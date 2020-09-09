@@ -527,47 +527,6 @@ var _export = function (options, source) {
   }
 };
 
-var aFunction$1 = function (it) {
-  if (typeof it != 'function') {
-    throw TypeError(String(it) + ' is not a function');
-  } return it;
-};
-
-// optional / simple context binding
-var functionBindContext = function (fn, that, length) {
-  aFunction$1(fn);
-  if (that === undefined) return fn;
-  switch (length) {
-    case 0: return function () {
-      return fn.call(that);
-    };
-    case 1: return function (a) {
-      return fn.call(that, a);
-    };
-    case 2: return function (a, b) {
-      return fn.call(that, a, b);
-    };
-    case 3: return function (a, b, c) {
-      return fn.call(that, a, b, c);
-    };
-  }
-  return function (/* ...args */) {
-    return fn.apply(that, arguments);
-  };
-};
-
-// `ToObject` abstract operation
-// https://tc39.github.io/ecma262/#sec-toobject
-var toObject = function (argument) {
-  return Object(requireObjectCoercible(argument));
-};
-
-// `IsArray` abstract operation
-// https://tc39.github.io/ecma262/#sec-isarray
-var isArray = Array.isArray || function isArray(arg) {
-  return classofRaw(arg) == 'Array';
-};
-
 var nativeSymbol = !!Object.getOwnPropertySymbols && !fails(function () {
   // Chrome 38 Symbol has incorrect toString conversion
   // eslint-disable-next-line no-undef
@@ -590,187 +549,6 @@ var wellKnownSymbol = function (name) {
     else WellKnownSymbolsStore[name] = createWellKnownSymbol('Symbol.' + name);
   } return WellKnownSymbolsStore[name];
 };
-
-var SPECIES = wellKnownSymbol('species');
-
-// `ArraySpeciesCreate` abstract operation
-// https://tc39.github.io/ecma262/#sec-arrayspeciescreate
-var arraySpeciesCreate = function (originalArray, length) {
-  var C;
-  if (isArray(originalArray)) {
-    C = originalArray.constructor;
-    // cross-realm fallback
-    if (typeof C == 'function' && (C === Array || isArray(C.prototype))) C = undefined;
-    else if (isObject(C)) {
-      C = C[SPECIES];
-      if (C === null) C = undefined;
-    }
-  } return new (C === undefined ? Array : C)(length === 0 ? 0 : length);
-};
-
-var push = [].push;
-
-// `Array.prototype.{ forEach, map, filter, some, every, find, findIndex }` methods implementation
-var createMethod$1 = function (TYPE) {
-  var IS_MAP = TYPE == 1;
-  var IS_FILTER = TYPE == 2;
-  var IS_SOME = TYPE == 3;
-  var IS_EVERY = TYPE == 4;
-  var IS_FIND_INDEX = TYPE == 6;
-  var NO_HOLES = TYPE == 5 || IS_FIND_INDEX;
-  return function ($this, callbackfn, that, specificCreate) {
-    var O = toObject($this);
-    var self = indexedObject(O);
-    var boundFunction = functionBindContext(callbackfn, that, 3);
-    var length = toLength(self.length);
-    var index = 0;
-    var create = specificCreate || arraySpeciesCreate;
-    var target = IS_MAP ? create($this, length) : IS_FILTER ? create($this, 0) : undefined;
-    var value, result;
-    for (;length > index; index++) if (NO_HOLES || index in self) {
-      value = self[index];
-      result = boundFunction(value, index, O);
-      if (TYPE) {
-        if (IS_MAP) target[index] = result; // map
-        else if (result) switch (TYPE) {
-          case 3: return true;              // some
-          case 5: return value;             // find
-          case 6: return index;             // findIndex
-          case 2: push.call(target, value); // filter
-        } else if (IS_EVERY) return false;  // every
-      }
-    }
-    return IS_FIND_INDEX ? -1 : IS_SOME || IS_EVERY ? IS_EVERY : target;
-  };
-};
-
-var arrayIteration = {
-  // `Array.prototype.forEach` method
-  // https://tc39.github.io/ecma262/#sec-array.prototype.foreach
-  forEach: createMethod$1(0),
-  // `Array.prototype.map` method
-  // https://tc39.github.io/ecma262/#sec-array.prototype.map
-  map: createMethod$1(1),
-  // `Array.prototype.filter` method
-  // https://tc39.github.io/ecma262/#sec-array.prototype.filter
-  filter: createMethod$1(2),
-  // `Array.prototype.some` method
-  // https://tc39.github.io/ecma262/#sec-array.prototype.some
-  some: createMethod$1(3),
-  // `Array.prototype.every` method
-  // https://tc39.github.io/ecma262/#sec-array.prototype.every
-  every: createMethod$1(4),
-  // `Array.prototype.find` method
-  // https://tc39.github.io/ecma262/#sec-array.prototype.find
-  find: createMethod$1(5),
-  // `Array.prototype.findIndex` method
-  // https://tc39.github.io/ecma262/#sec-array.prototype.findIndex
-  findIndex: createMethod$1(6)
-};
-
-var engineUserAgent = getBuiltIn('navigator', 'userAgent') || '';
-
-var process = global_1.process;
-var versions = process && process.versions;
-var v8 = versions && versions.v8;
-var match, version;
-
-if (v8) {
-  match = v8.split('.');
-  version = match[0] + match[1];
-} else if (engineUserAgent) {
-  match = engineUserAgent.match(/Edge\/(\d+)/);
-  if (!match || match[1] >= 74) {
-    match = engineUserAgent.match(/Chrome\/(\d+)/);
-    if (match) version = match[1];
-  }
-}
-
-var engineV8Version = version && +version;
-
-var SPECIES$1 = wellKnownSymbol('species');
-
-var arrayMethodHasSpeciesSupport = function (METHOD_NAME) {
-  // We can't use this feature detection in V8 since it causes
-  // deoptimization and serious performance degradation
-  // https://github.com/zloirock/core-js/issues/677
-  return engineV8Version >= 51 || !fails(function () {
-    var array = [];
-    var constructor = array.constructor = {};
-    constructor[SPECIES$1] = function () {
-      return { foo: 1 };
-    };
-    return array[METHOD_NAME](Boolean).foo !== 1;
-  });
-};
-
-var defineProperty = Object.defineProperty;
-var cache = {};
-
-var thrower = function (it) { throw it; };
-
-var arrayMethodUsesToLength = function (METHOD_NAME, options) {
-  if (has(cache, METHOD_NAME)) return cache[METHOD_NAME];
-  if (!options) options = {};
-  var method = [][METHOD_NAME];
-  var ACCESSORS = has(options, 'ACCESSORS') ? options.ACCESSORS : false;
-  var argument0 = has(options, 0) ? options[0] : thrower;
-  var argument1 = has(options, 1) ? options[1] : undefined;
-
-  return cache[METHOD_NAME] = !!method && !fails(function () {
-    if (ACCESSORS && !descriptors) return true;
-    var O = { length: -1 };
-
-    if (ACCESSORS) defineProperty(O, 1, { enumerable: true, get: thrower });
-    else O[1] = 1;
-
-    method.call(O, argument0, argument1);
-  });
-};
-
-var $filter = arrayIteration.filter;
-
-
-
-var HAS_SPECIES_SUPPORT = arrayMethodHasSpeciesSupport('filter');
-// Edge 14- issue
-var USES_TO_LENGTH = arrayMethodUsesToLength('filter');
-
-// `Array.prototype.filter` method
-// https://tc39.github.io/ecma262/#sec-array.prototype.filter
-// with adding support of @@species
-_export({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT || !USES_TO_LENGTH }, {
-  filter: function filter(callbackfn /* , thisArg */) {
-    return $filter(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
-  }
-});
-
-var arrayMethodIsStrict = function (METHOD_NAME, argument) {
-  var method = [][METHOD_NAME];
-  return !!method && fails(function () {
-    // eslint-disable-next-line no-useless-call,no-throw-literal
-    method.call(null, argument || function () { throw 1; }, 1);
-  });
-};
-
-var $forEach = arrayIteration.forEach;
-
-
-
-var STRICT_METHOD = arrayMethodIsStrict('forEach');
-var USES_TO_LENGTH$1 = arrayMethodUsesToLength('forEach');
-
-// `Array.prototype.forEach` method implementation
-// https://tc39.github.io/ecma262/#sec-array.prototype.foreach
-var arrayForEach = (!STRICT_METHOD || !USES_TO_LENGTH$1) ? function forEach(callbackfn /* , thisArg */) {
-  return $forEach(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
-} : [].forEach;
-
-// `Array.prototype.forEach` method
-// https://tc39.github.io/ecma262/#sec-array.prototype.foreach
-_export({ target: 'Array', proto: true, forced: [].forEach != arrayForEach }, {
-  forEach: arrayForEach
-});
 
 // `Object.keys` method
 // https://tc39.github.io/ecma262/#sec-object.keys
@@ -880,15 +658,39 @@ var addToUnscopables = function (key) {
   ArrayPrototype[UNSCOPABLES][key] = true;
 };
 
+var defineProperty = Object.defineProperty;
+var cache = {};
+
+var thrower = function (it) { throw it; };
+
+var arrayMethodUsesToLength = function (METHOD_NAME, options) {
+  if (has(cache, METHOD_NAME)) return cache[METHOD_NAME];
+  if (!options) options = {};
+  var method = [][METHOD_NAME];
+  var ACCESSORS = has(options, 'ACCESSORS') ? options.ACCESSORS : false;
+  var argument0 = has(options, 0) ? options[0] : thrower;
+  var argument1 = has(options, 1) ? options[1] : undefined;
+
+  return cache[METHOD_NAME] = !!method && !fails(function () {
+    if (ACCESSORS && !descriptors) return true;
+    var O = { length: -1 };
+
+    if (ACCESSORS) defineProperty(O, 1, { enumerable: true, get: thrower });
+    else O[1] = 1;
+
+    method.call(O, argument0, argument1);
+  });
+};
+
 var $includes = arrayIncludes.includes;
 
 
 
-var USES_TO_LENGTH$2 = arrayMethodUsesToLength('indexOf', { ACCESSORS: true, 1: 0 });
+var USES_TO_LENGTH = arrayMethodUsesToLength('indexOf', { ACCESSORS: true, 1: 0 });
 
 // `Array.prototype.includes` method
 // https://tc39.github.io/ecma262/#sec-array.prototype.includes
-_export({ target: 'Array', proto: true, forced: !USES_TO_LENGTH$2 }, {
+_export({ target: 'Array', proto: true, forced: !USES_TO_LENGTH }, {
   includes: function includes(el /* , fromIndex = 0 */) {
     return $includes(this, el, arguments.length > 1 ? arguments[1] : undefined);
   }
@@ -897,6 +699,14 @@ _export({ target: 'Array', proto: true, forced: !USES_TO_LENGTH$2 }, {
 // https://tc39.github.io/ecma262/#sec-array.prototype-@@unscopables
 addToUnscopables('includes');
 
+var arrayMethodIsStrict = function (METHOD_NAME, argument) {
+  var method = [][METHOD_NAME];
+  return !!method && fails(function () {
+    // eslint-disable-next-line no-useless-call,no-throw-literal
+    method.call(null, argument || function () { throw 1; }, 1);
+  });
+};
+
 var $indexOf = arrayIncludes.indexOf;
 
 
@@ -904,12 +714,12 @@ var $indexOf = arrayIncludes.indexOf;
 var nativeIndexOf = [].indexOf;
 
 var NEGATIVE_ZERO = !!nativeIndexOf && 1 / [1].indexOf(1, -0) < 0;
-var STRICT_METHOD$1 = arrayMethodIsStrict('indexOf');
-var USES_TO_LENGTH$3 = arrayMethodUsesToLength('indexOf', { ACCESSORS: true, 1: 0 });
+var STRICT_METHOD = arrayMethodIsStrict('indexOf');
+var USES_TO_LENGTH$1 = arrayMethodUsesToLength('indexOf', { ACCESSORS: true, 1: 0 });
 
 // `Array.prototype.indexOf` method
 // https://tc39.github.io/ecma262/#sec-array.prototype.indexof
-_export({ target: 'Array', proto: true, forced: NEGATIVE_ZERO || !STRICT_METHOD$1 || !USES_TO_LENGTH$3 }, {
+_export({ target: 'Array', proto: true, forced: NEGATIVE_ZERO || !STRICT_METHOD || !USES_TO_LENGTH$1 }, {
   indexOf: function indexOf(searchElement /* , fromIndex = 0 */) {
     return NEGATIVE_ZERO
       // convert -0 to +0
@@ -919,6 +729,12 @@ _export({ target: 'Array', proto: true, forced: NEGATIVE_ZERO || !STRICT_METHOD$
 });
 
 var iterators = {};
+
+// `ToObject` abstract operation
+// https://tc39.github.io/ecma262/#sec-toobject
+var toObject = function (argument) {
+  return Object(requireObjectCoercible(argument));
+};
 
 var correctPrototypeGetter = !fails(function () {
   function F() { /* empty */ }
@@ -1150,96 +966,168 @@ addToUnscopables('keys');
 addToUnscopables('values');
 addToUnscopables('entries');
 
+var aFunction$1 = function (it) {
+  if (typeof it != 'function') {
+    throw TypeError(String(it) + ' is not a function');
+  } return it;
+};
+
+// optional / simple context binding
+var functionBindContext = function (fn, that, length) {
+  aFunction$1(fn);
+  if (that === undefined) return fn;
+  switch (length) {
+    case 0: return function () {
+      return fn.call(that);
+    };
+    case 1: return function (a) {
+      return fn.call(that, a);
+    };
+    case 2: return function (a, b) {
+      return fn.call(that, a, b);
+    };
+    case 3: return function (a, b, c) {
+      return fn.call(that, a, b, c);
+    };
+  }
+  return function (/* ...args */) {
+    return fn.apply(that, arguments);
+  };
+};
+
+// `IsArray` abstract operation
+// https://tc39.github.io/ecma262/#sec-isarray
+var isArray = Array.isArray || function isArray(arg) {
+  return classofRaw(arg) == 'Array';
+};
+
+var SPECIES = wellKnownSymbol('species');
+
+// `ArraySpeciesCreate` abstract operation
+// https://tc39.github.io/ecma262/#sec-arrayspeciescreate
+var arraySpeciesCreate = function (originalArray, length) {
+  var C;
+  if (isArray(originalArray)) {
+    C = originalArray.constructor;
+    // cross-realm fallback
+    if (typeof C == 'function' && (C === Array || isArray(C.prototype))) C = undefined;
+    else if (isObject(C)) {
+      C = C[SPECIES];
+      if (C === null) C = undefined;
+    }
+  } return new (C === undefined ? Array : C)(length === 0 ? 0 : length);
+};
+
+var push = [].push;
+
+// `Array.prototype.{ forEach, map, filter, some, every, find, findIndex }` methods implementation
+var createMethod$1 = function (TYPE) {
+  var IS_MAP = TYPE == 1;
+  var IS_FILTER = TYPE == 2;
+  var IS_SOME = TYPE == 3;
+  var IS_EVERY = TYPE == 4;
+  var IS_FIND_INDEX = TYPE == 6;
+  var NO_HOLES = TYPE == 5 || IS_FIND_INDEX;
+  return function ($this, callbackfn, that, specificCreate) {
+    var O = toObject($this);
+    var self = indexedObject(O);
+    var boundFunction = functionBindContext(callbackfn, that, 3);
+    var length = toLength(self.length);
+    var index = 0;
+    var create = specificCreate || arraySpeciesCreate;
+    var target = IS_MAP ? create($this, length) : IS_FILTER ? create($this, 0) : undefined;
+    var value, result;
+    for (;length > index; index++) if (NO_HOLES || index in self) {
+      value = self[index];
+      result = boundFunction(value, index, O);
+      if (TYPE) {
+        if (IS_MAP) target[index] = result; // map
+        else if (result) switch (TYPE) {
+          case 3: return true;              // some
+          case 5: return value;             // find
+          case 6: return index;             // findIndex
+          case 2: push.call(target, value); // filter
+        } else if (IS_EVERY) return false;  // every
+      }
+    }
+    return IS_FIND_INDEX ? -1 : IS_SOME || IS_EVERY ? IS_EVERY : target;
+  };
+};
+
+var arrayIteration = {
+  // `Array.prototype.forEach` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype.foreach
+  forEach: createMethod$1(0),
+  // `Array.prototype.map` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype.map
+  map: createMethod$1(1),
+  // `Array.prototype.filter` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype.filter
+  filter: createMethod$1(2),
+  // `Array.prototype.some` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype.some
+  some: createMethod$1(3),
+  // `Array.prototype.every` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype.every
+  every: createMethod$1(4),
+  // `Array.prototype.find` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype.find
+  find: createMethod$1(5),
+  // `Array.prototype.findIndex` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype.findIndex
+  findIndex: createMethod$1(6)
+};
+
+var engineUserAgent = getBuiltIn('navigator', 'userAgent') || '';
+
+var process = global_1.process;
+var versions = process && process.versions;
+var v8 = versions && versions.v8;
+var match, version;
+
+if (v8) {
+  match = v8.split('.');
+  version = match[0] + match[1];
+} else if (engineUserAgent) {
+  match = engineUserAgent.match(/Edge\/(\d+)/);
+  if (!match || match[1] >= 74) {
+    match = engineUserAgent.match(/Chrome\/(\d+)/);
+    if (match) version = match[1];
+  }
+}
+
+var engineV8Version = version && +version;
+
+var SPECIES$1 = wellKnownSymbol('species');
+
+var arrayMethodHasSpeciesSupport = function (METHOD_NAME) {
+  // We can't use this feature detection in V8 since it causes
+  // deoptimization and serious performance degradation
+  // https://github.com/zloirock/core-js/issues/677
+  return engineV8Version >= 51 || !fails(function () {
+    var array = [];
+    var constructor = array.constructor = {};
+    constructor[SPECIES$1] = function () {
+      return { foo: 1 };
+    };
+    return array[METHOD_NAME](Boolean).foo !== 1;
+  });
+};
+
 var $map = arrayIteration.map;
 
 
 
-var HAS_SPECIES_SUPPORT$1 = arrayMethodHasSpeciesSupport('map');
+var HAS_SPECIES_SUPPORT = arrayMethodHasSpeciesSupport('map');
 // FF49- issue
-var USES_TO_LENGTH$4 = arrayMethodUsesToLength('map');
+var USES_TO_LENGTH$2 = arrayMethodUsesToLength('map');
 
 // `Array.prototype.map` method
 // https://tc39.github.io/ecma262/#sec-array.prototype.map
 // with adding support of @@species
-_export({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT$1 || !USES_TO_LENGTH$4 }, {
+_export({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT || !USES_TO_LENGTH$2 }, {
   map: function map(callbackfn /* , thisArg */) {
     return $map(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
-  }
-});
-
-var createProperty = function (object, key, value) {
-  var propertyKey = toPrimitive(key);
-  if (propertyKey in object) objectDefineProperty.f(object, propertyKey, createPropertyDescriptor(0, value));
-  else object[propertyKey] = value;
-};
-
-var HAS_SPECIES_SUPPORT$2 = arrayMethodHasSpeciesSupport('slice');
-var USES_TO_LENGTH$5 = arrayMethodUsesToLength('slice', { ACCESSORS: true, 0: 0, 1: 2 });
-
-var SPECIES$2 = wellKnownSymbol('species');
-var nativeSlice = [].slice;
-var max$1 = Math.max;
-
-// `Array.prototype.slice` method
-// https://tc39.github.io/ecma262/#sec-array.prototype.slice
-// fallback for not array-like ES3 strings and DOM objects
-_export({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT$2 || !USES_TO_LENGTH$5 }, {
-  slice: function slice(start, end) {
-    var O = toIndexedObject(this);
-    var length = toLength(O.length);
-    var k = toAbsoluteIndex(start, length);
-    var fin = toAbsoluteIndex(end === undefined ? length : end, length);
-    // inline `ArraySpeciesCreate` for usage native `Array#slice` where it's possible
-    var Constructor, result, n;
-    if (isArray(O)) {
-      Constructor = O.constructor;
-      // cross-realm fallback
-      if (typeof Constructor == 'function' && (Constructor === Array || isArray(Constructor.prototype))) {
-        Constructor = undefined;
-      } else if (isObject(Constructor)) {
-        Constructor = Constructor[SPECIES$2];
-        if (Constructor === null) Constructor = undefined;
-      }
-      if (Constructor === Array || Constructor === undefined) {
-        return nativeSlice.call(O, k, fin);
-      }
-    }
-    result = new (Constructor === undefined ? Array : Constructor)(max$1(fin - k, 0));
-    for (n = 0; k < fin; k++, n++) if (k in O) createProperty(result, n, O[k]);
-    result.length = n;
-    return result;
-  }
-});
-
-var defineProperty$2 = objectDefineProperty.f;
-
-var FunctionPrototype = Function.prototype;
-var FunctionPrototypeToString = FunctionPrototype.toString;
-var nameRE = /^\s*function ([^ (]*)/;
-var NAME = 'name';
-
-// Function instances `.name` property
-// https://tc39.github.io/ecma262/#sec-function-instances-name
-if (descriptors && !(NAME in FunctionPrototype)) {
-  defineProperty$2(FunctionPrototype, NAME, {
-    configurable: true,
-    get: function () {
-      try {
-        return FunctionPrototypeToString.call(this).match(nameRE)[1];
-      } catch (error) {
-        return '';
-      }
-    }
-  });
-}
-
-var FAILS_ON_PRIMITIVES = fails(function () { objectKeys(1); });
-
-// `Object.keys` method
-// https://tc39.github.io/ecma262/#sec-object.keys
-_export({ target: 'Object', stat: true, forced: FAILS_ON_PRIMITIVES }, {
-  keys: function keys(it) {
-    return objectKeys(toObject(it));
   }
 });
 
@@ -1292,14 +1180,14 @@ var redefineAll = function (target, src, options) {
   return target;
 };
 
-var SPECIES$3 = wellKnownSymbol('species');
+var SPECIES$2 = wellKnownSymbol('species');
 
 var setSpecies = function (CONSTRUCTOR_NAME) {
   var Constructor = getBuiltIn(CONSTRUCTOR_NAME);
   var defineProperty = objectDefineProperty.f;
 
-  if (descriptors && Constructor && !Constructor[SPECIES$3]) {
-    defineProperty(Constructor, SPECIES$3, {
+  if (descriptors && Constructor && !Constructor[SPECIES$2]) {
+    defineProperty(Constructor, SPECIES$2, {
       configurable: true,
       get: function () { return this; }
     });
@@ -1416,14 +1304,14 @@ var checkCorrectnessOfIteration = function (exec, SKIP_CLOSING) {
   return ITERATION_SUPPORT;
 };
 
-var SPECIES$4 = wellKnownSymbol('species');
+var SPECIES$3 = wellKnownSymbol('species');
 
 // `SpeciesConstructor` abstract operation
 // https://tc39.github.io/ecma262/#sec-speciesconstructor
 var speciesConstructor = function (O, defaultConstructor) {
   var C = anObject(O).constructor;
   var S;
-  return C === undefined || (S = anObject(C)[SPECIES$4]) == undefined ? defaultConstructor : aFunction$1(S);
+  return C === undefined || (S = anObject(C)[SPECIES$3]) == undefined ? defaultConstructor : aFunction$1(S);
 };
 
 var engineIsIos = /(iphone|ipod|ipad).*applewebkit/i.test(engineUserAgent);
@@ -1661,7 +1549,7 @@ var task$1 = task.set;
 
 
 
-var SPECIES$5 = wellKnownSymbol('species');
+var SPECIES$4 = wellKnownSymbol('species');
 var PROMISE = 'Promise';
 var getInternalState$1 = internalState.get;
 var setInternalState$1 = internalState.set;
@@ -1704,7 +1592,7 @@ var FORCED = isForced_1(PROMISE, function () {
     exec(function () { /* empty */ }, function () { /* empty */ });
   };
   var constructor = promise.constructor = {};
-  constructor[SPECIES$5] = FakePromise;
+  constructor[SPECIES$4] = FakePromise;
   return !(promise.then(function () { /* empty */ }) instanceof FakePromise);
 });
 
@@ -2118,42 +2006,577 @@ var domIterables = {
   TouchList: 0
 };
 
-for (var COLLECTION_NAME in domIterables) {
-  var Collection = global_1[COLLECTION_NAME];
-  var CollectionPrototype = Collection && Collection.prototype;
-  // some Chrome versions have non-configurable methods on DOMTokenList
-  if (CollectionPrototype && CollectionPrototype.forEach !== arrayForEach) try {
-    createNonEnumerableProperty(CollectionPrototype, 'forEach', arrayForEach);
-  } catch (error) {
-    CollectionPrototype.forEach = arrayForEach;
-  }
-}
-
 var ITERATOR$5 = wellKnownSymbol('iterator');
 var TO_STRING_TAG$3 = wellKnownSymbol('toStringTag');
 var ArrayValues = es_array_iterator.values;
 
+for (var COLLECTION_NAME in domIterables) {
+  var Collection = global_1[COLLECTION_NAME];
+  var CollectionPrototype = Collection && Collection.prototype;
+  if (CollectionPrototype) {
+    // some Chrome versions have non-configurable methods on DOMTokenList
+    if (CollectionPrototype[ITERATOR$5] !== ArrayValues) try {
+      createNonEnumerableProperty(CollectionPrototype, ITERATOR$5, ArrayValues);
+    } catch (error) {
+      CollectionPrototype[ITERATOR$5] = ArrayValues;
+    }
+    if (!CollectionPrototype[TO_STRING_TAG$3]) {
+      createNonEnumerableProperty(CollectionPrototype, TO_STRING_TAG$3, COLLECTION_NAME);
+    }
+    if (domIterables[COLLECTION_NAME]) for (var METHOD_NAME in es_array_iterator) {
+      // some Chrome versions have non-configurable methods on DOMTokenList
+      if (CollectionPrototype[METHOD_NAME] !== es_array_iterator[METHOD_NAME]) try {
+        createNonEnumerableProperty(CollectionPrototype, METHOD_NAME, es_array_iterator[METHOD_NAME]);
+      } catch (error) {
+        CollectionPrototype[METHOD_NAME] = es_array_iterator[METHOD_NAME];
+      }
+    }
+  }
+}
+
+var nativeGetOwnPropertyNames = objectGetOwnPropertyNames.f;
+
+var toString$1 = {}.toString;
+
+var windowNames = typeof window == 'object' && window && Object.getOwnPropertyNames
+  ? Object.getOwnPropertyNames(window) : [];
+
+var getWindowNames = function (it) {
+  try {
+    return nativeGetOwnPropertyNames(it);
+  } catch (error) {
+    return windowNames.slice();
+  }
+};
+
+// fallback for IE11 buggy Object.getOwnPropertyNames with iframe and window
+var f$6 = function getOwnPropertyNames(it) {
+  return windowNames && toString$1.call(it) == '[object Window]'
+    ? getWindowNames(it)
+    : nativeGetOwnPropertyNames(toIndexedObject(it));
+};
+
+var objectGetOwnPropertyNamesExternal = {
+	f: f$6
+};
+
+var f$7 = wellKnownSymbol;
+
+var wellKnownSymbolWrapped = {
+	f: f$7
+};
+
+var defineProperty$2 = objectDefineProperty.f;
+
+var defineWellKnownSymbol = function (NAME) {
+  var Symbol = path.Symbol || (path.Symbol = {});
+  if (!has(Symbol, NAME)) defineProperty$2(Symbol, NAME, {
+    value: wellKnownSymbolWrapped.f(NAME)
+  });
+};
+
+var $forEach = arrayIteration.forEach;
+
+var HIDDEN = sharedKey('hidden');
+var SYMBOL = 'Symbol';
+var PROTOTYPE$1 = 'prototype';
+var TO_PRIMITIVE = wellKnownSymbol('toPrimitive');
+var setInternalState$2 = internalState.set;
+var getInternalState$2 = internalState.getterFor(SYMBOL);
+var ObjectPrototype$1 = Object[PROTOTYPE$1];
+var $Symbol = global_1.Symbol;
+var $stringify = getBuiltIn('JSON', 'stringify');
+var nativeGetOwnPropertyDescriptor$1 = objectGetOwnPropertyDescriptor.f;
+var nativeDefineProperty$1 = objectDefineProperty.f;
+var nativeGetOwnPropertyNames$1 = objectGetOwnPropertyNamesExternal.f;
+var nativePropertyIsEnumerable$1 = objectPropertyIsEnumerable.f;
+var AllSymbols = shared('symbols');
+var ObjectPrototypeSymbols = shared('op-symbols');
+var StringToSymbolRegistry = shared('string-to-symbol-registry');
+var SymbolToStringRegistry = shared('symbol-to-string-registry');
+var WellKnownSymbolsStore$1 = shared('wks');
+var QObject = global_1.QObject;
+// Don't use setters in Qt Script, https://github.com/zloirock/core-js/issues/173
+var USE_SETTER = !QObject || !QObject[PROTOTYPE$1] || !QObject[PROTOTYPE$1].findChild;
+
+// fallback for old Android, https://code.google.com/p/v8/issues/detail?id=687
+var setSymbolDescriptor = descriptors && fails(function () {
+  return objectCreate(nativeDefineProperty$1({}, 'a', {
+    get: function () { return nativeDefineProperty$1(this, 'a', { value: 7 }).a; }
+  })).a != 7;
+}) ? function (O, P, Attributes) {
+  var ObjectPrototypeDescriptor = nativeGetOwnPropertyDescriptor$1(ObjectPrototype$1, P);
+  if (ObjectPrototypeDescriptor) delete ObjectPrototype$1[P];
+  nativeDefineProperty$1(O, P, Attributes);
+  if (ObjectPrototypeDescriptor && O !== ObjectPrototype$1) {
+    nativeDefineProperty$1(ObjectPrototype$1, P, ObjectPrototypeDescriptor);
+  }
+} : nativeDefineProperty$1;
+
+var wrap = function (tag, description) {
+  var symbol = AllSymbols[tag] = objectCreate($Symbol[PROTOTYPE$1]);
+  setInternalState$2(symbol, {
+    type: SYMBOL,
+    tag: tag,
+    description: description
+  });
+  if (!descriptors) symbol.description = description;
+  return symbol;
+};
+
+var isSymbol = useSymbolAsUid ? function (it) {
+  return typeof it == 'symbol';
+} : function (it) {
+  return Object(it) instanceof $Symbol;
+};
+
+var $defineProperty = function defineProperty(O, P, Attributes) {
+  if (O === ObjectPrototype$1) $defineProperty(ObjectPrototypeSymbols, P, Attributes);
+  anObject(O);
+  var key = toPrimitive(P, true);
+  anObject(Attributes);
+  if (has(AllSymbols, key)) {
+    if (!Attributes.enumerable) {
+      if (!has(O, HIDDEN)) nativeDefineProperty$1(O, HIDDEN, createPropertyDescriptor(1, {}));
+      O[HIDDEN][key] = true;
+    } else {
+      if (has(O, HIDDEN) && O[HIDDEN][key]) O[HIDDEN][key] = false;
+      Attributes = objectCreate(Attributes, { enumerable: createPropertyDescriptor(0, false) });
+    } return setSymbolDescriptor(O, key, Attributes);
+  } return nativeDefineProperty$1(O, key, Attributes);
+};
+
+var $defineProperties = function defineProperties(O, Properties) {
+  anObject(O);
+  var properties = toIndexedObject(Properties);
+  var keys = objectKeys(properties).concat($getOwnPropertySymbols(properties));
+  $forEach(keys, function (key) {
+    if (!descriptors || $propertyIsEnumerable.call(properties, key)) $defineProperty(O, key, properties[key]);
+  });
+  return O;
+};
+
+var $create = function create(O, Properties) {
+  return Properties === undefined ? objectCreate(O) : $defineProperties(objectCreate(O), Properties);
+};
+
+var $propertyIsEnumerable = function propertyIsEnumerable(V) {
+  var P = toPrimitive(V, true);
+  var enumerable = nativePropertyIsEnumerable$1.call(this, P);
+  if (this === ObjectPrototype$1 && has(AllSymbols, P) && !has(ObjectPrototypeSymbols, P)) return false;
+  return enumerable || !has(this, P) || !has(AllSymbols, P) || has(this, HIDDEN) && this[HIDDEN][P] ? enumerable : true;
+};
+
+var $getOwnPropertyDescriptor = function getOwnPropertyDescriptor(O, P) {
+  var it = toIndexedObject(O);
+  var key = toPrimitive(P, true);
+  if (it === ObjectPrototype$1 && has(AllSymbols, key) && !has(ObjectPrototypeSymbols, key)) return;
+  var descriptor = nativeGetOwnPropertyDescriptor$1(it, key);
+  if (descriptor && has(AllSymbols, key) && !(has(it, HIDDEN) && it[HIDDEN][key])) {
+    descriptor.enumerable = true;
+  }
+  return descriptor;
+};
+
+var $getOwnPropertyNames = function getOwnPropertyNames(O) {
+  var names = nativeGetOwnPropertyNames$1(toIndexedObject(O));
+  var result = [];
+  $forEach(names, function (key) {
+    if (!has(AllSymbols, key) && !has(hiddenKeys, key)) result.push(key);
+  });
+  return result;
+};
+
+var $getOwnPropertySymbols = function getOwnPropertySymbols(O) {
+  var IS_OBJECT_PROTOTYPE = O === ObjectPrototype$1;
+  var names = nativeGetOwnPropertyNames$1(IS_OBJECT_PROTOTYPE ? ObjectPrototypeSymbols : toIndexedObject(O));
+  var result = [];
+  $forEach(names, function (key) {
+    if (has(AllSymbols, key) && (!IS_OBJECT_PROTOTYPE || has(ObjectPrototype$1, key))) {
+      result.push(AllSymbols[key]);
+    }
+  });
+  return result;
+};
+
+// `Symbol` constructor
+// https://tc39.github.io/ecma262/#sec-symbol-constructor
+if (!nativeSymbol) {
+  $Symbol = function Symbol() {
+    if (this instanceof $Symbol) throw TypeError('Symbol is not a constructor');
+    var description = !arguments.length || arguments[0] === undefined ? undefined : String(arguments[0]);
+    var tag = uid(description);
+    var setter = function (value) {
+      if (this === ObjectPrototype$1) setter.call(ObjectPrototypeSymbols, value);
+      if (has(this, HIDDEN) && has(this[HIDDEN], tag)) this[HIDDEN][tag] = false;
+      setSymbolDescriptor(this, tag, createPropertyDescriptor(1, value));
+    };
+    if (descriptors && USE_SETTER) setSymbolDescriptor(ObjectPrototype$1, tag, { configurable: true, set: setter });
+    return wrap(tag, description);
+  };
+
+  redefine($Symbol[PROTOTYPE$1], 'toString', function toString() {
+    return getInternalState$2(this).tag;
+  });
+
+  redefine($Symbol, 'withoutSetter', function (description) {
+    return wrap(uid(description), description);
+  });
+
+  objectPropertyIsEnumerable.f = $propertyIsEnumerable;
+  objectDefineProperty.f = $defineProperty;
+  objectGetOwnPropertyDescriptor.f = $getOwnPropertyDescriptor;
+  objectGetOwnPropertyNames.f = objectGetOwnPropertyNamesExternal.f = $getOwnPropertyNames;
+  objectGetOwnPropertySymbols.f = $getOwnPropertySymbols;
+
+  wellKnownSymbolWrapped.f = function (name) {
+    return wrap(wellKnownSymbol(name), name);
+  };
+
+  if (descriptors) {
+    // https://github.com/tc39/proposal-Symbol-description
+    nativeDefineProperty$1($Symbol[PROTOTYPE$1], 'description', {
+      configurable: true,
+      get: function description() {
+        return getInternalState$2(this).description;
+      }
+    });
+    {
+      redefine(ObjectPrototype$1, 'propertyIsEnumerable', $propertyIsEnumerable, { unsafe: true });
+    }
+  }
+}
+
+_export({ global: true, wrap: true, forced: !nativeSymbol, sham: !nativeSymbol }, {
+  Symbol: $Symbol
+});
+
+$forEach(objectKeys(WellKnownSymbolsStore$1), function (name) {
+  defineWellKnownSymbol(name);
+});
+
+_export({ target: SYMBOL, stat: true, forced: !nativeSymbol }, {
+  // `Symbol.for` method
+  // https://tc39.github.io/ecma262/#sec-symbol.for
+  'for': function (key) {
+    var string = String(key);
+    if (has(StringToSymbolRegistry, string)) return StringToSymbolRegistry[string];
+    var symbol = $Symbol(string);
+    StringToSymbolRegistry[string] = symbol;
+    SymbolToStringRegistry[symbol] = string;
+    return symbol;
+  },
+  // `Symbol.keyFor` method
+  // https://tc39.github.io/ecma262/#sec-symbol.keyfor
+  keyFor: function keyFor(sym) {
+    if (!isSymbol(sym)) throw TypeError(sym + ' is not a symbol');
+    if (has(SymbolToStringRegistry, sym)) return SymbolToStringRegistry[sym];
+  },
+  useSetter: function () { USE_SETTER = true; },
+  useSimple: function () { USE_SETTER = false; }
+});
+
+_export({ target: 'Object', stat: true, forced: !nativeSymbol, sham: !descriptors }, {
+  // `Object.create` method
+  // https://tc39.github.io/ecma262/#sec-object.create
+  create: $create,
+  // `Object.defineProperty` method
+  // https://tc39.github.io/ecma262/#sec-object.defineproperty
+  defineProperty: $defineProperty,
+  // `Object.defineProperties` method
+  // https://tc39.github.io/ecma262/#sec-object.defineproperties
+  defineProperties: $defineProperties,
+  // `Object.getOwnPropertyDescriptor` method
+  // https://tc39.github.io/ecma262/#sec-object.getownpropertydescriptors
+  getOwnPropertyDescriptor: $getOwnPropertyDescriptor
+});
+
+_export({ target: 'Object', stat: true, forced: !nativeSymbol }, {
+  // `Object.getOwnPropertyNames` method
+  // https://tc39.github.io/ecma262/#sec-object.getownpropertynames
+  getOwnPropertyNames: $getOwnPropertyNames,
+  // `Object.getOwnPropertySymbols` method
+  // https://tc39.github.io/ecma262/#sec-object.getownpropertysymbols
+  getOwnPropertySymbols: $getOwnPropertySymbols
+});
+
+// Chrome 38 and 39 `Object.getOwnPropertySymbols` fails on primitives
+// https://bugs.chromium.org/p/v8/issues/detail?id=3443
+_export({ target: 'Object', stat: true, forced: fails(function () { objectGetOwnPropertySymbols.f(1); }) }, {
+  getOwnPropertySymbols: function getOwnPropertySymbols(it) {
+    return objectGetOwnPropertySymbols.f(toObject(it));
+  }
+});
+
+// `JSON.stringify` method behavior with symbols
+// https://tc39.github.io/ecma262/#sec-json.stringify
+if ($stringify) {
+  var FORCED_JSON_STRINGIFY = !nativeSymbol || fails(function () {
+    var symbol = $Symbol();
+    // MS Edge converts symbol values to JSON as {}
+    return $stringify([symbol]) != '[null]'
+      // WebKit converts symbol values to JSON as null
+      || $stringify({ a: symbol }) != '{}'
+      // V8 throws on boxed symbols
+      || $stringify(Object(symbol)) != '{}';
+  });
+
+  _export({ target: 'JSON', stat: true, forced: FORCED_JSON_STRINGIFY }, {
+    // eslint-disable-next-line no-unused-vars
+    stringify: function stringify(it, replacer, space) {
+      var args = [it];
+      var index = 1;
+      var $replacer;
+      while (arguments.length > index) args.push(arguments[index++]);
+      $replacer = replacer;
+      if (!isObject(replacer) && it === undefined || isSymbol(it)) return; // IE8 returns string on undefined
+      if (!isArray(replacer)) replacer = function (key, value) {
+        if (typeof $replacer == 'function') value = $replacer.call(this, key, value);
+        if (!isSymbol(value)) return value;
+      };
+      args[1] = replacer;
+      return $stringify.apply(null, args);
+    }
+  });
+}
+
+// `Symbol.prototype[@@toPrimitive]` method
+// https://tc39.github.io/ecma262/#sec-symbol.prototype-@@toprimitive
+if (!$Symbol[PROTOTYPE$1][TO_PRIMITIVE]) {
+  createNonEnumerableProperty($Symbol[PROTOTYPE$1], TO_PRIMITIVE, $Symbol[PROTOTYPE$1].valueOf);
+}
+// `Symbol.prototype[@@toStringTag]` property
+// https://tc39.github.io/ecma262/#sec-symbol.prototype-@@tostringtag
+setToStringTag($Symbol, SYMBOL);
+
+hiddenKeys[HIDDEN] = true;
+
+var defineProperty$3 = objectDefineProperty.f;
+
+
+var NativeSymbol = global_1.Symbol;
+
+if (descriptors && typeof NativeSymbol == 'function' && (!('description' in NativeSymbol.prototype) ||
+  // Safari 12 bug
+  NativeSymbol().description !== undefined
+)) {
+  var EmptyStringDescriptionStore = {};
+  // wrap Symbol constructor for correct work with undefined description
+  var SymbolWrapper = function Symbol() {
+    var description = arguments.length < 1 || arguments[0] === undefined ? undefined : String(arguments[0]);
+    var result = this instanceof SymbolWrapper
+      ? new NativeSymbol(description)
+      // in Edge 13, String(Symbol(undefined)) === 'Symbol(undefined)'
+      : description === undefined ? NativeSymbol() : NativeSymbol(description);
+    if (description === '') EmptyStringDescriptionStore[result] = true;
+    return result;
+  };
+  copyConstructorProperties(SymbolWrapper, NativeSymbol);
+  var symbolPrototype = SymbolWrapper.prototype = NativeSymbol.prototype;
+  symbolPrototype.constructor = SymbolWrapper;
+
+  var symbolToString = symbolPrototype.toString;
+  var native = String(NativeSymbol('test')) == 'Symbol(test)';
+  var regexp = /^Symbol\((.*)\)[^)]+$/;
+  defineProperty$3(symbolPrototype, 'description', {
+    configurable: true,
+    get: function description() {
+      var symbol = isObject(this) ? this.valueOf() : this;
+      var string = symbolToString.call(symbol);
+      if (has(EmptyStringDescriptionStore, symbol)) return '';
+      var desc = native ? string.slice(7, -1) : string.replace(regexp, '$1');
+      return desc === '' ? undefined : desc;
+    }
+  });
+
+  _export({ global: true, forced: true }, {
+    Symbol: SymbolWrapper
+  });
+}
+
+// `Symbol.asyncIterator` well-known symbol
+// https://tc39.github.io/ecma262/#sec-symbol.asynciterator
+defineWellKnownSymbol('asyncIterator');
+
+// `Symbol.iterator` well-known symbol
+// https://tc39.github.io/ecma262/#sec-symbol.iterator
+defineWellKnownSymbol('iterator');
+
+// `Symbol.toStringTag` well-known symbol
+// https://tc39.github.io/ecma262/#sec-symbol.tostringtag
+defineWellKnownSymbol('toStringTag');
+
+var $forEach$1 = arrayIteration.forEach;
+
+
+
+var STRICT_METHOD$1 = arrayMethodIsStrict('forEach');
+var USES_TO_LENGTH$3 = arrayMethodUsesToLength('forEach');
+
+// `Array.prototype.forEach` method implementation
+// https://tc39.github.io/ecma262/#sec-array.prototype.foreach
+var arrayForEach = (!STRICT_METHOD$1 || !USES_TO_LENGTH$3) ? function forEach(callbackfn /* , thisArg */) {
+  return $forEach$1(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+} : [].forEach;
+
+// `Array.prototype.forEach` method
+// https://tc39.github.io/ecma262/#sec-array.prototype.foreach
+_export({ target: 'Array', proto: true, forced: [].forEach != arrayForEach }, {
+  forEach: arrayForEach
+});
+
+var createProperty = function (object, key, value) {
+  var propertyKey = toPrimitive(key);
+  if (propertyKey in object) objectDefineProperty.f(object, propertyKey, createPropertyDescriptor(0, value));
+  else object[propertyKey] = value;
+};
+
+var HAS_SPECIES_SUPPORT$1 = arrayMethodHasSpeciesSupport('slice');
+var USES_TO_LENGTH$4 = arrayMethodUsesToLength('slice', { ACCESSORS: true, 0: 0, 1: 2 });
+
+var SPECIES$5 = wellKnownSymbol('species');
+var nativeSlice = [].slice;
+var max$1 = Math.max;
+
+// `Array.prototype.slice` method
+// https://tc39.github.io/ecma262/#sec-array.prototype.slice
+// fallback for not array-like ES3 strings and DOM objects
+_export({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT$1 || !USES_TO_LENGTH$4 }, {
+  slice: function slice(start, end) {
+    var O = toIndexedObject(this);
+    var length = toLength(O.length);
+    var k = toAbsoluteIndex(start, length);
+    var fin = toAbsoluteIndex(end === undefined ? length : end, length);
+    // inline `ArraySpeciesCreate` for usage native `Array#slice` where it's possible
+    var Constructor, result, n;
+    if (isArray(O)) {
+      Constructor = O.constructor;
+      // cross-realm fallback
+      if (typeof Constructor == 'function' && (Constructor === Array || isArray(Constructor.prototype))) {
+        Constructor = undefined;
+      } else if (isObject(Constructor)) {
+        Constructor = Constructor[SPECIES$5];
+        if (Constructor === null) Constructor = undefined;
+      }
+      if (Constructor === Array || Constructor === undefined) {
+        return nativeSlice.call(O, k, fin);
+      }
+    }
+    result = new (Constructor === undefined ? Array : Constructor)(max$1(fin - k, 0));
+    for (n = 0; k < fin; k++, n++) if (k in O) createProperty(result, n, O[k]);
+    result.length = n;
+    return result;
+  }
+});
+
+var defineProperty$4 = objectDefineProperty.f;
+
+var FunctionPrototype = Function.prototype;
+var FunctionPrototypeToString = FunctionPrototype.toString;
+var nameRE = /^\s*function ([^ (]*)/;
+var NAME = 'name';
+
+// Function instances `.name` property
+// https://tc39.github.io/ecma262/#sec-function-instances-name
+if (descriptors && !(NAME in FunctionPrototype)) {
+  defineProperty$4(FunctionPrototype, NAME, {
+    configurable: true,
+    get: function () {
+      try {
+        return FunctionPrototypeToString.call(this).match(nameRE)[1];
+      } catch (error) {
+        return '';
+      }
+    }
+  });
+}
+
+// JSON[@@toStringTag] property
+// https://tc39.github.io/ecma262/#sec-json-@@tostringtag
+setToStringTag(global_1.JSON, 'JSON', true);
+
+// Math[@@toStringTag] property
+// https://tc39.github.io/ecma262/#sec-math-@@tostringtag
+setToStringTag(Math, 'Math', true);
+
+var FAILS_ON_PRIMITIVES = fails(function () { objectGetPrototypeOf(1); });
+
+// `Object.getPrototypeOf` method
+// https://tc39.github.io/ecma262/#sec-object.getprototypeof
+_export({ target: 'Object', stat: true, forced: FAILS_ON_PRIMITIVES, sham: !correctPrototypeGetter }, {
+  getPrototypeOf: function getPrototypeOf(it) {
+    return objectGetPrototypeOf(toObject(it));
+  }
+});
+
+// `Object.setPrototypeOf` method
+// https://tc39.github.io/ecma262/#sec-object.setprototypeof
+_export({ target: 'Object', stat: true }, {
+  setPrototypeOf: objectSetPrototypeOf
+});
+
+// `String.prototype.{ codePointAt, at }` methods implementation
+var createMethod$2 = function (CONVERT_TO_STRING) {
+  return function ($this, pos) {
+    var S = String(requireObjectCoercible($this));
+    var position = toInteger(pos);
+    var size = S.length;
+    var first, second;
+    if (position < 0 || position >= size) return CONVERT_TO_STRING ? '' : undefined;
+    first = S.charCodeAt(position);
+    return first < 0xD800 || first > 0xDBFF || position + 1 === size
+      || (second = S.charCodeAt(position + 1)) < 0xDC00 || second > 0xDFFF
+        ? CONVERT_TO_STRING ? S.charAt(position) : first
+        : CONVERT_TO_STRING ? S.slice(position, position + 2) : (first - 0xD800 << 10) + (second - 0xDC00) + 0x10000;
+  };
+};
+
+var stringMultibyte = {
+  // `String.prototype.codePointAt` method
+  // https://tc39.github.io/ecma262/#sec-string.prototype.codepointat
+  codeAt: createMethod$2(false),
+  // `String.prototype.at` method
+  // https://github.com/mathiasbynens/String.prototype.at
+  charAt: createMethod$2(true)
+};
+
+var charAt = stringMultibyte.charAt;
+
+
+
+var STRING_ITERATOR = 'String Iterator';
+var setInternalState$3 = internalState.set;
+var getInternalState$3 = internalState.getterFor(STRING_ITERATOR);
+
+// `String.prototype[@@iterator]` method
+// https://tc39.github.io/ecma262/#sec-string.prototype-@@iterator
+defineIterator(String, 'String', function (iterated) {
+  setInternalState$3(this, {
+    type: STRING_ITERATOR,
+    string: String(iterated),
+    index: 0
+  });
+// `%StringIteratorPrototype%.next` method
+// https://tc39.github.io/ecma262/#sec-%stringiteratorprototype%.next
+}, function next() {
+  var state = getInternalState$3(this);
+  var string = state.string;
+  var index = state.index;
+  var point;
+  if (index >= string.length) return { value: undefined, done: true };
+  point = charAt(string, index);
+  state.index += point.length;
+  return { value: point, done: false };
+});
+
 for (var COLLECTION_NAME$1 in domIterables) {
   var Collection$1 = global_1[COLLECTION_NAME$1];
   var CollectionPrototype$1 = Collection$1 && Collection$1.prototype;
-  if (CollectionPrototype$1) {
-    // some Chrome versions have non-configurable methods on DOMTokenList
-    if (CollectionPrototype$1[ITERATOR$5] !== ArrayValues) try {
-      createNonEnumerableProperty(CollectionPrototype$1, ITERATOR$5, ArrayValues);
-    } catch (error) {
-      CollectionPrototype$1[ITERATOR$5] = ArrayValues;
-    }
-    if (!CollectionPrototype$1[TO_STRING_TAG$3]) {
-      createNonEnumerableProperty(CollectionPrototype$1, TO_STRING_TAG$3, COLLECTION_NAME$1);
-    }
-    if (domIterables[COLLECTION_NAME$1]) for (var METHOD_NAME in es_array_iterator) {
-      // some Chrome versions have non-configurable methods on DOMTokenList
-      if (CollectionPrototype$1[METHOD_NAME] !== es_array_iterator[METHOD_NAME]) try {
-        createNonEnumerableProperty(CollectionPrototype$1, METHOD_NAME, es_array_iterator[METHOD_NAME]);
-      } catch (error) {
-        CollectionPrototype$1[METHOD_NAME] = es_array_iterator[METHOD_NAME];
-      }
-    }
+  // some Chrome versions have non-configurable methods on DOMTokenList
+  if (CollectionPrototype$1 && CollectionPrototype$1.forEach !== arrayForEach) try {
+    createNonEnumerableProperty(CollectionPrototype$1, 'forEach', arrayForEach);
+  } catch (error) {
+    CollectionPrototype$1.forEach = arrayForEach;
   }
 }
 
@@ -2432,456 +2855,6 @@ function _createForOfIteratorHelper(o, allowArrayLike) {
     }
   };
 }
-
-var nativeGetOwnPropertyNames = objectGetOwnPropertyNames.f;
-
-var toString$1 = {}.toString;
-
-var windowNames = typeof window == 'object' && window && Object.getOwnPropertyNames
-  ? Object.getOwnPropertyNames(window) : [];
-
-var getWindowNames = function (it) {
-  try {
-    return nativeGetOwnPropertyNames(it);
-  } catch (error) {
-    return windowNames.slice();
-  }
-};
-
-// fallback for IE11 buggy Object.getOwnPropertyNames with iframe and window
-var f$6 = function getOwnPropertyNames(it) {
-  return windowNames && toString$1.call(it) == '[object Window]'
-    ? getWindowNames(it)
-    : nativeGetOwnPropertyNames(toIndexedObject(it));
-};
-
-var objectGetOwnPropertyNamesExternal = {
-	f: f$6
-};
-
-var f$7 = wellKnownSymbol;
-
-var wellKnownSymbolWrapped = {
-	f: f$7
-};
-
-var defineProperty$3 = objectDefineProperty.f;
-
-var defineWellKnownSymbol = function (NAME) {
-  var Symbol = path.Symbol || (path.Symbol = {});
-  if (!has(Symbol, NAME)) defineProperty$3(Symbol, NAME, {
-    value: wellKnownSymbolWrapped.f(NAME)
-  });
-};
-
-var $forEach$1 = arrayIteration.forEach;
-
-var HIDDEN = sharedKey('hidden');
-var SYMBOL = 'Symbol';
-var PROTOTYPE$1 = 'prototype';
-var TO_PRIMITIVE = wellKnownSymbol('toPrimitive');
-var setInternalState$2 = internalState.set;
-var getInternalState$2 = internalState.getterFor(SYMBOL);
-var ObjectPrototype$1 = Object[PROTOTYPE$1];
-var $Symbol = global_1.Symbol;
-var $stringify = getBuiltIn('JSON', 'stringify');
-var nativeGetOwnPropertyDescriptor$1 = objectGetOwnPropertyDescriptor.f;
-var nativeDefineProperty$1 = objectDefineProperty.f;
-var nativeGetOwnPropertyNames$1 = objectGetOwnPropertyNamesExternal.f;
-var nativePropertyIsEnumerable$1 = objectPropertyIsEnumerable.f;
-var AllSymbols = shared('symbols');
-var ObjectPrototypeSymbols = shared('op-symbols');
-var StringToSymbolRegistry = shared('string-to-symbol-registry');
-var SymbolToStringRegistry = shared('symbol-to-string-registry');
-var WellKnownSymbolsStore$1 = shared('wks');
-var QObject = global_1.QObject;
-// Don't use setters in Qt Script, https://github.com/zloirock/core-js/issues/173
-var USE_SETTER = !QObject || !QObject[PROTOTYPE$1] || !QObject[PROTOTYPE$1].findChild;
-
-// fallback for old Android, https://code.google.com/p/v8/issues/detail?id=687
-var setSymbolDescriptor = descriptors && fails(function () {
-  return objectCreate(nativeDefineProperty$1({}, 'a', {
-    get: function () { return nativeDefineProperty$1(this, 'a', { value: 7 }).a; }
-  })).a != 7;
-}) ? function (O, P, Attributes) {
-  var ObjectPrototypeDescriptor = nativeGetOwnPropertyDescriptor$1(ObjectPrototype$1, P);
-  if (ObjectPrototypeDescriptor) delete ObjectPrototype$1[P];
-  nativeDefineProperty$1(O, P, Attributes);
-  if (ObjectPrototypeDescriptor && O !== ObjectPrototype$1) {
-    nativeDefineProperty$1(ObjectPrototype$1, P, ObjectPrototypeDescriptor);
-  }
-} : nativeDefineProperty$1;
-
-var wrap = function (tag, description) {
-  var symbol = AllSymbols[tag] = objectCreate($Symbol[PROTOTYPE$1]);
-  setInternalState$2(symbol, {
-    type: SYMBOL,
-    tag: tag,
-    description: description
-  });
-  if (!descriptors) symbol.description = description;
-  return symbol;
-};
-
-var isSymbol = useSymbolAsUid ? function (it) {
-  return typeof it == 'symbol';
-} : function (it) {
-  return Object(it) instanceof $Symbol;
-};
-
-var $defineProperty = function defineProperty(O, P, Attributes) {
-  if (O === ObjectPrototype$1) $defineProperty(ObjectPrototypeSymbols, P, Attributes);
-  anObject(O);
-  var key = toPrimitive(P, true);
-  anObject(Attributes);
-  if (has(AllSymbols, key)) {
-    if (!Attributes.enumerable) {
-      if (!has(O, HIDDEN)) nativeDefineProperty$1(O, HIDDEN, createPropertyDescriptor(1, {}));
-      O[HIDDEN][key] = true;
-    } else {
-      if (has(O, HIDDEN) && O[HIDDEN][key]) O[HIDDEN][key] = false;
-      Attributes = objectCreate(Attributes, { enumerable: createPropertyDescriptor(0, false) });
-    } return setSymbolDescriptor(O, key, Attributes);
-  } return nativeDefineProperty$1(O, key, Attributes);
-};
-
-var $defineProperties = function defineProperties(O, Properties) {
-  anObject(O);
-  var properties = toIndexedObject(Properties);
-  var keys = objectKeys(properties).concat($getOwnPropertySymbols(properties));
-  $forEach$1(keys, function (key) {
-    if (!descriptors || $propertyIsEnumerable.call(properties, key)) $defineProperty(O, key, properties[key]);
-  });
-  return O;
-};
-
-var $create = function create(O, Properties) {
-  return Properties === undefined ? objectCreate(O) : $defineProperties(objectCreate(O), Properties);
-};
-
-var $propertyIsEnumerable = function propertyIsEnumerable(V) {
-  var P = toPrimitive(V, true);
-  var enumerable = nativePropertyIsEnumerable$1.call(this, P);
-  if (this === ObjectPrototype$1 && has(AllSymbols, P) && !has(ObjectPrototypeSymbols, P)) return false;
-  return enumerable || !has(this, P) || !has(AllSymbols, P) || has(this, HIDDEN) && this[HIDDEN][P] ? enumerable : true;
-};
-
-var $getOwnPropertyDescriptor = function getOwnPropertyDescriptor(O, P) {
-  var it = toIndexedObject(O);
-  var key = toPrimitive(P, true);
-  if (it === ObjectPrototype$1 && has(AllSymbols, key) && !has(ObjectPrototypeSymbols, key)) return;
-  var descriptor = nativeGetOwnPropertyDescriptor$1(it, key);
-  if (descriptor && has(AllSymbols, key) && !(has(it, HIDDEN) && it[HIDDEN][key])) {
-    descriptor.enumerable = true;
-  }
-  return descriptor;
-};
-
-var $getOwnPropertyNames = function getOwnPropertyNames(O) {
-  var names = nativeGetOwnPropertyNames$1(toIndexedObject(O));
-  var result = [];
-  $forEach$1(names, function (key) {
-    if (!has(AllSymbols, key) && !has(hiddenKeys, key)) result.push(key);
-  });
-  return result;
-};
-
-var $getOwnPropertySymbols = function getOwnPropertySymbols(O) {
-  var IS_OBJECT_PROTOTYPE = O === ObjectPrototype$1;
-  var names = nativeGetOwnPropertyNames$1(IS_OBJECT_PROTOTYPE ? ObjectPrototypeSymbols : toIndexedObject(O));
-  var result = [];
-  $forEach$1(names, function (key) {
-    if (has(AllSymbols, key) && (!IS_OBJECT_PROTOTYPE || has(ObjectPrototype$1, key))) {
-      result.push(AllSymbols[key]);
-    }
-  });
-  return result;
-};
-
-// `Symbol` constructor
-// https://tc39.github.io/ecma262/#sec-symbol-constructor
-if (!nativeSymbol) {
-  $Symbol = function Symbol() {
-    if (this instanceof $Symbol) throw TypeError('Symbol is not a constructor');
-    var description = !arguments.length || arguments[0] === undefined ? undefined : String(arguments[0]);
-    var tag = uid(description);
-    var setter = function (value) {
-      if (this === ObjectPrototype$1) setter.call(ObjectPrototypeSymbols, value);
-      if (has(this, HIDDEN) && has(this[HIDDEN], tag)) this[HIDDEN][tag] = false;
-      setSymbolDescriptor(this, tag, createPropertyDescriptor(1, value));
-    };
-    if (descriptors && USE_SETTER) setSymbolDescriptor(ObjectPrototype$1, tag, { configurable: true, set: setter });
-    return wrap(tag, description);
-  };
-
-  redefine($Symbol[PROTOTYPE$1], 'toString', function toString() {
-    return getInternalState$2(this).tag;
-  });
-
-  redefine($Symbol, 'withoutSetter', function (description) {
-    return wrap(uid(description), description);
-  });
-
-  objectPropertyIsEnumerable.f = $propertyIsEnumerable;
-  objectDefineProperty.f = $defineProperty;
-  objectGetOwnPropertyDescriptor.f = $getOwnPropertyDescriptor;
-  objectGetOwnPropertyNames.f = objectGetOwnPropertyNamesExternal.f = $getOwnPropertyNames;
-  objectGetOwnPropertySymbols.f = $getOwnPropertySymbols;
-
-  wellKnownSymbolWrapped.f = function (name) {
-    return wrap(wellKnownSymbol(name), name);
-  };
-
-  if (descriptors) {
-    // https://github.com/tc39/proposal-Symbol-description
-    nativeDefineProperty$1($Symbol[PROTOTYPE$1], 'description', {
-      configurable: true,
-      get: function description() {
-        return getInternalState$2(this).description;
-      }
-    });
-    {
-      redefine(ObjectPrototype$1, 'propertyIsEnumerable', $propertyIsEnumerable, { unsafe: true });
-    }
-  }
-}
-
-_export({ global: true, wrap: true, forced: !nativeSymbol, sham: !nativeSymbol }, {
-  Symbol: $Symbol
-});
-
-$forEach$1(objectKeys(WellKnownSymbolsStore$1), function (name) {
-  defineWellKnownSymbol(name);
-});
-
-_export({ target: SYMBOL, stat: true, forced: !nativeSymbol }, {
-  // `Symbol.for` method
-  // https://tc39.github.io/ecma262/#sec-symbol.for
-  'for': function (key) {
-    var string = String(key);
-    if (has(StringToSymbolRegistry, string)) return StringToSymbolRegistry[string];
-    var symbol = $Symbol(string);
-    StringToSymbolRegistry[string] = symbol;
-    SymbolToStringRegistry[symbol] = string;
-    return symbol;
-  },
-  // `Symbol.keyFor` method
-  // https://tc39.github.io/ecma262/#sec-symbol.keyfor
-  keyFor: function keyFor(sym) {
-    if (!isSymbol(sym)) throw TypeError(sym + ' is not a symbol');
-    if (has(SymbolToStringRegistry, sym)) return SymbolToStringRegistry[sym];
-  },
-  useSetter: function () { USE_SETTER = true; },
-  useSimple: function () { USE_SETTER = false; }
-});
-
-_export({ target: 'Object', stat: true, forced: !nativeSymbol, sham: !descriptors }, {
-  // `Object.create` method
-  // https://tc39.github.io/ecma262/#sec-object.create
-  create: $create,
-  // `Object.defineProperty` method
-  // https://tc39.github.io/ecma262/#sec-object.defineproperty
-  defineProperty: $defineProperty,
-  // `Object.defineProperties` method
-  // https://tc39.github.io/ecma262/#sec-object.defineproperties
-  defineProperties: $defineProperties,
-  // `Object.getOwnPropertyDescriptor` method
-  // https://tc39.github.io/ecma262/#sec-object.getownpropertydescriptors
-  getOwnPropertyDescriptor: $getOwnPropertyDescriptor
-});
-
-_export({ target: 'Object', stat: true, forced: !nativeSymbol }, {
-  // `Object.getOwnPropertyNames` method
-  // https://tc39.github.io/ecma262/#sec-object.getownpropertynames
-  getOwnPropertyNames: $getOwnPropertyNames,
-  // `Object.getOwnPropertySymbols` method
-  // https://tc39.github.io/ecma262/#sec-object.getownpropertysymbols
-  getOwnPropertySymbols: $getOwnPropertySymbols
-});
-
-// Chrome 38 and 39 `Object.getOwnPropertySymbols` fails on primitives
-// https://bugs.chromium.org/p/v8/issues/detail?id=3443
-_export({ target: 'Object', stat: true, forced: fails(function () { objectGetOwnPropertySymbols.f(1); }) }, {
-  getOwnPropertySymbols: function getOwnPropertySymbols(it) {
-    return objectGetOwnPropertySymbols.f(toObject(it));
-  }
-});
-
-// `JSON.stringify` method behavior with symbols
-// https://tc39.github.io/ecma262/#sec-json.stringify
-if ($stringify) {
-  var FORCED_JSON_STRINGIFY = !nativeSymbol || fails(function () {
-    var symbol = $Symbol();
-    // MS Edge converts symbol values to JSON as {}
-    return $stringify([symbol]) != '[null]'
-      // WebKit converts symbol values to JSON as null
-      || $stringify({ a: symbol }) != '{}'
-      // V8 throws on boxed symbols
-      || $stringify(Object(symbol)) != '{}';
-  });
-
-  _export({ target: 'JSON', stat: true, forced: FORCED_JSON_STRINGIFY }, {
-    // eslint-disable-next-line no-unused-vars
-    stringify: function stringify(it, replacer, space) {
-      var args = [it];
-      var index = 1;
-      var $replacer;
-      while (arguments.length > index) args.push(arguments[index++]);
-      $replacer = replacer;
-      if (!isObject(replacer) && it === undefined || isSymbol(it)) return; // IE8 returns string on undefined
-      if (!isArray(replacer)) replacer = function (key, value) {
-        if (typeof $replacer == 'function') value = $replacer.call(this, key, value);
-        if (!isSymbol(value)) return value;
-      };
-      args[1] = replacer;
-      return $stringify.apply(null, args);
-    }
-  });
-}
-
-// `Symbol.prototype[@@toPrimitive]` method
-// https://tc39.github.io/ecma262/#sec-symbol.prototype-@@toprimitive
-if (!$Symbol[PROTOTYPE$1][TO_PRIMITIVE]) {
-  createNonEnumerableProperty($Symbol[PROTOTYPE$1], TO_PRIMITIVE, $Symbol[PROTOTYPE$1].valueOf);
-}
-// `Symbol.prototype[@@toStringTag]` property
-// https://tc39.github.io/ecma262/#sec-symbol.prototype-@@tostringtag
-setToStringTag($Symbol, SYMBOL);
-
-hiddenKeys[HIDDEN] = true;
-
-var defineProperty$4 = objectDefineProperty.f;
-
-
-var NativeSymbol = global_1.Symbol;
-
-if (descriptors && typeof NativeSymbol == 'function' && (!('description' in NativeSymbol.prototype) ||
-  // Safari 12 bug
-  NativeSymbol().description !== undefined
-)) {
-  var EmptyStringDescriptionStore = {};
-  // wrap Symbol constructor for correct work with undefined description
-  var SymbolWrapper = function Symbol() {
-    var description = arguments.length < 1 || arguments[0] === undefined ? undefined : String(arguments[0]);
-    var result = this instanceof SymbolWrapper
-      ? new NativeSymbol(description)
-      // in Edge 13, String(Symbol(undefined)) === 'Symbol(undefined)'
-      : description === undefined ? NativeSymbol() : NativeSymbol(description);
-    if (description === '') EmptyStringDescriptionStore[result] = true;
-    return result;
-  };
-  copyConstructorProperties(SymbolWrapper, NativeSymbol);
-  var symbolPrototype = SymbolWrapper.prototype = NativeSymbol.prototype;
-  symbolPrototype.constructor = SymbolWrapper;
-
-  var symbolToString = symbolPrototype.toString;
-  var native = String(NativeSymbol('test')) == 'Symbol(test)';
-  var regexp = /^Symbol\((.*)\)[^)]+$/;
-  defineProperty$4(symbolPrototype, 'description', {
-    configurable: true,
-    get: function description() {
-      var symbol = isObject(this) ? this.valueOf() : this;
-      var string = symbolToString.call(symbol);
-      if (has(EmptyStringDescriptionStore, symbol)) return '';
-      var desc = native ? string.slice(7, -1) : string.replace(regexp, '$1');
-      return desc === '' ? undefined : desc;
-    }
-  });
-
-  _export({ global: true, forced: true }, {
-    Symbol: SymbolWrapper
-  });
-}
-
-// `Symbol.asyncIterator` well-known symbol
-// https://tc39.github.io/ecma262/#sec-symbol.asynciterator
-defineWellKnownSymbol('asyncIterator');
-
-// `Symbol.iterator` well-known symbol
-// https://tc39.github.io/ecma262/#sec-symbol.iterator
-defineWellKnownSymbol('iterator');
-
-// `Symbol.toStringTag` well-known symbol
-// https://tc39.github.io/ecma262/#sec-symbol.tostringtag
-defineWellKnownSymbol('toStringTag');
-
-// JSON[@@toStringTag] property
-// https://tc39.github.io/ecma262/#sec-json-@@tostringtag
-setToStringTag(global_1.JSON, 'JSON', true);
-
-// Math[@@toStringTag] property
-// https://tc39.github.io/ecma262/#sec-math-@@tostringtag
-setToStringTag(Math, 'Math', true);
-
-var FAILS_ON_PRIMITIVES$1 = fails(function () { objectGetPrototypeOf(1); });
-
-// `Object.getPrototypeOf` method
-// https://tc39.github.io/ecma262/#sec-object.getprototypeof
-_export({ target: 'Object', stat: true, forced: FAILS_ON_PRIMITIVES$1, sham: !correctPrototypeGetter }, {
-  getPrototypeOf: function getPrototypeOf(it) {
-    return objectGetPrototypeOf(toObject(it));
-  }
-});
-
-// `Object.setPrototypeOf` method
-// https://tc39.github.io/ecma262/#sec-object.setprototypeof
-_export({ target: 'Object', stat: true }, {
-  setPrototypeOf: objectSetPrototypeOf
-});
-
-// `String.prototype.{ codePointAt, at }` methods implementation
-var createMethod$2 = function (CONVERT_TO_STRING) {
-  return function ($this, pos) {
-    var S = String(requireObjectCoercible($this));
-    var position = toInteger(pos);
-    var size = S.length;
-    var first, second;
-    if (position < 0 || position >= size) return CONVERT_TO_STRING ? '' : undefined;
-    first = S.charCodeAt(position);
-    return first < 0xD800 || first > 0xDBFF || position + 1 === size
-      || (second = S.charCodeAt(position + 1)) < 0xDC00 || second > 0xDFFF
-        ? CONVERT_TO_STRING ? S.charAt(position) : first
-        : CONVERT_TO_STRING ? S.slice(position, position + 2) : (first - 0xD800 << 10) + (second - 0xDC00) + 0x10000;
-  };
-};
-
-var stringMultibyte = {
-  // `String.prototype.codePointAt` method
-  // https://tc39.github.io/ecma262/#sec-string.prototype.codepointat
-  codeAt: createMethod$2(false),
-  // `String.prototype.at` method
-  // https://github.com/mathiasbynens/String.prototype.at
-  charAt: createMethod$2(true)
-};
-
-var charAt = stringMultibyte.charAt;
-
-
-
-var STRING_ITERATOR = 'String Iterator';
-var setInternalState$3 = internalState.set;
-var getInternalState$3 = internalState.getterFor(STRING_ITERATOR);
-
-// `String.prototype[@@iterator]` method
-// https://tc39.github.io/ecma262/#sec-string.prototype-@@iterator
-defineIterator(String, 'String', function (iterated) {
-  setInternalState$3(this, {
-    type: STRING_ITERATOR,
-    string: String(iterated),
-    index: 0
-  });
-// `%StringIteratorPrototype%.next` method
-// https://tc39.github.io/ecma262/#sec-%stringiteratorprototype%.next
-}, function next() {
-  var state = getInternalState$3(this);
-  var string = state.string;
-  var index = state.index;
-  var point;
-  if (index >= string.length) return { value: undefined, done: true };
-  point = charAt(string, index);
-  state.index += point.length;
-  return { value: point, done: false };
-});
 
 var runtime_1 = createCommonjsModule(function (module) {
   /**
@@ -3607,8 +3580,8 @@ var runtime_1 = createCommonjsModule(function (module) {
   }
 });
 
-var HAS_SPECIES_SUPPORT$3 = arrayMethodHasSpeciesSupport('splice');
-var USES_TO_LENGTH$6 = arrayMethodUsesToLength('splice', { ACCESSORS: true, 0: 0, 1: 2 });
+var HAS_SPECIES_SUPPORT$2 = arrayMethodHasSpeciesSupport('splice');
+var USES_TO_LENGTH$5 = arrayMethodUsesToLength('splice', { ACCESSORS: true, 0: 0, 1: 2 });
 
 var max$2 = Math.max;
 var min$2 = Math.min;
@@ -3618,7 +3591,7 @@ var MAXIMUM_ALLOWED_LENGTH_EXCEEDED = 'Maximum allowed length exceeded';
 // `Array.prototype.splice` method
 // https://tc39.github.io/ecma262/#sec-array.prototype.splice
 // with adding support of @@species
-_export({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT$3 || !USES_TO_LENGTH$6 }, {
+_export({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT$2 || !USES_TO_LENGTH$5 }, {
   splice: function splice(start, deleteCount /* , ...items */) {
     var O = toObject(this);
     var len = toLength(O.length);
@@ -3823,8 +3796,8 @@ var nativeLastIndexOf = [].lastIndexOf;
 var NEGATIVE_ZERO$1 = !!nativeLastIndexOf && 1 / [1].lastIndexOf(1, -0) < 0;
 var STRICT_METHOD$3 = arrayMethodIsStrict('lastIndexOf');
 // For preventing possible almost infinite loop in non-standard implementations, test the forward version of the method
-var USES_TO_LENGTH$7 = arrayMethodUsesToLength('indexOf', { ACCESSORS: true, 1: 0 });
-var FORCED$2 = NEGATIVE_ZERO$1 || !STRICT_METHOD$3 || !USES_TO_LENGTH$7;
+var USES_TO_LENGTH$6 = arrayMethodUsesToLength('indexOf', { ACCESSORS: true, 1: 0 });
+var FORCED$2 = NEGATIVE_ZERO$1 || !STRICT_METHOD$3 || !USES_TO_LENGTH$6;
 
 // `Array.prototype.lastIndexOf` method implementation
 // https://tc39.github.io/ecma262/#sec-array.prototype.lastindexof
@@ -5495,7 +5468,7 @@ exportTypedArrayMethod$3('fill', function fill(value /* , start, end */) {
   return arrayFill.apply(aTypedArray$3(this), arguments);
 });
 
-var $filter$1 = arrayIteration.filter;
+var $filter = arrayIteration.filter;
 
 
 var aTypedArray$4 = arrayBufferViewCore.aTypedArray;
@@ -5505,7 +5478,7 @@ var exportTypedArrayMethod$4 = arrayBufferViewCore.exportTypedArrayMethod;
 // `%TypedArray%.prototype.filter` method
 // https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.filter
 exportTypedArrayMethod$4('filter', function filter(callbackfn /* , thisArg */) {
-  var list = $filter$1(aTypedArray$4(this), callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+  var list = $filter(aTypedArray$4(this), callbackfn, arguments.length > 1 ? arguments[1] : undefined);
   var C = speciesConstructor(this, this.constructor);
   var index = 0;
   var length = list.length;
@@ -12139,6 +12112,16 @@ L.gmx.Deferred = Deferred;
   });
 })();
 
+var FAILS_ON_PRIMITIVES$1 = fails(function () { objectKeys(1); });
+
+// `Object.keys` method
+// https://tc39.github.io/ecma262/#sec-object.keys
+_export({ target: 'Object', stat: true, forced: FAILS_ON_PRIMITIVES$1 }, {
+  keys: function keys(it) {
+    return objectKeys(toObject(it));
+  }
+});
+
 (function () {
   var ImageRequest = function ImageRequest(id, url, options) {
     this._id = id;
@@ -14618,6 +14601,23 @@ L.gmx.observer = function (options) {
     return new TilesTree(options);
   };
 })();
+
+var $filter$1 = arrayIteration.filter;
+
+
+
+var HAS_SPECIES_SUPPORT$3 = arrayMethodHasSpeciesSupport('filter');
+// Edge 14- issue
+var USES_TO_LENGTH$7 = arrayMethodUsesToLength('filter');
+
+// `Array.prototype.filter` method
+// https://tc39.github.io/ecma262/#sec-array.prototype.filter
+// with adding support of @@species
+_export({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT$3 || !USES_TO_LENGTH$7 }, {
+  filter: function filter(callbackfn /* , thisArg */) {
+    return $filter$1(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+  }
+});
 
 var $reduce$1 = arrayReduce.left;
 
@@ -25205,6 +25205,8 @@ var Content = L$1.Control.extend({
   },
   onAdd: function onAdd(map) {
     this._container = L$1.DomUtil.create('div', 'scanex-forestry-content');
+    L$1.DomEvent.disableScrollPropagation(this._container);
+    L$1.DomEvent.disableClickPropagation(this._container);
     return this._container;
   },
   onRemove: function onRemove(map) {},
@@ -25264,12 +25266,8 @@ var Content = L$1.Control.extend({
 
 var translate = T.getText.bind(T);
 T.addText('rus', {
-  layers: {
-    title: 'Матрица слоев',
-    quadrants: 'Кварталы',
-    stands: 'Выделы',
-    parks: 'Охраняемые территории',
-    fires: 'Пожары'
+  legend: {
+    title: 'Обозначения'
   }
 });
 var Legend = L$1.Control.extend({
@@ -25277,13 +25275,19 @@ var Legend = L$1.Control.extend({
   options: {
     position: 'topright'
   },
+  initialize: function initialize() {
+    this._components = {};
+  },
   onAdd: function onAdd(map) {
     var _this = this;
 
     this._container = L$1.DomUtil.create('div', 'scanex-forestry-legend');
     this._icon = L$1.DomUtil.create('div', 'scanex-legend-icon icon', this._container);
-    this._content = L$1.DomUtil.create('div', 'legend-popup hidden', this._container);
-    this._content.innerHTML = "<table>\n            <thead>\n                <tr>                    \n                    <th colspan=\"3\">\n                        <label>".concat(translate('layers.title'), "</label>\n                    </th>\n                </tr>\n            </thead>            \n            <tbody>\n                <tr class=\"quadrants\">\n                    <td>\n                        <i></i>\n                    </td>\n                    <td>\n                        <label>").concat(translate('layers.quadrants'), "</label>\n                    </td>\n                    <td>\n                        <div class=\"toggle\"></div>\n                    </td>\n                </tr>\n                <tr class=\"stands\">\n                    <td>\n                        <i></i>\n                    </td>\n                    <td>\n                        <label>").concat(translate('layers.stands'), "</label>\n                    </td>\n                    <td>\n                        <div class=\"toggle\"></div>\n                    </td>\n                </tr>\n                <tr class=\"parks\">\n                    <td>\n                        <i></i>\n                    </td>\n                    <td>\n                        <label>").concat(translate('layers.parks'), "</label>\n                    </td>\n                    <td>\n                        <div class=\"toggle\"></div>\n                    </td>\n                </tr>\n                <tr class=\"fires\">\n                    <td>\n                        <i></i>\n                    </td>\n                    <td>\n                        <label>").concat(translate('layers.fires'), "</label>\n                    </td>\n                    <td>\n                        <div class=\"toggle\"></div>\n                    </td>\n                </tr>\n            </tbody>\n        </table>");
+    this._panel = L$1.DomUtil.create('div', 'panel hidden', this._container);
+    this._header = L$1.DomUtil.create('div', 'header', this._panel);
+    L$1.DomUtil.create('i', 'scanex-legend-icon header-icon', this._header);
+    L$1.DomUtil.create('label', 'title', this._header).innerText = translate('legend.title');
+    this._content = L$1.DomUtil.create('div', 'content', this._panel);
     L$1.DomEvent.on(this._icon, 'click', function (e) {
       L$1.DomEvent.stopPropagation(e);
       _this._active = !_this._active;
@@ -25294,142 +25298,71 @@ var Legend = L$1.Control.extend({
         active: _this._active
       });
     });
-    this._quadrants = this._content.querySelector('.quadrants');
-    this._btnQuadrants = this._quadrants.querySelector('.toggle');
-    L$1.DomEvent.on(this._quadrants, 'click', function (e) {
-      L$1.DomEvent.stopPropagation(e);
-      var visible = !L$1.DomUtil.hasClass(_this._btnQuadrants, 'toggle-active');
-
-      _this.changeActive('quadrants', visible);
-
-      _this.fire('click', {
-        id: 'quadrants',
-        visible: visible
-      });
-    }, this);
-    this._stands = this._content.querySelector('.stands');
-    this._btnStands = this._stands.querySelector('.toggle');
-    L$1.DomEvent.on(this._stands, 'click', function (e) {
-      L$1.DomEvent.stopPropagation(e);
-      var visible = !L$1.DomUtil.hasClass(_this._btnStands, 'toggle-active');
-
-      _this.changeActive('stands', visible);
-
-      _this.fire('click', {
-        id: 'stands',
-        visible: visible
-      });
-    }, this);
-    this._parks = this._content.querySelector('.parks');
-    this._btnParks = this._parks.querySelector('.toggle');
-    L$1.DomEvent.on(this._parks, 'click', function (e) {
-      L$1.DomEvent.stopPropagation(e);
-      var visible = !L$1.DomUtil.hasClass(_this._btnParks, 'toggle-active');
-
-      _this.changeActive('parks', visible);
-
-      _this.fire('click', {
-        id: 'parks',
-        visible: visible
-      });
-    }, this);
-    this._fires = this._content.querySelector('.fires');
-    this._btnFires = this._fires.querySelector('.toggle');
-    L$1.DomEvent.on(this._fires, 'click', function (e) {
-      L$1.DomEvent.stopPropagation(e);
-      var visible = !L$1.DomUtil.hasClass(_this._btnFires, 'toggle-active');
-
-      _this.changeActive('fires', visible);
-
-      _this.fire('click', {
-        id: 'fires',
-        visible: visible
-      });
-    }, this);
     return this._container;
   },
   onRemove: function onRemove(map) {},
-  changeVisible: function changeVisible(id, visible) {
-    switch (id) {
-      case 'parks':
-        if (visible) {
-          L$1.DomUtil.removeClass(this._parks, 'hidden');
-        } else {
-          L$1.DomUtil.addClass(this._parks, 'hidden');
-        }
-
-        break;
-
-      case 'quadrants':
-        if (visible) {
-          L$1.DomUtil.removeClass(this._quadrants, 'hidden');
-          L$1.DomUtil.removeClass(this._stands, 'hidden');
-        } else {
-          L$1.DomUtil.addClass(this._quadrants, 'hidden');
-          L$1.DomUtil.addClass(this._stands, 'hidden');
-        }
-
-        break;
-
-      case 'fires':
-        if (visible) {
-          L$1.DomUtil.removeClass(this._fires, 'hidden');
-        } else {
-          L$1.DomUtil.addClass(this._fires, 'hidden');
-        }
-
-        break;
-    }
-  },
-  changeActive: function changeActive(id, active) {
-    switch (id) {
-      case 'parks':
-        if (active) {
-          L$1.DomUtil.addClass(this._btnParks, 'toggle-active');
-        } else {
-          L$1.DomUtil.removeClass(this._btnParks, 'toggle-active');
-        }
-
-        break;
-
-      case 'quadrants':
-        if (active) {
-          L$1.DomUtil.addClass(this._btnQuadrants, 'toggle-active');
-        } else {
-          L$1.DomUtil.removeClass(this._btnQuadrants, 'toggle-active');
-        }
-
-        break;
-
-      case 'stands':
-        if (active) {
-          L$1.DomUtil.addClass(this._btnStands, 'toggle-active');
-        } else {
-          L$1.DomUtil.removeClass(this._btnStands, 'toggle-active');
-        }
-
-        break;
-
-      case 'fires':
-        if (active) {
-          L$1.DomUtil.addClass(this._btnFires, 'toggle-active');
-        } else {
-          L$1.DomUtil.removeClass(this._btnFires, 'toggle-active');
-        }
-
-        break;
-    }
-  },
   showPanel: function showPanel(visible) {
     this._active = visible;
 
     if (this._active) {
       L$1.DomUtil.addClass(this._icon, 'active');
-      L$1.DomUtil.removeClass(this._content, 'hidden');
+      L$1.DomUtil.removeClass(this._panel, 'hidden');
     } else {
       L$1.DomUtil.removeClass(this._icon, 'active');
-      L$1.DomUtil.addClass(this._content, 'hidden');
+      L$1.DomUtil.addClass(this._panel, 'hidden');
     }
+  },
+  enable: function enable(id) {
+    var container = this._components[id];
+
+    if (container) {
+      var btn = container.querySelector('.toggle');
+      L$1.DomUtil.addClass(btn, 'toggle-active');
+      this.fire('click', {
+        id: id,
+        visible: true
+      });
+    }
+  },
+  disable: function disable(id) {
+    var container = this._components[id];
+
+    if (container) {
+      var btn = container.querySelector('.toggle');
+      L$1.DomUtil.removeClass(btn, 'toggle-active');
+      this.fire('click', {
+        id: id,
+        visible: false
+      });
+    }
+  },
+  toggle: function toggle(id) {
+    var container = this._components[id];
+
+    if (container) {
+      var btn = container.querySelector('.toggle');
+      var visible = !L$1.DomUtil.hasClass(btn, 'toggle-active');
+
+      if (visible) {
+        this.enable(id);
+      } else {
+        this.disable(id);
+      }
+    }
+  },
+  addComponent: function addComponent(id, title) {
+    var _this2 = this;
+
+    var container = L$1.DomUtil.create('div', 'component', this._content);
+    L$1.DomUtil.create('i', id, container);
+    L$1.DomUtil.create('label', 'title', container).innerText = title;
+    L$1.DomUtil.create('div', 'toggle', container);
+    L$1.DomEvent.on(container, 'click', function (e) {
+      L$1.DomEvent.stopPropagation(e);
+
+      _this2.toggle(id);
+    }, this);
+    this._components[id] = container;
   }
 });
 
@@ -25580,7 +25513,16 @@ var BaseLayers = L$1.Control.extend({
 var translate$2 = T.getText.bind(T);
 T.addText('rus', {
   hotSpotTimeLine: {
-    title: 'Приблизьте карту для загрузки на таймлайн'
+    title: 'Приблизьте карту для загрузки на таймлайн',
+    fire: 'Пожар',
+    date: 'Дата обнаружения',
+    satelite: 'Спутник',
+    from: 'Источник',
+    scanex: 'СКАНЭКС',
+    confidence: 'Достоверность',
+    brightness: 'Температура (К)',
+    frp: 'Мощность пожара',
+    coords: 'Координаты'
   }
 });
 var hotSpotLayerID = '9DC30891452449DD8D551D0AA62FFF54';
@@ -25736,7 +25678,7 @@ var HotSpotTimeLine = L$1.Control.extend({
 
     this._popup.classList.remove('hidden');
 
-    this._popup.innerHTML = "<a class=\"leaflet-popup-close-button\" href=\"#close\" style=\"visibility: inherit;\">\xD7</a>\n\t\t\t<table cellspacing=\"0\" cellpadding=\"0\">\n\t\t\t<thead>\n\t\t\t\t<tr>\n\t\t\t\t\t<th colspan=\"2\" class=\"title\">\u041F\u043E\u0436\u0430\u0440</th>\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"name\">\u0414\u0430\u0442\u0430 \u043E\u0431\u043D\u0430\u0440\u0443\u0436\u0435\u043D\u0438\u044F</td>\n\t\t\t\t\t<td class=\"value\">".concat(dateStr, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"name\">\u0421\u043F\u0443\u0442\u043D\u0438\u043A</td>\n\t\t\t\t\t<td class=\"value\">").concat(props.Satellite, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"name\">\u0418\u0441\u0442\u043E\u0447\u043D\u0438\u043A</td>\n\t\t\t\t\t<td class=\"value\">\u0421\u041A\u0410\u041D\u042D\u041A\u0421</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"name\">\u0414\u043E\u0441\u0442\u043E\u0432\u0435\u0440\u043D\u043E\u0441\u0442\u044C</td>\n\t\t\t\t\t<td class=\"value\">").concat(props.Confidence, " %</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"name\">\u0422\u0435\u043C\u043F\u0435\u0440\u0430\u0442\u0443\u0440\u0430 (\u041A)</td>\n\t\t\t\t\t<td class=\"value\">").concat(props.Brightness, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"name\">\u041C\u043E\u0449\u043D\u043E\u0441\u0442\u044C \u043F\u043E\u0436\u0430\u0440\u0430</td>\n\t\t\t\t\t<td class=\"value\">").concat(props.Frp, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"name\">\u041A\u043E\u043E\u0440\u0434\u0438\u043D\u0430\u0442\u044B</td>\n\t\t\t\t\t<td class=\"value\">").concat(L$1.gmxUtil.formatCoordinates(ev.latlng, 1), "</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
+    this._popup.innerHTML = "<a class=\"leaflet-popup-close-button\" href=\"#close\" style=\"visibility: inherit;\">\xD7</a>\n\t\t\t<table cellspacing=\"0\" cellpadding=\"0\">\n\t\t\t<thead>\n\t\t\t\t<tr>\n\t\t\t\t\t<th colspan=\"2\" class=\"title\">".concat(translate$2('hotSpotTimeLine.fire'), "</th>\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"name\">").concat(translate$2('hotSpotTimeLine.date'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(dateStr, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"name\">").concat(translate$2('hotSpotTimeLine.satelite'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(props.Satellite, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"name\">").concat(translate$2('hotSpotTimeLine.from'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(translate$2('hotSpotTimeLine.scanex'), "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"name\">").concat(translate$2('hotSpotTimeLine.confidence'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(props.Confidence, " %</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"name\">").concat(translate$2('hotSpotTimeLine.brightness'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(props.Brightness, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"name\">").concat(translate$2('hotSpotTimeLine.frp'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(props.Frp, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"name\">").concat(translate$2('hotSpotTimeLine.coords'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(L$1.gmxUtil.formatCoordinates(ev.latlng, 1), "</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
     L$1.DomEvent.on(this._popup.querySelector('.leaflet-popup-close-button'), 'click', function (ev) {
       _this3._popup.classList.add('hidden');
 
@@ -53924,32 +53866,26 @@ var Species = /*#__PURE__*/function () {
     });
     this._chart = new apexcharts_common(this._container.querySelector('.chart'), {
       chart: {
-        type: 'donut' // width: 500,
-
+        type: 'donut',
+        width: '500px',
+        height: '200px'
       },
       labels: [],
       series: [],
       legend: {
         position: 'right',
-        offsetY: 10,
-        offsetX: 77,
-        width: 200,
-        height: 200,
         fontSize: '15px'
       },
       plotOptions: {
         pie: {
-          size: 150,
-          customScale: 0.57,
-          offsetX: -77,
-          offsetY: -77,
           donut: {
             labels: {
               show: true,
               value: {
                 formatter: function formatter(val) {
                   return "".concat(val, " ").concat(translate$6('unit.m3'));
-                }
+                },
+                fontSize: '12px'
               },
               total: {
                 formatter: function formatter(_ref) {
@@ -53959,7 +53895,8 @@ var Species = /*#__PURE__*/function () {
                   }, 0), " ").concat(translate$6('unit.m3'));
                 },
                 label: translate$6('stock.all'),
-                show: true
+                show: true,
+                fontSize: '12px'
               }
             }
           }
@@ -54300,6 +54237,55 @@ var CreatePlot = /*#__PURE__*/function (_EventTarget) {
       this._quadrants.unhilite(id);
     }
   }, {
+    key: "toggle",
+    value: function () {
+      var _toggle = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(id) {
+        var ids, added;
+        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+          while (1) {
+            switch (_context4.prev = _context4.next) {
+              case 0:
+                ids = this.quadrants.slice();
+                added = false;
+
+                if (ids.includes(id)) {
+                  ids = ids.filter(function (k) {
+                    return k !== id;
+                  });
+                } else {
+                  ids.push(id);
+                  added = true;
+                }
+
+                _context4.next = 5;
+                return this.validate(ids);
+
+              case 5:
+                if (!_context4.sent) {
+                  _context4.next = 9;
+                  break;
+                }
+
+                return _context4.abrupt("return", added);
+
+              case 9:
+                throw translate$7('quadrant.invalid');
+
+              case 10:
+              case "end":
+                return _context4.stop();
+            }
+          }
+        }, _callee4, this);
+      }));
+
+      function toggle(_x3) {
+        return _toggle.apply(this, arguments);
+      }
+
+      return toggle;
+    }()
+  }, {
     key: "quadrants",
     get: function get() {
       return this._quadrants.items.map(function (_ref4) {
@@ -54609,6 +54595,55 @@ var EditPlot = /*#__PURE__*/function (_EventTarget) {
       this._quadrants.unhilite(id);
     }
   }, {
+    key: "toggle",
+    value: function () {
+      var _toggle = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(id) {
+        var ids, added;
+        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+          while (1) {
+            switch (_context5.prev = _context5.next) {
+              case 0:
+                ids = this.quadrants.slice();
+                added = false;
+
+                if (ids.includes(id)) {
+                  ids = ids.filter(function (k) {
+                    return k !== id;
+                  });
+                } else {
+                  ids.push(id);
+                  added = true;
+                }
+
+                _context5.next = 5;
+                return this.validate(ids);
+
+              case 5:
+                if (!_context5.sent) {
+                  _context5.next = 9;
+                  break;
+                }
+
+                return _context5.abrupt("return", added);
+
+              case 9:
+                throw translate$8('quadrant.invalid');
+
+              case 10:
+              case "end":
+                return _context5.stop();
+            }
+          }
+        }, _callee5, this);
+      }));
+
+      function toggle(_x4) {
+        return _toggle.apply(this, arguments);
+      }
+
+      return toggle;
+    }()
+  }, {
     key: "quadrants",
     get: function get() {
       return this._quadrants.items.map(function (_ref4) {
@@ -54657,13 +54692,13 @@ var Quadrant = /*#__PURE__*/function (_EventTarget) {
 
     _this._container.classList.add('scanex-forestry-quadrant');
 
-    _this._container.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n\t\t\t<thead>\n\t\t\t\t<tr>\n\t\t\t\t\t<th colspan=\"2\" class=\"title\">".concat(translate$9('quadrant.title'), "</th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th colspan=\"2\" class=\"forestry\"></th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th colspan=\"2\" class=\"stock\">").concat(translate$9('quadrant.Stock'), "</th>\t\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th colspan=\"2\" class=\"about\">").concat(translate$9('quadrant.about'), "</th>\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"chart\"></td>\n\t\t\t\t\t<td>&nbsp;</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
+    _this._container.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n\t\t\t<thead>\n\t\t\t\t<tr>\n\t\t\t\t\t<th class=\"title\">".concat(translate$9('quadrant.title'), "</th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th class=\"forestry\"></th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th class=\"stock\">").concat(translate$9('quadrant.Stock'), "</th>\t\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th class=\"about\">").concat(translate$9('quadrant.about'), "</th>\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"chart\"></td>\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
     _this._forestry = _this._container.querySelector('.forestry');
     _this._chart = new apexcharts_common(_this._container.querySelector('.chart'), {
       chart: {
         type: 'donut',
-        width: '600px',
-        height: '300px'
+        width: '500px',
+        height: '200px'
       },
       labels: [],
       series: [],
@@ -54679,7 +54714,8 @@ var Quadrant = /*#__PURE__*/function (_EventTarget) {
               value: {
                 formatter: function formatter(val) {
                   return "".concat(val, " ").concat(translate$9('unit.m3'));
-                }
+                },
+                fontSize: '12px'
               },
               total: {
                 formatter: function formatter(_ref2) {
@@ -54689,7 +54725,8 @@ var Quadrant = /*#__PURE__*/function (_EventTarget) {
                   }, 0), " ").concat(translate$9('unit.m3'));
                 },
                 label: translate$9('stock.all'),
-                show: true
+                show: true,
+                fontSize: '12px'
               }
             }
           }
@@ -56555,7 +56592,7 @@ var Analytics = /*#__PURE__*/function (_EventTarget) {
         opt.textContent = it.name;
         cont.appendChild(opt);
       });
-      this.currentLocalForestry = arr[0].id;
+      this.currentLocalForestry = arr.length ? arr[0].id : '';
     }
   }, {
     key: "_setRegion",
@@ -56578,7 +56615,7 @@ var Analytics = /*#__PURE__*/function (_EventTarget) {
         opt.textContent = it.name;
         cont.appendChild(opt);
       });
-      this.currentForestry = arr[0].id;
+      this.currentForestry = arr.length ? arr[0].id : '';
     }
   }, {
     key: "_setType",
@@ -56687,13 +56724,17 @@ T.addText('rus', {
   stand: {
     title: 'Выдел',
     usage: 'Целевое назначение лесов',
-    year: '',
-    area: '',
-    category: '',
-    protected: '',
-    slope: '',
-    targetSpecies: '',
-    mainSpecies: ''
+    year: 'Год актуализации',
+    area: 'Площадь выдела',
+    category: 'Категория земель',
+    protected: 'Особозащитные участки (ОЗУ)',
+    slope: 'Экспозиция / крутизна',
+    targetSpecies: 'Целевая порода',
+    mainSpecies: 'Преобладающая порода',
+    age: 'Группа возраста',
+    klass: 'Бонитет',
+    type: 'Тип леса',
+    percentage: 'Процент выполнения'
   }
 });
 
@@ -56716,35 +56757,31 @@ var Stand = /*#__PURE__*/function (_EventTarget) {
 
     _this._container.classList.add('scanex-forestry-stand');
 
-    _this._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th class=\"header1\" colspan=\"3\">".concat(translate$e('stand.title'), "</th>\n                </tr>\n                <tr>\n                    <th class=\"header2\" colspan=\"3\"></th>\n                </tr>\n            </thead>\n            <tbody>\n                <tr>\n                    <td class=\"stats\"></td>\n                    <td class=\"chart\"></td>                    \n                </tr>\n            </tbody>\n        </table>");
+    _this._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th class=\"header1\" colspan=\"3\">".concat(translate$e('stand.title'), "</th>\n                </tr>\n                <tr>\n                    <th class=\"header2\" colspan=\"3\"></th>\n                </tr>\n            </thead>\n            <tbody>\n                <tr>\n                    <td class=\"stats\"></td>\n                    <td class=\"chart\"></td>                    \n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"levels\"></td>\n\t\t\t\t\t<td class=\"events\"></td>\n\t\t\t\t</tr>\n            </tbody>\n\t\t</table>");
+    _this._header = _this._container.querySelector('.header2');
+    _this._stats = _this._container.querySelector('.stats');
     _this._chart = new apexcharts_common(_this._container.querySelector('.chart'), {
       chart: {
-        type: 'donut' // width: 500,
-
+        type: 'donut',
+        width: '400px',
+        height: '200px'
       },
       labels: [],
       series: [],
       legend: {
         position: 'right',
-        offsetY: 10,
-        offsetX: 77,
-        width: 200,
-        height: 200,
         fontSize: '15px'
       },
       plotOptions: {
         pie: {
-          size: 150,
-          customScale: 0.57,
-          offsetX: -77,
-          offsetY: -77,
           donut: {
             labels: {
               show: true,
               value: {
                 formatter: function formatter(val) {
                   return "".concat(val, " ").concat(translate$e('unit.m3'));
-                }
+                },
+                fontSize: '12px'
               },
               total: {
                 formatter: function formatter(_ref2) {
@@ -56754,7 +56791,8 @@ var Stand = /*#__PURE__*/function (_EventTarget) {
                   }, 0), " ").concat(translate$e('unit.m3'));
                 },
                 label: translate$e('stock.all'),
-                show: true
+                show: true,
+                fontSize: '12px'
               }
             }
           }
@@ -56764,6 +56802,8 @@ var Stand = /*#__PURE__*/function (_EventTarget) {
 
     _this._chart.render();
 
+    _this._levels = _this._container.querySelector('.levels');
+    _this._events = _this._container.querySelector('.events');
     return _this;
   }
 
@@ -56775,8 +56815,48 @@ var Stand = /*#__PURE__*/function (_EventTarget) {
           LocalForestry = data.LocalForestry,
           Stow = data.Stow,
           Quadrant = data.Quadrant,
-          Stand = data.Stand;
-      this._container.querySelector('.header2').innerText = [Forestry, LocalForestry, Stow, Quadrant, Stand].join(', ');
+          Stand = data.Stand,
+          ForestUseType = data.ForestUseType,
+          UpdatingYear = data.UpdatingYear,
+          Square = data.Square,
+          LandCategory = data.LandCategory,
+          OZU = data.OZU,
+          Exposition = data.Exposition,
+          Steepness = data.Steepness,
+          TargetSpecies = data.TargetSpecies,
+          PredominantSpecies = data.PredominantSpecies,
+          AgeGroup = data.AgeGroup,
+          AgeClass = data.AgeClass,
+          Stock = data.Stock,
+          Events = data.Events;
+      this._header.innerText = [Forestry, LocalForestry, Stow, Quadrant, Stand].join(', ');
+      this._stats.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<tbody>\n                <tr>\n                    <td>".concat(translate$e('stand.usage'), "</td>\n                    <td>").concat(ForestUseType, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$e('stand.year'), "</td>\n                    <td>").concat(UpdatingYear, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$e('stand.area'), "</td>\n                    <td>").concat(Square, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$e('stand.category'), "</td>\n                    <td>").concat(LandCategory, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$e('stand.protected'), "</td>\n                    <td>").concat(OZU, "</td>                    \n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$e('stand.slope'), "</td>\n                    <td>").concat(Exposition, " / ").concat(Steepness, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$e('stand.targetSpecies'), "</td>\n                    <td>").concat(TargetSpecies, "</td>                    \n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$e('stand.mainSpecies'), "</td>\n                    <td>").concat(PredominantSpecies, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$e('stand.age'), "</td>\n                    <td>").concat(AgeGroup, "</td>                    \n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$e('stand.klass'), "</td>\n                    <td>").concat(AgeClass, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$e('stand.type'), "</td>\n                    <td></td>                    \n                </tr>\n            </tbody>\n\t\t</table>");
+
+      var _Stock$reduce = Stock.reduce(function (a, _ref3) {
+        var stock = _ref3.stock,
+            species = _ref3.species;
+        a.labels.push(species);
+        a.series.push(stock);
+        return a;
+      }, {
+        labels: [],
+        series: []
+      }),
+          labels = _Stock$reduce.labels,
+          series = _Stock$reduce.series;
+
+      this._chart.updateOptions({
+        labels: labels
+      });
+
+      this._chart.updateSeries(series);
+
+      this._events.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<tbody>".concat(Events.map(function (_ref4) {
+        var name = _ref4.name,
+            activity = _ref4.activity,
+            fillingpercent = _ref4.fillingpercent;
+        return "<tr>\n\t\t\t\t\t<td>".concat(name, "</td>\n\t\t\t\t\t<td>").concat(activity, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td>").concat(translate$e('stand.percentage'), "</td>\n\t\t\t\t\t<td class=\"percentage\">").concat(fillingpercent, "</td>\n\t\t\t\t</tr>");
+      }).join(''), "</tbody>\n\t\t</table>");
     }
   }, {
     key: "toggle",
@@ -56883,15 +56963,16 @@ T.addText('rus', {
   modes: {
     map: 'Карта',
     list: 'Список'
+  },
+  legend: {
+    quadrants: 'Кварталы',
+    stands: 'Выделы',
+    parks: 'Охраняемые территории',
+    fires: 'Пожары'
   }
 });
 var defaultStyle = {
   fillStyle: 'rgba(28, 224, 0, 0.4)'
-};
-var hiliteStyle = {
-  fillStyle: 'rgba(28, 224, 0, 0.4)',
-  strokeStyle: '#1CE000',
-  lineWidth: 2
 };
 var fillStyle = document.createElement('canvas').getContext('2d').createPattern(L$1.gmxUtil.getPatternIcon(null, {
   "type": "",
@@ -56923,7 +57004,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
         _ref$center = _ref.center,
         center = _ref$center === void 0 ? [51.331898, 111.28051] : _ref$center,
         _ref$zoom = _ref.zoom,
-        zoom = _ref$zoom === void 0 ? 9 : _ref$zoom;
+        zoom = _ref$zoom === void 0 ? 10 : _ref$zoom;
 
     _classCallCheck(this, Map);
 
@@ -56943,8 +57024,6 @@ var Map = /*#__PURE__*/function (_EventTarget) {
     _this._baselayers = new BaseLayers();
 
     _this._baselayers.addTo(_this._map);
-
-    _this._baselayers.toggle('sputnik');
 
     _this._content = new Content();
 
@@ -57004,24 +57083,21 @@ var Map = /*#__PURE__*/function (_EventTarget) {
       return getUserInfo;
     }()
   }, {
-    key: "updateInterval",
-    value: function updateInterval() {
-      var _this2 = this;
-
-      this._gmxMap.layers.forEach(function (layer) {
-        if (typeof layer.setDateInterval === 'function') {
-          layer.setDateInterval(_this2._dateBegin, _this2._dateEnd);
-        }
-      });
-    }
-  }, {
     key: "showMain",
     value: function showMain() {
+      this._quadrants.removeStyleHook();
+
+      this._quadrants.repaint();
+
       this._content.showComponent();
     }
   }, {
     key: "showAnalytics",
     value: function showAnalytics() {
+      this._quadrants.removeStyleHook();
+
+      this._quadrants.repaint();
+
       var component = this._content.getComponent('analytics');
 
       if (!component) {
@@ -57031,8 +57107,12 @@ var Map = /*#__PURE__*/function (_EventTarget) {
       this._content.showComponent('analytics');
     }
   }, {
-    key: "showNaturalPark",
-    value: function showNaturalPark(id) {
+    key: "_showNaturalPark",
+    value: function _showNaturalPark(id) {
+      this._quadrants.removeStyleHook();
+
+      this._quadrants.repaint();
+
       var component = this._content.getComponent('naturalpark');
 
       if (!component) {
@@ -57047,13 +57127,17 @@ var Map = /*#__PURE__*/function (_EventTarget) {
     key: "showRequests",
     value: function () {
       var _showRequests = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
-        var _this3 = this;
+        var _this2 = this;
 
         var component;
         return regeneratorRuntime.wrap(function _callee4$(_context4) {
           while (1) {
             switch (_context4.prev = _context4.next) {
               case 0:
+                this._quadrants.removeStyleHook();
+
+                this._quadrants.repaint();
+
                 component = this._content.getComponent('requests');
 
                 if (!component) {
@@ -57065,12 +57149,9 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                           switch (_context2.prev = _context2.next) {
                             case 0:
                               _context2.next = 2;
-                              return _this3.showCreatePlot();
+                              return _this2._showCreatePlot();
 
                             case 2:
-                              _this3._quadrants.repaint();
-
-                            case 3:
                             case "end":
                               return _context2.stop();
                           }
@@ -57088,12 +57169,9 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                           switch (_context3.prev = _context3.next) {
                             case 0:
                               _context3.next = 2;
-                              return _this3.showEditPlot(e.detail);
+                              return _this2._showEditPlot(e.detail);
 
                             case 2:
-                              _this3._quadrants.repaint();
-
-                            case 3:
                             case "end":
                               return _context3.stop();
                           }
@@ -57107,13 +57185,13 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   }());
                 }
 
-                _context4.next = 4;
+                _context4.next = 6;
                 return component.update();
 
-              case 4:
+              case 6:
                 this._content.showComponent('requests');
 
-              case 5:
+              case 7:
               case "end":
                 return _context4.stop();
             }
@@ -57128,9 +57206,9 @@ var Map = /*#__PURE__*/function (_EventTarget) {
       return showRequests;
     }()
   }, {
-    key: "fitBounds",
+    key: "_fitBounds",
     value: function () {
-      var _fitBounds = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(id) {
+      var _fitBounds2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(id) {
         var _this$_quadrants$getG, LayerID, fd, response, _yield$response$json2, Status, Result, fields, values, i, _L$gmxUtil$convertGeo, coordinates, g, b;
 
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
@@ -57190,113 +57268,75 @@ var Map = /*#__PURE__*/function (_EventTarget) {
         }, _callee5, this);
       }));
 
-      function fitBounds(_x3) {
-        return _fitBounds.apply(this, arguments);
+      function _fitBounds(_x3) {
+        return _fitBounds2.apply(this, arguments);
       }
 
-      return fitBounds;
+      return _fitBounds;
     }()
   }, {
-    key: "quadrantStatus",
+    key: "_changePlot",
     value: function () {
-      var _quadrantStatus = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(show) {
-        var response, data;
+      var _changePlot2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(id) {
+        var mode, component;
         return regeneratorRuntime.wrap(function _callee6$(_context6) {
           while (1) {
             switch (_context6.prev = _context6.next) {
               case 0:
-                if (!show) {
-                  _context6.next = 16;
-                  break;
-                }
-
-                _context6.prev = 1;
+                mode = this._content.getCurrentId();
+                component = this._content.getComponent(mode);
                 _context6.next = 4;
-                return fetch("".concat(this._serviceEndpoint, "/Forest/GetPlotProjectStatuses"), {
-                  method: 'GET',
-                  credentials: 'include'
-                });
+                return component.toggle(id);
 
               case 4:
-                response = _context6.sent;
-                _context6.next = 7;
-                return response.json();
+                this._quadrants.redrawItem(id);
 
-              case 7:
-                data = _context6.sent;
-                console.log(data);
-                _context6.next = 14;
-                break;
-
-              case 11:
-                _context6.prev = 11;
-                _context6.t0 = _context6["catch"](1);
-                console.log(_context6.t0);
-
-              case 14:
-                _context6.next = 16;
-                break;
-
-              case 16:
+              case 5:
               case "end":
                 return _context6.stop();
             }
           }
-        }, _callee6, this, [[1, 11]]);
+        }, _callee6, this);
       }));
 
-      function quadrantStatus(_x4) {
-        return _quadrantStatus.apply(this, arguments);
+      function _changePlot(_x4) {
+        return _changePlot2.apply(this, arguments);
       }
 
-      return quadrantStatus;
+      return _changePlot;
     }()
   }, {
-    key: "showEditPlot",
+    key: "_showEditPlot",
     value: function () {
-      var _showEditPlot = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(id) {
-        var _this4 = this;
+      var _showEditPlot2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(id) {
+        var _this3 = this;
 
         var component;
         return regeneratorRuntime.wrap(function _callee10$(_context10) {
           while (1) {
             switch (_context10.prev = _context10.next) {
               case 0:
-                this.showLayer({
-                  id: 'quadrants',
-                  visible: true
-                });
-
-                this._legend.changeActive('quadrants', true);
+                this._legend.enable('quadrants');
 
                 component = this._content.getComponent('edit-plot');
 
                 if (!component) {
                   component = this._content.addComponent('edit-plot', EditPlot, {});
-                  component.on('save', /*#__PURE__*/function () {
-                    var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(e) {
-                      return regeneratorRuntime.wrap(function _callee7$(_context7) {
-                        while (1) {
-                          switch (_context7.prev = _context7.next) {
-                            case 0:
-                              _context7.next = 2;
-                              return _this4.showRequests();
+                  component.on('save', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7() {
+                    return regeneratorRuntime.wrap(function _callee7$(_context7) {
+                      while (1) {
+                        switch (_context7.prev = _context7.next) {
+                          case 0:
+                            _context7.next = 2;
+                            return _this3.showRequests();
 
-                            case 2:
-                              _this4._quadrants.repaint();
-
-                            case 3:
-                            case "end":
-                              return _context7.stop();
-                          }
+                          case 2:
+                          case "end":
+                            return _context7.stop();
                         }
-                      }, _callee7);
-                    }));
-
-                    return function (_x6) {
-                      return _ref4.apply(this, arguments);
-                    };
-                  }()).on('quadrant:click', /*#__PURE__*/function () {
+                      }
+                    }, _callee7);
+                  }))).on('quadrant:click', /*#__PURE__*/function () {
                     var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(e) {
                       var id;
                       return regeneratorRuntime.wrap(function _callee8$(_context8) {
@@ -57305,12 +57345,9 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                             case 0:
                               id = e.detail;
                               _context8.next = 3;
-                              return _this4.fitBounds(id);
+                              return _this3._fitBounds(id);
 
                             case 3:
-                              _this4._quadrants.repaint();
-
-                            case 4:
                             case "end":
                               return _context8.stop();
                           }
@@ -57318,26 +57355,16 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                       }, _callee8);
                     }));
 
-                    return function (_x7) {
+                    return function (_x6) {
                       return _ref5.apply(this, arguments);
                     };
-                  }()).on('quadrant:over', function (e) {
-                    var id = e.detail;
-                    _this4._hilited[id] = id;
-
-                    _this4._quadrants.repaint();
-                  }).on('quadrant:out', function (e) {
-                    var id = e.detail;
-                    delete _this4._hilited[id];
-
-                    _this4._quadrants.repaint();
-                  }).on('backward', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9() {
+                  }()).on('backward', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9() {
                     return regeneratorRuntime.wrap(function _callee9$(_context9) {
                       while (1) {
                         switch (_context9.prev = _context9.next) {
                           case 0:
                             _context9.next = 2;
-                            return _this4.showRequests();
+                            return _this3.showRequests();
 
                           case 2:
                           case "end":
@@ -57350,10 +57377,22 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
                 this._content.showComponent('edit-plot');
 
+                this._quadrants.setStyleHook(function (item) {
+                  if (component.quadrants.includes(item.id)) {
+                    // return this._hilited [item.id] ? hiliteStyle : defaultStyle;
+                    return defaultStyle;
+                  } else {
+                    return {};
+                  }
+                });
+
                 _context10.next = 7;
                 return component.show(id);
 
               case 7:
+                this._quadrants.repaint();
+
+              case 8:
               case "end":
                 return _context10.stop();
             }
@@ -57361,29 +57400,24 @@ var Map = /*#__PURE__*/function (_EventTarget) {
         }, _callee10, this);
       }));
 
-      function showEditPlot(_x5) {
-        return _showEditPlot.apply(this, arguments);
+      function _showEditPlot(_x5) {
+        return _showEditPlot2.apply(this, arguments);
       }
 
-      return showEditPlot;
+      return _showEditPlot;
     }()
   }, {
-    key: "showCreatePlot",
+    key: "_showCreatePlot",
     value: function () {
-      var _showCreatePlot = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee13() {
-        var _this5 = this;
+      var _showCreatePlot2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee14() {
+        var _this4 = this;
 
         var component;
-        return regeneratorRuntime.wrap(function _callee13$(_context13) {
+        return regeneratorRuntime.wrap(function _callee14$(_context14) {
           while (1) {
-            switch (_context13.prev = _context13.next) {
+            switch (_context14.prev = _context14.next) {
               case 0:
-                this.showLayer({
-                  id: 'quadrants',
-                  visible: true
-                });
-
-                this._legend.changeActive('quadrants', true);
+                this._legend.enable('quadrants');
 
                 component = this._content.getComponent('create-plot');
 
@@ -57396,7 +57430,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                           switch (_context11.prev = _context11.next) {
                             case 0:
                               _context11.next = 2;
-                              return _this5.showRequests();
+                              return _this4.showRequests();
 
                             case 2:
                             case "end":
@@ -57406,76 +57440,61 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                       }, _callee11);
                     }));
 
-                    return function (_x8) {
+                    return function (_x7) {
                       return _ref7.apply(this, arguments);
                     };
-                  }()).on('quadrant:click', function (e) {
-                    var id = e.detail;
+                  }()).on('quadrant:click', /*#__PURE__*/function () {
+                    var _ref8 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee12(e) {
+                      var id;
+                      return regeneratorRuntime.wrap(function _callee12$(_context12) {
+                        while (1) {
+                          switch (_context12.prev = _context12.next) {
+                            case 0:
+                              id = e.detail;
+                              _context12.next = 3;
+                              return _this4._fitBounds(id);
 
-                    _this5._quadrants.repaint();
-                  }).on('quadrant:over', function (e) {
-                    var id = e.detail;
-                    _this5._hilited[id] = id;
+                            case 3:
+                            case "end":
+                              return _context12.stop();
+                          }
+                        }
+                      }, _callee12);
+                    }));
 
-                    _this5._quadrants.repaint();
-                  }).on('quadrant:out', function (e) {
-                    var id = e.detail;
-                    delete _this5._hilited[id];
-
-                    _this5._quadrants.repaint();
-                  }).on('backward', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee12() {
-                    return regeneratorRuntime.wrap(function _callee12$(_context12) {
+                    return function (_x8) {
+                      return _ref8.apply(this, arguments);
+                    };
+                  }()) // .on('quadrant:over', e => {
+                  //     const id = e.detail;
+                  //     this._hilited[id] = id;                    
+                  //     this._quadrants.repaint();
+                  // })
+                  // .on('quadrant:out', e => {
+                  //     const id = e.detail;
+                  //     delete this._hilited[id];
+                  //     this._quadrants.repaint();
+                  // })
+                  .on('backward', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee13() {
+                    return regeneratorRuntime.wrap(function _callee13$(_context13) {
                       while (1) {
-                        switch (_context12.prev = _context12.next) {
+                        switch (_context13.prev = _context13.next) {
                           case 0:
-                            _context12.next = 2;
-                            return _this5.showRequests();
+                            _context13.next = 2;
+                            return _this4.showRequests();
 
                           case 2:
                           case "end":
-                            return _context12.stop();
+                            return _context13.stop();
                         }
                       }
-                    }, _callee12);
+                    }, _callee13);
                   })));
                 }
 
+                this._quadrants.repaint();
+
                 this._content.showComponent('create-plot');
-
-              case 5:
-              case "end":
-                return _context13.stop();
-            }
-          }
-        }, _callee13, this);
-      }));
-
-      function showCreatePlot() {
-        return _showCreatePlot.apply(this, arguments);
-      }
-
-      return showCreatePlot;
-    }()
-  }, {
-    key: "showUploaded",
-    value: function () {
-      var _showUploaded = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee14() {
-        var component;
-        return regeneratorRuntime.wrap(function _callee14$(_context14) {
-          while (1) {
-            switch (_context14.prev = _context14.next) {
-              case 0:
-                component = this._content.getComponent('uploaded');
-
-                if (!component) {
-                  component = this._content.addComponent('uploaded', Uploaded, {});
-                }
-
-                _context14.next = 4;
-                return component.update();
-
-              case 4:
-                this._content.showComponent('uploaded');
 
               case 5:
               case "end":
@@ -57485,60 +57504,38 @@ var Map = /*#__PURE__*/function (_EventTarget) {
         }, _callee14, this);
       }));
 
-      function showUploaded() {
-        return _showUploaded.apply(this, arguments);
+      function _showCreatePlot() {
+        return _showCreatePlot2.apply(this, arguments);
       }
 
-      return showUploaded;
+      return _showCreatePlot;
     }()
   }, {
-    key: "showQuadrant",
+    key: "showUploaded",
     value: function () {
-      var _showQuadrant = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee15(layerID, quadrantID, gmx_id) {
-        var component, layer;
+      var _showUploaded = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee15() {
+        var component;
         return regeneratorRuntime.wrap(function _callee15$(_context15) {
           while (1) {
             switch (_context15.prev = _context15.next) {
               case 0:
-                component = this._content.getComponent('quadrant');
+                this._quadrants.removeStyleHook();
+
+                this._quadrants.repaint();
+
+                component = this._content.getComponent('uploaded');
 
                 if (!component) {
-                  component = this._content.addComponent('quadrant', Quadrant, {});
-                }
-
-                layer = this._gmxMap.layersByID[layerID];
-
-                if (!layer) {
-                  _context15.next = 14;
-                  break;
+                  component = this._content.addComponent('uploaded', Uploaded, {});
                 }
 
                 _context15.next = 6;
-                return component.toggle(layerID, quadrantID);
+                return component.update();
 
               case 6:
-                if (!_context15.sent) {
-                  _context15.next = 11;
-                  break;
-                }
+                this._content.showComponent('uploaded');
 
-                layer.setStyleHook(function (item) {
-                  return item.id === gmx_id ? {
-                    fillStyle: fillStyle
-                  } : {};
-                });
-
-                this._content.showComponent('quadrant');
-
-                _context15.next = 14;
-                break;
-
-              case 11:
-                layer.removeStyleHook();
-                layer.repaint();
-                this.showMain();
-
-              case 14:
+              case 7:
               case "end":
                 return _context15.stop();
             }
@@ -57546,60 +57543,54 @@ var Map = /*#__PURE__*/function (_EventTarget) {
         }, _callee15, this);
       }));
 
-      function showQuadrant(_x9, _x10, _x11) {
-        return _showQuadrant.apply(this, arguments);
+      function showUploaded() {
+        return _showUploaded.apply(this, arguments);
       }
 
-      return showQuadrant;
+      return showUploaded;
     }()
   }, {
-    key: "showStand",
+    key: "_showQuadrant",
     value: function () {
-      var _showStand = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee16(layerID, standID, gmx_id) {
-        var component, layer;
+      var _showQuadrant2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee16(layerID, quadrantID, gmx_id) {
+        var component;
         return regeneratorRuntime.wrap(function _callee16$(_context16) {
           while (1) {
             switch (_context16.prev = _context16.next) {
               case 0:
-                component = this._content.getComponent('stand');
+                component = this._content.getComponent('quadrant');
 
                 if (!component) {
-                  component = this._content.addComponent('stand', Stand, {});
+                  component = this._content.addComponent('quadrant', Quadrant, {});
                 }
 
-                layer = this._gmxMap.layersByID[layerID];
+                this._content.showComponent('quadrant');
 
-                if (!layer) {
-                  _context16.next = 14;
-                  break;
-                }
+                _context16.next = 5;
+                return component.toggle(layerID, quadrantID);
 
-                _context16.next = 6;
-                return component.toggle(layerID, standID);
-
-              case 6:
+              case 5:
                 if (!_context16.sent) {
-                  _context16.next = 11;
+                  _context16.next = 9;
                   break;
                 }
 
-                layer.setStyleHook(function (item) {
+                this._quadrants.setStyleHook(function (item) {
                   return item.id === gmx_id ? {
                     fillStyle: fillStyle
                   } : {};
                 });
 
-                this._content.showComponent('stand');
-
-                _context16.next = 14;
+                _context16.next = 10;
                 break;
 
-              case 11:
-                layer.removeStyleHook();
-                layer.repaint();
+              case 9:
                 this.showMain();
 
-              case 14:
+              case 10:
+                this._quadrants.repaint();
+
+              case 11:
               case "end":
                 return _context16.stop();
             }
@@ -57607,33 +57598,104 @@ var Map = /*#__PURE__*/function (_EventTarget) {
         }, _callee16, this);
       }));
 
-      function showStand(_x12, _x13, _x14) {
-        return _showStand.apply(this, arguments);
+      function _showQuadrant(_x9, _x10, _x11) {
+        return _showQuadrant2.apply(this, arguments);
       }
 
-      return showStand;
+      return _showQuadrant;
     }()
   }, {
-    key: "showLayer",
-    value: function showLayer(_ref9) {
-      var id = _ref9.id,
-          visible = _ref9.visible;
-      var layer;
-      var kind;
+    key: "_showStand",
+    value: function () {
+      var _showStand2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee17(layerID, standID, gmx_id) {
+        var component;
+        return regeneratorRuntime.wrap(function _callee17$(_context17) {
+          while (1) {
+            switch (_context17.prev = _context17.next) {
+              case 0:
+                component = this._content.getComponent('stand');
 
-      for (var _i = 0, _Object$keys = Object.keys(this._layers); _i < _Object$keys.length; _i++) {
-        var layerID = _Object$keys[_i];
-        var props = this._layers[layerID];
-        kind = props.MetaProperties.kind;
+                if (!component) {
+                  component = this._content.addComponent('stand', Stand, {});
+                }
 
-        if (kind && kind.Value && kind.Value === id) {
-          layer = this._gmxMap.layersByID[layerID];
-          break;
-        }
+                this._content.showComponent('stand');
+
+                _context17.next = 5;
+                return component.toggle(layerID, standID);
+
+              case 5:
+                if (!_context17.sent) {
+                  _context17.next = 9;
+                  break;
+                }
+
+                this._stands.setStyleHook(function (item) {
+                  return item.id === gmx_id ? {
+                    fillStyle: fillStyle
+                  } : {};
+                });
+
+                _context17.next = 11;
+                break;
+
+              case 9:
+                this._stands.removeStyleHook();
+
+                this.showMain();
+
+              case 11:
+                this._stands.repaint();
+
+              case 12:
+              case "end":
+                return _context17.stop();
+            }
+          }
+        }, _callee17, this);
+      }));
+
+      function _showStand(_x12, _x13, _x14) {
+        return _showStand2.apply(this, arguments);
       }
 
-      if (layer) {
-        if (kind.Value === 'fires') {
+      return _showStand;
+    }()
+  }, {
+    key: "_showLayer",
+    value: function _showLayer(_ref10) {
+      var id = _ref10.id,
+          visible = _ref10.visible;
+
+      switch (id) {
+        case 'quadrants':
+          if (visible) {
+            this._map.addLayer(this._quadrants);
+          } else {
+            this._map.removeLayer(this._quadrants);
+          }
+
+          break;
+
+        case 'parks':
+          if (visible) {
+            this._map.addLayer(this._parks);
+          } else {
+            this._map.removeLayer(this._parks);
+          }
+
+          break;
+
+        case 'stands':
+          if (visible) {
+            this._map.addLayer(this._stands);
+          } else {
+            this._map.removeLayer(this._stands);
+          }
+
+          break;
+
+        case 'fires':
           if (visible) {
             if (this._hotspottimeline) {
               this._map.addControl(this._hotspottimeline);
@@ -57647,25 +57709,19 @@ var Map = /*#__PURE__*/function (_EventTarget) {
               this._map.removeLayer(this._fires);
             }
           }
-        } else {
-          if (visible && !layer._map) {
-            this._map.addLayer(layer);
-          } else if (!visible && layer._map) {
-            this._map.removeLayer(layer);
-          }
-        }
+
+          break;
       }
     }
   }, {
     key: "load",
     value: function () {
       var _load = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee19() {
-        var _this6 = this;
+        var _this5 = this;
 
         var mapId,
             _loop,
             i,
-            shownLayers,
             end,
             start,
             _args19 = arguments;
@@ -57684,220 +57740,180 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
               case 3:
                 this._gmxMap = _context19.sent;
+                this._zoom = new Zoom();
+
+                this._zoom.addTo(this._map);
+
+                this._map.on('zoomend', function (e) {
+                  if (_this5._grid) {
+                    _this5._grid.repaint();
+                  }
+                });
+
+                this._legend = new Legend();
+
+                this._legend.addTo(this._map);
+
+                this._legend.on('click', this._showLayer.bind(this));
 
                 _loop = function _loop(i) {
-                  var layer = _this6._gmxMap.layers[i];
+                  var layer = _this5._gmxMap.layers[i];
                   var props = layer.getGmxProperties();
 
                   if (props.IsRasterCatalog) {
-                    layer.on('add', function (e) {
-                      nsGmx.gmxTimeLine.addLayer(layer);
+                    layer.on('add', function () {
+                      return nsGmx.gmxTimeLine.addLayer(layer);
                     });
                   }
 
-                  _this6._layers[props.name] = props;
-                  var kind = props.MetaProperties.kind;
+                  var LayerID = props.LayerID,
+                      kind = props.MetaProperties.kind;
+
+                  if (typeof layer.disablePopup === 'function') {
+                    layer.disablePopup();
+                  }
+
+                  layer.on('click', /*#__PURE__*/function () {
+                    var _ref11 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee18(e) {
+                      var _e$gmx, id, properties, mode;
+
+                      return regeneratorRuntime.wrap(function _callee18$(_context18) {
+                        while (1) {
+                          switch (_context18.prev = _context18.next) {
+                            case 0:
+                              _context18.prev = 0;
+                              L$1.DomEvent.stopPropagation(e);
+                              _e$gmx = e.gmx, id = _e$gmx.id, properties = _e$gmx.properties;
+
+                              if (!kind) {
+                                _context18.next = 37;
+                                break;
+                              }
+
+                              mode = _this5._content.getCurrentId();
+                              _context18.t0 = kind.Value;
+                              _context18.next = _context18.t0 === 'quadrants' ? 8 : _context18.t0 === 'parks' ? 19 : _context18.t0 === 'stands' ? 27 : 36;
+                              break;
+
+                            case 8:
+                              _context18.t1 = mode;
+                              _context18.next = _context18.t1 === 'create-plot' ? 11 : _context18.t1 === 'edit-plot' ? 11 : _context18.t1 === 'requests' ? 14 : _context18.t1 === 'uploaded' ? 14 : 15;
+                              break;
+
+                            case 11:
+                              _context18.next = 13;
+                              return _this5._changePlot(id);
+
+                            case 13:
+                              return _context18.abrupt("break", 18);
+
+                            case 14:
+                              return _context18.abrupt("break", 18);
+
+                            case 15:
+                              _context18.next = 17;
+                              return _this5._showQuadrant(LayerID, properties.id, id);
+
+                            case 17:
+                              return _context18.abrupt("break", 18);
+
+                            case 18:
+                              return _context18.abrupt("break", 37);
+
+                            case 19:
+                              _context18.t2 = mode;
+                              _context18.next = _context18.t2 === 'create-plot' ? 22 : _context18.t2 === 'edit-plot' ? 22 : _context18.t2 === 'requests' ? 23 : _context18.t2 === 'uploaded' ? 23 : 24;
+                              break;
+
+                            case 22:
+                              return _context18.abrupt("break", 26);
+
+                            case 23:
+                              return _context18.abrupt("break", 26);
+
+                            case 24:
+                              _this5._showNaturalPark(properties);
+
+                              return _context18.abrupt("break", 26);
+
+                            case 26:
+                              return _context18.abrupt("break", 37);
+
+                            case 27:
+                              _context18.t3 = mode;
+                              _context18.next = _context18.t3 === 'create-plot' ? 30 : _context18.t3 === 'edit-plot' ? 30 : _context18.t3 === 'requests' ? 31 : _context18.t3 === 'uploaded' ? 31 : 32;
+                              break;
+
+                            case 30:
+                              return _context18.abrupt("break", 35);
+
+                            case 31:
+                              return _context18.abrupt("break", 35);
+
+                            case 32:
+                              _context18.next = 34;
+                              return _this5._showStand(LayerID, properties.id, id);
+
+                            case 34:
+                              return _context18.abrupt("break", 35);
+
+                            case 35:
+                              return _context18.abrupt("break", 37);
+
+                            case 36:
+                              return _context18.abrupt("break", 37);
+
+                            case 37:
+                              _context18.next = 42;
+                              break;
+
+                            case 39:
+                              _context18.prev = 39;
+                              _context18.t4 = _context18["catch"](0);
+                              alert(_context18.t4.toString());
+
+                            case 42:
+                            case "end":
+                              return _context18.stop();
+                          }
+                        }
+                      }, _callee18, null, [[0, 39]]);
+                    }));
+
+                    return function (_x15) {
+                      return _ref11.apply(this, arguments);
+                    };
+                  }());
 
                   if (kind) {
-                    if (kind.Value === 'quadrants') {
-                      _this6._quadrants = layer;
-                      var ss = layer.getStyles().map(function (s) {
-                        s.MinZoom = 9;
-                        s.DisableBalloonOnMouseMove = true;
-                        s.RenderStyle = _objectSpread2(_objectSpread2({}, s.RenderStyle), {}, {
-                          labelField: 'code'
-                        });
-                        s.DisableBalloonOnClick = true;
-                        return s;
-                      });
-                      layer.setStyles(ss);
-                      layer.setStyleHook(function (item) {
-                        var component;
+                    switch (kind.Value) {
+                      case 'quadrants':
+                        _this5._quadrants = layer;
 
-                        var mode = _this6._content.getCurrentId();
+                        _this5._legend.addComponent('quadrants', translate$f('legend.quadrants'));
 
-                        switch (mode) {
-                          case 'create-plot':
-                          case 'edit-plot':
-                            component = _this6._content.getComponent(mode);
+                        break;
 
-                            if (component && component.quadrants.includes(item.id)) {
-                              return _this6._hilited[item.id] ? hiliteStyle : defaultStyle;
-                            } else {
-                              return {};
-                            }
+                      case 'parks':
+                        _this5._parks = layer;
 
-                          default:
-                            return {};
-                        }
-                      });
-                      layer.disablePopup().on('click', /*#__PURE__*/function () {
-                        var _ref13 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee17(e) {
-                          var _e$gmx, id, properties, layerID, ids, component, mode;
+                        _this5._legend.addComponent('parks', translate$f('legend.parks'));
 
-                          return regeneratorRuntime.wrap(function _callee17$(_context17) {
-                            while (1) {
-                              switch (_context17.prev = _context17.next) {
-                                case 0:
-                                  L$1.DomEvent.stopPropagation(e);
-                                  _e$gmx = e.gmx, id = _e$gmx.id, properties = _e$gmx.properties, layerID = _e$gmx.layer.options.layerID;
-                                  ids = [];
-                                  mode = _this6._content.getCurrentId();
-                                  _context17.prev = 4;
-                                  _context17.t0 = mode;
-                                  _context17.next = _context17.t0 === 'create-plot' ? 8 : _context17.t0 === 'edit-plot' ? 8 : _context17.t0 === 'requests' ? 17 : _context17.t0 === 'uploaded' ? 17 : 18;
-                                  break;
+                        break;
 
-                                case 8:
-                                  component = _this6._content.getComponent(mode);
-                                  ids = component.quadrants.slice();
+                      case 'stands':
+                        _this5._stands = layer;
 
-                                  if (ids.includes(id)) {
-                                    ids = ids.filter(function (k) {
-                                      return k !== id;
-                                    });
-                                  } else {
-                                    ids.push(id);
-                                  }
+                        _this5._legend.addComponent('stands', translate$f('legend.stands'));
 
-                                  _context17.next = 13;
-                                  return component.validate(ids);
+                        break;
 
-                                case 13:
-                                  if (_context17.sent) {
-                                    _context17.next = 15;
-                                    break;
-                                  }
+                      case 'fires':
+                        _this5._fires = layer;
 
-                                  alert(translate$f('quadrant.invalid'));
+                        _this5._legend.addComponent('fires', translate$f('legend.fires'));
 
-                                case 15:
-                                  _this6._quadrants.repaint();
-
-                                  return _context17.abrupt("break", 21);
-
-                                case 17:
-                                  return _context17.abrupt("break", 21);
-
-                                case 18:
-                                  _context17.next = 20;
-                                  return _this6.showQuadrant(layerID, properties.id, id);
-
-                                case 20:
-                                  return _context17.abrupt("break", 21);
-
-                                case 21:
-                                  _context17.next = 26;
-                                  break;
-
-                                case 23:
-                                  _context17.prev = 23;
-                                  _context17.t1 = _context17["catch"](4);
-                                  alert(_context17.t1.toString());
-
-                                case 26:
-                                case "end":
-                                  return _context17.stop();
-                              }
-                            }
-                          }, _callee17, null, [[4, 23]]);
-                        }));
-
-                        return function (_x15) {
-                          return _ref13.apply(this, arguments);
-                        };
-                      }()).on('mouseover', function (e) {
-                        L$1.DomEvent.stopPropagation(e);
-                        var id = e.gmx.properties.id;
-
-                        var mode = _this6._content.getCurrentId();
-
-                        var component;
-
-                        switch (mode) {
-                          case 'create-plot':
-                          case 'edit-plot':
-                            component = _this6._content.getComponent(mode);
-                            component.hilite(id);
-                            break;
-                        }
-                      }).on('mouseout', function (e) {
-                        L$1.DomEvent.stopPropagation(e);
-                        var id = e.gmx.properties.id;
-
-                        var mode = _this6._content.getCurrentId();
-
-                        var component;
-
-                        switch (mode) {
-                          case 'create-plot':
-                          case 'edit-plot':
-                            component = _this6._content.getComponent(mode);
-                            component.unhilite(id);
-                            break;
-                        }
-                      });
-                    } else if (kind.Value === 'parks') {
-                      layer.disablePopup().on('click', function (e) {
-                        L$1.DomEvent.stopPropagation(e);
-
-                        _this6.showNaturalPark(e.gmx.properties);
-                      }, _this6);
-                    } else if (kind.Value === 'stands') {
-                      _this6._stands = layer;
-                      layer.disablePopup().on('click', /*#__PURE__*/function () {
-                        var _ref14 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee18(e) {
-                          var _e$gmx2, id, properties, layerID, mode;
-
-                          return regeneratorRuntime.wrap(function _callee18$(_context18) {
-                            while (1) {
-                              switch (_context18.prev = _context18.next) {
-                                case 0:
-                                  _context18.prev = 0;
-                                  L$1.DomEvent.stopPropagation(e);
-                                  _e$gmx2 = e.gmx, id = _e$gmx2.id, properties = _e$gmx2.properties, layerID = _e$gmx2.layer.options.layerID;
-                                  mode = _this6._content.getCurrentId();
-                                  _context18.t0 = mode;
-                                  _context18.next = _context18.t0 === 'create-plot' ? 7 : _context18.t0 === 'edit-plot' ? 7 : 8;
-                                  break;
-
-                                case 7:
-                                  return _context18.abrupt("break", 11);
-
-                                case 8:
-                                  _context18.next = 10;
-                                  return _this6.showStand(layerID, properties.id, id);
-
-                                case 10:
-                                  return _context18.abrupt("break", 11);
-
-                                case 11:
-                                  _context18.next = 13;
-                                  return _this6.showStand();
-
-                                case 13:
-                                  _context18.next = 18;
-                                  break;
-
-                                case 15:
-                                  _context18.prev = 15;
-                                  _context18.t1 = _context18["catch"](0);
-                                  alert(_context18.t1.toString());
-
-                                case 18:
-                                case "end":
-                                  return _context18.stop();
-                              }
-                            }
-                          }, _callee18, null, [[0, 15]]);
-                        }));
-
-                        return function (_x16) {
-                          return _ref14.apply(this, arguments);
-                        };
-                      }());
-                    } else if (kind.Value === 'fires') {
-                      _this6._fires = layer;
+                        break;
                     }
                   }
                 };
@@ -57906,126 +57922,32 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   _loop(i);
                 }
 
-                this._legend = new Legend();
-
-                this._legend.addTo(this._map);
-
-                this._legend.on('click', this.showLayer.bind(this));
-
-                this._layerSwitch = new LayerSwitch();
-
-                this._layerSwitch.addTo(this._map);
-
-                this._layerSwitch.on('click', function (_ref10) {
-                  var layerID = _ref10.layerID,
-                      visible = _ref10.visible;
-                  var layer = _this6._gmxMap.layersByID[layerID];
-
-                  if (layer) {
-                    var _layer$getGmxProperti = layer.getGmxProperties(),
-                        kind = _layer$getGmxProperti.MetaProperties.kind;
-
-                    if (kind) {
-                      switch (kind.Value) {
-                        case 'quadrants':
-                          Object.keys(_this6._layers).forEach(function (id) {
-                            var layer = _this6._gmxMap.layersByID[id];
-
-                            var _layer$getGmxProperti2 = layer.getGmxProperties(),
-                                kind = _layer$getGmxProperti2.MetaProperties.kind;
-
-                            if (kind) {
-                              switch (kind.Value) {
-                                case 'quadrants':
-                                case 'stands':
-                                  if (!visible) {
-                                    _this6._map.removeLayer(layer);
-                                  }
-
-                                  break;
-                              }
-                            }
-                          });
-                          break;
-                      }
-
-                      _this6._legend.changeVisible(kind.Value, visible);
-                    }
-                  }
-                });
-
-                shownLayers = [];
-                Object.keys(this._layers).forEach(function (layerID) {
-                  var _this6$_layers$layerI = _this6._layers[layerID],
-                      title = _this6$_layers$layerI.title,
-                      visible = _this6$_layers$layerI.visible;
-                  var layer = _this6._gmxMap.layersByID[layerID];
-
-                  if (layer) {
-                    var _layer$getGmxProperti3 = layer.getGmxProperties(),
-                        kind = _layer$getGmxProperti3.MetaProperties.kind;
-
-                    if (kind && kind.Value) {
-                      switch (kind.Value) {
-                        case 'quadrants':
-                        case 'parks':
-                        case 'fires':
-                          shownLayers.push({
-                            id: kind.Value,
-                            layerID: layerID,
-                            title: title,
-                            visible: true
-                          });
-                          break;
-                      }
-                    }
-                  }
-                });
-
-                this._layerSwitch.update(shownLayers);
-
-                this._layerSwitch.on('activate', function (_ref11) {
-                  var active = _ref11.active;
-
-                  _this6._legend.showPanel(false);
-                });
-
-                this._legend.on('activate', function (_ref12) {
-                  var active = _ref12.active;
-
-                  _this6._layerSwitch.showPanel(false);
-                });
-
-                this._zoom = new Zoom();
-
-                this._zoom.addTo(this._map);
-
-                this._map.on('zoomend', function (e) {
-                  if (_this6._grid) {
-                    _this6._grid.repaint();
-                  }
-                });
-
-                _context19.next = 22;
+                _context19.next = 14;
                 return this.getUserInfo();
 
-              case 22:
+              case 14:
                 if (!_context19.sent) {
-                  _context19.next = 26;
+                  _context19.next = 18;
                   break;
                 }
 
                 this._hotspottimeline = new HotSpotTimeLine();
-                _context19.next = 29;
+                _context19.next = 21;
                 break;
 
-              case 26:
+              case 18:
                 end = new Date();
                 start = new Date(end.getTime() - 2 * 60 * 60 * 24 * 1000);
 
                 this._fires.setDateInterval(start, end);
 
-              case 29:
+              case 21:
+                this._baselayers.toggle('sputnik'); // const CRLayer = this._gmxMap.layersByID['958E59D9911E4889AB3E787DE2AC028B'];	// Каталог растров
+                // this._map.addControl(nsGmx.gmxTimeLine.afterViewer({gmxMap: this._gmxMap}, this._map));	// Контрол таймлайна CR
+                // this._map.addLayer(CRLayer);
+
+
+              case 22:
               case "end":
                 return _context19.stop();
             }
