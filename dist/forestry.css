@@ -2625,6 +2625,14 @@ svg.leaflet-image-layer.leaflet-interactive path {
     font-style: normal;
     font-weight: bold;
     font-size: 14px;
+    text-align: left;
+}
+.scanex-forestry-uploaded table.data .content td {
+    font-family: 'Open Sans', sans-serif;
+    font-style: normal;
+    font-weight: normal;
+    font-size: 12px;
+    line-height: 24px;
 }
 .scanex-forestry-uploaded .scanex-uploaded-icon {
     background-repeat: no-repeat;
@@ -2692,6 +2700,22 @@ svg.leaflet-image-layer.leaflet-interactive path {
 }
 .scanex-forestry-uploaded .footer > * {
     float: left;
+}
+.scanex-forestry-uploaded .footer .add,
+.scanex-forestry-uploaded .footer .remove {
+    font-family: 'Open Sans', sans-serif;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 28px;
+    text-align: center;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    color: #FFFFFF;    
+    width: 150px;
+    background: #008060;
+    margin-left: 10px;
 }
 .scanex-forestry-quadrant {
     padding: 23px;
@@ -3444,12 +3468,42 @@ http://nicolasgallagher.com/micro-clearfix-hack/
 .scanex-forestry-plot .species .chart {
     height: 200px;
 }
-.scanex-forestry-pager input[type=text] {
-    width: 30px;
+.scanex-forestry-pager input[type=text],
+.scanex-forestry-pager button {    
+    font-family: 'Open Sans', sans-serif;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 28px;
     text-align: center;
+    border-radius: 6px;    
 }
 .scanex-forestry-pager button {
     cursor: pointer;
+    color: #FFFFFF;
+    border: none;
+}
+.scanex-forestry-pager input[type=text],
+.scanex-forestry-pager .first,
+.scanex-forestry-pager .last {
+    width: 40px;    
+}
+.scanex-forestry-pager .previous,
+.scanex-forestry-pager .next {
+    background: #6B707B;
+}
+.scanex-forestry-pager .first,
+.scanex-forestry-pager .last {
+    background: #008060;
+}
+.scanex-forestry-pager .previous,
+.scanex-forestry-pager .next {    
+    width: 150px;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+.scanex-forestry-pager input[type=text] {
+    border: 1px solid #6B707B;
 }
 .leaflet-popup-content .gmx-style-legend .prefix, .leaflet-marker-icon.gmx-style-legend-icon.leaflet-zoom-animated.leaflet-interactive {
     padding-right: 4px;

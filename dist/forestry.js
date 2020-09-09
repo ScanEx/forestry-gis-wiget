@@ -56230,7 +56230,7 @@ var Uploaded = /*#__PURE__*/function (_EventTarget) {
                 }];
                 return _context2.abrupt("return", {
                   items: items,
-                  count: 100
+                  count: items.length
                 });
 
               case 16:
@@ -56302,7 +56302,7 @@ var Uploaded = /*#__PURE__*/function (_EventTarget) {
                     _loop(i);
                   }
 
-                  this._pager.pages = count;
+                  this._pager.pages = Math.ceil(count / this._pageSize);
                 }
 
                 _context3.next = 13;
