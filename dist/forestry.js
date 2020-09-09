@@ -56919,6 +56919,44 @@ var Stand = /*#__PURE__*/function (_EventTarget) {
 
 var translate$f = T.getText.bind(T);
 T.addText('rus', {
+  declaration: {
+    title: 'Лесная декларация',
+    federalSubject: 'Наименование субъекта Российской Федерации',
+    executive: 'Орган исполнительной власти',
+    officer: 'Ответственное лицо',
+    lessee: 'Арендатор',
+    contract: 'Договор аренды'
+  }
+});
+
+var Declaration = /*#__PURE__*/function (_EventTarget) {
+  _inherits(Declaration, _EventTarget);
+
+  var _super = _createSuper(Declaration);
+
+  function Declaration(container, _ref) {
+    var _this;
+
+    var _ref$serviceEndpoint = _ref.serviceEndpoint,
+        serviceEndpoint = _ref$serviceEndpoint === void 0 ? 'http://lv.scanex.ru:9999' : _ref$serviceEndpoint;
+
+    _classCallCheck(this, Declaration);
+
+    _this = _super.call(this);
+    _this._container = container;
+    _this._serviceEndpoint = serviceEndpoint;
+
+    _this._container.classList.add('scanex-forestry-declaration');
+
+    _this._container.innerHTML = "<div class=\"title\">".concat(translate$f('declaration.title'), "</div>\n        <table cellspacing=\"0\" cellpadding=\"0\">\n            <tbody>\n                <tr>\n                    <td>").concat(translate$f('declaration.federalSubject'), "</td>\n                    <td></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.executive'), "</td>\n                    <td></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.officer'), "</td>\n                    <td></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.lessee'), "</td>\n                    <td></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.contract'), "</td>\n                    <td></td>\n                </tr>\n            </tbody>\n        </table>");
+    return _this;
+  }
+
+  return Declaration;
+}(EventTarget);
+
+var translate$g = T.getText.bind(T);
+T.addText('rus', {
   measure: {
     bearing: {
       in: 'Входящий',
@@ -56968,7 +57006,8 @@ T.addText('rus', {
     quadrants: 'Кварталы',
     stands: 'Выделы',
     parks: 'Охраняемые территории',
-    fires: 'Пожары'
+    fires: 'Пожары',
+    declarations: 'Лесные декларации'
   }
 });
 var defaultStyle = {
@@ -57101,7 +57140,9 @@ var Map = /*#__PURE__*/function (_EventTarget) {
       var component = this._content.getComponent('analytics');
 
       if (!component) {
-        component = this._content.addComponent('analytics', Analytics, {});
+        component = this._content.addComponent('analytics', Analytics, {
+          serviceEndpoint: this._serviceEndpoint
+        });
       }
 
       this._content.showComponent('analytics');
@@ -57116,7 +57157,9 @@ var Map = /*#__PURE__*/function (_EventTarget) {
       var component = this._content.getComponent('naturalpark');
 
       if (!component) {
-        component = this._content.addComponent('naturalpark', NaturalPark, {});
+        component = this._content.addComponent('naturalpark', NaturalPark, {
+          serviceEndpoint: this._serviceEndpoint
+        });
       }
 
       this._content.showComponent('naturalpark');
@@ -57141,7 +57184,9 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 component = this._content.getComponent('requests');
 
                 if (!component) {
-                  component = this._content.addComponent('requests', Requests, {});
+                  component = this._content.addComponent('requests', Requests, {
+                    serviceEndpoint: this._serviceEndpoint
+                  });
                   component.on('create', /*#__PURE__*/function () {
                     var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(e) {
                       return regeneratorRuntime.wrap(function _callee2$(_context2) {
@@ -57191,7 +57236,14 @@ var Map = /*#__PURE__*/function (_EventTarget) {
               case 6:
                 this._content.showComponent('requests');
 
-              case 7:
+                if (this._plotProject) {
+                  this._showLayer({
+                    id: 'declarations',
+                    visible: true
+                  });
+                }
+
+              case 8:
               case "end":
                 return _context4.stop();
             }
@@ -57321,7 +57373,9 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 component = this._content.getComponent('edit-plot');
 
                 if (!component) {
-                  component = this._content.addComponent('edit-plot', EditPlot, {});
+                  component = this._content.addComponent('edit-plot', EditPlot, {
+                    serviceEndpoint: this._serviceEndpoint
+                  });
                   component.on('save', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7() {
                     return regeneratorRuntime.wrap(function _callee7$(_context7) {
                       while (1) {
@@ -57422,7 +57476,9 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 component = this._content.getComponent('create-plot');
 
                 if (!component) {
-                  component = this._content.addComponent('create-plot', CreatePlot, {});
+                  component = this._content.addComponent('create-plot', CreatePlot, {
+                    serviceEndpoint: this._serviceEndpoint
+                  });
                   component.on('save', /*#__PURE__*/function () {
                     var _ref7 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11(e) {
                       return regeneratorRuntime.wrap(function _callee11$(_context11) {
@@ -57526,7 +57582,9 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 component = this._content.getComponent('uploaded');
 
                 if (!component) {
-                  component = this._content.addComponent('uploaded', Uploaded, {});
+                  component = this._content.addComponent('uploaded', Uploaded, {
+                    serviceEndpoint: this._serviceEndpoint
+                  });
                 }
 
                 _context15.next = 6;
@@ -57561,7 +57619,9 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 component = this._content.getComponent('quadrant');
 
                 if (!component) {
-                  component = this._content.addComponent('quadrant', Quadrant, {});
+                  component = this._content.addComponent('quadrant', Quadrant, {
+                    serviceEndpoint: this._serviceEndpoint
+                  });
                 }
 
                 this._content.showComponent('quadrant');
@@ -57616,7 +57676,9 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 component = this._content.getComponent('stand');
 
                 if (!component) {
-                  component = this._content.addComponent('stand', Stand, {});
+                  component = this._content.addComponent('stand', Stand, {
+                    serviceEndpoint: this._serviceEndpoint
+                  });
                 }
 
                 this._content.showComponent('stand');
@@ -57660,6 +57722,65 @@ var Map = /*#__PURE__*/function (_EventTarget) {
       }
 
       return _showStand;
+    }()
+  }, {
+    key: "_showDeclaration",
+    value: function () {
+      var _showDeclaration2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee18() {
+        var component;
+        return regeneratorRuntime.wrap(function _callee18$(_context18) {
+          while (1) {
+            switch (_context18.prev = _context18.next) {
+              case 0:
+                component = this._content.getComponent('declaration');
+
+                if (!component) {
+                  component = this._content.addComponent('declaration', Declaration, {
+                    serviceEndpoint: this._serviceEndpoint
+                  });
+                }
+
+                this._content.showComponent('declaration');
+
+                _context18.next = 5;
+                return component.toggle(layerID, standID);
+
+              case 5:
+                if (!_context18.sent) {
+                  _context18.next = 9;
+                  break;
+                }
+
+                this._declarations.setStyleHook(function (item) {
+                  return item.id === gmx_id ? {
+                    fillStyle: fillStyle
+                  } : {};
+                });
+
+                _context18.next = 11;
+                break;
+
+              case 9:
+                this._declarations.removeStyleHook();
+
+                this.showMain();
+
+              case 11:
+                this._declarations.repaint();
+
+              case 12:
+              case "end":
+                return _context18.stop();
+            }
+          }
+        }, _callee18, this);
+      }));
+
+      function _showDeclaration() {
+        return _showDeclaration2.apply(this, arguments);
+      }
+
+      return _showDeclaration;
     }()
   }, {
     key: "_showLayer",
@@ -57711,12 +57832,21 @@ var Map = /*#__PURE__*/function (_EventTarget) {
           }
 
           break;
+
+        case 'declarations':
+          if (visible) {
+            this._map.addLayer(this._declarations);
+          } else {
+            this._map.removeLayer(this._declarations);
+          }
+
+          break;
       }
     }
   }, {
     key: "load",
     value: function () {
-      var _load = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee19() {
+      var _load = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee20() {
         var _this5 = this;
 
         var mapId,
@@ -57724,14 +57854,14 @@ var Map = /*#__PURE__*/function (_EventTarget) {
             i,
             end,
             start,
-            _args19 = arguments;
+            _args20 = arguments;
 
-        return regeneratorRuntime.wrap(function _callee19$(_context19) {
+        return regeneratorRuntime.wrap(function _callee20$(_context20) {
           while (1) {
-            switch (_context19.prev = _context19.next) {
+            switch (_context20.prev = _context20.next) {
               case 0:
-                mapId = _args19.length > 0 && _args19[0] !== undefined ? _args19[0] : '3B9D614D7AFA4A1ABF2BF1E0918677EF';
-                _context19.next = 3;
+                mapId = _args20.length > 0 && _args20[0] !== undefined ? _args20[0] : '3B9D614D7AFA4A1ABF2BF1E0918677EF';
+                _context20.next = 3;
                 return L$1.gmx.loadMap(mapId, {
                   leafletMap: this._map,
                   hostName: this._hostName,
@@ -57739,7 +57869,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 });
 
               case 3:
-                this._gmxMap = _context19.sent;
+                this._gmxMap = _context20.sent;
                 this._zoom = new Zoom();
 
                 this._zoom.addTo(this._map);
@@ -57774,110 +57904,117 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   }
 
                   layer.on('click', /*#__PURE__*/function () {
-                    var _ref11 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee18(e) {
+                    var _ref11 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee19(e) {
                       var _e$gmx, id, properties, mode;
 
-                      return regeneratorRuntime.wrap(function _callee18$(_context18) {
+                      return regeneratorRuntime.wrap(function _callee19$(_context19) {
                         while (1) {
-                          switch (_context18.prev = _context18.next) {
+                          switch (_context19.prev = _context19.next) {
                             case 0:
-                              _context18.prev = 0;
+                              _context19.prev = 0;
                               L$1.DomEvent.stopPropagation(e);
                               _e$gmx = e.gmx, id = _e$gmx.id, properties = _e$gmx.properties;
 
                               if (!kind) {
-                                _context18.next = 37;
+                                _context19.next = 40;
                                 break;
                               }
 
                               mode = _this5._content.getCurrentId();
-                              _context18.t0 = kind.Value;
-                              _context18.next = _context18.t0 === 'quadrants' ? 8 : _context18.t0 === 'parks' ? 19 : _context18.t0 === 'stands' ? 27 : 36;
+                              _context19.t0 = kind.Value;
+                              _context19.next = _context19.t0 === 'quadrants' ? 8 : _context19.t0 === 'parks' ? 19 : _context19.t0 === 'stands' ? 27 : _context19.t0 === 'declarations' ? 36 : 39;
                               break;
 
                             case 8:
-                              _context18.t1 = mode;
-                              _context18.next = _context18.t1 === 'create-plot' ? 11 : _context18.t1 === 'edit-plot' ? 11 : _context18.t1 === 'requests' ? 14 : _context18.t1 === 'uploaded' ? 14 : 15;
+                              _context19.t1 = mode;
+                              _context19.next = _context19.t1 === 'create-plot' ? 11 : _context19.t1 === 'edit-plot' ? 11 : _context19.t1 === 'requests' ? 14 : _context19.t1 === 'uploaded' ? 14 : 15;
                               break;
 
                             case 11:
-                              _context18.next = 13;
+                              _context19.next = 13;
                               return _this5._changePlot(id);
 
                             case 13:
-                              return _context18.abrupt("break", 18);
+                              return _context19.abrupt("break", 18);
 
                             case 14:
-                              return _context18.abrupt("break", 18);
+                              return _context19.abrupt("break", 18);
 
                             case 15:
-                              _context18.next = 17;
+                              _context19.next = 17;
                               return _this5._showQuadrant(LayerID, properties.id, id);
 
                             case 17:
-                              return _context18.abrupt("break", 18);
+                              return _context19.abrupt("break", 18);
 
                             case 18:
-                              return _context18.abrupt("break", 37);
+                              return _context19.abrupt("break", 40);
 
                             case 19:
-                              _context18.t2 = mode;
-                              _context18.next = _context18.t2 === 'create-plot' ? 22 : _context18.t2 === 'edit-plot' ? 22 : _context18.t2 === 'requests' ? 23 : _context18.t2 === 'uploaded' ? 23 : 24;
+                              _context19.t2 = mode;
+                              _context19.next = _context19.t2 === 'create-plot' ? 22 : _context19.t2 === 'edit-plot' ? 22 : _context19.t2 === 'requests' ? 23 : _context19.t2 === 'uploaded' ? 23 : 24;
                               break;
 
                             case 22:
-                              return _context18.abrupt("break", 26);
+                              return _context19.abrupt("break", 26);
 
                             case 23:
-                              return _context18.abrupt("break", 26);
+                              return _context19.abrupt("break", 26);
 
                             case 24:
                               _this5._showNaturalPark(properties);
 
-                              return _context18.abrupt("break", 26);
+                              return _context19.abrupt("break", 26);
 
                             case 26:
-                              return _context18.abrupt("break", 37);
+                              return _context19.abrupt("break", 40);
 
                             case 27:
-                              _context18.t3 = mode;
-                              _context18.next = _context18.t3 === 'create-plot' ? 30 : _context18.t3 === 'edit-plot' ? 30 : _context18.t3 === 'requests' ? 31 : _context18.t3 === 'uploaded' ? 31 : 32;
+                              _context19.t3 = mode;
+                              _context19.next = _context19.t3 === 'create-plot' ? 30 : _context19.t3 === 'edit-plot' ? 30 : _context19.t3 === 'requests' ? 31 : _context19.t3 === 'uploaded' ? 31 : 32;
                               break;
 
                             case 30:
-                              return _context18.abrupt("break", 35);
+                              return _context19.abrupt("break", 35);
 
                             case 31:
-                              return _context18.abrupt("break", 35);
+                              return _context19.abrupt("break", 35);
 
                             case 32:
-                              _context18.next = 34;
+                              _context19.next = 34;
                               return _this5._showStand(LayerID, properties.id, id);
 
                             case 34:
-                              return _context18.abrupt("break", 35);
+                              return _context19.abrupt("break", 35);
 
                             case 35:
-                              return _context18.abrupt("break", 37);
+                              return _context19.abrupt("break", 40);
 
                             case 36:
-                              return _context18.abrupt("break", 37);
+                              _context19.next = 38;
+                              return _this5._showDeclaration(LayerID, properties.id, id);
 
-                            case 37:
-                              _context18.next = 42;
-                              break;
+                            case 38:
+                              return _context19.abrupt("break", 40);
 
                             case 39:
-                              _context18.prev = 39;
-                              _context18.t4 = _context18["catch"](0);
-                              alert(_context18.t4.toString());
+                              return _context19.abrupt("break", 40);
+
+                            case 40:
+                              _context19.next = 45;
+                              break;
 
                             case 42:
+                              _context19.prev = 42;
+                              _context19.t4 = _context19["catch"](0);
+                              alert(_context19.t4.toString());
+
+                            case 45:
                             case "end":
-                              return _context18.stop();
+                              return _context19.stop();
                           }
                         }
-                      }, _callee18, null, [[0, 39]]);
+                      }, _callee19, null, [[0, 42]]);
                     }));
 
                     return function (_x15) {
@@ -57890,29 +58027,40 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                       case 'quadrants':
                         _this5._quadrants = layer;
 
-                        _this5._legend.addComponent('quadrants', translate$f('legend.quadrants'));
+                        _this5._legend.addComponent('quadrants', translate$g('legend.quadrants'));
 
                         break;
 
                       case 'parks':
                         _this5._parks = layer;
 
-                        _this5._legend.addComponent('parks', translate$f('legend.parks'));
+                        _this5._legend.addComponent('parks', translate$g('legend.parks'));
 
                         break;
 
                       case 'stands':
                         _this5._stands = layer;
 
-                        _this5._legend.addComponent('stands', translate$f('legend.stands'));
+                        _this5._legend.addComponent('stands', translate$g('legend.stands'));
 
                         break;
 
                       case 'fires':
                         _this5._fires = layer;
 
-                        _this5._legend.addComponent('fires', translate$f('legend.fires'));
+                        _this5._legend.addComponent('fires', translate$g('legend.fires'));
 
+                        break;
+
+                      case 'declarations':
+                        _this5._declarations = layer;
+
+                        _this5._legend.addComponent('declarations', translate$g('legend.declarations'));
+
+                        break;
+
+                      case 'plot_project':
+                        _this5._plotProject = layer;
                         break;
                     }
                   }
@@ -57922,17 +58070,17 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   _loop(i);
                 }
 
-                _context19.next = 14;
+                _context20.next = 14;
                 return this.getUserInfo();
 
               case 14:
-                if (!_context19.sent) {
-                  _context19.next = 18;
+                if (!_context20.sent) {
+                  _context20.next = 18;
                   break;
                 }
 
                 this._hotspottimeline = new HotSpotTimeLine();
-                _context19.next = 21;
+                _context20.next = 21;
                 break;
 
               case 18:
@@ -57949,10 +58097,10 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
               case 22:
               case "end":
-                return _context19.stop();
+                return _context20.stop();
             }
           }
-        }, _callee19, this);
+        }, _callee20, this);
       }));
 
       function load() {
