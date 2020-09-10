@@ -49,7 +49,7 @@
 			let mapContainer = document.getElementById('map');
 			
 			// инициализация
-			let map = new Map(mapContainer, {hostName: 'lv.scanex.ru:8080'});
+			let map = new Map(mapContainer, {hostName: 'lv.scanex.ru:8080', serviceEndpoint: 'http://lv.scanex.ru:9999'});
 			
 			// привязка обработчика события
 			map.addEventListener('request:create', e => {

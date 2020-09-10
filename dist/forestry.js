@@ -36330,8 +36330,7 @@ var Requests = /*#__PURE__*/function (_EventTarget) {
 
     var _ref$columns = _ref.columns,
         columns = _ref$columns === void 0 ? ['id', 'status', 'title', 'forestry'] : _ref$columns,
-        _ref$serviceEndpoint = _ref.serviceEndpoint,
-        serviceEndpoint = _ref$serviceEndpoint === void 0 ? 'http://lv.scanex.ru:9999' : _ref$serviceEndpoint;
+        serviceEndpoint = _ref.serviceEndpoint;
 
     _classCallCheck(this, Requests);
 
@@ -54023,8 +54022,7 @@ var CreatePlot = /*#__PURE__*/function (_EventTarget) {
   function CreatePlot(container, _ref) {
     var _this;
 
-    var _ref$serviceEndpoint = _ref.serviceEndpoint,
-        serviceEndpoint = _ref$serviceEndpoint === void 0 ? 'http://lv.scanex.ru:9999' : _ref$serviceEndpoint;
+    var serviceEndpoint = _ref.serviceEndpoint;
 
     _classCallCheck(this, CreatePlot);
 
@@ -54316,8 +54314,7 @@ var EditPlot = /*#__PURE__*/function (_EventTarget) {
   function EditPlot(container, _ref) {
     var _this;
 
-    var _ref$serviceEndpoint = _ref.serviceEndpoint,
-        serviceEndpoint = _ref$serviceEndpoint === void 0 ? 'http://lv.scanex.ru:9999' : _ref$serviceEndpoint;
+    var serviceEndpoint = _ref.serviceEndpoint;
 
     _classCallCheck(this, EditPlot);
 
@@ -54681,8 +54678,7 @@ var Quadrant = /*#__PURE__*/function (_EventTarget) {
   function Quadrant(container, _ref) {
     var _this;
 
-    var _ref$serviceEndpoint = _ref.serviceEndpoint,
-        serviceEndpoint = _ref$serviceEndpoint === void 0 ? 'http://lv.scanex.ru:9999' : _ref$serviceEndpoint;
+    var serviceEndpoint = _ref.serviceEndpoint;
 
     _classCallCheck(this, Quadrant);
 
@@ -56105,8 +56101,7 @@ var Uploaded = /*#__PURE__*/function (_EventTarget) {
   function Uploaded(container, _ref) {
     var _this;
 
-    var _ref$serviceEndpoint = _ref.serviceEndpoint,
-        serviceEndpoint = _ref$serviceEndpoint === void 0 ? 'http://lv.scanex.ru:8080' : _ref$serviceEndpoint,
+    var serviceEndpoint = _ref.serviceEndpoint,
         _ref$columns = _ref.columns,
         columns = _ref$columns === void 0 ? ['type', 'date', 'name'] : _ref$columns,
         _ref$types = _ref.types,
@@ -56126,11 +56121,11 @@ var Uploaded = /*#__PURE__*/function (_EventTarget) {
 
     _this._container.classList.add('scanex-forestry-uploaded');
 
-    _this._container.innerHTML = "<div class=\"title\">".concat(translate$b('uploaded.title'), "</div>\n        <table class=\"filter\" cellpadding=\"0\" cellspacing=\"0\">\n            <tr>\n                <td>\n                    <div class=\"name\">\n                        <i class=\"scanex-uploaded-icon search\"></i>\n                        <input type=\"text\" placeholder=\"").concat(translate$b('uploaded.name'), "\" value=\"\" />\n                    </div>\n                </td>\n                <td>\n                    <select>").concat(_this._types.map(function (id) {
+    _this._container.innerHTML = "<div class=\"title\">".concat(translate$b('uploaded.title'), "</div>\n        <div class=\"filter\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tr>\n                    <td>\n                        <div class=\"name\">\n                            <i class=\"scanex-uploaded-icon search\"></i>\n                            <input type=\"text\" placeholder=\"").concat(translate$b('uploaded.name'), "\" value=\"\" />\n                        </div>\n                    </td>\n                    <td>\n                        <select>").concat(_this._types.map(function (id) {
       return "<option value=\"".concat(id, "\">").concat(id, "</option>");
-    }).join(''), "</select>\n                </td>\n                <td>\n                    <div class=\"date\">\n                        <input class=\"datepicker\" type=\"text\" placeholder=\"").concat(translate$b('uploaded.date'), "\" value=\"\" />\n                        <i class=\"scanex-uploaded-icon calendar\"></i>\n                    </div>\n                </td>\n            </tr>\n        </table>\n        <table class=\"data\" cellpadding=\"7\" cellspacing=\"0\">\n            <thead>\n                <tr><th></th>").concat(_this._columns.map(function (id) {
+    }).join(''), "</select>\n                    </td>\n                    <td>\n                        <div class=\"date\">\n                            <input class=\"datepicker\" type=\"text\" placeholder=\"").concat(translate$b('uploaded.date'), "\" value=\"\" />\n                            <i class=\"scanex-uploaded-icon calendar\"></i>\n                        </div>\n                    </td>\n                </tr>\n            </table>\n        </div>\n        <div class=\"data\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <thead>\n                    <tr><th></th>").concat(_this._columns.map(function (id) {
       return "<th>".concat(translate$b("uploaded.".concat(id)), "</th>");
-    }).join(''), "</tr>\n            </thead>\n            <tbody class=\"content\"></tbody>\n        </table>\n        <div class=\"footer\">\n            <div class=\"pages\"></div>\n            <button class=\"add\">").concat(translate$b("uploaded.add"), "</button>\n            <button class=\"remove\">").concat(translate$b("uploaded.remove"), "</button>\n        </div>");
+    }).join(''), "</tr>\n                </thead>\n                <tbody class=\"content\"></tbody>\n            </table>\n        </div>\n        <div class=\"footer\">\n            <div class=\"pages\"></div>\n            <button class=\"add\">").concat(translate$b("uploaded.add"), "</button>\n            <button class=\"remove\">").concat(translate$b("uploaded.remove"), "</button>\n        </div>");
     _this._date = new pikaday({
       field: _this._container.querySelector('.datepicker'),
       format: 'DD.MM.YYYY',
@@ -56369,8 +56364,7 @@ var Analytics = /*#__PURE__*/function (_EventTarget) {
   function Analytics(container, _ref) {
     var _this;
 
-    var _ref$serviceEndpoint = _ref.serviceEndpoint,
-        serviceEndpoint = _ref$serviceEndpoint === void 0 ? 'http://lv.scanex.ru:9999' : _ref$serviceEndpoint;
+    var serviceEndpoint = _ref.serviceEndpoint;
 
     _classCallCheck(this, Analytics);
 
@@ -56442,7 +56436,38 @@ var Analytics = /*#__PURE__*/function (_EventTarget) {
 
       var speciesOptions = this._parseOptionsHeader(data.species);
 
-      this._container.innerHTML = "<div class=\"header\">".concat(translate$c('analytics.title'), "</div>\n\t\t\t<div class=\"content\">\n\t\t\t\t<div class=\"line\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$c('analytics.type'), "</div>\n\t\t\t\t\t\t<select name=\"type\" class=\"type style-4\">\n\t\t\t\t\t\t\t").concat(typeOption, "\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"right-wrap\">\n\t\t\t\t\t\t<button class=\"save\">\u0421\u0444\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u043E\u0442\u0447\u0435\u0442</button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"line\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$c('analytics.region'), "</div>\n\t\t\t\t\t\t<select name=\"region\" class=\"region\">\n\t\t\t\t\t\t\t").concat(regionOptions, "\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"right-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$c('analytics.forestry'), "</div>\n\t\t\t\t\t\t<select name=\"forestry\" class=\"forestry\">\n\t\t\t\t\t\t </select>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"line\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$c('analytics.districtForestry'), "</div>\n\t\t\t\t\t\t<select name=\"localForestry\" class=\"localForestry\">\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"right-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$c('analytics.period'), "</div>\n\t\t\t\t\t\t<div class=\"date-inputs\">\n\t\t\t\t\t\t\t<input type=\"date\" name=\"DateBegin\" class=\"input-date\" value=\"2010-01-01\" />\n\t\t\t\t\t\t\t<input type=\"date\" name=\"DateEnd\" class=\"input-date\" value=\"2020-01-01\" />\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"line species hidden\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$c('analytics.vybpor'), "</div>\n\t\t\t\t\t\t<select name=\"species\" class=\"species\">\n\t\t\t\t\t\t\t").concat(speciesOptions, "\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"chartCont\">\n\t\t\t\t</div>\n\t\t\t</div>");
+      this._container.innerHTML = "<div class=\"header\">".concat(translate$c('analytics.title'), "</div>\n\t\t\t<div class=\"content\">\n\t\t\t\t<div class=\"line\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$c('analytics.type'), "</div>\n\t\t\t\t\t\t<select name=\"type\" class=\"type style-4\">\n\t\t\t\t\t\t\t").concat(typeOption, "\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"right-wrap\">\n\t\t\t\t\t\t<button class=\"save\">\u0421\u0444\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u043E\u0442\u0447\u0435\u0442</button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"line\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$c('analytics.region'), "</div>\n\t\t\t\t\t\t<select name=\"region\" class=\"region\">\n\t\t\t\t\t\t\t").concat(regionOptions, "\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"right-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$c('analytics.forestry'), "</div>\n\t\t\t\t\t\t<select name=\"forestry\" class=\"forestry\">\n\t\t\t\t\t\t </select>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"line\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$c('analytics.districtForestry'), "</div>\n\t\t\t\t\t\t<select name=\"localForestry\" class=\"localForestry\">\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"right-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$c('analytics.period'), "</div>\n\t\t\t\t\t\t<div class=\"date-inputs\">\n\t\t\t\t\t\t\t<span class=\"date\">\n\t\t\t\t\t\t\t<input class=\"dateBegin\" type=\"text\" placeholder=\"\" value=\"\">\n\t\t\t\t\t\t\t<i class=\"scanex-uploaded-icon calendar\"></i>\n\t\t\t\t\t\t\t</span>\n\n\t\t\t\t\t\t\t<span class=\"date\">\n\t\t\t\t\t\t\t<input class=\"dateEnd\" type=\"text\" placeholder=\"\" value=\"\">\n\t\t\t\t\t\t\t<i class=\"scanex-uploaded-icon calendar\"></i>\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"line species hidden\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$c('analytics.vybpor'), "</div>\n\t\t\t\t\t\t<select name=\"species\" class=\"species\">\n\t\t\t\t\t\t\t").concat(speciesOptions, "\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"chartCont\">\n\t\t\t\t</div>\n\t\t\t</div>");
+      var i18n = {
+        previousMonth: 'Предыдущий месяц',
+        nextMonth: 'Следующий месяц',
+        months: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'],
+        weekdays: ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'],
+        weekdaysShort: ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб']
+      };
+      this._lo = new pikaday({
+        field: this._container.querySelector('.dateBegin'),
+        format: 'DD.MM.YYYY',
+        yearRange: 20,
+        i18n: i18n // ,
+        // keyboardInput: false,
+        // blurFieldOnSelect: true
+
+      });
+
+      this._lo.setDate(new Date(2019, 0, 1));
+
+      this._hi = new pikaday({
+        field: this._container.querySelector('.dateEnd'),
+        format: 'DD.MM.YYYY',
+        yearRange: 20,
+        i18n: i18n // ,
+        // keyboardInput: false,
+        // blurFieldOnSelect: true
+
+      });
+
+      this._hi.setDate(new Date());
+
       this._chartCont = this._container.querySelector('.chartCont');
 
       this._container.querySelector('.type').addEventListener('change', function (e) {
@@ -56470,21 +56495,21 @@ var Analytics = /*#__PURE__*/function (_EventTarget) {
 
       this._container.querySelector('.save').addEventListener('click', /*#__PURE__*/function () {
         var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(e) {
-          var dates, pdata, url;
+          var d1, d2, pdata, url;
           return regeneratorRuntime.wrap(function _callee2$(_context2) {
             while (1) {
               switch (_context2.prev = _context2.next) {
                 case 0:
                   e.stopPropagation();
-                  dates = _this2._container.getElementsByClassName('input-date');
+                  d1 = _this2._lo.getDate();
+                  d2 = _this2._hi.getDate();
                   pdata = {
                     RegionID: _this2.currentRegion,
                     ForestryID: _this2.currentForestry,
-                    LocalForestryID: _this2.currentLocalForestry
+                    LocalForestryID: _this2.currentLocalForestry,
+                    DateBegin: d1 ? d1.toISOString() : '',
+                    DateEnd: d2 ? d2.toISOString() : ''
                   };
-                  dates.forEach(function (it) {
-                    pdata[it.name] = it.valueAsDate.toISOString();
-                  });
                   url = _this2._serviceEndpoint;
 
                   if (_this2.currentType === 0) {
@@ -56694,8 +56719,7 @@ var NaturalPark = /*#__PURE__*/function (_EventTarget) {
   function NaturalPark(container, _ref) {
     var _this;
 
-    var _ref$serviceEndpoint = _ref.serviceEndpoint,
-        serviceEndpoint = _ref$serviceEndpoint === void 0 ? 'http://lv.scanex.ru:9999' : _ref$serviceEndpoint;
+    var serviceEndpoint = _ref.serviceEndpoint;
 
     _classCallCheck(this, NaturalPark);
 
@@ -56746,8 +56770,7 @@ var Stand = /*#__PURE__*/function (_EventTarget) {
   function Stand(container, _ref) {
     var _this;
 
-    var _ref$serviceEndpoint = _ref.serviceEndpoint,
-        serviceEndpoint = _ref$serviceEndpoint === void 0 ? 'http://lv.scanex.ru:9999' : _ref$serviceEndpoint;
+    var serviceEndpoint = _ref.serviceEndpoint;
 
     _classCallCheck(this, Stand);
 
@@ -56925,7 +56948,23 @@ T.addText('rus', {
     executive: 'Орган исполнительной власти',
     officer: 'Ответственное лицо',
     lessee: 'Арендатор',
-    contract: 'Договор аренды'
+    contract: 'Договор аренды',
+    usage: 'Целевое назначение лесов',
+    category: 'Категория защитных лесов',
+    forestry: 'Наименование лесничества (лесопарка)',
+    district: 'Наименование участкового лесничества',
+    site: 'Наименование урочища (при наличии)',
+    quadrant: 'Номер лесного квартала',
+    stand: 'Номер лесотаксационного выдела',
+    landing: 'Номер лесосеки',
+    area: 'Площадь лесосеки (лесотаксационного выдела)',
+    form: 'Форма рубки',
+    kind: 'Вид рубки',
+    range: 'Хозяйство',
+    species: 'Вырубаемая древесная порода',
+    units: 'Единицы измерения',
+    amount: 'Объем заготовки',
+    doc: 'Документы к договору аренды'
   }
 });
 
@@ -56937,8 +56976,7 @@ var Declaration = /*#__PURE__*/function (_EventTarget) {
   function Declaration(container, _ref) {
     var _this;
 
-    var _ref$serviceEndpoint = _ref.serviceEndpoint,
-        serviceEndpoint = _ref$serviceEndpoint === void 0 ? 'http://lv.scanex.ru:9999' : _ref$serviceEndpoint;
+    var serviceEndpoint = _ref.serviceEndpoint;
 
     _classCallCheck(this, Declaration);
 
@@ -56948,9 +56986,70 @@ var Declaration = /*#__PURE__*/function (_EventTarget) {
 
     _this._container.classList.add('scanex-forestry-declaration');
 
-    _this._container.innerHTML = "<div class=\"title\">".concat(translate$f('declaration.title'), "</div>\n        <table cellspacing=\"0\" cellpadding=\"0\">\n            <tbody>\n                <tr>\n                    <td>").concat(translate$f('declaration.federalSubject'), "</td>\n                    <td></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.executive'), "</td>\n                    <td></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.officer'), "</td>\n                    <td></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.lessee'), "</td>\n                    <td></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.contract'), "</td>\n                    <td></td>\n                </tr>\n            </tbody>\n        </table>");
+    _this._container.innerHTML = "<div class=\"header\">\n            <label>".concat(translate$f('declaration.title'), "</label>\n            <label class=\"number\"></label>\n        </div>\n        <table cellspacing=\"0\" cellpadding=\"0\">\n            <tbody>\n                <tr>\n                    <td>").concat(translate$f('declaration.federalSubject'), "</td>\n                    <td class=\"federal-subject\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.executive'), "</td>\n                    <td class=\"executive\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.officer'), "</td>\n                    <td class=\"officer\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.lessee'), "</td>\n                    <td class=\"lessee\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.contract'), "</td>\n                    <td class=\"contract\"></td>\n                </tr>\n            </tbody>\n        </table>\n        <div>\n            <i class=\"scanex-declaration-icon doc\"></i>\n            <button class=\"open-doc\">").concat(translate$f('declaration.doc'), "<button>\n        </div>\n        <table cellspacing=\"0\" cellpadding=\"0\">\n            <tbody>\n                <tr>\n                    <td>").concat(translate$f('declaration.usage'), "</td>\n                    <td class=\"usage\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.category'), "</td>\n                    <td class=\"category\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.forestry'), "</td>\n                    <td class=\"forestry\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.district'), "</td>\n                    <td class=\"district\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.site'), "</td>\n                    <td class=\"site\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.quadrant'), "</td>\n                    <td class=\"quadrant\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.stand'), "</td>\n                    <td class=\"stand\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.landing'), "</td>\n                    <td class=\"landing\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.area'), "</td>\n                    <td class=\"area\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.form'), "</td>\n                    <td class=\"form\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.kind'), "</td>\n                    <td class=\"kind\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.range'), "</td>\n                    <td class=\"range\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.species'), "</td>\n                    <td class=\"species\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.units'), "</td>\n                    <td class=\"units\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.amount'), "</td>\n                    <td class=\"amount\"></td>\n                </tr>\n            </tbody>\n        </table>");
     return _this;
   }
+
+  _createClass(Declaration, [{
+    key: "_render",
+    value: function _render(data) {
+      console.log(data);
+    }
+  }, {
+    key: "toggle",
+    value: function () {
+      var _toggle = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(layerID, id) {
+        var response, data;
+        return regeneratorRuntime.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                if (!(this._data && this._data.layerID === layerID && this._data.id === id)) {
+                  _context.next = 5;
+                  break;
+                }
+
+                this._data = null;
+                return _context.abrupt("return", false);
+
+              case 5:
+                this._data = {
+                  layerID: layerID,
+                  id: id
+                };
+                _context.next = 8;
+                return fetch("".concat(this._serviceEndpoint, "/Forest/GetStandInformation?StandID=").concat(this._data.id), {
+                  method: 'GET',
+                  credentials: 'include'
+                });
+
+              case 8:
+                response = _context.sent;
+                _context.next = 11;
+                return response.json();
+
+              case 11:
+                data = _context.sent;
+
+                this._render(data);
+
+                return _context.abrupt("return", true);
+
+              case 14:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee, this);
+      }));
+
+      function toggle(_x, _x2) {
+        return _toggle.apply(this, arguments);
+      }
+
+      return toggle;
+    }()
+  }]);
 
   return Declaration;
 }(EventTarget);
@@ -57038,8 +57137,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
     var _this;
 
     var hostName = _ref.hostName,
-        _ref$serviceEndpoint = _ref.serviceEndpoint,
-        serviceEndpoint = _ref$serviceEndpoint === void 0 ? 'http://lv.scanex.ru:9999' : _ref$serviceEndpoint,
+        serviceEndpoint = _ref.serviceEndpoint,
         _ref$center = _ref.center,
         center = _ref$center === void 0 ? [51.331898, 111.28051] : _ref$center,
         _ref$zoom = _ref.zoom,
@@ -57583,7 +57681,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
                 if (!component) {
                   component = this._content.addComponent('uploaded', Uploaded, {
-                    serviceEndpoint: this._serviceEndpoint
+                    serviceEndpoint: "//".concat(this._hostName)
                   });
                 }
 
@@ -57726,7 +57824,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_showDeclaration",
     value: function () {
-      var _showDeclaration2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee18() {
+      var _showDeclaration2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee18(layerID, declarationID, gmx_id) {
         var component;
         return regeneratorRuntime.wrap(function _callee18$(_context18) {
           while (1) {
@@ -57743,7 +57841,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 this._content.showComponent('declaration');
 
                 _context18.next = 5;
-                return component.toggle(layerID, standID);
+                return component.toggle(layerID, declarationID);
 
               case 5:
                 if (!_context18.sent) {
@@ -57776,7 +57874,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
         }, _callee18, this);
       }));
 
-      function _showDeclaration() {
+      function _showDeclaration(_x15, _x16, _x17) {
         return _showDeclaration2.apply(this, arguments);
       }
 
@@ -57790,28 +57888,34 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
       switch (id) {
         case 'quadrants':
-          if (visible) {
-            this._map.addLayer(this._quadrants);
-          } else {
-            this._map.removeLayer(this._quadrants);
+          if (this._quadrants) {
+            if (visible) {
+              this._map.addLayer(this._quadrants);
+            } else {
+              this._map.removeLayer(this._quadrants);
+            }
           }
 
           break;
 
         case 'parks':
-          if (visible) {
-            this._map.addLayer(this._parks);
-          } else {
-            this._map.removeLayer(this._parks);
+          if (this._parks) {
+            if (visible) {
+              this._map.addLayer(this._parks);
+            } else {
+              this._map.removeLayer(this._parks);
+            }
           }
 
           break;
 
         case 'stands':
-          if (visible) {
-            this._map.addLayer(this._stands);
-          } else {
-            this._map.removeLayer(this._stands);
+          if (this._stands) {
+            if (visible) {
+              this._map.addLayer(this._stands);
+            } else {
+              this._map.removeLayer(this._stands);
+            }
           }
 
           break;
@@ -57820,13 +57924,13 @@ var Map = /*#__PURE__*/function (_EventTarget) {
           if (visible) {
             if (this._hotspottimeline) {
               this._map.addControl(this._hotspottimeline);
-            } else {
+            } else if (this._fires) {
               this._map.addLayer(this._fires);
             }
           } else {
             if (this._hotspottimeline) {
               this._map.removeControl(this._hotspottimeline);
-            } else {
+            } else if (this._fires) {
               this._map.removeLayer(this._fires);
             }
           }
@@ -57834,10 +57938,12 @@ var Map = /*#__PURE__*/function (_EventTarget) {
           break;
 
         case 'declarations':
-          if (visible) {
-            this._map.addLayer(this._declarations);
-          } else {
-            this._map.removeLayer(this._declarations);
+          if (this._declarations) {
+            if (visible) {
+              this._map.addLayer(this._declarations);
+            } else {
+              this._map.removeLayer(this._declarations);
+            }
           }
 
           break;
@@ -58017,7 +58123,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                       }, _callee19, null, [[0, 42]]);
                     }));
 
-                    return function (_x15) {
+                    return function (_x18) {
                       return _ref11.apply(this, arguments);
                     };
                   }());
