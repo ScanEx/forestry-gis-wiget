@@ -20728,15 +20728,17 @@ L.gmx.VectorLayer.include({
           idr = geoItem[0],
           dataOption = geoItems[i].dataOption || {},
           item = geoItems[i],
-          parsedStyle = gmx.styleManager.getObjStyle(item),
+          parsedStyleKeys = item.parsedStyleKeys || {},
+          dpStyleKeys = dataOption.parsedStyleKeys || {},
           // item = gmx.dataManager.getItem(idr),
-      currentStyle = item.currentStyle || item.parsedStyleKeys || {},
+      currentStyle = item.currentStyle || parsedStyleKeys || {},
           iconScale = currentStyle.iconScale || 1,
           iconCenter = currentStyle.iconCenter,
           iconAnchor = !iconCenter && currentStyle.iconAnchor ? currentStyle.iconAnchor : null,
+          parsedStyle = gmx.styleManager.getObjStyle(item) || {},
           lineWidth = currentStyle.lineWidth || parsedStyle.lineWidth || parsedStyle.weight || 0,
-          sx = lineWidth + (parsedStyle.sx || currentStyle.sx || parsedStyle.iconSize || 0),
-          sy = lineWidth + (parsedStyle.sy || currentStyle.sy || parsedStyle.iconSize || 0),
+          sx = lineWidth + (parsedStyle.sx || currentStyle.sx || parsedStyle.iconSize || dpStyleKeys.sx || 0),
+          sy = lineWidth + (parsedStyle.sy || currentStyle.sy || parsedStyle.iconSize || dpStyleKeys.sy || 0),
           offset = [iconScale * sx / 2, iconScale * sy / 2],
           point = mercPoint,
           geom = geoItem[geoItem.length - 1],
@@ -36369,19 +36371,18 @@ var Requests = /*#__PURE__*/function (_EventTarget) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                _context.prev = 0;
-                _context.next = 3;
+                _context.next = 2;
                 return fetch("".concat(this._serviceEndpoint, "/Forest/GetPlotProjectsList?StartPosition=0"), {
                   method: 'GET',
                   credentials: 'include'
                 });
 
-              case 3:
+              case 2:
                 response = _context.sent;
-                _context.next = 6;
+                _context.next = 5;
                 return response.json();
 
-              case 6:
+              case 5:
                 items = _context.sent;
                 this._content.innerHTML = items.map(function (item) {
                   return "<tr class=\"request\">".concat(_this2._columns.map(function (col) {
@@ -36407,20 +36408,12 @@ var Requests = /*#__PURE__*/function (_EventTarget) {
                   _loop(i);
                 }
 
-                _context.next = 16;
-                break;
-
-              case 13:
-                _context.prev = 13;
-                _context.t0 = _context["catch"](0);
-                alert(_context.t0.toString());
-
-              case 16:
+              case 10:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, this, [[0, 13]]);
+        }, _callee, this);
       }));
 
       function update() {
@@ -54760,27 +54753,24 @@ var Quadrant = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "toggle",
     value: function () {
-      var _toggle = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(layerID, id) {
+      var _toggle = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(id) {
         var response, data;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                if (!(this._data && this._data.layerID === layerID && this._data.id === id)) {
+                if (!(this._id === id)) {
                   _context.next = 5;
                   break;
                 }
 
-                this._data = null;
+                this._id = null;
                 return _context.abrupt("return", false);
 
               case 5:
-                this._data = {
-                  layerID: layerID,
-                  id: id
-                };
+                this._id = id;
                 _context.next = 8;
-                return fetch("".concat(this._serviceEndpoint, "/Forest/GetQuadrantInformation?QuadrantID=").concat(this._data.id), {
+                return fetch("".concat(this._serviceEndpoint, "/Forest/GetQuadrantInformation?QuadrantID=").concat(this._id), {
                   method: 'GET',
                   credentials: 'include'
                 });
@@ -54805,7 +54795,7 @@ var Quadrant = /*#__PURE__*/function (_EventTarget) {
         }, _callee, this);
       }));
 
-      function toggle(_x, _x2) {
+      function toggle(_x) {
         return _toggle.apply(this, arguments);
       }
 
@@ -56229,7 +56219,7 @@ var Uploaded = /*#__PURE__*/function (_EventTarget) {
                 });
 
               case 16:
-                throw data;
+                throw new Error(JSON.stringify(data));
 
               case 17:
               case "end":
@@ -56258,24 +56248,23 @@ var Uploaded = /*#__PURE__*/function (_EventTarget) {
             switch (_context3.prev = _context3.next) {
               case 0:
                 if (!(typeof this.callback === 'function')) {
-                  _context3.next = 13;
+                  _context3.next = 7;
                   break;
                 }
 
-                _context3.prev = 1;
-                _context3.next = 4;
+                _context3.next = 3;
                 return this.callback(this._pageSize, this._page);
 
-              case 4:
+              case 3:
                 _yield$this$callback = _context3.sent;
                 items = _yield$this$callback.items;
                 count = _yield$this$callback.count;
 
                 if (count > 0) {
                   this._content.innerHTML = items.map(function (item) {
-                    return "<tr>\n                            <td>\n                                <i class=\"scanex-uploaded-icon box\"></i>\n                            </td>\n                            ".concat(_this2._columns.map(function (id) {
+                    return "<tr>\n                        <td>\n                            <i class=\"scanex-uploaded-icon box\"></i>\n                        </td>\n                        ".concat(_this2._columns.map(function (id) {
                       return "<td>".concat(item[id], "</td>");
-                    }).join(''), "\n                        </tr>");
+                    }).join(''), "\n                    </tr>");
                   }).join('');
                   boxes = this._content.querySelectorAll('i');
 
@@ -56300,20 +56289,12 @@ var Uploaded = /*#__PURE__*/function (_EventTarget) {
                   this._pager.pages = Math.ceil(count / this._pageSize);
                 }
 
-                _context3.next = 13;
-                break;
-
-              case 10:
-                _context3.prev = 10;
-                _context3.t0 = _context3["catch"](1);
-                alert(_context3.t0.toString());
-
-              case 13:
+              case 7:
               case "end":
                 return _context3.stop();
             }
           }
-        }, _callee3, this, [[1, 10]]);
+        }, _callee3, this);
       }));
 
       function update() {
@@ -56884,27 +56865,24 @@ var Stand = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "toggle",
     value: function () {
-      var _toggle = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(layerID, id) {
+      var _toggle = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(id) {
         var response, data;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                if (!(this._data && this._data.layerID === layerID && this._data.id === id)) {
+                if (!(this._id === id)) {
                   _context.next = 5;
                   break;
                 }
 
-                this._data = null;
+                this._id = null;
                 return _context.abrupt("return", false);
 
               case 5:
-                this._data = {
-                  layerID: layerID,
-                  id: id
-                };
+                this._id = id;
                 _context.next = 8;
-                return fetch("".concat(this._serviceEndpoint, "/Forest/GetStandInformation?StandID=").concat(this._data.id), {
+                return fetch("".concat(this._serviceEndpoint, "/Forest/GetStandInformation?StandID=").concat(this._id), {
                   method: 'GET',
                   credentials: 'include'
                 });
@@ -56929,7 +56907,7 @@ var Stand = /*#__PURE__*/function (_EventTarget) {
         }, _callee, this);
       }));
 
-      function toggle(_x, _x2) {
+      function toggle(_x) {
         return _toggle.apply(this, arguments);
       }
 
@@ -56986,7 +56964,7 @@ var Declaration = /*#__PURE__*/function (_EventTarget) {
 
     _this._container.classList.add('scanex-forestry-declaration');
 
-    _this._container.innerHTML = "<div class=\"header\">\n            <label>".concat(translate$f('declaration.title'), "</label>\n            <label class=\"number\"></label>\n        </div>\n        <table cellspacing=\"0\" cellpadding=\"0\">\n            <tbody>\n                <tr>\n                    <td>").concat(translate$f('declaration.federalSubject'), "</td>\n                    <td class=\"federal-subject\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.executive'), "</td>\n                    <td class=\"executive\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.officer'), "</td>\n                    <td class=\"officer\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.lessee'), "</td>\n                    <td class=\"lessee\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.contract'), "</td>\n                    <td class=\"contract\"></td>\n                </tr>\n            </tbody>\n        </table>\n        <div>\n            <i class=\"scanex-declaration-icon doc\"></i>\n            <button class=\"open-doc\">").concat(translate$f('declaration.doc'), "<button>\n        </div>\n        <table cellspacing=\"0\" cellpadding=\"0\">\n            <tbody>\n                <tr>\n                    <td>").concat(translate$f('declaration.usage'), "</td>\n                    <td class=\"usage\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.category'), "</td>\n                    <td class=\"category\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.forestry'), "</td>\n                    <td class=\"forestry\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.district'), "</td>\n                    <td class=\"district\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.site'), "</td>\n                    <td class=\"site\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.quadrant'), "</td>\n                    <td class=\"quadrant\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.stand'), "</td>\n                    <td class=\"stand\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.landing'), "</td>\n                    <td class=\"landing\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.area'), "</td>\n                    <td class=\"area\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.form'), "</td>\n                    <td class=\"form\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.kind'), "</td>\n                    <td class=\"kind\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.range'), "</td>\n                    <td class=\"range\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.species'), "</td>\n                    <td class=\"species\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.units'), "</td>\n                    <td class=\"units\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.amount'), "</td>\n                    <td class=\"amount\"></td>\n                </tr>\n            </tbody>\n        </table>");
+    _this._container.innerHTML = "<div class=\"header\">\n            <label>".concat(translate$f('declaration.title'), "</label>\n            <label class=\"number\"></label>\n        </div>\n        <table cellspacing=\"0\" cellpadding=\"0\">\n            <tbody>\n                <tr>\n                    <td>").concat(translate$f('declaration.federalSubject'), "</td>\n                    <td class=\"federal-subject\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.executive'), "</td>\n                    <td class=\"executive\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.officer'), "</td>\n                    <td class=\"officer\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.lessee'), "</td>\n                    <td class=\"lessee\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.contract'), "</td>\n                    <td class=\"contract\"></td>\n                </tr>\n            </tbody>\n        </table>\n        <div>\n            <i class=\"scanex-declaration-icon doc\"></i>\n            <button class=\"open-doc\">").concat(translate$f('declaration.doc'), "</button>\n        </div>\n        <table cellspacing=\"0\" cellpadding=\"0\">\n            <tbody>\n                <tr>\n                    <td>").concat(translate$f('declaration.usage'), "</td>\n                    <td class=\"usage\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.category'), "</td>\n                    <td class=\"category\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.forestry'), "</td>\n                    <td class=\"forestry\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.district'), "</td>\n                    <td class=\"district\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.site'), "</td>\n                    <td class=\"site\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.quadrant'), "</td>\n                    <td class=\"quadrant\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.stand'), "</td>\n                    <td class=\"stand\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.landing'), "</td>\n                    <td class=\"landing\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.area'), "</td>\n                    <td class=\"area\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.form'), "</td>\n                    <td class=\"form\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.kind'), "</td>\n                    <td class=\"kind\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.range'), "</td>\n                    <td class=\"range\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.species'), "</td>\n                    <td class=\"species\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.units'), "</td>\n                    <td class=\"units\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.amount'), "</td>\n                    <td class=\"amount\"></td>\n                </tr>\n            </tbody>\n        </table>");
     return _this;
   }
 
@@ -56998,27 +56976,24 @@ var Declaration = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "toggle",
     value: function () {
-      var _toggle = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(layerID, id) {
+      var _toggle = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(id) {
         var response, data;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                if (!(this._data && this._data.layerID === layerID && this._data.id === id)) {
+                if (!(this._id === id)) {
                   _context.next = 5;
                   break;
                 }
 
-                this._data = null;
+                this._id = null;
                 return _context.abrupt("return", false);
 
               case 5:
-                this._data = {
-                  layerID: layerID,
-                  id: id
-                };
+                this._id = id;
                 _context.next = 8;
-                return fetch("".concat(this._serviceEndpoint, "/Forest/GetStandInformation?StandID=").concat(this._data.id), {
+                return fetch("".concat(this._serviceEndpoint, "/Forest/GetStandInformation?StandID=").concat(this._id), {
                   method: 'GET',
                   credentials: 'include'
                 });
@@ -57043,7 +57018,7 @@ var Declaration = /*#__PURE__*/function (_EventTarget) {
         }, _callee, this);
       }));
 
-      function toggle(_x, _x2) {
+      function toggle(_x) {
         return _toggle.apply(this, arguments);
       }
 
@@ -57108,25 +57083,55 @@ T.addText('rus', {
     fires: 'Пожары',
     declarations: 'Лесные декларации'
   }
-});
-var defaultStyle = {
-  fillStyle: 'rgba(28, 224, 0, 0.4)'
-};
-var fillStyle = document.createElement('canvas').getContext('2d').createPattern(L$1.gmxUtil.getPatternIcon(null, {
-  "type": "",
-  "color": 11846096,
-  "opacity": 1,
-  "weight": 1,
-  "fillOpacity": 0.64,
-  "fillPattern": {
-    "style": "diagonal1",
-    "width": 8,
-    "step": 0,
-    "colors": [0, 16777215],
-    "patternColorsFunction": [null, null]
+}); // const defaultStyle = {
+//     fillStyle: 'rgba(28, 224, 0, 0.4)',
+// };
+// const hiliteStyle = {
+//     fillStyle: 'rgba(28, 224, 0, 0.4)',
+//     strokeStyle: '#1CE000',
+//     lineWidth: 2,
+// };
+
+var LAYERS_STYLES = {
+  DECLARATION: {
+    SELECTED: {
+      fillStyle: 'rgba(49, 243, 80, 0.25)',
+      strokeStyle: '#61E9F1',
+      lineWidth: 2
+    }
   },
-  "common": true
-}).canvas, 'repeat');
+  QUADRANT: {
+    PLOT: {
+      fillStyle: 'rgba(28, 224, 0, 0.4)'
+    },
+    SELECTED: {
+      fillStyle: 'rgba(255, 184, 1, 0.08)' // strokeStyle: '#FFB801',
+      // lineWidth: 2,
+
+    } // SELECTED: document.createElement('canvas').getContext('2d').createPattern(L.gmxUtil.getPatternIcon(null, {
+    //     "type":"",
+    //     "color": 11846096,
+    //     "opacity":1,
+    //     "weight":1,
+    //     "fillOpacity":0.64,
+    //     "fillPattern":{
+    //         "style":"diagonal1",
+    //         "width":8,
+    //         "step":0,
+    //         "colors": [0,16777215],
+    //         "patternColorsFunction":[null,null]
+    //     },
+    //     "common":true
+    // }).canvas, 'repeat')
+
+  },
+  STAND: {
+    SELECTED: {
+      fillStyle: 'rgba(255, 184, 1, 0.08)',
+      strokeStyle: '#FFB801'
+    }
+  }
+};
 
 var Map = /*#__PURE__*/function (_EventTarget) {
   _inherits(Map, _EventTarget);
@@ -57222,6 +57227,8 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "showMain",
     value: function showMain() {
+      this._clear();
+
       this._quadrants.removeStyleHook();
 
       this._quadrants.repaint();
@@ -57231,6 +57238,8 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "showAnalytics",
     value: function showAnalytics() {
+      this._clear();
+
       this._quadrants.removeStyleHook();
 
       this._quadrants.repaint();
@@ -57246,25 +57255,6 @@ var Map = /*#__PURE__*/function (_EventTarget) {
       this._content.showComponent('analytics');
     }
   }, {
-    key: "_showNaturalPark",
-    value: function _showNaturalPark(id) {
-      this._quadrants.removeStyleHook();
-
-      this._quadrants.repaint();
-
-      var component = this._content.getComponent('naturalpark');
-
-      if (!component) {
-        component = this._content.addComponent('naturalpark', NaturalPark, {
-          serviceEndpoint: this._serviceEndpoint
-        });
-      }
-
-      this._content.showComponent('naturalpark');
-
-      component.show(id);
-    }
-  }, {
     key: "showRequests",
     value: function () {
       var _showRequests = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
@@ -57275,6 +57265,8 @@ var Map = /*#__PURE__*/function (_EventTarget) {
           while (1) {
             switch (_context4.prev = _context4.next) {
               case 0:
+                _context4.prev = 0;
+
                 this._quadrants.removeStyleHook();
 
                 this._quadrants.repaint();
@@ -57328,25 +57320,30 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   }());
                 }
 
-                _context4.next = 6;
+                _context4.next = 7;
                 return component.update();
 
-              case 6:
+              case 7:
                 this._content.showComponent('requests');
 
                 if (this._plotProject) {
-                  this._showLayer({
-                    id: 'declarations',
-                    visible: true
-                  });
+                  this._map.addLayer(this._plotProject);
                 }
 
-              case 8:
+                _context4.next = 14;
+                break;
+
+              case 11:
+                _context4.prev = 11;
+                _context4.t0 = _context4["catch"](0);
+                alert(_context4.t0.toString());
+
+              case 14:
               case "end":
                 return _context4.stop();
             }
           }
-        }, _callee4, this);
+        }, _callee4, this, [[0, 11]]);
       }));
 
       function showRequests() {
@@ -57355,6 +57352,34 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
       return showRequests;
     }()
+  }, {
+    key: "_clear",
+    value: function _clear() {
+      if (this._plotProject && this._plotProject._map) {
+        this._map.removeLayer(this._plotProject);
+      }
+    }
+  }, {
+    key: "_showNaturalPark",
+    value: function _showNaturalPark(id) {
+      this._clear();
+
+      this._quadrants.removeStyleHook();
+
+      this._quadrants.repaint();
+
+      var component = this._content.getComponent('naturalpark');
+
+      if (!component) {
+        component = this._content.addComponent('naturalpark', NaturalPark, {
+          serviceEndpoint: this._serviceEndpoint
+        });
+      }
+
+      this._content.showComponent('naturalpark');
+
+      component.show(id);
+    }
   }, {
     key: "_fitBounds",
     value: function () {
@@ -57466,6 +57491,8 @@ var Map = /*#__PURE__*/function (_EventTarget) {
           while (1) {
             switch (_context10.prev = _context10.next) {
               case 0:
+                this._clear();
+
                 this._legend.enable('quadrants');
 
                 component = this._content.getComponent('edit-plot');
@@ -57532,19 +57559,19 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 this._quadrants.setStyleHook(function (item) {
                   if (component.quadrants.includes(item.id)) {
                     // return this._hilited [item.id] ? hiliteStyle : defaultStyle;
-                    return defaultStyle;
+                    return LAYERS_STYLES.QUADRANT.PLOT;
                   } else {
                     return {};
                   }
                 });
 
-                _context10.next = 7;
+                _context10.next = 8;
                 return component.show(id);
 
-              case 7:
+              case 8:
                 this._quadrants.repaint();
 
-              case 8:
+              case 9:
               case "end":
                 return _context10.stop();
             }
@@ -57569,6 +57596,8 @@ var Map = /*#__PURE__*/function (_EventTarget) {
           while (1) {
             switch (_context14.prev = _context14.next) {
               case 0:
+                this._clear();
+
                 this._legend.enable('quadrants');
 
                 component = this._content.getComponent('create-plot');
@@ -57650,7 +57679,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
                 this._content.showComponent('create-plot');
 
-              case 5:
+              case 6:
               case "end":
                 return _context14.stop();
             }
@@ -57673,6 +57702,10 @@ var Map = /*#__PURE__*/function (_EventTarget) {
           while (1) {
             switch (_context15.prev = _context15.next) {
               case 0:
+                this._clear();
+
+                _context15.prev = 1;
+
                 this._quadrants.removeStyleHook();
 
                 this._quadrants.repaint();
@@ -57685,18 +57718,26 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   });
                 }
 
-                _context15.next = 6;
+                _context15.next = 8;
                 return component.update();
 
-              case 6:
+              case 8:
                 this._content.showComponent('uploaded');
 
-              case 7:
+                _context15.next = 14;
+                break;
+
+              case 11:
+                _context15.prev = 11;
+                _context15.t0 = _context15["catch"](1);
+                alert(_context15.t0.toString());
+
+              case 14:
               case "end":
                 return _context15.stop();
             }
           }
-        }, _callee15, this);
+        }, _callee15, this, [[1, 11]]);
       }));
 
       function showUploaded() {
@@ -57708,7 +57749,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_showQuadrant",
     value: function () {
-      var _showQuadrant2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee16(layerID, quadrantID, gmx_id) {
+      var _showQuadrant2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee16(id, gmx_id) {
         var component;
         return regeneratorRuntime.wrap(function _callee16$(_context16) {
           while (1) {
@@ -57725,7 +57766,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 this._content.showComponent('quadrant');
 
                 _context16.next = 5;
-                return component.toggle(layerID, quadrantID);
+                return component.toggle(id);
 
               case 5:
                 if (!_context16.sent) {
@@ -57734,9 +57775,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 }
 
                 this._quadrants.setStyleHook(function (item) {
-                  return item.id === gmx_id ? {
-                    fillStyle: fillStyle
-                  } : {};
+                  return item.id === gmx_id ? LAYERS_STYLES.QUADRANT.SELECTED : {};
                 });
 
                 _context16.next = 10;
@@ -57756,7 +57795,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
         }, _callee16, this);
       }));
 
-      function _showQuadrant(_x9, _x10, _x11) {
+      function _showQuadrant(_x9, _x10) {
         return _showQuadrant2.apply(this, arguments);
       }
 
@@ -57765,7 +57804,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_showStand",
     value: function () {
-      var _showStand2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee17(layerID, standID, gmx_id) {
+      var _showStand2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee17(id, gmx_id) {
         var component;
         return regeneratorRuntime.wrap(function _callee17$(_context17) {
           while (1) {
@@ -57782,7 +57821,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 this._content.showComponent('stand');
 
                 _context17.next = 5;
-                return component.toggle(layerID, standID);
+                return component.toggle(id);
 
               case 5:
                 if (!_context17.sent) {
@@ -57791,9 +57830,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 }
 
                 this._stands.setStyleHook(function (item) {
-                  return item.id === gmx_id ? {
-                    fillStyle: fillStyle
-                  } : {};
+                  return item.id === gmx_id ? LAYERS_STYLES.STAND.SELECTED : {};
                 });
 
                 _context17.next = 11;
@@ -57815,7 +57852,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
         }, _callee17, this);
       }));
 
-      function _showStand(_x12, _x13, _x14) {
+      function _showStand(_x11, _x12) {
         return _showStand2.apply(this, arguments);
       }
 
@@ -57824,7 +57861,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_showDeclaration",
     value: function () {
-      var _showDeclaration2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee18(layerID, declarationID, gmx_id) {
+      var _showDeclaration2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee18(id, gmx_id) {
         var component;
         return regeneratorRuntime.wrap(function _callee18$(_context18) {
           while (1) {
@@ -57841,7 +57878,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 this._content.showComponent('declaration');
 
                 _context18.next = 5;
-                return component.toggle(layerID, declarationID);
+                return component.toggle(id);
 
               case 5:
                 if (!_context18.sent) {
@@ -57850,9 +57887,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 }
 
                 this._declarations.setStyleHook(function (item) {
-                  return item.id === gmx_id ? {
-                    fillStyle: fillStyle
-                  } : {};
+                  return item.id === gmx_id ? LAYERS_STYLES.DECLARATION.SELECTED : {};
                 });
 
                 _context18.next = 11;
@@ -57874,7 +57909,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
         }, _callee18, this);
       }));
 
-      function _showDeclaration(_x15, _x16, _x17) {
+      function _showDeclaration(_x13, _x14) {
         return _showDeclaration2.apply(this, arguments);
       }
 
@@ -57950,9 +57985,209 @@ var Map = /*#__PURE__*/function (_EventTarget) {
       }
     }
   }, {
+    key: "_quadrantClick",
+    value: function () {
+      var _quadrantClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee19(e) {
+        var _e$gmx, id, properties, mode;
+
+        return regeneratorRuntime.wrap(function _callee19$(_context19) {
+          while (1) {
+            switch (_context19.prev = _context19.next) {
+              case 0:
+                _context19.prev = 0;
+                L$1.DomEvent.stopPropagation(e);
+                _e$gmx = e.gmx, id = _e$gmx.id, properties = _e$gmx.properties;
+                mode = this._content.getCurrentId();
+                _context19.t0 = mode;
+                _context19.next = _context19.t0 === 'create-plot' ? 7 : _context19.t0 === 'edit-plot' ? 7 : _context19.t0 === 'requests' ? 10 : _context19.t0 === 'uploaded' ? 10 : 11;
+                break;
+
+              case 7:
+                _context19.next = 9;
+                return this._changePlot(id);
+
+              case 9:
+                return _context19.abrupt("break", 14);
+
+              case 10:
+                return _context19.abrupt("break", 14);
+
+              case 11:
+                _context19.next = 13;
+                return this._showQuadrant(properties.id, id);
+
+              case 13:
+                return _context19.abrupt("break", 14);
+
+              case 14:
+                _context19.next = 19;
+                break;
+
+              case 16:
+                _context19.prev = 16;
+                _context19.t1 = _context19["catch"](0);
+                alert(_context19.t1.toString());
+
+              case 19:
+              case "end":
+                return _context19.stop();
+            }
+          }
+        }, _callee19, this, [[0, 16]]);
+      }));
+
+      function _quadrantClick(_x15) {
+        return _quadrantClick2.apply(this, arguments);
+      }
+
+      return _quadrantClick;
+    }()
+  }, {
+    key: "_parkClick",
+    value: function () {
+      var _parkClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee20(e) {
+        var _e$gmx2, id, properties, mode;
+
+        return regeneratorRuntime.wrap(function _callee20$(_context20) {
+          while (1) {
+            switch (_context20.prev = _context20.next) {
+              case 0:
+                _context20.prev = 0;
+                L$1.DomEvent.stopPropagation(e);
+                _e$gmx2 = e.gmx, id = _e$gmx2.id, properties = _e$gmx2.properties;
+                mode = this._content.getCurrentId();
+                _context20.t0 = mode;
+                _context20.next = _context20.t0 === 'create-plot' ? 7 : _context20.t0 === 'edit-plot' ? 7 : _context20.t0 === 'requests' ? 7 : _context20.t0 === 'uploaded' ? 7 : 8;
+                break;
+
+              case 7:
+                return _context20.abrupt("break", 10);
+
+              case 8:
+                this._showNaturalPark(properties);
+
+                return _context20.abrupt("break", 10);
+
+              case 10:
+                _context20.next = 15;
+                break;
+
+              case 12:
+                _context20.prev = 12;
+                _context20.t1 = _context20["catch"](0);
+                alert(_context20.t1.toString());
+
+              case 15:
+              case "end":
+                return _context20.stop();
+            }
+          }
+        }, _callee20, this, [[0, 12]]);
+      }));
+
+      function _parkClick(_x16) {
+        return _parkClick2.apply(this, arguments);
+      }
+
+      return _parkClick;
+    }()
+  }, {
+    key: "_standClick",
+    value: function () {
+      var _standClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee21(e) {
+        var _e$gmx3, id, properties, mode;
+
+        return regeneratorRuntime.wrap(function _callee21$(_context21) {
+          while (1) {
+            switch (_context21.prev = _context21.next) {
+              case 0:
+                _context21.prev = 0;
+                L$1.DomEvent.stopPropagation(e);
+                _e$gmx3 = e.gmx, id = _e$gmx3.id, properties = _e$gmx3.properties;
+                mode = this._content.getCurrentId();
+                _context21.t0 = mode;
+                _context21.next = _context21.t0 === 'create-plot' ? 7 : _context21.t0 === 'edit-plot' ? 7 : _context21.t0 === 'requests' ? 8 : _context21.t0 === 'uploaded' ? 8 : 9;
+                break;
+
+              case 7:
+                return _context21.abrupt("break", 12);
+
+              case 8:
+                return _context21.abrupt("break", 12);
+
+              case 9:
+                _context21.next = 11;
+                return this._showStand(properties.id, id);
+
+              case 11:
+                return _context21.abrupt("break", 12);
+
+              case 12:
+                _context21.next = 17;
+                break;
+
+              case 14:
+                _context21.prev = 14;
+                _context21.t1 = _context21["catch"](0);
+                alert(_context21.t1.toString());
+
+              case 17:
+              case "end":
+                return _context21.stop();
+            }
+          }
+        }, _callee21, this, [[0, 14]]);
+      }));
+
+      function _standClick(_x17) {
+        return _standClick2.apply(this, arguments);
+      }
+
+      return _standClick;
+    }()
+  }, {
+    key: "_declarationClick",
+    value: function () {
+      var _declarationClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee22(e) {
+        var _e$gmx4, id, properties;
+
+        return regeneratorRuntime.wrap(function _callee22$(_context22) {
+          while (1) {
+            switch (_context22.prev = _context22.next) {
+              case 0:
+                _context22.prev = 0;
+                L$1.DomEvent.stopPropagation(e);
+                _e$gmx4 = e.gmx, id = _e$gmx4.id, properties = _e$gmx4.properties;
+                _context22.next = 5;
+                return this._showDeclaration(properties.id, id);
+
+              case 5:
+                _context22.next = 10;
+                break;
+
+              case 7:
+                _context22.prev = 7;
+                _context22.t0 = _context22["catch"](0);
+                alert(_context22.t0.toString());
+
+              case 10:
+              case "end":
+                return _context22.stop();
+            }
+          }
+        }, _callee22, this, [[0, 7]]);
+      }));
+
+      function _declarationClick(_x18) {
+        return _declarationClick2.apply(this, arguments);
+      }
+
+      return _declarationClick;
+    }()
+  }, {
     key: "load",
     value: function () {
-      var _load = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee20() {
+      var _load = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee23() {
         var _this5 = this;
 
         var mapId,
@@ -57960,14 +58195,14 @@ var Map = /*#__PURE__*/function (_EventTarget) {
             i,
             end,
             start,
-            _args20 = arguments;
+            _args23 = arguments;
 
-        return regeneratorRuntime.wrap(function _callee20$(_context20) {
+        return regeneratorRuntime.wrap(function _callee23$(_context23) {
           while (1) {
-            switch (_context20.prev = _context20.next) {
+            switch (_context23.prev = _context23.next) {
               case 0:
-                mapId = _args20.length > 0 && _args20[0] !== undefined ? _args20[0] : '3B9D614D7AFA4A1ABF2BF1E0918677EF';
-                _context20.next = 3;
+                mapId = _args23.length > 0 && _args23[0] !== undefined ? _args23[0] : '3B9D614D7AFA4A1ABF2BF1E0918677EF';
+                _context23.next = 3;
                 return L$1.gmx.loadMap(mapId, {
                   leafletMap: this._map,
                   hostName: this._hostName,
@@ -57975,7 +58210,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 });
 
               case 3:
-                this._gmxMap = _context20.sent;
+                this._gmxMap = _context23.sent;
                 this._zoom = new Zoom();
 
                 this._zoom.addTo(this._map);
@@ -58002,136 +58237,18 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                     });
                   }
 
-                  var LayerID = props.LayerID,
-                      kind = props.MetaProperties.kind;
+                  var kind = props.MetaProperties.kind;
 
                   if (typeof layer.disablePopup === 'function') {
                     layer.disablePopup();
                   }
 
-                  layer.on('click', /*#__PURE__*/function () {
-                    var _ref11 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee19(e) {
-                      var _e$gmx, id, properties, mode;
-
-                      return regeneratorRuntime.wrap(function _callee19$(_context19) {
-                        while (1) {
-                          switch (_context19.prev = _context19.next) {
-                            case 0:
-                              _context19.prev = 0;
-                              L$1.DomEvent.stopPropagation(e);
-                              _e$gmx = e.gmx, id = _e$gmx.id, properties = _e$gmx.properties;
-
-                              if (!kind) {
-                                _context19.next = 40;
-                                break;
-                              }
-
-                              mode = _this5._content.getCurrentId();
-                              _context19.t0 = kind.Value;
-                              _context19.next = _context19.t0 === 'quadrants' ? 8 : _context19.t0 === 'parks' ? 19 : _context19.t0 === 'stands' ? 27 : _context19.t0 === 'declarations' ? 36 : 39;
-                              break;
-
-                            case 8:
-                              _context19.t1 = mode;
-                              _context19.next = _context19.t1 === 'create-plot' ? 11 : _context19.t1 === 'edit-plot' ? 11 : _context19.t1 === 'requests' ? 14 : _context19.t1 === 'uploaded' ? 14 : 15;
-                              break;
-
-                            case 11:
-                              _context19.next = 13;
-                              return _this5._changePlot(id);
-
-                            case 13:
-                              return _context19.abrupt("break", 18);
-
-                            case 14:
-                              return _context19.abrupt("break", 18);
-
-                            case 15:
-                              _context19.next = 17;
-                              return _this5._showQuadrant(LayerID, properties.id, id);
-
-                            case 17:
-                              return _context19.abrupt("break", 18);
-
-                            case 18:
-                              return _context19.abrupt("break", 40);
-
-                            case 19:
-                              _context19.t2 = mode;
-                              _context19.next = _context19.t2 === 'create-plot' ? 22 : _context19.t2 === 'edit-plot' ? 22 : _context19.t2 === 'requests' ? 23 : _context19.t2 === 'uploaded' ? 23 : 24;
-                              break;
-
-                            case 22:
-                              return _context19.abrupt("break", 26);
-
-                            case 23:
-                              return _context19.abrupt("break", 26);
-
-                            case 24:
-                              _this5._showNaturalPark(properties);
-
-                              return _context19.abrupt("break", 26);
-
-                            case 26:
-                              return _context19.abrupt("break", 40);
-
-                            case 27:
-                              _context19.t3 = mode;
-                              _context19.next = _context19.t3 === 'create-plot' ? 30 : _context19.t3 === 'edit-plot' ? 30 : _context19.t3 === 'requests' ? 31 : _context19.t3 === 'uploaded' ? 31 : 32;
-                              break;
-
-                            case 30:
-                              return _context19.abrupt("break", 35);
-
-                            case 31:
-                              return _context19.abrupt("break", 35);
-
-                            case 32:
-                              _context19.next = 34;
-                              return _this5._showStand(LayerID, properties.id, id);
-
-                            case 34:
-                              return _context19.abrupt("break", 35);
-
-                            case 35:
-                              return _context19.abrupt("break", 40);
-
-                            case 36:
-                              _context19.next = 38;
-                              return _this5._showDeclaration(LayerID, properties.id, id);
-
-                            case 38:
-                              return _context19.abrupt("break", 40);
-
-                            case 39:
-                              return _context19.abrupt("break", 40);
-
-                            case 40:
-                              _context19.next = 45;
-                              break;
-
-                            case 42:
-                              _context19.prev = 42;
-                              _context19.t4 = _context19["catch"](0);
-                              alert(_context19.t4.toString());
-
-                            case 45:
-                            case "end":
-                              return _context19.stop();
-                          }
-                        }
-                      }, _callee19, null, [[0, 42]]);
-                    }));
-
-                    return function (_x18) {
-                      return _ref11.apply(this, arguments);
-                    };
-                  }());
-
                   if (kind) {
                     switch (kind.Value) {
                       case 'quadrants':
                         _this5._quadrants = layer;
+
+                        _this5._quadrants.on('click', _this5._quadrantClick.bind(_this5));
 
                         _this5._legend.addComponent('quadrants', translate$g('legend.quadrants'));
 
@@ -58140,12 +58257,16 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                       case 'parks':
                         _this5._parks = layer;
 
+                        _this5._parks.on('click', _this5._parkClick.bind(_this5));
+
                         _this5._legend.addComponent('parks', translate$g('legend.parks'));
 
                         break;
 
                       case 'stands':
                         _this5._stands = layer;
+
+                        _this5._stands.on('click', _this5._standClick.bind(_this5));
 
                         _this5._legend.addComponent('stands', translate$g('legend.stands'));
 
@@ -58160,6 +58281,8 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
                       case 'declarations':
                         _this5._declarations = layer;
+
+                        _this5._declarations.on('click', _this5._declarationClick.bind(_this5));
 
                         _this5._legend.addComponent('declarations', translate$g('legend.declarations'));
 
@@ -58176,17 +58299,17 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   _loop(i);
                 }
 
-                _context20.next = 14;
+                _context23.next = 14;
                 return this.getUserInfo();
 
               case 14:
-                if (!_context20.sent) {
-                  _context20.next = 18;
+                if (!_context23.sent) {
+                  _context23.next = 18;
                   break;
                 }
 
                 this._hotspottimeline = new HotSpotTimeLine();
-                _context20.next = 21;
+                _context23.next = 21;
                 break;
 
               case 18:
@@ -58203,10 +58326,10 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
               case 22:
               case "end":
-                return _context20.stop();
+                return _context23.stop();
             }
           }
-        }, _callee20, this);
+        }, _callee23, this);
       }));
 
       function load() {
