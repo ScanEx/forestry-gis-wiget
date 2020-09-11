@@ -2,7 +2,7 @@
 * Объект: Map
   * Инициализация:
 	```js
-	var map = new Map(mapContainer, {hostName: 'lv.scanex.ru:8080', serviceEndPoint: 'http://lv.scanex.ru:9999', center: [51.331898, 111.28051], zoom: 9});
+	var map = new Map(mapContainer, {gmxEndpoint: 'http://lv.scanex.ru:8080', serviceEndPoint: 'http://lv.scanex.ru:9999', center: [51.331898, 111.28051], zoom: 9});
 	```
   	* mapContainer - DOM-элемент, содержащий карту
 	* hostName - имя хоста сервера карты
