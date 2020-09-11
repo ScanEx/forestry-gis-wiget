@@ -57218,6 +57218,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
         mapProps: "".concat(pathname, "/TileSender.ashx")
       })
     }).setView(center, zoom);
+    console.log("Map options:", _this._map.options);
     _this._baselayers = new BaseLayers();
 
     _this._baselayers.addTo(_this._map);
