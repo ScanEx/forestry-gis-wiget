@@ -12903,7 +12903,7 @@ var gmxMapManager = {
         } else {
           L.gmx.gmxSessionManager.requestSessionKey(serverHost, options.apiKey).then(function (sessionKey) {
             opt.key = sessionKey;
-            gmxAPIutils.requestJSONP(L.gmxUtil.protocol + '//' + serverHost + '/TileSender.ashx', opt).then(function (json) {
+            gmxAPIutils.requestJSONP(L.gmxUtil.protocol + '//' + serverHost + mapPropsEndPoint, opt).then(function (json) {
               if (json && json.Status === 'ok' && json.Result) {
                 json.Result.properties.hostName = serverHost;
                 json.Result.properties.sessionKey = sessionKey;
@@ -18338,9 +18338,11 @@ L.gmx.VectorLayer = VectorGridLayer.extend({
       var layerLink = gmx.tileAttributeIndexes.GMX_RasterCatalogID;
 
       if (layerLink) {
+        var endPoint = this.options.gmxEndPoints ? this.options.gmxEndPoints.tileProps : '/TileSender.ashx';
+
         gmx.rasterBGfunc = function (x, y, z, item, srs) {
           var properties = item.properties,
-              url = L.gmxUtil.protocol + '//' + gmx.hostName + '/TileSender.ashx?ModeKey=tile&ftc=osm' + '&x=' + x + '&y=' + y + '&z=' + z;
+              url = L.gmxUtil.protocol + '//' + gmx.hostName + endPoint + '?ModeKey=tile&ftc=osm' + '&x=' + x + '&y=' + y + '&z=' + z;
 
           if (srs || gmx.srs) {
             url += '&srs=' + (srs || gmx.srs);
@@ -21266,13 +21268,15 @@ L.gmx.VectorLayer.include({
           workerParams = [],
           bboxStr = WORLDBBOX,
           chkHost = function chkHost(hostName, busyFlag) {
-        var url = L.gmxUtil.protocol + '//' + hostName + script,
-            layersStr = JSON.stringify(hosts[hostName]);
+        var layersData = hosts[hostName],
+            endPoint = layersData[0].endPoint || script,
+            url = L.gmxUtil.protocol + '//' + hostName + endPoint,
+            layersStr = JSON.stringify(layersData);
         var ph = {
           WrapStyle: 'None',
           ftc: 'osm'
         };
-        var params = 'WrapStyle=None&ftc=osm';
+        var params = 'WrapStyle=func&ftc=osm'; // var params = 'WrapStyle=None&ftc=osm';
 
         if (layersVersion.needBbox) {
           var bbox = map.getBounds(),
@@ -21319,43 +21323,28 @@ L.gmx.VectorLayer.include({
         }
 
         if ('FormData' in window) {
-          hostBusy[hostName] = true;
-          L.gmxUtil.request({
-            url: url,
-            async: true,
-            headers: {
-              'Content-type': 'application/x-www-form-urlencoded'
-            },
-            type: 'POST',
-            params: params,
-            withCredentials: true,
-            callback: function callback(response) {
-              delete hostBusy[hostName];
+          var onError = function onError(response) {
+            console.log('Error: LayerVersion ', response);
+            delete hostBusy[hostName];
 
-              if (needReq[hostName] && !busyFlag) {
-                delete needReq[hostName];
-                hosts = getRequestParams();
-                chkHost(hostName, true);
-              } else {
-                processResponse(JSON.parse(response));
-              }
-            },
-            onError: function onError(response) {
-              console.log('Error: LayerVersion ', response);
-              delete hostBusy[hostName];
-
-              if (needReq[hostName] && !busyFlag) {
-                delete needReq[hostName];
-                chkHost(hostName, true);
-              }
+            if (needReq[hostName] && !busyFlag) {
+              delete needReq[hostName];
+              chkHost(hostName, true);
             }
-          }); // } else {
-          // L.gmxUtil.sendCrossDomainPostRequest(url, {
-          // WrapStyle: 'message',
-          // layers: layersStr
-          // }, processResponse);
-          // }
+          };
 
+          L.gmxUtil.requestJSONP(url + '?' + params, {}).then(function (json) {
+            delete hostBusy[hostName];
+
+            if (needReq[hostName] && !busyFlag) {
+              delete needReq[hostName];
+              hosts = getRequestParams();
+              chkHost(hostName, true);
+            } else {
+              processResponse(json);
+            }
+          }, onError);
+          hostBusy[hostName] = true;
           var timeStamp = Date.now();
 
           for (var key in layers) {
@@ -56921,7 +56910,7 @@ var Stand = /*#__PURE__*/function (_EventTarget) {
 var translate$f = T.getText.bind(T);
 T.addText('rus', {
   declaration: {
-    title: 'Лесная декларация',
+    title: 'Лесная декларация №',
     federalSubject: 'Наименование субъекта Российской Федерации',
     executive: 'Орган исполнительной власти',
     officer: 'Ответственное лицо',
@@ -56964,7 +56953,7 @@ var Declaration = /*#__PURE__*/function (_EventTarget) {
 
     _this._container.classList.add('scanex-forestry-declaration');
 
-    _this._container.innerHTML = "<div class=\"header\">\n            <label>".concat(translate$f('declaration.title'), "</label>\n            <label class=\"number\"></label>\n        </div>\n        <table cellspacing=\"0\" cellpadding=\"0\">\n            <tbody>\n                <tr>\n                    <td>").concat(translate$f('declaration.federalSubject'), "</td>\n                    <td class=\"federal-subject\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.executive'), "</td>\n                    <td class=\"executive\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.officer'), "</td>\n                    <td class=\"officer\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.lessee'), "</td>\n                    <td class=\"lessee\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.contract'), "</td>\n                    <td class=\"contract\"></td>\n                </tr>\n            </tbody>\n        </table>\n        <div>\n            <i class=\"scanex-declaration-icon doc\"></i>\n            <button class=\"open-doc\">").concat(translate$f('declaration.doc'), "</button>\n        </div>\n        <table cellspacing=\"0\" cellpadding=\"0\">\n            <tbody>\n                <tr>\n                    <td>").concat(translate$f('declaration.usage'), "</td>\n                    <td class=\"usage\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.category'), "</td>\n                    <td class=\"category\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.forestry'), "</td>\n                    <td class=\"forestry\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.district'), "</td>\n                    <td class=\"district\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.site'), "</td>\n                    <td class=\"site\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.quadrant'), "</td>\n                    <td class=\"quadrant\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.stand'), "</td>\n                    <td class=\"stand\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.landing'), "</td>\n                    <td class=\"landing\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.area'), "</td>\n                    <td class=\"area\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.form'), "</td>\n                    <td class=\"form\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.kind'), "</td>\n                    <td class=\"kind\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.range'), "</td>\n                    <td class=\"range\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.species'), "</td>\n                    <td class=\"species\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.units'), "</td>\n                    <td class=\"units\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.amount'), "</td>\n                    <td class=\"amount\"></td>\n                </tr>\n            </tbody>\n        </table>");
+    _this._container.innerHTML = "<div class=\"header\">\n            <label>".concat(translate$f('declaration.title'), "</label>            \n            <label class=\"number\"></label>\n        </div>\n        <table cellspacing=\"0\" cellpadding=\"0\">\n            <tbody>\n                <tr>\n                    <td>").concat(translate$f('declaration.federalSubject'), "</td>\n                    <td class=\"federal-subject\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.executive'), "</td>\n                    <td class=\"executive\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.officer'), "</td>\n                    <td class=\"officer\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.lessee'), "</td>\n                    <td class=\"lessee\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.contract'), "</td>\n                    <td class=\"contract\"></td>\n                </tr>\n            </tbody>\n        </table>\n        <div>\n            <i class=\"scanex-declaration-icon doc\"></i>\n            <button class=\"open-doc\">").concat(translate$f('declaration.doc'), "</button>\n        </div>\n        <table cellspacing=\"0\" cellpadding=\"0\">\n            <tbody>\n                <tr>\n                    <td>").concat(translate$f('declaration.usage'), "</td>\n                    <td class=\"usage\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.category'), "</td>\n                    <td class=\"category\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.forestry'), "</td>\n                    <td class=\"forestry\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.district'), "</td>\n                    <td class=\"district\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.site'), "</td>\n                    <td class=\"site\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.quadrant'), "</td>\n                    <td class=\"quadrant\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.stand'), "</td>\n                    <td class=\"stand\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.landing'), "</td>\n                    <td class=\"landing\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.area'), "</td>\n                    <td class=\"area\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.form'), "</td>\n                    <td class=\"form\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.kind'), "</td>\n                    <td class=\"kind\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.range'), "</td>\n                    <td class=\"range\"></td>\n                </tr>                                \n            </tbody>\n            <table class=\"stats\" cellspacing=\"0\" cellpadding=\"0\">\n                <thead>\n                    <tr>\n                        <th>").concat(translate$f('declaration.species'), "</th>\n                        <th>").concat(translate$f('declaration.amount'), "</th>\n                    </tr>\n                </thead>\n                <tbody class=\"stats-content\"></tbody>\n            </table>\n        </table>");
     return _this;
   }
 
@@ -56972,7 +56961,8 @@ var Declaration = /*#__PURE__*/function (_EventTarget) {
     key: "_render",
     value: function _render(data) {
       console.log(data);
-      var Region = data.Region,
+      var DeclarationNumber = data.DeclarationNumber,
+          Region = data.Region,
           ExecutiveAuthority = data.ExecutiveAuthority,
           ResponsiblePerson = data.ResponsiblePerson,
           Owner = data.Owner,
@@ -56982,8 +56972,15 @@ var Declaration = /*#__PURE__*/function (_EventTarget) {
           Forestry = data.Forestry,
           LocalForestry = data.LocalForestry,
           Stow = data.Stow,
-          Num = data.Num;
-      this._container.querySelector('.number').innerText = '';
+          ForestInventoryUnitNumber = data.ForestInventoryUnitNumber,
+          Num = data.Num,
+          QutiingAreaNumber = data.QutiingAreaNumber,
+          Square = data.Square,
+          FellingForm = data.FellingForm,
+          FellingType = data.FellingType,
+          Farm = data.Farm,
+          Stock = data.Stock;
+      this._container.querySelector('.number').innerText = DeclarationNumber || '';
       this._container.querySelector('.federal-subject').innerText = Region || '';
       this._container.querySelector('.executive').innerText = ExecutiveAuthority || '';
       this._container.querySelector('.officer').innerText = ResponsiblePerson || '';
@@ -56994,7 +56991,18 @@ var Declaration = /*#__PURE__*/function (_EventTarget) {
       this._container.querySelector('.forestry').innerText = Forestry || '';
       this._container.querySelector('.district').innerText = LocalForestry || '';
       this._container.querySelector('.site').innerText = Stow || '';
-      this._container.querySelector('.quadrant').innerText = Num || '';
+      this._container.querySelector('.quadrant').innerText = ForestInventoryUnitNumber || '';
+      this._container.querySelector('.stand').innerText = Num || '';
+      this._container.querySelector('.landing').innerText = QutiingAreaNumber || '';
+      this._container.querySelector('.area').innerText = Square || '';
+      this._container.querySelector('.form').innerText = FellingForm || '';
+      this._container.querySelector('.kind').innerText = FellingType || '';
+      this._container.querySelector('.range').innerText = Farm || '';
+      this._container.querySelector('.stats-content').innerHTML = Stock.map(function (_ref2) {
+        var species = _ref2.species,
+            stock = _ref2.stock;
+        return "<tr>\n                <td>".concat(species, "</td>\n                <td class=\"amount\">").concat(stock, "</td>\n            </tr>");
+      }).join('');
     }
   }, {
     key: "toggle",
@@ -57206,19 +57214,19 @@ var Map = /*#__PURE__*/function (_EventTarget) {
         port = _URL.port;
 
     _this._hostName = port ? "".concat(hostname, ":").concat(port) : hostname;
+    _this._gmxPath = pathname;
     _this._serviceEndpoint = serviceEndpoint;
     _this._map = L$1.map(_this._container, {
       // renderer: L.canvas(),
       zoomControl: false,
       gmxEndPoints: _defineProperty({}, _this._hostName, {
-        checkVersion: "".concat(pathname, "/Layer/CheckVersion.ashx"),
-        layerProps: "".concat(pathname, "/Layer/GetLayerJson.ashx"),
-        searchLayerItem: "".concat(pathname, "/VectorLayer/Search.ashx"),
-        tileProps: "".concat(pathname, "/TileSender.ashx"),
-        mapProps: "".concat(pathname, "/TileSender.ashx")
+        checkVersion: "".concat(_this._gmxPath, "/Layer/CheckVersion.ashx"),
+        layerProps: "".concat(_this._gmxPath, "/Layer/GetLayerJson.ashx"),
+        searchLayerItem: "".concat(_this._gmxPath, "/VectorLayer/Search.ashx"),
+        tileProps: "".concat(_this._gmxPath, "/TileSender.ashx"),
+        mapProps: "".concat(_this._gmxPath, "/TileSender.ashx")
       })
     }).setView(center, zoom);
-    console.log("Map options:", _this._map.options);
     _this._baselayers = new BaseLayers();
 
     _this._baselayers.addTo(_this._map);
@@ -57241,7 +57249,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
             switch (_context.prev = _context.next) {
               case 0:
                 _context.next = 2;
-                return fetch("//".concat(this._hostName, "/User/GetUserInfo.ashx?WrapStyle=None"), {
+                return fetch("".concat(this._gmxEndpoint, "/User/GetUserInfo.ashx?WrapStyle=None"), {
                   method: 'GET',
                   credentials: 'include'
                 });
@@ -58369,7 +58377,14 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 return L$1.gmx.loadMap(mapId, {
                   leafletMap: this._map,
                   hostName: this._hostName,
-                  setZIndex: true
+                  setZIndex: true,
+                  gmxEndPoints: {
+                    checkVersion: "".concat(this._gmxPath, "/Layer/CheckVersion.ashx"),
+                    layerProps: "".concat(this._gmxPath, "/Layer/GetLayerJson.ashx"),
+                    searchLayerItem: "".concat(this._gmxPath, "/VectorLayer/Search.ashx"),
+                    tileProps: "".concat(this._gmxPath, "/TileSender.ashx"),
+                    mapProps: "".concat(this._gmxPath, "/TileSender.ashx")
+                  }
                 });
 
               case 3:
