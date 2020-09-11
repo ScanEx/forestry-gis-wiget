@@ -5,7 +5,7 @@
 	var map = new Map(mapContainer, {gmxEndpoint: 'http://lv.scanex.ru:8080', serviceEndPoint: 'http://lv.scanex.ru:9999', center: [51.331898, 111.28051], zoom: 9});
 	```
   	* mapContainer - DOM-элемент, содержащий карту
-	* hostName - имя хоста сервера карты
+	* gmxEndpoint - корневой адрес сервера Geomixer
 	* serviceEndPoint - корневой адрес серверного API
   	* center - координаты начального центра карты (широта, долгота в градусах)
   	* zoom - начальный масштаб
