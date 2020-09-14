@@ -669,6 +669,59 @@ _export({ target: 'Array', proto: true, forced: FORCED }, {
   }
 });
 
+var arrayMethodIsStrict = function (METHOD_NAME, argument) {
+  var method = [][METHOD_NAME];
+  return !!method && fails(function () {
+    // eslint-disable-next-line no-useless-call,no-throw-literal
+    method.call(null, argument || function () { throw 1; }, 1);
+  });
+};
+
+var defineProperty = Object.defineProperty;
+var cache = {};
+
+var thrower = function (it) { throw it; };
+
+var arrayMethodUsesToLength = function (METHOD_NAME, options) {
+  if (has(cache, METHOD_NAME)) return cache[METHOD_NAME];
+  if (!options) options = {};
+  var method = [][METHOD_NAME];
+  var ACCESSORS = has(options, 'ACCESSORS') ? options.ACCESSORS : false;
+  var argument0 = has(options, 0) ? options[0] : thrower;
+  var argument1 = has(options, 1) ? options[1] : undefined;
+
+  return cache[METHOD_NAME] = !!method && !fails(function () {
+    if (ACCESSORS && !descriptors) return true;
+    var O = { length: -1 };
+
+    if (ACCESSORS) defineProperty(O, 1, { enumerable: true, get: thrower });
+    else O[1] = 1;
+
+    method.call(O, argument0, argument1);
+  });
+};
+
+var $indexOf = arrayIncludes.indexOf;
+
+
+
+var nativeIndexOf = [].indexOf;
+
+var NEGATIVE_ZERO = !!nativeIndexOf && 1 / [1].indexOf(1, -0) < 0;
+var STRICT_METHOD = arrayMethodIsStrict('indexOf');
+var USES_TO_LENGTH = arrayMethodUsesToLength('indexOf', { ACCESSORS: true, 1: 0 });
+
+// `Array.prototype.indexOf` method
+// https://tc39.github.io/ecma262/#sec-array.prototype.indexof
+_export({ target: 'Array', proto: true, forced: NEGATIVE_ZERO || !STRICT_METHOD || !USES_TO_LENGTH }, {
+  indexOf: function indexOf(searchElement /* , fromIndex = 0 */) {
+    return NEGATIVE_ZERO
+      // convert -0 to +0
+      ? nativeIndexOf.apply(this, arguments) || 0
+      : $indexOf(this, searchElement, arguments.length > 1 ? arguments[1] : undefined);
+  }
+});
+
 // `Object.keys` method
 // https://tc39.github.io/ecma262/#sec-object.keys
 var objectKeys = Object.keys || function keys(O) {
@@ -776,76 +829,6 @@ if (ArrayPrototype[UNSCOPABLES] == undefined) {
 var addToUnscopables = function (key) {
   ArrayPrototype[UNSCOPABLES][key] = true;
 };
-
-var defineProperty = Object.defineProperty;
-var cache = {};
-
-var thrower = function (it) { throw it; };
-
-var arrayMethodUsesToLength = function (METHOD_NAME, options) {
-  if (has(cache, METHOD_NAME)) return cache[METHOD_NAME];
-  if (!options) options = {};
-  var method = [][METHOD_NAME];
-  var ACCESSORS = has(options, 'ACCESSORS') ? options.ACCESSORS : false;
-  var argument0 = has(options, 0) ? options[0] : thrower;
-  var argument1 = has(options, 1) ? options[1] : undefined;
-
-  return cache[METHOD_NAME] = !!method && !fails(function () {
-    if (ACCESSORS && !descriptors) return true;
-    var O = { length: -1 };
-
-    if (ACCESSORS) defineProperty(O, 1, { enumerable: true, get: thrower });
-    else O[1] = 1;
-
-    method.call(O, argument0, argument1);
-  });
-};
-
-var $includes = arrayIncludes.includes;
-
-
-
-var USES_TO_LENGTH = arrayMethodUsesToLength('indexOf', { ACCESSORS: true, 1: 0 });
-
-// `Array.prototype.includes` method
-// https://tc39.github.io/ecma262/#sec-array.prototype.includes
-_export({ target: 'Array', proto: true, forced: !USES_TO_LENGTH }, {
-  includes: function includes(el /* , fromIndex = 0 */) {
-    return $includes(this, el, arguments.length > 1 ? arguments[1] : undefined);
-  }
-});
-
-// https://tc39.github.io/ecma262/#sec-array.prototype-@@unscopables
-addToUnscopables('includes');
-
-var arrayMethodIsStrict = function (METHOD_NAME, argument) {
-  var method = [][METHOD_NAME];
-  return !!method && fails(function () {
-    // eslint-disable-next-line no-useless-call,no-throw-literal
-    method.call(null, argument || function () { throw 1; }, 1);
-  });
-};
-
-var $indexOf = arrayIncludes.indexOf;
-
-
-
-var nativeIndexOf = [].indexOf;
-
-var NEGATIVE_ZERO = !!nativeIndexOf && 1 / [1].indexOf(1, -0) < 0;
-var STRICT_METHOD = arrayMethodIsStrict('indexOf');
-var USES_TO_LENGTH$1 = arrayMethodUsesToLength('indexOf', { ACCESSORS: true, 1: 0 });
-
-// `Array.prototype.indexOf` method
-// https://tc39.github.io/ecma262/#sec-array.prototype.indexof
-_export({ target: 'Array', proto: true, forced: NEGATIVE_ZERO || !STRICT_METHOD || !USES_TO_LENGTH$1 }, {
-  indexOf: function indexOf(searchElement /* , fromIndex = 0 */) {
-    return NEGATIVE_ZERO
-      // convert -0 to +0
-      ? nativeIndexOf.apply(this, arguments) || 0
-      : $indexOf(this, searchElement, arguments.length > 1 ? arguments[1] : undefined);
-  }
-});
 
 var iterators = {};
 
@@ -1174,12 +1157,12 @@ var $map = arrayIteration.map;
 
 var HAS_SPECIES_SUPPORT = arrayMethodHasSpeciesSupport('map');
 // FF49- issue
-var USES_TO_LENGTH$2 = arrayMethodUsesToLength('map');
+var USES_TO_LENGTH$1 = arrayMethodUsesToLength('map');
 
 // `Array.prototype.map` method
 // https://tc39.github.io/ecma262/#sec-array.prototype.map
 // with adding support of @@species
-_export({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT || !USES_TO_LENGTH$2 }, {
+_export({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT || !USES_TO_LENGTH$1 }, {
   map: function map(callbackfn /* , thisArg */) {
     return $map(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
   }
@@ -2015,12 +1998,36 @@ var correctIsRegexpLogic = function (METHOD_NAME) {
   } return false;
 };
 
-// `String.prototype.includes` method
-// https://tc39.github.io/ecma262/#sec-string.prototype.includes
-_export({ target: 'String', proto: true, forced: !correctIsRegexpLogic('includes') }, {
-  includes: function includes(searchString /* , position = 0 */) {
-    return !!~String(requireObjectCoercible(this))
-      .indexOf(notARegexp(searchString), arguments.length > 1 ? arguments[1] : undefined);
+var getOwnPropertyDescriptor$3 = objectGetOwnPropertyDescriptor.f;
+
+
+
+
+
+
+var nativeEndsWith = ''.endsWith;
+var min$2 = Math.min;
+
+var CORRECT_IS_REGEXP_LOGIC = correctIsRegexpLogic('endsWith');
+// https://github.com/zloirock/core-js/pull/702
+var MDN_POLYFILL_BUG =  !CORRECT_IS_REGEXP_LOGIC && !!function () {
+  var descriptor = getOwnPropertyDescriptor$3(String.prototype, 'endsWith');
+  return descriptor && !descriptor.writable;
+}();
+
+// `String.prototype.endsWith` method
+// https://tc39.github.io/ecma262/#sec-string.prototype.endswith
+_export({ target: 'String', proto: true, forced: !MDN_POLYFILL_BUG && !CORRECT_IS_REGEXP_LOGIC }, {
+  endsWith: function endsWith(searchString /* , endPosition = @length */) {
+    var that = String(requireObjectCoercible(this));
+    notARegexp(searchString);
+    var endPosition = arguments.length > 1 ? arguments[1] : undefined;
+    var len = toLength(that.length);
+    var end = endPosition === undefined ? len : min$2(toLength(endPosition), len);
+    var search = String(searchString);
+    return nativeEndsWith
+      ? nativeEndsWith.call(that, search, end)
+      : that.slice(end - search.length, end) === search;
   }
 });
 
@@ -4155,11 +4162,11 @@ var $forEach$1 = arrayIteration.forEach;
 
 
 var STRICT_METHOD$1 = arrayMethodIsStrict('forEach');
-var USES_TO_LENGTH$3 = arrayMethodUsesToLength('forEach');
+var USES_TO_LENGTH$2 = arrayMethodUsesToLength('forEach');
 
 // `Array.prototype.forEach` method implementation
 // https://tc39.github.io/ecma262/#sec-array.prototype.foreach
-var arrayForEach = (!STRICT_METHOD$1 || !USES_TO_LENGTH$3) ? function forEach(callbackfn /* , thisArg */) {
+var arrayForEach = (!STRICT_METHOD$1 || !USES_TO_LENGTH$2) ? function forEach(callbackfn /* , thisArg */) {
   return $forEach$1(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
 } : [].forEach;
 
@@ -4170,7 +4177,7 @@ _export({ target: 'Array', proto: true, forced: [].forEach != arrayForEach }, {
 });
 
 var HAS_SPECIES_SUPPORT$1 = arrayMethodHasSpeciesSupport('slice');
-var USES_TO_LENGTH$4 = arrayMethodUsesToLength('slice', { ACCESSORS: true, 0: 0, 1: 2 });
+var USES_TO_LENGTH$3 = arrayMethodUsesToLength('slice', { ACCESSORS: true, 0: 0, 1: 2 });
 
 var SPECIES$5 = wellKnownSymbol('species');
 var nativeSlice = [].slice;
@@ -4179,7 +4186,7 @@ var max$1 = Math.max;
 // `Array.prototype.slice` method
 // https://tc39.github.io/ecma262/#sec-array.prototype.slice
 // fallback for not array-like ES3 strings and DOM objects
-_export({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT$1 || !USES_TO_LENGTH$4 }, {
+_export({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT$1 || !USES_TO_LENGTH$3 }, {
   slice: function slice(start, end) {
     var O = toIndexedObject(this);
     var length = toLength(O.length);
@@ -5265,17 +5272,17 @@ var runtime_1 = createCommonjsModule(function (module) {
 });
 
 var HAS_SPECIES_SUPPORT$2 = arrayMethodHasSpeciesSupport('splice');
-var USES_TO_LENGTH$5 = arrayMethodUsesToLength('splice', { ACCESSORS: true, 0: 0, 1: 2 });
+var USES_TO_LENGTH$4 = arrayMethodUsesToLength('splice', { ACCESSORS: true, 0: 0, 1: 2 });
 
 var max$2 = Math.max;
-var min$2 = Math.min;
+var min$3 = Math.min;
 var MAX_SAFE_INTEGER$1 = 0x1FFFFFFFFFFFFF;
 var MAXIMUM_ALLOWED_LENGTH_EXCEEDED = 'Maximum allowed length exceeded';
 
 // `Array.prototype.splice` method
 // https://tc39.github.io/ecma262/#sec-array.prototype.splice
 // with adding support of @@species
-_export({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT$2 || !USES_TO_LENGTH$5 }, {
+_export({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT$2 || !USES_TO_LENGTH$4 }, {
   splice: function splice(start, deleteCount /* , ...items */) {
     var O = toObject(this);
     var len = toLength(O.length);
@@ -5289,7 +5296,7 @@ _export({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT$2 || !USES_
       actualDeleteCount = len - actualStart;
     } else {
       insertCount = argumentsLength - 2;
-      actualDeleteCount = min$2(max$2(toInteger(deleteCount), 0), len - actualStart);
+      actualDeleteCount = min$3(max$2(toInteger(deleteCount), 0), len - actualStart);
     }
     if (len + insertCount - actualDeleteCount > MAX_SAFE_INTEGER$1) {
       throw TypeError(MAXIMUM_ALLOWED_LENGTH_EXCEEDED);
@@ -5427,13 +5434,13 @@ _export({ target: 'Array', proto: true, forced: ES3_STRINGS || !STRICT_METHOD$2 
   }
 });
 
-var min$3 = Math.min;
+var min$4 = Math.min;
 var nativeLastIndexOf = [].lastIndexOf;
 var NEGATIVE_ZERO$1 = !!nativeLastIndexOf && 1 / [1].lastIndexOf(1, -0) < 0;
 var STRICT_METHOD$3 = arrayMethodIsStrict('lastIndexOf');
 // For preventing possible almost infinite loop in non-standard implementations, test the forward version of the method
-var USES_TO_LENGTH$6 = arrayMethodUsesToLength('indexOf', { ACCESSORS: true, 1: 0 });
-var FORCED$2 = NEGATIVE_ZERO$1 || !STRICT_METHOD$3 || !USES_TO_LENGTH$6;
+var USES_TO_LENGTH$5 = arrayMethodUsesToLength('indexOf', { ACCESSORS: true, 1: 0 });
+var FORCED$2 = NEGATIVE_ZERO$1 || !STRICT_METHOD$3 || !USES_TO_LENGTH$5;
 
 // `Array.prototype.lastIndexOf` method implementation
 // https://tc39.github.io/ecma262/#sec-array.prototype.lastindexof
@@ -5443,7 +5450,7 @@ var arrayLastIndexOf = FORCED$2 ? function lastIndexOf(searchElement /* , fromIn
   var O = toIndexedObject(this);
   var length = toLength(O.length);
   var index = length - 1;
-  if (arguments.length > 1) index = min$3(index, toInteger(arguments[1]));
+  if (arguments.length > 1) index = min$4(index, toInteger(arguments[1]));
   if (index < 0) index = length + index;
   for (;index >= 0; index--) if (index in O && O[index] === searchElement) return index || 0;
   return -1;
@@ -5843,7 +5850,7 @@ var stringTrim = {
 };
 
 var getOwnPropertyNames$1 = objectGetOwnPropertyNames.f;
-var getOwnPropertyDescriptor$3 = objectGetOwnPropertyDescriptor.f;
+var getOwnPropertyDescriptor$4 = objectGetOwnPropertyDescriptor.f;
 var defineProperty$7 = objectDefineProperty.f;
 var trim = stringTrim.trim;
 
@@ -5902,7 +5909,7 @@ if (isForced_1(NUMBER, !NativeNumber(' 0o1') || !NativeNumber('0b1') || NativeNu
     'MIN_SAFE_INTEGER,parseFloat,parseInt,isInteger'
   ).split(','), j$1 = 0, key$1; keys$2.length > j$1; j$1++) {
     if (has(NativeNumber, key$1 = keys$2[j$1]) && !has(NumberWrapper, key$1)) {
-      defineProperty$7(NumberWrapper, key$1, getOwnPropertyDescriptor$3(NativeNumber, key$1));
+      defineProperty$7(NumberWrapper, key$1, getOwnPropertyDescriptor$4(NativeNumber, key$1));
     }
   }
   NumberWrapper.prototype = NumberPrototype;
@@ -6294,7 +6301,7 @@ fixRegexpWellKnownSymbolLogic('match', 1, function (MATCH, nativeMatch, maybeCal
 });
 
 var max$3 = Math.max;
-var min$4 = Math.min;
+var min$5 = Math.min;
 var floor$4 = Math.floor;
 var SUBSTITUTION_SYMBOLS = /\$([$&'`]|\d\d?|<[^>]*>)/g;
 var SUBSTITUTION_SYMBOLS_NO_NAMED = /\$([$&'`]|\d\d?)/g;
@@ -6359,7 +6366,7 @@ fixRegexpWellKnownSymbolLogic('replace', 2, function (REPLACE, nativeReplace, ma
         result = results[i];
 
         var matched = String(result[0]);
-        var position = max$3(min$4(toInteger(result.index), S.length), 0);
+        var position = max$3(min$5(toInteger(result.index), S.length), 0);
         var captures = [];
         // NOTE: This is equivalent to
         //   captures = result.slice(1).map(maybeToString)
@@ -6455,7 +6462,7 @@ fixRegexpWellKnownSymbolLogic('search', 1, function (SEARCH, nativeSearch, maybe
 });
 
 var arrayPush = [].push;
-var min$5 = Math.min;
+var min$6 = Math.min;
 var MAX_UINT32 = 0xFFFFFFFF;
 
 // babel-minify transpiles RegExp('x', 'y') -> /x/y and it causes SyntaxError
@@ -6558,7 +6565,7 @@ fixRegexpWellKnownSymbolLogic('split', 2, function (SPLIT, nativeSplit, maybeCal
         var e;
         if (
           z === null ||
-          (e = min$5(toLength(splitter.lastIndex + (SUPPORTS_Y ? 0 : q)), S.length)) === p
+          (e = min$6(toLength(splitter.lastIndex + (SUPPORTS_Y ? 0 : q)), S.length)) === p
         ) {
           q = advanceStringIndex(S, q, unicodeMatching);
         } else {
@@ -7049,7 +7056,7 @@ typedArrayConstructor('Float64', function (init) {
   };
 });
 
-var min$6 = Math.min;
+var min$7 = Math.min;
 
 // `Array.prototype.copyWithin` method implementation
 // https://tc39.github.io/ecma262/#sec-array.prototype.copywithin
@@ -7059,7 +7066,7 @@ var arrayCopyWithin = [].copyWithin || function copyWithin(target /* = 0 */, sta
   var to = toAbsoluteIndex(target, len);
   var from = toAbsoluteIndex(start, len);
   var end = arguments.length > 2 ? arguments[2] : undefined;
-  var count = min$6((end === undefined ? len : toAbsoluteIndex(end, len)) - from, len - to);
+  var count = min$7((end === undefined ? len : toAbsoluteIndex(end, len)) - from, len - to);
   var inc = 1;
   if (from < to && to < from + count) {
     inc = -1;
@@ -7156,7 +7163,7 @@ exportTypedArrayMethod$7('forEach', function forEach(callbackfn /* , thisArg */)
   $forEach$2(aTypedArray$7(this), callbackfn, arguments.length > 1 ? arguments[1] : undefined);
 });
 
-var $includes$1 = arrayIncludes.includes;
+var $includes = arrayIncludes.includes;
 
 var aTypedArray$8 = arrayBufferViewCore.aTypedArray;
 var exportTypedArrayMethod$8 = arrayBufferViewCore.exportTypedArrayMethod;
@@ -7164,7 +7171,7 @@ var exportTypedArrayMethod$8 = arrayBufferViewCore.exportTypedArrayMethod;
 // `%TypedArray%.prototype.includes` method
 // https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.includes
 exportTypedArrayMethod$8('includes', function includes(searchElement /* , fromIndex */) {
-  return $includes$1(aTypedArray$8(this), searchElement, arguments.length > 1 ? arguments[1] : undefined);
+  return $includes(aTypedArray$8(this), searchElement, arguments.length > 1 ? arguments[1] : undefined);
 });
 
 var $indexOf$1 = arrayIncludes.indexOf;
@@ -14608,12 +14615,12 @@ var $filter$1 = arrayIteration.filter;
 
 var HAS_SPECIES_SUPPORT$3 = arrayMethodHasSpeciesSupport('filter');
 // Edge 14- issue
-var USES_TO_LENGTH$7 = arrayMethodUsesToLength('filter');
+var USES_TO_LENGTH$6 = arrayMethodUsesToLength('filter');
 
 // `Array.prototype.filter` method
 // https://tc39.github.io/ecma262/#sec-array.prototype.filter
 // with adding support of @@species
-_export({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT$3 || !USES_TO_LENGTH$7 }, {
+_export({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT$3 || !USES_TO_LENGTH$6 }, {
   filter: function filter(callbackfn /* , thisArg */) {
     return $filter$1(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
   }
@@ -14624,11 +14631,11 @@ var $reduce$1 = arrayReduce.left;
 
 
 var STRICT_METHOD$4 = arrayMethodIsStrict('reduce');
-var USES_TO_LENGTH$8 = arrayMethodUsesToLength('reduce', { 1: 0 });
+var USES_TO_LENGTH$7 = arrayMethodUsesToLength('reduce', { 1: 0 });
 
 // `Array.prototype.reduce` method
 // https://tc39.github.io/ecma262/#sec-array.prototype.reduce
-_export({ target: 'Array', proto: true, forced: !STRICT_METHOD$4 || !USES_TO_LENGTH$8 }, {
+_export({ target: 'Array', proto: true, forced: !STRICT_METHOD$4 || !USES_TO_LENGTH$7 }, {
   reduce: function reduce(callbackfn /* , initialValue */) {
     return $reduce$1(this, callbackfn, arguments.length, arguments.length > 1 ? arguments[1] : undefined);
   }
@@ -25202,18 +25209,116 @@ var Content = L$1.Control.extend({
   },
   onRemove: function onRemove(map) {},
   addComponent: function addComponent(id, Component, options) {
+    var _this = this;
+
     if (!this._components[id]) {
       var container = L$1.DomUtil.create('div', 'component hidden', this._container);
       container.setAttribute('data-id', id);
-      this._components[id] = new Component(container, options);
+      var component = new Component(container, options);
+      component.on('close', function () {
+        var el = _this._container.querySelector("[data-id=".concat(id, "]"));
+
+        L$1.DomUtil.addClass(el, 'hidden');
+      });
+      component.on('open', function () {
+        var el = _this._container.querySelector("[data-id=".concat(id, "]"));
+
+        L$1.DomUtil.removeClass(el, 'hidden');
+      });
+      this._components[id] = component;
     }
 
     return this._components[id];
   },
-  getComponent: function getComponent(id) {
-    return this._components[id];
+  hasComponent: function hasComponent(id) {
+    return !!this._components[id];
   },
-  showComponent: function showComponent(id) {
+  showDefault: function () {
+    var _showDefault = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+      return regeneratorRuntime.wrap(function _callee$(_context) {
+        while (1) {
+          switch (_context.prev = _context.next) {
+            case 0:
+              _context.next = 2;
+              return this.showComponent();
+
+            case 2:
+            case "end":
+              return _context.stop();
+          }
+        }
+      }, _callee, this);
+    }));
+
+    function showDefault() {
+      return _showDefault.apply(this, arguments);
+    }
+
+    return showDefault;
+  }(),
+  isDefault: function isDefault() {
+    return !this.getCurrentId();
+  },
+  showComponent: function () {
+    var _showComponent = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(id, options) {
+      var _this2 = this;
+
+      return regeneratorRuntime.wrap(function _callee3$(_context3) {
+        while (1) {
+          switch (_context3.prev = _context3.next) {
+            case 0:
+              Object.keys(this._components).forEach( /*#__PURE__*/function () {
+                var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(k) {
+                  var component;
+                  return regeneratorRuntime.wrap(function _callee2$(_context2) {
+                    while (1) {
+                      switch (_context2.prev = _context2.next) {
+                        case 0:
+                          component = _this2._components[k];
+
+                          if (!(k === id)) {
+                            _context2.next = 6;
+                            break;
+                          }
+
+                          _context2.next = 4;
+                          return component.open(options);
+
+                        case 4:
+                          _context2.next = 7;
+                          break;
+
+                        case 6:
+                          component.close();
+
+                        case 7:
+                        case "end":
+                          return _context2.stop();
+                      }
+                    }
+                  }, _callee2);
+                }));
+
+                return function (_x3) {
+                  return _ref.apply(this, arguments);
+                };
+              }());
+
+            case 1:
+            case "end":
+              return _context3.stop();
+          }
+        }
+      }, _callee3, this);
+    }));
+
+    function showComponent(_x, _x2) {
+      return _showComponent.apply(this, arguments);
+    }
+
+    return showComponent;
+  }(),
+  getCurrentId: function getCurrentId() {
     var _iterator = _createForOfIteratorHelper(this._container.querySelectorAll('.component')),
         _step;
 
@@ -25221,34 +25326,14 @@ var Content = L$1.Control.extend({
       for (_iterator.s(); !(_step = _iterator.n()).done;) {
         var el = _step.value;
 
-        if (el.getAttribute('data-id') === id) {
-          L$1.DomUtil.removeClass(el, 'hidden');
-        } else {
-          L$1.DomUtil.addClass(el, 'hidden');
+        if (!L$1.DomUtil.hasClass(el, 'hidden')) {
+          return el.getAttribute('data-id');
         }
       }
     } catch (err) {
       _iterator.e(err);
     } finally {
       _iterator.f();
-    }
-  },
-  getCurrentId: function getCurrentId() {
-    var _iterator2 = _createForOfIteratorHelper(this._container.querySelectorAll('.component')),
-        _step2;
-
-    try {
-      for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
-        var el = _step2.value;
-
-        if (!L$1.DomUtil.hasClass(el, 'hidden')) {
-          return el.getAttribute('data-id');
-        }
-      }
-    } catch (err) {
-      _iterator2.e(err);
-    } finally {
-      _iterator2.f();
     }
 
     return null;
@@ -25403,7 +25488,8 @@ var baseLayers = {
 var BaseLayers = L$1.Control.extend({
   includes: L$1.Evented.prototype,
   options: {
-    position: 'topright'
+    position: 'topright',
+    apiKey: 'LX3YKLVMUF'
   },
   onAdd: function onAdd(map) {
     var _this = this;
@@ -25447,7 +25533,7 @@ var BaseLayers = L$1.Control.extend({
   onRemove: function onRemove(map) {},
   _getLayers: function _getLayers() {
     L$1.gmx.loadLayers([{
-      apiKey: 'LX3YKLVMUF',
+      apiKey: this.options.apiKey,
       mapID: '1D30C72D02914C5FB90D1D448159CAB6',
       layerID: '63E083C0916F4414A2F6B78242F56CA6',
       // satellite
@@ -26483,14 +26569,14 @@ var $find$1 = arrayIteration.find;
 var FIND = 'find';
 var SKIPS_HOLES = true;
 
-var USES_TO_LENGTH$9 = arrayMethodUsesToLength(FIND);
+var USES_TO_LENGTH$8 = arrayMethodUsesToLength(FIND);
 
 // Shouldn't skip holes
 if (FIND in []) Array(1)[FIND](function () { SKIPS_HOLES = false; });
 
 // `Array.prototype.find` method
 // https://tc39.github.io/ecma262/#sec-array.prototype.find
-_export({ target: 'Array', proto: true, forced: SKIPS_HOLES || !USES_TO_LENGTH$9 }, {
+_export({ target: 'Array', proto: true, forced: SKIPS_HOLES || !USES_TO_LENGTH$8 }, {
   find: function find(callbackfn /* , that = undefined */) {
     return $find$1(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
   }
@@ -36319,7 +36405,8 @@ var Requests = /*#__PURE__*/function (_EventTarget) {
   function Requests(container, _ref) {
     var _this;
 
-    var _ref$columns = _ref.columns,
+    var quadrants = _ref.quadrants,
+        _ref$columns = _ref.columns,
         columns = _ref$columns === void 0 ? ['id', 'status', 'title', 'forestry'] : _ref$columns,
         serviceEndpoint = _ref.serviceEndpoint;
 
@@ -36330,6 +36417,7 @@ var Requests = /*#__PURE__*/function (_EventTarget) {
 
     _this._container.classList.add('scanex-forestry-requests');
 
+    _this._quadrants = quadrants;
     _this._columns = columns;
     _this._serviceEndpoint = serviceEndpoint;
     _this._container.innerHTML = "<table class=\"header\" cellpadding=\"0\" cellspacing=\"0\">\n            <tbody>\n                <tr>\n                    <td>\n                        <label class=\"title\">".concat(translate$3('project.header'), "</label>\n                    </td>                    \n                    <td>\n                        <button class=\"create\">").concat(translate$3('project.create'), "</button>\n                    </td>\n                </tr>\n            </tbody>\n        </table>        \n        <table class=\"content\" cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>").concat(_this._columns.map(function (id) {
@@ -36349,29 +36437,30 @@ var Requests = /*#__PURE__*/function (_EventTarget) {
   }
 
   _createClass(Requests, [{
-    key: "update",
+    key: "open",
     value: function () {
-      var _update = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
         var _this2 = this;
 
-        var response, items, rows, _loop, i;
+        var response, items, rows, _loop, i, event;
 
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                _context.next = 2;
+                _context.prev = 0;
+                _context.next = 3;
                 return fetch("".concat(this._serviceEndpoint, "/Forest/GetPlotProjectsList?StartPosition=0"), {
                   method: 'GET',
                   credentials: 'include'
                 });
 
-              case 2:
+              case 3:
                 response = _context.sent;
-                _context.next = 5;
+                _context.next = 6;
                 return response.json();
 
-              case 5:
+              case 6:
                 items = _context.sent;
                 this._content.innerHTML = items.map(function (item) {
                   return "<tr class=\"request\">".concat(_this2._columns.map(function (col) {
@@ -36397,24 +36486,72 @@ var Requests = /*#__PURE__*/function (_EventTarget) {
                   _loop(i);
                 }
 
-              case 10:
+                event = document.createEvent('Event');
+                event.initEvent('open', false, false);
+                this.dispatchEvent(event);
+                _context.next = 19;
+                break;
+
+              case 16:
+                _context.prev = 16;
+                _context.t0 = _context["catch"](0);
+                alert(_context.t0.toString());
+
+              case 19:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, this);
+        }, _callee, this, [[0, 16]]);
       }));
 
-      function update() {
-        return _update.apply(this, arguments);
+      function open() {
+        return _open.apply(this, arguments);
       }
 
-      return update;
+      return open;
     }()
+  }, {
+    key: "close",
+    value: function close() {
+      this._quadrants.removeStyleHook();
+
+      this._quadrants.repaint();
+
+      var event = document.createEvent('Event');
+      event.initEvent('close', false, false);
+      this.dispatchEvent(event);
+    }
   }]);
 
   return Requests;
 }(EventTarget);
+
+var $includes$1 = arrayIncludes.includes;
+
+
+
+var USES_TO_LENGTH$9 = arrayMethodUsesToLength('indexOf', { ACCESSORS: true, 1: 0 });
+
+// `Array.prototype.includes` method
+// https://tc39.github.io/ecma262/#sec-array.prototype.includes
+_export({ target: 'Array', proto: true, forced: !USES_TO_LENGTH$9 }, {
+  includes: function includes(el /* , fromIndex = 0 */) {
+    return $includes$1(this, el, arguments.length > 1 ? arguments[1] : undefined);
+  }
+});
+
+// https://tc39.github.io/ecma262/#sec-array.prototype-@@unscopables
+addToUnscopables('includes');
+
+// `String.prototype.includes` method
+// https://tc39.github.io/ecma262/#sec-string.prototype.includes
+_export({ target: 'String', proto: true, forced: !correctIsRegexpLogic('includes') }, {
+  includes: function includes(searchString /* , position = 0 */) {
+    return !!~String(requireObjectCoercible(this))
+      .indexOf(notARegexp(searchString), arguments.length > 1 ? arguments[1] : undefined);
+  }
+});
 
 var translate$4 = T.getText.bind(T);
 T.addText('rus', {
@@ -53995,6 +54132,9 @@ T.addText('rus', {
     create: 'Создать проект'
   }
 });
+var STYLES = {
+  fillStyle: 'rgba(28, 224, 0, 0.4)'
+};
 
 var CreatePlot = /*#__PURE__*/function (_EventTarget) {
   _inherits(CreatePlot, _EventTarget);
@@ -54004,7 +54144,8 @@ var CreatePlot = /*#__PURE__*/function (_EventTarget) {
   function CreatePlot(container, _ref) {
     var _this;
 
-    var serviceEndpoint = _ref.serviceEndpoint;
+    var quadrants = _ref.quadrants,
+        serviceEndpoint = _ref.serviceEndpoint;
 
     _classCallCheck(this, CreatePlot);
 
@@ -54014,14 +54155,13 @@ var CreatePlot = /*#__PURE__*/function (_EventTarget) {
 
     _this._container.classList.add('scanex-forestry-plot');
 
+    _this._quadrants = quadrants;
     _this._serviceEndpoint = serviceEndpoint;
     _this._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th colspan=\"2\">\n                        <button class=\"backward\"></button>\n                        <label class=\"head\">".concat(translate$7('plot.title'), "</label>                        \n                        <button class=\"create\">").concat(translate$7('plot.create'), "</button>\n                    </th>\n                </tr>\n            </thead>\n            <tbody>\n                <tr>                    \n                    <td>                                                \n                        <div class=\"species\"></div>\n                    </td>\n                    <td>\n                        <div class=\"quadrants\"></div>\n                    </td>\n                </tr>\n            </tbody>\n        </table>");
     container.querySelector('.backward').addEventListener('click', function (e) {
       e.stopPropagation();
-      var event = document.createEvent('Event');
-      event.initEvent('backward', false, false);
 
-      _this.dispatchEvent(event);
+      _this.back();
     });
     var btnCreate = container.querySelector('.create');
     btnCreate.addEventListener('click', /*#__PURE__*/function () {
@@ -54055,9 +54195,9 @@ var CreatePlot = /*#__PURE__*/function (_EventTarget) {
         return _ref2.apply(this, arguments);
       };
     }());
-    _this._quadrants = new Quadrants(container.querySelector('.quadrants'));
+    _this._quadrantView = new Quadrants(container.querySelector('.quadrants'));
 
-    _this._quadrants.on('item:click', function (e) {
+    _this._quadrantView.on('item:click', function (e) {
       var id = e.detail;
       var event = document.createEvent('Event');
       event.initEvent('quadrant:click', false, false);
@@ -54080,11 +54220,18 @@ var CreatePlot = /*#__PURE__*/function (_EventTarget) {
       _this.dispatchEvent(event);
     });
 
-    _this._species = new Species(container.querySelector('.species'));
+    _this._speciesView = new Species(container.querySelector('.species'));
     return _this;
   }
 
   _createClass(CreatePlot, [{
+    key: "back",
+    value: function back() {
+      var event = document.createEvent('Event');
+      event.initEvent('backward', false, false);
+      this.dispatchEvent(event);
+    }
+  }, {
     key: "save",
     value: function () {
       var _save = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
@@ -54095,7 +54242,7 @@ var CreatePlot = /*#__PURE__*/function (_EventTarget) {
               case 0:
                 fd = new FormData();
                 fd.append('Title', "".concat(new Date().toLocaleDateString()));
-                fd.append('ForestQs', this._quadrants.items.map(function (_ref3) {
+                fd.append('ForestQs', this._quadrantView.items.map(function (_ref3) {
                   var gmx_id = _ref3.gmx_id;
                   return gmx_id.toString();
                 }).join(','));
@@ -54138,61 +54285,42 @@ var CreatePlot = /*#__PURE__*/function (_EventTarget) {
           while (1) {
             switch (_context3.prev = _context3.next) {
               case 0:
-                if (!(Array.isArray(ids) && ids.length > 0)) {
-                  _context3.next = 22;
-                  break;
-                }
-
                 fd = new FormData();
                 fd.append('ForestBlocks', ids.map(function (id) {
                   return id.toString();
                 }).join(','));
-                _context3.next = 5;
+                _context3.next = 4;
                 return fetch("".concat(this._serviceEndpoint, "/Forest/ValidateForestProjectGmxIds"), {
                   method: 'POST',
                   credentials: 'include',
                   body: fd
                 });
 
-              case 5:
+              case 4:
                 response = _context3.sent;
-                _context3.next = 8;
+                _context3.next = 7;
                 return response.json();
 
-              case 8:
+              case 7:
                 _yield$response$json = _context3.sent;
                 Status = _yield$response$json.Status;
                 ForestStat = _yield$response$json.ForestStat;
                 SquareStat = _yield$response$json.SquareStat;
 
                 if (!(Status === 'valid')) {
-                  _context3.next = 19;
+                  _context3.next = 15;
                   break;
                 }
 
-                this._quadrants.items = SquareStat;
-                this._species.items = ForestStat;
+                return _context3.abrupt("return", {
+                  ForestStat: ForestStat,
+                  SquareStat: SquareStat
+                });
 
-                this._container.classList.remove('hidden');
-
-                return _context3.abrupt("return", true);
-
-              case 19:
+              case 15:
                 return _context3.abrupt("return", false);
 
-              case 20:
-                _context3.next = 26;
-                break;
-
-              case 22:
-                this._quadrants.items = [];
-                this._species.items = [];
-
-                this._container.classList.add('hidden');
-
-                return _context3.abrupt("return", true);
-
-              case 26:
+              case 16:
               case "end":
                 return _context3.stop();
             }
@@ -54209,49 +54337,71 @@ var CreatePlot = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "hilite",
     value: function hilite(id) {
-      this._quadrants.hilite(id);
+      this._quadrantView.hilite(id);
     }
   }, {
     key: "unhilite",
     value: function unhilite(id) {
-      this._quadrants.unhilite(id);
+      this._quadrantView.unhilite(id);
     }
   }, {
-    key: "toggle",
+    key: "_quadrantClick",
+    value: function _quadrantClick(e) {
+      var _this2 = this;
+
+      L$1.DomEvent.stopPropagation(e);
+      var id = e.gmx.id;
+      var ids = this.quadrants.slice();
+
+      if (ids.includes(id)) {
+        ids = ids.filter(function (k) {
+          return k !== id;
+        });
+      } else {
+        ids.push(id);
+      }
+
+      if (ids.length === 0) {
+        this.back();
+      } else {
+        this.validate(ids).then(function (valid) {
+          if (valid) {
+            _this2._quadrantView.items = valid.SquareStat;
+            _this2._speciesView.items = valid.ForestStat;
+
+            _this2._quadrants.repaint();
+          } else {
+            alert(translate$7('quadrant.invalid'));
+          }
+        }).catch(function (e) {
+          alert(e.toString());
+        });
+      }
+    }
+  }, {
+    key: "open",
     value: function () {
-      var _toggle = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(id) {
-        var ids, added;
+      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
+        var _this3 = this;
+
+        var event;
         return regeneratorRuntime.wrap(function _callee4$(_context4) {
           while (1) {
             switch (_context4.prev = _context4.next) {
               case 0:
-                ids = this.quadrants.slice();
-                added = false;
+                this._quadrants.setStyleHook(function (item) {
+                  return _this3.quadrants.includes(item.id) ? STYLES : {};
+                });
 
-                if (ids.includes(id)) {
-                  ids = ids.filter(function (k) {
-                    return k !== id;
-                  });
-                } else {
-                  ids.push(id);
-                  added = true;
-                }
+                this._quadrants.on('click', this._quadrantClick, this);
 
-                _context4.next = 5;
-                return this.validate(ids);
+                this._quadrants.repaint();
 
-              case 5:
-                if (!_context4.sent) {
-                  _context4.next = 9;
-                  break;
-                }
+                event = document.createEvent('Event');
+                event.initEvent('open', false, false);
+                this.dispatchEvent(event);
 
-                return _context4.abrupt("return", added);
-
-              case 9:
-                throw translate$7('quadrant.invalid');
-
-              case 10:
+              case 6:
               case "end":
                 return _context4.stop();
             }
@@ -54259,16 +54409,29 @@ var CreatePlot = /*#__PURE__*/function (_EventTarget) {
         }, _callee4, this);
       }));
 
-      function toggle(_x3) {
-        return _toggle.apply(this, arguments);
+      function open() {
+        return _open.apply(this, arguments);
       }
 
-      return toggle;
+      return open;
     }()
+  }, {
+    key: "close",
+    value: function close() {
+      this._quadrants.removeStyleHook();
+
+      this._quadrants.repaint();
+
+      this._quadrants.off('click', this._quadrantClick, this);
+
+      var event = document.createEvent('Event');
+      event.initEvent('close', false, false);
+      this.dispatchEvent(event);
+    }
   }, {
     key: "quadrants",
     get: function get() {
-      return this._quadrants.items.map(function (_ref4) {
+      return this._quadrantView.items.map(function (_ref4) {
         var gmx_id = _ref4.gmx_id;
         return gmx_id;
       });
@@ -54287,6 +54450,9 @@ T.addText('rus', {
     save: 'Сохранить проект'
   }
 });
+var STYLES$1 = {
+  fillStyle: 'rgba(28, 224, 0, 0.4)'
+};
 
 var EditPlot = /*#__PURE__*/function (_EventTarget) {
   _inherits(EditPlot, _EventTarget);
@@ -54296,7 +54462,8 @@ var EditPlot = /*#__PURE__*/function (_EventTarget) {
   function EditPlot(container, _ref) {
     var _this;
 
-    var serviceEndpoint = _ref.serviceEndpoint;
+    var quadrants = _ref.quadrants,
+        serviceEndpoint = _ref.serviceEndpoint;
 
     _classCallCheck(this, EditPlot);
 
@@ -54306,14 +54473,13 @@ var EditPlot = /*#__PURE__*/function (_EventTarget) {
 
     _this._container.classList.add('scanex-forestry-plot');
 
+    _this._quadrants = quadrants;
     _this._serviceEndpoint = serviceEndpoint;
     _this._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th colspan=\"2\">\n                        <button class=\"backward\"></button>\n                        <label class=\"head\">".concat(translate$8('plot.title'), "</label>                        \n                        <button class=\"save\">").concat(translate$8('plot.save'), "</button>\n                        <button class=\"request\">").concat(translate$8('plot.request'), "</button>\n                    </th>\n                </tr>\n            </thead>\n            <tbody>\n                <tr>                    \n                    <td>                                                \n                        <div class=\"species\"></div>\n                    </td>\n                    <td>\n                        <div class=\"quadrants\"></div>\n                    </td>\n                </tr>\n            </tbody>\n        </table>");
     container.querySelector('.backward').addEventListener('click', function (e) {
       e.stopPropagation();
-      var event = document.createEvent('Event');
-      event.initEvent('backward', false, false);
 
-      _this.dispatchEvent(event);
+      _this.back();
     });
     var btnSave = container.querySelector('.save');
     btnSave.addEventListener('click', /*#__PURE__*/function () {
@@ -54347,9 +54513,9 @@ var EditPlot = /*#__PURE__*/function (_EventTarget) {
         return _ref2.apply(this, arguments);
       };
     }());
-    _this._quadrants = new Quadrants(container.querySelector('.quadrants'));
+    _this._quadrantView = new Quadrants(container.querySelector('.quadrants'));
 
-    _this._quadrants.on('item:click', function (e) {
+    _this._quadrantView.on('item:click', function (e) {
       var id = e.detail;
       var event = document.createEvent('Event');
       event.initEvent('quadrant:click', false, false);
@@ -54372,86 +54538,73 @@ var EditPlot = /*#__PURE__*/function (_EventTarget) {
       _this.dispatchEvent(event);
     });
 
-    _this._species = new Species(container.querySelector('.species'));
+    _this._speciesView = new Species(container.querySelector('.species'));
     return _this;
   }
 
   _createClass(EditPlot, [{
-    key: "show",
-    value: function () {
-      var _show = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(id) {
-        var response, _yield$response$json, gmxIds;
+    key: "_quadrantClick",
+    value: function _quadrantClick(e) {
+      var _this2 = this;
 
+      L$1.DomEvent.stopPropagation(e);
+      var id = e.gmx.id;
+      var ids = this.quadrants.slice();
+
+      if (ids.includes(id)) {
+        ids = ids.filter(function (k) {
+          return k !== id;
+        });
+      } else {
+        ids.push(id);
+      }
+
+      if (ids.length === 0) {
+        this.back();
+      } else {
+        this.validate(ids).then(function (valid) {
+          if (valid) {
+            _this2._quadrantView.items = valid.SquareStat;
+            _this2._speciesView.items = valid.ForestStat;
+
+            _this2._quadrants.repaint();
+          } else {
+            alert(translate$8('quadrant.invalid'));
+          }
+        }).catch(function (e) {
+          alert(e.toString());
+        });
+      }
+    }
+  }, {
+    key: "back",
+    value: function back() {
+      var event = document.createEvent('Event');
+      event.initEvent('backward', false, false);
+      this.dispatchEvent(event);
+    }
+  }, {
+    key: "save",
+    value: function () {
+      var _save = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
+        var fd, response;
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
               case 0:
-                _context2.next = 2;
-                return fetch("".concat(this._serviceEndpoint, "/Forest/GetPlotProjectDraft?ForestProjectID=").concat(id), {
-                  method: 'GET',
-                  credentials: 'include'
-                });
-
-              case 2:
-                response = _context2.sent;
-                _context2.next = 5;
-                return response.json();
-
-              case 5:
-                _yield$response$json = _context2.sent;
-                gmxIds = _yield$response$json.gmxIds;
-                _context2.next = 9;
-                return this.validate(gmxIds);
-
-              case 9:
-                if (!_context2.sent) {
-                  _context2.next = 13;
-                  break;
-                }
-
-                this._valid = id;
-                _context2.next = 14;
-                break;
-
-              case 13:
-                this._valid = false;
-
-              case 14:
-              case "end":
-                return _context2.stop();
-            }
-          }
-        }, _callee2, this);
-      }));
-
-      function show(_x2) {
-        return _show.apply(this, arguments);
-      }
-
-      return show;
-    }()
-  }, {
-    key: "save",
-    value: function () {
-      var _save = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
-        var fd, response;
-        return regeneratorRuntime.wrap(function _callee3$(_context3) {
-          while (1) {
-            switch (_context3.prev = _context3.next) {
-              case 0:
                 if (!this._valid) {
-                  _context3.next = 13;
+                  _context2.next = 13;
                   break;
                 }
 
                 fd = new FormData();
                 fd.append('ForestProjectID', this._valid);
                 fd.append('Title', "".concat(new Date().toLocaleDateString()));
-                fd.append('ForestQs', this._quadrants.items.map(function (_ref3) {
+                fd.append('ForestQs', this._quadrantView.items.map(function (_ref3) {
                   var gmx_id = _ref3.gmx_id;
                   return gmx_id.toString();
                 }).join(','));
-                _context3.next = 7;
+                _context2.next = 7;
                 return fetch("".concat(this._serviceEndpoint, "/Forest/StoreDraftForestProjectGmxIds"), {
                   method: 'POST',
                   credentials: 'include',
@@ -54459,24 +54612,24 @@ var EditPlot = /*#__PURE__*/function (_EventTarget) {
                 });
 
               case 7:
-                response = _context3.sent;
-                _context3.next = 10;
+                response = _context2.sent;
+                _context2.next = 10;
                 return response.json();
 
               case 10:
-                return _context3.abrupt("return", _context3.sent);
+                return _context2.abrupt("return", _context2.sent);
 
               case 13:
-                return _context3.abrupt("return", new Promise(function (resolve) {
+                return _context2.abrupt("return", new Promise(function (resolve) {
                   return resolve(false);
                 }));
 
               case 14:
               case "end":
-                return _context3.stop();
+                return _context2.stop();
             }
           }
-        }, _callee3, this);
+        }, _callee2, this);
       }));
 
       function save() {
@@ -54488,76 +54641,57 @@ var EditPlot = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "validate",
     value: function () {
-      var _validate = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(ids) {
-        var fd, response, _yield$response$json2, Status, ForestStat, SquareStat;
+      var _validate = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(ids) {
+        var fd, response, _yield$response$json, Status, ForestStat, SquareStat;
 
-        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+        return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
-            switch (_context4.prev = _context4.next) {
+            switch (_context3.prev = _context3.next) {
               case 0:
-                if (!(Array.isArray(ids) && ids.length > 0)) {
-                  _context4.next = 22;
-                  break;
-                }
-
                 fd = new FormData();
                 fd.append('ForestBlocks', ids.map(function (id) {
                   return id.toString();
                 }).join(','));
-                _context4.next = 5;
+                _context3.next = 4;
                 return fetch("".concat(this._serviceEndpoint, "/Forest/ValidateForestProjectGmxIds"), {
                   method: 'POST',
                   credentials: 'include',
                   body: fd
                 });
 
-              case 5:
-                response = _context4.sent;
-                _context4.next = 8;
+              case 4:
+                response = _context3.sent;
+                _context3.next = 7;
                 return response.json();
 
-              case 8:
-                _yield$response$json2 = _context4.sent;
-                Status = _yield$response$json2.Status;
-                ForestStat = _yield$response$json2.ForestStat;
-                SquareStat = _yield$response$json2.SquareStat;
+              case 7:
+                _yield$response$json = _context3.sent;
+                Status = _yield$response$json.Status;
+                ForestStat = _yield$response$json.ForestStat;
+                SquareStat = _yield$response$json.SquareStat;
 
                 if (!(Status === 'valid')) {
-                  _context4.next = 19;
+                  _context3.next = 15;
                   break;
                 }
 
-                this._quadrants.items = SquareStat;
-                this._species.items = ForestStat;
+                return _context3.abrupt("return", {
+                  ForestStat: ForestStat,
+                  SquareStat: SquareStat
+                });
 
-                this._container.classList.remove('hidden');
+              case 15:
+                return _context3.abrupt("return", false);
 
-                return _context4.abrupt("return", true);
-
-              case 19:
-                return _context4.abrupt("return", false);
-
-              case 20:
-                _context4.next = 26;
-                break;
-
-              case 22:
-                this._quadrants.items = [];
-                this._species.items = [];
-
-                this._container.classList.add('hidden');
-
-                return _context4.abrupt("return", true);
-
-              case 26:
+              case 16:
               case "end":
-                return _context4.stop();
+                return _context3.stop();
             }
           }
-        }, _callee4, this);
+        }, _callee3, this);
       }));
 
-      function validate(_x3) {
+      function validate(_x2) {
         return _validate.apply(this, arguments);
       }
 
@@ -54566,66 +54700,112 @@ var EditPlot = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "hilite",
     value: function hilite(id) {
-      this._quadrants.hilite(id);
+      this._quadrantView.hilite(id);
     }
   }, {
     key: "unhilite",
     value: function unhilite(id) {
-      this._quadrants.unhilite(id);
+      this._quadrantView.unhilite(id);
     }
   }, {
-    key: "toggle",
+    key: "open",
     value: function () {
-      var _toggle = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(id) {
-        var ids, added;
-        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(id) {
+        var _this3 = this;
+
+        var response, _yield$response$json2, gmxIds, event;
+
+        return regeneratorRuntime.wrap(function _callee4$(_context4) {
           while (1) {
-            switch (_context5.prev = _context5.next) {
+            switch (_context4.prev = _context4.next) {
               case 0:
-                ids = this.quadrants.slice();
-                added = false;
+                _context4.prev = 0;
+                _context4.next = 3;
+                return fetch("".concat(this._serviceEndpoint, "/Forest/GetPlotProjectDraft?ForestProjectID=").concat(id), {
+                  method: 'GET',
+                  credentials: 'include'
+                });
 
-                if (ids.includes(id)) {
-                  ids = ids.filter(function (k) {
-                    return k !== id;
-                  });
-                } else {
-                  ids.push(id);
-                  added = true;
-                }
+              case 3:
+                response = _context4.sent;
+                _context4.next = 6;
+                return response.json();
 
-                _context5.next = 5;
-                return this.validate(ids);
+              case 6:
+                _yield$response$json2 = _context4.sent;
+                gmxIds = _yield$response$json2.gmxIds;
+                _context4.next = 10;
+                return this.validate(gmxIds);
 
-              case 5:
-                if (!_context5.sent) {
-                  _context5.next = 9;
+              case 10:
+                this._valid = _context4.sent;
+
+                if (!this._valid) {
+                  _context4.next = 22;
                   break;
                 }
 
-                return _context5.abrupt("return", added);
+                this._quadrantView.items = this._valid.SquareStat;
+                this._speciesView.items = this._valid.ForestStat;
 
-              case 9:
+                this._quadrants.setStyleHook(function (item) {
+                  return _this3.quadrants.includes(item.id) ? STYLES$1 : {};
+                });
+
+                this._quadrants.on('click', this._quadrantClick, this);
+
+                this._quadrants.repaint();
+
+                event = document.createEvent('Event');
+                event.initEvent('open', false, false);
+                this.dispatchEvent(event);
+                _context4.next = 23;
+                break;
+
+              case 22:
                 throw translate$8('quadrant.invalid');
 
-              case 10:
+              case 23:
+                _context4.next = 29;
+                break;
+
+              case 25:
+                _context4.prev = 25;
+                _context4.t0 = _context4["catch"](0);
+                this.back();
+                alert(_context4.t0.toString());
+
+              case 29:
               case "end":
-                return _context5.stop();
+                return _context4.stop();
             }
           }
-        }, _callee5, this);
+        }, _callee4, this, [[0, 25]]);
       }));
 
-      function toggle(_x4) {
-        return _toggle.apply(this, arguments);
+      function open(_x3) {
+        return _open.apply(this, arguments);
       }
 
-      return toggle;
+      return open;
     }()
+  }, {
+    key: "close",
+    value: function close() {
+      this._quadrants.removeStyleHook();
+
+      this._quadrants.repaint();
+
+      this._quadrants.off('click', this._quadrantClick, this);
+
+      var event = document.createEvent('Event');
+      event.initEvent('close', false, false);
+      this.dispatchEvent(event);
+    }
   }, {
     key: "quadrants",
     get: function get() {
-      return this._quadrants.items.map(function (_ref4) {
+      return this._quadrantView.items.map(function (_ref4) {
         var gmx_id = _ref4.gmx_id;
         return gmx_id;
       });
@@ -54651,6 +54831,11 @@ T.addText('rus', {
     ha: 'га'
   }
 });
+var STYLES$2 = {
+  fillStyle: 'rgba(255, 184, 1)',
+  strokeStyle: '#FFB801',
+  lineWidth: 2
+};
 
 var Quadrant = /*#__PURE__*/function (_EventTarget) {
   _inherits(Quadrant, _EventTarget);
@@ -54660,13 +54845,15 @@ var Quadrant = /*#__PURE__*/function (_EventTarget) {
   function Quadrant(container, _ref) {
     var _this;
 
-    var serviceEndpoint = _ref.serviceEndpoint;
+    var quadrants = _ref.quadrants,
+        serviceEndpoint = _ref.serviceEndpoint;
 
     _classCallCheck(this, Quadrant);
 
     _this = _super.call(this);
     _this._serviceEndpoint = serviceEndpoint;
     _this._container = container;
+    _this._quadrants = quadrants;
 
     _this._container.classList.add('scanex-forestry-quadrant');
 
@@ -54740,43 +54927,55 @@ var Quadrant = /*#__PURE__*/function (_EventTarget) {
       this._chart.updateSeries(series);
     }
   }, {
-    key: "toggle",
+    key: "open",
     value: function () {
-      var _toggle = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(id) {
-        var response, data;
+      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(_ref3) {
+        var id, gmx_id, response, data, event;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                if (!(this._id === id)) {
+                id = _ref3.id, gmx_id = _ref3.gmx_id;
+
+                if (!(this._gmx_id === gmx_id)) {
                   _context.next = 5;
                   break;
                 }
 
-                this._id = null;
-                return _context.abrupt("return", false);
+                this.close();
+                _context.next = 18;
+                break;
 
               case 5:
-                this._id = id;
-                _context.next = 8;
-                return fetch("".concat(this._serviceEndpoint, "/Forest/GetQuadrantInformation?QuadrantID=").concat(this._id), {
+                this._gmx_id = gmx_id;
+
+                this._quadrants.setStyleHook(function (item) {
+                  return item.id === gmx_id ? STYLES$2 : {};
+                });
+
+                this._quadrants.repaint();
+
+                _context.next = 10;
+                return fetch("".concat(this._serviceEndpoint, "/Forest/GetQuadrantInformation?QuadrantID=").concat(id), {
                   method: 'GET',
                   credentials: 'include'
                 });
 
-              case 8:
+              case 10:
                 response = _context.sent;
-                _context.next = 11;
+                _context.next = 13;
                 return response.json();
 
-              case 11:
+              case 13:
                 data = _context.sent;
 
                 this._render(data);
 
-                return _context.abrupt("return", true);
+                event = document.createEvent('Event');
+                event.initEvent('open', false, false);
+                this.dispatchEvent(event);
 
-              case 14:
+              case 18:
               case "end":
                 return _context.stop();
             }
@@ -54784,12 +54983,24 @@ var Quadrant = /*#__PURE__*/function (_EventTarget) {
         }, _callee, this);
       }));
 
-      function toggle(_x) {
-        return _toggle.apply(this, arguments);
+      function open(_x) {
+        return _open.apply(this, arguments);
       }
 
-      return toggle;
+      return open;
     }()
+  }, {
+    key: "close",
+    value: function close() {
+      this._quadrants.removeStyleHook();
+
+      this._quadrants.redrawItem(this._gmx_id);
+
+      this._gmx_id = null;
+      var event = document.createEvent('Event');
+      event.initEvent('close', false, false);
+      this.dispatchEvent(event);
+    }
   }]);
 
   return Quadrant;
@@ -56225,35 +56436,36 @@ var Uploaded = /*#__PURE__*/function (_EventTarget) {
       return callback;
     }()
   }, {
-    key: "update",
+    key: "open",
     value: function () {
-      var _update = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
+      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
         var _this2 = this;
 
-        var _yield$this$callback, items, count, boxes, _loop, i;
+        var _yield$this$callback, items, count, boxes, _loop, i, event;
 
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
               case 0:
                 if (!(typeof this.callback === 'function')) {
-                  _context3.next = 7;
+                  _context3.next = 16;
                   break;
                 }
 
-                _context3.next = 3;
+                _context3.prev = 1;
+                _context3.next = 4;
                 return this.callback(this._pageSize, this._page);
 
-              case 3:
+              case 4:
                 _yield$this$callback = _context3.sent;
                 items = _yield$this$callback.items;
                 count = _yield$this$callback.count;
 
                 if (count > 0) {
                   this._content.innerHTML = items.map(function (item) {
-                    return "<tr>\n                        <td>\n                            <i class=\"scanex-uploaded-icon box\"></i>\n                        </td>\n                        ".concat(_this2._columns.map(function (id) {
+                    return "<tr>\n                            <td>\n                                <i class=\"scanex-uploaded-icon box\"></i>\n                            </td>\n                            ".concat(_this2._columns.map(function (id) {
                       return "<td>".concat(item[id], "</td>");
-                    }).join(''), "\n                    </tr>");
+                    }).join(''), "\n                        </tr>");
                   }).join('');
                   boxes = this._content.querySelectorAll('i');
 
@@ -56278,20 +56490,38 @@ var Uploaded = /*#__PURE__*/function (_EventTarget) {
                   this._pager.pages = Math.ceil(count / this._pageSize);
                 }
 
-              case 7:
+                event = document.createEvent('Event');
+                event.initEvent('open', false, false);
+                this.dispatchEvent(event);
+                _context3.next = 16;
+                break;
+
+              case 13:
+                _context3.prev = 13;
+                _context3.t0 = _context3["catch"](1);
+                alert(_context3.t0.toString());
+
+              case 16:
               case "end":
                 return _context3.stop();
             }
           }
-        }, _callee3, this);
+        }, _callee3, this, [[1, 13]]);
       }));
 
-      function update() {
-        return _update.apply(this, arguments);
+      function open() {
+        return _open.apply(this, arguments);
       }
 
-      return update;
+      return open;
     }()
+  }, {
+    key: "close",
+    value: function close() {
+      var event = document.createEvent('Event');
+      event.initEvent('close', false, false);
+      this.dispatchEvent(event);
+    }
   }]);
 
   return Uploaded;
@@ -56334,29 +56564,28 @@ var Analytics = /*#__PURE__*/function (_EventTarget) {
   function Analytics(container, _ref) {
     var _this;
 
-    var serviceEndpoint = _ref.serviceEndpoint;
+    var quadrants = _ref.quadrants,
+        serviceEndpoint = _ref.serviceEndpoint;
 
     _classCallCheck(this, Analytics);
 
     _this = _super.call(this);
     _this._container = container;
+    _this._quadrants = quadrants;
     L$1.DomEvent.disableScrollPropagation(container);
 
     _this._container.classList.add('scanex-forestry-analytics');
 
     _this._serviceEndpoint = serviceEndpoint;
     _this._container.innerHTML = '';
-
-    _this.getReportHeaderData();
-
     return _this;
   }
 
   _createClass(Analytics, [{
-    key: "getReportHeaderData",
+    key: "open",
     value: function () {
-      var _getReportHeaderData = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
-        var response;
+      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+        var response, event;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
@@ -56377,7 +56606,11 @@ var Analytics = /*#__PURE__*/function (_EventTarget) {
 
                 this._renderer(this._headerData);
 
-              case 7:
+                event = document.createEvent('Event');
+                event.initEvent('open', false, false);
+                this.dispatchEvent(event);
+
+              case 10:
               case "end":
                 return _context.stop();
             }
@@ -56385,12 +56618,23 @@ var Analytics = /*#__PURE__*/function (_EventTarget) {
         }, _callee, this);
       }));
 
-      function getReportHeaderData() {
-        return _getReportHeaderData.apply(this, arguments);
+      function open() {
+        return _open.apply(this, arguments);
       }
 
-      return getReportHeaderData;
+      return open;
     }()
+  }, {
+    key: "close",
+    value: function close() {
+      this._quadrants.removeStyleHook();
+
+      this._quadrants.repaint();
+
+      var event = document.createEvent('Event');
+      event.initEvent('close', false, false);
+      this.dispatchEvent(event);
+    }
   }, {
     key: "_renderer",
     value: function _renderer(data) {
@@ -56705,8 +56949,34 @@ var NaturalPark = /*#__PURE__*/function (_EventTarget) {
 
   _createClass(NaturalPark, [{
     key: "show",
-    value: function show(props) {
-      this._container.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n\t\t\t<thead>\n\t\t\t\t<tr>\n\t\t\t\t\t<th colspan=\"2\" class=\"title\">".concat(translate$d('naturalPark.title'), "</th>\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"name title\">").concat(translate$d('naturalPark.name'), "</td>\n\t\t\t\t\t<td class=\"name value\">").concat(props.NAME_R, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"type title\">").concat(translate$d('naturalPark.type'), "</td>\n\t\t\t\t\t<td class=\"type value\">").concat(props.TYPE_NL, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"year title\">").concat(translate$d('naturalPark.year'), "</td>\n\t\t\t\t\t<td class=\"year value\">").concat(props.YEAR_, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"prov title\">").concat(translate$d('naturalPark.prov'), "</td>\n\t\t\t\t\t<td class=\"prov value\">").concat(props.PROV_NL, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"area title\">").concat(translate$d('naturalPark.area'), "</td>\n\t\t\t\t\t<td class=\"area value\">").concat(props.AREA_DOC, "</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
+    value: function () {
+      var _show = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(props) {
+        return regeneratorRuntime.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                this._container.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n\t\t\t<thead>\n\t\t\t\t<tr>\n\t\t\t\t\t<th colspan=\"2\" class=\"title\">".concat(translate$d('naturalPark.title'), "</th>\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"name title\">").concat(translate$d('naturalPark.name'), "</td>\n\t\t\t\t\t<td class=\"name value\">").concat(props.NAME_R, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"type title\">").concat(translate$d('naturalPark.type'), "</td>\n\t\t\t\t\t<td class=\"type value\">").concat(props.TYPE_NL, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"year title\">").concat(translate$d('naturalPark.year'), "</td>\n\t\t\t\t\t<td class=\"year value\">").concat(props.YEAR_, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"prov title\">").concat(translate$d('naturalPark.prov'), "</td>\n\t\t\t\t\t<td class=\"prov value\">").concat(props.PROV_NL, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"area title\">").concat(translate$d('naturalPark.area'), "</td>\n\t\t\t\t\t<td class=\"area value\">").concat(props.AREA_DOC, "</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
+
+              case 1:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee, this);
+      }));
+
+      function show(_x) {
+        return _show.apply(this, arguments);
+      }
+
+      return show;
+    }()
+  }, {
+    key: "hide",
+    value: function hide() {
+      this._quadrants.removeStyleHook();
+
+      this._quadrants.repaint();
     }
   }]);
 
@@ -56731,6 +57001,10 @@ T.addText('rus', {
     percentage: 'Процент выполнения'
   }
 });
+var STYLES$3 = {
+  fillStyle: 'rgba(255, 184, 1)',
+  strokeStyle: '#FFB801'
+};
 
 var Stand = /*#__PURE__*/function (_EventTarget) {
   _inherits(Stand, _EventTarget);
@@ -56740,13 +57014,15 @@ var Stand = /*#__PURE__*/function (_EventTarget) {
   function Stand(container, _ref) {
     var _this;
 
-    var serviceEndpoint = _ref.serviceEndpoint;
+    var stands = _ref.stands,
+        serviceEndpoint = _ref.serviceEndpoint;
 
     _classCallCheck(this, Stand);
 
     _this = _super.call(this);
     _this._container = container;
     _this._serviceEndpoint = serviceEndpoint;
+    _this._stands = stands;
 
     _this._container.classList.add('scanex-forestry-stand');
 
@@ -56852,26 +57128,29 @@ var Stand = /*#__PURE__*/function (_EventTarget) {
       }).join(''), "</tbody>\n\t\t</table>");
     }
   }, {
-    key: "toggle",
+    key: "open",
     value: function () {
-      var _toggle = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(id) {
-        var response, data;
+      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(_ref5) {
+        var id, gmx_id, response, data, event;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                if (!(this._id === id)) {
+                id = _ref5.id, gmx_id = _ref5.gmx_id;
+
+                if (!(this._gmx_id === gmx_id)) {
                   _context.next = 5;
                   break;
                 }
 
-                this._id = null;
-                return _context.abrupt("return", false);
+                this.close();
+                _context.next = 18;
+                break;
 
               case 5:
-                this._id = id;
+                this._gmx_id = gmx_id;
                 _context.next = 8;
-                return fetch("".concat(this._serviceEndpoint, "/Forest/GetStandInformation?StandID=").concat(this._id), {
+                return fetch("".concat(this._serviceEndpoint, "/Forest/GetStandInformation?StandID=").concat(id), {
                   method: 'GET',
                   credentials: 'include'
                 });
@@ -56886,9 +57165,17 @@ var Stand = /*#__PURE__*/function (_EventTarget) {
 
                 this._render(data);
 
-                return _context.abrupt("return", true);
+                this._stands.setStyleHook(function (item) {
+                  return item.id === gmx_id ? STYLES$3 : {};
+                });
 
-              case 14:
+                this._stands.redrawItem(this._gmx_id);
+
+                event = document.createEvent('Event');
+                event.initEvent('open', false, false);
+                this.dispatchEvent(event);
+
+              case 18:
               case "end":
                 return _context.stop();
             }
@@ -56896,12 +57183,24 @@ var Stand = /*#__PURE__*/function (_EventTarget) {
         }, _callee, this);
       }));
 
-      function toggle(_x) {
-        return _toggle.apply(this, arguments);
+      function open(_x) {
+        return _open.apply(this, arguments);
       }
 
-      return toggle;
+      return open;
     }()
+  }, {
+    key: "close",
+    value: function close() {
+      this._stands.removeStyleHook();
+
+      this._stands.redrawItem(this._gmx_id);
+
+      this._gmx_id = null;
+      var event = document.createEvent('Event');
+      event.initEvent('close', false, false);
+      this.dispatchEvent(event);
+    }
   }]);
 
   return Stand;
@@ -56934,6 +57233,11 @@ T.addText('rus', {
     doc: 'Документы к договору аренды'
   }
 });
+var STYLES$4 = {
+  fillStyle: 'rgba(49, 243, 80, 0.25)',
+  strokeStyle: '#61E9F1',
+  lineWidth: 2
+};
 
 var Declaration = /*#__PURE__*/function (_EventTarget) {
   _inherits(Declaration, _EventTarget);
@@ -56943,17 +57247,19 @@ var Declaration = /*#__PURE__*/function (_EventTarget) {
   function Declaration(container, _ref) {
     var _this;
 
-    var serviceEndpoint = _ref.serviceEndpoint;
+    var declarations = _ref.declarations,
+        serviceEndpoint = _ref.serviceEndpoint;
 
     _classCallCheck(this, Declaration);
 
     _this = _super.call(this);
     _this._container = container;
     _this._serviceEndpoint = serviceEndpoint;
+    _this._declarations = declarations;
 
     _this._container.classList.add('scanex-forestry-declaration');
 
-    _this._container.innerHTML = "<div class=\"header\">\n            <label>".concat(translate$f('declaration.title'), "</label>            \n            <label class=\"number\"></label>\n        </div>\n        <table cellspacing=\"0\" cellpadding=\"0\">\n            <tbody>\n                <tr>\n                    <td>").concat(translate$f('declaration.federalSubject'), "</td>\n                    <td class=\"federal-subject\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.executive'), "</td>\n                    <td class=\"executive\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.officer'), "</td>\n                    <td class=\"officer\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.lessee'), "</td>\n                    <td class=\"lessee\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.contract'), "</td>\n                    <td class=\"contract\"></td>\n                </tr>\n            </tbody>\n        </table>\n        <div>\n            <i class=\"scanex-declaration-icon doc\"></i>\n            <button class=\"open-doc\">").concat(translate$f('declaration.doc'), "</button>\n        </div>\n        <table cellspacing=\"0\" cellpadding=\"0\">\n            <tbody>\n                <tr>\n                    <td>").concat(translate$f('declaration.usage'), "</td>\n                    <td class=\"usage\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.category'), "</td>\n                    <td class=\"category\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.forestry'), "</td>\n                    <td class=\"forestry\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.district'), "</td>\n                    <td class=\"district\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.site'), "</td>\n                    <td class=\"site\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.quadrant'), "</td>\n                    <td class=\"quadrant\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.stand'), "</td>\n                    <td class=\"stand\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.landing'), "</td>\n                    <td class=\"landing\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.area'), "</td>\n                    <td class=\"area\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.form'), "</td>\n                    <td class=\"form\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.kind'), "</td>\n                    <td class=\"kind\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.range'), "</td>\n                    <td class=\"range\"></td>\n                </tr>                                \n            </tbody>\n            <table class=\"stats\" cellspacing=\"0\" cellpadding=\"0\">\n                <thead>\n                    <tr>\n                        <th>").concat(translate$f('declaration.species'), "</th>\n                        <th>").concat(translate$f('declaration.amount'), "</th>\n                    </tr>\n                </thead>\n                <tbody class=\"stats-content\"></tbody>\n            </table>\n        </table>");
+    _this._container.innerHTML = "<div class=\"header\">\n            <label>".concat(translate$f('declaration.title'), "</label>            \n            <label class=\"number\"></label>\n        </div>\n        <table cellspacing=\"0\" cellpadding=\"0\">\n            <tbody>\n                <tr>\n                    <td>").concat(translate$f('declaration.federalSubject'), "</td>\n                    <td class=\"federal-subject\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.executive'), "</td>\n                    <td class=\"executive\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.officer'), "</td>\n                    <td class=\"officer\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.lessee'), "</td>\n                    <td class=\"lessee\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.contract'), "</td>\n                    <td class=\"contract\"></td>\n                </tr>\n            </tbody>\n        </table>\n        <div>\n            <i class=\"scanex-declaration-icon doc\"></i>\n            <button class=\"open-doc\">").concat(translate$f('declaration.doc'), "</button>\n        </div>\n        <div class=\"content\"></div>");
     return _this;
   }
 
@@ -56986,45 +57292,36 @@ var Declaration = /*#__PURE__*/function (_EventTarget) {
       this._container.querySelector('.officer').innerText = ResponsiblePerson || '';
       this._container.querySelector('.lessee').innerText = Owner || '';
       this._container.querySelector('.contract').innerText = DogovorNumber || '';
-      this._container.querySelector('.usage').innerText = ForestUseType || '';
-      this._container.querySelector('.category').innerText = ForestCategory || '';
-      this._container.querySelector('.forestry').innerText = Forestry || '';
-      this._container.querySelector('.district').innerText = LocalForestry || '';
-      this._container.querySelector('.site').innerText = Stow || '';
-      this._container.querySelector('.quadrant').innerText = ForestInventoryUnitNumber || '';
-      this._container.querySelector('.stand').innerText = Num || '';
-      this._container.querySelector('.landing').innerText = QutiingAreaNumber || '';
-      this._container.querySelector('.area').innerText = Square || '';
-      this._container.querySelector('.form').innerText = FellingForm || '';
-      this._container.querySelector('.kind').innerText = FellingType || '';
-      this._container.querySelector('.range').innerText = Farm || '';
-      this._container.querySelector('.stats-content').innerHTML = Stock.map(function (_ref2) {
+      this._container.querySelector('.content').innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tbody>\n                <tr>\n                    <td>".concat(translate$f('declaration.usage'), "</td>\n                    <td class=\"usage\">").concat(ForestUseType, "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.category'), "</td>\n                    <td class=\"category\">").concat(ForestCategory, "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.forestry'), "</td>\n                    <td class=\"forestry\">").concat(Forestry || '-', "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.district'), "</td>\n                    <td class=\"district\">").concat(LocalForestry || '-', "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.site'), "</td>\n                    <td class=\"site\">").concat(Stow || '-', "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.quadrant'), "</td>\n                    <td class=\"quadrant\">").concat(ForestInventoryUnitNumber, "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.stand'), "</td>\n                    <td class=\"stand\">").concat(Num || '-', "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.landing'), "</td>\n                    <td class=\"landing\">").concat(QutiingAreaNumber, "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.area'), "</td>\n                    <td class=\"area\">").concat(Square, "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.form'), "</td>\n                    <td class=\"form\">").concat(FellingForm, "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.kind'), "</td>\n                    <td class=\"kind\">").concat(FellingType, "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.range'), "</td>\n                    <td class=\"range\">").concat(Farm, "</td>\n                </tr>\n                ").concat(Array.isArray(Stock) && Stock.length ? "<tr>\n                        <td>".concat(translate$f('declaration.species'), "</td>\n                        <td>").concat(translate$f('declaration.amount'), "</td>\n                    </tr>\n                    ").concat(Stock.map(function (_ref2) {
         var species = _ref2.species,
             stock = _ref2.stock;
-        return "<tr>\n                <td>".concat(species, "</td>\n                <td class=\"amount\">").concat(stock, "</td>\n            </tr>");
-      }).join('');
+        return "<tr>\n                            <td>".concat(species, "</td>\n                            <td class=\"amount\">").concat(stock, "</td>\n                        </tr>");
+      }).join('')) : '', "\n            </tbody>            \n        </table>");
     }
   }, {
-    key: "toggle",
+    key: "open",
     value: function () {
-      var _toggle = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(id) {
-        var response, data;
+      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(_ref3) {
+        var id, gmx_id, response, data, event;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                if (!(this._id === id)) {
+                id = _ref3.id, gmx_id = _ref3.gmx_id;
+
+                if (!(this._gmx_id === gmx_id)) {
                   _context.next = 5;
                   break;
                 }
 
-                this._id = null;
-                return _context.abrupt("return", false);
+                this.close();
+                _context.next = 18;
+                break;
 
               case 5:
-                this._id = id;
+                this._gmx_id = gmx_id;
                 _context.next = 8;
-                return fetch("".concat(this._serviceEndpoint, "/Forest/GetForestDeclarationInformation?ForestDeclarationID=").concat(this._id), {
+                return fetch("".concat(this._serviceEndpoint, "/Forest/GetForestDeclarationInformation?ForestDeclarationID=").concat(id), {
                   method: 'GET',
                   credentials: 'include'
                 });
@@ -57039,9 +57336,17 @@ var Declaration = /*#__PURE__*/function (_EventTarget) {
 
                 this._render(data);
 
-                return _context.abrupt("return", true);
+                this._declarations.setStyleHook(function (item) {
+                  return item.id === gmx_id ? STYLES$4 : {};
+                });
 
-              case 14:
+                this._declarations.redrawItem(this._gmx_id);
+
+                event = document.createEvent('Event');
+                event.initEvent('open', false, false);
+                this.dispatchEvent(event);
+
+              case 18:
               case "end":
                 return _context.stop();
             }
@@ -57049,18 +57354,143 @@ var Declaration = /*#__PURE__*/function (_EventTarget) {
         }, _callee, this);
       }));
 
-      function toggle(_x) {
-        return _toggle.apply(this, arguments);
+      function open(_x) {
+        return _open.apply(this, arguments);
       }
 
-      return toggle;
+      return open;
     }()
+  }, {
+    key: "close",
+    value: function close() {
+      this._declarations.removeStyleHook();
+
+      this._declarations.redrawItem(this._gmx_id);
+
+      this._gmx_id = null;
+      var event = document.createEvent('Event');
+      event.initEvent('close', false, false);
+      this.dispatchEvent(event);
+    }
   }]);
 
   return Declaration;
 }(EventTarget);
 
 var translate$g = T.getText.bind(T);
+T.addText('rus', {
+  incident: {
+    title: 'Рубка',
+    titleFire: 'Гарь',
+    areaFire: 'Пройденная пожаром площадь (Га)',
+    areaFire1: 'Пройденная пожаром площадь насаждений, из которых возможна реализация древесины (Га)',
+    areaSpec: 'Площадь культур (Га)',
+    areaSpecNew: 'Площадь молодняков естественного происхождения (Га)',
+    areaFireLast: 'Площадь горельников прошлых лет (Га)',
+    areaSpecNot: 'Площадь редин и не покрытых лесом земель (Га)',
+    arend: 'Арендатор',
+    titleValue: 'Объем изменений запасов древесины',
+    estimValue: 'по прогнозам системы',
+    checkedValue: 'по данным натурной проверки',
+    otvet: 'Ответственный эксперт',
+    otvetCheck: 'Ответственный за проверку инцидента',
+    procVer: 'Процент вероятности инцидента',
+    tochn: 'Точность для детектированных изменений',
+    date: 'Дата обнаружения',
+    dateInspect: 'Дата обследования',
+    areaAll: 'Площадь повреждения всего (Га)',
+    areaArenda: 'Площадь повреждения на арендованной территории (Га)',
+    specialCommon: 'Преобладающая природа насаждений',
+    dateCheck: 'Срок провевдения натурной проверки',
+    comment: 'Комментарий',
+    status: 'Статус',
+    bpla: 'Снимок с БПЛА',
+    bplaTitle: 'Снимок зоны инцидента с БПЛА.tiff',
+    bplaView: 'Просмотр',
+    bplaLoad: 'Загрузить',
+    bplaDel: 'Удалить',
+    docs: 'Документы',
+    editGeo: 'Редактировать контур',
+    saveGeo: 'Сохранить изменения',
+    downloadGeo: 'Выгрузить контур',
+    verRastr: 'Растр вероятности',
+    maskWater: 'Маски облачности и воды',
+    checkedInc: 'Подтвердить инцидент',
+    declineInc: 'Отклонить инцидент'
+  },
+  unit: {
+    m: 'м',
+    m3: 'куб. м',
+    ha: 'га'
+  }
+});
+var testData = {
+  title: 'Читинское лесничество, Городское участковое лесничество, Колхоз “Вечерняя зорька”, Квартал № 115, Выдел № 58',
+  props: {
+    status: 'Инцидент в работе',
+    otvet: 'Иванов И.И.',
+    otvetCheck: 'Петров П.П',
+    procVer: 85,
+    tochn: 11,
+    date: '15.07.2019',
+    areaAll: 250,
+    dateCheck: '25.05.2019'
+  },
+  bpla: {
+    date: '02.07.2020, 12:24'
+  },
+  vyd: [{
+    title: 'Читинское лесничество, Городское участковое лесничество, Колхоз “Вечерняя зорька”, Квартал № 115, Выдел № 58',
+    firm: 'ООО “Дельфин”',
+    species: [{
+      name: 'Береза',
+      prog: 240,
+      real: 40
+    }, {
+      name: 'Береза',
+      prog: 240,
+      real: 240
+    }]
+  }, {
+    title: 'Читинское лесничество, Городское участковое лесничество, Колхоз “Вечерняя зорька”, Квартал № 115, Выдел № 58',
+    firm: 'ООО “Дельфин1”',
+    species: [{
+      name: 'Береза',
+      prog: 560,
+      real: 140
+    }, {
+      name: 'Береза',
+      prog: 240,
+      real: 240
+    }, {
+      name: 'Дуб',
+      prog: 560,
+      real: 140
+    }, {
+      name: 'Береза',
+      prog: 240,
+      real: 240
+    }]
+  }]
+};
+
+var _parseVyd = function _parseVyd(arr) {
+  return arr.map(function (data) {
+    var str = data.species.map(function (it) {
+      return "\n\t\t\t<div class=\"map-popup-part2__wrapper-in__table1_row padding-left-34\">".concat(it.name, " <span class=\"inline-flex-row-end\">").concat(it.real, " ").concat(translate$g('unit.m3'), "<span class=\"span-gray\">").concat(it.real, " ").concat(translate$g('unit.m3'), "</span></span></div>\n\t\t\t");
+    }).join('\n');
+    return "\n\t\t\t<div class=\"vydel\">\n\t\t\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">".concat(data.title, "</div>\n\t\t\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.arend'), " <span>").concat(data.firm, "</span></div>\n\t\t\t\t").concat(str, "\n\t\t\t</div>");
+  }).join('\n');
+};
+
+var _parseProps = function _parseProps(props) {
+  return "\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">".concat(translate$g('incident.status'), " <span>").concat(props.status, "</span></div>\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.otvet'), " <span>").concat(props.otvet, "</span></div>\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.otvetCheck'), " <span>").concat(props.otvetCheck, "</span></div>\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.procVer'), " <span>").concat(props.procVer, " %</span></div>\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.tochn'), " <span>").concat(props.tochn, " ").concat(translate$g('unit.m'), "</span></div>\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.date'), " <span>").concat(props.date, "</span></div>\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.areaAll'), " <span>").concat(props.areaAll, "</span></div>\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.dateCheck'), " <span class=\"span-gray\">").concat(props.dateCheck, "</span></div>\n\t");
+};
+
+var STYLES$5 = {
+  fillStyle: 'rgba(255, 184, 1)',
+  strokeStyle: '#FFB801'
+};
 
 var Incident = /*#__PURE__*/function (_EventTarget) {
   _inherits(Incident, _EventTarget);
@@ -57070,18 +57500,145 @@ var Incident = /*#__PURE__*/function (_EventTarget) {
   function Incident(container, _ref) {
     var _this;
 
-    var serviceEndpoint = _ref.serviceEndpoint;
+    var incidents = _ref.incidents,
+        serviceEndpoint = _ref.serviceEndpoint;
 
     _classCallCheck(this, Incident);
 
     _this = _super.call(this);
     _this._container = container;
     _this._serviceEndpoint = serviceEndpoint;
+    _this._incidents = incidents;
 
     _this._container.classList.add('scanex-forestry-incident');
 
+    _this._container.innerHTML = '';
     return _this;
   }
+
+  _createClass(Incident, [{
+    key: "_render",
+    value: function _render(props, data) {
+      switch (props.type) {
+        case 1:
+          // Рубка
+          this._container.classList.add('minHeight');
+
+          this._setForm2();
+
+          break;
+
+        case 2:
+          // Гарь
+          this._container.classList.add('minHeight');
+
+          this._setForm3();
+
+          break;
+
+        default:
+          this._container.classList.remove('minHeight');
+
+          this._setForm1(data);
+
+          break;
+      }
+    }
+  }, {
+    key: "_setForm3",
+    value: function _setForm3(data) {
+      data = data || {
+        state: 'Неподтвержденный инцидент',
+        areaAll: 250,
+        areaArenda: 250,
+        date: '15.07.2019',
+        specialCommon: 'Береза'
+      };
+      this._container.innerHTML = "\n           <div class=\"map-popup-part2__header\">".concat(translate$g('incident.title'), "</div>\n            <div class=\"map-popup-part2__wrapper-in style-4\">\n                <div class=\"map-popup-part2__wrapper-in__table1\">\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.status'), "<span>").concat(data.state, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.areaAll'), "<span>").concat(data.areaAll, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.areaArenda'), "<span>").concat(data.areaArenda, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.date'), "<span>").concat(data.date, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.specialCommon'), "<span>").concat(data.specialCommon, "</span></div>\n                </div>\n            </div>\n\t\t");
+    }
+  }, {
+    key: "_setForm2",
+    value: function _setForm2(data) {
+      data = data || {
+        state: 'Подтвержденный инцидент',
+        areaFire: 250,
+        areaFire1: 250,
+        areaSpec: 250,
+        areaSpecNew: 250,
+        areaFireLast: 250,
+        areaSpecNot: 250,
+        date: '15.07.2019',
+        dateInspect: '20.08.2020',
+        specialCommon: 'Береза'
+      };
+      this._container.innerHTML = "\n           <div class=\"map-popup-part2__header\">".concat(translate$g('incident.titleFire'), "</div>\n            <div class=\"map-popup-part2__wrapper-in style-4\">\n                <div class=\"map-popup-part2__wrapper-in__table1\">\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.status'), "<span>").concat(data.state, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.specialCommon'), "<span>").concat(data.specialCommon, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.areaFire'), "<span>").concat(data.areaFire, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.areaFire1'), "<span>").concat(data.areaFire1, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.areaSpec'), "<span>").concat(data.areaSpec, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.areaSpecNew'), "<span>").concat(data.areaSpecNew, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.areaFireLast'), "<span>").concat(data.areaFireLast, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.areaSpecNot'), "<span>").concat(data.areaSpecNot, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.date'), "<span>").concat(data.date, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.dateInspect'), "<span>").concat(data.dateInspect, "</span></div>\n                </div>\n            </div>\n\t\t");
+    }
+  }, {
+    key: "_setForm1",
+    value: function _setForm1(data) {
+      // console.log('_render', data);
+      var str1 = _parseVyd(data.vyd);
+
+      var str2 = _parseProps(data.props);
+
+      this._container.innerHTML = "\n            <div class=\"map-popup-part2__header\">".concat(translate$g('incident.title'), "</div>\n            <div class=\"map-popup-part2__wrapper-in wrapper-full-height\">\n                <div class=\"map-popup-part2__wrapper-in-inside\">\n                    <div class=\"inside_left\">\n                        <div class=\"header\">\n                            <div class=\"text\">").concat(data.title, "</div>\n                        </div>\n                        <div class=\"spacer-23\"></div>\n                        <div class=\"map-popup-part2__wrapper-in__table1\">\n\t\t\t\t\t\t\t").concat(str2, "\n\n                            <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.comment'), "</div>\n                            <textarea class=\"usr-text-area\">                            </textarea>\n                            <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.bpla'), ":</div>\n\n                            <div class=\"map-popup-part2__wrapper-in__table1_row\">\n\n                                <span>").concat(data.bpla.date, "</span>\n                                <span>").concat(translate$g('incident.bplaTitle'), "</span>\n                                <div class=\"group_buttons\">\n                                    <div class=\"mini-green-but\">").concat(translate$g('incident.bplaView'), "</div>\n                                    <div class=\"mini-green-but\">").concat(translate$g('incident.bplaLoad'), "</div>\n                                    <div class=\"mini-green-but\">").concat(translate$g('incident.bplaDel'), "</div>\n                                </div>\n                            </div>\n                            <div class=\"map-popup-part2__wrapper-in__table1_row margin-top-35\"><span class=\"span_bold\">").concat(translate$g('incident.titleValue'), "</span> <span class=\"span_bold\">").concat(translate$g('incident.estimValue'), "</span> <span class=\"span_bold\">").concat(translate$g('incident.checkedValue'), "</span></div>\n\t\t\t\t\t\t\t").concat(str1, "\n                        </div>\n                    </div>\n                    <div class=\"map-popup-part2__wrapper-in-inside__right rubka\">\n                        <div class=\"right-wrapper-top \">\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$g('incident.docs'), "</button>\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$g('incident.editGeo'), "</button>\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$g('incident.saveGeo'), "</button>\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$g('incident.downloadGeo'), "</button>\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$g('incident.verRastr'), "</button>\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$g('incident.maskWater'), "</button>\n                        </div>\n\n                         <div class=\"right-wrapper-bottom \">\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$g('incident.checkedInc'), "</button>\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$g('incident.declineInc'), "</button>\n                        </div>\n\n                    </div>\n                </div>\n            </div>");
+    }
+  }, {
+    key: "open",
+    value: function () {
+      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(_ref2) {
+        var props, gmx_id, event;
+        return regeneratorRuntime.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                props = _ref2.props, gmx_id = _ref2.gmx_id;
+
+                if (this._gmx_id === gmx_id) {
+                  this.close();
+                } else {
+                  this._gmx_id = gmx_id;
+
+                  this._incidents.setStyleHook(function (item) {
+                    return item.id === gmx_id ? STYLES$5 : {};
+                  });
+
+                  this._incidents.repaint();
+
+                  this._render(props, testData);
+
+                  event = document.createEvent('Event');
+                  event.initEvent('open', false, false);
+                  this.dispatchEvent(event);
+                }
+
+              case 2:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee, this);
+      }));
+
+      function open(_x) {
+        return _open.apply(this, arguments);
+      }
+
+      return open;
+    }()
+  }, {
+    key: "close",
+    value: function close() {
+      this._incidents.removeStyleHook();
+
+      this._incidents.redrawItem(this._gmx_id);
+
+      this._gmx_id = null;
+      var event = document.createEvent('Event');
+      event.initEvent('close', false, false);
+      this.dispatchEvent(event);
+    }
+  }]);
 
   return Incident;
 }(EventTarget);
@@ -57142,45 +57699,6 @@ T.addText('rus', {
     incidents: 'Инциденты'
   }
 }); // const defaultStyle = {
-//     fillStyle: 'rgba(28, 224, 0, 0.4)',
-// };
-// const hiliteStyle = {
-//     fillStyle: 'rgba(28, 224, 0, 0.4)',
-//     strokeStyle: '#1CE000',
-//     lineWidth: 2,
-// };
-
-var LAYERS_STYLES = {
-  DECLARATION: {
-    SELECTED: {
-      fillStyle: 'rgba(49, 243, 80, 0.25)',
-      strokeStyle: '#61E9F1',
-      lineWidth: 2
-    }
-  },
-  QUADRANT: {
-    PLOT: {
-      fillStyle: 'rgba(28, 224, 0, 0.4)'
-    },
-    SELECTED: {
-      fillStyle: 'rgba(255, 184, 1)',
-      strokeStyle: '#FFB801',
-      lineWidth: 2
-    }
-  },
-  STAND: {
-    SELECTED: {
-      fillStyle: 'rgba(255, 184, 1)',
-      strokeStyle: '#FFB801'
-    }
-  },
-  INCIDENT: {
-    SELECTED: {
-      fillStyle: 'rgba(255, 184, 1)',
-      strokeStyle: '#FFB801'
-    }
-  }
-};
 
 var Map = /*#__PURE__*/function (_EventTarget) {
   _inherits(Map, _EventTarget);
@@ -57190,7 +57708,9 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   function Map(container, _ref) {
     var _this;
 
-    var gmxEndpoint = _ref.gmxEndpoint,
+    var _ref$apiKey = _ref.apiKey,
+        apiKey = _ref$apiKey === void 0 ? 'I9ELMZU8GD' : _ref$apiKey,
+        gmxEndpoint = _ref.gmxEndpoint,
         serviceEndpoint = _ref.serviceEndpoint,
         _ref$center = _ref.center,
         center = _ref$center === void 0 ? [51.331898, 111.28051] : _ref$center,
@@ -57207,6 +57727,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
     _this._container.classList.add('scanex-forestry-map');
 
     _this._gmxEndpoint = gmxEndpoint;
+    _this._apiKey = apiKey;
 
     var _URL = new URL(_this._gmxEndpoint),
         hostname = _URL.hostname,
@@ -57214,23 +57735,18 @@ var Map = /*#__PURE__*/function (_EventTarget) {
         port = _URL.port;
 
     _this._hostName = port ? "".concat(hostname, ":").concat(port) : hostname;
-    _this._gmxPath = pathname;
+
+    if (pathname.endsWith('/')) {
+      _this._gmxPath = pathname;
+    } else {
+      _this._gmxPath = "".concat(pathname, "/");
+    }
+
     _this._serviceEndpoint = serviceEndpoint;
     _this._map = L$1.map(_this._container, {
       // renderer: L.canvas(),
-      zoomControl: false,
-      gmxEndPoints: _defineProperty({}, _this._hostName, {
-        checkVersion: "".concat(_this._gmxPath, "/Layer/CheckVersion.ashx"),
-        layerProps: "".concat(_this._gmxPath, "/Layer/GetLayerJson.ashx"),
-        searchLayerItem: "".concat(_this._gmxPath, "/VectorLayer/Search.ashx"),
-        tileProps: "".concat(_this._gmxPath, "/TileSender.ashx"),
-        mapProps: "".concat(_this._gmxPath, "/TileSender.ashx")
-      })
+      zoomControl: false
     }).setView(center, zoom);
-    _this._baselayers = new BaseLayers();
-
-    _this._baselayers.addTo(_this._map);
-
     _this._content = new Content();
 
     _this._content.addTo(_this._map);
@@ -57290,247 +57806,143 @@ var Map = /*#__PURE__*/function (_EventTarget) {
     }()
   }, {
     key: "showMain",
-    value: function showMain() {
-      this._clear();
+    value: function () {
+      var _showMain = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
+        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                _context2.next = 2;
+                return this._content.showDefault();
 
-      this._quadrants.removeStyleHook();
+              case 2:
+              case "end":
+                return _context2.stop();
+            }
+          }
+        }, _callee2, this);
+      }));
 
-      this._quadrants.repaint();
-
-      this._content.showComponent();
-    }
-  }, {
-    key: "showAnalytics",
-    value: function showAnalytics() {
-      this._clear();
-
-      this._quadrants.removeStyleHook();
-
-      this._quadrants.repaint();
-
-      var component = this._content.getComponent('analytics');
-
-      if (!component) {
-        component = this._content.addComponent('analytics', Analytics, {
-          serviceEndpoint: this._serviceEndpoint
-        });
+      function showMain() {
+        return _showMain.apply(this, arguments);
       }
 
-      this._content.showComponent('analytics');
-    }
+      return showMain;
+    }()
+  }, {
+    key: "showAnalytics",
+    value: function () {
+      var _showAnalytics = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
+        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                _context3.prev = 0;
+
+                if (!this._content.hasComponent('analytics')) {
+                  this._content.addComponent('analytics', Analytics, {
+                    quadrants: this._quadrants,
+                    serviceEndpoint: this._serviceEndpoint
+                  });
+                }
+
+                _context3.next = 4;
+                return this._content.showComponent('analytics');
+
+              case 4:
+                _context3.next = 9;
+                break;
+
+              case 6:
+                _context3.prev = 6;
+                _context3.t0 = _context3["catch"](0);
+                alert(_context3.t0.toString());
+
+              case 9:
+              case "end":
+                return _context3.stop();
+            }
+          }
+        }, _callee3, this, [[0, 6]]);
+      }));
+
+      function showAnalytics() {
+        return _showAnalytics.apply(this, arguments);
+      }
+
+      return showAnalytics;
+    }()
   }, {
     key: "showRequests",
     value: function () {
-      var _showRequests = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
+      var _showRequests = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6() {
         var _this2 = this;
 
         var component;
-        return regeneratorRuntime.wrap(function _callee4$(_context4) {
-          while (1) {
-            switch (_context4.prev = _context4.next) {
-              case 0:
-                _context4.prev = 0;
-
-                this._quadrants.removeStyleHook();
-
-                this._quadrants.repaint();
-
-                component = this._content.getComponent('requests');
-
-                if (!component) {
-                  component = this._content.addComponent('requests', Requests, {
-                    serviceEndpoint: this._serviceEndpoint
-                  });
-                  component.on('create', /*#__PURE__*/function () {
-                    var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(e) {
-                      return regeneratorRuntime.wrap(function _callee2$(_context2) {
-                        while (1) {
-                          switch (_context2.prev = _context2.next) {
-                            case 0:
-                              _context2.next = 2;
-                              return _this2._showCreatePlot();
-
-                            case 2:
-                            case "end":
-                              return _context2.stop();
-                          }
-                        }
-                      }, _callee2);
-                    }));
-
-                    return function (_x) {
-                      return _ref2.apply(this, arguments);
-                    };
-                  }()).on('edit', /*#__PURE__*/function () {
-                    var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(e) {
-                      return regeneratorRuntime.wrap(function _callee3$(_context3) {
-                        while (1) {
-                          switch (_context3.prev = _context3.next) {
-                            case 0:
-                              _context3.next = 2;
-                              return _this2._showEditPlot(e.detail);
-
-                            case 2:
-                            case "end":
-                              return _context3.stop();
-                          }
-                        }
-                      }, _callee3);
-                    }));
-
-                    return function (_x2) {
-                      return _ref3.apply(this, arguments);
-                    };
-                  }());
-                }
-
-                _context4.next = 7;
-                return component.update();
-
-              case 7:
-                this._content.showComponent('requests');
-
-                if (this._plotProject) {
-                  this._map.addLayer(this._plotProject);
-                }
-
-                _context4.next = 14;
-                break;
-
-              case 11:
-                _context4.prev = 11;
-                _context4.t0 = _context4["catch"](0);
-                alert(_context4.t0.toString());
-
-              case 14:
-              case "end":
-                return _context4.stop();
-            }
-          }
-        }, _callee4, this, [[0, 11]]);
-      }));
-
-      function showRequests() {
-        return _showRequests.apply(this, arguments);
-      }
-
-      return showRequests;
-    }()
-  }, {
-    key: "_clear",
-    value: function _clear() {
-      if (this._plotProject && this._plotProject._map) {
-        this._map.removeLayer(this._plotProject);
-      }
-    }
-  }, {
-    key: "_showNaturalPark",
-    value: function _showNaturalPark(id) {
-      this._clear();
-
-      this._quadrants.removeStyleHook();
-
-      this._quadrants.repaint();
-
-      var component = this._content.getComponent('naturalpark');
-
-      if (!component) {
-        component = this._content.addComponent('naturalpark', NaturalPark, {
-          serviceEndpoint: this._serviceEndpoint
-        });
-      }
-
-      this._content.showComponent('naturalpark');
-
-      component.show(id);
-    }
-  }, {
-    key: "_fitBounds",
-    value: function () {
-      var _fitBounds2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(id) {
-        var _this$_quadrants$getG, LayerID, fd, response, _yield$response$json2, Status, Result, fields, values, i, _L$gmxUtil$convertGeo, coordinates, g, b;
-
-        return regeneratorRuntime.wrap(function _callee5$(_context5) {
-          while (1) {
-            switch (_context5.prev = _context5.next) {
-              case 0:
-                if (!this._quadrants) {
-                  _context5.next = 17;
-                  break;
-                }
-
-                _this$_quadrants$getG = this._quadrants.getGmxProperties(), LayerID = _this$_quadrants$getG.LayerID;
-                fd = new FormData();
-                fd.append('query', "[rec_id]=".concat(id));
-                fd.append('page', '0');
-                fd.append('pagesize', '1');
-                fd.append('geometry', 'true');
-                fd.append('layer', LayerID);
-                _context5.next = 10;
-                return fetch("//".concat(this._hostName, "/VectorLayer/Search.ashx?WrapStyle=None"), {
-                  method: 'POST',
-                  credentials: 'include',
-                  body: fd
-                });
-
-              case 10:
-                response = _context5.sent;
-                _context5.next = 13;
-                return response.json();
-
-              case 13:
-                _yield$response$json2 = _context5.sent;
-                Status = _yield$response$json2.Status;
-                Result = _yield$response$json2.Result;
-
-                if (Status === 'ok') {
-                  fields = Result.fields, values = Result.values;
-                  i = fields.indexOf('geomixergeojson');
-                  _L$gmxUtil$convertGeo = L$1.gmxUtil.convertGeometry(values[0][i], true), coordinates = _L$gmxUtil$convertGeo.coordinates;
-                  g = L$1.geoJSON({
-                    type: 'Feature',
-                    geometry: {
-                      type: 'Polygon',
-                      coordinates: coordinates
-                    }
-                  });
-                  b = g.getBounds();
-
-                  this._map.fitBounds(b);
-                }
-
-              case 17:
-              case "end":
-                return _context5.stop();
-            }
-          }
-        }, _callee5, this);
-      }));
-
-      function _fitBounds(_x3) {
-        return _fitBounds2.apply(this, arguments);
-      }
-
-      return _fitBounds;
-    }()
-  }, {
-    key: "_changePlot",
-    value: function () {
-      var _changePlot2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(id) {
-        var mode, component;
         return regeneratorRuntime.wrap(function _callee6$(_context6) {
           while (1) {
             switch (_context6.prev = _context6.next) {
               case 0:
-                mode = this._content.getCurrentId();
-                component = this._content.getComponent(mode);
-                _context6.next = 4;
-                return component.toggle(id);
+                try {
+                  if (!this._content.hasComponent('requests')) {
+                    component = this._content.addComponent('requests', Requests, {
+                      quadrants: this._quadrants,
+                      serviceEndpoint: this._serviceEndpoint
+                    });
+                    component.on('create', /*#__PURE__*/function () {
+                      var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(e) {
+                        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+                          while (1) {
+                            switch (_context4.prev = _context4.next) {
+                              case 0:
+                                _context4.next = 2;
+                                return _this2._showCreatePlot();
 
-              case 4:
-                this._quadrants.redrawItem(id);
+                              case 2:
+                              case "end":
+                                return _context4.stop();
+                            }
+                          }
+                        }, _callee4);
+                      }));
 
-              case 5:
+                      return function (_x) {
+                        return _ref2.apply(this, arguments);
+                      };
+                    }());
+                    component.on('edit', /*#__PURE__*/function () {
+                      var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(e) {
+                        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+                          while (1) {
+                            switch (_context5.prev = _context5.next) {
+                              case 0:
+                                _context5.next = 2;
+                                return _this2._showEditPlot(e.detail);
+
+                              case 2:
+                              case "end":
+                                return _context5.stop();
+                            }
+                          }
+                        }, _callee5);
+                      }));
+
+                      return function (_x2) {
+                        return _ref3.apply(this, arguments);
+                      };
+                    }());
+                  }
+
+                  this._content.showComponent('requests');
+
+                  if (this._plotProject) {
+                    this._map.addLayer(this._plotProject);
+                  }
+                } catch (e) {
+                  alert(e.toString());
+                }
+
+              case 1:
               case "end":
                 return _context6.stop();
             }
@@ -57538,11 +57950,11 @@ var Map = /*#__PURE__*/function (_EventTarget) {
         }, _callee6, this);
       }));
 
-      function _changePlot(_x4) {
-        return _changePlot2.apply(this, arguments);
+      function showRequests() {
+        return _showRequests.apply(this, arguments);
       }
 
-      return _changePlot;
+      return showRequests;
     }()
   }, {
     key: "_showEditPlot",
@@ -57555,14 +57967,11 @@ var Map = /*#__PURE__*/function (_EventTarget) {
           while (1) {
             switch (_context10.prev = _context10.next) {
               case 0:
-                this._clear();
-
                 this._legend.enable('quadrants');
 
-                component = this._content.getComponent('edit-plot');
-
-                if (!component) {
+                if (!this._content.hasComponent('edit-plot')) {
                   component = this._content.addComponent('edit-plot', EditPlot, {
+                    quadrants: this._quadrants,
                     serviceEndpoint: this._serviceEndpoint
                   });
                   component.on('save', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7() {
@@ -57598,7 +58007,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                       }, _callee8);
                     }));
 
-                    return function (_x6) {
+                    return function (_x4) {
                       return _ref5.apply(this, arguments);
                     };
                   }()).on('backward', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9() {
@@ -57618,24 +58027,9 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   })));
                 }
 
-                this._content.showComponent('edit-plot');
+                this._content.showComponent('edit-plot', id);
 
-                this._quadrants.setStyleHook(function (item) {
-                  if (component.quadrants.includes(item.id)) {
-                    // return this._hilited [item.id] ? hiliteStyle : defaultStyle;
-                    return LAYERS_STYLES.QUADRANT.PLOT;
-                  } else {
-                    return {};
-                  }
-                });
-
-                _context10.next = 8;
-                return component.show(id);
-
-              case 8:
-                this._quadrants.repaint();
-
-              case 9:
+              case 3:
               case "end":
                 return _context10.stop();
             }
@@ -57643,7 +58037,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
         }, _callee10, this);
       }));
 
-      function _showEditPlot(_x5) {
+      function _showEditPlot(_x3) {
         return _showEditPlot2.apply(this, arguments);
       }
 
@@ -57660,14 +58054,11 @@ var Map = /*#__PURE__*/function (_EventTarget) {
           while (1) {
             switch (_context14.prev = _context14.next) {
               case 0:
-                this._clear();
-
                 this._legend.enable('quadrants');
 
-                component = this._content.getComponent('create-plot');
-
-                if (!component) {
+                if (!this._content.hasComponent('create-plot')) {
                   component = this._content.addComponent('create-plot', CreatePlot, {
+                    quadrants: this._quadrants,
                     serviceEndpoint: this._serviceEndpoint
                   });
                   component.on('save', /*#__PURE__*/function () {
@@ -57687,7 +58078,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                       }, _callee11);
                     }));
 
-                    return function (_x7) {
+                    return function (_x5) {
                       return _ref7.apply(this, arguments);
                     };
                   }()).on('quadrant:click', /*#__PURE__*/function () {
@@ -57709,7 +58100,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                       }, _callee12);
                     }));
 
-                    return function (_x8) {
+                    return function (_x6) {
                       return _ref8.apply(this, arguments);
                     };
                   }()) // .on('quadrant:over', e => {
@@ -57739,11 +58130,9 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   })));
                 }
 
-                this._quadrants.repaint();
-
                 this._content.showComponent('create-plot');
 
-              case 6:
+              case 3:
               case "end":
                 return _context14.stop();
             }
@@ -57758,50 +58147,112 @@ var Map = /*#__PURE__*/function (_EventTarget) {
       return _showCreatePlot;
     }()
   }, {
-    key: "showUploaded",
+    key: "_showNaturalPark",
+    value: function _showNaturalPark(id) {
+      if (!this._content.hasComponent('naturalpark')) {
+        this._content.addComponent('naturalpark', NaturalPark, {
+          quadrants: this._quadrants,
+          serviceEndpoint: this._serviceEndpoint
+        });
+      }
+
+      this._content.showComponent('naturalpark', id);
+    }
+  }, {
+    key: "_fitBounds",
     value: function () {
-      var _showUploaded = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee15() {
-        var component;
+      var _fitBounds2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee15(id) {
+        var _this$_quadrants$getG, LayerID, fd, response, _yield$response$json2, Status, Result, fields, values, i, _L$gmxUtil$convertGeo, coordinates, g, b;
+
         return regeneratorRuntime.wrap(function _callee15$(_context15) {
           while (1) {
             switch (_context15.prev = _context15.next) {
               case 0:
-                this._clear();
-
-                _context15.prev = 1;
-
-                this._quadrants.removeStyleHook();
-
-                this._quadrants.repaint();
-
-                component = this._content.getComponent('uploaded');
-
-                if (!component) {
-                  component = this._content.addComponent('uploaded', Uploaded, {
-                    serviceEndpoint: "//".concat(this._hostName)
-                  });
+                if (!this._quadrants) {
+                  _context15.next = 17;
+                  break;
                 }
 
-                _context15.next = 8;
-                return component.update();
+                _this$_quadrants$getG = this._quadrants.getGmxProperties(), LayerID = _this$_quadrants$getG.LayerID;
+                fd = new FormData();
+                fd.append('query', "[rec_id]=".concat(id));
+                fd.append('page', '0');
+                fd.append('pagesize', '1');
+                fd.append('geometry', 'true');
+                fd.append('layer', LayerID);
+                _context15.next = 10;
+                return fetch("//".concat(this._hostName, "/VectorLayer/Search.ashx?WrapStyle=None"), {
+                  method: 'POST',
+                  credentials: 'include',
+                  body: fd
+                });
 
-              case 8:
-                this._content.showComponent('uploaded');
+              case 10:
+                response = _context15.sent;
+                _context15.next = 13;
+                return response.json();
 
-                _context15.next = 14;
-                break;
+              case 13:
+                _yield$response$json2 = _context15.sent;
+                Status = _yield$response$json2.Status;
+                Result = _yield$response$json2.Result;
 
-              case 11:
-                _context15.prev = 11;
-                _context15.t0 = _context15["catch"](1);
-                alert(_context15.t0.toString());
+                if (Status === 'ok') {
+                  fields = Result.fields, values = Result.values;
+                  i = fields.indexOf('geomixergeojson');
+                  _L$gmxUtil$convertGeo = L$1.gmxUtil.convertGeometry(values[0][i], true), coordinates = _L$gmxUtil$convertGeo.coordinates;
+                  g = L$1.geoJSON({
+                    type: 'Feature',
+                    geometry: {
+                      type: 'Polygon',
+                      coordinates: coordinates
+                    }
+                  });
+                  b = g.getBounds();
 
-              case 14:
+                  this._map.fitBounds(b);
+                }
+
+              case 17:
               case "end":
                 return _context15.stop();
             }
           }
-        }, _callee15, this, [[1, 11]]);
+        }, _callee15, this);
+      }));
+
+      function _fitBounds(_x7) {
+        return _fitBounds2.apply(this, arguments);
+      }
+
+      return _fitBounds;
+    }()
+  }, {
+    key: "showUploaded",
+    value: function () {
+      var _showUploaded = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee16() {
+        return regeneratorRuntime.wrap(function _callee16$(_context16) {
+          while (1) {
+            switch (_context16.prev = _context16.next) {
+              case 0:
+                try {
+                  if (!this._content.hasComponent('uploaded')) {
+                    this._content.addComponent('uploaded', Uploaded, {
+                      serviceEndpoint: "//".concat(this._hostName)
+                    });
+                  }
+
+                  this._content.showComponent('uploaded');
+                } catch (e) {
+                  alert(e.toString());
+                }
+
+              case 1:
+              case "end":
+                return _context16.stop();
+            }
+          }
+        }, _callee16, this);
       }));
 
       function showUploaded() {
@@ -57813,53 +58264,32 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_showQuadrant",
     value: function () {
-      var _showQuadrant2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee16(id, gmx_id) {
-        var component;
-        return regeneratorRuntime.wrap(function _callee16$(_context16) {
+      var _showQuadrant2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee17(id, gmx_id) {
+        return regeneratorRuntime.wrap(function _callee17$(_context17) {
           while (1) {
-            switch (_context16.prev = _context16.next) {
+            switch (_context17.prev = _context17.next) {
               case 0:
-                component = this._content.getComponent('quadrant');
-
-                if (!component) {
-                  component = this._content.addComponent('quadrant', Quadrant, {
+                if (!this._content.hasComponent('quadrant')) {
+                  this._content.addComponent('quadrant', Quadrant, {
+                    quadrants: this._quadrants,
                     serviceEndpoint: this._serviceEndpoint
                   });
                 }
 
-                this._content.showComponent('quadrant');
-
-                _context16.next = 5;
-                return component.toggle(id);
-
-              case 5:
-                if (!_context16.sent) {
-                  _context16.next = 9;
-                  break;
-                }
-
-                this._quadrants.setStyleHook(function (item) {
-                  return item.id === gmx_id ? LAYERS_STYLES.QUADRANT.SELECTED : {};
+                this._content.showComponent('quadrant', {
+                  id: id,
+                  gmx_id: gmx_id
                 });
 
-                _context16.next = 10;
-                break;
-
-              case 9:
-                this.showMain();
-
-              case 10:
-                this._quadrants.repaint();
-
-              case 11:
+              case 2:
               case "end":
-                return _context16.stop();
+                return _context17.stop();
             }
           }
-        }, _callee16, this);
+        }, _callee17, this);
       }));
 
-      function _showQuadrant(_x9, _x10) {
+      function _showQuadrant(_x8, _x9) {
         return _showQuadrant2.apply(this, arguments);
       }
 
@@ -57868,55 +58298,32 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_showStand",
     value: function () {
-      var _showStand2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee17(id, gmx_id) {
-        var component;
-        return regeneratorRuntime.wrap(function _callee17$(_context17) {
+      var _showStand2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee18(id, gmx_id) {
+        return regeneratorRuntime.wrap(function _callee18$(_context18) {
           while (1) {
-            switch (_context17.prev = _context17.next) {
+            switch (_context18.prev = _context18.next) {
               case 0:
-                component = this._content.getComponent('stand');
-
-                if (!component) {
-                  component = this._content.addComponent('stand', Stand, {
+                if (!this._content.hasComponent('stand')) {
+                  this._content.addComponent('stand', Stand, {
+                    stands: this._stands,
                     serviceEndpoint: this._serviceEndpoint
                   });
                 }
 
-                this._content.showComponent('stand');
-
-                _context17.next = 5;
-                return component.toggle(id);
-
-              case 5:
-                if (!_context17.sent) {
-                  _context17.next = 9;
-                  break;
-                }
-
-                this._stands.setStyleHook(function (item) {
-                  return item.id === gmx_id ? LAYERS_STYLES.STAND.SELECTED : {};
+                this._content.showComponent('stand', {
+                  id: id,
+                  gmx_id: gmx_id
                 });
 
-                _context17.next = 11;
-                break;
-
-              case 9:
-                this._stands.removeStyleHook();
-
-                this.showMain();
-
-              case 11:
-                this._stands.repaint();
-
-              case 12:
+              case 2:
               case "end":
-                return _context17.stop();
+                return _context18.stop();
             }
           }
-        }, _callee17, this);
+        }, _callee18, this);
       }));
 
-      function _showStand(_x11, _x12) {
+      function _showStand(_x10, _x11) {
         return _showStand2.apply(this, arguments);
       }
 
@@ -57925,55 +58332,32 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_showDeclaration",
     value: function () {
-      var _showDeclaration2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee18(id, gmx_id) {
-        var component;
-        return regeneratorRuntime.wrap(function _callee18$(_context18) {
+      var _showDeclaration2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee19(id, gmx_id) {
+        return regeneratorRuntime.wrap(function _callee19$(_context19) {
           while (1) {
-            switch (_context18.prev = _context18.next) {
+            switch (_context19.prev = _context19.next) {
               case 0:
-                component = this._content.getComponent('declaration');
-
-                if (!component) {
-                  component = this._content.addComponent('declaration', Declaration, {
+                if (!this._content.hasComponent('declaration')) {
+                  this._content.addComponent('declaration', Declaration, {
+                    declarations: this._declarations,
                     serviceEndpoint: this._serviceEndpoint
                   });
                 }
 
-                this._content.showComponent('declaration');
-
-                _context18.next = 5;
-                return component.toggle(id);
-
-              case 5:
-                if (!_context18.sent) {
-                  _context18.next = 9;
-                  break;
-                }
-
-                this._declarations.setStyleHook(function (item) {
-                  return item.id === gmx_id ? LAYERS_STYLES.DECLARATION.SELECTED : {};
+                this._content.showComponent('declaration', {
+                  id: id,
+                  gmx_id: gmx_id
                 });
 
-                _context18.next = 11;
-                break;
-
-              case 9:
-                this._declarations.removeStyleHook();
-
-                this.showMain();
-
-              case 11:
-                this._declarations.repaint();
-
-              case 12:
+              case 2:
               case "end":
-                return _context18.stop();
+                return _context19.stop();
             }
           }
-        }, _callee18, this);
+        }, _callee19, this);
       }));
 
-      function _showDeclaration(_x13, _x14) {
+      function _showDeclaration(_x12, _x13) {
         return _showDeclaration2.apply(this, arguments);
       }
 
@@ -57982,55 +58366,32 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_showIncident",
     value: function () {
-      var _showIncident2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee19(id, gmx_id) {
-        var component;
-        return regeneratorRuntime.wrap(function _callee19$(_context19) {
+      var _showIncident2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee20(props, gmx_id) {
+        return regeneratorRuntime.wrap(function _callee20$(_context20) {
           while (1) {
-            switch (_context19.prev = _context19.next) {
+            switch (_context20.prev = _context20.next) {
               case 0:
-                component = this._content.getComponent('incident');
-
-                if (!component) {
-                  component = this._content.addComponent('incident', Incident, {
+                if (!this._content.hasComponent('incident')) {
+                  this._content.addComponent('incident', Incident, {
+                    incidents: this._incidents,
                     serviceEndpoint: this._serviceEndpoint
                   });
                 }
 
-                this._content.showComponent('incident');
-
-                _context19.next = 5;
-                return component.toggle(id);
-
-              case 5:
-                if (!_context19.sent) {
-                  _context19.next = 9;
-                  break;
-                }
-
-                this._declarations.setStyleHook(function (item) {
-                  return item.id === gmx_id ? LAYERS_STYLES.INCIDENT.SELECTED : {};
+                this._content.showComponent('incident', {
+                  props: props,
+                  gmx_id: gmx_id
                 });
 
-                _context19.next = 11;
-                break;
-
-              case 9:
-                this._declarations.removeStyleHook();
-
-                this.showMain();
-
-              case 11:
-                this._declarations.repaint();
-
-              case 12:
+              case 2:
               case "end":
-                return _context19.stop();
+                return _context20.stop();
             }
           }
-        }, _callee19, this);
+        }, _callee20, this);
       }));
 
-      function _showIncident(_x15, _x16) {
+      function _showIncident(_x14, _x15) {
         return _showIncident2.apply(this, arguments);
       }
 
@@ -58042,12 +58403,22 @@ var Map = /*#__PURE__*/function (_EventTarget) {
       var id = _ref10.id,
           visible = _ref10.visible;
 
+      var mode = this._content.getCurrentId();
+
       switch (id) {
         case 'quadrants':
           if (this._quadrants) {
             if (visible) {
               this._map.addLayer(this._quadrants);
             } else {
+              switch (mode) {
+                case 'create-plot':
+                case 'edit-plot':
+                case 'quadrant':
+                  this.showMain();
+                  break;
+              }
+
               this._map.removeLayer(this._quadrants);
             }
           }
@@ -58059,6 +58430,12 @@ var Map = /*#__PURE__*/function (_EventTarget) {
             if (visible) {
               this._map.addLayer(this._parks);
             } else {
+              switch (mode) {
+                case 'naturalpark':
+                  this.showMain();
+                  break;
+              }
+
               this._map.removeLayer(this._parks);
             }
           }
@@ -58070,6 +58447,12 @@ var Map = /*#__PURE__*/function (_EventTarget) {
             if (visible) {
               this._map.addLayer(this._stands);
             } else {
+              switch (mode) {
+                case 'stand':
+                  this.showMain();
+                  break;
+              }
+
               this._map.removeLayer(this._stands);
             }
           }
@@ -58098,6 +58481,12 @@ var Map = /*#__PURE__*/function (_EventTarget) {
             if (visible) {
               this._map.addLayer(this._declarations);
             } else {
+              switch (mode) {
+                case 'declaration':
+                  this.showMain();
+                  break;
+              }
+
               this._map.removeLayer(this._declarations);
             }
           }
@@ -58109,6 +58498,12 @@ var Map = /*#__PURE__*/function (_EventTarget) {
             if (visible) {
               this._map.addLayer(this._incidents);
             } else {
+              switch (mode) {
+                case 'incident':
+                  this.showMain();
+                  break;
+              }
+
               this._map.removeLayer(this._incidents);
             }
           }
@@ -58119,56 +58514,44 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_quadrantClick",
     value: function () {
-      var _quadrantClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee20(e) {
-        var _e$gmx, id, properties, mode;
+      var _quadrantClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee21(e) {
+        var mode, _e$gmx, id, properties;
 
-        return regeneratorRuntime.wrap(function _callee20$(_context20) {
+        return regeneratorRuntime.wrap(function _callee21$(_context21) {
           while (1) {
-            switch (_context20.prev = _context20.next) {
+            switch (_context21.prev = _context21.next) {
               case 0:
-                _context20.prev = 0;
+                mode = this._content.getCurrentId();
+
+                if (!(!mode || mode === 'quadrant')) {
+                  _context21.next = 12;
+                  break;
+                }
+
                 L$1.DomEvent.stopPropagation(e);
                 _e$gmx = e.gmx, id = _e$gmx.id, properties = _e$gmx.properties;
-                mode = this._content.getCurrentId();
-                _context20.t0 = mode;
-                _context20.next = _context20.t0 === 'create-plot' ? 7 : _context20.t0 === 'edit-plot' ? 7 : _context20.t0 === 'requests' ? 10 : _context20.t0 === 'uploaded' ? 10 : 11;
-                break;
-
-              case 7:
-                _context20.next = 9;
-                return this._changePlot(id);
-
-              case 9:
-                return _context20.abrupt("break", 14);
-
-              case 10:
-                return _context20.abrupt("break", 14);
-
-              case 11:
-                _context20.next = 13;
+                _context21.prev = 4;
+                _context21.next = 7;
                 return this._showQuadrant(properties.id, id);
 
-              case 13:
-                return _context20.abrupt("break", 14);
-
-              case 14:
-                _context20.next = 19;
+              case 7:
+                _context21.next = 12;
                 break;
 
-              case 16:
-                _context20.prev = 16;
-                _context20.t1 = _context20["catch"](0);
-                alert(_context20.t1.toString());
+              case 9:
+                _context21.prev = 9;
+                _context21.t0 = _context21["catch"](4);
+                alert(_context21.t0.toString());
 
-              case 19:
+              case 12:
               case "end":
-                return _context20.stop();
+                return _context21.stop();
             }
           }
-        }, _callee20, this, [[0, 16]]);
+        }, _callee21, this, [[4, 9]]);
       }));
 
-      function _quadrantClick(_x17) {
+      function _quadrantClick(_x16) {
         return _quadrantClick2.apply(this, arguments);
       }
 
@@ -58177,47 +58560,30 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_parkClick",
     value: function () {
-      var _parkClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee21(e) {
-        var _e$gmx2, id, properties, mode;
-
-        return regeneratorRuntime.wrap(function _callee21$(_context21) {
+      var _parkClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee22(e) {
+        var properties;
+        return regeneratorRuntime.wrap(function _callee22$(_context22) {
           while (1) {
-            switch (_context21.prev = _context21.next) {
+            switch (_context22.prev = _context22.next) {
               case 0:
-                _context21.prev = 0;
-                L$1.DomEvent.stopPropagation(e);
-                _e$gmx2 = e.gmx, id = _e$gmx2.id, properties = _e$gmx2.properties;
-                mode = this._content.getCurrentId();
-                _context21.t0 = mode;
-                _context21.next = _context21.t0 === 'create-plot' ? 7 : _context21.t0 === 'edit-plot' ? 7 : _context21.t0 === 'requests' ? 7 : _context21.t0 === 'uploaded' ? 7 : 8;
-                break;
+                try {
+                  L$1.DomEvent.stopPropagation(e);
+                  properties = e.gmx.properties;
 
-              case 7:
-                return _context21.abrupt("break", 10);
+                  this._showNaturalPark(properties);
+                } catch (e) {
+                  alert(e.toString());
+                }
 
-              case 8:
-                this._showNaturalPark(properties);
-
-                return _context21.abrupt("break", 10);
-
-              case 10:
-                _context21.next = 15;
-                break;
-
-              case 12:
-                _context21.prev = 12;
-                _context21.t1 = _context21["catch"](0);
-                alert(_context21.t1.toString());
-
-              case 15:
+              case 1:
               case "end":
-                return _context21.stop();
+                return _context22.stop();
             }
           }
-        }, _callee21, this, [[0, 12]]);
+        }, _callee22, this);
       }));
 
-      function _parkClick(_x18) {
+      function _parkClick(_x17) {
         return _parkClick2.apply(this, arguments);
       }
 
@@ -58226,52 +58592,44 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_standClick",
     value: function () {
-      var _standClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee22(e) {
-        var _e$gmx3, id, properties, mode;
+      var _standClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee23(e) {
+        var mode, _e$gmx2, id, properties;
 
-        return regeneratorRuntime.wrap(function _callee22$(_context22) {
+        return regeneratorRuntime.wrap(function _callee23$(_context23) {
           while (1) {
-            switch (_context22.prev = _context22.next) {
+            switch (_context23.prev = _context23.next) {
               case 0:
-                _context22.prev = 0;
-                L$1.DomEvent.stopPropagation(e);
-                _e$gmx3 = e.gmx, id = _e$gmx3.id, properties = _e$gmx3.properties;
                 mode = this._content.getCurrentId();
-                _context22.t0 = mode;
-                _context22.next = _context22.t0 === 'create-plot' ? 7 : _context22.t0 === 'edit-plot' ? 7 : _context22.t0 === 'requests' ? 8 : _context22.t0 === 'uploaded' ? 8 : 9;
-                break;
 
-              case 7:
-                return _context22.abrupt("break", 12);
+                if (!(!mode || mode === 'stand')) {
+                  _context23.next = 12;
+                  break;
+                }
 
-              case 8:
-                return _context22.abrupt("break", 12);
-
-              case 9:
-                _context22.next = 11;
+                _context23.prev = 2;
+                L$1.DomEvent.stopPropagation(e);
+                _e$gmx2 = e.gmx, id = _e$gmx2.id, properties = _e$gmx2.properties;
+                _context23.next = 7;
                 return this._showStand(properties.id, id);
 
-              case 11:
-                return _context22.abrupt("break", 12);
-
-              case 12:
-                _context22.next = 17;
+              case 7:
+                _context23.next = 12;
                 break;
 
-              case 14:
-                _context22.prev = 14;
-                _context22.t1 = _context22["catch"](0);
-                alert(_context22.t1.toString());
+              case 9:
+                _context23.prev = 9;
+                _context23.t0 = _context23["catch"](2);
+                alert(_context23.t0.toString());
 
-              case 17:
+              case 12:
               case "end":
-                return _context22.stop();
+                return _context23.stop();
             }
           }
-        }, _callee22, this, [[0, 14]]);
+        }, _callee23, this, [[2, 9]]);
       }));
 
-      function _standClick(_x19) {
+      function _standClick(_x18) {
         return _standClick2.apply(this, arguments);
       }
 
@@ -58280,47 +58638,8 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_declarationClick",
     value: function () {
-      var _declarationClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee23(e) {
-        var _e$gmx4, id, properties;
-
-        return regeneratorRuntime.wrap(function _callee23$(_context23) {
-          while (1) {
-            switch (_context23.prev = _context23.next) {
-              case 0:
-                _context23.prev = 0;
-                L$1.DomEvent.stopPropagation(e);
-                _e$gmx4 = e.gmx, id = _e$gmx4.id, properties = _e$gmx4.properties;
-                _context23.next = 5;
-                return this._showDeclaration(properties.id, id);
-
-              case 5:
-                _context23.next = 10;
-                break;
-
-              case 7:
-                _context23.prev = 7;
-                _context23.t0 = _context23["catch"](0);
-                alert(_context23.t0.toString());
-
-              case 10:
-              case "end":
-                return _context23.stop();
-            }
-          }
-        }, _callee23, this, [[0, 7]]);
-      }));
-
-      function _declarationClick(_x20) {
-        return _declarationClick2.apply(this, arguments);
-      }
-
-      return _declarationClick;
-    }()
-  }, {
-    key: "_incidentClick",
-    value: function () {
-      var _incidentClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee24(e) {
-        var _e$gmx5, id, properties;
+      var _declarationClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee24(e) {
+        var _e$gmx3, id, properties;
 
         return regeneratorRuntime.wrap(function _callee24$(_context24) {
           while (1) {
@@ -58328,9 +58647,9 @@ var Map = /*#__PURE__*/function (_EventTarget) {
               case 0:
                 _context24.prev = 0;
                 L$1.DomEvent.stopPropagation(e);
-                _e$gmx5 = e.gmx, id = _e$gmx5.id, properties = _e$gmx5.properties;
+                _e$gmx3 = e.gmx, id = _e$gmx3.id, properties = _e$gmx3.properties;
                 _context24.next = 5;
-                return this._showIncident(properties.id, id);
+                return this._showDeclaration(properties.id, id);
 
               case 5:
                 _context24.next = 10;
@@ -58349,7 +58668,46 @@ var Map = /*#__PURE__*/function (_EventTarget) {
         }, _callee24, this, [[0, 7]]);
       }));
 
-      function _incidentClick(_x21) {
+      function _declarationClick(_x19) {
+        return _declarationClick2.apply(this, arguments);
+      }
+
+      return _declarationClick;
+    }()
+  }, {
+    key: "_incidentClick",
+    value: function () {
+      var _incidentClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee25(e) {
+        var _e$gmx4, id, properties;
+
+        return regeneratorRuntime.wrap(function _callee25$(_context25) {
+          while (1) {
+            switch (_context25.prev = _context25.next) {
+              case 0:
+                _context25.prev = 0;
+                L$1.DomEvent.stopPropagation(e);
+                _e$gmx4 = e.gmx, id = _e$gmx4.id, properties = _e$gmx4.properties;
+                _context25.next = 5;
+                return this._showIncident(properties, id);
+
+              case 5:
+                _context25.next = 10;
+                break;
+
+              case 7:
+                _context25.prev = 7;
+                _context25.t0 = _context25["catch"](0);
+                alert(_context25.t0.toString());
+
+              case 10:
+              case "end":
+                return _context25.stop();
+            }
+          }
+        }, _callee25, this, [[0, 7]]);
+      }));
+
+      function _incidentClick(_x20) {
         return _incidentClick2.apply(this, arguments);
       }
 
@@ -58358,7 +58716,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "load",
     value: function () {
-      var _load = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee25() {
+      var _load = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee26() {
         var _this5 = this;
 
         var mapId,
@@ -58366,29 +58724,30 @@ var Map = /*#__PURE__*/function (_EventTarget) {
             i,
             end,
             start,
-            _args25 = arguments;
+            _args26 = arguments;
 
-        return regeneratorRuntime.wrap(function _callee25$(_context25) {
+        return regeneratorRuntime.wrap(function _callee26$(_context26) {
           while (1) {
-            switch (_context25.prev = _context25.next) {
+            switch (_context26.prev = _context26.next) {
               case 0:
-                mapId = _args25.length > 0 && _args25[0] !== undefined ? _args25[0] : '3B9D614D7AFA4A1ABF2BF1E0918677EF';
-                _context25.next = 3;
+                mapId = _args26.length > 0 && _args26[0] !== undefined ? _args26[0] : '3B9D614D7AFA4A1ABF2BF1E0918677EF';
+                _context26.next = 3;
                 return L$1.gmx.loadMap(mapId, {
+                  // apiKey: this._apiKey,
                   leafletMap: this._map,
                   hostName: this._hostName,
                   setZIndex: true,
                   gmxEndPoints: {
-                    checkVersion: "".concat(this._gmxPath, "/Layer/CheckVersion.ashx"),
-                    layerProps: "".concat(this._gmxPath, "/Layer/GetLayerJson.ashx"),
-                    searchLayerItem: "".concat(this._gmxPath, "/VectorLayer/Search.ashx"),
-                    tileProps: "".concat(this._gmxPath, "/TileSender.ashx"),
-                    mapProps: "".concat(this._gmxPath, "/TileSender.ashx")
+                    checkVersion: "".concat(this._gmxPath, "Layer/CheckVersion.ashx"),
+                    layerProps: "".concat(this._gmxPath, "Layer/GetLayerJson.ashx"),
+                    searchLayerItem: "".concat(this._gmxPath, "VectorLayer/Search.ashx"),
+                    tileProps: "".concat(this._gmxPath, "TileSender.ashx"),
+                    mapProps: "".concat(this._gmxPath, "TileSender.ashx")
                   }
                 });
 
               case 3:
-                this._gmxMap = _context25.sent;
+                this._gmxMap = _context26.sent;
                 this._zoom = new Zoom();
 
                 this._zoom.addTo(this._map);
@@ -58399,11 +58758,25 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   }
                 });
 
+                this._baselayers = new BaseLayers({
+                  apiKey: this._apiKey
+                });
+
+                this._baselayers.addTo(this._map);
+
                 this._legend = new Legend();
 
                 this._legend.addTo(this._map);
 
                 this._legend.on('click', this._showLayer.bind(this));
+
+                this._legend.on('activate', function () {
+                  _this5._baselayers.showPanel(false);
+                });
+
+                this._baselayers.on('activate', function () {
+                  _this5._legend.showPanel(false);
+                });
 
                 _loop = function _loop(i) {
                   var layer = _this5._gmxMap.layers[i];
@@ -58486,37 +58859,37 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   _loop(i);
                 }
 
-                _context25.next = 14;
+                _context26.next = 18;
                 return this.getUserInfo();
 
-              case 14:
-                if (!_context25.sent) {
-                  _context25.next = 18;
+              case 18:
+                if (!_context26.sent) {
+                  _context26.next = 22;
                   break;
                 }
 
                 this._hotspottimeline = new HotSpotTimeLine();
-                _context25.next = 21;
+                _context26.next = 25;
                 break;
 
-              case 18:
+              case 22:
                 end = new Date();
                 start = new Date(end.getTime() - 2 * 60 * 60 * 24 * 1000);
 
                 this._fires.setDateInterval(start, end);
 
-              case 21:
+              case 25:
                 this._baselayers.toggle('sputnik'); // const CRLayer = this._gmxMap.layersByID['958E59D9911E4889AB3E787DE2AC028B'];	// Каталог растров
                 // this._map.addControl(nsGmx.gmxTimeLine.afterViewer({gmxMap: this._gmxMap}, this._map));	// Контрол таймлайна CR
                 // this._map.addLayer(CRLayer);
 
 
-              case 22:
+              case 26:
               case "end":
-                return _context25.stop();
+                return _context26.stop();
             }
           }
-        }, _callee25, this);
+        }, _callee26, this);
       }));
 
       function load() {
