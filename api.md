@@ -16,15 +16,15 @@
 		```
 	* включить состояние по умолчанию
 		```js
-		showMain();
+		async showMain();
 		```
 	* показать сводную аналитику	
 		```js
-		showAnalytics();
+		async showAnalytics();
 		```
 	* показать данные пользователя
 		```js
-		showUploaded();
+		async showUploaded();
 		```
 	* показать список заявок
 		```js
