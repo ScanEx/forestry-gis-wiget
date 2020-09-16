@@ -54566,6 +54566,48 @@ var EditPlot = /*#__PURE__*/function (_Plot2) {
         return _ref8.apply(this, arguments);
       };
     }());
+
+    var btnRequest = _this4._container.querySelector('.request');
+
+    btnRequest.addEventListener('click', /*#__PURE__*/function () {
+      var _ref9 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(e) {
+        var event;
+        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+          while (1) {
+            switch (_context5.prev = _context5.next) {
+              case 0:
+                e.stopPropagation();
+                _context5.prev = 1;
+                _context5.next = 4;
+                return _this4._createRequest();
+
+              case 4:
+                event = document.createEvent('Event');
+                event.initEvent('create', false, false);
+                event.detail = _this4._valid;
+
+                _this4.dispatchEvent(event);
+
+                _context5.next = 13;
+                break;
+
+              case 10:
+                _context5.prev = 10;
+                _context5.t0 = _context5["catch"](1);
+                alert(_context5.t0.toString());
+
+              case 13:
+              case "end":
+                return _context5.stop();
+            }
+          }
+        }, _callee5, null, [[1, 10]]);
+      }));
+
+      return function (_x4) {
+        return _ref9.apply(this, arguments);
+      };
+    }());
     _this4._quadrants = new Quadrants(_this4._container.querySelector('.quadrants'));
 
     _this4._quadrants.on('item:click', function (e) {
@@ -54596,22 +54638,62 @@ var EditPlot = /*#__PURE__*/function (_Plot2) {
   }
 
   _createClass(EditPlot, [{
+    key: "_createRequest",
+    value: function () {
+      var _createRequest2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6() {
+        var fd, response;
+        return regeneratorRuntime.wrap(function _callee6$(_context6) {
+          while (1) {
+            switch (_context6.prev = _context6.next) {
+              case 0:
+                fd = new FormData();
+                fd.append('ForestProjectID', this._valid);
+                _context6.next = 4;
+                return fetch("".concat(this._serviceEndpoint, "/Forest/CreateApplicationFromDraft"), {
+                  method: 'POST',
+                  credentials: 'include',
+                  body: fd
+                });
+
+              case 4:
+                response = _context6.sent;
+                _context6.next = 7;
+                return response.json();
+
+              case 7:
+                return _context6.abrupt("return", _context6.sent);
+
+              case 8:
+              case "end":
+                return _context6.stop();
+            }
+          }
+        }, _callee6, this);
+      }));
+
+      function _createRequest() {
+        return _createRequest2.apply(this, arguments);
+      }
+
+      return _createRequest;
+    }()
+  }, {
     key: "_save",
     value: function () {
-      var _save3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5() {
+      var _save3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7() {
         var fd, response;
-        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+        return regeneratorRuntime.wrap(function _callee7$(_context7) {
           while (1) {
-            switch (_context5.prev = _context5.next) {
+            switch (_context7.prev = _context7.next) {
               case 0:
                 fd = new FormData();
                 fd.append('ForestProjectID', this._valid);
                 fd.append('Title', "".concat(new Date().toLocaleDateString()));
-                fd.append('ForestQs', this._quadrants.items.map(function (_ref9) {
-                  var gmx_id = _ref9.gmx_id;
+                fd.append('ForestQs', this._quadrants.items.map(function (_ref10) {
+                  var gmx_id = _ref10.gmx_id;
                   return gmx_id.toString();
                 }).join(','));
-                _context5.next = 6;
+                _context7.next = 6;
                 return fetch("".concat(this._serviceEndpoint, "/Forest/StoreDraftForestProjectGmxIds"), {
                   method: 'POST',
                   credentials: 'include',
@@ -54619,19 +54701,19 @@ var EditPlot = /*#__PURE__*/function (_Plot2) {
                 });
 
               case 6:
-                response = _context5.sent;
-                _context5.next = 9;
+                response = _context7.sent;
+                _context7.next = 9;
                 return response.json();
 
               case 9:
-                return _context5.abrupt("return", _context5.sent);
+                return _context7.abrupt("return", _context7.sent);
 
               case 10:
               case "end":
-                return _context5.stop();
+                return _context7.stop();
             }
           }
-        }, _callee5, this);
+        }, _callee7, this);
       }));
 
       function _save() {
@@ -54643,36 +54725,36 @@ var EditPlot = /*#__PURE__*/function (_Plot2) {
   }, {
     key: "open",
     value: function () {
-      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(id) {
+      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(id) {
         var response, _yield$response$json2, gmxIds, result;
 
-        return regeneratorRuntime.wrap(function _callee6$(_context6) {
+        return regeneratorRuntime.wrap(function _callee8$(_context8) {
           while (1) {
-            switch (_context6.prev = _context6.next) {
+            switch (_context8.prev = _context8.next) {
               case 0:
-                _context6.prev = 0;
-                _context6.next = 3;
+                _context8.prev = 0;
+                _context8.next = 3;
                 return fetch("".concat(this._serviceEndpoint, "/Forest/GetPlotProjectDraft?ForestProjectID=").concat(id), {
                   method: 'GET',
                   credentials: 'include'
                 });
 
               case 3:
-                response = _context6.sent;
-                _context6.next = 6;
+                response = _context8.sent;
+                _context8.next = 6;
                 return response.json();
 
               case 6:
-                _yield$response$json2 = _context6.sent;
+                _yield$response$json2 = _context8.sent;
                 gmxIds = _yield$response$json2.gmxIds;
-                _context6.next = 10;
+                _context8.next = 10;
                 return this._validate(gmxIds);
 
               case 10:
-                result = _context6.sent;
+                result = _context8.sent;
 
                 if (!result) {
-                  _context6.next = 18;
+                  _context8.next = 18;
                   break;
                 }
 
@@ -54682,33 +54764,33 @@ var EditPlot = /*#__PURE__*/function (_Plot2) {
 
                 _get(_getPrototypeOf(EditPlot.prototype), "open", this).call(this);
 
-                _context6.next = 19;
+                _context8.next = 19;
                 break;
 
               case 18:
                 throw translate$7('quadrant.invalid');
 
               case 19:
-                _context6.next = 25;
+                _context8.next = 25;
                 break;
 
               case 21:
-                _context6.prev = 21;
-                _context6.t0 = _context6["catch"](0);
+                _context8.prev = 21;
+                _context8.t0 = _context8["catch"](0);
 
                 this._back();
 
-                alert(_context6.t0.toString());
+                alert(_context8.t0.toString());
 
               case 25:
               case "end":
-                return _context6.stop();
+                return _context8.stop();
             }
           }
-        }, _callee6, this, [[0, 21]]);
+        }, _callee8, this, [[0, 21]]);
       }));
 
-      function open(_x4) {
+      function open(_x5) {
         return _open.apply(this, arguments);
       }
 
@@ -57922,7 +58004,13 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                         }
                       }
                     }, _callee10);
-                  })));
+                  }))).on('create', function (e) {
+                    var event = document.createEvent('Event');
+                    event.initEvent('request:create', false, false);
+                    event.detail = e.detail;
+
+                    _this3.dispatchEvent(event);
+                  });
                 }
 
                 _context11.next = 3;
