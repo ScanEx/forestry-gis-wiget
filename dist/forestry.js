@@ -4345,55 +4345,6 @@ function _createClass(Constructor, protoProps, staticProps) {
   return Constructor;
 }
 
-function _defineProperty(obj, key, value) {
-  if (key in obj) {
-    Object.defineProperty(obj, key, {
-      value: value,
-      enumerable: true,
-      configurable: true,
-      writable: true
-    });
-  } else {
-    obj[key] = value;
-  }
-
-  return obj;
-}
-
-function ownKeys$1(object, enumerableOnly) {
-  var keys = Object.keys(object);
-
-  if (Object.getOwnPropertySymbols) {
-    var symbols = Object.getOwnPropertySymbols(object);
-    if (enumerableOnly) symbols = symbols.filter(function (sym) {
-      return Object.getOwnPropertyDescriptor(object, sym).enumerable;
-    });
-    keys.push.apply(keys, symbols);
-  }
-
-  return keys;
-}
-
-function _objectSpread2(target) {
-  for (var i = 1; i < arguments.length; i++) {
-    var source = arguments[i] != null ? arguments[i] : {};
-
-    if (i % 2) {
-      ownKeys$1(Object(source), true).forEach(function (key) {
-        _defineProperty(target, key, source[key]);
-      });
-    } else if (Object.getOwnPropertyDescriptors) {
-      Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
-    } else {
-      ownKeys$1(Object(source)).forEach(function (key) {
-        Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
-      });
-    }
-  }
-
-  return target;
-}
-
 function _inherits(subClass, superClass) {
   if (typeof superClass !== "function" && superClass !== null) {
     throw new TypeError("Super expression must either be null or a function");
@@ -4471,6 +4422,36 @@ function _createSuper(Derived) {
 
     return _possibleConstructorReturn(this, result);
   };
+}
+
+function _superPropBase(object, property) {
+  while (!Object.prototype.hasOwnProperty.call(object, property)) {
+    object = _getPrototypeOf(object);
+    if (object === null) break;
+  }
+
+  return object;
+}
+
+function _get(target, property, receiver) {
+  if (typeof Reflect !== "undefined" && Reflect.get) {
+    _get = Reflect.get;
+  } else {
+    _get = function _get(target, property, receiver) {
+      var base = _superPropBase(target, property);
+
+      if (!base) return;
+      var desc = Object.getOwnPropertyDescriptor(base, property);
+
+      if (desc.get) {
+        return desc.get.call(receiver);
+      }
+
+      return desc.value;
+    };
+  }
+
+  return _get(target, property, receiver || target);
 }
 
 function _unsupportedIterableToArray(o, minLen) {
@@ -25120,80 +25101,6 @@ var Zoom = L$1.Control.extend({
   onRemove: function onRemove() {}
 });
 
-var LayerSwitch = L$1.Control.extend({
-  includes: L$1.Evented.prototype,
-  initialize: function initialize(name, options) {
-    this._active = false;
-  },
-  options: {
-    position: 'topright'
-  },
-  onAdd: function onAdd(map) {
-    var _this = this;
-
-    this._container = L$1.DomUtil.create('div', 'map-top-right-wrapper__layer');
-    this._icon = L$1.DomUtil.create('div', 'layer-icon layer', this._container);
-    this._layers = L$1.DomUtil.create('div', 'layer-popup hidden', this._container);
-    L$1.DomEvent.on(this._icon, 'click', function (e) {
-      L$1.DomEvent.stopPropagation(e);
-      _this._active = !_this._active;
-
-      _this.showPanel(_this._active);
-
-      _this.fire('activate', {
-        active: _this._active
-      });
-    });
-    return this._container;
-  },
-  onRemove: function onRemove(map) {},
-  update: function update(items) {
-    var _this2 = this;
-
-    this._items = items;
-    this._layers.innerHTML = "".concat(this._items.map(function (_ref) {
-      var title = _ref.title,
-          visible = _ref.visible;
-      return "<div class=\"layer-popup__row".concat(visible ? ' active' : '', "\"><div>").concat(title, "</div><div class=\"toggle\"></div></div>");
-    }).join(''));
-
-    var rows = this._container.querySelectorAll('.layer-popup__row');
-
-    var _loop = function _loop(i) {
-      var row = rows[i];
-      L$1.DomEvent.on(row, 'click', function (e) {
-        L$1.DomEvent.stopPropagation(e);
-        var visible = !L$1.DomUtil.hasClass(row, 'active');
-
-        if (visible) {
-          L$1.DomUtil.addClass(row, 'active');
-        } else {
-          L$1.DomUtil.removeClass(row, 'active');
-        }
-
-        _this2.fire('click', _objectSpread2(_objectSpread2({}, items[i]), {}, {
-          visible: visible
-        }));
-      }, _this2);
-    };
-
-    for (var i = 0; i < rows.length; ++i) {
-      _loop(i);
-    }
-  },
-  showPanel: function showPanel(visible) {
-    this._active = visible;
-
-    if (this._active) {
-      L$1.DomUtil.addClass(this._icon, 'active');
-      L$1.DomUtil.removeClass(this._layers, 'hidden');
-    } else {
-      L$1.DomUtil.removeClass(this._icon, 'active');
-      L$1.DomUtil.addClass(this._layers, 'hidden');
-    }
-  }
-});
-
 var Content = L$1.Control.extend({
   options: {
     position: 'bottom'
@@ -25549,15 +25456,33 @@ var BaseLayers = L$1.Control.extend({
       baseLayers.OSMHybrid.layers = [satellite, hybrid];
     });
   },
-  toggle: function toggle(id) {
+  unload: function unload() {
     var _this2 = this;
+
+    if (this._activeID) {
+      var baseLayer = baseLayers[this._activeID];
+
+      if (baseLayer) {
+        baseLayer.layers.forEach(function (it) {
+          _this2._map.removeLayer(it);
+        });
+        L$1.DomUtil.removeClass(baseLayer.node, 'active');
+      }
+
+      this._activeID = null;
+    }
+
+    return this;
+  },
+  toggle: function toggle(id) {
+    var _this3 = this;
 
     if (this._activeID !== id) {
       var baseLayer = baseLayers[this._activeID];
 
       if (this._activeID && baseLayer) {
         baseLayer.layers.forEach(function (it) {
-          _this2._map.removeLayer(it);
+          _this3._map.removeLayer(it);
         });
         L$1.DomUtil.removeClass(baseLayer.node, 'active');
       }
@@ -25567,7 +25492,7 @@ var BaseLayers = L$1.Control.extend({
 
       if (baseLayer) {
         baseLayer.layers.forEach(function (it) {
-          _this2._map.addLayer(it);
+          _this3._map.addLayer(it);
         });
       }
 
@@ -36384,6 +36309,92 @@ addToUnscopables(FIND);
   }
 })();
 
+var Component = /*#__PURE__*/function (_EventTarget) {
+  _inherits(Component, _EventTarget);
+
+  var _super = _createSuper(Component);
+
+  function Component(container, options) {
+    var _this;
+
+    _classCallCheck(this, Component);
+
+    _this = _super.call(this);
+    _this._container = container;
+    _this._options = options;
+    L$1.DomEvent.disableScrollPropagation(_this._container);
+    return _this;
+  }
+
+  _createClass(Component, [{
+    key: "_styleHook",
+    value: function _styleHook(item) {
+      return {};
+    }
+  }, {
+    key: "_click",
+    value: function _click(e) {
+      L$1.DomEvent.stopPropagation(e);
+    }
+  }, {
+    key: "open",
+    value: function () {
+      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+        var event;
+        return regeneratorRuntime.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                if (this._options.layer) {
+                  this._options.layer.setStyleHook(this._styleHook.bind(this));
+
+                  this._options.layer.repaint();
+
+                  if (this._options.clickable) {
+                    this._options.layer.on('click', this._click, this);
+                  }
+                }
+
+                event = document.createEvent('Event');
+                event.initEvent('open', false, false);
+                this.dispatchEvent(event);
+
+              case 4:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee, this);
+      }));
+
+      function open() {
+        return _open.apply(this, arguments);
+      }
+
+      return open;
+    }()
+  }, {
+    key: "close",
+    value: function close() {
+      if (this._options.layer) {
+        this._options.layer.removeStyleHook();
+
+        this._options.layer.repaint();
+
+        if (this._options.clickable) {
+          this._options.layer.off('click', this._click, this);
+        }
+      }
+
+      var event = document.createEvent('Event');
+      event.initEvent('close', false, false);
+      this.dispatchEvent(event);
+    }
+  }]);
+
+  return Component;
+}(EventTarget);
+
 var translate$3 = T.getText.bind(T);
 T.addText('rus', {
   project: {
@@ -36396,30 +36407,54 @@ T.addText('rus', {
     create: 'Создать проект'
   }
 });
+var STYLES = {
+  SELECTED: {
+    fillStyle: 'rgba(42, 121,31)'
+  },
+  BID: {
+    fillStyle: 'rgba(144, 112, 29)'
+  },
+  LEASED: {
+    fillStyle: 'rgba(100, 39, 39)'
+  },
+  OWN: {
+    fillStyle: 'rgba(42, 121,31, 0.5)'
+  }
+};
 
-var Requests = /*#__PURE__*/function (_EventTarget) {
-  _inherits(Requests, _EventTarget);
+var Requests = /*#__PURE__*/function (_Component) {
+  _inherits(Requests, _Component);
 
   var _super = _createSuper(Requests);
 
   function Requests(container, _ref) {
     var _this;
 
-    var quadrants = _ref.quadrants,
+    var layer = _ref.layer,
         _ref$columns = _ref.columns,
         columns = _ref$columns === void 0 ? ['id', 'status', 'title', 'forestry'] : _ref$columns,
         serviceEndpoint = _ref.serviceEndpoint;
 
     _classCallCheck(this, Requests);
 
-    _this = _super.call(this);
-    _this._container = container;
+    _this = _super.call(this, container, {
+      layer: layer
+    });
 
     _this._container.classList.add('scanex-forestry-requests');
 
-    _this._quadrants = quadrants;
     _this._columns = columns;
     _this._serviceEndpoint = serviceEndpoint;
+
+    var _this$_options$layer$ = _this._options.layer.getGmxProperties(),
+        attributes = _this$_options$layer$.attributes;
+
+    _this._statusIndex = attributes.indexOf('status_calc');
+
+    if (_this._statusIndex >= 0) {
+      _this._statusIndex = _this._statusIndex + 1;
+    }
+
     _this._container.innerHTML = "<table class=\"header\" cellpadding=\"0\" cellspacing=\"0\">\n            <tbody>\n                <tr>\n                    <td>\n                        <label class=\"title\">".concat(translate$3('project.header'), "</label>\n                    </td>                    \n                    <td>\n                        <button class=\"create\">").concat(translate$3('project.create'), "</button>\n                    </td>\n                </tr>\n            </tbody>\n        </table>        \n        <table class=\"content\" cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>").concat(_this._columns.map(function (id) {
       return "<th>".concat(translate$3("project.".concat(id)), "</th>");
     }).join(''), "</tr>\n            </thead>\n            <tbody class=\"items\"></tbody>\n        </table>");
@@ -36437,12 +36472,35 @@ var Requests = /*#__PURE__*/function (_EventTarget) {
   }
 
   _createClass(Requests, [{
+    key: "_styleHook",
+    value: function _styleHook(_ref2) {
+      var properties = _ref2.properties;
+
+      if (this._statusIndex >= 0) {
+        switch (properties[this._statusIndex]) {
+          case 1:
+            return STYLES.OWN;
+
+          case 2:
+            return STYLES.BID;
+
+          case 3:
+            return STYLES.LEASED;
+
+          default:
+            return {};
+        }
+      }
+
+      return {};
+    }
+  }, {
     key: "open",
     value: function () {
       var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
         var _this2 = this;
 
-        var response, items, rows, _loop, i, event;
+        var response, items, rows, _loop, i;
 
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
@@ -36486,23 +36544,25 @@ var Requests = /*#__PURE__*/function (_EventTarget) {
                   _loop(i);
                 }
 
-                event = document.createEvent('Event');
-                event.initEvent('open', false, false);
-                this.dispatchEvent(event);
+                _context.next = 13;
+                return _get(_getPrototypeOf(Requests.prototype), "open", this).call(this);
+
+              case 13:
                 _context.next = 19;
                 break;
 
-              case 16:
-                _context.prev = 16;
+              case 15:
+                _context.prev = 15;
                 _context.t0 = _context["catch"](0);
                 alert(_context.t0.toString());
+                this.close();
 
               case 19:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, this, [[0, 16]]);
+        }, _callee, this, [[0, 15]]);
       }));
 
       function open() {
@@ -36511,21 +36571,10 @@ var Requests = /*#__PURE__*/function (_EventTarget) {
 
       return open;
     }()
-  }, {
-    key: "close",
-    value: function close() {
-      this._quadrants.removeStyleHook();
-
-      this._quadrants.repaint();
-
-      var event = document.createEvent('Event');
-      event.initEvent('close', false, false);
-      this.dispatchEvent(event);
-    }
   }]);
 
   return Requests;
-}(EventTarget);
+}(Component);
 
 var $includes$1 = arrayIncludes.includes;
 
@@ -54129,224 +54178,89 @@ var translate$7 = T.getText.bind(T);
 T.addText('rus', {
   plot: {
     title: 'Создание проекта лесного участка',
-    create: 'Создать проект'
+    create: 'Создать проект',
+    edit: 'Редактировать проект',
+    request: 'Создать заявку',
+    save: 'Сохранить проект'
   }
 });
-var STYLES = {
-  fillStyle: 'rgba(28, 224, 0, 0.4)'
+var STYLES$1 = {
+  SELECTED: {
+    fillStyle: 'rgba(42, 121,31)'
+  },
+  BID: {
+    fillStyle: 'rgba(144, 112, 29)'
+  },
+  LEASED: {
+    fillStyle: 'rgba(100, 39, 39)'
+  },
+  OWN: {
+    fillStyle: 'rgba(42, 121,31, 0.5)'
+  }
 };
 
-var CreatePlot = /*#__PURE__*/function (_EventTarget) {
-  _inherits(CreatePlot, _EventTarget);
+var Plot = /*#__PURE__*/function (_Component) {
+  _inherits(Plot, _Component);
 
-  var _super = _createSuper(CreatePlot);
+  var _super = _createSuper(Plot);
 
-  function CreatePlot(container, _ref) {
+  function Plot(container, _ref) {
     var _this;
 
-    var quadrants = _ref.quadrants,
+    var layer = _ref.layer,
         serviceEndpoint = _ref.serviceEndpoint;
 
-    _classCallCheck(this, CreatePlot);
+    _classCallCheck(this, Plot);
 
-    _this = _super.call(this);
-    _this._container = container;
-    L$1.DomEvent.disableScrollPropagation(container);
+    _this = _super.call(this, container, {
+      layer: layer,
+      clickable: true
+    });
 
     _this._container.classList.add('scanex-forestry-plot');
 
-    _this._quadrants = quadrants;
+    var _this$_options$layer$ = _this._options.layer.getGmxProperties(),
+        attributes = _this$_options$layer$.attributes;
+
+    _this._statusIndex = attributes.indexOf('status_calc');
     _this._serviceEndpoint = serviceEndpoint;
-    _this._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th colspan=\"2\">\n                        <button class=\"backward\"></button>\n                        <label class=\"head\">".concat(translate$7('plot.title'), "</label>                        \n                        <button class=\"create\">").concat(translate$7('plot.create'), "</button>\n                    </th>\n                </tr>\n            </thead>\n            <tbody>\n                <tr>                    \n                    <td>                                                \n                        <div class=\"species\"></div>\n                    </td>\n                    <td>\n                        <div class=\"quadrants\"></div>\n                    </td>\n                </tr>\n            </tbody>\n        </table>");
-    container.querySelector('.backward').addEventListener('click', function (e) {
-      e.stopPropagation();
-
-      _this.back();
-    });
-    var btnCreate = container.querySelector('.create');
-    btnCreate.addEventListener('click', /*#__PURE__*/function () {
-      var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e) {
-        var data, event;
-        return regeneratorRuntime.wrap(function _callee$(_context) {
-          while (1) {
-            switch (_context.prev = _context.next) {
-              case 0:
-                e.stopPropagation();
-                _context.next = 3;
-                return _this.save();
-
-              case 3:
-                data = _context.sent;
-                event = document.createEvent('Event');
-                event.initEvent('save', false, false);
-                event.detail = data;
-
-                _this.dispatchEvent(event);
-
-              case 8:
-              case "end":
-                return _context.stop();
-            }
-          }
-        }, _callee);
-      }));
-
-      return function (_x) {
-        return _ref2.apply(this, arguments);
-      };
-    }());
-    _this._quadrantView = new Quadrants(container.querySelector('.quadrants'));
-
-    _this._quadrantView.on('item:click', function (e) {
-      var id = e.detail;
-      var event = document.createEvent('Event');
-      event.initEvent('quadrant:click', false, false);
-      event.detail = id;
-
-      _this.dispatchEvent(event);
-    }).on('item:over', function (e) {
-      var id = e.detail;
-      var event = document.createEvent('Event');
-      event.initEvent('quadrant:over', false, false);
-      event.detail = id;
-
-      _this.dispatchEvent(event);
-    }).on('item:out', function (e) {
-      var id = e.detail;
-      var event = document.createEvent('Event');
-      event.initEvent('quadrant:out', false, false);
-      event.detail = id;
-
-      _this.dispatchEvent(event);
-    });
-
-    _this._speciesView = new Species(container.querySelector('.species'));
     return _this;
   }
 
-  _createClass(CreatePlot, [{
-    key: "back",
-    value: function back() {
+  _createClass(Plot, [{
+    key: "_styleHook",
+    value: function _styleHook(_ref2) {
+      var id = _ref2.id,
+          properties = _ref2.properties;
+
+      if (this._statusIndex >= 0) {
+        switch (properties[this._statusIndex]) {
+          case 1:
+            return STYLES$1.OWN;
+
+          case 2:
+            return STYLES$1.BID;
+
+          case 3:
+            return STYLES$1.LEASED;
+
+          default:
+            return this.quadrants.includes(id) ? STYLES$1.SELECTED : {};
+        }
+      }
+
+      return {};
+    }
+  }, {
+    key: "_back",
+    value: function _back() {
       var event = document.createEvent('Event');
       event.initEvent('backward', false, false);
       this.dispatchEvent(event);
     }
   }, {
-    key: "save",
-    value: function () {
-      var _save = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
-        var fd, response;
-        return regeneratorRuntime.wrap(function _callee2$(_context2) {
-          while (1) {
-            switch (_context2.prev = _context2.next) {
-              case 0:
-                fd = new FormData();
-                fd.append('Title', "".concat(new Date().toLocaleDateString()));
-                fd.append('ForestQs', this._quadrantView.items.map(function (_ref3) {
-                  var gmx_id = _ref3.gmx_id;
-                  return gmx_id.toString();
-                }).join(','));
-                _context2.next = 5;
-                return fetch("".concat(this._serviceEndpoint, "/Forest/StoreDraftForestProjectGmxIds"), {
-                  method: 'POST',
-                  credentials: 'include',
-                  body: fd
-                });
-
-              case 5:
-                response = _context2.sent;
-                _context2.next = 8;
-                return response.json();
-
-              case 8:
-                return _context2.abrupt("return", _context2.sent);
-
-              case 9:
-              case "end":
-                return _context2.stop();
-            }
-          }
-        }, _callee2, this);
-      }));
-
-      function save() {
-        return _save.apply(this, arguments);
-      }
-
-      return save;
-    }()
-  }, {
-    key: "validate",
-    value: function () {
-      var _validate = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(ids) {
-        var fd, response, _yield$response$json, Status, ForestStat, SquareStat;
-
-        return regeneratorRuntime.wrap(function _callee3$(_context3) {
-          while (1) {
-            switch (_context3.prev = _context3.next) {
-              case 0:
-                fd = new FormData();
-                fd.append('ForestBlocks', ids.map(function (id) {
-                  return id.toString();
-                }).join(','));
-                _context3.next = 4;
-                return fetch("".concat(this._serviceEndpoint, "/Forest/ValidateForestProjectGmxIds"), {
-                  method: 'POST',
-                  credentials: 'include',
-                  body: fd
-                });
-
-              case 4:
-                response = _context3.sent;
-                _context3.next = 7;
-                return response.json();
-
-              case 7:
-                _yield$response$json = _context3.sent;
-                Status = _yield$response$json.Status;
-                ForestStat = _yield$response$json.ForestStat;
-                SquareStat = _yield$response$json.SquareStat;
-
-                if (!(Status === 'valid')) {
-                  _context3.next = 15;
-                  break;
-                }
-
-                return _context3.abrupt("return", {
-                  ForestStat: ForestStat,
-                  SquareStat: SquareStat
-                });
-
-              case 15:
-                return _context3.abrupt("return", false);
-
-              case 16:
-              case "end":
-                return _context3.stop();
-            }
-          }
-        }, _callee3, this);
-      }));
-
-      function validate(_x2) {
-        return _validate.apply(this, arguments);
-      }
-
-      return validate;
-    }()
-  }, {
-    key: "hilite",
-    value: function hilite(id) {
-      this._quadrantView.hilite(id);
-    }
-  }, {
-    key: "unhilite",
-    value: function unhilite(id) {
-      this._quadrantView.unhilite(id);
-    }
-  }, {
-    key: "_quadrantClick",
-    value: function _quadrantClick(e) {
+    key: "_click",
+    value: function _click(e) {
       var _this2 = this;
 
       L$1.DomEvent.stopPropagation(e);
@@ -54362,14 +54276,14 @@ var CreatePlot = /*#__PURE__*/function (_EventTarget) {
       }
 
       if (ids.length === 0) {
-        this.back();
+        this._back();
       } else {
-        this.validate(ids).then(function (valid) {
+        this._validate(ids).then(function (valid) {
           if (valid) {
-            _this2._quadrantView.items = valid.SquareStat;
-            _this2._speciesView.items = valid.ForestStat;
+            _this2._quadrants.items = valid.SquareStat;
+            _this2._species.items = valid.ForestStat;
 
-            _this2._quadrants.repaint();
+            _this2._options.layer.repaint();
           } else {
             alert(translate$7('quadrant.invalid'));
           }
@@ -54379,280 +54293,64 @@ var CreatePlot = /*#__PURE__*/function (_EventTarget) {
       }
     }
   }, {
-    key: "open",
+    key: "_save",
     value: function () {
-      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
-        var _this3 = this;
-
-        var event;
-        return regeneratorRuntime.wrap(function _callee4$(_context4) {
-          while (1) {
-            switch (_context4.prev = _context4.next) {
-              case 0:
-                this._quadrants.setStyleHook(function (item) {
-                  return _this3.quadrants.includes(item.id) ? STYLES : {};
-                });
-
-                this._quadrants.on('click', this._quadrantClick, this);
-
-                this._quadrants.repaint();
-
-                event = document.createEvent('Event');
-                event.initEvent('open', false, false);
-                this.dispatchEvent(event);
-
-              case 6:
-              case "end":
-                return _context4.stop();
-            }
-          }
-        }, _callee4, this);
-      }));
-
-      function open() {
-        return _open.apply(this, arguments);
-      }
-
-      return open;
-    }()
-  }, {
-    key: "close",
-    value: function close() {
-      this._quadrants.removeStyleHook();
-
-      this._quadrants.repaint();
-
-      this._quadrants.off('click', this._quadrantClick, this);
-
-      var event = document.createEvent('Event');
-      event.initEvent('close', false, false);
-      this.dispatchEvent(event);
-    }
-  }, {
-    key: "quadrants",
-    get: function get() {
-      return this._quadrantView.items.map(function (_ref4) {
-        var gmx_id = _ref4.gmx_id;
-        return gmx_id;
-      });
-    }
-  }]);
-
-  return CreatePlot;
-}(EventTarget);
-
-var translate$8 = T.getText.bind(T);
-T.addText('rus', {
-  plot: {
-    title: 'Создание проекта лесного участка',
-    edit: 'Редактировать проект',
-    request: 'Создать заявку',
-    save: 'Сохранить проект'
-  }
-});
-var STYLES$1 = {
-  fillStyle: 'rgba(28, 224, 0, 0.4)'
-};
-
-var EditPlot = /*#__PURE__*/function (_EventTarget) {
-  _inherits(EditPlot, _EventTarget);
-
-  var _super = _createSuper(EditPlot);
-
-  function EditPlot(container, _ref) {
-    var _this;
-
-    var quadrants = _ref.quadrants,
-        serviceEndpoint = _ref.serviceEndpoint;
-
-    _classCallCheck(this, EditPlot);
-
-    _this = _super.call(this);
-    _this._container = container;
-    L$1.DomEvent.disableScrollPropagation(container);
-
-    _this._container.classList.add('scanex-forestry-plot');
-
-    _this._quadrants = quadrants;
-    _this._serviceEndpoint = serviceEndpoint;
-    _this._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th colspan=\"2\">\n                        <button class=\"backward\"></button>\n                        <label class=\"head\">".concat(translate$8('plot.title'), "</label>                        \n                        <button class=\"save\">").concat(translate$8('plot.save'), "</button>\n                        <button class=\"request\">").concat(translate$8('plot.request'), "</button>\n                    </th>\n                </tr>\n            </thead>\n            <tbody>\n                <tr>                    \n                    <td>                                                \n                        <div class=\"species\"></div>\n                    </td>\n                    <td>\n                        <div class=\"quadrants\"></div>\n                    </td>\n                </tr>\n            </tbody>\n        </table>");
-    container.querySelector('.backward').addEventListener('click', function (e) {
-      e.stopPropagation();
-
-      _this.back();
-    });
-    var btnSave = container.querySelector('.save');
-    btnSave.addEventListener('click', /*#__PURE__*/function () {
-      var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e) {
-        var data, event;
+      var _save2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+        var fd, response;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                e.stopPropagation();
-                _context.next = 3;
-                return _this.save();
-
-              case 3:
-                data = _context.sent;
-                event = document.createEvent('Event');
-                event.initEvent('save', false, false);
-                event.detail = data;
-
-                _this.dispatchEvent(event);
-
-              case 8:
-              case "end":
-                return _context.stop();
-            }
-          }
-        }, _callee);
-      }));
-
-      return function (_x) {
-        return _ref2.apply(this, arguments);
-      };
-    }());
-    _this._quadrantView = new Quadrants(container.querySelector('.quadrants'));
-
-    _this._quadrantView.on('item:click', function (e) {
-      var id = e.detail;
-      var event = document.createEvent('Event');
-      event.initEvent('quadrant:click', false, false);
-      event.detail = id;
-
-      _this.dispatchEvent(event);
-    }).on('item:over', function (e) {
-      var id = e.detail;
-      var event = document.createEvent('Event');
-      event.initEvent('quadrant:over', false, false);
-      event.detail = id;
-
-      _this.dispatchEvent(event);
-    }).on('item:out', function (e) {
-      var id = e.detail;
-      var event = document.createEvent('Event');
-      event.initEvent('quadrant:out', false, false);
-      event.detail = id;
-
-      _this.dispatchEvent(event);
-    });
-
-    _this._speciesView = new Species(container.querySelector('.species'));
-    return _this;
-  }
-
-  _createClass(EditPlot, [{
-    key: "_quadrantClick",
-    value: function _quadrantClick(e) {
-      var _this2 = this;
-
-      L$1.DomEvent.stopPropagation(e);
-      var id = e.gmx.id;
-      var ids = this.quadrants.slice();
-
-      if (ids.includes(id)) {
-        ids = ids.filter(function (k) {
-          return k !== id;
-        });
-      } else {
-        ids.push(id);
-      }
-
-      if (ids.length === 0) {
-        this.back();
-      } else {
-        this.validate(ids).then(function (valid) {
-          if (valid) {
-            _this2._quadrantView.items = valid.SquareStat;
-            _this2._speciesView.items = valid.ForestStat;
-
-            _this2._quadrants.repaint();
-          } else {
-            alert(translate$8('quadrant.invalid'));
-          }
-        }).catch(function (e) {
-          alert(e.toString());
-        });
-      }
-    }
-  }, {
-    key: "back",
-    value: function back() {
-      var event = document.createEvent('Event');
-      event.initEvent('backward', false, false);
-      this.dispatchEvent(event);
-    }
-  }, {
-    key: "save",
-    value: function () {
-      var _save = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
-        var fd, response;
-        return regeneratorRuntime.wrap(function _callee2$(_context2) {
-          while (1) {
-            switch (_context2.prev = _context2.next) {
-              case 0:
-                if (!this._valid) {
-                  _context2.next = 13;
-                  break;
-                }
-
                 fd = new FormData();
-                fd.append('ForestProjectID', this._valid);
                 fd.append('Title', "".concat(new Date().toLocaleDateString()));
-                fd.append('ForestQs', this._quadrantView.items.map(function (_ref3) {
+                fd.append('ForestQs', this._quadrants.items.map(function (_ref3) {
                   var gmx_id = _ref3.gmx_id;
                   return gmx_id.toString();
                 }).join(','));
-                _context2.next = 7;
+                _context.next = 5;
                 return fetch("".concat(this._serviceEndpoint, "/Forest/StoreDraftForestProjectGmxIds"), {
                   method: 'POST',
                   credentials: 'include',
                   body: fd
                 });
 
-              case 7:
-                response = _context2.sent;
-                _context2.next = 10;
+              case 5:
+                response = _context.sent;
+                _context.next = 8;
                 return response.json();
 
-              case 10:
-                return _context2.abrupt("return", _context2.sent);
+              case 8:
+                return _context.abrupt("return", _context.sent);
 
-              case 13:
-                return _context2.abrupt("return", new Promise(function (resolve) {
-                  return resolve(false);
-                }));
-
-              case 14:
+              case 9:
               case "end":
-                return _context2.stop();
+                return _context.stop();
             }
           }
-        }, _callee2, this);
+        }, _callee, this);
       }));
 
-      function save() {
-        return _save.apply(this, arguments);
+      function _save() {
+        return _save2.apply(this, arguments);
       }
 
-      return save;
+      return _save;
     }()
   }, {
-    key: "validate",
+    key: "_validate",
     value: function () {
-      var _validate = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(ids) {
+      var _validate2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(ids) {
         var fd, response, _yield$response$json, Status, ForestStat, SquareStat;
 
-        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+        return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
-            switch (_context3.prev = _context3.next) {
+            switch (_context2.prev = _context2.next) {
               case 0:
                 fd = new FormData();
                 fd.append('ForestBlocks', ids.map(function (id) {
                   return id.toString();
                 }).join(','));
-                _context3.next = 4;
+                _context2.next = 4;
                 return fetch("".concat(this._serviceEndpoint, "/Forest/ValidateForestProjectGmxIds"), {
                   method: 'POST',
                   credentials: 'include',
@@ -54660,162 +54358,368 @@ var EditPlot = /*#__PURE__*/function (_EventTarget) {
                 });
 
               case 4:
-                response = _context3.sent;
-                _context3.next = 7;
+                response = _context2.sent;
+                _context2.next = 7;
                 return response.json();
 
               case 7:
-                _yield$response$json = _context3.sent;
+                _yield$response$json = _context2.sent;
                 Status = _yield$response$json.Status;
                 ForestStat = _yield$response$json.ForestStat;
                 SquareStat = _yield$response$json.SquareStat;
 
                 if (!(Status === 'valid')) {
-                  _context3.next = 15;
+                  _context2.next = 15;
                   break;
                 }
 
-                return _context3.abrupt("return", {
+                return _context2.abrupt("return", {
                   ForestStat: ForestStat,
                   SquareStat: SquareStat
                 });
 
               case 15:
-                return _context3.abrupt("return", false);
+                return _context2.abrupt("return", false);
 
               case 16:
               case "end":
-                return _context3.stop();
+                return _context2.stop();
             }
           }
-        }, _callee3, this);
+        }, _callee2, this);
       }));
 
-      function validate(_x2) {
-        return _validate.apply(this, arguments);
+      function _validate(_x) {
+        return _validate2.apply(this, arguments);
       }
 
-      return validate;
+      return _validate;
     }()
   }, {
     key: "hilite",
     value: function hilite(id) {
-      this._quadrantView.hilite(id);
+      this._quadrants.hilite(id);
     }
   }, {
     key: "unhilite",
     value: function unhilite(id) {
-      this._quadrantView.unhilite(id);
-    }
-  }, {
-    key: "open",
-    value: function () {
-      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(id) {
-        var _this3 = this;
-
-        var response, _yield$response$json2, gmxIds, event;
-
-        return regeneratorRuntime.wrap(function _callee4$(_context4) {
-          while (1) {
-            switch (_context4.prev = _context4.next) {
-              case 0:
-                _context4.prev = 0;
-                _context4.next = 3;
-                return fetch("".concat(this._serviceEndpoint, "/Forest/GetPlotProjectDraft?ForestProjectID=").concat(id), {
-                  method: 'GET',
-                  credentials: 'include'
-                });
-
-              case 3:
-                response = _context4.sent;
-                _context4.next = 6;
-                return response.json();
-
-              case 6:
-                _yield$response$json2 = _context4.sent;
-                gmxIds = _yield$response$json2.gmxIds;
-                _context4.next = 10;
-                return this.validate(gmxIds);
-
-              case 10:
-                this._valid = _context4.sent;
-
-                if (!this._valid) {
-                  _context4.next = 22;
-                  break;
-                }
-
-                this._quadrantView.items = this._valid.SquareStat;
-                this._speciesView.items = this._valid.ForestStat;
-
-                this._quadrants.setStyleHook(function (item) {
-                  return _this3.quadrants.includes(item.id) ? STYLES$1 : {};
-                });
-
-                this._quadrants.on('click', this._quadrantClick, this);
-
-                this._quadrants.repaint();
-
-                event = document.createEvent('Event');
-                event.initEvent('open', false, false);
-                this.dispatchEvent(event);
-                _context4.next = 23;
-                break;
-
-              case 22:
-                throw translate$8('quadrant.invalid');
-
-              case 23:
-                _context4.next = 29;
-                break;
-
-              case 25:
-                _context4.prev = 25;
-                _context4.t0 = _context4["catch"](0);
-                this.back();
-                alert(_context4.t0.toString());
-
-              case 29:
-              case "end":
-                return _context4.stop();
-            }
-          }
-        }, _callee4, this, [[0, 25]]);
-      }));
-
-      function open(_x3) {
-        return _open.apply(this, arguments);
-      }
-
-      return open;
-    }()
-  }, {
-    key: "close",
-    value: function close() {
-      this._quadrants.removeStyleHook();
-
-      this._quadrants.repaint();
-
-      this._quadrants.off('click', this._quadrantClick, this);
-
-      var event = document.createEvent('Event');
-      event.initEvent('close', false, false);
-      this.dispatchEvent(event);
+      this._quadrants.unhilite(id);
     }
   }, {
     key: "quadrants",
     get: function get() {
-      return this._quadrantView.items.map(function (_ref4) {
+      return this._quadrants.items.map(function (_ref4) {
         var gmx_id = _ref4.gmx_id;
         return gmx_id;
       });
     }
   }]);
 
-  return EditPlot;
-}(EventTarget);
+  return Plot;
+}(Component);
 
-var translate$9 = T.getText.bind(T);
+var CreatePlot = /*#__PURE__*/function (_Plot) {
+  _inherits(CreatePlot, _Plot);
+
+  var _super2 = _createSuper(CreatePlot);
+
+  function CreatePlot(container, _ref5) {
+    var _this3;
+
+    var layer = _ref5.layer,
+        serviceEndpoint = _ref5.serviceEndpoint;
+
+    _classCallCheck(this, CreatePlot);
+
+    _this3 = _super2.call(this, container, {
+      layer: layer,
+      serviceEndpoint: serviceEndpoint
+    });
+    _this3._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th colspan=\"2\">\n                        <button class=\"backward\"></button>\n                        <label class=\"head\">".concat(translate$7('plot.title'), "</label>                        \n                        <button class=\"create\">").concat(translate$7('plot.create'), "</button>\n                    </th>\n                </tr>\n            </thead>\n            <tbody>\n                <tr>                    \n                    <td>                                                \n                        <div class=\"species\"></div>\n                    </td>\n                    <td>\n                        <div class=\"quadrants\"></div>\n                    </td>\n                </tr>\n            </tbody>\n        </table>");
+
+    _this3._container.querySelector('.backward').addEventListener('click', function (e) {
+      e.stopPropagation();
+
+      _this3._back();
+    });
+
+    var btnCreate = _this3._container.querySelector('.create');
+
+    btnCreate.addEventListener('click', /*#__PURE__*/function () {
+      var _ref6 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(e) {
+        var data, event;
+        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                e.stopPropagation();
+                _context3.next = 3;
+                return _this3._save();
+
+              case 3:
+                data = _context3.sent;
+                event = document.createEvent('Event');
+                event.initEvent('save', false, false);
+                event.detail = data;
+
+                _this3.dispatchEvent(event);
+
+              case 8:
+              case "end":
+                return _context3.stop();
+            }
+          }
+        }, _callee3);
+      }));
+
+      return function (_x2) {
+        return _ref6.apply(this, arguments);
+      };
+    }());
+    _this3._quadrants = new Quadrants(_this3._container.querySelector('.quadrants'));
+
+    _this3._quadrants.on('item:click', function (e) {
+      var id = e.detail;
+      var event = document.createEvent('Event');
+      event.initEvent('quadrant:click', false, false);
+      event.detail = id;
+
+      _this3.dispatchEvent(event);
+    }).on('item:over', function (e) {
+      var id = e.detail;
+      var event = document.createEvent('Event');
+      event.initEvent('quadrant:over', false, false);
+      event.detail = id;
+
+      _this3.dispatchEvent(event);
+    }).on('item:out', function (e) {
+      var id = e.detail;
+      var event = document.createEvent('Event');
+      event.initEvent('quadrant:out', false, false);
+      event.detail = id;
+
+      _this3.dispatchEvent(event);
+    });
+
+    _this3._species = new Species(_this3._container.querySelector('.species'));
+    return _this3;
+  }
+
+  return CreatePlot;
+}(Plot);
+
+var EditPlot = /*#__PURE__*/function (_Plot2) {
+  _inherits(EditPlot, _Plot2);
+
+  var _super3 = _createSuper(EditPlot);
+
+  function EditPlot(container, _ref7) {
+    var _this4;
+
+    var layer = _ref7.layer,
+        serviceEndpoint = _ref7.serviceEndpoint;
+
+    _classCallCheck(this, EditPlot);
+
+    _this4 = _super3.call(this, container, {
+      layer: layer,
+      serviceEndpoint: serviceEndpoint
+    });
+    _this4._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th colspan=\"2\">\n                        <button class=\"backward\"></button>\n                        <label class=\"head\">".concat(translate$7('plot.title'), "</label>                        \n                        <button class=\"save\">").concat(translate$7('plot.save'), "</button>\n                        <button class=\"request\">").concat(translate$7('plot.request'), "</button>\n                    </th>\n                </tr>\n            </thead>\n            <tbody>\n                <tr>                    \n                    <td>                                                \n                        <div class=\"species\"></div>\n                    </td>\n                    <td>\n                        <div class=\"quadrants\"></div>\n                    </td>\n                </tr>\n            </tbody>\n        </table>");
+
+    _this4._container.querySelector('.backward').addEventListener('click', function (e) {
+      e.stopPropagation();
+
+      _this4._back();
+    });
+
+    var btnSave = _this4._container.querySelector('.save');
+
+    btnSave.addEventListener('click', /*#__PURE__*/function () {
+      var _ref8 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(e) {
+        var data, event;
+        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+          while (1) {
+            switch (_context4.prev = _context4.next) {
+              case 0:
+                e.stopPropagation();
+                _context4.next = 3;
+                return _this4._save();
+
+              case 3:
+                data = _context4.sent;
+                event = document.createEvent('Event');
+                event.initEvent('save', false, false);
+                event.detail = data;
+
+                _this4.dispatchEvent(event);
+
+              case 8:
+              case "end":
+                return _context4.stop();
+            }
+          }
+        }, _callee4);
+      }));
+
+      return function (_x3) {
+        return _ref8.apply(this, arguments);
+      };
+    }());
+    _this4._quadrants = new Quadrants(_this4._container.querySelector('.quadrants'));
+
+    _this4._quadrants.on('item:click', function (e) {
+      var id = e.detail;
+      var event = document.createEvent('Event');
+      event.initEvent('quadrant:click', false, false);
+      event.detail = id;
+
+      _this4.dispatchEvent(event);
+    }).on('item:over', function (e) {
+      var id = e.detail;
+      var event = document.createEvent('Event');
+      event.initEvent('quadrant:over', false, false);
+      event.detail = id;
+
+      _this4.dispatchEvent(event);
+    }).on('item:out', function (e) {
+      var id = e.detail;
+      var event = document.createEvent('Event');
+      event.initEvent('quadrant:out', false, false);
+      event.detail = id;
+
+      _this4.dispatchEvent(event);
+    });
+
+    _this4._species = new Species(_this4._container.querySelector('.species'));
+    return _this4;
+  }
+
+  _createClass(EditPlot, [{
+    key: "_save",
+    value: function () {
+      var _save3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5() {
+        var fd, response;
+        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+          while (1) {
+            switch (_context5.prev = _context5.next) {
+              case 0:
+                fd = new FormData();
+                fd.append('ForestProjectID', this._valid);
+                fd.append('Title', "".concat(new Date().toLocaleDateString()));
+                fd.append('ForestQs', this._quadrants.items.map(function (_ref9) {
+                  var gmx_id = _ref9.gmx_id;
+                  return gmx_id.toString();
+                }).join(','));
+                _context5.next = 6;
+                return fetch("".concat(this._serviceEndpoint, "/Forest/StoreDraftForestProjectGmxIds"), {
+                  method: 'POST',
+                  credentials: 'include',
+                  body: fd
+                });
+
+              case 6:
+                response = _context5.sent;
+                _context5.next = 9;
+                return response.json();
+
+              case 9:
+                return _context5.abrupt("return", _context5.sent);
+
+              case 10:
+              case "end":
+                return _context5.stop();
+            }
+          }
+        }, _callee5, this);
+      }));
+
+      function _save() {
+        return _save3.apply(this, arguments);
+      }
+
+      return _save;
+    }()
+  }, {
+    key: "open",
+    value: function () {
+      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(id) {
+        var response, _yield$response$json2, gmxIds, result;
+
+        return regeneratorRuntime.wrap(function _callee6$(_context6) {
+          while (1) {
+            switch (_context6.prev = _context6.next) {
+              case 0:
+                _context6.prev = 0;
+                _context6.next = 3;
+                return fetch("".concat(this._serviceEndpoint, "/Forest/GetPlotProjectDraft?ForestProjectID=").concat(id), {
+                  method: 'GET',
+                  credentials: 'include'
+                });
+
+              case 3:
+                response = _context6.sent;
+                _context6.next = 6;
+                return response.json();
+
+              case 6:
+                _yield$response$json2 = _context6.sent;
+                gmxIds = _yield$response$json2.gmxIds;
+                _context6.next = 10;
+                return this._validate(gmxIds);
+
+              case 10:
+                result = _context6.sent;
+
+                if (!result) {
+                  _context6.next = 18;
+                  break;
+                }
+
+                this._valid = id;
+                this._quadrants.items = result.SquareStat;
+                this._species.items = result.ForestStat;
+
+                _get(_getPrototypeOf(EditPlot.prototype), "open", this).call(this);
+
+                _context6.next = 19;
+                break;
+
+              case 18:
+                throw translate$7('quadrant.invalid');
+
+              case 19:
+                _context6.next = 25;
+                break;
+
+              case 21:
+                _context6.prev = 21;
+                _context6.t0 = _context6["catch"](0);
+
+                this._back();
+
+                alert(_context6.t0.toString());
+
+              case 25:
+              case "end":
+                return _context6.stop();
+            }
+          }
+        }, _callee6, this, [[0, 21]]);
+      }));
+
+      function open(_x4) {
+        return _open.apply(this, arguments);
+      }
+
+      return open;
+    }()
+  }]);
+
+  return EditPlot;
+}(Plot);
+
+var translate$8 = T.getText.bind(T);
 T.addText('rus', {
   quadrant: {
     Stock: 'Объем древесины',
@@ -54837,27 +54741,27 @@ var STYLES$2 = {
   lineWidth: 2
 };
 
-var Quadrant = /*#__PURE__*/function (_EventTarget) {
-  _inherits(Quadrant, _EventTarget);
+var Quadrant = /*#__PURE__*/function (_Component) {
+  _inherits(Quadrant, _Component);
 
   var _super = _createSuper(Quadrant);
 
   function Quadrant(container, _ref) {
     var _this;
 
-    var quadrants = _ref.quadrants,
+    var layer = _ref.layer,
         serviceEndpoint = _ref.serviceEndpoint;
 
     _classCallCheck(this, Quadrant);
 
-    _this = _super.call(this);
+    _this = _super.call(this, container, {
+      layer: layer
+    });
     _this._serviceEndpoint = serviceEndpoint;
-    _this._container = container;
-    _this._quadrants = quadrants;
 
     _this._container.classList.add('scanex-forestry-quadrant');
 
-    _this._container.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n\t\t\t<thead>\n\t\t\t\t<tr>\n\t\t\t\t\t<th class=\"title\">".concat(translate$9('quadrant.title'), "</th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th class=\"forestry\"></th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th class=\"stock\">").concat(translate$9('quadrant.Stock'), "</th>\t\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th class=\"about\">").concat(translate$9('quadrant.about'), "</th>\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"chart\"></td>\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
+    _this._container.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n\t\t\t<thead>\n\t\t\t\t<tr>\n\t\t\t\t\t<th class=\"title\">".concat(translate$8('quadrant.title'), "</th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th class=\"forestry\"></th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th class=\"stock\">").concat(translate$8('quadrant.Stock'), "</th>\t\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th class=\"about\">").concat(translate$8('quadrant.about'), "</th>\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"chart\"></td>\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
     _this._forestry = _this._container.querySelector('.forestry');
     _this._chart = new apexcharts_common(_this._container.querySelector('.chart'), {
       chart: {
@@ -54878,7 +54782,7 @@ var Quadrant = /*#__PURE__*/function (_EventTarget) {
               show: true,
               value: {
                 formatter: function formatter(val) {
-                  return "".concat(val, " ").concat(translate$9('unit.m3'));
+                  return "".concat(val, " ").concat(translate$8('unit.m3'));
                 },
                 fontSize: '12px'
               },
@@ -54887,9 +54791,9 @@ var Quadrant = /*#__PURE__*/function (_EventTarget) {
                   var series = _ref2.config.series;
                   return "".concat(series.reduce(function (p, c) {
                     return p + c;
-                  }, 0), " ").concat(translate$9('unit.m3'));
+                  }, 0), " ").concat(translate$8('unit.m3'));
                 },
-                label: translate$9('stock.all'),
+                label: translate$8('stock.all'),
                 show: true,
                 fontSize: '12px'
               }
@@ -54907,7 +54811,7 @@ var Quadrant = /*#__PURE__*/function (_EventTarget) {
   _createClass(Quadrant, [{
     key: "_render",
     value: function _render(data) {
-      this._forestry.innerText = "".concat(translate$9('quadrant.Forestry'), ": ").concat(data.Forestry, ", ").concat(translate$9('quadrant.LocalForestry'), ": ").concat(data.LocalForestry);
+      this._forestry.innerText = "".concat(translate$8('quadrant.Forestry'), ": ").concat(data.Forestry, ", ").concat(translate$8('quadrant.LocalForestry'), ": ").concat(data.LocalForestry);
 
       var _data$Stock$reduce = data.Stock.reduce(function (a, s) {
         a.labels.push(s.species);
@@ -54927,55 +54831,52 @@ var Quadrant = /*#__PURE__*/function (_EventTarget) {
       this._chart.updateSeries(series);
     }
   }, {
+    key: "_styleHook",
+    value: function _styleHook(item) {
+      return item.id === this._gmx_id ? STYLES$2 : {};
+    }
+  }, {
     key: "open",
     value: function () {
       var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(_ref3) {
-        var id, gmx_id, response, data, event;
+        var id, gmx_id, response, data;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
                 id = _ref3.id, gmx_id = _ref3.gmx_id;
 
-                if (!(this._gmx_id === gmx_id)) {
+                if (!(this._gmx_id && this._gmx_id === gmx_id)) {
                   _context.next = 5;
                   break;
                 }
 
                 this.close();
-                _context.next = 18;
+                _context.next = 15;
                 break;
 
               case 5:
                 this._gmx_id = gmx_id;
-
-                this._quadrants.setStyleHook(function (item) {
-                  return item.id === gmx_id ? STYLES$2 : {};
-                });
-
-                this._quadrants.repaint();
-
-                _context.next = 10;
+                _context.next = 8;
                 return fetch("".concat(this._serviceEndpoint, "/Forest/GetQuadrantInformation?QuadrantID=").concat(id), {
                   method: 'GET',
                   credentials: 'include'
                 });
 
-              case 10:
+              case 8:
                 response = _context.sent;
-                _context.next = 13;
+                _context.next = 11;
                 return response.json();
 
-              case 13:
+              case 11:
                 data = _context.sent;
 
                 this._render(data);
 
-                event = document.createEvent('Event');
-                event.initEvent('open', false, false);
-                this.dispatchEvent(event);
+                _context.next = 15;
+                return _get(_getPrototypeOf(Quadrant.prototype), "open", this).call(this);
 
-              case 18:
+              case 15:
               case "end":
                 return _context.stop();
             }
@@ -54992,19 +54893,14 @@ var Quadrant = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "close",
     value: function close() {
-      this._quadrants.removeStyleHook();
-
-      this._quadrants.redrawItem(this._gmx_id);
-
       this._gmx_id = null;
-      var event = document.createEvent('Event');
-      event.initEvent('close', false, false);
-      this.dispatchEvent(event);
+
+      _get(_getPrototypeOf(Quadrant.prototype), "close", this).call(this);
     }
   }]);
 
   return Quadrant;
-}(EventTarget);
+}(Component);
 
 var pikaday = createCommonjsModule(function (module, exports) {
   /*!
@@ -56182,7 +56078,7 @@ _export({ target: 'Number', stat: true }, {
   isInteger: isInteger
 });
 
-var translate$a = T.getText.bind(T);
+var translate$9 = T.getText.bind(T);
 T.addText('rus', {
   pager: {
     previous: 'Предыдущая',
@@ -56202,7 +56098,7 @@ var Pager = /*#__PURE__*/function (_EventTarget) {
 
     _this = _super.call(this);
     _this._container = container;
-    _this._container.innerHTML = "<table class=\"scanex-forestry-pager\" cellpadding=\"0\" cellspacing=\"0\">\n            <tr>\n                <td>\n                    <button class=\"first\">1</button>\n                </td>                \n                <td>\n                    <button class=\"previous\">".concat(translate$a('pager.previous'), "</button>\n                </td>\n                <td>\n                    <input type=\"text\" value=\"\" />\n                </td>\n                <td>\n                    <button class=\"next\">").concat(translate$a('pager.next'), "</button>\n                </td>                \n                <td>\n                    <button class=\"last\"></button>\n                </td>\n            </tr>\n        </table>");
+    _this._container.innerHTML = "<table class=\"scanex-forestry-pager\" cellpadding=\"0\" cellspacing=\"0\">\n            <tr>\n                <td>\n                    <button class=\"first\">1</button>\n                </td>                \n                <td>\n                    <button class=\"previous\">".concat(translate$9('pager.previous'), "</button>\n                </td>\n                <td>\n                    <input type=\"text\" value=\"\" />\n                </td>\n                <td>\n                    <button class=\"next\">").concat(translate$9('pager.next'), "</button>\n                </td>                \n                <td>\n                    <button class=\"last\"></button>\n                </td>\n            </tr>\n        </table>");
 
     _this._container.querySelector('.first').addEventListener('click', function (e) {
       e.stopPropagation();
@@ -56269,7 +56165,7 @@ var Pager = /*#__PURE__*/function (_EventTarget) {
   return Pager;
 }(EventTarget);
 
-var translate$b = T.getText.bind(T);
+var translate$a = T.getText.bind(T);
 T.addText('rus', {
   uploaded: {
     title: 'Мои данные',
@@ -56311,11 +56207,11 @@ var Uploaded = /*#__PURE__*/function (_EventTarget) {
 
     _this._container.classList.add('scanex-forestry-uploaded');
 
-    _this._container.innerHTML = "<div class=\"title\">".concat(translate$b('uploaded.title'), "</div>\n        <div class=\"filter\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tr>\n                    <td>\n                        <div class=\"name\">\n                            <i class=\"scanex-uploaded-icon search\"></i>\n                            <input type=\"text\" placeholder=\"").concat(translate$b('uploaded.name'), "\" value=\"\" />\n                        </div>\n                    </td>\n                    <td>\n                        <select>").concat(_this._types.map(function (id) {
+    _this._container.innerHTML = "<div class=\"title\">".concat(translate$a('uploaded.title'), "</div>\n        <div class=\"filter\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tr>\n                    <td>\n                        <div class=\"name\">\n                            <i class=\"scanex-uploaded-icon search\"></i>\n                            <input type=\"text\" placeholder=\"").concat(translate$a('uploaded.name'), "\" value=\"\" />\n                        </div>\n                    </td>\n                    <td>\n                        <select>").concat(_this._types.map(function (id) {
       return "<option value=\"".concat(id, "\">").concat(id, "</option>");
-    }).join(''), "</select>\n                    </td>\n                    <td>\n                        <div class=\"date\">\n                            <input class=\"datepicker\" type=\"text\" placeholder=\"").concat(translate$b('uploaded.date'), "\" value=\"\" />\n                            <i class=\"scanex-uploaded-icon calendar\"></i>\n                        </div>\n                    </td>\n                </tr>\n            </table>\n        </div>\n        <div class=\"data\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <thead>\n                    <tr><th></th>").concat(_this._columns.map(function (id) {
-      return "<th>".concat(translate$b("uploaded.".concat(id)), "</th>");
-    }).join(''), "</tr>\n                </thead>\n                <tbody class=\"content\"></tbody>\n            </table>\n        </div>\n        <div class=\"footer\">\n            <div class=\"pages\"></div>\n            <button class=\"add\">").concat(translate$b("uploaded.add"), "</button>\n            <button class=\"remove\">").concat(translate$b("uploaded.remove"), "</button>\n        </div>");
+    }).join(''), "</select>\n                    </td>\n                    <td>\n                        <div class=\"date\">\n                            <input class=\"datepicker\" type=\"text\" placeholder=\"").concat(translate$a('uploaded.date'), "\" value=\"\" />\n                            <i class=\"scanex-uploaded-icon calendar\"></i>\n                        </div>\n                    </td>\n                </tr>\n            </table>\n        </div>\n        <div class=\"data\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <thead>\n                    <tr><th></th>").concat(_this._columns.map(function (id) {
+      return "<th>".concat(translate$a("uploaded.".concat(id)), "</th>");
+    }).join(''), "</tr>\n                </thead>\n                <tbody class=\"content\"></tbody>\n            </table>\n        </div>\n        <div class=\"footer\">\n            <div class=\"pages\"></div>\n            <button class=\"add\">").concat(translate$a("uploaded.add"), "</button>\n            <button class=\"remove\">").concat(translate$a("uploaded.remove"), "</button>\n        </div>");
     _this._date = new pikaday({
       field: _this._container.querySelector('.datepicker'),
       format: 'DD.MM.YYYY',
@@ -56527,7 +56423,7 @@ var Uploaded = /*#__PURE__*/function (_EventTarget) {
   return Uploaded;
 }(EventTarget);
 
-var translate$c = T.getText.bind(T);
+var translate$b = T.getText.bind(T);
 T.addText('rus', {
   analytics: {
     title: 'Сводная аналитика',
@@ -56556,28 +56452,26 @@ T.addText('rus', {
   }
 });
 
-var Analytics = /*#__PURE__*/function (_EventTarget) {
-  _inherits(Analytics, _EventTarget);
+var Analytics = /*#__PURE__*/function (_Component) {
+  _inherits(Analytics, _Component);
 
   var _super = _createSuper(Analytics);
 
   function Analytics(container, _ref) {
     var _this;
 
-    var quadrants = _ref.quadrants,
+    var layer = _ref.layer,
         serviceEndpoint = _ref.serviceEndpoint;
 
     _classCallCheck(this, Analytics);
 
-    _this = _super.call(this);
-    _this._container = container;
-    _this._quadrants = quadrants;
-    L$1.DomEvent.disableScrollPropagation(container);
+    _this = _super.call(this, container, {
+      layer: layer
+    });
 
     _this._container.classList.add('scanex-forestry-analytics');
 
     _this._serviceEndpoint = serviceEndpoint;
-    _this._container.innerHTML = '';
     return _this;
   }
 
@@ -56585,7 +56479,7 @@ var Analytics = /*#__PURE__*/function (_EventTarget) {
     key: "open",
     value: function () {
       var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
-        var response, event;
+        var response;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
@@ -56604,13 +56498,11 @@ var Analytics = /*#__PURE__*/function (_EventTarget) {
               case 5:
                 this._headerData = _context.sent;
 
-                this._renderer(this._headerData);
+                this._render(this._headerData);
 
-                event = document.createEvent('Event');
-                event.initEvent('open', false, false);
-                this.dispatchEvent(event);
+                _get(_getPrototypeOf(Analytics.prototype), "open", this).call(this);
 
-              case 10:
+              case 8:
               case "end":
                 return _context.stop();
             }
@@ -56625,24 +56517,13 @@ var Analytics = /*#__PURE__*/function (_EventTarget) {
       return open;
     }()
   }, {
-    key: "close",
-    value: function close() {
-      this._quadrants.removeStyleHook();
-
-      this._quadrants.repaint();
-
-      var event = document.createEvent('Event');
-      event.initEvent('close', false, false);
-      this.dispatchEvent(event);
-    }
-  }, {
-    key: "_renderer",
-    value: function _renderer(data) {
+    key: "_render",
+    value: function _render(data) {
       var _this2 = this;
 
       this.currentType = 0;
 
-      var typeOption = this._parseOptions(translate$c('analytics.typeOption'));
+      var typeOption = this._parseOptions(translate$b('analytics.typeOption'));
 
       var regionOptions = this._parseOptionsHeader(data.regions);
 
@@ -56650,7 +56531,7 @@ var Analytics = /*#__PURE__*/function (_EventTarget) {
 
       var speciesOptions = this._parseOptionsHeader(data.species);
 
-      this._container.innerHTML = "<div class=\"header\">".concat(translate$c('analytics.title'), "</div>\n\t\t\t<div class=\"content\">\n\t\t\t\t<div class=\"line\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$c('analytics.type'), "</div>\n\t\t\t\t\t\t<select name=\"type\" class=\"type style-4\">\n\t\t\t\t\t\t\t").concat(typeOption, "\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"right-wrap\">\n\t\t\t\t\t\t<button class=\"save\">\u0421\u0444\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u043E\u0442\u0447\u0435\u0442</button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"line\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$c('analytics.region'), "</div>\n\t\t\t\t\t\t<select name=\"region\" class=\"region\">\n\t\t\t\t\t\t\t").concat(regionOptions, "\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"right-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$c('analytics.forestry'), "</div>\n\t\t\t\t\t\t<select name=\"forestry\" class=\"forestry\">\n\t\t\t\t\t\t </select>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"line\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$c('analytics.districtForestry'), "</div>\n\t\t\t\t\t\t<select name=\"localForestry\" class=\"localForestry\">\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"right-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$c('analytics.period'), "</div>\n\t\t\t\t\t\t<div class=\"date-inputs\">\n\t\t\t\t\t\t\t<span class=\"date\">\n\t\t\t\t\t\t\t<input class=\"dateBegin\" type=\"text\" placeholder=\"\" value=\"\">\n\t\t\t\t\t\t\t<i class=\"scanex-uploaded-icon calendar\"></i>\n\t\t\t\t\t\t\t</span>\n\n\t\t\t\t\t\t\t<span class=\"date\">\n\t\t\t\t\t\t\t<input class=\"dateEnd\" type=\"text\" placeholder=\"\" value=\"\">\n\t\t\t\t\t\t\t<i class=\"scanex-uploaded-icon calendar\"></i>\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"line species hidden\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$c('analytics.vybpor'), "</div>\n\t\t\t\t\t\t<select name=\"species\" class=\"species\">\n\t\t\t\t\t\t\t").concat(speciesOptions, "\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"chartCont\">\n\t\t\t\t</div>\n\t\t\t</div>");
+      this._container.innerHTML = "<div class=\"header\">".concat(translate$b('analytics.title'), "</div>\n\t\t\t<div class=\"content\">\n\t\t\t\t<div class=\"line\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$b('analytics.type'), "</div>\n\t\t\t\t\t\t<select name=\"type\" class=\"type style-4\">\n\t\t\t\t\t\t\t").concat(typeOption, "\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"right-wrap\">\n\t\t\t\t\t\t<button class=\"save\">\u0421\u0444\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u043E\u0442\u0447\u0435\u0442</button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"line\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$b('analytics.region'), "</div>\n\t\t\t\t\t\t<select name=\"region\" class=\"region\">\n\t\t\t\t\t\t\t").concat(regionOptions, "\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"right-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$b('analytics.forestry'), "</div>\n\t\t\t\t\t\t<select name=\"forestry\" class=\"forestry\">\n\t\t\t\t\t\t </select>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"line\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$b('analytics.districtForestry'), "</div>\n\t\t\t\t\t\t<select name=\"localForestry\" class=\"localForestry\">\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"right-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$b('analytics.period'), "</div>\n\t\t\t\t\t\t<div class=\"date-inputs\">\n\t\t\t\t\t\t\t<span class=\"date\">\n\t\t\t\t\t\t\t<input class=\"dateBegin\" type=\"text\" placeholder=\"\" value=\"\">\n\t\t\t\t\t\t\t<i class=\"scanex-uploaded-icon calendar\"></i>\n\t\t\t\t\t\t\t</span>\n\n\t\t\t\t\t\t\t<span class=\"date\">\n\t\t\t\t\t\t\t<input class=\"dateEnd\" type=\"text\" placeholder=\"\" value=\"\">\n\t\t\t\t\t\t\t<i class=\"scanex-uploaded-icon calendar\"></i>\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"line species hidden\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$b('analytics.vybpor'), "</div>\n\t\t\t\t\t\t<select name=\"species\" class=\"species\">\n\t\t\t\t\t\t\t").concat(speciesOptions, "\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"chartCont\">\n\t\t\t\t</div>\n\t\t\t</div>");
       var i18n = {
         previousMonth: 'Предыдущий месяц',
         nextMonth: 'Следующий месяц',
@@ -56899,21 +56780,21 @@ var Analytics = /*#__PURE__*/function (_EventTarget) {
       var str = data.map(function (it) {
         return "<div class=\"chart-row__left-el\">\n\t\t\t\t<div class=\"chart-row__left-el-chart\">\n\t\t\t\t\t<div class=\"chart-row__left-el-chart__text\">".concat(it.payed, " \u043C<sup>3</sup></div>\n\t\t\t\t\t<div class=\"chart-row__left-el-chart__arrow green-bg\" style=\"height: ").concat(Math.floor(maxHeight * Math.min(it.payed, maxValue) / maxValue), "px\"></div>\n\t\t\t\t\t<div class=\"chart-row__left-el-chart__text_bot\">").concat(it.organization || it.species, "</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"chart-row__left-el-chart\">\n\t\t\t\t\t<div class=\"chart-row__left-el-chart__text\">").concat(it.cutDown, " \u043C<sup>3</sup></div>\n\t\t\t\t\t<div class=\"chart-row__left-el-chart__arrow blue-bg\" style=\"height: ").concat(Math.floor(maxHeight * Math.min(it.cutDown, maxValue) / maxValue), "px\"></div>\n\t\t\t\t\t<div class=\"chart-row__left-el-chart__text_bot\">&nbsp;</div>\n\t\t\t\t</div>\n\t\t\t</div>");
       }).join('\n');
-      this._chartCont.innerHTML = "<div class=\"line\">\n\t\t\t<div class=\"chart-header black\">".concat(translate$c('analytics.sootn'), "&nbsp;<span class=\"green\">").concat(translate$c('analytics.oplach'), "</span>&nbsp;\u0438&nbsp;<span class=\"blue\">").concat(translate$c('analytics.vyrub'), "</span>&nbsp;").concat(translate$c('analytics.dreves'), "\n\t\t\t</div>\n\t\t</div>\n\t\t<div class=\"chart-row\">\n\t\t\t<div class=\"chart-row__left\">\n\t\t\t\t").concat(str, "\n\t\t\t</div>\n\t\t\t<div class=\"chart-row__right\">\n\t\t\t\t<div class=\"chart-row__right_line\">\n\t\t\t\t\t<div class=\"rec green-bg\"></div>\n\t\t\t\t\t<div class=\"rec-text\">").concat(translate$c('analytics.opl'), "</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"chart-row__right_line\">\n\t\t\t\t\t<div class=\"rec blue-bg\"></div>\n\t\t\t\t\t<div class=\"rec-text\">").concat(translate$c('analytics.vyr'), "</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>");
+      this._chartCont.innerHTML = "<div class=\"line\">\n\t\t\t<div class=\"chart-header black\">".concat(translate$b('analytics.sootn'), "&nbsp;<span class=\"green\">").concat(translate$b('analytics.oplach'), "</span>&nbsp;\u0438&nbsp;<span class=\"blue\">").concat(translate$b('analytics.vyrub'), "</span>&nbsp;").concat(translate$b('analytics.dreves'), "\n\t\t\t</div>\n\t\t</div>\n\t\t<div class=\"chart-row\">\n\t\t\t<div class=\"chart-row__left\">\n\t\t\t\t").concat(str, "\n\t\t\t</div>\n\t\t\t<div class=\"chart-row__right\">\n\t\t\t\t<div class=\"chart-row__right_line\">\n\t\t\t\t\t<div class=\"rec green-bg\"></div>\n\t\t\t\t\t<div class=\"rec-text\">").concat(translate$b('analytics.opl'), "</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"chart-row__right_line\">\n\t\t\t\t\t<div class=\"rec blue-bg\"></div>\n\t\t\t\t\t<div class=\"rec-text\">").concat(translate$b('analytics.vyr'), "</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>");
     }
   }, {
     key: "_parseBallance",
     value: function _parseBallance(data) {
       var maxValue = data.total;
       var maxWidth = 220;
-      this._chartCont.innerHTML = "<table class=\"line\">\n            <tr>\n\t\t\t\t<td class=\"first\">".concat(translate$c('analytics.growth'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act green-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.growth.quantity, maxValue) / maxValue), "px\"></div></td>\n                <td class=\"third green\">").concat(data.growth.quantity, " \u043C<sup>3</sup></td>\n                <td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"green\">").concat(data.growth.summa, " ").concat(translate$c('analytics.milr'), "</span></td>\n            </tr>\n            <tr>\n\t\t\t\t<td class=\"first\">").concat(translate$c('analytics.burntOut'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act red-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.burntOut.quantity, maxValue) / maxValue), "px\"></div></td>\n                <td class=\"third red\">").concat(data.burntOut.quantity, " \u043C<sup>3</sup></td>\n                <td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"red\">").concat(data.burntOut.summa, " ").concat(translate$c('analytics.milr'), "</span></td>\n            </tr>\n            <tr>\n\t\t\t\t<td class=\"first\">").concat(translate$c('analytics.cutDown'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act red-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.cutDown.quantity, maxValue) / maxValue), "px\"></div></td>\n                <td class=\"third red\">").concat(data.cutDown.quantity, " \u043C<sup>3</sup></td>\n                <td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"red\">").concat(data.cutDown.summa, " ").concat(translate$c('analytics.milr'), "</span></td>\n            </tr>\n            <tr>\n\t\t\t\t<td class=\"first\">").concat(translate$c('analytics.ballanceChanges'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act red-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.ballanceChanges.quantity, maxValue) / maxValue), "px\"></div></td>\n                <td class=\"third red\">").concat(data.ballanceChanges.quantity, " \u043C<sup>3</sup></td>\n                <td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"red\">").concat(data.ballanceChanges.summa, " ").concat(translate$c('analytics.milr'), "</span></td>\n            </tr>\n            <tr>\n\t\t\t\t<td class=\"first\">").concat(translate$c('analytics.total'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act green-bg\" style=\"width: 100%\"></div></td>\n                <td class=\"third gray\">125 684 \u043C<sup>3</sup></td>\n                <td class=\"last\"></td>\n            </tr>\n\t\t</table>");
+      this._chartCont.innerHTML = "<table class=\"line\">\n            <tr>\n\t\t\t\t<td class=\"first\">".concat(translate$b('analytics.growth'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act green-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.growth.quantity, maxValue) / maxValue), "px\"></div></td>\n                <td class=\"third green\">").concat(data.growth.quantity, " \u043C<sup>3</sup></td>\n                <td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"green\">").concat(data.growth.summa, " ").concat(translate$b('analytics.milr'), "</span></td>\n            </tr>\n            <tr>\n\t\t\t\t<td class=\"first\">").concat(translate$b('analytics.burntOut'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act red-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.burntOut.quantity, maxValue) / maxValue), "px\"></div></td>\n                <td class=\"third red\">").concat(data.burntOut.quantity, " \u043C<sup>3</sup></td>\n                <td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"red\">").concat(data.burntOut.summa, " ").concat(translate$b('analytics.milr'), "</span></td>\n            </tr>\n            <tr>\n\t\t\t\t<td class=\"first\">").concat(translate$b('analytics.cutDown'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act red-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.cutDown.quantity, maxValue) / maxValue), "px\"></div></td>\n                <td class=\"third red\">").concat(data.cutDown.quantity, " \u043C<sup>3</sup></td>\n                <td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"red\">").concat(data.cutDown.summa, " ").concat(translate$b('analytics.milr'), "</span></td>\n            </tr>\n            <tr>\n\t\t\t\t<td class=\"first\">").concat(translate$b('analytics.ballanceChanges'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act red-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.ballanceChanges.quantity, maxValue) / maxValue), "px\"></div></td>\n                <td class=\"third red\">").concat(data.ballanceChanges.quantity, " \u043C<sup>3</sup></td>\n                <td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"red\">").concat(data.ballanceChanges.summa, " ").concat(translate$b('analytics.milr'), "</span></td>\n            </tr>\n            <tr>\n\t\t\t\t<td class=\"first\">").concat(translate$b('analytics.total'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act green-bg\" style=\"width: 100%\"></div></td>\n                <td class=\"third gray\">125 684 \u043C<sup>3</sup></td>\n                <td class=\"last\"></td>\n            </tr>\n\t\t</table>");
     }
   }]);
 
   return Analytics;
-}(EventTarget);
+}(Component);
 
-var translate$d = T.getText.bind(T);
+var translate$c = T.getText.bind(T);
 T.addText('rus', {
   naturalPark: {
     title: 'Особо охраняемая природная территория',
@@ -56925,39 +56806,42 @@ T.addText('rus', {
   }
 });
 
-var NaturalPark = /*#__PURE__*/function (_EventTarget) {
-  _inherits(NaturalPark, _EventTarget);
+var NaturalPark = /*#__PURE__*/function (_Component) {
+  _inherits(NaturalPark, _Component);
 
   var _super = _createSuper(NaturalPark);
 
   function NaturalPark(container, _ref) {
     var _this;
 
-    var serviceEndpoint = _ref.serviceEndpoint;
+    var layer = _ref.layer,
+        serviceEndpoint = _ref.serviceEndpoint;
 
     _classCallCheck(this, NaturalPark);
 
-    _this = _super.call(this);
+    _this = _super.call(this, container, {
+      layer: layer
+    });
     _this._serviceEndpoint = serviceEndpoint;
-    _this._container = container;
 
     _this._container.classList.add('scanex-forestry-naturalpark');
 
-    _this._container.innerHTML = '';
     return _this;
   }
 
   _createClass(NaturalPark, [{
-    key: "show",
+    key: "open",
     value: function () {
-      var _show = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(props) {
+      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(props) {
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                this._container.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n\t\t\t<thead>\n\t\t\t\t<tr>\n\t\t\t\t\t<th colspan=\"2\" class=\"title\">".concat(translate$d('naturalPark.title'), "</th>\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"name title\">").concat(translate$d('naturalPark.name'), "</td>\n\t\t\t\t\t<td class=\"name value\">").concat(props.NAME_R, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"type title\">").concat(translate$d('naturalPark.type'), "</td>\n\t\t\t\t\t<td class=\"type value\">").concat(props.TYPE_NL, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"year title\">").concat(translate$d('naturalPark.year'), "</td>\n\t\t\t\t\t<td class=\"year value\">").concat(props.YEAR_, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"prov title\">").concat(translate$d('naturalPark.prov'), "</td>\n\t\t\t\t\t<td class=\"prov value\">").concat(props.PROV_NL, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"area title\">").concat(translate$d('naturalPark.area'), "</td>\n\t\t\t\t\t<td class=\"area value\">").concat(props.AREA_DOC, "</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
+                this._container.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n\t\t\t<thead>\n\t\t\t\t<tr>\n\t\t\t\t\t<th colspan=\"2\" class=\"title\">".concat(translate$c('naturalPark.title'), "</th>\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"name title\">").concat(translate$c('naturalPark.name'), "</td>\n\t\t\t\t\t<td class=\"name value\">").concat(props.NAME_R, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"type title\">").concat(translate$c('naturalPark.type'), "</td>\n\t\t\t\t\t<td class=\"type value\">").concat(props.TYPE_NL, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"year title\">").concat(translate$c('naturalPark.year'), "</td>\n\t\t\t\t\t<td class=\"year value\">").concat(props.YEAR_, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"prov title\">").concat(translate$c('naturalPark.prov'), "</td>\n\t\t\t\t\t<td class=\"prov value\">").concat(props.PROV_NL, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"area title\">").concat(translate$c('naturalPark.area'), "</td>\n\t\t\t\t\t<td class=\"area value\">").concat(props.AREA_DOC, "</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
+                _context.next = 3;
+                return _get(_getPrototypeOf(NaturalPark.prototype), "open", this).call(this);
 
-              case 1:
+              case 3:
               case "end":
                 return _context.stop();
             }
@@ -56965,25 +56849,18 @@ var NaturalPark = /*#__PURE__*/function (_EventTarget) {
         }, _callee, this);
       }));
 
-      function show(_x) {
-        return _show.apply(this, arguments);
+      function open(_x) {
+        return _open.apply(this, arguments);
       }
 
-      return show;
+      return open;
     }()
-  }, {
-    key: "hide",
-    value: function hide() {
-      this._quadrants.removeStyleHook();
-
-      this._quadrants.repaint();
-    }
   }]);
 
   return NaturalPark;
-}(EventTarget);
+}(Component);
 
-var translate$e = T.getText.bind(T);
+var translate$d = T.getText.bind(T);
 T.addText('rus', {
   stand: {
     title: 'Выдел',
@@ -57006,27 +56883,27 @@ var STYLES$3 = {
   strokeStyle: '#FFB801'
 };
 
-var Stand = /*#__PURE__*/function (_EventTarget) {
-  _inherits(Stand, _EventTarget);
+var Stand = /*#__PURE__*/function (_Component) {
+  _inherits(Stand, _Component);
 
   var _super = _createSuper(Stand);
 
   function Stand(container, _ref) {
     var _this;
 
-    var stands = _ref.stands,
+    var layer = _ref.layer,
         serviceEndpoint = _ref.serviceEndpoint;
 
     _classCallCheck(this, Stand);
 
-    _this = _super.call(this);
-    _this._container = container;
+    _this = _super.call(this, container, {
+      layer: layer
+    });
     _this._serviceEndpoint = serviceEndpoint;
-    _this._stands = stands;
 
     _this._container.classList.add('scanex-forestry-stand');
 
-    _this._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th class=\"header1\" colspan=\"3\">".concat(translate$e('stand.title'), "</th>\n                </tr>\n                <tr>\n                    <th class=\"header2\" colspan=\"3\"></th>\n                </tr>\n            </thead>\n            <tbody>\n                <tr>\n                    <td class=\"stats\"></td>\n                    <td class=\"chart\"></td>                    \n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"levels\"></td>\n\t\t\t\t\t<td class=\"events\"></td>\n\t\t\t\t</tr>\n            </tbody>\n\t\t</table>");
+    _this._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th class=\"header1\" colspan=\"3\">".concat(translate$d('stand.title'), "</th>\n                </tr>\n                <tr>\n                    <th class=\"header2\" colspan=\"3\"></th>\n                </tr>\n            </thead>\n            <tbody>\n                <tr>\n                    <td class=\"stats\"></td>\n                    <td class=\"chart\"></td>                    \n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"levels\"></td>\n\t\t\t\t\t<td class=\"events\"></td>\n\t\t\t\t</tr>\n            </tbody>\n\t\t</table>");
     _this._header = _this._container.querySelector('.header2');
     _this._stats = _this._container.querySelector('.stats');
     _this._chart = new apexcharts_common(_this._container.querySelector('.chart'), {
@@ -57048,7 +56925,7 @@ var Stand = /*#__PURE__*/function (_EventTarget) {
               show: true,
               value: {
                 formatter: function formatter(val) {
-                  return "".concat(val, " ").concat(translate$e('unit.m3'));
+                  return "".concat(val, " ").concat(translate$d('unit.m3'));
                 },
                 fontSize: '12px'
               },
@@ -57057,9 +56934,9 @@ var Stand = /*#__PURE__*/function (_EventTarget) {
                   var series = _ref2.config.series;
                   return "".concat(series.reduce(function (p, c) {
                     return p + c;
-                  }, 0), " ").concat(translate$e('unit.m3'));
+                  }, 0), " ").concat(translate$d('unit.m3'));
                 },
-                label: translate$e('stock.all'),
+                label: translate$d('stock.all'),
                 show: true,
                 fontSize: '12px'
               }
@@ -57079,7 +56956,6 @@ var Stand = /*#__PURE__*/function (_EventTarget) {
   _createClass(Stand, [{
     key: "_render",
     value: function _render(data) {
-      console.log(data);
       var Forestry = data.Forestry,
           LocalForestry = data.LocalForestry,
           Stow = data.Stow,
@@ -57099,7 +56975,7 @@ var Stand = /*#__PURE__*/function (_EventTarget) {
           Stock = data.Stock,
           Events = data.Events;
       this._header.innerText = [Forestry, LocalForestry, Stow, Quadrant, Stand].join(', ');
-      this._stats.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<tbody>\n                <tr>\n                    <td>".concat(translate$e('stand.usage'), "</td>\n                    <td>").concat(ForestUseType, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$e('stand.year'), "</td>\n                    <td>").concat(UpdatingYear, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$e('stand.area'), "</td>\n                    <td>").concat(Square, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$e('stand.category'), "</td>\n                    <td>").concat(LandCategory, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$e('stand.protected'), "</td>\n                    <td>").concat(OZU, "</td>                    \n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$e('stand.slope'), "</td>\n                    <td>").concat(Exposition, " / ").concat(Steepness, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$e('stand.targetSpecies'), "</td>\n                    <td>").concat(TargetSpecies, "</td>                    \n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$e('stand.mainSpecies'), "</td>\n                    <td>").concat(PredominantSpecies, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$e('stand.age'), "</td>\n                    <td>").concat(AgeGroup, "</td>                    \n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$e('stand.klass'), "</td>\n                    <td>").concat(AgeClass, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$e('stand.type'), "</td>\n                    <td></td>                    \n                </tr>\n            </tbody>\n\t\t</table>");
+      this._stats.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<tbody>\n                <tr>\n                    <td>".concat(translate$d('stand.usage'), "</td>\n                    <td>").concat(ForestUseType, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$d('stand.year'), "</td>\n                    <td>").concat(UpdatingYear, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$d('stand.area'), "</td>\n                    <td>").concat(Square, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$d('stand.category'), "</td>\n                    <td>").concat(LandCategory, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$d('stand.protected'), "</td>\n                    <td>").concat(OZU, "</td>                    \n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$d('stand.slope'), "</td>\n                    <td>").concat(Exposition, " / ").concat(Steepness, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$d('stand.targetSpecies'), "</td>\n                    <td>").concat(TargetSpecies, "</td>                    \n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$d('stand.mainSpecies'), "</td>\n                    <td>").concat(PredominantSpecies, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$d('stand.age'), "</td>\n                    <td>").concat(AgeGroup, "</td>                    \n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$d('stand.klass'), "</td>\n                    <td>").concat(AgeClass, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$d('stand.type'), "</td>\n                    <td></td>                    \n                </tr>\n            </tbody>\n\t\t</table>");
 
       var _Stock$reduce = Stock.reduce(function (a, _ref3) {
         var stock = _ref3.stock,
@@ -57124,27 +57000,32 @@ var Stand = /*#__PURE__*/function (_EventTarget) {
         var name = _ref4.name,
             activity = _ref4.activity,
             fillingpercent = _ref4.fillingpercent;
-        return "<tr>\n\t\t\t\t\t<td>".concat(name, "</td>\n\t\t\t\t\t<td>").concat(activity, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td>").concat(translate$e('stand.percentage'), "</td>\n\t\t\t\t\t<td class=\"percentage\">").concat(fillingpercent, "</td>\n\t\t\t\t</tr>");
+        return "<tr>\n\t\t\t\t\t<td>".concat(name, "</td>\n\t\t\t\t\t<td>").concat(activity, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td>").concat(translate$d('stand.percentage'), "</td>\n\t\t\t\t\t<td class=\"percentage\">").concat(fillingpercent, "</td>\n\t\t\t\t</tr>");
       }).join(''), "</tbody>\n\t\t</table>");
+    }
+  }, {
+    key: "_styleHook",
+    value: function _styleHook(item) {
+      return item.id === this._gmx_id ? STYLES$3 : {};
     }
   }, {
     key: "open",
     value: function () {
       var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(_ref5) {
-        var id, gmx_id, response, data, event;
+        var id, gmx_id, response, data;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
                 id = _ref5.id, gmx_id = _ref5.gmx_id;
 
-                if (!(this._gmx_id === gmx_id)) {
+                if (!(this._gmx_id && this._gmx_id === gmx_id)) {
                   _context.next = 5;
                   break;
                 }
 
                 this.close();
-                _context.next = 18;
+                _context.next = 15;
                 break;
 
               case 5:
@@ -57165,17 +57046,10 @@ var Stand = /*#__PURE__*/function (_EventTarget) {
 
                 this._render(data);
 
-                this._stands.setStyleHook(function (item) {
-                  return item.id === gmx_id ? STYLES$3 : {};
-                });
+                _context.next = 15;
+                return _get(_getPrototypeOf(Stand.prototype), "open", this).call(this);
 
-                this._stands.redrawItem(this._gmx_id);
-
-                event = document.createEvent('Event');
-                event.initEvent('open', false, false);
-                this.dispatchEvent(event);
-
-              case 18:
+              case 15:
               case "end":
                 return _context.stop();
             }
@@ -57192,21 +57066,16 @@ var Stand = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "close",
     value: function close() {
-      this._stands.removeStyleHook();
-
-      this._stands.redrawItem(this._gmx_id);
-
       this._gmx_id = null;
-      var event = document.createEvent('Event');
-      event.initEvent('close', false, false);
-      this.dispatchEvent(event);
+
+      _get(_getPrototypeOf(Stand.prototype), "close", this).call(this);
     }
   }]);
 
   return Stand;
-}(EventTarget);
+}(Component);
 
-var translate$f = T.getText.bind(T);
+var translate$e = T.getText.bind(T);
 T.addText('rus', {
   declaration: {
     title: 'Лесная декларация №',
@@ -57239,34 +57108,33 @@ var STYLES$4 = {
   lineWidth: 2
 };
 
-var Declaration = /*#__PURE__*/function (_EventTarget) {
-  _inherits(Declaration, _EventTarget);
+var Declaration = /*#__PURE__*/function (_Component) {
+  _inherits(Declaration, _Component);
 
   var _super = _createSuper(Declaration);
 
   function Declaration(container, _ref) {
     var _this;
 
-    var declarations = _ref.declarations,
+    var layer = _ref.layer,
         serviceEndpoint = _ref.serviceEndpoint;
 
     _classCallCheck(this, Declaration);
 
-    _this = _super.call(this);
-    _this._container = container;
+    _this = _super.call(this, container, {
+      layer: layer
+    });
     _this._serviceEndpoint = serviceEndpoint;
-    _this._declarations = declarations;
 
     _this._container.classList.add('scanex-forestry-declaration');
 
-    _this._container.innerHTML = "<div class=\"header\">\n            <label>".concat(translate$f('declaration.title'), "</label>            \n            <label class=\"number\"></label>\n        </div>\n        <table cellspacing=\"0\" cellpadding=\"0\">\n            <tbody>\n                <tr>\n                    <td>").concat(translate$f('declaration.federalSubject'), "</td>\n                    <td class=\"federal-subject\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.executive'), "</td>\n                    <td class=\"executive\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.officer'), "</td>\n                    <td class=\"officer\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.lessee'), "</td>\n                    <td class=\"lessee\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.contract'), "</td>\n                    <td class=\"contract\"></td>\n                </tr>\n            </tbody>\n        </table>\n        <div>\n            <i class=\"scanex-declaration-icon doc\"></i>\n            <button class=\"open-doc\">").concat(translate$f('declaration.doc'), "</button>\n        </div>\n        <div class=\"content\"></div>");
+    _this._container.innerHTML = "<div class=\"header\">\n            <label>".concat(translate$e('declaration.title'), "</label>            \n            <label class=\"number\"></label>\n        </div>\n        <table cellspacing=\"0\" cellpadding=\"0\">\n            <tbody>\n                <tr>\n                    <td>").concat(translate$e('declaration.federalSubject'), "</td>\n                    <td class=\"federal-subject\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.executive'), "</td>\n                    <td class=\"executive\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.officer'), "</td>\n                    <td class=\"officer\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.lessee'), "</td>\n                    <td class=\"lessee\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.contract'), "</td>\n                    <td class=\"contract\"></td>\n                </tr>\n            </tbody>\n        </table>\n        <div>\n            <i class=\"scanex-declaration-icon doc\"></i>\n            <button class=\"open-doc\">").concat(translate$e('declaration.doc'), "</button>\n        </div>\n        <div class=\"content\"></div>");
     return _this;
   }
 
   _createClass(Declaration, [{
     key: "_render",
     value: function _render(data) {
-      console.log(data);
       var DeclarationNumber = data.DeclarationNumber,
           Region = data.Region,
           ExecutiveAuthority = data.ExecutiveAuthority,
@@ -57292,30 +57160,35 @@ var Declaration = /*#__PURE__*/function (_EventTarget) {
       this._container.querySelector('.officer').innerText = ResponsiblePerson || '';
       this._container.querySelector('.lessee').innerText = Owner || '';
       this._container.querySelector('.contract').innerText = DogovorNumber || '';
-      this._container.querySelector('.content').innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tbody>\n                <tr>\n                    <td>".concat(translate$f('declaration.usage'), "</td>\n                    <td class=\"usage\">").concat(ForestUseType, "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.category'), "</td>\n                    <td class=\"category\">").concat(ForestCategory, "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.forestry'), "</td>\n                    <td class=\"forestry\">").concat(Forestry || '-', "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.district'), "</td>\n                    <td class=\"district\">").concat(LocalForestry || '-', "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.site'), "</td>\n                    <td class=\"site\">").concat(Stow || '-', "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.quadrant'), "</td>\n                    <td class=\"quadrant\">").concat(ForestInventoryUnitNumber, "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.stand'), "</td>\n                    <td class=\"stand\">").concat(Num || '-', "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.landing'), "</td>\n                    <td class=\"landing\">").concat(QutiingAreaNumber, "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.area'), "</td>\n                    <td class=\"area\">").concat(Square, "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.form'), "</td>\n                    <td class=\"form\">").concat(FellingForm, "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.kind'), "</td>\n                    <td class=\"kind\">").concat(FellingType, "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$f('declaration.range'), "</td>\n                    <td class=\"range\">").concat(Farm, "</td>\n                </tr>\n                ").concat(Array.isArray(Stock) && Stock.length ? "<tr>\n                        <td>".concat(translate$f('declaration.species'), "</td>\n                        <td>").concat(translate$f('declaration.amount'), "</td>\n                    </tr>\n                    ").concat(Stock.map(function (_ref2) {
+      this._container.querySelector('.content').innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tbody>\n                <tr>\n                    <td>".concat(translate$e('declaration.usage'), "</td>\n                    <td class=\"usage\">").concat(ForestUseType, "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.category'), "</td>\n                    <td class=\"category\">").concat(ForestCategory, "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.forestry'), "</td>\n                    <td class=\"forestry\">").concat(Forestry || '-', "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.district'), "</td>\n                    <td class=\"district\">").concat(LocalForestry || '-', "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.site'), "</td>\n                    <td class=\"site\">").concat(Stow || '-', "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.quadrant'), "</td>\n                    <td class=\"quadrant\">").concat(ForestInventoryUnitNumber, "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.stand'), "</td>\n                    <td class=\"stand\">").concat(Num || '-', "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.landing'), "</td>\n                    <td class=\"landing\">").concat(QutiingAreaNumber, "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.area'), "</td>\n                    <td class=\"area\">").concat(Square, "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.form'), "</td>\n                    <td class=\"form\">").concat(FellingForm, "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.kind'), "</td>\n                    <td class=\"kind\">").concat(FellingType, "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.range'), "</td>\n                    <td class=\"range\">").concat(Farm, "</td>\n                </tr>\n                ").concat(Array.isArray(Stock) && Stock.length ? "<tr>\n                        <td>".concat(translate$e('declaration.species'), "</td>\n                        <td>").concat(translate$e('declaration.amount'), "</td>\n                    </tr>\n                    ").concat(Stock.map(function (_ref2) {
         var species = _ref2.species,
             stock = _ref2.stock;
         return "<tr>\n                            <td>".concat(species, "</td>\n                            <td class=\"amount\">").concat(stock, "</td>\n                        </tr>");
       }).join('')) : '', "\n            </tbody>            \n        </table>");
     }
   }, {
+    key: "_styleHook",
+    value: function _styleHook(item) {
+      return item.id === this._gmx_id ? STYLES$4 : {};
+    }
+  }, {
     key: "open",
     value: function () {
       var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(_ref3) {
-        var id, gmx_id, response, data, event;
+        var id, gmx_id, response, data;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
                 id = _ref3.id, gmx_id = _ref3.gmx_id;
 
-                if (!(this._gmx_id === gmx_id)) {
+                if (!(this._gmx_id && this._gmx_id === gmx_id)) {
                   _context.next = 5;
                   break;
                 }
 
                 this.close();
-                _context.next = 18;
+                _context.next = 15;
                 break;
 
               case 5:
@@ -57336,17 +57209,10 @@ var Declaration = /*#__PURE__*/function (_EventTarget) {
 
                 this._render(data);
 
-                this._declarations.setStyleHook(function (item) {
-                  return item.id === gmx_id ? STYLES$4 : {};
-                });
+                _context.next = 15;
+                return _get(_getPrototypeOf(Declaration.prototype), "open", this).call(this);
 
-                this._declarations.redrawItem(this._gmx_id);
-
-                event = document.createEvent('Event');
-                event.initEvent('open', false, false);
-                this.dispatchEvent(event);
-
-              case 18:
+              case 15:
               case "end":
                 return _context.stop();
             }
@@ -57363,21 +57229,16 @@ var Declaration = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "close",
     value: function close() {
-      this._declarations.removeStyleHook();
-
-      this._declarations.redrawItem(this._gmx_id);
-
       this._gmx_id = null;
-      var event = document.createEvent('Event');
-      event.initEvent('close', false, false);
-      this.dispatchEvent(event);
+
+      _get(_getPrototypeOf(Declaration.prototype), "close", this).call(this);
     }
   }]);
 
   return Declaration;
-}(EventTarget);
+}(Component);
 
-var translate$g = T.getText.bind(T);
+var translate$f = T.getText.bind(T);
 T.addText('rus', {
   incident: {
     title: 'Рубка',
@@ -57477,14 +57338,14 @@ var testData = {
 var _parseVyd = function _parseVyd(arr) {
   return arr.map(function (data) {
     var str = data.species.map(function (it) {
-      return "\n\t\t\t<div class=\"map-popup-part2__wrapper-in__table1_row padding-left-34\">".concat(it.name, " <span class=\"inline-flex-row-end\">").concat(it.real, " ").concat(translate$g('unit.m3'), "<span class=\"span-gray\">").concat(it.real, " ").concat(translate$g('unit.m3'), "</span></span></div>\n\t\t\t");
+      return "\n\t\t\t<div class=\"map-popup-part2__wrapper-in__table1_row padding-left-34\">".concat(it.name, " <span class=\"inline-flex-row-end\">").concat(it.real, " ").concat(translate$f('unit.m3'), "<span class=\"span-gray\">").concat(it.real, " ").concat(translate$f('unit.m3'), "</span></span></div>\n\t\t\t");
     }).join('\n');
-    return "\n\t\t\t<div class=\"vydel\">\n\t\t\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">".concat(data.title, "</div>\n\t\t\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.arend'), " <span>").concat(data.firm, "</span></div>\n\t\t\t\t").concat(str, "\n\t\t\t</div>");
+    return "\n\t\t\t<div class=\"vydel\">\n\t\t\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">".concat(data.title, "</div>\n\t\t\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.arend'), " <span>").concat(data.firm, "</span></div>\n\t\t\t\t").concat(str, "\n\t\t\t</div>");
   }).join('\n');
 };
 
 var _parseProps = function _parseProps(props) {
-  return "\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">".concat(translate$g('incident.status'), " <span>").concat(props.status, "</span></div>\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.otvet'), " <span>").concat(props.otvet, "</span></div>\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.otvetCheck'), " <span>").concat(props.otvetCheck, "</span></div>\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.procVer'), " <span>").concat(props.procVer, " %</span></div>\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.tochn'), " <span>").concat(props.tochn, " ").concat(translate$g('unit.m'), "</span></div>\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.date'), " <span>").concat(props.date, "</span></div>\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.areaAll'), " <span>").concat(props.areaAll, "</span></div>\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.dateCheck'), " <span class=\"span-gray\">").concat(props.dateCheck, "</span></div>\n\t");
+  return "\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">".concat(translate$f('incident.status'), " <span>").concat(props.status, "</span></div>\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.otvet'), " <span>").concat(props.otvet, "</span></div>\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.otvetCheck'), " <span>").concat(props.otvetCheck, "</span></div>\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.procVer'), " <span>").concat(props.procVer, " %</span></div>\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.tochn'), " <span>").concat(props.tochn, " ").concat(translate$f('unit.m'), "</span></div>\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.date'), " <span>").concat(props.date, "</span></div>\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaAll'), " <span>").concat(props.areaAll, "</span></div>\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.dateCheck'), " <span class=\"span-gray\">").concat(props.dateCheck, "</span></div>\n\t");
 };
 
 var STYLES$5 = {
@@ -57492,27 +57353,26 @@ var STYLES$5 = {
   strokeStyle: '#FFB801'
 };
 
-var Incident = /*#__PURE__*/function (_EventTarget) {
-  _inherits(Incident, _EventTarget);
+var Incident = /*#__PURE__*/function (_Component) {
+  _inherits(Incident, _Component);
 
   var _super = _createSuper(Incident);
 
   function Incident(container, _ref) {
     var _this;
 
-    var incidents = _ref.incidents,
+    var layer = _ref.layer,
         serviceEndpoint = _ref.serviceEndpoint;
 
     _classCallCheck(this, Incident);
 
-    _this = _super.call(this);
-    _this._container = container;
+    _this = _super.call(this, container, {
+      layer: layer
+    });
     _this._serviceEndpoint = serviceEndpoint;
-    _this._incidents = incidents;
 
     _this._container.classList.add('scanex-forestry-incident');
 
-    _this._container.innerHTML = '';
     return _this;
   }
 
@@ -57554,7 +57414,7 @@ var Incident = /*#__PURE__*/function (_EventTarget) {
         date: '15.07.2019',
         specialCommon: 'Береза'
       };
-      this._container.innerHTML = "\n           <div class=\"map-popup-part2__header\">".concat(translate$g('incident.title'), "</div>\n            <div class=\"map-popup-part2__wrapper-in style-4\">\n                <div class=\"map-popup-part2__wrapper-in__table1\">\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.status'), "<span>").concat(data.state, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.areaAll'), "<span>").concat(data.areaAll, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.areaArenda'), "<span>").concat(data.areaArenda, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.date'), "<span>").concat(data.date, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.specialCommon'), "<span>").concat(data.specialCommon, "</span></div>\n                </div>\n            </div>\n\t\t");
+      this._container.innerHTML = "\n           <div class=\"map-popup-part2__header\">".concat(translate$f('incident.title'), "</div>\n            <div class=\"map-popup-part2__wrapper-in style-4\">\n                <div class=\"map-popup-part2__wrapper-in__table1\">\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.status'), "<span>").concat(data.state, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaAll'), "<span>").concat(data.areaAll, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaArenda'), "<span>").concat(data.areaArenda, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.date'), "<span>").concat(data.date, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.specialCommon'), "<span>").concat(data.specialCommon, "</span></div>\n                </div>\n            </div>\n\t\t");
     }
   }, {
     key: "_setForm2",
@@ -57571,7 +57431,7 @@ var Incident = /*#__PURE__*/function (_EventTarget) {
         dateInspect: '20.08.2020',
         specialCommon: 'Береза'
       };
-      this._container.innerHTML = "\n           <div class=\"map-popup-part2__header\">".concat(translate$g('incident.titleFire'), "</div>\n            <div class=\"map-popup-part2__wrapper-in style-4\">\n                <div class=\"map-popup-part2__wrapper-in__table1\">\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.status'), "<span>").concat(data.state, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.specialCommon'), "<span>").concat(data.specialCommon, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.areaFire'), "<span>").concat(data.areaFire, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.areaFire1'), "<span>").concat(data.areaFire1, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.areaSpec'), "<span>").concat(data.areaSpec, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.areaSpecNew'), "<span>").concat(data.areaSpecNew, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.areaFireLast'), "<span>").concat(data.areaFireLast, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.areaSpecNot'), "<span>").concat(data.areaSpecNot, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.date'), "<span>").concat(data.date, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.dateInspect'), "<span>").concat(data.dateInspect, "</span></div>\n                </div>\n            </div>\n\t\t");
+      this._container.innerHTML = "\n           <div class=\"map-popup-part2__header\">".concat(translate$f('incident.titleFire'), "</div>\n            <div class=\"map-popup-part2__wrapper-in style-4\">\n                <div class=\"map-popup-part2__wrapper-in__table1\">\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.status'), "<span>").concat(data.state, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.specialCommon'), "<span>").concat(data.specialCommon, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaFire'), "<span>").concat(data.areaFire, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaFire1'), "<span>").concat(data.areaFire1, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaSpec'), "<span>").concat(data.areaSpec, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaSpecNew'), "<span>").concat(data.areaSpecNew, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaFireLast'), "<span>").concat(data.areaFireLast, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaSpecNot'), "<span>").concat(data.areaSpecNot, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.date'), "<span>").concat(data.date, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.dateInspect'), "<span>").concat(data.dateInspect, "</span></div>\n                </div>\n            </div>\n\t\t");
     }
   }, {
     key: "_setForm1",
@@ -57581,38 +57441,42 @@ var Incident = /*#__PURE__*/function (_EventTarget) {
 
       var str2 = _parseProps(data.props);
 
-      this._container.innerHTML = "\n            <div class=\"map-popup-part2__header\">".concat(translate$g('incident.title'), "</div>\n            <div class=\"map-popup-part2__wrapper-in wrapper-full-height\">\n                <div class=\"map-popup-part2__wrapper-in-inside\">\n                    <div class=\"inside_left\">\n                        <div class=\"header\">\n                            <div class=\"text\">").concat(data.title, "</div>\n                        </div>\n                        <div class=\"spacer-23\"></div>\n                        <div class=\"map-popup-part2__wrapper-in__table1\">\n\t\t\t\t\t\t\t").concat(str2, "\n\n                            <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.comment'), "</div>\n                            <textarea class=\"usr-text-area\">                            </textarea>\n                            <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$g('incident.bpla'), ":</div>\n\n                            <div class=\"map-popup-part2__wrapper-in__table1_row\">\n\n                                <span>").concat(data.bpla.date, "</span>\n                                <span>").concat(translate$g('incident.bplaTitle'), "</span>\n                                <div class=\"group_buttons\">\n                                    <div class=\"mini-green-but\">").concat(translate$g('incident.bplaView'), "</div>\n                                    <div class=\"mini-green-but\">").concat(translate$g('incident.bplaLoad'), "</div>\n                                    <div class=\"mini-green-but\">").concat(translate$g('incident.bplaDel'), "</div>\n                                </div>\n                            </div>\n                            <div class=\"map-popup-part2__wrapper-in__table1_row margin-top-35\"><span class=\"span_bold\">").concat(translate$g('incident.titleValue'), "</span> <span class=\"span_bold\">").concat(translate$g('incident.estimValue'), "</span> <span class=\"span_bold\">").concat(translate$g('incident.checkedValue'), "</span></div>\n\t\t\t\t\t\t\t").concat(str1, "\n                        </div>\n                    </div>\n                    <div class=\"map-popup-part2__wrapper-in-inside__right rubka\">\n                        <div class=\"right-wrapper-top \">\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$g('incident.docs'), "</button>\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$g('incident.editGeo'), "</button>\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$g('incident.saveGeo'), "</button>\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$g('incident.downloadGeo'), "</button>\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$g('incident.verRastr'), "</button>\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$g('incident.maskWater'), "</button>\n                        </div>\n\n                         <div class=\"right-wrapper-bottom \">\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$g('incident.checkedInc'), "</button>\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$g('incident.declineInc'), "</button>\n                        </div>\n\n                    </div>\n                </div>\n            </div>");
+      this._container.innerHTML = "\n            <div class=\"map-popup-part2__header\">".concat(translate$f('incident.title'), "</div>\n            <div class=\"map-popup-part2__wrapper-in wrapper-full-height\">\n                <div class=\"map-popup-part2__wrapper-in-inside\">\n                    <div class=\"inside_left\">\n                        <div class=\"header\">\n                            <div class=\"text\">").concat(data.title, "</div>\n                        </div>\n                        <div class=\"spacer-23\"></div>\n                        <div class=\"map-popup-part2__wrapper-in__table1\">\n\t\t\t\t\t\t\t").concat(str2, "\n\n                            <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.comment'), "</div>\n                            <textarea class=\"usr-text-area\">                            </textarea>\n                            <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.bpla'), ":</div>\n\n                            <div class=\"map-popup-part2__wrapper-in__table1_row\">\n\n                                <span>").concat(data.bpla.date, "</span>\n                                <span>").concat(translate$f('incident.bplaTitle'), "</span>\n                                <div class=\"group_buttons\">\n                                    <div class=\"mini-green-but\">").concat(translate$f('incident.bplaView'), "</div>\n                                    <div class=\"mini-green-but\">").concat(translate$f('incident.bplaLoad'), "</div>\n                                    <div class=\"mini-green-but\">").concat(translate$f('incident.bplaDel'), "</div>\n                                </div>\n                            </div>\n                            <div class=\"map-popup-part2__wrapper-in__table1_row margin-top-35\"><span class=\"span_bold\">").concat(translate$f('incident.titleValue'), "</span> <span class=\"span_bold\">").concat(translate$f('incident.estimValue'), "</span> <span class=\"span_bold\">").concat(translate$f('incident.checkedValue'), "</span></div>\n\t\t\t\t\t\t\t").concat(str1, "\n                        </div>\n                    </div>\n                    <div class=\"map-popup-part2__wrapper-in-inside__right rubka\">\n                        <div class=\"right-wrapper-top \">\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$f('incident.docs'), "</button>\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$f('incident.editGeo'), "</button>\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$f('incident.saveGeo'), "</button>\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$f('incident.downloadGeo'), "</button>\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$f('incident.verRastr'), "</button>\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$f('incident.maskWater'), "</button>\n                        </div>\n\n                         <div class=\"right-wrapper-bottom \">\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$f('incident.checkedInc'), "</button>\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$f('incident.declineInc'), "</button>\n                        </div>\n\n                    </div>\n                </div>\n            </div>");
+    }
+  }, {
+    key: "_styleHook",
+    value: function _styleHook(item) {
+      return item.id === this._gmx_id ? STYLES$5 : {};
     }
   }, {
     key: "open",
     value: function () {
       var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(_ref2) {
-        var props, gmx_id, event;
+        var props, gmx_id;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
                 props = _ref2.props, gmx_id = _ref2.gmx_id;
 
-                if (this._gmx_id === gmx_id) {
-                  this.close();
-                } else {
-                  this._gmx_id = gmx_id;
-
-                  this._incidents.setStyleHook(function (item) {
-                    return item.id === gmx_id ? STYLES$5 : {};
-                  });
-
-                  this._incidents.repaint();
-
-                  this._render(props, testData);
-
-                  event = document.createEvent('Event');
-                  event.initEvent('open', false, false);
-                  this.dispatchEvent(event);
+                if (!(this._gmx_id && this._gmx_id === gmx_id)) {
+                  _context.next = 5;
+                  break;
                 }
 
-              case 2:
+                this.close();
+                _context.next = 9;
+                break;
+
+              case 5:
+                this._gmx_id = gmx_id;
+
+                this._render(props, testData);
+
+                _context.next = 9;
+                return _get(_getPrototypeOf(Incident.prototype), "open", this).call(this);
+
+              case 9:
               case "end":
                 return _context.stop();
             }
@@ -57629,21 +57493,16 @@ var Incident = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "close",
     value: function close() {
-      this._incidents.removeStyleHook();
-
-      this._incidents.redrawItem(this._gmx_id);
-
       this._gmx_id = null;
-      var event = document.createEvent('Event');
-      event.initEvent('close', false, false);
-      this.dispatchEvent(event);
+
+      _get(_getPrototypeOf(Incident.prototype), "close", this).call(this);
     }
   }]);
 
   return Incident;
-}(EventTarget);
+}(Component);
 
-var translate$h = T.getText.bind(T);
+var translate$g = T.getText.bind(T);
 T.addText('rus', {
   measure: {
     bearing: {
@@ -57699,6 +57558,13 @@ T.addText('rus', {
     incidents: 'Инциденты'
   }
 }); // const defaultStyle = {
+//     fillStyle: 'rgba(28, 224, 0, 0.4)',
+// };
+// const hiliteStyle = {
+//     fillStyle: 'rgba(28, 224, 0, 0.4)',
+//     strokeStyle: '#1CE000',
+//     lineWidth: 2,
+// };
 
 var Map = /*#__PURE__*/function (_EventTarget) {
   _inherits(Map, _EventTarget);
@@ -57747,6 +57613,36 @@ var Map = /*#__PURE__*/function (_EventTarget) {
       // renderer: L.canvas(),
       zoomControl: false
     }).setView(center, zoom);
+
+    _this._map.on('click', /*#__PURE__*/function () {
+      var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e) {
+        return regeneratorRuntime.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                L$1.DomEvent.stopPropagation(e);
+
+                if (e.gmx) {
+                  _context.next = 4;
+                  break;
+                }
+
+                _context.next = 4;
+                return _this.showMain();
+
+              case 4:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee);
+      }));
+
+      return function (_x) {
+        return _ref2.apply(this, arguments);
+      };
+    }(), _assertThisInitialized(_this));
+
     _this._content = new Content();
 
     _this._content.addTo(_this._map);
@@ -57757,45 +57653,45 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   _createClass(Map, [{
     key: "getUserInfo",
     value: function () {
-      var _getUserInfo = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+      var _getUserInfo = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
         var response, _yield$response$json, Status, Result;
 
-        return regeneratorRuntime.wrap(function _callee$(_context) {
+        return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
-            switch (_context.prev = _context.next) {
+            switch (_context2.prev = _context2.next) {
               case 0:
-                _context.next = 2;
+                _context2.next = 2;
                 return fetch("".concat(this._gmxEndpoint, "/User/GetUserInfo.ashx?WrapStyle=None"), {
                   method: 'GET',
                   credentials: 'include'
                 });
 
               case 2:
-                response = _context.sent;
-                _context.next = 5;
+                response = _context2.sent;
+                _context2.next = 5;
                 return response.json();
 
               case 5:
-                _yield$response$json = _context.sent;
+                _yield$response$json = _context2.sent;
                 Status = _yield$response$json.Status;
                 Result = _yield$response$json.Result;
 
                 if (!(Status === 'ok')) {
-                  _context.next = 12;
+                  _context2.next = 12;
                   break;
                 }
 
-                return _context.abrupt("return", Result);
+                return _context2.abrupt("return", Result);
 
               case 12:
-                return _context.abrupt("return", false);
+                return _context2.abrupt("return", false);
 
               case 13:
               case "end":
-                return _context.stop();
+                return _context2.stop();
             }
           }
-        }, _callee, this);
+        }, _callee2, this);
       }));
 
       function getUserInfo() {
@@ -57807,20 +57703,20 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "showMain",
     value: function () {
-      var _showMain = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
-        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+      var _showMain = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
+        return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
-            switch (_context2.prev = _context2.next) {
+            switch (_context3.prev = _context3.next) {
               case 0:
-                _context2.next = 2;
+                _context3.next = 2;
                 return this._content.showDefault();
 
               case 2:
               case "end":
-                return _context2.stop();
+                return _context3.stop();
             }
           }
-        }, _callee2, this);
+        }, _callee3, this);
       }));
 
       function showMain() {
@@ -57832,38 +57728,38 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "showAnalytics",
     value: function () {
-      var _showAnalytics = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
-        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+      var _showAnalytics = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
+        return regeneratorRuntime.wrap(function _callee4$(_context4) {
           while (1) {
-            switch (_context3.prev = _context3.next) {
+            switch (_context4.prev = _context4.next) {
               case 0:
-                _context3.prev = 0;
+                _context4.prev = 0;
 
                 if (!this._content.hasComponent('analytics')) {
                   this._content.addComponent('analytics', Analytics, {
-                    quadrants: this._quadrants,
+                    layer: this._quadrants,
                     serviceEndpoint: this._serviceEndpoint
                   });
                 }
 
-                _context3.next = 4;
+                _context4.next = 4;
                 return this._content.showComponent('analytics');
 
               case 4:
-                _context3.next = 9;
+                _context4.next = 9;
                 break;
 
               case 6:
-                _context3.prev = 6;
-                _context3.t0 = _context3["catch"](0);
-                alert(_context3.t0.toString());
+                _context4.prev = 6;
+                _context4.t0 = _context4["catch"](0);
+                alert(_context4.t0.toString());
 
               case 9:
               case "end":
-                return _context3.stop();
+                return _context4.stop();
             }
           }
-        }, _callee3, this, [[0, 6]]);
+        }, _callee4, this, [[0, 6]]);
       }));
 
       function showAnalytics() {
@@ -57875,79 +57771,83 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "showRequests",
     value: function () {
-      var _showRequests = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6() {
+      var _showRequests = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7() {
         var _this2 = this;
 
         var component;
-        return regeneratorRuntime.wrap(function _callee6$(_context6) {
+        return regeneratorRuntime.wrap(function _callee7$(_context7) {
           while (1) {
-            switch (_context6.prev = _context6.next) {
+            switch (_context7.prev = _context7.next) {
               case 0:
-                try {
-                  if (!this._content.hasComponent('requests')) {
-                    component = this._content.addComponent('requests', Requests, {
-                      quadrants: this._quadrants,
-                      serviceEndpoint: this._serviceEndpoint
-                    });
-                    component.on('create', /*#__PURE__*/function () {
-                      var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(e) {
-                        return regeneratorRuntime.wrap(function _callee4$(_context4) {
-                          while (1) {
-                            switch (_context4.prev = _context4.next) {
-                              case 0:
-                                _context4.next = 2;
-                                return _this2._showCreatePlot();
+                _context7.prev = 0;
 
-                              case 2:
-                              case "end":
-                                return _context4.stop();
-                            }
+                if (!this._content.hasComponent('requests')) {
+                  component = this._content.addComponent('requests', Requests, {
+                    layer: this._quadrants,
+                    serviceEndpoint: this._serviceEndpoint
+                  });
+                  component.on('create', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5() {
+                    return regeneratorRuntime.wrap(function _callee5$(_context5) {
+                      while (1) {
+                        switch (_context5.prev = _context5.next) {
+                          case 0:
+                            _context5.next = 2;
+                            return _this2._showCreatePlot();
+
+                          case 2:
+                          case "end":
+                            return _context5.stop();
+                        }
+                      }
+                    }, _callee5);
+                  })));
+                  component.on('edit', /*#__PURE__*/function () {
+                    var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(e) {
+                      return regeneratorRuntime.wrap(function _callee6$(_context6) {
+                        while (1) {
+                          switch (_context6.prev = _context6.next) {
+                            case 0:
+                              _context6.next = 2;
+                              return _this2._showEditPlot(e.detail);
+
+                            case 2:
+                            case "end":
+                              return _context6.stop();
                           }
-                        }, _callee4);
-                      }));
+                        }
+                      }, _callee6);
+                    }));
 
-                      return function (_x) {
-                        return _ref2.apply(this, arguments);
-                      };
-                    }());
-                    component.on('edit', /*#__PURE__*/function () {
-                      var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(e) {
-                        return regeneratorRuntime.wrap(function _callee5$(_context5) {
-                          while (1) {
-                            switch (_context5.prev = _context5.next) {
-                              case 0:
-                                _context5.next = 2;
-                                return _this2._showEditPlot(e.detail);
-
-                              case 2:
-                              case "end":
-                                return _context5.stop();
-                            }
-                          }
-                        }, _callee5);
-                      }));
-
-                      return function (_x2) {
-                        return _ref3.apply(this, arguments);
-                      };
-                    }());
-                  }
-
-                  this._content.showComponent('requests');
-
-                  if (this._plotProject) {
-                    this._map.addLayer(this._plotProject);
-                  }
-                } catch (e) {
-                  alert(e.toString());
+                    return function (_x2) {
+                      return _ref4.apply(this, arguments);
+                    };
+                  }());
                 }
 
-              case 1:
+                _context7.next = 4;
+                return this._content.showComponent('requests');
+
+              case 4:
+                this._legend.enable('quadrants');
+
+                if (this._plotProject) {
+                  this._map.addLayer(this._plotProject);
+                }
+
+                _context7.next = 11;
+                break;
+
+              case 8:
+                _context7.prev = 8;
+                _context7.t0 = _context7["catch"](0);
+                alert(_context7.t0.toString());
+
+              case 11:
               case "end":
-                return _context6.stop();
+                return _context7.stop();
             }
           }
-        }, _callee6, this);
+        }, _callee7, this, [[0, 8]]);
       }));
 
       function showRequests() {
@@ -57959,82 +57859,84 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_showEditPlot",
     value: function () {
-      var _showEditPlot2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(id) {
+      var _showEditPlot2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11(id) {
         var _this3 = this;
 
         var component;
-        return regeneratorRuntime.wrap(function _callee10$(_context10) {
+        return regeneratorRuntime.wrap(function _callee11$(_context11) {
           while (1) {
-            switch (_context10.prev = _context10.next) {
+            switch (_context11.prev = _context11.next) {
               case 0:
-                this._legend.enable('quadrants');
-
                 if (!this._content.hasComponent('edit-plot')) {
                   component = this._content.addComponent('edit-plot', EditPlot, {
-                    quadrants: this._quadrants,
+                    layer: this._quadrants,
                     serviceEndpoint: this._serviceEndpoint
                   });
-                  component.on('save', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7() {
-                    return regeneratorRuntime.wrap(function _callee7$(_context7) {
+                  component.on('save', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8() {
+                    return regeneratorRuntime.wrap(function _callee8$(_context8) {
                       while (1) {
-                        switch (_context7.prev = _context7.next) {
+                        switch (_context8.prev = _context8.next) {
                           case 0:
-                            _context7.next = 2;
+                            _context8.next = 2;
                             return _this3.showRequests();
 
                           case 2:
                           case "end":
-                            return _context7.stop();
+                            return _context8.stop();
                         }
                       }
-                    }, _callee7);
+                    }, _callee8);
                   }))).on('quadrant:click', /*#__PURE__*/function () {
-                    var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(e) {
+                    var _ref6 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9(e) {
                       var id;
-                      return regeneratorRuntime.wrap(function _callee8$(_context8) {
+                      return regeneratorRuntime.wrap(function _callee9$(_context9) {
                         while (1) {
-                          switch (_context8.prev = _context8.next) {
+                          switch (_context9.prev = _context9.next) {
                             case 0:
                               id = e.detail;
-                              _context8.next = 3;
+                              _context9.next = 3;
                               return _this3._fitBounds(id);
 
                             case 3:
                             case "end":
-                              return _context8.stop();
+                              return _context9.stop();
                           }
                         }
-                      }, _callee8);
+                      }, _callee9);
                     }));
 
                     return function (_x4) {
-                      return _ref5.apply(this, arguments);
+                      return _ref6.apply(this, arguments);
                     };
-                  }()).on('backward', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9() {
-                    return regeneratorRuntime.wrap(function _callee9$(_context9) {
+                  }()).on('backward', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10() {
+                    return regeneratorRuntime.wrap(function _callee10$(_context10) {
                       while (1) {
-                        switch (_context9.prev = _context9.next) {
+                        switch (_context10.prev = _context10.next) {
                           case 0:
-                            _context9.next = 2;
+                            _context10.next = 2;
                             return _this3.showRequests();
 
                           case 2:
                           case "end":
-                            return _context9.stop();
+                            return _context10.stop();
                         }
                       }
-                    }, _callee9);
+                    }, _callee10);
                   })));
                 }
 
-                this._content.showComponent('edit-plot', id);
+                _context11.next = 3;
+                return this._content.showComponent('edit-plot', id);
 
               case 3:
+                this._legend.enable('quadrants');
+
+              case 4:
               case "end":
-                return _context10.stop();
+                return _context11.stop();
             }
           }
-        }, _callee10, this);
+        }, _callee11, this);
       }));
 
       function _showEditPlot(_x3) {
@@ -58046,53 +57948,29 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_showCreatePlot",
     value: function () {
-      var _showCreatePlot2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee14() {
+      var _showCreatePlot2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee15() {
         var _this4 = this;
 
         var component;
-        return regeneratorRuntime.wrap(function _callee14$(_context14) {
+        return regeneratorRuntime.wrap(function _callee15$(_context15) {
           while (1) {
-            switch (_context14.prev = _context14.next) {
+            switch (_context15.prev = _context15.next) {
               case 0:
-                this._legend.enable('quadrants');
-
                 if (!this._content.hasComponent('create-plot')) {
                   component = this._content.addComponent('create-plot', CreatePlot, {
-                    quadrants: this._quadrants,
+                    layer: this._quadrants,
                     serviceEndpoint: this._serviceEndpoint
                   });
                   component.on('save', /*#__PURE__*/function () {
-                    var _ref7 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11(e) {
-                      return regeneratorRuntime.wrap(function _callee11$(_context11) {
-                        while (1) {
-                          switch (_context11.prev = _context11.next) {
-                            case 0:
-                              _context11.next = 2;
-                              return _this4.showRequests();
-
-                            case 2:
-                            case "end":
-                              return _context11.stop();
-                          }
-                        }
-                      }, _callee11);
-                    }));
-
-                    return function (_x5) {
-                      return _ref7.apply(this, arguments);
-                    };
-                  }()).on('quadrant:click', /*#__PURE__*/function () {
                     var _ref8 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee12(e) {
-                      var id;
                       return regeneratorRuntime.wrap(function _callee12$(_context12) {
                         while (1) {
                           switch (_context12.prev = _context12.next) {
                             case 0:
-                              id = e.detail;
-                              _context12.next = 3;
-                              return _this4._fitBounds(id);
+                              _context12.next = 2;
+                              return _this4.showRequests();
 
-                            case 3:
+                            case 2:
                             case "end":
                               return _context12.stop();
                           }
@@ -58100,8 +57978,30 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                       }, _callee12);
                     }));
 
-                    return function (_x6) {
+                    return function (_x5) {
                       return _ref8.apply(this, arguments);
+                    };
+                  }()).on('quadrant:click', /*#__PURE__*/function () {
+                    var _ref9 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee13(e) {
+                      var id;
+                      return regeneratorRuntime.wrap(function _callee13$(_context13) {
+                        while (1) {
+                          switch (_context13.prev = _context13.next) {
+                            case 0:
+                              id = e.detail;
+                              _context13.next = 3;
+                              return _this4._fitBounds(id);
+
+                            case 3:
+                            case "end":
+                              return _context13.stop();
+                          }
+                        }
+                      }, _callee13);
+                    }));
+
+                    return function (_x6) {
+                      return _ref9.apply(this, arguments);
                     };
                   }()) // .on('quadrant:over', e => {
                   //     const id = e.detail;
@@ -58113,31 +58013,35 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   //     delete this._hilited[id];
                   //     this._quadrants.repaint();
                   // })
-                  .on('backward', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee13() {
-                    return regeneratorRuntime.wrap(function _callee13$(_context13) {
+                  .on('backward', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee14() {
+                    return regeneratorRuntime.wrap(function _callee14$(_context14) {
                       while (1) {
-                        switch (_context13.prev = _context13.next) {
+                        switch (_context14.prev = _context14.next) {
                           case 0:
-                            _context13.next = 2;
+                            _context14.next = 2;
                             return _this4.showRequests();
 
                           case 2:
                           case "end":
-                            return _context13.stop();
+                            return _context14.stop();
                         }
                       }
-                    }, _callee13);
+                    }, _callee14);
                   })));
                 }
 
-                this._content.showComponent('create-plot');
+                _context15.next = 3;
+                return this._content.showComponent('create-plot');
 
               case 3:
+                this._legend.enable('quadrants');
+
+              case 4:
               case "end":
-                return _context14.stop();
+                return _context15.stop();
             }
           }
-        }, _callee14, this);
+        }, _callee15, this);
       }));
 
       function _showCreatePlot() {
@@ -58148,28 +58052,48 @@ var Map = /*#__PURE__*/function (_EventTarget) {
     }()
   }, {
     key: "_showNaturalPark",
-    value: function _showNaturalPark(id) {
-      if (!this._content.hasComponent('naturalpark')) {
-        this._content.addComponent('naturalpark', NaturalPark, {
-          quadrants: this._quadrants,
-          serviceEndpoint: this._serviceEndpoint
-        });
+    value: function () {
+      var _showNaturalPark2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee16(id) {
+        return regeneratorRuntime.wrap(function _callee16$(_context16) {
+          while (1) {
+            switch (_context16.prev = _context16.next) {
+              case 0:
+                if (!this._content.hasComponent('naturalpark')) {
+                  this._content.addComponent('naturalpark', NaturalPark, {
+                    layer: this._quadrants,
+                    serviceEndpoint: this._serviceEndpoint
+                  });
+                }
+
+                _context16.next = 3;
+                return this._content.showComponent('naturalpark', id);
+
+              case 3:
+              case "end":
+                return _context16.stop();
+            }
+          }
+        }, _callee16, this);
+      }));
+
+      function _showNaturalPark(_x7) {
+        return _showNaturalPark2.apply(this, arguments);
       }
 
-      this._content.showComponent('naturalpark', id);
-    }
+      return _showNaturalPark;
+    }()
   }, {
     key: "_fitBounds",
     value: function () {
-      var _fitBounds2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee15(id) {
+      var _fitBounds2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee17(id) {
         var _this$_quadrants$getG, LayerID, fd, response, _yield$response$json2, Status, Result, fields, values, i, _L$gmxUtil$convertGeo, coordinates, g, b;
 
-        return regeneratorRuntime.wrap(function _callee15$(_context15) {
+        return regeneratorRuntime.wrap(function _callee17$(_context17) {
           while (1) {
-            switch (_context15.prev = _context15.next) {
+            switch (_context17.prev = _context17.next) {
               case 0:
                 if (!this._quadrants) {
-                  _context15.next = 17;
+                  _context17.next = 17;
                   break;
                 }
 
@@ -58180,7 +58104,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 fd.append('pagesize', '1');
                 fd.append('geometry', 'true');
                 fd.append('layer', LayerID);
-                _context15.next = 10;
+                _context17.next = 10;
                 return fetch("//".concat(this._hostName, "/VectorLayer/Search.ashx?WrapStyle=None"), {
                   method: 'POST',
                   credentials: 'include',
@@ -58188,12 +58112,12 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 });
 
               case 10:
-                response = _context15.sent;
-                _context15.next = 13;
+                response = _context17.sent;
+                _context17.next = 13;
                 return response.json();
 
               case 13:
-                _yield$response$json2 = _context15.sent;
+                _yield$response$json2 = _context17.sent;
                 Status = _yield$response$json2.Status;
                 Result = _yield$response$json2.Result;
 
@@ -58215,13 +58139,13 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
               case 17:
               case "end":
-                return _context15.stop();
+                return _context17.stop();
             }
           }
-        }, _callee15, this);
+        }, _callee17, this);
       }));
 
-      function _fitBounds(_x7) {
+      function _fitBounds(_x8) {
         return _fitBounds2.apply(this, arguments);
       }
 
@@ -58230,29 +58154,37 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "showUploaded",
     value: function () {
-      var _showUploaded = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee16() {
-        return regeneratorRuntime.wrap(function _callee16$(_context16) {
+      var _showUploaded = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee18() {
+        return regeneratorRuntime.wrap(function _callee18$(_context18) {
           while (1) {
-            switch (_context16.prev = _context16.next) {
+            switch (_context18.prev = _context18.next) {
               case 0:
-                try {
-                  if (!this._content.hasComponent('uploaded')) {
-                    this._content.addComponent('uploaded', Uploaded, {
-                      serviceEndpoint: "//".concat(this._hostName)
-                    });
-                  }
+                _context18.prev = 0;
 
-                  this._content.showComponent('uploaded');
-                } catch (e) {
-                  alert(e.toString());
+                if (!this._content.hasComponent('uploaded')) {
+                  this._content.addComponent('uploaded', Uploaded, {
+                    serviceEndpoint: "//".concat(this._hostName)
+                  });
                 }
 
-              case 1:
+                _context18.next = 4;
+                return this._content.showComponent('uploaded');
+
+              case 4:
+                _context18.next = 9;
+                break;
+
+              case 6:
+                _context18.prev = 6;
+                _context18.t0 = _context18["catch"](0);
+                alert(_context18.t0.toString());
+
+              case 9:
               case "end":
-                return _context16.stop();
+                return _context18.stop();
             }
           }
-        }, _callee16, this);
+        }, _callee18, this, [[0, 6]]);
       }));
 
       function showUploaded() {
@@ -58264,32 +58196,33 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_showQuadrant",
     value: function () {
-      var _showQuadrant2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee17(id, gmx_id) {
-        return regeneratorRuntime.wrap(function _callee17$(_context17) {
+      var _showQuadrant2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee19(id, gmx_id) {
+        return regeneratorRuntime.wrap(function _callee19$(_context19) {
           while (1) {
-            switch (_context17.prev = _context17.next) {
+            switch (_context19.prev = _context19.next) {
               case 0:
                 if (!this._content.hasComponent('quadrant')) {
                   this._content.addComponent('quadrant', Quadrant, {
-                    quadrants: this._quadrants,
+                    layer: this._quadrants,
                     serviceEndpoint: this._serviceEndpoint
                   });
                 }
 
-                this._content.showComponent('quadrant', {
+                _context19.next = 3;
+                return this._content.showComponent('quadrant', {
                   id: id,
                   gmx_id: gmx_id
                 });
 
-              case 2:
+              case 3:
               case "end":
-                return _context17.stop();
+                return _context19.stop();
             }
           }
-        }, _callee17, this);
+        }, _callee19, this);
       }));
 
-      function _showQuadrant(_x8, _x9) {
+      function _showQuadrant(_x9, _x10) {
         return _showQuadrant2.apply(this, arguments);
       }
 
@@ -58298,32 +58231,33 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_showStand",
     value: function () {
-      var _showStand2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee18(id, gmx_id) {
-        return regeneratorRuntime.wrap(function _callee18$(_context18) {
+      var _showStand2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee20(id, gmx_id) {
+        return regeneratorRuntime.wrap(function _callee20$(_context20) {
           while (1) {
-            switch (_context18.prev = _context18.next) {
+            switch (_context20.prev = _context20.next) {
               case 0:
                 if (!this._content.hasComponent('stand')) {
                   this._content.addComponent('stand', Stand, {
-                    stands: this._stands,
+                    layer: this._stands,
                     serviceEndpoint: this._serviceEndpoint
                   });
                 }
 
-                this._content.showComponent('stand', {
+                _context20.next = 3;
+                return this._content.showComponent('stand', {
                   id: id,
                   gmx_id: gmx_id
                 });
 
-              case 2:
+              case 3:
               case "end":
-                return _context18.stop();
+                return _context20.stop();
             }
           }
-        }, _callee18, this);
+        }, _callee20, this);
       }));
 
-      function _showStand(_x10, _x11) {
+      function _showStand(_x11, _x12) {
         return _showStand2.apply(this, arguments);
       }
 
@@ -58332,32 +58266,33 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_showDeclaration",
     value: function () {
-      var _showDeclaration2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee19(id, gmx_id) {
-        return regeneratorRuntime.wrap(function _callee19$(_context19) {
+      var _showDeclaration2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee21(id, gmx_id) {
+        return regeneratorRuntime.wrap(function _callee21$(_context21) {
           while (1) {
-            switch (_context19.prev = _context19.next) {
+            switch (_context21.prev = _context21.next) {
               case 0:
                 if (!this._content.hasComponent('declaration')) {
                   this._content.addComponent('declaration', Declaration, {
-                    declarations: this._declarations,
+                    layer: this._declarations,
                     serviceEndpoint: this._serviceEndpoint
                   });
                 }
 
-                this._content.showComponent('declaration', {
+                _context21.next = 3;
+                return this._content.showComponent('declaration', {
                   id: id,
                   gmx_id: gmx_id
                 });
 
-              case 2:
+              case 3:
               case "end":
-                return _context19.stop();
+                return _context21.stop();
             }
           }
-        }, _callee19, this);
+        }, _callee21, this);
       }));
 
-      function _showDeclaration(_x12, _x13) {
+      function _showDeclaration(_x13, _x14) {
         return _showDeclaration2.apply(this, arguments);
       }
 
@@ -58366,32 +58301,33 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_showIncident",
     value: function () {
-      var _showIncident2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee20(props, gmx_id) {
-        return regeneratorRuntime.wrap(function _callee20$(_context20) {
+      var _showIncident2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee22(props, gmx_id) {
+        return regeneratorRuntime.wrap(function _callee22$(_context22) {
           while (1) {
-            switch (_context20.prev = _context20.next) {
+            switch (_context22.prev = _context22.next) {
               case 0:
                 if (!this._content.hasComponent('incident')) {
                   this._content.addComponent('incident', Incident, {
-                    incidents: this._incidents,
+                    layer: this._incidents,
                     serviceEndpoint: this._serviceEndpoint
                   });
                 }
 
-                this._content.showComponent('incident', {
+                _context22.next = 3;
+                return this._content.showComponent('incident', {
                   props: props,
                   gmx_id: gmx_id
                 });
 
-              case 2:
+              case 3:
               case "end":
-                return _context20.stop();
+                return _context22.stop();
             }
           }
-        }, _callee20, this);
+        }, _callee22, this);
       }));
 
-      function _showIncident(_x14, _x15) {
+      function _showIncident(_x15, _x16) {
         return _showIncident2.apply(this, arguments);
       }
 
@@ -58399,159 +58335,279 @@ var Map = /*#__PURE__*/function (_EventTarget) {
     }()
   }, {
     key: "_showLayer",
-    value: function _showLayer(_ref10) {
-      var id = _ref10.id,
-          visible = _ref10.visible;
-
-      var mode = this._content.getCurrentId();
-
-      switch (id) {
-        case 'quadrants':
-          if (this._quadrants) {
-            if (visible) {
-              this._map.addLayer(this._quadrants);
-            } else {
-              switch (mode) {
-                case 'create-plot':
-                case 'edit-plot':
-                case 'quadrant':
-                  this.showMain();
-                  break;
-              }
-
-              this._map.removeLayer(this._quadrants);
-            }
-          }
-
-          break;
-
-        case 'parks':
-          if (this._parks) {
-            if (visible) {
-              this._map.addLayer(this._parks);
-            } else {
-              switch (mode) {
-                case 'naturalpark':
-                  this.showMain();
-                  break;
-              }
-
-              this._map.removeLayer(this._parks);
-            }
-          }
-
-          break;
-
-        case 'stands':
-          if (this._stands) {
-            if (visible) {
-              this._map.addLayer(this._stands);
-            } else {
-              switch (mode) {
-                case 'stand':
-                  this.showMain();
-                  break;
-              }
-
-              this._map.removeLayer(this._stands);
-            }
-          }
-
-          break;
-
-        case 'fires':
-          if (visible) {
-            if (this._hotspottimeline) {
-              this._map.addControl(this._hotspottimeline);
-            } else if (this._fires) {
-              this._map.addLayer(this._fires);
-            }
-          } else {
-            if (this._hotspottimeline) {
-              this._map.removeControl(this._hotspottimeline);
-            } else if (this._fires) {
-              this._map.removeLayer(this._fires);
-            }
-          }
-
-          break;
-
-        case 'declarations':
-          if (this._declarations) {
-            if (visible) {
-              this._map.addLayer(this._declarations);
-            } else {
-              switch (mode) {
-                case 'declaration':
-                  this.showMain();
-                  break;
-              }
-
-              this._map.removeLayer(this._declarations);
-            }
-          }
-
-          break;
-
-        case 'incidents':
-          if (this._incidents) {
-            if (visible) {
-              this._map.addLayer(this._incidents);
-            } else {
-              switch (mode) {
-                case 'incident':
-                  this.showMain();
-                  break;
-              }
-
-              this._map.removeLayer(this._incidents);
-            }
-          }
-
-          break;
-      }
-    }
-  }, {
-    key: "_quadrantClick",
     value: function () {
-      var _quadrantClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee21(e) {
-        var mode, _e$gmx, id, properties;
-
-        return regeneratorRuntime.wrap(function _callee21$(_context21) {
+      var _showLayer2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee23(_ref11) {
+        var id, visible, mode;
+        return regeneratorRuntime.wrap(function _callee23$(_context23) {
           while (1) {
-            switch (_context21.prev = _context21.next) {
+            switch (_context23.prev = _context23.next) {
               case 0:
+                id = _ref11.id, visible = _ref11.visible;
                 mode = this._content.getCurrentId();
+                _context23.t0 = id;
+                _context23.next = _context23.t0 === 'quadrants' ? 5 : _context23.t0 === 'parks' ? 19 : _context23.t0 === 'stands' ? 33 : _context23.t0 === 'fires' ? 47 : _context23.t0 === 'declarations' ? 49 : _context23.t0 === 'incidents' ? 63 : 77;
+                break;
 
-                if (!(!mode || mode === 'quadrant')) {
-                  _context21.next = 12;
+              case 5:
+                if (!this._quadrants) {
+                  _context23.next = 18;
                   break;
                 }
 
+                if (!visible) {
+                  _context23.next = 10;
+                  break;
+                }
+
+                this._map.addLayer(this._quadrants);
+
+                _context23.next = 18;
+                break;
+
+              case 10:
+                _context23.t1 = mode;
+                _context23.next = _context23.t1 === 'create-plot' ? 13 : _context23.t1 === 'edit-plot' ? 13 : _context23.t1 === 'quadrant' ? 13 : 16;
+                break;
+
+              case 13:
+                _context23.next = 15;
+                return this.showMain();
+
+              case 15:
+                return _context23.abrupt("break", 17);
+
+              case 16:
+                return _context23.abrupt("break", 17);
+
+              case 17:
+                this._map.removeLayer(this._quadrants);
+
+              case 18:
+                return _context23.abrupt("break", 78);
+
+              case 19:
+                if (!this._parks) {
+                  _context23.next = 32;
+                  break;
+                }
+
+                if (!visible) {
+                  _context23.next = 24;
+                  break;
+                }
+
+                this._map.addLayer(this._parks);
+
+                _context23.next = 32;
+                break;
+
+              case 24:
+                _context23.t2 = mode;
+                _context23.next = _context23.t2 === 'naturalpark' ? 27 : 30;
+                break;
+
+              case 27:
+                _context23.next = 29;
+                return this.showMain();
+
+              case 29:
+                return _context23.abrupt("break", 31);
+
+              case 30:
+                return _context23.abrupt("break", 31);
+
+              case 31:
+                this._map.removeLayer(this._parks);
+
+              case 32:
+                return _context23.abrupt("break", 78);
+
+              case 33:
+                if (!this._stands) {
+                  _context23.next = 46;
+                  break;
+                }
+
+                if (!visible) {
+                  _context23.next = 38;
+                  break;
+                }
+
+                this._map.addLayer(this._stands);
+
+                _context23.next = 46;
+                break;
+
+              case 38:
+                _context23.t3 = mode;
+                _context23.next = _context23.t3 === 'stand' ? 41 : 44;
+                break;
+
+              case 41:
+                _context23.next = 43;
+                return this.showMain();
+
+              case 43:
+                return _context23.abrupt("break", 45);
+
+              case 44:
+                return _context23.abrupt("break", 45);
+
+              case 45:
+                this._map.removeLayer(this._stands);
+
+              case 46:
+                return _context23.abrupt("break", 78);
+
+              case 47:
+                if (visible) {
+                  if (this._hotspottimeline) {
+                    this._map.addControl(this._hotspottimeline);
+                  } else if (this._fires) {
+                    this._map.addLayer(this._fires);
+                  }
+                } else {
+                  if (this._hotspottimeline) {
+                    this._map.removeControl(this._hotspottimeline);
+                  } else if (this._fires) {
+                    this._map.removeLayer(this._fires);
+                  }
+                }
+
+                return _context23.abrupt("break", 78);
+
+              case 49:
+                if (!this._declarations) {
+                  _context23.next = 62;
+                  break;
+                }
+
+                if (!visible) {
+                  _context23.next = 54;
+                  break;
+                }
+
+                this._map.addLayer(this._declarations);
+
+                _context23.next = 62;
+                break;
+
+              case 54:
+                _context23.t4 = mode;
+                _context23.next = _context23.t4 === 'declaration' ? 57 : 60;
+                break;
+
+              case 57:
+                _context23.next = 59;
+                return this.showMain();
+
+              case 59:
+                return _context23.abrupt("break", 61);
+
+              case 60:
+                return _context23.abrupt("break", 61);
+
+              case 61:
+                this._map.removeLayer(this._declarations);
+
+              case 62:
+                return _context23.abrupt("break", 78);
+
+              case 63:
+                if (!this._incidents) {
+                  _context23.next = 76;
+                  break;
+                }
+
+                if (!visible) {
+                  _context23.next = 68;
+                  break;
+                }
+
+                this._map.addLayer(this._incidents);
+
+                _context23.next = 76;
+                break;
+
+              case 68:
+                _context23.t5 = mode;
+                _context23.next = _context23.t5 === 'incident' ? 71 : 74;
+                break;
+
+              case 71:
+                _context23.next = 73;
+                return this.showMain();
+
+              case 73:
+                return _context23.abrupt("break", 75);
+
+              case 74:
+                return _context23.abrupt("break", 75);
+
+              case 75:
+                this._map.removeLayer(this._incidents);
+
+              case 76:
+                return _context23.abrupt("break", 78);
+
+              case 77:
+                return _context23.abrupt("break", 78);
+
+              case 78:
+              case "end":
+                return _context23.stop();
+            }
+          }
+        }, _callee23, this);
+      }));
+
+      function _showLayer(_x17) {
+        return _showLayer2.apply(this, arguments);
+      }
+
+      return _showLayer;
+    }()
+  }, {
+    key: "_quadrantClick",
+    value: function () {
+      var _quadrantClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee24(e) {
+        var mode, _e$gmx, id, properties;
+
+        return regeneratorRuntime.wrap(function _callee24$(_context24) {
+          while (1) {
+            switch (_context24.prev = _context24.next) {
+              case 0:
                 L$1.DomEvent.stopPropagation(e);
+                mode = this._content.getCurrentId();
+
+                if (!(!mode || mode === 'quadrant')) {
+                  _context24.next = 12;
+                  break;
+                }
+
                 _e$gmx = e.gmx, id = _e$gmx.id, properties = _e$gmx.properties;
-                _context21.prev = 4;
-                _context21.next = 7;
+                _context24.prev = 4;
+                _context24.next = 7;
                 return this._showQuadrant(properties.id, id);
 
               case 7:
-                _context21.next = 12;
+                _context24.next = 12;
                 break;
 
               case 9:
-                _context21.prev = 9;
-                _context21.t0 = _context21["catch"](4);
-                alert(_context21.t0.toString());
+                _context24.prev = 9;
+                _context24.t0 = _context24["catch"](4);
+                alert(_context24.t0.toString());
 
               case 12:
               case "end":
-                return _context21.stop();
+                return _context24.stop();
             }
           }
-        }, _callee21, this, [[4, 9]]);
+        }, _callee24, this, [[4, 9]]);
       }));
 
-      function _quadrantClick(_x16) {
+      function _quadrantClick(_x18) {
         return _quadrantClick2.apply(this, arguments);
       }
 
@@ -58560,30 +58616,36 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_parkClick",
     value: function () {
-      var _parkClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee22(e) {
+      var _parkClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee25(e) {
         var properties;
-        return regeneratorRuntime.wrap(function _callee22$(_context22) {
+        return regeneratorRuntime.wrap(function _callee25$(_context25) {
           while (1) {
-            switch (_context22.prev = _context22.next) {
+            switch (_context25.prev = _context25.next) {
               case 0:
-                try {
-                  L$1.DomEvent.stopPropagation(e);
-                  properties = e.gmx.properties;
+                L$1.DomEvent.stopPropagation(e);
+                _context25.prev = 1;
+                properties = e.gmx.properties;
+                _context25.next = 5;
+                return this._showNaturalPark(properties);
 
-                  this._showNaturalPark(properties);
-                } catch (e) {
-                  alert(e.toString());
-                }
+              case 5:
+                _context25.next = 10;
+                break;
 
-              case 1:
+              case 7:
+                _context25.prev = 7;
+                _context25.t0 = _context25["catch"](1);
+                alert(_context25.t0.toString());
+
+              case 10:
               case "end":
-                return _context22.stop();
+                return _context25.stop();
             }
           }
-        }, _callee22, this);
+        }, _callee25, this, [[1, 7]]);
       }));
 
-      function _parkClick(_x17) {
+      function _parkClick(_x19) {
         return _parkClick2.apply(this, arguments);
       }
 
@@ -58592,44 +58654,44 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_standClick",
     value: function () {
-      var _standClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee23(e) {
+      var _standClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee26(e) {
         var mode, _e$gmx2, id, properties;
 
-        return regeneratorRuntime.wrap(function _callee23$(_context23) {
+        return regeneratorRuntime.wrap(function _callee26$(_context26) {
           while (1) {
-            switch (_context23.prev = _context23.next) {
+            switch (_context26.prev = _context26.next) {
               case 0:
+                L$1.DomEvent.stopPropagation(e);
                 mode = this._content.getCurrentId();
 
                 if (!(!mode || mode === 'stand')) {
-                  _context23.next = 12;
+                  _context26.next = 12;
                   break;
                 }
 
-                _context23.prev = 2;
-                L$1.DomEvent.stopPropagation(e);
+                _context26.prev = 3;
                 _e$gmx2 = e.gmx, id = _e$gmx2.id, properties = _e$gmx2.properties;
-                _context23.next = 7;
+                _context26.next = 7;
                 return this._showStand(properties.id, id);
 
               case 7:
-                _context23.next = 12;
+                _context26.next = 12;
                 break;
 
               case 9:
-                _context23.prev = 9;
-                _context23.t0 = _context23["catch"](2);
-                alert(_context23.t0.toString());
+                _context26.prev = 9;
+                _context26.t0 = _context26["catch"](3);
+                alert(_context26.t0.toString());
 
               case 12:
               case "end":
-                return _context23.stop();
+                return _context26.stop();
             }
           }
-        }, _callee23, this, [[2, 9]]);
+        }, _callee26, this, [[3, 9]]);
       }));
 
-      function _standClick(_x18) {
+      function _standClick(_x20) {
         return _standClick2.apply(this, arguments);
       }
 
@@ -58638,37 +58700,37 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_declarationClick",
     value: function () {
-      var _declarationClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee24(e) {
+      var _declarationClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee27(e) {
         var _e$gmx3, id, properties;
 
-        return regeneratorRuntime.wrap(function _callee24$(_context24) {
+        return regeneratorRuntime.wrap(function _callee27$(_context27) {
           while (1) {
-            switch (_context24.prev = _context24.next) {
+            switch (_context27.prev = _context27.next) {
               case 0:
-                _context24.prev = 0;
                 L$1.DomEvent.stopPropagation(e);
+                _context27.prev = 1;
                 _e$gmx3 = e.gmx, id = _e$gmx3.id, properties = _e$gmx3.properties;
-                _context24.next = 5;
+                _context27.next = 5;
                 return this._showDeclaration(properties.id, id);
 
               case 5:
-                _context24.next = 10;
+                _context27.next = 10;
                 break;
 
               case 7:
-                _context24.prev = 7;
-                _context24.t0 = _context24["catch"](0);
-                alert(_context24.t0.toString());
+                _context27.prev = 7;
+                _context27.t0 = _context27["catch"](1);
+                alert(_context27.t0.toString());
 
               case 10:
               case "end":
-                return _context24.stop();
+                return _context27.stop();
             }
           }
-        }, _callee24, this, [[0, 7]]);
+        }, _callee27, this, [[1, 7]]);
       }));
 
-      function _declarationClick(_x19) {
+      function _declarationClick(_x21) {
         return _declarationClick2.apply(this, arguments);
       }
 
@@ -58677,37 +58739,37 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_incidentClick",
     value: function () {
-      var _incidentClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee25(e) {
+      var _incidentClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee28(e) {
         var _e$gmx4, id, properties;
 
-        return regeneratorRuntime.wrap(function _callee25$(_context25) {
+        return regeneratorRuntime.wrap(function _callee28$(_context28) {
           while (1) {
-            switch (_context25.prev = _context25.next) {
+            switch (_context28.prev = _context28.next) {
               case 0:
-                _context25.prev = 0;
                 L$1.DomEvent.stopPropagation(e);
+                _context28.prev = 1;
                 _e$gmx4 = e.gmx, id = _e$gmx4.id, properties = _e$gmx4.properties;
-                _context25.next = 5;
+                _context28.next = 5;
                 return this._showIncident(properties, id);
 
               case 5:
-                _context25.next = 10;
+                _context28.next = 10;
                 break;
 
               case 7:
-                _context25.prev = 7;
-                _context25.t0 = _context25["catch"](0);
-                alert(_context25.t0.toString());
+                _context28.prev = 7;
+                _context28.t0 = _context28["catch"](1);
+                alert(_context28.t0.toString());
 
               case 10:
               case "end":
-                return _context25.stop();
+                return _context28.stop();
             }
           }
-        }, _callee25, this, [[0, 7]]);
+        }, _callee28, this, [[1, 7]]);
       }));
 
-      function _incidentClick(_x20) {
+      function _incidentClick(_x22) {
         return _incidentClick2.apply(this, arguments);
       }
 
@@ -58716,7 +58778,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "load",
     value: function () {
-      var _load = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee26() {
+      var _load = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee30() {
         var _this5 = this;
 
         var mapId,
@@ -58724,14 +58786,14 @@ var Map = /*#__PURE__*/function (_EventTarget) {
             i,
             end,
             start,
-            _args26 = arguments;
+            _args30 = arguments;
 
-        return regeneratorRuntime.wrap(function _callee26$(_context26) {
+        return regeneratorRuntime.wrap(function _callee30$(_context30) {
           while (1) {
-            switch (_context26.prev = _context26.next) {
+            switch (_context30.prev = _context30.next) {
               case 0:
-                mapId = _args26.length > 0 && _args26[0] !== undefined ? _args26[0] : '3B9D614D7AFA4A1ABF2BF1E0918677EF';
-                _context26.next = 3;
+                mapId = _args30.length > 0 && _args30[0] !== undefined ? _args30[0] : '3B9D614D7AFA4A1ABF2BF1E0918677EF';
+                _context30.next = 3;
                 return L$1.gmx.loadMap(mapId, {
                   // apiKey: this._apiKey,
                   leafletMap: this._map,
@@ -58747,7 +58809,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 });
 
               case 3:
-                this._gmxMap = _context26.sent;
+                this._gmxMap = _context30.sent;
                 this._zoom = new Zoom();
 
                 this._zoom.addTo(this._map);
@@ -58768,7 +58830,27 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
                 this._legend.addTo(this._map);
 
-                this._legend.on('click', this._showLayer.bind(this));
+                this._legend.on('click', /*#__PURE__*/function () {
+                  var _ref12 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee29(e) {
+                    return regeneratorRuntime.wrap(function _callee29$(_context29) {
+                      while (1) {
+                        switch (_context29.prev = _context29.next) {
+                          case 0:
+                            _context29.next = 2;
+                            return _this5._showLayer(e);
+
+                          case 2:
+                          case "end":
+                            return _context29.stop();
+                        }
+                      }
+                    }, _callee29);
+                  }));
+
+                  return function (_x23) {
+                    return _ref12.apply(this, arguments);
+                  };
+                }(), this);
 
                 this._legend.on('activate', function () {
                   _this5._baselayers.showPanel(false);
@@ -58799,52 +58881,52 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                       case 'quadrants':
                         _this5._quadrants = layer;
 
-                        _this5._quadrants.on('click', _this5._quadrantClick.bind(_this5));
+                        _this5._quadrants.on('click', _this5._quadrantClick, _this5);
 
-                        _this5._legend.addComponent('quadrants', translate$h('legend.quadrants'));
+                        _this5._legend.addComponent('quadrants', translate$g('legend.quadrants'));
 
                         break;
 
                       case 'parks':
                         _this5._parks = layer;
 
-                        _this5._parks.on('click', _this5._parkClick.bind(_this5));
+                        _this5._parks.on('click', _this5._parkClick, _this5);
 
-                        _this5._legend.addComponent('parks', translate$h('legend.parks'));
+                        _this5._legend.addComponent('parks', translate$g('legend.parks'));
 
                         break;
 
                       case 'stands':
                         _this5._stands = layer;
 
-                        _this5._stands.on('click', _this5._standClick.bind(_this5));
+                        _this5._stands.on('click', _this5._standClick, _this5);
 
-                        _this5._legend.addComponent('stands', translate$h('legend.stands'));
+                        _this5._legend.addComponent('stands', translate$g('legend.stands'));
 
                         break;
 
                       case 'fires':
                         _this5._fires = layer;
 
-                        _this5._legend.addComponent('fires', translate$h('legend.fires'));
+                        _this5._legend.addComponent('fires', translate$g('legend.fires'));
 
                         break;
 
                       case 'declarations':
                         _this5._declarations = layer;
 
-                        _this5._declarations.on('click', _this5._declarationClick.bind(_this5));
+                        _this5._declarations.on('click', _this5._declarationClick, _this5);
 
-                        _this5._legend.addComponent('declarations', translate$h('legend.declarations'));
+                        _this5._legend.addComponent('declarations', translate$g('legend.declarations'));
 
                         break;
 
                       case 'incidents':
                         _this5._incidents = layer;
 
-                        _this5._incidents.on('click', _this5._incidentClick.bind(_this5));
+                        _this5._incidents.on('click', _this5._incidentClick, _this5);
 
-                        _this5._legend.addComponent('incidents', translate$h('legend.incidents'));
+                        _this5._legend.addComponent('incidents', translate$g('legend.incidents'));
 
                         break;
 
@@ -58859,17 +58941,17 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   _loop(i);
                 }
 
-                _context26.next = 18;
+                _context30.next = 18;
                 return this.getUserInfo();
 
               case 18:
-                if (!_context26.sent) {
-                  _context26.next = 22;
+                if (!_context30.sent) {
+                  _context30.next = 22;
                   break;
                 }
 
                 this._hotspottimeline = new HotSpotTimeLine();
-                _context26.next = 25;
+                _context30.next = 25;
                 break;
 
               case 22:
@@ -58886,10 +58968,10 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
               case 26:
               case "end":
-                return _context26.stop();
+                return _context30.stop();
             }
           }
-        }, _callee26, this);
+        }, _callee30, this);
       }));
 
       function load() {
@@ -58898,6 +58980,11 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
       return load;
     }()
+  }, {
+    key: "unload",
+    value: function unload() {
+      this._baselayers.unload();
+    }
   }]);
 
   return Map;
