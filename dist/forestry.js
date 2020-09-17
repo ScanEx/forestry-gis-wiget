@@ -25116,20 +25116,17 @@ var Content = L$1.Control.extend({
   },
   onRemove: function onRemove(map) {},
   addComponent: function addComponent(id, Component, options) {
-    var _this = this;
-
     if (!this._components[id]) {
       var container = L$1.DomUtil.create('div', 'component hidden', this._container);
       container.setAttribute('data-id', id);
       var component = new Component(container, options);
-      component.on('close', function () {
-        var el = _this._container.querySelector("[data-id=".concat(id, "]"));
 
+      var el = this._container.querySelector("[data-id=".concat(id, "]"));
+
+      component.on('close', function () {
         L$1.DomUtil.addClass(el, 'hidden');
       });
       component.on('open', function () {
-        var el = _this._container.querySelector("[data-id=".concat(id, "]"));
-
         L$1.DomUtil.removeClass(el, 'hidden');
       });
       this._components[id] = component;
@@ -25168,7 +25165,7 @@ var Content = L$1.Control.extend({
   },
   showComponent: function () {
     var _showComponent = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(id, options) {
-      var _this2 = this;
+      var _this = this;
 
       return regeneratorRuntime.wrap(function _callee3$(_context3) {
         while (1) {
@@ -25176,29 +25173,32 @@ var Content = L$1.Control.extend({
             case 0:
               Object.keys(this._components).forEach( /*#__PURE__*/function () {
                 var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(k) {
-                  var component;
+                  var component, el;
                   return regeneratorRuntime.wrap(function _callee2$(_context2) {
                     while (1) {
                       switch (_context2.prev = _context2.next) {
                         case 0:
-                          component = _this2._components[k];
+                          component = _this._components[k];
+                          el = _this._container.querySelector("[data-id=".concat(k, "]"));
 
                           if (!(k === id)) {
-                            _context2.next = 6;
+                            _context2.next = 8;
                             break;
                           }
 
-                          _context2.next = 4;
+                          L$1.DomUtil.removeClass(el, 'hidden');
+                          _context2.next = 6;
                           return component.open(options);
 
-                        case 4:
-                          _context2.next = 7;
+                        case 6:
+                          _context2.next = 10;
                           break;
 
-                        case 6:
+                        case 8:
+                          L$1.DomUtil.addClass(el, 'hidden');
                           component.close();
 
-                        case 7:
+                        case 10:
                         case "end":
                           return _context2.stop();
                       }
@@ -36452,7 +36452,7 @@ var Requests = /*#__PURE__*/function (_Component) {
     _this._statusIndex = attributes.indexOf('status_calc');
 
     if (_this._statusIndex >= 0) {
-      _this._statusIndex = _this._statusIndex + 1;
+      _this._statusIndex += 1;
     }
 
     _this._container.innerHTML = "<table class=\"header\" cellpadding=\"0\" cellspacing=\"0\">\n            <tbody>\n                <tr>\n                    <td>\n                        <label class=\"title\">".concat(translate$3('project.header'), "</label>\n                    </td>                    \n                    <td>\n                        <button class=\"create\">").concat(translate$3('project.create'), "</button>\n                    </td>\n                </tr>\n            </tbody>\n        </table>        \n        <table class=\"content\" cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>").concat(_this._columns.map(function (id) {
@@ -54041,7 +54041,8 @@ var Species = /*#__PURE__*/function () {
       series: [],
       legend: {
         position: 'right',
-        fontSize: '15px'
+        fontSize: '15px',
+        width: '200px'
       },
       plotOptions: {
         pie: {
@@ -54223,6 +54224,11 @@ var Plot = /*#__PURE__*/function (_Component) {
         attributes = _this$_options$layer$.attributes;
 
     _this._statusIndex = attributes.indexOf('status_calc');
+
+    if (_this._statusIndex >= 0) {
+      _this._statusIndex += 1;
+    }
+
     _this._serviceEndpoint = serviceEndpoint;
     return _this;
   }
@@ -54754,40 +54760,41 @@ var EditPlot = /*#__PURE__*/function (_Plot2) {
                 result = _context8.sent;
 
                 if (!result) {
-                  _context8.next = 18;
+                  _context8.next = 19;
                   break;
                 }
 
                 this._valid = id;
                 this._quadrants.items = result.SquareStat;
                 this._species.items = result.ForestStat;
+                _context8.next = 17;
+                return _get(_getPrototypeOf(EditPlot.prototype), "open", this).call(this);
 
-                _get(_getPrototypeOf(EditPlot.prototype), "open", this).call(this);
-
-                _context8.next = 19;
+              case 17:
+                _context8.next = 20;
                 break;
-
-              case 18:
-                throw translate$7('quadrant.invalid');
 
               case 19:
-                _context8.next = 25;
+                throw translate$7('quadrant.invalid');
+
+              case 20:
+                _context8.next = 26;
                 break;
 
-              case 21:
-                _context8.prev = 21;
+              case 22:
+                _context8.prev = 22;
                 _context8.t0 = _context8["catch"](0);
 
                 this._back();
 
                 alert(_context8.t0.toString());
 
-              case 25:
+              case 26:
               case "end":
                 return _context8.stop();
             }
           }
-        }, _callee8, this, [[0, 21]]);
+        }, _callee8, this, [[0, 22]]);
       }));
 
       function open(_x5) {
@@ -54855,7 +54862,8 @@ var Quadrant = /*#__PURE__*/function (_Component) {
       series: [],
       legend: {
         position: 'right',
-        fontSize: '15px'
+        fontSize: '15px',
+        width: '200px'
       },
       plotOptions: {
         pie: {
@@ -56998,7 +57006,8 @@ var Stand = /*#__PURE__*/function (_Component) {
       series: [],
       legend: {
         position: 'right',
-        fontSize: '15px'
+        fontSize: '15px',
+        width: '200px'
       },
       plotOptions: {
         pie: {
@@ -57637,7 +57646,7 @@ T.addText('rus', {
     parks: 'Охраняемые территории',
     fires: 'Пожары',
     declarations: 'Лесные декларации',
-    incidents: 'Инциденты'
+    incidents: 'Мониторинг'
   }
 }); // const defaultStyle = {
 //     fillStyle: 'rgba(28, 224, 0, 0.4)',
@@ -57647,6 +57656,18 @@ T.addText('rus', {
 //     strokeStyle: '#1CE000',
 //     lineWidth: 2,
 // };
+
+var PLOT_STYLES = {
+  BID: {
+    fillStyle: 'rgba(144, 112, 29)'
+  },
+  LEASED: {
+    fillStyle: 'rgba(100, 39, 39)'
+  },
+  OWN: {
+    fillStyle: 'rgba(42, 121,31, 0.5)'
+  }
+};
 
 var Map = /*#__PURE__*/function (_EventTarget) {
   _inherits(Map, _EventTarget);
@@ -57912,24 +57933,20 @@ var Map = /*#__PURE__*/function (_EventTarget) {
               case 4:
                 this._legend.enable('quadrants');
 
-                if (this._plotProject) {
-                  this._map.addLayer(this._plotProject);
-                }
-
-                _context7.next = 11;
+                _context7.next = 10;
                 break;
 
-              case 8:
-                _context7.prev = 8;
+              case 7:
+                _context7.prev = 7;
                 _context7.t0 = _context7["catch"](0);
                 alert(_context7.t0.toString());
 
-              case 11:
+              case 10:
               case "end":
                 return _context7.stop();
             }
           }
-        }, _callee7, this, [[0, 8]]);
+        }, _callee7, this, [[0, 7]]);
       }));
 
       function showRequests() {
@@ -58958,13 +58975,20 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                     });
                   }
 
-                  var kind = props.MetaProperties.kind;
+                  var attributes = props.attributes,
+                      kind = props.MetaProperties.kind;
 
                   if (typeof layer.disablePopup === 'function') {
                     layer.disablePopup();
                   }
 
                   if (kind) {
+                    var statusIndex = attributes && attributes.indexOf('status_calc') || -1;
+
+                    if (statusIndex >= 0) {
+                      statusIndex += 1;
+                    }
+
                     switch (kind.Value) {
                       case 'quadrants':
                         _this5._quadrants = layer;
@@ -59020,6 +59044,31 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
                       case 'plot_project':
                         _this5._plotProject = layer;
+
+                        _this5._plotProject.setStyleHook(function (_ref13) {
+                          var properties = _ref13.properties;
+
+                          if (statusIndex >= 0) {
+                            switch (properties[statusIndex]) {
+                              case 1:
+                                return PLOT_STYLES.OWN;
+
+                              case 2:
+                                return PLOT_STYLES.BID;
+
+                              case 3:
+                                return PLOT_STYLES.LEASED;
+
+                              default:
+                                return {};
+                            }
+                          }
+
+                          return {};
+                        });
+
+                        _this5._map.addLayer(_this5._plotProject);
+
                         break;
                     }
                   }
