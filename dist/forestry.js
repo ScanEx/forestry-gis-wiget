@@ -25265,6 +25265,8 @@ var Legend = L$1.Control.extend({
     var _this = this;
 
     this._container = L$1.DomUtil.create('div', 'scanex-forestry-legend');
+    L$1.DomEvent.disableScrollPropagation(this._container);
+    L$1.DomEvent.disableClickPropagation(this._container);
     this._icon = L$1.DomUtil.create('div', 'scanex-legend-icon icon', this._container);
     this._panel = L$1.DomUtil.create('div', 'panel hidden', this._container);
     this._header = L$1.DomUtil.create('div', 'header', this._panel);
@@ -25296,7 +25298,7 @@ var Legend = L$1.Control.extend({
     }
   },
   enable: function enable(id) {
-    var container = this._components[id];
+    var container = this._container.querySelector("[data-id=".concat(id, "]"));
 
     if (container) {
       var btn = container.querySelector('.toggle');
@@ -25308,7 +25310,7 @@ var Legend = L$1.Control.extend({
     }
   },
   disable: function disable(id) {
-    var container = this._components[id];
+    var container = this._container.querySelector("[data-id=".concat(id, "]"));
 
     if (container) {
       var btn = container.querySelector('.toggle');
@@ -25320,7 +25322,7 @@ var Legend = L$1.Control.extend({
     }
   },
   toggle: function toggle(id) {
-    var container = this._components[id];
+    var container = this._container.querySelector("[data-id=".concat(id, "]"));
 
     if (container) {
       var btn = container.querySelector('.toggle');
@@ -25333,19 +25335,72 @@ var Legend = L$1.Control.extend({
       }
     }
   },
-  addComponent: function addComponent(id, title) {
+  addComponent: function addComponent(id, title, parent) {
     var _this2 = this;
 
-    var container = L$1.DomUtil.create('div', 'component', this._content);
-    L$1.DomUtil.create('i', id, container);
+    var container = L$1.DomUtil.create('div', 'component', parent ? parent : this._content);
+    container.setAttribute('data-id', id);
+    L$1.DomUtil.create('i', null, container);
     L$1.DomUtil.create('label', 'title', container).innerText = title;
     L$1.DomUtil.create('div', 'toggle', container);
     L$1.DomEvent.on(container, 'click', function (e) {
-      L$1.DomEvent.stopPropagation(e);
-
       _this2.toggle(id);
     }, this);
     this._components[id] = container;
+    return container;
+  },
+  addGroup: function addGroup(id, title) {
+    var _this3 = this;
+
+    var container = L$1.DomUtil.create('div', 'group', this._content);
+    container.setAttribute('data-id', id);
+    var header = L$1.DomUtil.create('div', 'header', container);
+    var icon = L$1.DomUtil.create('i', 'scanex-legend-icon', header);
+    L$1.DomUtil.addClass(icon, id);
+    var label = L$1.DomUtil.create('label', 'title', header);
+    label.innerText = title;
+    var btn = L$1.DomUtil.create('div', 'toggle', header);
+    var children = L$1.DomUtil.create('div', 'children hidden', container);
+    L$1.DomEvent.on(label, 'click', function (e) {
+      L$1.DomEvent.stopPropagation(e);
+
+      if (L$1.DomUtil.hasClass(children, 'hidden')) {
+        L$1.DomUtil.removeClass(children, 'hidden');
+      } else {
+        L$1.DomUtil.addClass(children, 'hidden');
+      }
+    }, this);
+    L$1.DomEvent.on(btn, 'click', function (e) {
+      var visible = !L$1.DomUtil.hasClass(btn, 'toggle-active');
+
+      if (visible) {
+        L$1.DomUtil.addClass(btn, 'toggle-active');
+      } else {
+        L$1.DomUtil.removeClass(btn, 'toggle-active');
+      }
+
+      var _iterator = _createForOfIteratorHelper(children.querySelectorAll('.component')),
+          _step;
+
+      try {
+        for (_iterator.s(); !(_step = _iterator.n()).done;) {
+          var item = _step.value;
+
+          var _id = item.getAttribute('data-id');
+
+          if (visible) {
+            _this3.enable(_id);
+          } else {
+            _this3.disable(_id);
+          }
+        }
+      } catch (err) {
+        _iterator.e(err);
+      } finally {
+        _iterator.f();
+      }
+    }, this);
+    return children;
   }
 });
 
@@ -57646,26 +57701,102 @@ T.addText('rus', {
     parks: 'Охраняемые территории',
     fires: 'Пожары',
     declarations: 'Лесные декларации',
-    incidents: 'Мониторинг'
+    incidents: 'Мониторинг',
+    burn: {
+      unconfirmed: 'Гарь неподтвержденная',
+      working: 'Гарь в работе',
+      faux: 'Гарь ложная',
+      confirmed: 'Гарь подтвержденная'
+    },
+    cut: {
+      unconfirmed: 'Рубка неподтвержденная',
+      working: 'Рубка в работе',
+      faux: 'Рубка ложная',
+      confirmed: 'Рубка подтвержденная'
+    },
+    windthrow: {
+      unconfirmed: 'Ветровал неподтвержденный',
+      working: 'Ветровал в работе',
+      faux: 'Ветровал ложный',
+      confirmed: 'Ветровал подтвержденный'
+    },
+    disease: {
+      unconfirmed: 'Патология неподтвержденная',
+      working: 'Патология в работе',
+      faux: 'Патология ложная',
+      confirmed: 'Патология подтвержденная'
+    }
   }
 }); // const defaultStyle = {
-//     fillStyle: 'rgba(28, 224, 0, 0.4)',
-// };
-// const hiliteStyle = {
-//     fillStyle: 'rgba(28, 224, 0, 0.4)',
-//     strokeStyle: '#1CE000',
-//     lineWidth: 2,
-// };
-
-var PLOT_STYLES = {
-  BID: {
-    fillStyle: 'rgba(144, 112, 29)'
+var STYLES$6 = {
+  PLOT: {
+    BID: {
+      fillStyle: 'rgba(144, 112, 29)'
+    },
+    LEASED: {
+      fillStyle: 'rgba(100, 39, 39)'
+    },
+    OWN: {
+      fillStyle: 'rgba(42, 121,31, 0.5)'
+    }
   },
-  LEASED: {
-    fillStyle: 'rgba(100, 39, 39)'
-  },
-  OWN: {
-    fillStyle: 'rgba(42, 121,31, 0.5)'
+  INCIDENTS: {
+    CUT: {
+      UNCONFIRMED: {
+        fillStyle: 'rgba(253, 185, 255, 0.5)'
+      },
+      WORKING: {
+        fillStyle: 'rgba(255, 85, 177, 0.5)'
+      },
+      FAUX: {
+        fillStyle: 'rgba(126, 46, 77, 0.5)'
+      },
+      CONFIRMED: {
+        fillStyle: 'rgba(215, 0, 76, 0.4)'
+      }
+    },
+    WINDTHROW: {
+      UNCONFIRMED: {
+        fillStyle: 'rgba(253, 185, 255, 0.5)'
+      },
+      WORKING: {
+        fillStyle: 'rgba(255, 85, 177, 0.5)'
+      },
+      FAUX: {
+        fillStyle: 'rgba(126, 46, 77, 0.5)'
+      },
+      CONFIRMED: {
+        fillStyle: 'rgba(215, 0, 76, 0.4)'
+      }
+    },
+    DISEASE: {
+      UNCONFIRMED: {
+        fillStyle: 'rgba(151, 168, 255, 0.5)'
+      },
+      WORKING: {
+        fillStyle: 'rgba(61, 81, 254, 0.5)'
+      },
+      FAUX: {
+        fillStyle: 'rgba(76, 84, 125, 0.5)'
+      },
+      CONFIRMED: {
+        fillStyle: 'rgba(70, 5, 255, 0.5)'
+      }
+    },
+    BURN: {
+      UNCONFIRMED: {
+        fillStyle: 'rgba(255, 168, 67, 0.45)'
+      },
+      WORKING: {
+        fillStyle: 'rgba(255, 122, 0, 0.5)'
+      },
+      FAUX: {
+        fillStyle: 'rgba(241, 207, 166, 0.45)'
+      },
+      CONFIRMED: {
+        fillStyle: 'rgba(239, 78, 9, 0.5)'
+      }
+    }
   }
 };
 
@@ -58889,6 +59020,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
         var mapId,
             _loop,
             i,
+            p,
             end,
             start,
             _args30 = arguments;
@@ -58935,28 +59067,6 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
                 this._legend.addTo(this._map);
 
-                this._legend.on('click', /*#__PURE__*/function () {
-                  var _ref12 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee29(e) {
-                    return regeneratorRuntime.wrap(function _callee29$(_context29) {
-                      while (1) {
-                        switch (_context29.prev = _context29.next) {
-                          case 0:
-                            _context29.next = 2;
-                            return _this5._showLayer(e);
-
-                          case 2:
-                          case "end":
-                            return _context29.stop();
-                        }
-                      }
-                    }, _callee29);
-                  }));
-
-                  return function (_x23) {
-                    return _ref12.apply(this, arguments);
-                  };
-                }(), this);
-
                 this._legend.on('activate', function () {
                   _this5._baselayers.showPanel(false);
                 });
@@ -58995,16 +59105,12 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
                         _this5._quadrants.on('click', _this5._quadrantClick, _this5);
 
-                        _this5._legend.addComponent('quadrants', translate$g('legend.quadrants'));
-
                         break;
 
                       case 'parks':
                         _this5._parks = layer;
 
                         _this5._parks.on('click', _this5._parkClick, _this5);
-
-                        _this5._legend.addComponent('parks', translate$g('legend.parks'));
 
                         break;
 
@@ -59013,23 +59119,16 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
                         _this5._stands.on('click', _this5._standClick, _this5);
 
-                        _this5._legend.addComponent('stands', translate$g('legend.stands'));
-
                         break;
 
                       case 'fires':
                         _this5._fires = layer;
-
-                        _this5._legend.addComponent('fires', translate$g('legend.fires'));
-
                         break;
 
                       case 'declarations':
                         _this5._declarations = layer;
 
                         _this5._declarations.on('click', _this5._declarationClick, _this5);
-
-                        _this5._legend.addComponent('declarations', translate$g('legend.declarations'));
 
                         break;
 
@@ -59038,26 +59137,24 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
                         _this5._incidents.on('click', _this5._incidentClick, _this5);
 
-                        _this5._legend.addComponent('incidents', translate$g('legend.incidents'));
-
                         break;
 
                       case 'plot_project':
                         _this5._plotProject = layer;
 
-                        _this5._plotProject.setStyleHook(function (_ref13) {
-                          var properties = _ref13.properties;
+                        _this5._plotProject.setStyleHook(function (_ref29) {
+                          var properties = _ref29.properties;
 
                           if (statusIndex >= 0) {
                             switch (properties[statusIndex]) {
                               case 1:
-                                return PLOT_STYLES.OWN;
+                                return STYLES$6.PLOT.OWN;
 
                               case 2:
-                                return PLOT_STYLES.BID;
+                                return STYLES$6.PLOT.BID;
 
                               case 3:
-                                return PLOT_STYLES.LEASED;
+                                return STYLES$6.PLOT.LEASED;
 
                               default:
                                 return {};
@@ -59078,32 +59175,470 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   _loop(i);
                 }
 
-                _context30.next = 18;
+                if (this._quadrants) {
+                  this._legend.addComponent('quadrants', translate$g('legend.quadrants'));
+                }
+
+                if (this._stands) {
+                  this._legend.addComponent('stands', translate$g('legend.stands'));
+                }
+
+                if (this._declarations) {
+                  this._legend.addComponent('declarations', translate$g('legend.declarations'));
+                }
+
+                if (this._parks) {
+                  this._legend.addComponent('parks', translate$g('legend.parks'));
+                }
+
+                if (this._fires) {
+                  this._legend.addComponent('fires', translate$g('legend.fires'));
+                }
+
+                if (this._incidents) {
+                  p = this._legend.addGroup('incidents', translate$g('legend.incidents'));
+
+                  this._legend.addComponent('cut-unconfirmed', translate$g('legend.cut.unconfirmed'), p);
+
+                  this._legend.addComponent('cut-working', translate$g('legend.cut.working'), p);
+
+                  this._legend.addComponent('cut-faux', translate$g('legend.cut.faux'), p);
+
+                  this._legend.addComponent('cut-confirmed', translate$g('legend.cut.confirmed'), p); // this._legend.addComponent('windthrow-unconfirmed', translate('legend.windthrow.unconfirmed'), p);
+                  // this._legend.addComponent('windthrow-working', translate('legend.windthrow.working'), p);
+                  // this._legend.addComponent('windthrow-faux', translate('legend.windthrow.faux'), p);
+                  // this._legend.addComponent('windthrow-confirmed', translate('legend.windthrow.confirmed'), p);
+
+
+                  this._legend.addComponent('disease-unconfirmed', translate$g('legend.disease.unconfirmed'), p);
+
+                  this._legend.addComponent('disease-working', translate$g('legend.disease.working'), p);
+
+                  this._legend.addComponent('disease-faux', translate$g('legend.disease.faux'), p);
+
+                  this._legend.addComponent('disease-confirmed', translate$g('legend.disease.confirmed'), p);
+
+                  this._legend.addComponent('burn-unconfirmed', translate$g('legend.burn.unconfirmed'), p);
+
+                  this._legend.addComponent('burn-working', translate$g('legend.burn.working'), p);
+
+                  this._legend.addComponent('burn-faux', translate$g('legend.burn.faux'), p);
+
+                  this._legend.addComponent('burn-confirmed', translate$g('legend.burn.confirmed'), p);
+                }
+
+                this._legend.on('click', /*#__PURE__*/function () {
+                  var _ref12 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee29(e) {
+                    var id, visible, p, cid, sid;
+                    return regeneratorRuntime.wrap(function _callee29$(_context29) {
+                      while (1) {
+                        switch (_context29.prev = _context29.next) {
+                          case 0:
+                            id = e.id, visible = e.visible;
+                            cid = -1;
+                            sid = -1;
+
+                            if (_this5._incidents) {
+                              p = _this5._incidents.getGmxProperties();
+                              cid = p.attributes.indexOf('class_id');
+
+                              if (cid >= 0) {
+                                cid += 1;
+                              }
+
+                              sid = p.attributes.indexOf('status_id');
+
+                              if (sid >= 0) {
+                                sid += 1;
+                              }
+                            }
+
+                            _context29.t0 = id;
+                            _context29.next = _context29.t0 === 'cut-unconfirmed' ? 7 : _context29.t0 === 'cut-working' ? 11 : _context29.t0 === 'cut-faux' ? 15 : _context29.t0 === 'cut-confirmed' ? 19 : _context29.t0 === 'windthrow-unconfirmed' ? 23 : _context29.t0 === 'windthrow-working' ? 27 : _context29.t0 === 'windthrow-faux' ? 31 : _context29.t0 === 'windthrow-confirmed' ? 35 : _context29.t0 === 'disease-unconfirmed' ? 39 : _context29.t0 === 'disease-working' ? 43 : _context29.t0 === 'disease-faux' ? 47 : _context29.t0 === 'disease-confirmed' ? 51 : _context29.t0 === 'burn-unconfirmed' ? 55 : _context29.t0 === 'burn-working' ? 59 : _context29.t0 === 'burn-faux' ? 63 : _context29.t0 === 'burn-confirmed' ? 67 : 71;
+                            break;
+
+                          case 7:
+                            if (visible) {
+                              _this5._incidents.setStyleHook(function (_ref13) {
+                                var properties = _ref13.properties;
+                                var c = properties[cid];
+                                var s = properties[sid];
+                                return c === 1 && s === 1 ? STYLES$6.INCIDENTS.CUT.UNCONFIRMED : {};
+                              });
+                            } else {
+                              _this5._incidents.removeStyleHook();
+                            }
+
+                            _context29.next = 10;
+                            return _this5._showLayer({
+                              id: 'incidents',
+                              visible: visible
+                            });
+
+                          case 10:
+                            return _context29.abrupt("break", 74);
+
+                          case 11:
+                            if (visible) {
+                              _this5._incidents.setStyleHook(function (_ref14) {
+                                var properties = _ref14.properties;
+                                var c = properties[cid];
+                                var s = properties[sid];
+                                return c === 1 && s === 2 ? STYLES$6.INCIDENTS.CUT.WORKING : {};
+                              });
+                            } else {
+                              _this5._incidents.removeStyleHook();
+                            }
+
+                            _context29.next = 14;
+                            return _this5._showLayer({
+                              id: 'incidents',
+                              visible: visible
+                            });
+
+                          case 14:
+                            return _context29.abrupt("break", 74);
+
+                          case 15:
+                            if (visible) {
+                              _this5._incidents.setStyleHook(function (_ref15) {
+                                var properties = _ref15.properties;
+                                var c = properties[cid];
+                                var s = properties[sid];
+                                return c === 1 && s === 3 ? STYLES$6.INCIDENTS.CUT.FAUX : {};
+                              });
+                            } else {
+                              _this5._incidents.removeStyleHook();
+                            }
+
+                            _context29.next = 18;
+                            return _this5._showLayer({
+                              id: 'incidents',
+                              visible: visible
+                            });
+
+                          case 18:
+                            return _context29.abrupt("break", 74);
+
+                          case 19:
+                            if (visible) {
+                              _this5._incidents.setStyleHook(function (_ref16) {
+                                var properties = _ref16.properties;
+                                var c = properties[cid];
+                                var s = properties[sid];
+                                return c === 1 && s === 4 ? STYLES$6.INCIDENTS.CUT.CONFIRMED : {};
+                              });
+                            } else {
+                              _this5._incidents.removeStyleHook();
+                            }
+
+                            _context29.next = 22;
+                            return _this5._showLayer({
+                              id: 'incidents',
+                              visible: visible
+                            });
+
+                          case 22:
+                            return _context29.abrupt("break", 74);
+
+                          case 23:
+                            if (visible) {
+                              _this5._incidents.setStyleHook(function (_ref17) {
+                                var properties = _ref17.properties;
+                                var c = properties[cid];
+                                var s = properties[sid];
+                                return c === 2 && s === 1 ? STYLES$6.INCIDENTS.WINDTHROW.UNCONFIRMED : {};
+                              });
+                            } else {
+                              _this5._incidents.removeStyleHook();
+                            }
+
+                            _context29.next = 26;
+                            return _this5._showLayer({
+                              id: 'incidents',
+                              visible: visible
+                            });
+
+                          case 26:
+                            return _context29.abrupt("break", 74);
+
+                          case 27:
+                            if (visible) {
+                              _this5._incidents.setStyleHook(function (_ref18) {
+                                var properties = _ref18.properties;
+                                var c = properties[cid];
+                                var s = properties[sid];
+                                return c === 2 && s === 2 ? STYLES$6.INCIDENTS.WINDTHROW.WORKING : {};
+                              });
+                            } else {
+                              _this5._incidents.removeStyleHook();
+                            }
+
+                            _context29.next = 30;
+                            return _this5._showLayer({
+                              id: 'incidents',
+                              visible: visible
+                            });
+
+                          case 30:
+                            return _context29.abrupt("break", 74);
+
+                          case 31:
+                            if (visible) {
+                              _this5._incidents.setStyleHook(function (_ref19) {
+                                var properties = _ref19.properties;
+                                var c = properties[cid];
+                                var s = properties[sid];
+                                return c === 2 && s === 3 ? STYLES$6.INCIDENTS.WINDTHROW.FAUX : {};
+                              });
+                            } else {
+                              _this5._incidents.removeStyleHook();
+                            }
+
+                            _context29.next = 34;
+                            return _this5._showLayer({
+                              id: 'incidents',
+                              visible: visible
+                            });
+
+                          case 34:
+                            return _context29.abrupt("break", 74);
+
+                          case 35:
+                            if (visible) {
+                              _this5._incidents.setStyleHook(function (_ref20) {
+                                var properties = _ref20.properties;
+                                var c = properties[cid];
+                                var s = properties[sid];
+                                return c === 2 && s === 4 ? STYLES$6.INCIDENTS.WINDTHROW.CONFIRMED : {};
+                              });
+                            } else {
+                              _this5._incidents.removeStyleHook();
+                            }
+
+                            _context29.next = 38;
+                            return _this5._showLayer({
+                              id: 'incidents',
+                              visible: visible
+                            });
+
+                          case 38:
+                            return _context29.abrupt("break", 74);
+
+                          case 39:
+                            if (visible) {
+                              _this5._incidents.setStyleHook(function (_ref21) {
+                                var properties = _ref21.properties;
+                                var c = properties[cid];
+                                var s = properties[sid];
+                                return c === 3 && s === 1 ? STYLES$6.INCIDENTS.DISEASE.UNCONFIRMED : {};
+                              });
+                            } else {
+                              _this5._incidents.removeStyleHook();
+                            }
+
+                            _context29.next = 42;
+                            return _this5._showLayer({
+                              id: 'incidents',
+                              visible: visible
+                            });
+
+                          case 42:
+                            return _context29.abrupt("break", 74);
+
+                          case 43:
+                            if (visible) {
+                              _this5._incidents.setStyleHook(function (_ref22) {
+                                var properties = _ref22.properties;
+                                var c = properties[cid];
+                                var s = properties[sid];
+                                return c === 3 && s === 2 ? STYLES$6.INCIDENTS.DISEASE.WORKING : {};
+                              });
+                            } else {
+                              _this5._incidents.removeStyleHook();
+                            }
+
+                            _context29.next = 46;
+                            return _this5._showLayer({
+                              id: 'incidents',
+                              visible: visible
+                            });
+
+                          case 46:
+                            return _context29.abrupt("break", 74);
+
+                          case 47:
+                            if (visible) {
+                              _this5._incidents.setStyleHook(function (_ref23) {
+                                var properties = _ref23.properties;
+                                var c = properties[cid];
+                                var s = properties[sid];
+                                return c === 3 && s === 3 ? STYLES$6.INCIDENTS.DISEASE.FAUX : {};
+                              });
+                            } else {
+                              _this5._incidents.removeStyleHook();
+                            }
+
+                            _context29.next = 50;
+                            return _this5._showLayer({
+                              id: 'incidents',
+                              visible: visible
+                            });
+
+                          case 50:
+                            return _context29.abrupt("break", 74);
+
+                          case 51:
+                            if (visible) {
+                              _this5._incidents.setStyleHook(function (_ref24) {
+                                var properties = _ref24.properties;
+                                var c = properties[cid];
+                                var s = properties[sid];
+                                return c === 3 && s === 4 ? STYLES$6.INCIDENTS.DISEASE.CONFIRMED : {};
+                              });
+                            } else {
+                              _this5._incidents.removeStyleHook();
+                            }
+
+                            _context29.next = 54;
+                            return _this5._showLayer({
+                              id: 'incidents',
+                              visible: visible
+                            });
+
+                          case 54:
+                            return _context29.abrupt("break", 74);
+
+                          case 55:
+                            if (visible) {
+                              _this5._incidents.setStyleHook(function (_ref25) {
+                                var properties = _ref25.properties;
+                                var c = properties[cid];
+                                var s = properties[sid];
+                                return c === 4 && s === 1 ? STYLES$6.INCIDENTS.BURN.UNCONFIRMED : {};
+                              });
+                            } else {
+                              _this5._incidents.removeStyleHook();
+                            }
+
+                            _context29.next = 58;
+                            return _this5._showLayer({
+                              id: 'incidents',
+                              visible: visible
+                            });
+
+                          case 58:
+                            return _context29.abrupt("break", 74);
+
+                          case 59:
+                            if (visible) {
+                              _this5._incidents.setStyleHook(function (_ref26) {
+                                var properties = _ref26.properties;
+                                var c = properties[cid];
+                                var s = properties[sid];
+                                return c === 4 && s === 2 ? STYLES$6.INCIDENTS.BURN.WORKING : {};
+                              });
+                            } else {
+                              _this5._incidents.removeStyleHook();
+                            }
+
+                            _context29.next = 62;
+                            return _this5._showLayer({
+                              id: 'incidents',
+                              visible: visible
+                            });
+
+                          case 62:
+                            return _context29.abrupt("break", 74);
+
+                          case 63:
+                            if (visible) {
+                              _this5._incidents.setStyleHook(function (_ref27) {
+                                var properties = _ref27.properties;
+                                var c = properties[cid];
+                                var s = properties[sid];
+                                return c === 4 && s === 3 ? STYLES$6.INCIDENTS.BURN.FAUX : {};
+                              });
+                            } else {
+                              _this5._incidents.removeStyleHook();
+                            }
+
+                            _context29.next = 66;
+                            return _this5._showLayer({
+                              id: 'incidents',
+                              visible: visible
+                            });
+
+                          case 66:
+                            return _context29.abrupt("break", 74);
+
+                          case 67:
+                            if (visible) {
+                              _this5._incidents.setStyleHook(function (_ref28) {
+                                var properties = _ref28.properties;
+                                var c = properties[cid];
+                                var s = properties[sid];
+                                return c === 4 && s === 4 ? STYLES$6.INCIDENTS.BURN.CONFIRMED : {};
+                              });
+                            } else {
+                              _this5._incidents.removeStyleHook();
+                            }
+
+                            _context29.next = 70;
+                            return _this5._showLayer({
+                              id: 'incidents',
+                              visible: visible
+                            });
+
+                          case 70:
+                            return _context29.abrupt("break", 74);
+
+                          case 71:
+                            _context29.next = 73;
+                            return _this5._showLayer(e);
+
+                          case 73:
+                            return _context29.abrupt("break", 74);
+
+                          case 74:
+                          case "end":
+                            return _context29.stop();
+                        }
+                      }
+                    }, _callee29);
+                  }));
+
+                  return function (_x23) {
+                    return _ref12.apply(this, arguments);
+                  };
+                }(), this);
+
+                _context30.next = 24;
                 return this.getUserInfo();
 
-              case 18:
+              case 24:
                 if (!_context30.sent) {
-                  _context30.next = 22;
+                  _context30.next = 28;
                   break;
                 }
 
                 this._hotspottimeline = new HotSpotTimeLine();
-                _context30.next = 25;
+                _context30.next = 31;
                 break;
 
-              case 22:
+              case 28:
                 end = new Date();
                 start = new Date(end.getTime() - 2 * 60 * 60 * 24 * 1000);
 
                 this._fires.setDateInterval(start, end);
 
-              case 25:
+              case 31:
                 this._baselayers.toggle('sputnik'); // const CRLayer = this._gmxMap.layersByID['958E59D9911E4889AB3E787DE2AC028B'];	// Каталог растров
                 // this._map.addControl(nsGmx.gmxTimeLine.afterViewer({gmxMap: this._gmxMap}, this._map));	// Контрол таймлайна CR
                 // this._map.addLayer(CRLayer);
 
 
-              case 26:
+              case 32:
               case "end":
                 return _context30.stop();
             }
