@@ -1935,40 +1935,6 @@ _export({ target: PROMISE, stat: true, forced: INCORRECT_ITERATION }, {
   }
 });
 
-// `RegExp.prototype.flags` getter implementation
-// https://tc39.github.io/ecma262/#sec-get-regexp.prototype.flags
-var regexpFlags = function () {
-  var that = anObject(this);
-  var result = '';
-  if (that.global) result += 'g';
-  if (that.ignoreCase) result += 'i';
-  if (that.multiline) result += 'm';
-  if (that.dotAll) result += 's';
-  if (that.unicode) result += 'u';
-  if (that.sticky) result += 'y';
-  return result;
-};
-
-var TO_STRING = 'toString';
-var RegExpPrototype = RegExp.prototype;
-var nativeToString = RegExpPrototype[TO_STRING];
-
-var NOT_GENERIC = fails(function () { return nativeToString.call({ source: 'a', flags: 'b' }) != '/a/b'; });
-// FF44- RegExp#toString has a wrong name
-var INCORRECT_NAME = nativeToString.name != TO_STRING;
-
-// `RegExp.prototype.toString` method
-// https://tc39.github.io/ecma262/#sec-regexp.prototype.tostring
-if (NOT_GENERIC || INCORRECT_NAME) {
-  redefine(RegExp.prototype, TO_STRING, function toString() {
-    var R = anObject(this);
-    var p = String(R.source);
-    var rf = R.flags;
-    var f = String(rf === undefined && R instanceof RegExp && !('flags' in RegExpPrototype) ? regexpFlags.call(R) : rf);
-    return '/' + p + '/' + f;
-  }, { unsafe: true });
-}
-
 var MATCH = wellKnownSymbol('match');
 
 // `IsRegExp` abstract operation
@@ -4259,6 +4225,40 @@ _export({ target: 'Object', stat: true, forced: FAILS_ON_PRIMITIVES, sham: !corr
 _export({ target: 'Object', stat: true }, {
   setPrototypeOf: objectSetPrototypeOf
 });
+
+// `RegExp.prototype.flags` getter implementation
+// https://tc39.github.io/ecma262/#sec-get-regexp.prototype.flags
+var regexpFlags = function () {
+  var that = anObject(this);
+  var result = '';
+  if (that.global) result += 'g';
+  if (that.ignoreCase) result += 'i';
+  if (that.multiline) result += 'm';
+  if (that.dotAll) result += 's';
+  if (that.unicode) result += 'u';
+  if (that.sticky) result += 'y';
+  return result;
+};
+
+var TO_STRING = 'toString';
+var RegExpPrototype = RegExp.prototype;
+var nativeToString = RegExpPrototype[TO_STRING];
+
+var NOT_GENERIC = fails(function () { return nativeToString.call({ source: 'a', flags: 'b' }) != '/a/b'; });
+// FF44- RegExp#toString has a wrong name
+var INCORRECT_NAME = nativeToString.name != TO_STRING;
+
+// `RegExp.prototype.toString` method
+// https://tc39.github.io/ecma262/#sec-regexp.prototype.tostring
+if (NOT_GENERIC || INCORRECT_NAME) {
+  redefine(RegExp.prototype, TO_STRING, function toString() {
+    var R = anObject(this);
+    var p = String(R.source);
+    var rf = R.flags;
+    var f = String(rf === undefined && R instanceof RegExp && !('flags' in RegExpPrototype) ? regexpFlags.call(R) : rf);
+    return '/' + p + '/' + f;
+  }, { unsafe: true });
+}
 
 for (var COLLECTION_NAME$1 in domIterables) {
   var Collection$1 = global_1[COLLECTION_NAME$1];
@@ -25119,7 +25119,8 @@ var Content = L$1.Control.extend({
     if (!this._components[id]) {
       var container = L$1.DomUtil.create('div', 'component hidden', this._container);
       container.setAttribute('data-id', id);
-      var component = new Component(container, options);
+      container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody>\n                    <tr>\n                        <td class=\"target\"></td>\n                        <td>\n                            <i class=\"scanex-component-icon close\"></i>\n                        </td>\n                    </tr>\n                </tbody>\n            </table>";
+      var component = new Component(container.querySelector('.target'), options);
 
       var el = this._container.querySelector("[data-id=".concat(id, "]"));
 
@@ -25129,6 +25130,11 @@ var Content = L$1.Control.extend({
       component.on('open', function () {
         L$1.DomUtil.removeClass(el, 'hidden');
       });
+      var btnClose = container.querySelector('.scanex-component-icon');
+      L$1.DomEvent.on(btnClose, 'click', function (e) {
+        L$1.DomEvent.stopPropagation(e);
+        component.close();
+      }, this);
       this._components[id] = component;
     }
 
@@ -36388,17 +36394,38 @@ var Component = /*#__PURE__*/function (_EventTarget) {
     }
   }, {
     key: "_click",
-    value: function _click(e) {
-      L$1.DomEvent.stopPropagation(e);
-    }
-  }, {
-    key: "open",
     value: function () {
-      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
-        var event;
+      var _click2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e) {
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
+              case 0:
+                L$1.DomEvent.stopPropagation(e);
+
+              case 1:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee);
+      }));
+
+      function _click(_x) {
+        return _click2.apply(this, arguments);
+      }
+
+      return _click;
+    }()
+  }, {
+    key: "open",
+    value: function () {
+      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
+        var _this2 = this;
+
+        var event;
+        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
               case 0:
                 if (this._options.layer) {
                   this._options.layer.setStyleHook(this._styleHook.bind(this));
@@ -36406,7 +36433,30 @@ var Component = /*#__PURE__*/function (_EventTarget) {
                   this._options.layer.repaint();
 
                   if (this._options.clickable) {
-                    this._options.layer.on('click', this._click, this);
+                    this._options.layer.on('click', /*#__PURE__*/function () {
+                      var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(e) {
+                        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+                          while (1) {
+                            switch (_context2.prev = _context2.next) {
+                              case 0:
+                                _context2.next = 2;
+                                return _this2._click(e);
+
+                              case 2:
+                                return _context2.abrupt("return", _context2.sent);
+
+                              case 3:
+                              case "end":
+                                return _context2.stop();
+                            }
+                          }
+                        }, _callee2);
+                      }));
+
+                      return function (_x2) {
+                        return _ref.apply(this, arguments);
+                      };
+                    }(), this);
                   }
                 }
 
@@ -36416,10 +36466,10 @@ var Component = /*#__PURE__*/function (_EventTarget) {
 
               case 4:
               case "end":
-                return _context.stop();
+                return _context3.stop();
             }
           }
-        }, _callee, this);
+        }, _callee3, this);
       }));
 
       function open() {
@@ -36603,16 +36653,17 @@ var Requests = /*#__PURE__*/function (_Component) {
                 return _get(_getPrototypeOf(Requests.prototype), "open", this).call(this);
 
               case 13:
-                _context.next = 19;
+                _context.next = 20;
                 break;
 
               case 15:
                 _context.prev = 15;
                 _context.t0 = _context["catch"](0);
-                alert(_context.t0.toString());
+                console.log(_context.t0);
+                alert(translate$3('error.requests'));
                 this.close();
 
-              case 19:
+              case 20:
               case "end":
                 return _context.stop();
             }
@@ -54238,6 +54289,11 @@ T.addText('rus', {
     edit: 'Редактировать проект',
     request: 'Создать заявку',
     save: 'Сохранить проект'
+  },
+  error: {
+    request: {
+      create: 'Ошибка при создании заявки'
+    }
   }
 });
 var STYLES$1 = {
@@ -54321,46 +54377,84 @@ var Plot = /*#__PURE__*/function (_Component) {
     }
   }, {
     key: "_click",
-    value: function _click(e) {
-      var _this2 = this;
-
-      L$1.DomEvent.stopPropagation(e);
-      var id = e.gmx.id;
-      var ids = this.quadrants.slice();
-
-      if (ids.includes(id)) {
-        ids = ids.filter(function (k) {
-          return k !== id;
-        });
-      } else {
-        ids.push(id);
-      }
-
-      if (ids.length === 0) {
-        this._back();
-      } else {
-        this._validate(ids).then(function (valid) {
-          if (valid) {
-            _this2._quadrants.items = valid.SquareStat;
-            _this2._species.items = valid.ForestStat;
-
-            _this2._options.layer.repaint();
-          } else {
-            alert(translate$7('quadrant.invalid'));
-          }
-        }).catch(function (e) {
-          alert(e.toString());
-        });
-      }
-    }
-  }, {
-    key: "_save",
     value: function () {
-      var _save2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
-        var fd, response;
+      var _click2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e) {
+        var id, ids, valid;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
+              case 0:
+                _context.prev = 0;
+                L$1.DomEvent.stopPropagation(e);
+                id = e.gmx.id;
+                ids = this.quadrants.slice();
+
+                if (ids.includes(id)) {
+                  ids = ids.filter(function (k) {
+                    return k !== id;
+                  });
+                } else {
+                  ids.push(id);
+                }
+
+                if (!(ids.length === 0)) {
+                  _context.next = 9;
+                  break;
+                }
+
+                this._back();
+
+                _context.next = 13;
+                break;
+
+              case 9:
+                _context.next = 11;
+                return this._validate(ids);
+
+              case 11:
+                valid = _context.sent;
+
+                if (valid) {
+                  this._quadrants.items = valid.SquareStat;
+                  this._species.items = valid.ForestStat;
+
+                  this._options.layer.repaint();
+                } else {
+                  alert(translate$7('quadrant.invalid'));
+                }
+
+              case 13:
+                _context.next = 19;
+                break;
+
+              case 15:
+                _context.prev = 15;
+                _context.t0 = _context["catch"](0);
+                console.log(_context.t0);
+                alert(translate$7('error.quadrant'));
+
+              case 19:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee, this, [[0, 15]]);
+      }));
+
+      function _click(_x) {
+        return _click2.apply(this, arguments);
+      }
+
+      return _click;
+    }()
+  }, {
+    key: "_save",
+    value: function () {
+      var _save2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
+        var fd, response;
+        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
               case 0:
                 fd = new FormData();
                 fd.append('Title', "".concat(new Date().toLocaleDateString()));
@@ -54368,7 +54462,7 @@ var Plot = /*#__PURE__*/function (_Component) {
                   var gmx_id = _ref3.gmx_id;
                   return gmx_id.toString();
                 }).join(','));
-                _context.next = 5;
+                _context2.next = 5;
                 return fetch("".concat(this._serviceEndpoint, "/Forest/StoreDraftForestProjectGmxIds"), {
                   method: 'POST',
                   credentials: 'include',
@@ -54376,19 +54470,19 @@ var Plot = /*#__PURE__*/function (_Component) {
                 });
 
               case 5:
-                response = _context.sent;
-                _context.next = 8;
+                response = _context2.sent;
+                _context2.next = 8;
                 return response.json();
 
               case 8:
-                return _context.abrupt("return", _context.sent);
+                return _context2.abrupt("return", _context2.sent);
 
               case 9:
               case "end":
-                return _context.stop();
+                return _context2.stop();
             }
           }
-        }, _callee, this);
+        }, _callee2, this);
       }));
 
       function _save() {
@@ -54400,18 +54494,18 @@ var Plot = /*#__PURE__*/function (_Component) {
   }, {
     key: "_validate",
     value: function () {
-      var _validate2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(ids) {
+      var _validate2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(ids) {
         var fd, response, _yield$response$json, Status, ForestStat, SquareStat;
 
-        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+        return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
-            switch (_context2.prev = _context2.next) {
+            switch (_context3.prev = _context3.next) {
               case 0:
                 fd = new FormData();
                 fd.append('ForestBlocks', ids.map(function (id) {
                   return id.toString();
                 }).join(','));
-                _context2.next = 4;
+                _context3.next = 4;
                 return fetch("".concat(this._serviceEndpoint, "/Forest/ValidateForestProjectGmxIds"), {
                   method: 'POST',
                   credentials: 'include',
@@ -54419,38 +54513,38 @@ var Plot = /*#__PURE__*/function (_Component) {
                 });
 
               case 4:
-                response = _context2.sent;
-                _context2.next = 7;
+                response = _context3.sent;
+                _context3.next = 7;
                 return response.json();
 
               case 7:
-                _yield$response$json = _context2.sent;
+                _yield$response$json = _context3.sent;
                 Status = _yield$response$json.Status;
                 ForestStat = _yield$response$json.ForestStat;
                 SquareStat = _yield$response$json.SquareStat;
 
                 if (!(Status === 'valid')) {
-                  _context2.next = 15;
+                  _context3.next = 15;
                   break;
                 }
 
-                return _context2.abrupt("return", {
+                return _context3.abrupt("return", {
                   ForestStat: ForestStat,
                   SquareStat: SquareStat
                 });
 
               case 15:
-                return _context2.abrupt("return", false);
+                return _context3.abrupt("return", false);
 
               case 16:
               case "end":
-                return _context2.stop();
+                return _context3.stop();
             }
           }
-        }, _callee2, this);
+        }, _callee3, this);
       }));
 
-      function _validate(_x) {
+      function _validate(_x2) {
         return _validate2.apply(this, arguments);
       }
 
@@ -54485,18 +54579,108 @@ var CreatePlot = /*#__PURE__*/function (_Plot) {
   var _super2 = _createSuper(CreatePlot);
 
   function CreatePlot(container, _ref5) {
-    var _this3;
+    var _this2;
 
     var layer = _ref5.layer,
         serviceEndpoint = _ref5.serviceEndpoint;
 
     _classCallCheck(this, CreatePlot);
 
-    _this3 = _super2.call(this, container, {
+    _this2 = _super2.call(this, container, {
       layer: layer,
       serviceEndpoint: serviceEndpoint
     });
-    _this3._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th colspan=\"2\">\n                        <button class=\"backward\"></button>\n                        <label class=\"head\">".concat(translate$7('plot.title'), "</label>                        \n                        <button class=\"create\">").concat(translate$7('plot.create'), "</button>\n                    </th>\n                </tr>\n            </thead>\n            <tbody>\n                <tr>                    \n                    <td>                                                \n                        <div class=\"species\"></div>\n                    </td>\n                    <td>\n                        <div class=\"quadrants\"></div>\n                    </td>\n                </tr>\n            </tbody>\n        </table>");
+    _this2._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th colspan=\"2\">\n                        <button class=\"backward\"></button>\n                        <label class=\"head\">".concat(translate$7('plot.title'), "</label>                        \n                        <button class=\"create\">").concat(translate$7('plot.create'), "</button>\n                    </th>\n                </tr>\n            </thead>\n            <tbody>\n                <tr>                    \n                    <td>                                                \n                        <div class=\"species\"></div>\n                    </td>\n                    <td>\n                        <div class=\"quadrants\"></div>\n                    </td>\n                </tr>\n            </tbody>\n        </table>");
+
+    _this2._container.querySelector('.backward').addEventListener('click', function (e) {
+      e.stopPropagation();
+
+      _this2._back();
+    });
+
+    var btnCreate = _this2._container.querySelector('.create');
+
+    btnCreate.addEventListener('click', /*#__PURE__*/function () {
+      var _ref6 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(e) {
+        var data, event;
+        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+          while (1) {
+            switch (_context4.prev = _context4.next) {
+              case 0:
+                e.stopPropagation();
+                _context4.next = 3;
+                return _this2._save();
+
+              case 3:
+                data = _context4.sent;
+                event = document.createEvent('Event');
+                event.initEvent('save', false, false);
+                event.detail = data;
+
+                _this2.dispatchEvent(event);
+
+              case 8:
+              case "end":
+                return _context4.stop();
+            }
+          }
+        }, _callee4);
+      }));
+
+      return function (_x3) {
+        return _ref6.apply(this, arguments);
+      };
+    }());
+    _this2._quadrants = new Quadrants(_this2._container.querySelector('.quadrants'));
+
+    _this2._quadrants.on('item:click', function (e) {
+      var id = e.detail;
+      var event = document.createEvent('Event');
+      event.initEvent('quadrant:click', false, false);
+      event.detail = id;
+
+      _this2.dispatchEvent(event);
+    }).on('item:over', function (e) {
+      var id = e.detail;
+      var event = document.createEvent('Event');
+      event.initEvent('quadrant:over', false, false);
+      event.detail = id;
+
+      _this2.dispatchEvent(event);
+    }).on('item:out', function (e) {
+      var id = e.detail;
+      var event = document.createEvent('Event');
+      event.initEvent('quadrant:out', false, false);
+      event.detail = id;
+
+      _this2.dispatchEvent(event);
+    });
+
+    _this2._species = new Species(_this2._container.querySelector('.species'));
+    return _this2;
+  }
+
+  return CreatePlot;
+}(Plot);
+
+var EditPlot = /*#__PURE__*/function (_Plot2) {
+  _inherits(EditPlot, _Plot2);
+
+  var _super3 = _createSuper(EditPlot);
+
+  function EditPlot(container, _ref7) {
+    var _this3;
+
+    var layer = _ref7.layer,
+        serviceEndpoint = _ref7.serviceEndpoint;
+
+    _classCallCheck(this, EditPlot);
+
+    _this3 = _super3.call(this, container, {
+      layer: layer,
+      serviceEndpoint: serviceEndpoint
+    });
+    _this3._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th colspan=\"2\">\n                        <button class=\"backward\"></button>\n                        <label class=\"head\">".concat(translate$7('plot.title'), "</label>                        \n                        <button class=\"save\">").concat(translate$7('plot.save'), "</button>\n                        <button class=\"request\">").concat(translate$7('plot.request'), "</button>\n                    </th>\n                </tr>\n            </thead>\n            <tbody>\n                <tr>                    \n                    <td>                                                \n                        <div class=\"species\"></div>\n                    </td>\n                    <td>\n                        <div class=\"quadrants\"></div>\n                    </td>\n                </tr>\n            </tbody>\n        </table>");
 
     _this3._container.querySelector('.backward').addEventListener('click', function (e) {
       e.stopPropagation();
@@ -54504,21 +54688,21 @@ var CreatePlot = /*#__PURE__*/function (_Plot) {
       _this3._back();
     });
 
-    var btnCreate = _this3._container.querySelector('.create');
+    var btnSave = _this3._container.querySelector('.save');
 
-    btnCreate.addEventListener('click', /*#__PURE__*/function () {
-      var _ref6 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(e) {
+    btnSave.addEventListener('click', /*#__PURE__*/function () {
+      var _ref8 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(e) {
         var data, event;
-        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+        return regeneratorRuntime.wrap(function _callee5$(_context5) {
           while (1) {
-            switch (_context3.prev = _context3.next) {
+            switch (_context5.prev = _context5.next) {
               case 0:
                 e.stopPropagation();
-                _context3.next = 3;
+                _context5.next = 3;
                 return _this3._save();
 
               case 3:
-                data = _context3.sent;
+                data = _context5.sent;
                 event = document.createEvent('Event');
                 event.initEvent('save', false, false);
                 event.detail = data;
@@ -54527,14 +54711,57 @@ var CreatePlot = /*#__PURE__*/function (_Plot) {
 
               case 8:
               case "end":
-                return _context3.stop();
+                return _context5.stop();
             }
           }
-        }, _callee3);
+        }, _callee5);
       }));
 
-      return function (_x2) {
-        return _ref6.apply(this, arguments);
+      return function (_x4) {
+        return _ref8.apply(this, arguments);
+      };
+    }());
+
+    var btnRequest = _this3._container.querySelector('.request');
+
+    btnRequest.addEventListener('click', /*#__PURE__*/function () {
+      var _ref9 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(e) {
+        var event;
+        return regeneratorRuntime.wrap(function _callee6$(_context6) {
+          while (1) {
+            switch (_context6.prev = _context6.next) {
+              case 0:
+                e.stopPropagation();
+                _context6.prev = 1;
+                _context6.next = 4;
+                return _this3._createRequest();
+
+              case 4:
+                event = document.createEvent('Event');
+                event.initEvent('create', false, false);
+                event.detail = _this3._valid;
+
+                _this3.dispatchEvent(event);
+
+                _context6.next = 14;
+                break;
+
+              case 10:
+                _context6.prev = 10;
+                _context6.t0 = _context6["catch"](1);
+                console.log(_context6.t0);
+                alert(translate$7('error.request.create'));
+
+              case 14:
+              case "end":
+                return _context6.stop();
+            }
+          }
+        }, _callee6, null, [[1, 10]]);
+      }));
+
+      return function (_x5) {
+        return _ref9.apply(this, arguments);
       };
     }());
     _this3._quadrants = new Quadrants(_this3._container.querySelector('.quadrants'));
@@ -54566,150 +54793,18 @@ var CreatePlot = /*#__PURE__*/function (_Plot) {
     return _this3;
   }
 
-  return CreatePlot;
-}(Plot);
-
-var EditPlot = /*#__PURE__*/function (_Plot2) {
-  _inherits(EditPlot, _Plot2);
-
-  var _super3 = _createSuper(EditPlot);
-
-  function EditPlot(container, _ref7) {
-    var _this4;
-
-    var layer = _ref7.layer,
-        serviceEndpoint = _ref7.serviceEndpoint;
-
-    _classCallCheck(this, EditPlot);
-
-    _this4 = _super3.call(this, container, {
-      layer: layer,
-      serviceEndpoint: serviceEndpoint
-    });
-    _this4._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th colspan=\"2\">\n                        <button class=\"backward\"></button>\n                        <label class=\"head\">".concat(translate$7('plot.title'), "</label>                        \n                        <button class=\"save\">").concat(translate$7('plot.save'), "</button>\n                        <button class=\"request\">").concat(translate$7('plot.request'), "</button>\n                    </th>\n                </tr>\n            </thead>\n            <tbody>\n                <tr>                    \n                    <td>                                                \n                        <div class=\"species\"></div>\n                    </td>\n                    <td>\n                        <div class=\"quadrants\"></div>\n                    </td>\n                </tr>\n            </tbody>\n        </table>");
-
-    _this4._container.querySelector('.backward').addEventListener('click', function (e) {
-      e.stopPropagation();
-
-      _this4._back();
-    });
-
-    var btnSave = _this4._container.querySelector('.save');
-
-    btnSave.addEventListener('click', /*#__PURE__*/function () {
-      var _ref8 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(e) {
-        var data, event;
-        return regeneratorRuntime.wrap(function _callee4$(_context4) {
-          while (1) {
-            switch (_context4.prev = _context4.next) {
-              case 0:
-                e.stopPropagation();
-                _context4.next = 3;
-                return _this4._save();
-
-              case 3:
-                data = _context4.sent;
-                event = document.createEvent('Event');
-                event.initEvent('save', false, false);
-                event.detail = data;
-
-                _this4.dispatchEvent(event);
-
-              case 8:
-              case "end":
-                return _context4.stop();
-            }
-          }
-        }, _callee4);
-      }));
-
-      return function (_x3) {
-        return _ref8.apply(this, arguments);
-      };
-    }());
-
-    var btnRequest = _this4._container.querySelector('.request');
-
-    btnRequest.addEventListener('click', /*#__PURE__*/function () {
-      var _ref9 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(e) {
-        var event;
-        return regeneratorRuntime.wrap(function _callee5$(_context5) {
-          while (1) {
-            switch (_context5.prev = _context5.next) {
-              case 0:
-                e.stopPropagation();
-                _context5.prev = 1;
-                _context5.next = 4;
-                return _this4._createRequest();
-
-              case 4:
-                event = document.createEvent('Event');
-                event.initEvent('create', false, false);
-                event.detail = _this4._valid;
-
-                _this4.dispatchEvent(event);
-
-                _context5.next = 13;
-                break;
-
-              case 10:
-                _context5.prev = 10;
-                _context5.t0 = _context5["catch"](1);
-                alert(_context5.t0.toString());
-
-              case 13:
-              case "end":
-                return _context5.stop();
-            }
-          }
-        }, _callee5, null, [[1, 10]]);
-      }));
-
-      return function (_x4) {
-        return _ref9.apply(this, arguments);
-      };
-    }());
-    _this4._quadrants = new Quadrants(_this4._container.querySelector('.quadrants'));
-
-    _this4._quadrants.on('item:click', function (e) {
-      var id = e.detail;
-      var event = document.createEvent('Event');
-      event.initEvent('quadrant:click', false, false);
-      event.detail = id;
-
-      _this4.dispatchEvent(event);
-    }).on('item:over', function (e) {
-      var id = e.detail;
-      var event = document.createEvent('Event');
-      event.initEvent('quadrant:over', false, false);
-      event.detail = id;
-
-      _this4.dispatchEvent(event);
-    }).on('item:out', function (e) {
-      var id = e.detail;
-      var event = document.createEvent('Event');
-      event.initEvent('quadrant:out', false, false);
-      event.detail = id;
-
-      _this4.dispatchEvent(event);
-    });
-
-    _this4._species = new Species(_this4._container.querySelector('.species'));
-    return _this4;
-  }
-
   _createClass(EditPlot, [{
     key: "_createRequest",
     value: function () {
-      var _createRequest2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6() {
+      var _createRequest2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7() {
         var fd, response;
-        return regeneratorRuntime.wrap(function _callee6$(_context6) {
+        return regeneratorRuntime.wrap(function _callee7$(_context7) {
           while (1) {
-            switch (_context6.prev = _context6.next) {
+            switch (_context7.prev = _context7.next) {
               case 0:
                 fd = new FormData();
                 fd.append('ForestProjectID', this._valid);
-                _context6.next = 4;
+                _context7.next = 4;
                 return fetch("".concat(this._serviceEndpoint, "/Forest/CreateApplicationFromDraft"), {
                   method: 'POST',
                   credentials: 'include',
@@ -54717,19 +54812,19 @@ var EditPlot = /*#__PURE__*/function (_Plot2) {
                 });
 
               case 4:
-                response = _context6.sent;
-                _context6.next = 7;
+                response = _context7.sent;
+                _context7.next = 7;
                 return response.json();
 
               case 7:
-                return _context6.abrupt("return", _context6.sent);
+                return _context7.abrupt("return", _context7.sent);
 
               case 8:
               case "end":
-                return _context6.stop();
+                return _context7.stop();
             }
           }
-        }, _callee6, this);
+        }, _callee7, this);
       }));
 
       function _createRequest() {
@@ -54741,11 +54836,11 @@ var EditPlot = /*#__PURE__*/function (_Plot2) {
   }, {
     key: "_save",
     value: function () {
-      var _save3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7() {
+      var _save3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8() {
         var fd, response;
-        return regeneratorRuntime.wrap(function _callee7$(_context7) {
+        return regeneratorRuntime.wrap(function _callee8$(_context8) {
           while (1) {
-            switch (_context7.prev = _context7.next) {
+            switch (_context8.prev = _context8.next) {
               case 0:
                 fd = new FormData();
                 fd.append('ForestProjectID', this._valid);
@@ -54754,7 +54849,7 @@ var EditPlot = /*#__PURE__*/function (_Plot2) {
                   var gmx_id = _ref10.gmx_id;
                   return gmx_id.toString();
                 }).join(','));
-                _context7.next = 6;
+                _context8.next = 6;
                 return fetch("".concat(this._serviceEndpoint, "/Forest/StoreDraftForestProjectGmxIds"), {
                   method: 'POST',
                   credentials: 'include',
@@ -54762,19 +54857,19 @@ var EditPlot = /*#__PURE__*/function (_Plot2) {
                 });
 
               case 6:
-                response = _context7.sent;
-                _context7.next = 9;
+                response = _context8.sent;
+                _context8.next = 9;
                 return response.json();
 
               case 9:
-                return _context7.abrupt("return", _context7.sent);
+                return _context8.abrupt("return", _context8.sent);
 
               case 10:
               case "end":
-                return _context7.stop();
+                return _context8.stop();
             }
           }
-        }, _callee7, this);
+        }, _callee8, this);
       }));
 
       function _save() {
@@ -54786,73 +54881,74 @@ var EditPlot = /*#__PURE__*/function (_Plot2) {
   }, {
     key: "open",
     value: function () {
-      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(id) {
+      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9(id) {
         var response, _yield$response$json2, gmxIds, result;
 
-        return regeneratorRuntime.wrap(function _callee8$(_context8) {
+        return regeneratorRuntime.wrap(function _callee9$(_context9) {
           while (1) {
-            switch (_context8.prev = _context8.next) {
+            switch (_context9.prev = _context9.next) {
               case 0:
-                _context8.prev = 0;
-                _context8.next = 3;
+                _context9.prev = 0;
+                _context9.next = 3;
                 return fetch("".concat(this._serviceEndpoint, "/Forest/GetPlotProjectDraft?ForestProjectID=").concat(id), {
                   method: 'GET',
                   credentials: 'include'
                 });
 
               case 3:
-                response = _context8.sent;
-                _context8.next = 6;
+                response = _context9.sent;
+                _context9.next = 6;
                 return response.json();
 
               case 6:
-                _yield$response$json2 = _context8.sent;
+                _yield$response$json2 = _context9.sent;
                 gmxIds = _yield$response$json2.gmxIds;
-                _context8.next = 10;
+                _context9.next = 10;
                 return this._validate(gmxIds);
 
               case 10:
-                result = _context8.sent;
+                result = _context9.sent;
 
                 if (!result) {
-                  _context8.next = 19;
+                  _context9.next = 19;
                   break;
                 }
 
                 this._valid = id;
                 this._quadrants.items = result.SquareStat;
                 this._species.items = result.ForestStat;
-                _context8.next = 17;
+                _context9.next = 17;
                 return _get(_getPrototypeOf(EditPlot.prototype), "open", this).call(this);
 
               case 17:
-                _context8.next = 20;
+                _context9.next = 20;
                 break;
 
               case 19:
                 throw translate$7('quadrant.invalid');
 
               case 20:
-                _context8.next = 26;
+                _context9.next = 27;
                 break;
 
               case 22:
-                _context8.prev = 22;
-                _context8.t0 = _context8["catch"](0);
+                _context9.prev = 22;
+                _context9.t0 = _context9["catch"](0);
 
                 this._back();
 
-                alert(_context8.t0.toString());
+                console.log(_context9.t0);
+                alert(translate$7('error.plot.edit'));
 
-              case 26:
+              case 27:
               case "end":
-                return _context8.stop();
+                return _context9.stop();
             }
           }
-        }, _callee8, this, [[0, 22]]);
+        }, _callee9, this, [[0, 22]]);
       }));
 
-      function open(_x5) {
+      function open(_x6) {
         return _open.apply(this, arguments);
       }
 
@@ -56324,8 +56420,8 @@ T.addText('rus', {
   }
 });
 
-var Uploaded = /*#__PURE__*/function (_EventTarget) {
-  _inherits(Uploaded, _EventTarget);
+var Uploaded = /*#__PURE__*/function (_Component) {
+  _inherits(Uploaded, _Component);
 
   var _super = _createSuper(Uploaded);
 
@@ -56342,8 +56438,7 @@ var Uploaded = /*#__PURE__*/function (_EventTarget) {
 
     _classCallCheck(this, Uploaded);
 
-    _this = _super.call(this);
-    _this._container = container;
+    _this = _super.call(this, container, {});
     _this._columns = columns;
     _this._types = types;
     _this._pageSize = pageSize;
@@ -56482,14 +56577,14 @@ var Uploaded = /*#__PURE__*/function (_EventTarget) {
       var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
         var _this2 = this;
 
-        var _yield$this$callback, items, count, boxes, _loop, i, event;
+        var _yield$this$callback, items, count, boxes, _loop, i;
 
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
               case 0:
                 if (!(typeof this.callback === 'function')) {
-                  _context3.next = 16;
+                  _context3.next = 17;
                   break;
                 }
 
@@ -56531,23 +56626,26 @@ var Uploaded = /*#__PURE__*/function (_EventTarget) {
                   this._pager.pages = Math.ceil(count / this._pageSize);
                 }
 
-                event = document.createEvent('Event');
-                event.initEvent('open', false, false);
-                this.dispatchEvent(event);
-                _context3.next = 16;
+                _context3.next = 10;
+                return _get(_getPrototypeOf(Uploaded.prototype), "open", this).call(this);
+
+              case 10:
+                _context3.next = 17;
                 break;
 
-              case 13:
-                _context3.prev = 13;
+              case 12:
+                _context3.prev = 12;
                 _context3.t0 = _context3["catch"](1);
-                alert(_context3.t0.toString());
+                this.close();
+                console.log(_context3.t0);
+                alert(translate$a('error.uploaded'));
 
-              case 16:
+              case 17:
               case "end":
                 return _context3.stop();
             }
           }
-        }, _callee3, this, [[1, 13]]);
+        }, _callee3, this, [[1, 12]]);
       }));
 
       function open() {
@@ -56556,17 +56654,10 @@ var Uploaded = /*#__PURE__*/function (_EventTarget) {
 
       return open;
     }()
-  }, {
-    key: "close",
-    value: function close() {
-      var event = document.createEvent('Event');
-      event.initEvent('close', false, false);
-      this.dispatchEvent(event);
-    }
   }]);
 
   return Uploaded;
-}(EventTarget);
+}(Component);
 
 var translate$b = T.getText.bind(T);
 T.addText('rus', {
@@ -56630,7 +56721,7 @@ var Analytics = /*#__PURE__*/function (_Component) {
             switch (_context.prev = _context.next) {
               case 0:
                 _context.next = 2;
-                return fetch("".concat(this._serviceEndpoint, "/Forest/Forest/GetReportHeaderData"), {
+                return fetch("".concat(this._serviceEndpoint, "/Forest/GetReportHeaderData"), {
                   method: 'GET',
                   credentials: 'include'
                 });
@@ -57494,11 +57585,6 @@ var _parseProps = function _parseProps(props) {
   return "\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">".concat(translate$f('incident.status'), " <span>").concat(props.status, "</span></div>\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.otvet'), " <span>").concat(props.otvet, "</span></div>\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.otvetCheck'), " <span>").concat(props.otvetCheck, "</span></div>\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.procVer'), " <span>").concat(props.procVer, " %</span></div>\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.tochn'), " <span>").concat(props.tochn, " ").concat(translate$f('unit.m'), "</span></div>\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.date'), " <span>").concat(props.date, "</span></div>\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaAll'), " <span>").concat(props.areaAll, "</span></div>\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.dateCheck'), " <span class=\"span-gray\">").concat(props.dateCheck, "</span></div>\n\t");
 };
 
-var STYLES$5 = {
-  fillStyle: 'rgba(255, 184, 1)',
-  strokeStyle: '#FFB801'
-};
-
 var Incident = /*#__PURE__*/function (_Component) {
   _inherits(Incident, _Component);
 
@@ -57507,14 +57593,11 @@ var Incident = /*#__PURE__*/function (_Component) {
   function Incident(container, _ref) {
     var _this;
 
-    var layer = _ref.layer,
-        serviceEndpoint = _ref.serviceEndpoint;
+    var serviceEndpoint = _ref.serviceEndpoint;
 
     _classCallCheck(this, Incident);
 
-    _this = _super.call(this, container, {
-      layer: layer
-    });
+    _this = _super.call(this, container, {});
     _this._serviceEndpoint = serviceEndpoint;
 
     _this._container.classList.add('scanex-forestry-incident');
@@ -57588,12 +57671,10 @@ var Incident = /*#__PURE__*/function (_Component) {
       var str2 = _parseProps(data.props);
 
       this._container.innerHTML = "\n            <div class=\"map-popup-part2__header\">".concat(translate$f('incident.title'), "</div>\n            <div class=\"map-popup-part2__wrapper-in wrapper-full-height\">\n                <div class=\"map-popup-part2__wrapper-in-inside\">\n                    <div class=\"inside_left\">\n                        <div class=\"header\">\n                            <div class=\"text\">").concat(data.title, "</div>\n                        </div>\n                        <div class=\"spacer-23\"></div>\n                        <div class=\"map-popup-part2__wrapper-in__table1\">\n\t\t\t\t\t\t\t").concat(str2, "\n\n                            <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.comment'), "</div>\n                            <textarea class=\"usr-text-area\">                            </textarea>\n                            <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.bpla'), ":</div>\n\n                            <div class=\"map-popup-part2__wrapper-in__table1_row\">\n\n                                <span>").concat(data.bpla.date, "</span>\n                                <span>").concat(translate$f('incident.bplaTitle'), "</span>\n                                <div class=\"group_buttons\">\n                                    <div class=\"mini-green-but\">").concat(translate$f('incident.bplaView'), "</div>\n                                    <div class=\"mini-green-but\">").concat(translate$f('incident.bplaLoad'), "</div>\n                                    <div class=\"mini-green-but\">").concat(translate$f('incident.bplaDel'), "</div>\n                                </div>\n                            </div>\n                            <div class=\"map-popup-part2__wrapper-in__table1_row margin-top-35\"><span class=\"span_bold\">").concat(translate$f('incident.titleValue'), "</span> <span class=\"span_bold\">").concat(translate$f('incident.estimValue'), "</span> <span class=\"span_bold\">").concat(translate$f('incident.checkedValue'), "</span></div>\n\t\t\t\t\t\t\t").concat(str1, "\n                        </div>\n                    </div>\n                    <div class=\"map-popup-part2__wrapper-in-inside__right rubka\">\n                        <div class=\"right-wrapper-top \">\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$f('incident.docs'), "</button>\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$f('incident.editGeo'), "</button>\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$f('incident.saveGeo'), "</button>\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$f('incident.downloadGeo'), "</button>\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$f('incident.verRastr'), "</button>\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$f('incident.maskWater'), "</button>\n                        </div>\n\n                         <div class=\"right-wrapper-bottom \">\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$f('incident.checkedInc'), "</button>\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$f('incident.declineInc'), "</button>\n                        </div>\n\n                    </div>\n                </div>\n            </div>");
-    }
-  }, {
-    key: "_styleHook",
-    value: function _styleHook(item) {
-      return item.id === this._gmx_id ? STYLES$5 : {};
-    }
+    } // _styleHook(item) {
+    //     return item.id === this._gmx_id ? STYLES : {};
+    // }
+
   }, {
     key: "open",
     value: function () {
@@ -57700,8 +57781,9 @@ T.addText('rus', {
     stands: 'Выделы',
     parks: 'Охраняемые территории',
     fires: 'Пожары',
-    declarations: 'Лесные декларации',
+    declarations: 'Декларации',
     incidents: 'Мониторинг',
+    plotProjects: 'Проекты участков',
     burn: {
       unconfirmed: 'Гарь неподтвержденная',
       working: 'Гарь в работе',
@@ -57726,9 +57808,31 @@ T.addText('rus', {
       faux: 'Патология ложная',
       confirmed: 'Патология подтвержденная'
     }
+  },
+  error: {
+    analytics: 'Ошибка при отображении аналитики',
+    declaration: 'Ошибка при отображении декларации',
+    requests: 'Ошибка при отображении списка запросов',
+    plot: {
+      create: 'Ошибка при создании запроса',
+      edit: 'Ошибка при редактировании запроса'
+    },
+    incident: 'Ошибка при отображении инцидента',
+    naturalpark: 'Ошибка при отображении ООПТ',
+    quadrant: 'Ошибка при отображении квартала',
+    stand: 'Ошибка при отображении выдела',
+    uploaded: 'Ошибка при отображении данных'
   }
 }); // const defaultStyle = {
-var STYLES$6 = {
+//     fillStyle: 'rgba(28, 224, 0, 0.4)',
+// };
+// const hiliteStyle = {
+//     fillStyle: 'rgba(28, 224, 0, 0.4)',
+//     strokeStyle: '#1CE000',
+//     lineWidth: 2,
+// };
+
+var STYLES$5 = {
   PLOT: {
     BID: {
       fillStyle: 'rgba(144, 112, 29)'
@@ -57942,10 +58046,14 @@ var Map = /*#__PURE__*/function (_EventTarget) {
           while (1) {
             switch (_context3.prev = _context3.next) {
               case 0:
-                _context3.next = 2;
+                this._legend.showPanel(false);
+
+                this._baselayers.showPanel(false);
+
+                _context3.next = 4;
                 return this._content.showDefault();
 
-              case 2:
+              case 4:
               case "end":
                 return _context3.stop();
             }
@@ -57980,15 +58088,17 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 return this._content.showComponent('analytics');
 
               case 4:
-                _context4.next = 9;
+                _context4.next = 11;
                 break;
 
               case 6:
                 _context4.prev = 6;
                 _context4.t0 = _context4["catch"](0);
-                alert(_context4.t0.toString());
+                console.log(_context4.t0);
+                alert(translate$g('error.analytics'));
+                this.showMain();
 
-              case 9:
+              case 11:
               case "end":
                 return _context4.stop();
             }
@@ -58064,15 +58174,17 @@ var Map = /*#__PURE__*/function (_EventTarget) {
               case 4:
                 this._legend.enable('quadrants');
 
-                _context7.next = 10;
+                _context7.next = 12;
                 break;
 
               case 7:
                 _context7.prev = 7;
                 _context7.t0 = _context7["catch"](0);
-                alert(_context7.t0.toString());
+                console.log(_context7.t0);
+                alert(translate$g('error.requests'));
+                this.showMain();
 
-              case 10:
+              case 12:
               case "end":
                 return _context7.stop();
             }
@@ -58097,6 +58209,8 @@ var Map = /*#__PURE__*/function (_EventTarget) {
           while (1) {
             switch (_context11.prev = _context11.next) {
               case 0:
+                _context11.prev = 0;
+
                 if (!this._content.hasComponent('edit-plot')) {
                   component = this._content.addComponent('edit-plot', EditPlot, {
                     layer: this._quadrants,
@@ -58161,18 +58275,28 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   });
                 }
 
-                _context11.next = 3;
+                _context11.next = 4;
                 return this._content.showComponent('edit-plot', id);
 
-              case 3:
+              case 4:
                 this._legend.enable('quadrants');
 
-              case 4:
+                _context11.next = 12;
+                break;
+
+              case 7:
+                _context11.prev = 7;
+                _context11.t0 = _context11["catch"](0);
+                console.log(_context11.t0);
+                alert(translate$g('error.plot.edit'));
+                this.showMain();
+
+              case 12:
               case "end":
                 return _context11.stop();
             }
           }
-        }, _callee11, this);
+        }, _callee11, this, [[0, 7]]);
       }));
 
       function _showEditPlot(_x3) {
@@ -58192,6 +58316,8 @@ var Map = /*#__PURE__*/function (_EventTarget) {
           while (1) {
             switch (_context15.prev = _context15.next) {
               case 0:
+                _context15.prev = 0;
+
                 if (!this._content.hasComponent('create-plot')) {
                   component = this._content.addComponent('create-plot', CreatePlot, {
                     layer: this._quadrants,
@@ -58266,18 +58392,28 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   })));
                 }
 
-                _context15.next = 3;
+                _context15.next = 4;
                 return this._content.showComponent('create-plot');
 
-              case 3:
+              case 4:
                 this._legend.enable('quadrants');
 
-              case 4:
+                _context15.next = 12;
+                break;
+
+              case 7:
+                _context15.prev = 7;
+                _context15.t0 = _context15["catch"](0);
+                console.log(_context15.t0);
+                alert(translate$g('error.plot.create'));
+                this.showMain();
+
+              case 12:
               case "end":
                 return _context15.stop();
             }
           }
-        }, _callee15, this);
+        }, _callee15, this, [[0, 7]]);
       }));
 
       function _showCreatePlot() {
@@ -58294,6 +58430,8 @@ var Map = /*#__PURE__*/function (_EventTarget) {
           while (1) {
             switch (_context16.prev = _context16.next) {
               case 0:
+                _context16.prev = 0;
+
                 if (!this._content.hasComponent('naturalpark')) {
                   this._content.addComponent('naturalpark', NaturalPark, {
                     layer: this._quadrants,
@@ -58301,15 +58439,26 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   });
                 }
 
-                _context16.next = 3;
+                _context16.next = 4;
                 return this._content.showComponent('naturalpark', id);
 
-              case 3:
+              case 4:
+                _context16.next = 11;
+                break;
+
+              case 6:
+                _context16.prev = 6;
+                _context16.t0 = _context16["catch"](0);
+                console.log(_context16.t0);
+                alert(translate$g('error.naturalpark'));
+                this.showMain();
+
+              case 11:
               case "end":
                 return _context16.stop();
             }
           }
-        }, _callee16, this);
+        }, _callee16, this, [[0, 6]]);
       }));
 
       function _showNaturalPark(_x7) {
@@ -58407,15 +58556,17 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 return this._content.showComponent('uploaded');
 
               case 4:
-                _context18.next = 9;
+                _context18.next = 11;
                 break;
 
               case 6:
                 _context18.prev = 6;
                 _context18.t0 = _context18["catch"](0);
-                alert(_context18.t0.toString());
+                console.log(_context18.t0);
+                alert(translate$g('error.uploaded'));
+                this.showMain();
 
-              case 9:
+              case 11:
               case "end":
                 return _context18.stop();
             }
@@ -58437,6 +58588,8 @@ var Map = /*#__PURE__*/function (_EventTarget) {
           while (1) {
             switch (_context19.prev = _context19.next) {
               case 0:
+                _context19.prev = 0;
+
                 if (!this._content.hasComponent('quadrant')) {
                   this._content.addComponent('quadrant', Quadrant, {
                     layer: this._quadrants,
@@ -58444,18 +58597,29 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   });
                 }
 
-                _context19.next = 3;
+                _context19.next = 4;
                 return this._content.showComponent('quadrant', {
                   id: id,
                   gmx_id: gmx_id
                 });
 
-              case 3:
+              case 4:
+                _context19.next = 11;
+                break;
+
+              case 6:
+                _context19.prev = 6;
+                _context19.t0 = _context19["catch"](0);
+                console.log(_context19.t0);
+                alert(translate$g('error.quadrant'));
+                this.showMain();
+
+              case 11:
               case "end":
                 return _context19.stop();
             }
           }
-        }, _callee19, this);
+        }, _callee19, this, [[0, 6]]);
       }));
 
       function _showQuadrant(_x9, _x10) {
@@ -58472,6 +58636,8 @@ var Map = /*#__PURE__*/function (_EventTarget) {
           while (1) {
             switch (_context20.prev = _context20.next) {
               case 0:
+                _context20.prev = 0;
+
                 if (!this._content.hasComponent('stand')) {
                   this._content.addComponent('stand', Stand, {
                     layer: this._stands,
@@ -58479,18 +58645,29 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   });
                 }
 
-                _context20.next = 3;
+                _context20.next = 4;
                 return this._content.showComponent('stand', {
                   id: id,
                   gmx_id: gmx_id
                 });
 
-              case 3:
+              case 4:
+                _context20.next = 11;
+                break;
+
+              case 6:
+                _context20.prev = 6;
+                _context20.t0 = _context20["catch"](0);
+                console.log(_context20.t0);
+                alert(translate$g('error.stand'));
+                this.showMain();
+
+              case 11:
               case "end":
                 return _context20.stop();
             }
           }
-        }, _callee20, this);
+        }, _callee20, this, [[0, 6]]);
       }));
 
       function _showStand(_x11, _x12) {
@@ -58507,6 +58684,8 @@ var Map = /*#__PURE__*/function (_EventTarget) {
           while (1) {
             switch (_context21.prev = _context21.next) {
               case 0:
+                _context21.prev = 0;
+
                 if (!this._content.hasComponent('declaration')) {
                   this._content.addComponent('declaration', Declaration, {
                     layer: this._declarations,
@@ -58514,18 +58693,29 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   });
                 }
 
-                _context21.next = 3;
+                _context21.next = 4;
                 return this._content.showComponent('declaration', {
                   id: id,
                   gmx_id: gmx_id
                 });
 
-              case 3:
+              case 4:
+                _context21.next = 11;
+                break;
+
+              case 6:
+                _context21.prev = 6;
+                _context21.t0 = _context21["catch"](0);
+                console.log(_context21.t0);
+                alert(translate$g('error.declaration'));
+                this.showMain();
+
+              case 11:
               case "end":
                 return _context21.stop();
             }
           }
-        }, _callee21, this);
+        }, _callee21, this, [[0, 6]]);
       }));
 
       function _showDeclaration(_x13, _x14) {
@@ -58542,6 +58732,8 @@ var Map = /*#__PURE__*/function (_EventTarget) {
           while (1) {
             switch (_context22.prev = _context22.next) {
               case 0:
+                _context22.prev = 0;
+
                 if (!this._content.hasComponent('incident')) {
                   this._content.addComponent('incident', Incident, {
                     layer: this._incidents,
@@ -58549,18 +58741,29 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   });
                 }
 
-                _context22.next = 3;
+                _context22.next = 4;
                 return this._content.showComponent('incident', {
                   props: props,
                   gmx_id: gmx_id
                 });
 
-              case 3:
+              case 4:
+                _context22.next = 11;
+                break;
+
+              case 6:
+                _context22.prev = 6;
+                _context22.t0 = _context22["catch"](0);
+                console.log(_context22.t0);
+                alert(translate$g('error.incident'));
+                this.showMain();
+
+              case 11:
               case "end":
                 return _context22.stop();
             }
           }
-        }, _callee22, this);
+        }, _callee22, this, [[0, 6]]);
       }));
 
       function _showIncident(_x15, _x16) {
@@ -58581,7 +58784,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 id = _ref11.id, visible = _ref11.visible;
                 mode = this._content.getCurrentId();
                 _context23.t0 = id;
-                _context23.next = _context23.t0 === 'quadrants' ? 5 : _context23.t0 === 'parks' ? 19 : _context23.t0 === 'stands' ? 33 : _context23.t0 === 'fires' ? 47 : _context23.t0 === 'declarations' ? 49 : _context23.t0 === 'incidents' ? 63 : 77;
+                _context23.next = _context23.t0 === 'quadrants' ? 5 : _context23.t0 === 'parks' ? 19 : _context23.t0 === 'stands' ? 33 : _context23.t0 === 'fires' ? 47 : _context23.t0 === 'declarations' ? 49 : _context23.t0 === 'incidents' ? 63 : _context23.t0 === 'plot-projects' ? 77 : 79;
                 break;
 
               case 5:
@@ -58619,7 +58822,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 this._map.removeLayer(this._quadrants);
 
               case 18:
-                return _context23.abrupt("break", 78);
+                return _context23.abrupt("break", 80);
 
               case 19:
                 if (!this._parks) {
@@ -58656,7 +58859,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 this._map.removeLayer(this._parks);
 
               case 32:
-                return _context23.abrupt("break", 78);
+                return _context23.abrupt("break", 80);
 
               case 33:
                 if (!this._stands) {
@@ -58693,7 +58896,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 this._map.removeLayer(this._stands);
 
               case 46:
-                return _context23.abrupt("break", 78);
+                return _context23.abrupt("break", 80);
 
               case 47:
                 if (visible) {
@@ -58710,7 +58913,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   }
                 }
 
-                return _context23.abrupt("break", 78);
+                return _context23.abrupt("break", 80);
 
               case 49:
                 if (!this._declarations) {
@@ -58747,7 +58950,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 this._map.removeLayer(this._declarations);
 
               case 62:
-                return _context23.abrupt("break", 78);
+                return _context23.abrupt("break", 80);
 
               case 63:
                 if (!this._incidents) {
@@ -58784,12 +58987,23 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 this._map.removeLayer(this._incidents);
 
               case 76:
-                return _context23.abrupt("break", 78);
+                return _context23.abrupt("break", 80);
 
               case 77:
-                return _context23.abrupt("break", 78);
+                if (this._plotProject) {
+                  if (visible) {
+                    this._map.addLayer(this._plotProject);
+                  } else {
+                    this._map.removeLayer(this._plotProject);
+                  }
+                }
 
-              case 78:
+                return _context23.abrupt("break", 80);
+
+              case 79:
+                return _context23.abrupt("break", 80);
+
+              case 80:
               case "end":
                 return _context23.stop();
             }
@@ -58817,30 +59031,20 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 mode = this._content.getCurrentId();
 
                 if (!(!mode || mode === 'quadrant')) {
-                  _context24.next = 12;
+                  _context24.next = 6;
                   break;
                 }
 
                 _e$gmx = e.gmx, id = _e$gmx.id, properties = _e$gmx.properties;
-                _context24.prev = 4;
-                _context24.next = 7;
+                _context24.next = 6;
                 return this._showQuadrant(properties.id, id);
 
-              case 7:
-                _context24.next = 12;
-                break;
-
-              case 9:
-                _context24.prev = 9;
-                _context24.t0 = _context24["catch"](4);
-                alert(_context24.t0.toString());
-
-              case 12:
+              case 6:
               case "end":
                 return _context24.stop();
             }
           }
-        }, _callee24, this, [[4, 9]]);
+        }, _callee24, this);
       }));
 
       function _quadrantClick(_x18) {
@@ -58859,26 +59063,16 @@ var Map = /*#__PURE__*/function (_EventTarget) {
             switch (_context25.prev = _context25.next) {
               case 0:
                 L$1.DomEvent.stopPropagation(e);
-                _context25.prev = 1;
                 properties = e.gmx.properties;
-                _context25.next = 5;
+                _context25.next = 4;
                 return this._showNaturalPark(properties);
 
-              case 5:
-                _context25.next = 10;
-                break;
-
-              case 7:
-                _context25.prev = 7;
-                _context25.t0 = _context25["catch"](1);
-                alert(_context25.t0.toString());
-
-              case 10:
+              case 4:
               case "end":
                 return _context25.stop();
             }
           }
-        }, _callee25, this, [[1, 7]]);
+        }, _callee25, this);
       }));
 
       function _parkClick(_x19) {
@@ -58901,30 +59095,20 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 mode = this._content.getCurrentId();
 
                 if (!(!mode || mode === 'stand')) {
-                  _context26.next = 12;
+                  _context26.next = 6;
                   break;
                 }
 
-                _context26.prev = 3;
                 _e$gmx2 = e.gmx, id = _e$gmx2.id, properties = _e$gmx2.properties;
-                _context26.next = 7;
+                _context26.next = 6;
                 return this._showStand(properties.id, id);
 
-              case 7:
-                _context26.next = 12;
-                break;
-
-              case 9:
-                _context26.prev = 9;
-                _context26.t0 = _context26["catch"](3);
-                alert(_context26.t0.toString());
-
-              case 12:
+              case 6:
               case "end":
                 return _context26.stop();
             }
           }
-        }, _callee26, this, [[3, 9]]);
+        }, _callee26, this);
       }));
 
       function _standClick(_x20) {
@@ -58944,26 +59128,16 @@ var Map = /*#__PURE__*/function (_EventTarget) {
             switch (_context27.prev = _context27.next) {
               case 0:
                 L$1.DomEvent.stopPropagation(e);
-                _context27.prev = 1;
                 _e$gmx3 = e.gmx, id = _e$gmx3.id, properties = _e$gmx3.properties;
-                _context27.next = 5;
+                _context27.next = 4;
                 return this._showDeclaration(properties.id, id);
 
-              case 5:
-                _context27.next = 10;
-                break;
-
-              case 7:
-                _context27.prev = 7;
-                _context27.t0 = _context27["catch"](1);
-                alert(_context27.t0.toString());
-
-              case 10:
+              case 4:
               case "end":
                 return _context27.stop();
             }
           }
-        }, _callee27, this, [[1, 7]]);
+        }, _callee27, this);
       }));
 
       function _declarationClick(_x21) {
@@ -58983,26 +59157,16 @@ var Map = /*#__PURE__*/function (_EventTarget) {
             switch (_context28.prev = _context28.next) {
               case 0:
                 L$1.DomEvent.stopPropagation(e);
-                _context28.prev = 1;
                 _e$gmx4 = e.gmx, id = _e$gmx4.id, properties = _e$gmx4.properties;
-                _context28.next = 5;
+                _context28.next = 4;
                 return this._showIncident(properties, id);
 
-              case 5:
-                _context28.next = 10;
-                break;
-
-              case 7:
-                _context28.prev = 7;
-                _context28.t0 = _context28["catch"](1);
-                alert(_context28.t0.toString());
-
-              case 10:
+              case 4:
               case "end":
                 return _context28.stop();
             }
           }
-        }, _callee28, this, [[1, 7]]);
+        }, _callee28, this);
       }));
 
       function _incidentClick(_x22) {
@@ -59018,9 +59182,15 @@ var Map = /*#__PURE__*/function (_EventTarget) {
         var _this5 = this;
 
         var mapId,
+            incidentStyleHook,
             _loop,
             i,
+            incidents,
             p,
+            _this$_incidents$getG,
+            attributes,
+            cid,
+            sid,
             end,
             start,
             _args30 = arguments;
@@ -59075,6 +59245,10 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   _this5._legend.showPanel(false);
                 });
 
+                incidentStyleHook = function incidentStyleHook() {
+                  return null;
+                };
+
                 _loop = function _loop(i) {
                   var layer = _this5._gmxMap.layers[i];
                   var props = layer.getGmxProperties();
@@ -59093,10 +59267,10 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   }
 
                   if (kind) {
-                    var statusIndex = attributes && attributes.indexOf('status_calc') || -1;
+                    var _statusIndex = attributes && attributes.indexOf('status_calc') || -1;
 
-                    if (statusIndex >= 0) {
-                      statusIndex += 1;
+                    if (_statusIndex >= 0) {
+                      _statusIndex += 1;
                     }
 
                     switch (kind.Value) {
@@ -59137,35 +59311,12 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
                         _this5._incidents.on('click', _this5._incidentClick, _this5);
 
+                        _this5._map.addLayer(_this5._incidents);
+
                         break;
 
                       case 'plot_project':
                         _this5._plotProject = layer;
-
-                        _this5._plotProject.setStyleHook(function (_ref29) {
-                          var properties = _ref29.properties;
-
-                          if (statusIndex >= 0) {
-                            switch (properties[statusIndex]) {
-                              case 1:
-                                return STYLES$6.PLOT.OWN;
-
-                              case 2:
-                                return STYLES$6.PLOT.BID;
-
-                              case 3:
-                                return STYLES$6.PLOT.LEASED;
-
-                              default:
-                                return {};
-                            }
-                          }
-
-                          return {};
-                        });
-
-                        _this5._map.addLayer(_this5._plotProject);
-
                         break;
                     }
                   }
@@ -59194,6 +59345,34 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 if (this._fires) {
                   this._legend.addComponent('fires', translate$g('legend.fires'));
                 }
+
+                if (this._plotProject) {
+                  this._plotProject.setStyleHook(function (_ref12) {
+                    var properties = _ref12.properties;
+
+                    if (statusIndex >= 0) {
+                      switch (properties[statusIndex]) {
+                        case 1:
+                          return STYLES$5.PLOT.OWN;
+
+                        case 2:
+                          return STYLES$5.PLOT.BID;
+
+                        case 3:
+                          return STYLES$5.PLOT.LEASED;
+
+                        default:
+                          return {};
+                      }
+                    }
+
+                    return {};
+                  });
+
+                  this._legend.addComponent('plot-projects', translate$g('legend.plotProjects'));
+                }
+
+                incidents = {};
 
                 if (this._incidents) {
                   p = this._legend.addGroup('incidents', translate$g('legend.incidents'));
@@ -59225,382 +59404,135 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   this._legend.addComponent('burn-faux', translate$g('legend.burn.faux'), p);
 
                   this._legend.addComponent('burn-confirmed', translate$g('legend.burn.confirmed'), p);
+
+                  _this$_incidents$getG = this._incidents.getGmxProperties(), attributes = _this$_incidents$getG.attributes;
+                  cid = attributes.indexOf('class_id');
+
+                  if (cid >= 0) {
+                    cid += 1;
+                  }
+
+                  sid = attributes.indexOf('status_id');
+
+                  if (sid >= 0) {
+                    sid += 1;
+                  }
+
+                  incidentStyleHook = function incidentStyleHook(_ref13) {
+                    var properties = _ref13.properties;
+                    var c = properties[cid];
+                    var s = properties[sid];
+
+                    switch (c) {
+                      case 1:
+                        switch (s) {
+                          case 1:
+                            return incidents['cut-unconfirmed'] ? STYLES$5.INCIDENTS.CUT.UNCONFIRMED : null;
+
+                          case 2:
+                            return incidents['cut-working'] ? STYLES$5.INCIDENTS.CUT.WORKING : null;
+
+                          case 3:
+                            return incidents['cut-faux'] ? STYLES$5.INCIDENTS.CUT.FAUX : null;
+
+                          case 4:
+                            return incidents['cut-confirmed'] ? STYLES$5.INCIDENTS.CUT.CONFIRMED : null;
+
+                          default:
+                            return null;
+                        }
+
+                      case 2:
+                        switch (s) {
+                          case 1:
+                            return incidents['windthrow-unconfirmed'] ? STYLES$5.INCIDENTS.WINDTHROW.UNCONFIRMED : null;
+
+                          case 2:
+                            return incidents['windthrow-working'] ? STYLES$5.INCIDENTS.WINDTHROW.WORKING : null;
+
+                          case 3:
+                            return incidents['windthrow-faux'] ? STYLES$5.INCIDENTS.WINDTHROW.FAUX : null;
+
+                          case 4:
+                            return incidents['windthrow-confirmed'] ? STYLES$5.INCIDENTS.WINDTHROW.CONFIRMED : null;
+
+                          default:
+                            return null;
+                        }
+
+                      case 3:
+                        switch (s) {
+                          case 1:
+                            return incidents['disease-unconfirmed'] ? STYLES$5.INCIDENTS.DISEASE.UNCONFIRMED : null;
+
+                          case 2:
+                            return incidents['disease-working'] ? STYLES$5.INCIDENTS.DISEASE.WORKING : null;
+
+                          case 3:
+                            return incidents['disease-faux'] ? STYLES$5.INCIDENTS.DISEASE.FAUX : null;
+
+                          case 4:
+                            return incidents['disease-confirmed'] ? STYLES$5.INCIDENTS.DISEASE.CONFIRMED : null;
+
+                          default:
+                            return null;
+                        }
+
+                      case 4:
+                        switch (s) {
+                          case 1:
+                            return incidents['burn-unconfirmed'] ? STYLES$5.INCIDENTS.BURN.UNCONFIRMED : null;
+
+                          case 2:
+                            return incidents['burn-working'] ? STYLES$5.INCIDENTS.BURN.WORKING : null;
+
+                          case 3:
+                            return incidents['burn-faux'] ? STYLES$5.INCIDENTS.BURN.FAUX : null;
+
+                          case 4:
+                            return incidents['burn-confirmed'] ? STYLES$5.INCIDENTS.BURN.CONFIRMED : null;
+
+                          default:
+                            return null;
+                        }
+
+                      default:
+                        return null;
+                    }
+                  };
+
+                  this._incidents.setStyleHook(incidentStyleHook);
                 }
 
                 this._legend.on('click', /*#__PURE__*/function () {
-                  var _ref12 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee29(e) {
-                    var id, visible, p, cid, sid;
+                  var _ref14 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee29(e) {
+                    var id, visible;
                     return regeneratorRuntime.wrap(function _callee29$(_context29) {
                       while (1) {
                         switch (_context29.prev = _context29.next) {
                           case 0:
                             id = e.id, visible = e.visible;
-                            cid = -1;
-                            sid = -1;
-
-                            if (_this5._incidents) {
-                              p = _this5._incidents.getGmxProperties();
-                              cid = p.attributes.indexOf('class_id');
-
-                              if (cid >= 0) {
-                                cid += 1;
-                              }
-
-                              sid = p.attributes.indexOf('status_id');
-
-                              if (sid >= 0) {
-                                sid += 1;
-                              }
-                            }
-
                             _context29.t0 = id;
-                            _context29.next = _context29.t0 === 'cut-unconfirmed' ? 7 : _context29.t0 === 'cut-working' ? 11 : _context29.t0 === 'cut-faux' ? 15 : _context29.t0 === 'cut-confirmed' ? 19 : _context29.t0 === 'windthrow-unconfirmed' ? 23 : _context29.t0 === 'windthrow-working' ? 27 : _context29.t0 === 'windthrow-faux' ? 31 : _context29.t0 === 'windthrow-confirmed' ? 35 : _context29.t0 === 'disease-unconfirmed' ? 39 : _context29.t0 === 'disease-working' ? 43 : _context29.t0 === 'disease-faux' ? 47 : _context29.t0 === 'disease-confirmed' ? 51 : _context29.t0 === 'burn-unconfirmed' ? 55 : _context29.t0 === 'burn-working' ? 59 : _context29.t0 === 'burn-faux' ? 63 : _context29.t0 === 'burn-confirmed' ? 67 : 71;
+                            _context29.next = _context29.t0 === 'cut-unconfirmed' ? 4 : _context29.t0 === 'cut-working' ? 4 : _context29.t0 === 'cut-faux' ? 4 : _context29.t0 === 'cut-confirmed' ? 4 : _context29.t0 === 'windthrow-unconfirmed' ? 4 : _context29.t0 === 'windthrow-working' ? 4 : _context29.t0 === 'windthrow-faux' ? 4 : _context29.t0 === 'windthrow-confirmed' ? 4 : _context29.t0 === 'disease-unconfirmed' ? 4 : _context29.t0 === 'disease-working' ? 4 : _context29.t0 === 'disease-faux' ? 4 : _context29.t0 === 'disease-confirmed' ? 4 : _context29.t0 === 'burn-unconfirmed' ? 4 : _context29.t0 === 'burn-working' ? 4 : _context29.t0 === 'burn-faux' ? 4 : _context29.t0 === 'burn-confirmed' ? 4 : 8;
                             break;
 
-                          case 7:
-                            if (visible) {
-                              _this5._incidents.setStyleHook(function (_ref13) {
-                                var properties = _ref13.properties;
-                                var c = properties[cid];
-                                var s = properties[sid];
-                                return c === 1 && s === 1 ? STYLES$6.INCIDENTS.CUT.UNCONFIRMED : {};
-                              });
-                            } else {
-                              _this5._incidents.removeStyleHook();
-                            }
+                          case 4:
+                            incidents[id] = visible;
 
+                            _this5._incidents.setStyleHook(incidentStyleHook);
+
+                            _this5._incidents.repaint();
+
+                            return _context29.abrupt("break", 11);
+
+                          case 8:
                             _context29.next = 10;
-                            return _this5._showLayer({
-                              id: 'incidents',
-                              visible: visible
-                            });
-
-                          case 10:
-                            return _context29.abrupt("break", 74);
-
-                          case 11:
-                            if (visible) {
-                              _this5._incidents.setStyleHook(function (_ref14) {
-                                var properties = _ref14.properties;
-                                var c = properties[cid];
-                                var s = properties[sid];
-                                return c === 1 && s === 2 ? STYLES$6.INCIDENTS.CUT.WORKING : {};
-                              });
-                            } else {
-                              _this5._incidents.removeStyleHook();
-                            }
-
-                            _context29.next = 14;
-                            return _this5._showLayer({
-                              id: 'incidents',
-                              visible: visible
-                            });
-
-                          case 14:
-                            return _context29.abrupt("break", 74);
-
-                          case 15:
-                            if (visible) {
-                              _this5._incidents.setStyleHook(function (_ref15) {
-                                var properties = _ref15.properties;
-                                var c = properties[cid];
-                                var s = properties[sid];
-                                return c === 1 && s === 3 ? STYLES$6.INCIDENTS.CUT.FAUX : {};
-                              });
-                            } else {
-                              _this5._incidents.removeStyleHook();
-                            }
-
-                            _context29.next = 18;
-                            return _this5._showLayer({
-                              id: 'incidents',
-                              visible: visible
-                            });
-
-                          case 18:
-                            return _context29.abrupt("break", 74);
-
-                          case 19:
-                            if (visible) {
-                              _this5._incidents.setStyleHook(function (_ref16) {
-                                var properties = _ref16.properties;
-                                var c = properties[cid];
-                                var s = properties[sid];
-                                return c === 1 && s === 4 ? STYLES$6.INCIDENTS.CUT.CONFIRMED : {};
-                              });
-                            } else {
-                              _this5._incidents.removeStyleHook();
-                            }
-
-                            _context29.next = 22;
-                            return _this5._showLayer({
-                              id: 'incidents',
-                              visible: visible
-                            });
-
-                          case 22:
-                            return _context29.abrupt("break", 74);
-
-                          case 23:
-                            if (visible) {
-                              _this5._incidents.setStyleHook(function (_ref17) {
-                                var properties = _ref17.properties;
-                                var c = properties[cid];
-                                var s = properties[sid];
-                                return c === 2 && s === 1 ? STYLES$6.INCIDENTS.WINDTHROW.UNCONFIRMED : {};
-                              });
-                            } else {
-                              _this5._incidents.removeStyleHook();
-                            }
-
-                            _context29.next = 26;
-                            return _this5._showLayer({
-                              id: 'incidents',
-                              visible: visible
-                            });
-
-                          case 26:
-                            return _context29.abrupt("break", 74);
-
-                          case 27:
-                            if (visible) {
-                              _this5._incidents.setStyleHook(function (_ref18) {
-                                var properties = _ref18.properties;
-                                var c = properties[cid];
-                                var s = properties[sid];
-                                return c === 2 && s === 2 ? STYLES$6.INCIDENTS.WINDTHROW.WORKING : {};
-                              });
-                            } else {
-                              _this5._incidents.removeStyleHook();
-                            }
-
-                            _context29.next = 30;
-                            return _this5._showLayer({
-                              id: 'incidents',
-                              visible: visible
-                            });
-
-                          case 30:
-                            return _context29.abrupt("break", 74);
-
-                          case 31:
-                            if (visible) {
-                              _this5._incidents.setStyleHook(function (_ref19) {
-                                var properties = _ref19.properties;
-                                var c = properties[cid];
-                                var s = properties[sid];
-                                return c === 2 && s === 3 ? STYLES$6.INCIDENTS.WINDTHROW.FAUX : {};
-                              });
-                            } else {
-                              _this5._incidents.removeStyleHook();
-                            }
-
-                            _context29.next = 34;
-                            return _this5._showLayer({
-                              id: 'incidents',
-                              visible: visible
-                            });
-
-                          case 34:
-                            return _context29.abrupt("break", 74);
-
-                          case 35:
-                            if (visible) {
-                              _this5._incidents.setStyleHook(function (_ref20) {
-                                var properties = _ref20.properties;
-                                var c = properties[cid];
-                                var s = properties[sid];
-                                return c === 2 && s === 4 ? STYLES$6.INCIDENTS.WINDTHROW.CONFIRMED : {};
-                              });
-                            } else {
-                              _this5._incidents.removeStyleHook();
-                            }
-
-                            _context29.next = 38;
-                            return _this5._showLayer({
-                              id: 'incidents',
-                              visible: visible
-                            });
-
-                          case 38:
-                            return _context29.abrupt("break", 74);
-
-                          case 39:
-                            if (visible) {
-                              _this5._incidents.setStyleHook(function (_ref21) {
-                                var properties = _ref21.properties;
-                                var c = properties[cid];
-                                var s = properties[sid];
-                                return c === 3 && s === 1 ? STYLES$6.INCIDENTS.DISEASE.UNCONFIRMED : {};
-                              });
-                            } else {
-                              _this5._incidents.removeStyleHook();
-                            }
-
-                            _context29.next = 42;
-                            return _this5._showLayer({
-                              id: 'incidents',
-                              visible: visible
-                            });
-
-                          case 42:
-                            return _context29.abrupt("break", 74);
-
-                          case 43:
-                            if (visible) {
-                              _this5._incidents.setStyleHook(function (_ref22) {
-                                var properties = _ref22.properties;
-                                var c = properties[cid];
-                                var s = properties[sid];
-                                return c === 3 && s === 2 ? STYLES$6.INCIDENTS.DISEASE.WORKING : {};
-                              });
-                            } else {
-                              _this5._incidents.removeStyleHook();
-                            }
-
-                            _context29.next = 46;
-                            return _this5._showLayer({
-                              id: 'incidents',
-                              visible: visible
-                            });
-
-                          case 46:
-                            return _context29.abrupt("break", 74);
-
-                          case 47:
-                            if (visible) {
-                              _this5._incidents.setStyleHook(function (_ref23) {
-                                var properties = _ref23.properties;
-                                var c = properties[cid];
-                                var s = properties[sid];
-                                return c === 3 && s === 3 ? STYLES$6.INCIDENTS.DISEASE.FAUX : {};
-                              });
-                            } else {
-                              _this5._incidents.removeStyleHook();
-                            }
-
-                            _context29.next = 50;
-                            return _this5._showLayer({
-                              id: 'incidents',
-                              visible: visible
-                            });
-
-                          case 50:
-                            return _context29.abrupt("break", 74);
-
-                          case 51:
-                            if (visible) {
-                              _this5._incidents.setStyleHook(function (_ref24) {
-                                var properties = _ref24.properties;
-                                var c = properties[cid];
-                                var s = properties[sid];
-                                return c === 3 && s === 4 ? STYLES$6.INCIDENTS.DISEASE.CONFIRMED : {};
-                              });
-                            } else {
-                              _this5._incidents.removeStyleHook();
-                            }
-
-                            _context29.next = 54;
-                            return _this5._showLayer({
-                              id: 'incidents',
-                              visible: visible
-                            });
-
-                          case 54:
-                            return _context29.abrupt("break", 74);
-
-                          case 55:
-                            if (visible) {
-                              _this5._incidents.setStyleHook(function (_ref25) {
-                                var properties = _ref25.properties;
-                                var c = properties[cid];
-                                var s = properties[sid];
-                                return c === 4 && s === 1 ? STYLES$6.INCIDENTS.BURN.UNCONFIRMED : {};
-                              });
-                            } else {
-                              _this5._incidents.removeStyleHook();
-                            }
-
-                            _context29.next = 58;
-                            return _this5._showLayer({
-                              id: 'incidents',
-                              visible: visible
-                            });
-
-                          case 58:
-                            return _context29.abrupt("break", 74);
-
-                          case 59:
-                            if (visible) {
-                              _this5._incidents.setStyleHook(function (_ref26) {
-                                var properties = _ref26.properties;
-                                var c = properties[cid];
-                                var s = properties[sid];
-                                return c === 4 && s === 2 ? STYLES$6.INCIDENTS.BURN.WORKING : {};
-                              });
-                            } else {
-                              _this5._incidents.removeStyleHook();
-                            }
-
-                            _context29.next = 62;
-                            return _this5._showLayer({
-                              id: 'incidents',
-                              visible: visible
-                            });
-
-                          case 62:
-                            return _context29.abrupt("break", 74);
-
-                          case 63:
-                            if (visible) {
-                              _this5._incidents.setStyleHook(function (_ref27) {
-                                var properties = _ref27.properties;
-                                var c = properties[cid];
-                                var s = properties[sid];
-                                return c === 4 && s === 3 ? STYLES$6.INCIDENTS.BURN.FAUX : {};
-                              });
-                            } else {
-                              _this5._incidents.removeStyleHook();
-                            }
-
-                            _context29.next = 66;
-                            return _this5._showLayer({
-                              id: 'incidents',
-                              visible: visible
-                            });
-
-                          case 66:
-                            return _context29.abrupt("break", 74);
-
-                          case 67:
-                            if (visible) {
-                              _this5._incidents.setStyleHook(function (_ref28) {
-                                var properties = _ref28.properties;
-                                var c = properties[cid];
-                                var s = properties[sid];
-                                return c === 4 && s === 4 ? STYLES$6.INCIDENTS.BURN.CONFIRMED : {};
-                              });
-                            } else {
-                              _this5._incidents.removeStyleHook();
-                            }
-
-                            _context29.next = 70;
-                            return _this5._showLayer({
-                              id: 'incidents',
-                              visible: visible
-                            });
-
-                          case 70:
-                            return _context29.abrupt("break", 74);
-
-                          case 71:
-                            _context29.next = 73;
                             return _this5._showLayer(e);
 
-                          case 73:
-                            return _context29.abrupt("break", 74);
+                          case 10:
+                            return _context29.abrupt("break", 11);
 
-                          case 74:
+                          case 11:
                           case "end":
                             return _context29.stop();
                         }
@@ -59609,36 +59541,36 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   }));
 
                   return function (_x23) {
-                    return _ref12.apply(this, arguments);
+                    return _ref14.apply(this, arguments);
                   };
                 }(), this);
 
-                _context30.next = 24;
+                _context30.next = 27;
                 return this.getUserInfo();
 
-              case 24:
+              case 27:
                 if (!_context30.sent) {
-                  _context30.next = 28;
+                  _context30.next = 31;
                   break;
                 }
 
                 this._hotspottimeline = new HotSpotTimeLine();
-                _context30.next = 31;
+                _context30.next = 34;
                 break;
 
-              case 28:
+              case 31:
                 end = new Date();
                 start = new Date(end.getTime() - 2 * 60 * 60 * 24 * 1000);
 
                 this._fires.setDateInterval(start, end);
 
-              case 31:
+              case 34:
                 this._baselayers.toggle('sputnik'); // const CRLayer = this._gmxMap.layersByID['958E59D9911E4889AB3E787DE2AC028B'];	// Каталог растров
                 // this._map.addControl(nsGmx.gmxTimeLine.afterViewer({gmxMap: this._gmxMap}, this._map));	// Контрол таймлайна CR
                 // this._map.addLayer(CRLayer);
 
 
-              case 32:
+              case 35:
               case "end":
                 return _context30.stop();
             }
