@@ -57321,21 +57321,21 @@ T.addText('rus', {
     officer: 'Ответственное лицо',
     lessee: 'Арендатор',
     contract: 'Договор аренды',
-    usage: 'Целевое назначение лесов',
-    category: 'Категория защитных лесов',
-    forestry: 'Наименование лесничества (лесопарка)',
-    district: 'Наименование участкового лесничества',
-    site: 'Наименование урочища (при наличии)',
-    quadrant: 'Номер лесного квартала',
-    stand: 'Номер лесотаксационного выдела',
-    landing: 'Номер лесосеки',
-    area: 'Площадь лесосеки (лесотаксационного выдела)',
-    form: 'Форма рубки',
-    kind: 'Вид рубки',
-    range: 'Хозяйство',
+    purpose_of_forest: 'Целевое назначение лесов',
+    protective_forest_category: 'Категория защитных лесов',
+    forestry_name: 'Наименование лесничества (лесопарка)',
+    local_forestry_name: 'Наименование участкового лесничества',
+    tract_name: 'Наименование урочища (при наличии)',
+    quadrant_number: 'Номер лесного квартала',
+    forest_inventory_unit_number: 'Номер лесотаксационного выдела',
+    num: 'Номер лесосеки',
+    total_square: 'Площадь лесосеки (лесотаксационного выдела)',
+    felling_form: 'Форма рубки',
+    felling_type: 'Вид рубки',
+    farm: 'Хозяйство',
     species: 'Вырубаемая древесная порода',
-    units: 'Единицы измерения',
-    amount: 'Объем заготовки',
+    unit_of_measurement: 'Единицы измерения',
+    stock: 'Объем заготовки',
     doc: 'Документы к договору аренды'
   }
 });
@@ -57365,7 +57365,7 @@ var Declaration = /*#__PURE__*/function (_Component) {
 
     _this._container.classList.add('scanex-forestry-declaration');
 
-    _this._container.innerHTML = "<div class=\"header\">\n            <label>".concat(translate$e('declaration.title'), "</label>            \n            <label class=\"number\"></label>\n        </div>\n        <table cellspacing=\"0\" cellpadding=\"0\">\n            <tbody>\n                <tr>\n                    <td>").concat(translate$e('declaration.federalSubject'), "</td>\n                    <td class=\"federal-subject\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.executive'), "</td>\n                    <td class=\"executive\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.officer'), "</td>\n                    <td class=\"officer\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.lessee'), "</td>\n                    <td class=\"lessee\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.contract'), "</td>\n                    <td class=\"contract\"></td>\n                </tr>\n            </tbody>\n        </table>\n        <div>\n            <i class=\"scanex-declaration-icon doc\"></i>\n            <button class=\"open-doc\">").concat(translate$e('declaration.doc'), "</button>\n        </div>\n        <div class=\"content\"></div>");
+    _this._container.innerHTML = "<div class=\"header\">\n            <label>".concat(translate$e('declaration.title'), "</label>            \n            <label class=\"number\"></label>\n        </div>\n        <table cellspacing=\"0\" cellpadding=\"0\">\n            <tbody>\n                <!--\n                <tr>\n                    <td>").concat(translate$e('declaration.federalSubject'), "</td>\n                    <td class=\"federal-subject\"></td>\n                </tr>\n                -->\n                <tr>\n                    <td>").concat(translate$e('declaration.executive'), "</td>\n                    <td class=\"executive\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.officer'), "</td>\n                    <td class=\"officer\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.lessee'), "</td>\n                    <td class=\"lessee\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.contract'), "</td>\n                    <td class=\"contract\"></td>\n                </tr>\n            </tbody>\n        </table>\n        <div>\n            <i class=\"scanex-declaration-icon doc\"></i>\n            <button class=\"open-doc\">").concat(translate$e('declaration.doc'), "</button>\n        </div>\n        <table cellspacing=\"0\" cellpadding=\"0\">\n            <tbody>\n                <tr>\n                    <td>").concat(translate$e('declaration.purpose_of_forest'), "</td>\n                    <td class=\"purpose_of_forest\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.protective_forest_category'), "</td>\n                    <td class=\"protective_forest_category\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.forestry_name'), "</td>\n                    <td class=\"forestry_name\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.local_forestry_name'), "</td>\n                    <td class=\"local_forestry_name\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.tract_name'), "</td>\n                    <td class=\"tract_name\"></td>\n                </tr>                                \n                <tr>\n                    <td>").concat(translate$e('declaration.quadrant_number'), "</td>\n                    <td class=\"quadrant_number\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.forest_inventory_unit_number'), "</td>\n                    <td class=\"forest_inventory_unit_number\"></td>\n                </tr>\n            </tbody>\n        </table>\n        <div class=\"content\"></div>");
     return _this;
   }
 
@@ -57373,35 +57373,48 @@ var Declaration = /*#__PURE__*/function (_Component) {
     key: "_render",
     value: function _render(data) {
       var DeclarationNumber = data.DeclarationNumber,
-          Region = data.Region,
           ExecutiveAuthority = data.ExecutiveAuthority,
           ResponsiblePerson = data.ResponsiblePerson,
           Owner = data.Owner,
           DogovorNumber = data.DogovorNumber,
-          ForestUseType = data.ForestUseType,
-          ForestCategory = data.ForestCategory,
-          Forestry = data.Forestry,
-          LocalForestry = data.LocalForestry,
-          Stow = data.Stow,
-          ForestInventoryUnitNumber = data.ForestInventoryUnitNumber,
-          Num = data.Num,
-          QutiingAreaNumber = data.QutiingAreaNumber,
-          Square = data.Square,
-          FellingForm = data.FellingForm,
-          FellingType = data.FellingType,
-          Farm = data.Farm,
-          Stock = data.Stock;
-      this._container.querySelector('.number').innerText = DeclarationNumber || '';
-      this._container.querySelector('.federal-subject').innerText = Region || '';
+          CuttingAreas = data.CuttingAreas;
+      this._container.querySelector('.number').innerText = DeclarationNumber || ''; // this._container.querySelector('.federal-subject').innerText = Region || '';
+
       this._container.querySelector('.executive').innerText = ExecutiveAuthority || '';
       this._container.querySelector('.officer').innerText = ResponsiblePerson || '';
       this._container.querySelector('.lessee').innerText = Owner || '';
       this._container.querySelector('.contract').innerText = DogovorNumber || '';
-      this._container.querySelector('.content').innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tbody>\n                <tr>\n                    <td>".concat(translate$e('declaration.usage'), "</td>\n                    <td class=\"usage\">").concat(ForestUseType, "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.category'), "</td>\n                    <td class=\"category\">").concat(ForestCategory, "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.forestry'), "</td>\n                    <td class=\"forestry\">").concat(Forestry || '-', "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.district'), "</td>\n                    <td class=\"district\">").concat(LocalForestry || '-', "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.site'), "</td>\n                    <td class=\"site\">").concat(Stow || '-', "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.quadrant'), "</td>\n                    <td class=\"quadrant\">").concat(ForestInventoryUnitNumber, "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.stand'), "</td>\n                    <td class=\"stand\">").concat(Num || '-', "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.landing'), "</td>\n                    <td class=\"landing\">").concat(QutiingAreaNumber, "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.area'), "</td>\n                    <td class=\"area\">").concat(Square, "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.form'), "</td>\n                    <td class=\"form\">").concat(FellingForm, "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.kind'), "</td>\n                    <td class=\"kind\">").concat(FellingType, "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.range'), "</td>\n                    <td class=\"range\">").concat(Farm, "</td>\n                </tr>\n                ").concat(Array.isArray(Stock) && Stock.length ? "<tr>\n                        <td>".concat(translate$e('declaration.species'), "</td>\n                        <td>").concat(translate$e('declaration.amount'), "</td>\n                    </tr>\n                    ").concat(Stock.map(function (_ref2) {
-        var species = _ref2.species,
-            stock = _ref2.stock;
-        return "<tr>\n                            <td>".concat(species, "</td>\n                            <td class=\"amount\">").concat(stock, "</td>\n                        </tr>");
-      }).join('')) : '', "\n            </tbody>            \n        </table>");
+
+      var _ref2 = Array.isArray(CuttingAreas) && CuttingAreas.length ? CuttingAreas[0].volumes[0] : {},
+          purpose_of_forest = _ref2.purpose_of_forest,
+          protective_forest_category = _ref2.protective_forest_category,
+          forestry_name = _ref2.forestry_name,
+          local_forestry_name = _ref2.local_forestry_name,
+          tract_name = _ref2.tract_name,
+          quadrant_number = _ref2.quadrant_number,
+          forest_inventory_unit_number = _ref2.forest_inventory_unit_number;
+
+      this._container.querySelector('.purpose_of_forest').innerText = purpose_of_forest || '-';
+      this._container.querySelector('.protective_forest_category').innerText = protective_forest_category || '-';
+      this._container.querySelector('.forestry_name').innerText = forestry_name || '-';
+      this._container.querySelector('.local_forestry_name').innerText = local_forestry_name || '-';
+      this._container.querySelector('.tract_name').innerText = tract_name || '-';
+      this._container.querySelector('.quadrant_number').innerText = quadrant_number || '-';
+      this._container.querySelector('.forest_inventory_unit_number').innerText = forest_inventory_unit_number || '-';
+      this._container.querySelector('.content').innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tbody>                \n                ".concat(Array.isArray(CuttingAreas) ? CuttingAreas.map(function (_ref3) {
+        var num = _ref3.num,
+            volumes = _ref3.volumes;
+        return "<tr class=\"num\">\n                        <td>".concat(translate$e('declaration.num'), "</td>\n                        <td>").concat(num || '-', "</td>\n                    </tr>\n                    ").concat(Array.isArray(volumes) ? volumes.map(function (_ref4) {
+          var total_square = _ref4.total_square,
+              felling_form = _ref4.felling_form,
+              felling_type = _ref4.felling_type,
+              farm = _ref4.farm,
+              species = _ref4.species,
+              unit_of_measurement = _ref4.unit_of_measurement,
+              stock = _ref4.stock;
+          return "<tr>\n                        <td>".concat(translate$e('declaration.total_square'), "</td>\n                            <td class=\"amount\">").concat(total_square || '-', "</td>\n                        </tr>\n                        <tr>\n                            <td>").concat(translate$e('declaration.felling_form'), "</td>\n                            <td class=\"amount\">").concat(felling_form || '-', "</td>\n                        </tr>\n                        <tr>\n                            <td>").concat(translate$e('declaration.felling_type'), "</td>\n                            <td class=\"amount\">").concat(felling_type || '-', "</td>\n                        </tr>\n                        <tr>\n                            <td>").concat(translate$e('declaration.farm'), "</td>\n                            <td class=\"amount\">").concat(farm || '-', "</td>\n                        </tr>\n                        <tr>\n                            <td>").concat(translate$e('declaration.species'), "</td>\n                            <td class=\"amount\">").concat(species || '-', "</td>\n                        </tr>                        \n                        <tr>\n                            <td>").concat(translate$e('declaration.stock'), "</td>\n                            <td class=\"amount\">").concat(stock || '-', "</td>\n                        </tr>");
+        }).join('') : '');
+      }).join('') : '', "              \n            </tbody>\n        </table>");
     }
   }, {
     key: "_styleHook",
@@ -57411,13 +57424,13 @@ var Declaration = /*#__PURE__*/function (_Component) {
   }, {
     key: "open",
     value: function () {
-      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(_ref3) {
+      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(_ref5) {
         var id, gmx_id, response, data;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                id = _ref3.id, gmx_id = _ref3.gmx_id;
+                id = _ref5.id, gmx_id = _ref5.gmx_id;
 
                 if (!(this._gmx_id && this._gmx_id === gmx_id)) {
                   _context.next = 5;
@@ -57431,7 +57444,7 @@ var Declaration = /*#__PURE__*/function (_Component) {
               case 5:
                 this._gmx_id = gmx_id;
                 _context.next = 8;
-                return fetch("".concat(this._serviceEndpoint, "/Forest/GetForestDeclarationInformation?ForestDeclarationID=").concat(id), {
+                return fetch("".concat(this._serviceEndpoint, "/Forest/GetForestDeclarationInformation?ForestDeclarationID=").concat(id, "&debug=true"), {
                   method: 'GET',
                   credentials: 'include'
                 });
@@ -57480,6 +57493,7 @@ T.addText('rus', {
   incident: {
     title: 'Рубка',
     titleFire: 'Гарь',
+    titleDisease: 'Патология',
     areaFire: 'Пройденная пожаром площадь (Га)',
     areaFire1: 'Пройденная пожаром площадь насаждений, из которых возможна реализация древесины (Га)',
     areaSpec: 'Площадь культур (Га)',
@@ -57593,12 +57607,14 @@ var Incident = /*#__PURE__*/function (_Component) {
   function Incident(container, _ref) {
     var _this;
 
-    var serviceEndpoint = _ref.serviceEndpoint;
+    var serviceEndpoint = _ref.serviceEndpoint,
+        layer = _ref.layer;
 
     _classCallCheck(this, Incident);
 
     _this = _super.call(this, container, {});
     _this._serviceEndpoint = serviceEndpoint;
+    _this._layer = layer;
 
     _this._container.classList.add('scanex-forestry-incident');
 
@@ -57608,12 +57624,12 @@ var Incident = /*#__PURE__*/function (_Component) {
   _createClass(Incident, [{
     key: "_render",
     value: function _render(props, data) {
-      switch (props.type) {
+      switch (props.class_id) {
         case 1:
           // Рубка
           this._container.classList.add('minHeight');
 
-          this._setForm2();
+          this._setForm1();
 
           break;
 
@@ -57621,7 +57637,23 @@ var Incident = /*#__PURE__*/function (_Component) {
           // Гарь
           this._container.classList.add('minHeight');
 
+          this._setForm2();
+
+          break;
+
+        case 3:
+          // Патология
+          this._container.classList.add('minHeight');
+
           this._setForm3();
+
+          break;
+
+        case 4:
+          // Гарь
+          this._container.classList.add('minHeight');
+
+          this._setForm4();
 
           break;
 
@@ -57632,6 +57664,32 @@ var Incident = /*#__PURE__*/function (_Component) {
 
           break;
       }
+
+      this._container.querySelector('.verRastr').addEventListener('click', this._toggleRaster.bind(this));
+    }
+  }, {
+    key: "_toggleRaster",
+    value: function _toggleRaster(e) {
+      e.stopPropagation();
+      var map = this._layer._map;
+
+      if (this._layer.verifyRaster._map) {
+        map.removeLayer(this._layer.verifyRaster);
+      } else {
+        map.addLayer(this._layer.verifyRaster);
+      }
+    }
+  }, {
+    key: "_setForm4",
+    value: function _setForm4(data) {
+      data = data || {
+        state: 'Неподтвержденный инцидент',
+        areaAll: 250,
+        areaArenda: 250,
+        date: '15.07.2019',
+        specialCommon: 'Береза'
+      };
+      this._container.innerHTML = "\n           <div class=\"map-popup-part2__header\">".concat(translate$f('incident.title'), "</div>\n            <div class=\"map-popup-part2__wrapper-in style-4\">\n                <div class=\"map-popup-part2__wrapper-in__table1\">\n\t\t\t\t\t<div class=\"buttonsCont\">\n\t\t\t\t\t\t<button class=\"map-popup-part2__header_right_button_2 width-50 verRastr\">").concat(translate$f('incident.verRastr'), "</button>\n\t\t\t\t\t</div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.status'), "<span>").concat(data.state, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaAll'), "<span>").concat(data.areaAll, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaArenda'), "<span>").concat(data.areaArenda, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.date'), "<span>").concat(data.date, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.specialCommon'), "<span>").concat(data.specialCommon, "</span></div>\n                </div>\n            </div>\n\t\t");
     }
   }, {
     key: "_setForm3",
@@ -57643,7 +57701,7 @@ var Incident = /*#__PURE__*/function (_Component) {
         date: '15.07.2019',
         specialCommon: 'Береза'
       };
-      this._container.innerHTML = "\n           <div class=\"map-popup-part2__header\">".concat(translate$f('incident.title'), "</div>\n            <div class=\"map-popup-part2__wrapper-in style-4\">\n                <div class=\"map-popup-part2__wrapper-in__table1\">\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.status'), "<span>").concat(data.state, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaAll'), "<span>").concat(data.areaAll, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaArenda'), "<span>").concat(data.areaArenda, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.date'), "<span>").concat(data.date, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.specialCommon'), "<span>").concat(data.specialCommon, "</span></div>\n                </div>\n            </div>\n\t\t");
+      this._container.innerHTML = "\n           <div class=\"map-popup-part2__header\">".concat(translate$f('incident.titleDisease'), "</div>\n            <div class=\"map-popup-part2__wrapper-in style-4\">\n                <div class=\"map-popup-part2__wrapper-in__table1\">\n\t\t\t\t\t<div class=\"buttonsCont\">\n\t\t\t\t\t\t<button class=\"map-popup-part2__header_right_button_2 width-50 verRastr\">").concat(translate$f('incident.verRastr'), "</button>\n\t\t\t\t\t</div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.status'), "<span>").concat(data.state, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaAll'), "<span>").concat(data.areaAll, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaArenda'), "<span>").concat(data.areaArenda, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.date'), "<span>").concat(data.date, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.specialCommon'), "<span>").concat(data.specialCommon, "</span></div>\n                </div>\n            </div>\n\t\t");
     }
   }, {
     key: "_setForm2",
@@ -57660,11 +57718,28 @@ var Incident = /*#__PURE__*/function (_Component) {
         dateInspect: '20.08.2020',
         specialCommon: 'Береза'
       };
-      this._container.innerHTML = "\n           <div class=\"map-popup-part2__header\">".concat(translate$f('incident.titleFire'), "</div>\n            <div class=\"map-popup-part2__wrapper-in style-4\">\n                <div class=\"map-popup-part2__wrapper-in__table1\">\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.status'), "<span>").concat(data.state, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.specialCommon'), "<span>").concat(data.specialCommon, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaFire'), "<span>").concat(data.areaFire, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaFire1'), "<span>").concat(data.areaFire1, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaSpec'), "<span>").concat(data.areaSpec, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaSpecNew'), "<span>").concat(data.areaSpecNew, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaFireLast'), "<span>").concat(data.areaFireLast, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaSpecNot'), "<span>").concat(data.areaSpecNot, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.date'), "<span>").concat(data.date, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.dateInspect'), "<span>").concat(data.dateInspect, "</span></div>\n                </div>\n            </div>\n\t\t");
+      this._container.innerHTML = "\n           <div class=\"map-popup-part2__header\">".concat(translate$f('incident.titleFire'), "</div>\n            <div class=\"map-popup-part2__wrapper-in style-4\">\n                <div class=\"map-popup-part2__wrapper-in__table1\">\n\t\t\t\t\t<div class=\"buttonsCont\">\n\t\t\t\t\t\t<button class=\"map-popup-part2__header_right_button_2 width-50 verRastr\">").concat(translate$f('incident.verRastr'), "</button>\n\t\t\t\t\t</div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.status'), "<span>").concat(data.state, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.specialCommon'), "<span>").concat(data.specialCommon, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaFire'), "<span>").concat(data.areaFire, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaFire1'), "<span>").concat(data.areaFire1, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaSpec'), "<span>").concat(data.areaSpec, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaSpecNew'), "<span>").concat(data.areaSpecNew, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaFireLast'), "<span>").concat(data.areaFireLast, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaSpecNot'), "<span>").concat(data.areaSpecNot, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.date'), "<span>").concat(data.date, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.dateInspect'), "<span>").concat(data.dateInspect, "</span></div>\n                </div>\n            </div>\n\t\t");
     }
   }, {
     key: "_setForm1",
     value: function _setForm1(data) {
+      data = data || {
+        state: 'Подтвержденный инцидент',
+        areaFire: 250,
+        areaFire1: 250,
+        areaSpec: 250,
+        areaSpecNew: 250,
+        areaFireLast: 250,
+        areaSpecNot: 250,
+        date: '15.07.2019',
+        dateInspect: '20.08.2020',
+        specialCommon: 'Береза'
+      };
+      this._container.innerHTML = "\n           <div class=\"map-popup-part2__header\">".concat(translate$f('incident.title'), "</div>\n            <div class=\"map-popup-part2__wrapper-in style-4\">\n\n                <div class=\"map-popup-part2__wrapper-in__table1\">\n\t\t\t\t\t<div class=\"buttonsCont\">\n\t\t\t\t\t\t<button class=\"map-popup-part2__header_right_button_2 width-50 verRastr\">").concat(translate$f('incident.verRastr'), "</button>\n\t\t\t\t\t</div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.status'), "<span>").concat(data.state, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.specialCommon'), "<span>").concat(data.specialCommon, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaFire'), "<span>").concat(data.areaFire, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaFire1'), "<span>").concat(data.areaFire1, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaSpec'), "<span>").concat(data.areaSpec, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaSpecNew'), "<span>").concat(data.areaSpecNew, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaFireLast'), "<span>").concat(data.areaFireLast, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaSpecNot'), "<span>").concat(data.areaSpecNot, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.date'), "<span>").concat(data.date, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.dateInspect'), "<span>").concat(data.dateInspect, "</span></div>\n\t\t\t\t</div>\n            </div>\n\t\t");
+    }
+  }, {
+    key: "_setForm0",
+    value: function _setForm0(data) {
       // console.log('_render', data);
       var str1 = _parseVyd(data.vyd);
 
@@ -59185,10 +59260,13 @@ var Map = /*#__PURE__*/function (_EventTarget) {
             incidentStyleHook,
             _loop,
             i,
+            _this$_plotProject$ge,
+            attributes,
+            statusIndex,
             incidents,
             p,
             _this$_incidents$getG,
-            attributes,
+            _attributes,
             cid,
             sid,
             end,
@@ -59259,20 +59337,13 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                     });
                   }
 
-                  var attributes = props.attributes,
-                      kind = props.MetaProperties.kind;
-
                   if (typeof layer.disablePopup === 'function') {
                     layer.disablePopup();
                   }
 
+                  var kind = props.MetaProperties.kind;
+
                   if (kind) {
-                    var _statusIndex = attributes && attributes.indexOf('status_calc') || -1;
-
-                    if (_statusIndex >= 0) {
-                      _statusIndex += 1;
-                    }
-
                     switch (kind.Value) {
                       case 'quadrants':
                         _this5._quadrants = layer;
@@ -59308,6 +59379,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
                       case 'incidents':
                         _this5._incidents = layer;
+                        _this5._incidents.verifyRaster = _this5._gmxMap.layersByID['5728425F25B04F73871EDF47CC8EFBC0'];
 
                         _this5._incidents.on('click', _this5._incidentClick, _this5);
 
@@ -59347,6 +59419,13 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 }
 
                 if (this._plotProject) {
+                  _this$_plotProject$ge = this._plotProject.getGmxProperties(), attributes = _this$_plotProject$ge.attributes;
+                  statusIndex = attributes && attributes.indexOf('status_calc') || -1;
+
+                  if (statusIndex >= 0) {
+                    statusIndex += 1;
+                  }
+
                   this._plotProject.setStyleHook(function (_ref12) {
                     var properties = _ref12.properties;
 
@@ -59405,14 +59484,14 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
                   this._legend.addComponent('burn-confirmed', translate$g('legend.burn.confirmed'), p);
 
-                  _this$_incidents$getG = this._incidents.getGmxProperties(), attributes = _this$_incidents$getG.attributes;
-                  cid = attributes.indexOf('class_id');
+                  _this$_incidents$getG = this._incidents.getGmxProperties(), _attributes = _this$_incidents$getG.attributes;
+                  cid = _attributes.indexOf('class_id');
 
                   if (cid >= 0) {
                     cid += 1;
                   }
 
-                  sid = attributes.indexOf('status_id');
+                  sid = _attributes.indexOf('status_id');
 
                   if (sid >= 0) {
                     sid += 1;
