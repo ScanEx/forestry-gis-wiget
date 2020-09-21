@@ -2,13 +2,13 @@
 * Объект: Map
   * Инициализация:
 	```js
-	var map = new Map(mapContainer, {gmxEndpoint: 'http://lv.scanex.ru:8080', serviceEndpoint: 'http://lv.scanex.ru:9999', center: [51.331898, 111.28051], zoom: 9});
+	var map = new Map(mapContainer, {gmxPath: '/gis', apiPath: '/service', center: [51.331898, 111.28051], zoom: 9});
 	```
-  	* mapContainer - DOM-элемент, содержащий карту
-	* gmxEndpoint - корневой адрес сервера Geomixer
-	* serviceEndpoint - корневой адрес серверного API
-  	* center - координаты начального центра карты (широта, долгота в градусах) (необязательный параметр)
-  	* zoom - начальный масштаб (необязательный параметр)
+  	* mapContainer - DOM-элемент, содержащий карту	
+  	* gmxPath - путь к Геомиксеру (значение по умолчанию '/gis')
+  	* apiPath - путь к API (значение по умолчанию '/service')
+  	* center - координаты начального центра карты (широта, долгота в градусах) (значение по умолчанию [51.331898, 111.28051])
+  	* zoom - начальный масштаб (значение по умолчанию 9)
   * Методы:
     * асинхронная загрузка карты
 		```js
@@ -53,7 +53,7 @@
 			let mapContainer = document.getElementById('map');
 			
 			// инициализация
-			let map = new Map(mapContainer, {gmxEndpoint: 'http://lv.scanex.ru:8080', serviceEndpoint: 'http://lv.scanex.ru:9999'});
+			let map = new Map(mapContainer);
 			
 			// привязка обработчика события
 			map.addEventListener('request:create', e => {

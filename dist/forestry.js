@@ -527,148 +527,6 @@ var _export = function (options, source) {
   }
 };
 
-// `IsArray` abstract operation
-// https://tc39.github.io/ecma262/#sec-isarray
-var isArray = Array.isArray || function isArray(arg) {
-  return classofRaw(arg) == 'Array';
-};
-
-// `ToObject` abstract operation
-// https://tc39.github.io/ecma262/#sec-toobject
-var toObject = function (argument) {
-  return Object(requireObjectCoercible(argument));
-};
-
-var createProperty = function (object, key, value) {
-  var propertyKey = toPrimitive(key);
-  if (propertyKey in object) objectDefineProperty.f(object, propertyKey, createPropertyDescriptor(0, value));
-  else object[propertyKey] = value;
-};
-
-var nativeSymbol = !!Object.getOwnPropertySymbols && !fails(function () {
-  // Chrome 38 Symbol has incorrect toString conversion
-  // eslint-disable-next-line no-undef
-  return !String(Symbol());
-});
-
-var useSymbolAsUid = nativeSymbol
-  // eslint-disable-next-line no-undef
-  && !Symbol.sham
-  // eslint-disable-next-line no-undef
-  && typeof Symbol.iterator == 'symbol';
-
-var WellKnownSymbolsStore = shared('wks');
-var Symbol$1 = global_1.Symbol;
-var createWellKnownSymbol = useSymbolAsUid ? Symbol$1 : Symbol$1 && Symbol$1.withoutSetter || uid;
-
-var wellKnownSymbol = function (name) {
-  if (!has(WellKnownSymbolsStore, name)) {
-    if (nativeSymbol && has(Symbol$1, name)) WellKnownSymbolsStore[name] = Symbol$1[name];
-    else WellKnownSymbolsStore[name] = createWellKnownSymbol('Symbol.' + name);
-  } return WellKnownSymbolsStore[name];
-};
-
-var SPECIES = wellKnownSymbol('species');
-
-// `ArraySpeciesCreate` abstract operation
-// https://tc39.github.io/ecma262/#sec-arrayspeciescreate
-var arraySpeciesCreate = function (originalArray, length) {
-  var C;
-  if (isArray(originalArray)) {
-    C = originalArray.constructor;
-    // cross-realm fallback
-    if (typeof C == 'function' && (C === Array || isArray(C.prototype))) C = undefined;
-    else if (isObject(C)) {
-      C = C[SPECIES];
-      if (C === null) C = undefined;
-    }
-  } return new (C === undefined ? Array : C)(length === 0 ? 0 : length);
-};
-
-var engineUserAgent = getBuiltIn('navigator', 'userAgent') || '';
-
-var process = global_1.process;
-var versions = process && process.versions;
-var v8 = versions && versions.v8;
-var match, version;
-
-if (v8) {
-  match = v8.split('.');
-  version = match[0] + match[1];
-} else if (engineUserAgent) {
-  match = engineUserAgent.match(/Edge\/(\d+)/);
-  if (!match || match[1] >= 74) {
-    match = engineUserAgent.match(/Chrome\/(\d+)/);
-    if (match) version = match[1];
-  }
-}
-
-var engineV8Version = version && +version;
-
-var SPECIES$1 = wellKnownSymbol('species');
-
-var arrayMethodHasSpeciesSupport = function (METHOD_NAME) {
-  // We can't use this feature detection in V8 since it causes
-  // deoptimization and serious performance degradation
-  // https://github.com/zloirock/core-js/issues/677
-  return engineV8Version >= 51 || !fails(function () {
-    var array = [];
-    var constructor = array.constructor = {};
-    constructor[SPECIES$1] = function () {
-      return { foo: 1 };
-    };
-    return array[METHOD_NAME](Boolean).foo !== 1;
-  });
-};
-
-var IS_CONCAT_SPREADABLE = wellKnownSymbol('isConcatSpreadable');
-var MAX_SAFE_INTEGER = 0x1FFFFFFFFFFFFF;
-var MAXIMUM_ALLOWED_INDEX_EXCEEDED = 'Maximum allowed index exceeded';
-
-// We can't use this feature detection in V8 since it causes
-// deoptimization and serious performance degradation
-// https://github.com/zloirock/core-js/issues/679
-var IS_CONCAT_SPREADABLE_SUPPORT = engineV8Version >= 51 || !fails(function () {
-  var array = [];
-  array[IS_CONCAT_SPREADABLE] = false;
-  return array.concat()[0] !== array;
-});
-
-var SPECIES_SUPPORT = arrayMethodHasSpeciesSupport('concat');
-
-var isConcatSpreadable = function (O) {
-  if (!isObject(O)) return false;
-  var spreadable = O[IS_CONCAT_SPREADABLE];
-  return spreadable !== undefined ? !!spreadable : isArray(O);
-};
-
-var FORCED = !IS_CONCAT_SPREADABLE_SUPPORT || !SPECIES_SUPPORT;
-
-// `Array.prototype.concat` method
-// https://tc39.github.io/ecma262/#sec-array.prototype.concat
-// with adding support of @@isConcatSpreadable and @@species
-_export({ target: 'Array', proto: true, forced: FORCED }, {
-  concat: function concat(arg) { // eslint-disable-line no-unused-vars
-    var O = toObject(this);
-    var A = arraySpeciesCreate(O, 0);
-    var n = 0;
-    var i, k, length, len, E;
-    for (i = -1, length = arguments.length; i < length; i++) {
-      E = i === -1 ? O : arguments[i];
-      if (isConcatSpreadable(E)) {
-        len = toLength(E.length);
-        if (n + len > MAX_SAFE_INTEGER) throw TypeError(MAXIMUM_ALLOWED_INDEX_EXCEEDED);
-        for (k = 0; k < len; k++, n++) if (k in E) createProperty(A, n, E[k]);
-      } else {
-        if (n >= MAX_SAFE_INTEGER) throw TypeError(MAXIMUM_ALLOWED_INDEX_EXCEEDED);
-        createProperty(A, n++, E);
-      }
-    }
-    A.length = n;
-    return A;
-  }
-});
-
 var arrayMethodIsStrict = function (METHOD_NAME, argument) {
   var method = [][METHOD_NAME];
   return !!method && fails(function () {
@@ -721,6 +579,29 @@ _export({ target: 'Array', proto: true, forced: NEGATIVE_ZERO || !STRICT_METHOD 
       : $indexOf(this, searchElement, arguments.length > 1 ? arguments[1] : undefined);
   }
 });
+
+var nativeSymbol = !!Object.getOwnPropertySymbols && !fails(function () {
+  // Chrome 38 Symbol has incorrect toString conversion
+  // eslint-disable-next-line no-undef
+  return !String(Symbol());
+});
+
+var useSymbolAsUid = nativeSymbol
+  // eslint-disable-next-line no-undef
+  && !Symbol.sham
+  // eslint-disable-next-line no-undef
+  && typeof Symbol.iterator == 'symbol';
+
+var WellKnownSymbolsStore = shared('wks');
+var Symbol$1 = global_1.Symbol;
+var createWellKnownSymbol = useSymbolAsUid ? Symbol$1 : Symbol$1 && Symbol$1.withoutSetter || uid;
+
+var wellKnownSymbol = function (name) {
+  if (!has(WellKnownSymbolsStore, name)) {
+    if (nativeSymbol && has(Symbol$1, name)) WellKnownSymbolsStore[name] = Symbol$1[name];
+    else WellKnownSymbolsStore[name] = createWellKnownSymbol('Symbol.' + name);
+  } return WellKnownSymbolsStore[name];
+};
 
 // `Object.keys` method
 // https://tc39.github.io/ecma262/#sec-object.keys
@@ -831,6 +712,12 @@ var addToUnscopables = function (key) {
 };
 
 var iterators = {};
+
+// `ToObject` abstract operation
+// https://tc39.github.io/ecma262/#sec-toobject
+var toObject = function (argument) {
+  return Object(requireObjectCoercible(argument));
+};
 
 var correctPrototypeGetter = !fails(function () {
   function F() { /* empty */ }
@@ -1091,6 +978,29 @@ var functionBindContext = function (fn, that, length) {
   };
 };
 
+// `IsArray` abstract operation
+// https://tc39.github.io/ecma262/#sec-isarray
+var isArray = Array.isArray || function isArray(arg) {
+  return classofRaw(arg) == 'Array';
+};
+
+var SPECIES = wellKnownSymbol('species');
+
+// `ArraySpeciesCreate` abstract operation
+// https://tc39.github.io/ecma262/#sec-arrayspeciescreate
+var arraySpeciesCreate = function (originalArray, length) {
+  var C;
+  if (isArray(originalArray)) {
+    C = originalArray.constructor;
+    // cross-realm fallback
+    if (typeof C == 'function' && (C === Array || isArray(C.prototype))) C = undefined;
+    else if (isObject(C)) {
+      C = C[SPECIES];
+      if (C === null) C = undefined;
+    }
+  } return new (C === undefined ? Array : C)(length === 0 ? 0 : length);
+};
+
 var push = [].push;
 
 // `Array.prototype.{ forEach, map, filter, some, every, find, findIndex }` methods implementation
@@ -1149,6 +1059,42 @@ var arrayIteration = {
   // `Array.prototype.findIndex` method
   // https://tc39.github.io/ecma262/#sec-array.prototype.findIndex
   findIndex: createMethod$1(6)
+};
+
+var engineUserAgent = getBuiltIn('navigator', 'userAgent') || '';
+
+var process = global_1.process;
+var versions = process && process.versions;
+var v8 = versions && versions.v8;
+var match, version;
+
+if (v8) {
+  match = v8.split('.');
+  version = match[0] + match[1];
+} else if (engineUserAgent) {
+  match = engineUserAgent.match(/Edge\/(\d+)/);
+  if (!match || match[1] >= 74) {
+    match = engineUserAgent.match(/Chrome\/(\d+)/);
+    if (match) version = match[1];
+  }
+}
+
+var engineV8Version = version && +version;
+
+var SPECIES$1 = wellKnownSymbol('species');
+
+var arrayMethodHasSpeciesSupport = function (METHOD_NAME) {
+  // We can't use this feature detection in V8 since it causes
+  // deoptimization and serious performance degradation
+  // https://github.com/zloirock/core-js/issues/677
+  return engineV8Version >= 51 || !fails(function () {
+    var array = [];
+    var constructor = array.constructor = {};
+    constructor[SPECIES$1] = function () {
+      return { foo: 1 };
+    };
+    return array[METHOD_NAME](Boolean).foo !== 1;
+  });
 };
 
 var $map = arrayIteration.map;
@@ -1609,7 +1555,7 @@ var HANDLED = 1;
 var UNHANDLED = 2;
 var Internal, OwnPromiseCapability, PromiseWrapper, nativeThen;
 
-var FORCED$1 = isForced_1(PROMISE, function () {
+var FORCED = isForced_1(PROMISE, function () {
   var GLOBAL_CORE_JS_PROMISE = inspectSource(PromiseConstructor) !== String(PromiseConstructor);
   if (!GLOBAL_CORE_JS_PROMISE) {
     // V8 6.6 (Node 10 and Chrome 66) have a bug with resolving custom thenables
@@ -1633,7 +1579,7 @@ var FORCED$1 = isForced_1(PROMISE, function () {
   return !(promise.then(function () { /* empty */ }) instanceof FakePromise);
 });
 
-var INCORRECT_ITERATION = FORCED$1 || !checkCorrectnessOfIteration(function (iterable) {
+var INCORRECT_ITERATION = FORCED || !checkCorrectnessOfIteration(function (iterable) {
   PromiseConstructor.all(iterable)['catch'](function () { /* empty */ });
 });
 
@@ -1779,7 +1725,7 @@ var internalResolve = function (promise, state, value, unwrap) {
 };
 
 // constructor polyfill
-if (FORCED$1) {
+if (FORCED) {
   // 25.4.3.1 Promise(executor)
   PromiseConstructor = function Promise(executor) {
     anInstance(this, PromiseConstructor, PROMISE);
@@ -1860,7 +1806,7 @@ if (FORCED$1) {
   }
 }
 
-_export({ global: true, wrap: true, forced: FORCED$1 }, {
+_export({ global: true, wrap: true, forced: FORCED }, {
   Promise: PromiseConstructor
 });
 
@@ -1870,7 +1816,7 @@ setSpecies(PROMISE);
 PromiseWrapper = getBuiltIn(PROMISE);
 
 // statics
-_export({ target: PROMISE, stat: true, forced: FORCED$1 }, {
+_export({ target: PROMISE, stat: true, forced: FORCED }, {
   // `Promise.reject` method
   // https://tc39.github.io/ecma262/#sec-promise.reject
   reject: function reject(r) {
@@ -1880,7 +1826,7 @@ _export({ target: PROMISE, stat: true, forced: FORCED$1 }, {
   }
 });
 
-_export({ target: PROMISE, stat: true, forced:  FORCED$1 }, {
+_export({ target: PROMISE, stat: true, forced:  FORCED }, {
   // `Promise.resolve` method
   // https://tc39.github.io/ecma262/#sec-promise.resolve
   resolve: function resolve(x) {
@@ -1933,122 +1879,6 @@ _export({ target: PROMISE, stat: true, forced: INCORRECT_ITERATION }, {
     if (result.error) reject(result.value);
     return capability.promise;
   }
-});
-
-var MATCH = wellKnownSymbol('match');
-
-// `IsRegExp` abstract operation
-// https://tc39.github.io/ecma262/#sec-isregexp
-var isRegexp = function (it) {
-  var isRegExp;
-  return isObject(it) && ((isRegExp = it[MATCH]) !== undefined ? !!isRegExp : classofRaw(it) == 'RegExp');
-};
-
-var notARegexp = function (it) {
-  if (isRegexp(it)) {
-    throw TypeError("The method doesn't accept regular expressions");
-  } return it;
-};
-
-var MATCH$1 = wellKnownSymbol('match');
-
-var correctIsRegexpLogic = function (METHOD_NAME) {
-  var regexp = /./;
-  try {
-    '/./'[METHOD_NAME](regexp);
-  } catch (e) {
-    try {
-      regexp[MATCH$1] = false;
-      return '/./'[METHOD_NAME](regexp);
-    } catch (f) { /* empty */ }
-  } return false;
-};
-
-var getOwnPropertyDescriptor$3 = objectGetOwnPropertyDescriptor.f;
-
-
-
-
-
-
-var nativeEndsWith = ''.endsWith;
-var min$2 = Math.min;
-
-var CORRECT_IS_REGEXP_LOGIC = correctIsRegexpLogic('endsWith');
-// https://github.com/zloirock/core-js/pull/702
-var MDN_POLYFILL_BUG =  !CORRECT_IS_REGEXP_LOGIC && !!function () {
-  var descriptor = getOwnPropertyDescriptor$3(String.prototype, 'endsWith');
-  return descriptor && !descriptor.writable;
-}();
-
-// `String.prototype.endsWith` method
-// https://tc39.github.io/ecma262/#sec-string.prototype.endswith
-_export({ target: 'String', proto: true, forced: !MDN_POLYFILL_BUG && !CORRECT_IS_REGEXP_LOGIC }, {
-  endsWith: function endsWith(searchString /* , endPosition = @length */) {
-    var that = String(requireObjectCoercible(this));
-    notARegexp(searchString);
-    var endPosition = arguments.length > 1 ? arguments[1] : undefined;
-    var len = toLength(that.length);
-    var end = endPosition === undefined ? len : min$2(toLength(endPosition), len);
-    var search = String(searchString);
-    return nativeEndsWith
-      ? nativeEndsWith.call(that, search, end)
-      : that.slice(end - search.length, end) === search;
-  }
-});
-
-// `String.prototype.{ codePointAt, at }` methods implementation
-var createMethod$2 = function (CONVERT_TO_STRING) {
-  return function ($this, pos) {
-    var S = String(requireObjectCoercible($this));
-    var position = toInteger(pos);
-    var size = S.length;
-    var first, second;
-    if (position < 0 || position >= size) return CONVERT_TO_STRING ? '' : undefined;
-    first = S.charCodeAt(position);
-    return first < 0xD800 || first > 0xDBFF || position + 1 === size
-      || (second = S.charCodeAt(position + 1)) < 0xDC00 || second > 0xDFFF
-        ? CONVERT_TO_STRING ? S.charAt(position) : first
-        : CONVERT_TO_STRING ? S.slice(position, position + 2) : (first - 0xD800 << 10) + (second - 0xDC00) + 0x10000;
-  };
-};
-
-var stringMultibyte = {
-  // `String.prototype.codePointAt` method
-  // https://tc39.github.io/ecma262/#sec-string.prototype.codepointat
-  codeAt: createMethod$2(false),
-  // `String.prototype.at` method
-  // https://github.com/mathiasbynens/String.prototype.at
-  charAt: createMethod$2(true)
-};
-
-var charAt = stringMultibyte.charAt;
-
-
-
-var STRING_ITERATOR = 'String Iterator';
-var setInternalState$2 = internalState.set;
-var getInternalState$2 = internalState.getterFor(STRING_ITERATOR);
-
-// `String.prototype[@@iterator]` method
-// https://tc39.github.io/ecma262/#sec-string.prototype-@@iterator
-defineIterator(String, 'String', function (iterated) {
-  setInternalState$2(this, {
-    type: STRING_ITERATOR,
-    string: String(iterated),
-    index: 0
-  });
-// `%StringIteratorPrototype%.next` method
-// https://tc39.github.io/ecma262/#sec-%stringiteratorprototype%.next
-}, function next() {
-  var state = getInternalState$2(this);
-  var string = state.string;
-  var index = state.index;
-  var point;
-  if (index >= string.length) return { value: undefined, done: true };
-  point = charAt(string, index);
-  state.index += point.length;
-  return { value: point, done: false };
 });
 
 // iterable DOM collections
@@ -2115,1642 +1945,6 @@ for (var COLLECTION_NAME in domIterables) {
   }
 }
 
-var ITERATOR$6 = wellKnownSymbol('iterator');
-
-var nativeUrl = !fails(function () {
-  var url = new URL('b?a=1&b=2&c=3', 'http://a');
-  var searchParams = url.searchParams;
-  var result = '';
-  url.pathname = 'c%20d';
-  searchParams.forEach(function (value, key) {
-    searchParams['delete']('b');
-    result += key + value;
-  });
-  return (isPure && !url.toJSON)
-    || !searchParams.sort
-    || url.href !== 'http://a/c%20d?a=1&c=3'
-    || searchParams.get('c') !== '3'
-    || String(new URLSearchParams('?a=1')) !== 'a=1'
-    || !searchParams[ITERATOR$6]
-    // throws in Edge
-    || new URL('https://a@b').username !== 'a'
-    || new URLSearchParams(new URLSearchParams('a=b')).get('a') !== 'b'
-    // not punycoded in Edge
-    || new URL('http://тест').host !== 'xn--e1aybc'
-    // not escaped in Chrome 62-
-    || new URL('http://a#б').hash !== '#%D0%B1'
-    // fails in Chrome 66-
-    || result !== 'a1c3'
-    // throws in Safari
-    || new URL('http://x', undefined).host !== 'x';
-});
-
-var nativeAssign = Object.assign;
-var defineProperty$2 = Object.defineProperty;
-
-// `Object.assign` method
-// https://tc39.github.io/ecma262/#sec-object.assign
-var objectAssign = !nativeAssign || fails(function () {
-  // should have correct order of operations (Edge bug)
-  if (descriptors && nativeAssign({ b: 1 }, nativeAssign(defineProperty$2({}, 'a', {
-    enumerable: true,
-    get: function () {
-      defineProperty$2(this, 'b', {
-        value: 3,
-        enumerable: false
-      });
-    }
-  }), { b: 2 })).b !== 1) return true;
-  // should work with symbols and should have deterministic property order (V8 bug)
-  var A = {};
-  var B = {};
-  // eslint-disable-next-line no-undef
-  var symbol = Symbol();
-  var alphabet = 'abcdefghijklmnopqrst';
-  A[symbol] = 7;
-  alphabet.split('').forEach(function (chr) { B[chr] = chr; });
-  return nativeAssign({}, A)[symbol] != 7 || objectKeys(nativeAssign({}, B)).join('') != alphabet;
-}) ? function assign(target, source) { // eslint-disable-line no-unused-vars
-  var T = toObject(target);
-  var argumentsLength = arguments.length;
-  var index = 1;
-  var getOwnPropertySymbols = objectGetOwnPropertySymbols.f;
-  var propertyIsEnumerable = objectPropertyIsEnumerable.f;
-  while (argumentsLength > index) {
-    var S = indexedObject(arguments[index++]);
-    var keys = getOwnPropertySymbols ? objectKeys(S).concat(getOwnPropertySymbols(S)) : objectKeys(S);
-    var length = keys.length;
-    var j = 0;
-    var key;
-    while (length > j) {
-      key = keys[j++];
-      if (!descriptors || propertyIsEnumerable.call(S, key)) T[key] = S[key];
-    }
-  } return T;
-} : nativeAssign;
-
-// `Array.from` method implementation
-// https://tc39.github.io/ecma262/#sec-array.from
-var arrayFrom = function from(arrayLike /* , mapfn = undefined, thisArg = undefined */) {
-  var O = toObject(arrayLike);
-  var C = typeof this == 'function' ? this : Array;
-  var argumentsLength = arguments.length;
-  var mapfn = argumentsLength > 1 ? arguments[1] : undefined;
-  var mapping = mapfn !== undefined;
-  var iteratorMethod = getIteratorMethod(O);
-  var index = 0;
-  var length, result, step, iterator, next, value;
-  if (mapping) mapfn = functionBindContext(mapfn, argumentsLength > 2 ? arguments[2] : undefined, 2);
-  // if the target is not iterable or it's an array with the default iterator - use a simple case
-  if (iteratorMethod != undefined && !(C == Array && isArrayIteratorMethod(iteratorMethod))) {
-    iterator = iteratorMethod.call(O);
-    next = iterator.next;
-    result = new C();
-    for (;!(step = next.call(iterator)).done; index++) {
-      value = mapping ? callWithSafeIterationClosing(iterator, mapfn, [step.value, index], true) : step.value;
-      createProperty(result, index, value);
-    }
-  } else {
-    length = toLength(O.length);
-    result = new C(length);
-    for (;length > index; index++) {
-      value = mapping ? mapfn(O[index], index) : O[index];
-      createProperty(result, index, value);
-    }
-  }
-  result.length = index;
-  return result;
-};
-
-// based on https://github.com/bestiejs/punycode.js/blob/master/punycode.js
-var maxInt = 2147483647; // aka. 0x7FFFFFFF or 2^31-1
-var base = 36;
-var tMin = 1;
-var tMax = 26;
-var skew = 38;
-var damp = 700;
-var initialBias = 72;
-var initialN = 128; // 0x80
-var delimiter = '-'; // '\x2D'
-var regexNonASCII = /[^\0-\u007E]/; // non-ASCII chars
-var regexSeparators = /[.\u3002\uFF0E\uFF61]/g; // RFC 3490 separators
-var OVERFLOW_ERROR = 'Overflow: input needs wider integers to process';
-var baseMinusTMin = base - tMin;
-var floor$1 = Math.floor;
-var stringFromCharCode = String.fromCharCode;
-
-/**
- * Creates an array containing the numeric code points of each Unicode
- * character in the string. While JavaScript uses UCS-2 internally,
- * this function will convert a pair of surrogate halves (each of which
- * UCS-2 exposes as separate characters) into a single code point,
- * matching UTF-16.
- */
-var ucs2decode = function (string) {
-  var output = [];
-  var counter = 0;
-  var length = string.length;
-  while (counter < length) {
-    var value = string.charCodeAt(counter++);
-    if (value >= 0xD800 && value <= 0xDBFF && counter < length) {
-      // It's a high surrogate, and there is a next character.
-      var extra = string.charCodeAt(counter++);
-      if ((extra & 0xFC00) == 0xDC00) { // Low surrogate.
-        output.push(((value & 0x3FF) << 10) + (extra & 0x3FF) + 0x10000);
-      } else {
-        // It's an unmatched surrogate; only append this code unit, in case the
-        // next code unit is the high surrogate of a surrogate pair.
-        output.push(value);
-        counter--;
-      }
-    } else {
-      output.push(value);
-    }
-  }
-  return output;
-};
-
-/**
- * Converts a digit/integer into a basic code point.
- */
-var digitToBasic = function (digit) {
-  //  0..25 map to ASCII a..z or A..Z
-  // 26..35 map to ASCII 0..9
-  return digit + 22 + 75 * (digit < 26);
-};
-
-/**
- * Bias adaptation function as per section 3.4 of RFC 3492.
- * https://tools.ietf.org/html/rfc3492#section-3.4
- */
-var adapt = function (delta, numPoints, firstTime) {
-  var k = 0;
-  delta = firstTime ? floor$1(delta / damp) : delta >> 1;
-  delta += floor$1(delta / numPoints);
-  for (; delta > baseMinusTMin * tMax >> 1; k += base) {
-    delta = floor$1(delta / baseMinusTMin);
-  }
-  return floor$1(k + (baseMinusTMin + 1) * delta / (delta + skew));
-};
-
-/**
- * Converts a string of Unicode symbols (e.g. a domain name label) to a
- * Punycode string of ASCII-only symbols.
- */
-// eslint-disable-next-line  max-statements
-var encode = function (input) {
-  var output = [];
-
-  // Convert the input in UCS-2 to an array of Unicode code points.
-  input = ucs2decode(input);
-
-  // Cache the length.
-  var inputLength = input.length;
-
-  // Initialize the state.
-  var n = initialN;
-  var delta = 0;
-  var bias = initialBias;
-  var i, currentValue;
-
-  // Handle the basic code points.
-  for (i = 0; i < input.length; i++) {
-    currentValue = input[i];
-    if (currentValue < 0x80) {
-      output.push(stringFromCharCode(currentValue));
-    }
-  }
-
-  var basicLength = output.length; // number of basic code points.
-  var handledCPCount = basicLength; // number of code points that have been handled;
-
-  // Finish the basic string with a delimiter unless it's empty.
-  if (basicLength) {
-    output.push(delimiter);
-  }
-
-  // Main encoding loop:
-  while (handledCPCount < inputLength) {
-    // All non-basic code points < n have been handled already. Find the next larger one:
-    var m = maxInt;
-    for (i = 0; i < input.length; i++) {
-      currentValue = input[i];
-      if (currentValue >= n && currentValue < m) {
-        m = currentValue;
-      }
-    }
-
-    // Increase `delta` enough to advance the decoder's <n,i> state to <m,0>, but guard against overflow.
-    var handledCPCountPlusOne = handledCPCount + 1;
-    if (m - n > floor$1((maxInt - delta) / handledCPCountPlusOne)) {
-      throw RangeError(OVERFLOW_ERROR);
-    }
-
-    delta += (m - n) * handledCPCountPlusOne;
-    n = m;
-
-    for (i = 0; i < input.length; i++) {
-      currentValue = input[i];
-      if (currentValue < n && ++delta > maxInt) {
-        throw RangeError(OVERFLOW_ERROR);
-      }
-      if (currentValue == n) {
-        // Represent delta as a generalized variable-length integer.
-        var q = delta;
-        for (var k = base; /* no condition */; k += base) {
-          var t = k <= bias ? tMin : (k >= bias + tMax ? tMax : k - bias);
-          if (q < t) break;
-          var qMinusT = q - t;
-          var baseMinusT = base - t;
-          output.push(stringFromCharCode(digitToBasic(t + qMinusT % baseMinusT)));
-          q = floor$1(qMinusT / baseMinusT);
-        }
-
-        output.push(stringFromCharCode(digitToBasic(q)));
-        bias = adapt(delta, handledCPCountPlusOne, handledCPCount == basicLength);
-        delta = 0;
-        ++handledCPCount;
-      }
-    }
-
-    ++delta;
-    ++n;
-  }
-  return output.join('');
-};
-
-var stringPunycodeToAscii = function (input) {
-  var encoded = [];
-  var labels = input.toLowerCase().replace(regexSeparators, '\u002E').split('.');
-  var i, label;
-  for (i = 0; i < labels.length; i++) {
-    label = labels[i];
-    encoded.push(regexNonASCII.test(label) ? 'xn--' + encode(label) : label);
-  }
-  return encoded.join('.');
-};
-
-var getIterator = function (it) {
-  var iteratorMethod = getIteratorMethod(it);
-  if (typeof iteratorMethod != 'function') {
-    throw TypeError(String(it) + ' is not iterable');
-  } return anObject(iteratorMethod.call(it));
-};
-
-// TODO: in core-js@4, move /modules/ dependencies to public entries for better optimization by tools like `preset-env`
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-var $fetch$1 = getBuiltIn('fetch');
-var Headers = getBuiltIn('Headers');
-var ITERATOR$7 = wellKnownSymbol('iterator');
-var URL_SEARCH_PARAMS = 'URLSearchParams';
-var URL_SEARCH_PARAMS_ITERATOR = URL_SEARCH_PARAMS + 'Iterator';
-var setInternalState$3 = internalState.set;
-var getInternalParamsState = internalState.getterFor(URL_SEARCH_PARAMS);
-var getInternalIteratorState = internalState.getterFor(URL_SEARCH_PARAMS_ITERATOR);
-
-var plus = /\+/g;
-var sequences = Array(4);
-
-var percentSequence = function (bytes) {
-  return sequences[bytes - 1] || (sequences[bytes - 1] = RegExp('((?:%[\\da-f]{2}){' + bytes + '})', 'gi'));
-};
-
-var percentDecode = function (sequence) {
-  try {
-    return decodeURIComponent(sequence);
-  } catch (error) {
-    return sequence;
-  }
-};
-
-var deserialize = function (it) {
-  var result = it.replace(plus, ' ');
-  var bytes = 4;
-  try {
-    return decodeURIComponent(result);
-  } catch (error) {
-    while (bytes) {
-      result = result.replace(percentSequence(bytes--), percentDecode);
-    }
-    return result;
-  }
-};
-
-var find = /[!'()~]|%20/g;
-
-var replace = {
-  '!': '%21',
-  "'": '%27',
-  '(': '%28',
-  ')': '%29',
-  '~': '%7E',
-  '%20': '+'
-};
-
-var replacer = function (match) {
-  return replace[match];
-};
-
-var serialize = function (it) {
-  return encodeURIComponent(it).replace(find, replacer);
-};
-
-var parseSearchParams = function (result, query) {
-  if (query) {
-    var attributes = query.split('&');
-    var index = 0;
-    var attribute, entry;
-    while (index < attributes.length) {
-      attribute = attributes[index++];
-      if (attribute.length) {
-        entry = attribute.split('=');
-        result.push({
-          key: deserialize(entry.shift()),
-          value: deserialize(entry.join('='))
-        });
-      }
-    }
-  }
-};
-
-var updateSearchParams = function (query) {
-  this.entries.length = 0;
-  parseSearchParams(this.entries, query);
-};
-
-var validateArgumentsLength = function (passed, required) {
-  if (passed < required) throw TypeError('Not enough arguments');
-};
-
-var URLSearchParamsIterator = createIteratorConstructor(function Iterator(params, kind) {
-  setInternalState$3(this, {
-    type: URL_SEARCH_PARAMS_ITERATOR,
-    iterator: getIterator(getInternalParamsState(params).entries),
-    kind: kind
-  });
-}, 'Iterator', function next() {
-  var state = getInternalIteratorState(this);
-  var kind = state.kind;
-  var step = state.iterator.next();
-  var entry = step.value;
-  if (!step.done) {
-    step.value = kind === 'keys' ? entry.key : kind === 'values' ? entry.value : [entry.key, entry.value];
-  } return step;
-});
-
-// `URLSearchParams` constructor
-// https://url.spec.whatwg.org/#interface-urlsearchparams
-var URLSearchParamsConstructor = function URLSearchParams(/* init */) {
-  anInstance(this, URLSearchParamsConstructor, URL_SEARCH_PARAMS);
-  var init = arguments.length > 0 ? arguments[0] : undefined;
-  var that = this;
-  var entries = [];
-  var iteratorMethod, iterator, next, step, entryIterator, entryNext, first, second, key;
-
-  setInternalState$3(that, {
-    type: URL_SEARCH_PARAMS,
-    entries: entries,
-    updateURL: function () { /* empty */ },
-    updateSearchParams: updateSearchParams
-  });
-
-  if (init !== undefined) {
-    if (isObject(init)) {
-      iteratorMethod = getIteratorMethod(init);
-      if (typeof iteratorMethod === 'function') {
-        iterator = iteratorMethod.call(init);
-        next = iterator.next;
-        while (!(step = next.call(iterator)).done) {
-          entryIterator = getIterator(anObject(step.value));
-          entryNext = entryIterator.next;
-          if (
-            (first = entryNext.call(entryIterator)).done ||
-            (second = entryNext.call(entryIterator)).done ||
-            !entryNext.call(entryIterator).done
-          ) throw TypeError('Expected sequence with length 2');
-          entries.push({ key: first.value + '', value: second.value + '' });
-        }
-      } else for (key in init) if (has(init, key)) entries.push({ key: key, value: init[key] + '' });
-    } else {
-      parseSearchParams(entries, typeof init === 'string' ? init.charAt(0) === '?' ? init.slice(1) : init : init + '');
-    }
-  }
-};
-
-var URLSearchParamsPrototype = URLSearchParamsConstructor.prototype;
-
-redefineAll(URLSearchParamsPrototype, {
-  // `URLSearchParams.prototype.appent` method
-  // https://url.spec.whatwg.org/#dom-urlsearchparams-append
-  append: function append(name, value) {
-    validateArgumentsLength(arguments.length, 2);
-    var state = getInternalParamsState(this);
-    state.entries.push({ key: name + '', value: value + '' });
-    state.updateURL();
-  },
-  // `URLSearchParams.prototype.delete` method
-  // https://url.spec.whatwg.org/#dom-urlsearchparams-delete
-  'delete': function (name) {
-    validateArgumentsLength(arguments.length, 1);
-    var state = getInternalParamsState(this);
-    var entries = state.entries;
-    var key = name + '';
-    var index = 0;
-    while (index < entries.length) {
-      if (entries[index].key === key) entries.splice(index, 1);
-      else index++;
-    }
-    state.updateURL();
-  },
-  // `URLSearchParams.prototype.get` method
-  // https://url.spec.whatwg.org/#dom-urlsearchparams-get
-  get: function get(name) {
-    validateArgumentsLength(arguments.length, 1);
-    var entries = getInternalParamsState(this).entries;
-    var key = name + '';
-    var index = 0;
-    for (; index < entries.length; index++) {
-      if (entries[index].key === key) return entries[index].value;
-    }
-    return null;
-  },
-  // `URLSearchParams.prototype.getAll` method
-  // https://url.spec.whatwg.org/#dom-urlsearchparams-getall
-  getAll: function getAll(name) {
-    validateArgumentsLength(arguments.length, 1);
-    var entries = getInternalParamsState(this).entries;
-    var key = name + '';
-    var result = [];
-    var index = 0;
-    for (; index < entries.length; index++) {
-      if (entries[index].key === key) result.push(entries[index].value);
-    }
-    return result;
-  },
-  // `URLSearchParams.prototype.has` method
-  // https://url.spec.whatwg.org/#dom-urlsearchparams-has
-  has: function has(name) {
-    validateArgumentsLength(arguments.length, 1);
-    var entries = getInternalParamsState(this).entries;
-    var key = name + '';
-    var index = 0;
-    while (index < entries.length) {
-      if (entries[index++].key === key) return true;
-    }
-    return false;
-  },
-  // `URLSearchParams.prototype.set` method
-  // https://url.spec.whatwg.org/#dom-urlsearchparams-set
-  set: function set(name, value) {
-    validateArgumentsLength(arguments.length, 1);
-    var state = getInternalParamsState(this);
-    var entries = state.entries;
-    var found = false;
-    var key = name + '';
-    var val = value + '';
-    var index = 0;
-    var entry;
-    for (; index < entries.length; index++) {
-      entry = entries[index];
-      if (entry.key === key) {
-        if (found) entries.splice(index--, 1);
-        else {
-          found = true;
-          entry.value = val;
-        }
-      }
-    }
-    if (!found) entries.push({ key: key, value: val });
-    state.updateURL();
-  },
-  // `URLSearchParams.prototype.sort` method
-  // https://url.spec.whatwg.org/#dom-urlsearchparams-sort
-  sort: function sort() {
-    var state = getInternalParamsState(this);
-    var entries = state.entries;
-    // Array#sort is not stable in some engines
-    var slice = entries.slice();
-    var entry, entriesIndex, sliceIndex;
-    entries.length = 0;
-    for (sliceIndex = 0; sliceIndex < slice.length; sliceIndex++) {
-      entry = slice[sliceIndex];
-      for (entriesIndex = 0; entriesIndex < sliceIndex; entriesIndex++) {
-        if (entries[entriesIndex].key > entry.key) {
-          entries.splice(entriesIndex, 0, entry);
-          break;
-        }
-      }
-      if (entriesIndex === sliceIndex) entries.push(entry);
-    }
-    state.updateURL();
-  },
-  // `URLSearchParams.prototype.forEach` method
-  forEach: function forEach(callback /* , thisArg */) {
-    var entries = getInternalParamsState(this).entries;
-    var boundFunction = functionBindContext(callback, arguments.length > 1 ? arguments[1] : undefined, 3);
-    var index = 0;
-    var entry;
-    while (index < entries.length) {
-      entry = entries[index++];
-      boundFunction(entry.value, entry.key, this);
-    }
-  },
-  // `URLSearchParams.prototype.keys` method
-  keys: function keys() {
-    return new URLSearchParamsIterator(this, 'keys');
-  },
-  // `URLSearchParams.prototype.values` method
-  values: function values() {
-    return new URLSearchParamsIterator(this, 'values');
-  },
-  // `URLSearchParams.prototype.entries` method
-  entries: function entries() {
-    return new URLSearchParamsIterator(this, 'entries');
-  }
-}, { enumerable: true });
-
-// `URLSearchParams.prototype[@@iterator]` method
-redefine(URLSearchParamsPrototype, ITERATOR$7, URLSearchParamsPrototype.entries);
-
-// `URLSearchParams.prototype.toString` method
-// https://url.spec.whatwg.org/#urlsearchparams-stringification-behavior
-redefine(URLSearchParamsPrototype, 'toString', function toString() {
-  var entries = getInternalParamsState(this).entries;
-  var result = [];
-  var index = 0;
-  var entry;
-  while (index < entries.length) {
-    entry = entries[index++];
-    result.push(serialize(entry.key) + '=' + serialize(entry.value));
-  } return result.join('&');
-}, { enumerable: true });
-
-setToStringTag(URLSearchParamsConstructor, URL_SEARCH_PARAMS);
-
-_export({ global: true, forced: !nativeUrl }, {
-  URLSearchParams: URLSearchParamsConstructor
-});
-
-// Wrap `fetch` for correct work with polyfilled `URLSearchParams`
-// https://github.com/zloirock/core-js/issues/674
-if (!nativeUrl && typeof $fetch$1 == 'function' && typeof Headers == 'function') {
-  _export({ global: true, enumerable: true, forced: true }, {
-    fetch: function fetch(input /* , init */) {
-      var args = [input];
-      var init, body, headers;
-      if (arguments.length > 1) {
-        init = arguments[1];
-        if (isObject(init)) {
-          body = init.body;
-          if (classof(body) === URL_SEARCH_PARAMS) {
-            headers = init.headers ? new Headers(init.headers) : new Headers();
-            if (!headers.has('content-type')) {
-              headers.set('content-type', 'application/x-www-form-urlencoded;charset=UTF-8');
-            }
-            init = objectCreate(init, {
-              body: createPropertyDescriptor(0, String(body)),
-              headers: createPropertyDescriptor(0, headers)
-            });
-          }
-        }
-        args.push(init);
-      } return $fetch$1.apply(this, args);
-    }
-  });
-}
-
-var web_urlSearchParams = {
-  URLSearchParams: URLSearchParamsConstructor,
-  getState: getInternalParamsState
-};
-
-// TODO: in core-js@4, move /modules/ dependencies to public entries for better optimization by tools like `preset-env`
-
-
-
-
-
-
-
-
-
-
-
-var codeAt = stringMultibyte.codeAt;
-
-
-
-
-
-var NativeURL = global_1.URL;
-var URLSearchParams$1 = web_urlSearchParams.URLSearchParams;
-var getInternalSearchParamsState = web_urlSearchParams.getState;
-var setInternalState$4 = internalState.set;
-var getInternalURLState = internalState.getterFor('URL');
-var floor$2 = Math.floor;
-var pow = Math.pow;
-
-var INVALID_AUTHORITY = 'Invalid authority';
-var INVALID_SCHEME = 'Invalid scheme';
-var INVALID_HOST = 'Invalid host';
-var INVALID_PORT = 'Invalid port';
-
-var ALPHA = /[A-Za-z]/;
-var ALPHANUMERIC = /[\d+-.A-Za-z]/;
-var DIGIT = /\d/;
-var HEX_START = /^(0x|0X)/;
-var OCT = /^[0-7]+$/;
-var DEC = /^\d+$/;
-var HEX = /^[\dA-Fa-f]+$/;
-// eslint-disable-next-line no-control-regex
-var FORBIDDEN_HOST_CODE_POINT = /[\u0000\u0009\u000A\u000D #%/:?@[\\]]/;
-// eslint-disable-next-line no-control-regex
-var FORBIDDEN_HOST_CODE_POINT_EXCLUDING_PERCENT = /[\u0000\u0009\u000A\u000D #/:?@[\\]]/;
-// eslint-disable-next-line no-control-regex
-var LEADING_AND_TRAILING_C0_CONTROL_OR_SPACE = /^[\u0000-\u001F ]+|[\u0000-\u001F ]+$/g;
-// eslint-disable-next-line no-control-regex
-var TAB_AND_NEW_LINE = /[\u0009\u000A\u000D]/g;
-var EOF;
-
-var parseHost = function (url, input) {
-  var result, codePoints, index;
-  if (input.charAt(0) == '[') {
-    if (input.charAt(input.length - 1) != ']') return INVALID_HOST;
-    result = parseIPv6(input.slice(1, -1));
-    if (!result) return INVALID_HOST;
-    url.host = result;
-  // opaque host
-  } else if (!isSpecial(url)) {
-    if (FORBIDDEN_HOST_CODE_POINT_EXCLUDING_PERCENT.test(input)) return INVALID_HOST;
-    result = '';
-    codePoints = arrayFrom(input);
-    for (index = 0; index < codePoints.length; index++) {
-      result += percentEncode(codePoints[index], C0ControlPercentEncodeSet);
-    }
-    url.host = result;
-  } else {
-    input = stringPunycodeToAscii(input);
-    if (FORBIDDEN_HOST_CODE_POINT.test(input)) return INVALID_HOST;
-    result = parseIPv4(input);
-    if (result === null) return INVALID_HOST;
-    url.host = result;
-  }
-};
-
-var parseIPv4 = function (input) {
-  var parts = input.split('.');
-  var partsLength, numbers, index, part, radix, number, ipv4;
-  if (parts.length && parts[parts.length - 1] == '') {
-    parts.pop();
-  }
-  partsLength = parts.length;
-  if (partsLength > 4) return input;
-  numbers = [];
-  for (index = 0; index < partsLength; index++) {
-    part = parts[index];
-    if (part == '') return input;
-    radix = 10;
-    if (part.length > 1 && part.charAt(0) == '0') {
-      radix = HEX_START.test(part) ? 16 : 8;
-      part = part.slice(radix == 8 ? 1 : 2);
-    }
-    if (part === '') {
-      number = 0;
-    } else {
-      if (!(radix == 10 ? DEC : radix == 8 ? OCT : HEX).test(part)) return input;
-      number = parseInt(part, radix);
-    }
-    numbers.push(number);
-  }
-  for (index = 0; index < partsLength; index++) {
-    number = numbers[index];
-    if (index == partsLength - 1) {
-      if (number >= pow(256, 5 - partsLength)) return null;
-    } else if (number > 255) return null;
-  }
-  ipv4 = numbers.pop();
-  for (index = 0; index < numbers.length; index++) {
-    ipv4 += numbers[index] * pow(256, 3 - index);
-  }
-  return ipv4;
-};
-
-// eslint-disable-next-line max-statements
-var parseIPv6 = function (input) {
-  var address = [0, 0, 0, 0, 0, 0, 0, 0];
-  var pieceIndex = 0;
-  var compress = null;
-  var pointer = 0;
-  var value, length, numbersSeen, ipv4Piece, number, swaps, swap;
-
-  var char = function () {
-    return input.charAt(pointer);
-  };
-
-  if (char() == ':') {
-    if (input.charAt(1) != ':') return;
-    pointer += 2;
-    pieceIndex++;
-    compress = pieceIndex;
-  }
-  while (char()) {
-    if (pieceIndex == 8) return;
-    if (char() == ':') {
-      if (compress !== null) return;
-      pointer++;
-      pieceIndex++;
-      compress = pieceIndex;
-      continue;
-    }
-    value = length = 0;
-    while (length < 4 && HEX.test(char())) {
-      value = value * 16 + parseInt(char(), 16);
-      pointer++;
-      length++;
-    }
-    if (char() == '.') {
-      if (length == 0) return;
-      pointer -= length;
-      if (pieceIndex > 6) return;
-      numbersSeen = 0;
-      while (char()) {
-        ipv4Piece = null;
-        if (numbersSeen > 0) {
-          if (char() == '.' && numbersSeen < 4) pointer++;
-          else return;
-        }
-        if (!DIGIT.test(char())) return;
-        while (DIGIT.test(char())) {
-          number = parseInt(char(), 10);
-          if (ipv4Piece === null) ipv4Piece = number;
-          else if (ipv4Piece == 0) return;
-          else ipv4Piece = ipv4Piece * 10 + number;
-          if (ipv4Piece > 255) return;
-          pointer++;
-        }
-        address[pieceIndex] = address[pieceIndex] * 256 + ipv4Piece;
-        numbersSeen++;
-        if (numbersSeen == 2 || numbersSeen == 4) pieceIndex++;
-      }
-      if (numbersSeen != 4) return;
-      break;
-    } else if (char() == ':') {
-      pointer++;
-      if (!char()) return;
-    } else if (char()) return;
-    address[pieceIndex++] = value;
-  }
-  if (compress !== null) {
-    swaps = pieceIndex - compress;
-    pieceIndex = 7;
-    while (pieceIndex != 0 && swaps > 0) {
-      swap = address[pieceIndex];
-      address[pieceIndex--] = address[compress + swaps - 1];
-      address[compress + --swaps] = swap;
-    }
-  } else if (pieceIndex != 8) return;
-  return address;
-};
-
-var findLongestZeroSequence = function (ipv6) {
-  var maxIndex = null;
-  var maxLength = 1;
-  var currStart = null;
-  var currLength = 0;
-  var index = 0;
-  for (; index < 8; index++) {
-    if (ipv6[index] !== 0) {
-      if (currLength > maxLength) {
-        maxIndex = currStart;
-        maxLength = currLength;
-      }
-      currStart = null;
-      currLength = 0;
-    } else {
-      if (currStart === null) currStart = index;
-      ++currLength;
-    }
-  }
-  if (currLength > maxLength) {
-    maxIndex = currStart;
-    maxLength = currLength;
-  }
-  return maxIndex;
-};
-
-var serializeHost = function (host) {
-  var result, index, compress, ignore0;
-  // ipv4
-  if (typeof host == 'number') {
-    result = [];
-    for (index = 0; index < 4; index++) {
-      result.unshift(host % 256);
-      host = floor$2(host / 256);
-    } return result.join('.');
-  // ipv6
-  } else if (typeof host == 'object') {
-    result = '';
-    compress = findLongestZeroSequence(host);
-    for (index = 0; index < 8; index++) {
-      if (ignore0 && host[index] === 0) continue;
-      if (ignore0) ignore0 = false;
-      if (compress === index) {
-        result += index ? ':' : '::';
-        ignore0 = true;
-      } else {
-        result += host[index].toString(16);
-        if (index < 7) result += ':';
-      }
-    }
-    return '[' + result + ']';
-  } return host;
-};
-
-var C0ControlPercentEncodeSet = {};
-var fragmentPercentEncodeSet = objectAssign({}, C0ControlPercentEncodeSet, {
-  ' ': 1, '"': 1, '<': 1, '>': 1, '`': 1
-});
-var pathPercentEncodeSet = objectAssign({}, fragmentPercentEncodeSet, {
-  '#': 1, '?': 1, '{': 1, '}': 1
-});
-var userinfoPercentEncodeSet = objectAssign({}, pathPercentEncodeSet, {
-  '/': 1, ':': 1, ';': 1, '=': 1, '@': 1, '[': 1, '\\': 1, ']': 1, '^': 1, '|': 1
-});
-
-var percentEncode = function (char, set) {
-  var code = codeAt(char, 0);
-  return code > 0x20 && code < 0x7F && !has(set, char) ? char : encodeURIComponent(char);
-};
-
-var specialSchemes = {
-  ftp: 21,
-  file: null,
-  http: 80,
-  https: 443,
-  ws: 80,
-  wss: 443
-};
-
-var isSpecial = function (url) {
-  return has(specialSchemes, url.scheme);
-};
-
-var includesCredentials = function (url) {
-  return url.username != '' || url.password != '';
-};
-
-var cannotHaveUsernamePasswordPort = function (url) {
-  return !url.host || url.cannotBeABaseURL || url.scheme == 'file';
-};
-
-var isWindowsDriveLetter = function (string, normalized) {
-  var second;
-  return string.length == 2 && ALPHA.test(string.charAt(0))
-    && ((second = string.charAt(1)) == ':' || (!normalized && second == '|'));
-};
-
-var startsWithWindowsDriveLetter = function (string) {
-  var third;
-  return string.length > 1 && isWindowsDriveLetter(string.slice(0, 2)) && (
-    string.length == 2 ||
-    ((third = string.charAt(2)) === '/' || third === '\\' || third === '?' || third === '#')
-  );
-};
-
-var shortenURLsPath = function (url) {
-  var path = url.path;
-  var pathSize = path.length;
-  if (pathSize && (url.scheme != 'file' || pathSize != 1 || !isWindowsDriveLetter(path[0], true))) {
-    path.pop();
-  }
-};
-
-var isSingleDot = function (segment) {
-  return segment === '.' || segment.toLowerCase() === '%2e';
-};
-
-var isDoubleDot = function (segment) {
-  segment = segment.toLowerCase();
-  return segment === '..' || segment === '%2e.' || segment === '.%2e' || segment === '%2e%2e';
-};
-
-// States:
-var SCHEME_START = {};
-var SCHEME = {};
-var NO_SCHEME = {};
-var SPECIAL_RELATIVE_OR_AUTHORITY = {};
-var PATH_OR_AUTHORITY = {};
-var RELATIVE = {};
-var RELATIVE_SLASH = {};
-var SPECIAL_AUTHORITY_SLASHES = {};
-var SPECIAL_AUTHORITY_IGNORE_SLASHES = {};
-var AUTHORITY = {};
-var HOST = {};
-var HOSTNAME = {};
-var PORT = {};
-var FILE = {};
-var FILE_SLASH = {};
-var FILE_HOST = {};
-var PATH_START = {};
-var PATH = {};
-var CANNOT_BE_A_BASE_URL_PATH = {};
-var QUERY = {};
-var FRAGMENT = {};
-
-// eslint-disable-next-line max-statements
-var parseURL = function (url, input, stateOverride, base) {
-  var state = stateOverride || SCHEME_START;
-  var pointer = 0;
-  var buffer = '';
-  var seenAt = false;
-  var seenBracket = false;
-  var seenPasswordToken = false;
-  var codePoints, char, bufferCodePoints, failure;
-
-  if (!stateOverride) {
-    url.scheme = '';
-    url.username = '';
-    url.password = '';
-    url.host = null;
-    url.port = null;
-    url.path = [];
-    url.query = null;
-    url.fragment = null;
-    url.cannotBeABaseURL = false;
-    input = input.replace(LEADING_AND_TRAILING_C0_CONTROL_OR_SPACE, '');
-  }
-
-  input = input.replace(TAB_AND_NEW_LINE, '');
-
-  codePoints = arrayFrom(input);
-
-  while (pointer <= codePoints.length) {
-    char = codePoints[pointer];
-    switch (state) {
-      case SCHEME_START:
-        if (char && ALPHA.test(char)) {
-          buffer += char.toLowerCase();
-          state = SCHEME;
-        } else if (!stateOverride) {
-          state = NO_SCHEME;
-          continue;
-        } else return INVALID_SCHEME;
-        break;
-
-      case SCHEME:
-        if (char && (ALPHANUMERIC.test(char) || char == '+' || char == '-' || char == '.')) {
-          buffer += char.toLowerCase();
-        } else if (char == ':') {
-          if (stateOverride && (
-            (isSpecial(url) != has(specialSchemes, buffer)) ||
-            (buffer == 'file' && (includesCredentials(url) || url.port !== null)) ||
-            (url.scheme == 'file' && !url.host)
-          )) return;
-          url.scheme = buffer;
-          if (stateOverride) {
-            if (isSpecial(url) && specialSchemes[url.scheme] == url.port) url.port = null;
-            return;
-          }
-          buffer = '';
-          if (url.scheme == 'file') {
-            state = FILE;
-          } else if (isSpecial(url) && base && base.scheme == url.scheme) {
-            state = SPECIAL_RELATIVE_OR_AUTHORITY;
-          } else if (isSpecial(url)) {
-            state = SPECIAL_AUTHORITY_SLASHES;
-          } else if (codePoints[pointer + 1] == '/') {
-            state = PATH_OR_AUTHORITY;
-            pointer++;
-          } else {
-            url.cannotBeABaseURL = true;
-            url.path.push('');
-            state = CANNOT_BE_A_BASE_URL_PATH;
-          }
-        } else if (!stateOverride) {
-          buffer = '';
-          state = NO_SCHEME;
-          pointer = 0;
-          continue;
-        } else return INVALID_SCHEME;
-        break;
-
-      case NO_SCHEME:
-        if (!base || (base.cannotBeABaseURL && char != '#')) return INVALID_SCHEME;
-        if (base.cannotBeABaseURL && char == '#') {
-          url.scheme = base.scheme;
-          url.path = base.path.slice();
-          url.query = base.query;
-          url.fragment = '';
-          url.cannotBeABaseURL = true;
-          state = FRAGMENT;
-          break;
-        }
-        state = base.scheme == 'file' ? FILE : RELATIVE;
-        continue;
-
-      case SPECIAL_RELATIVE_OR_AUTHORITY:
-        if (char == '/' && codePoints[pointer + 1] == '/') {
-          state = SPECIAL_AUTHORITY_IGNORE_SLASHES;
-          pointer++;
-        } else {
-          state = RELATIVE;
-          continue;
-        } break;
-
-      case PATH_OR_AUTHORITY:
-        if (char == '/') {
-          state = AUTHORITY;
-          break;
-        } else {
-          state = PATH;
-          continue;
-        }
-
-      case RELATIVE:
-        url.scheme = base.scheme;
-        if (char == EOF) {
-          url.username = base.username;
-          url.password = base.password;
-          url.host = base.host;
-          url.port = base.port;
-          url.path = base.path.slice();
-          url.query = base.query;
-        } else if (char == '/' || (char == '\\' && isSpecial(url))) {
-          state = RELATIVE_SLASH;
-        } else if (char == '?') {
-          url.username = base.username;
-          url.password = base.password;
-          url.host = base.host;
-          url.port = base.port;
-          url.path = base.path.slice();
-          url.query = '';
-          state = QUERY;
-        } else if (char == '#') {
-          url.username = base.username;
-          url.password = base.password;
-          url.host = base.host;
-          url.port = base.port;
-          url.path = base.path.slice();
-          url.query = base.query;
-          url.fragment = '';
-          state = FRAGMENT;
-        } else {
-          url.username = base.username;
-          url.password = base.password;
-          url.host = base.host;
-          url.port = base.port;
-          url.path = base.path.slice();
-          url.path.pop();
-          state = PATH;
-          continue;
-        } break;
-
-      case RELATIVE_SLASH:
-        if (isSpecial(url) && (char == '/' || char == '\\')) {
-          state = SPECIAL_AUTHORITY_IGNORE_SLASHES;
-        } else if (char == '/') {
-          state = AUTHORITY;
-        } else {
-          url.username = base.username;
-          url.password = base.password;
-          url.host = base.host;
-          url.port = base.port;
-          state = PATH;
-          continue;
-        } break;
-
-      case SPECIAL_AUTHORITY_SLASHES:
-        state = SPECIAL_AUTHORITY_IGNORE_SLASHES;
-        if (char != '/' || buffer.charAt(pointer + 1) != '/') continue;
-        pointer++;
-        break;
-
-      case SPECIAL_AUTHORITY_IGNORE_SLASHES:
-        if (char != '/' && char != '\\') {
-          state = AUTHORITY;
-          continue;
-        } break;
-
-      case AUTHORITY:
-        if (char == '@') {
-          if (seenAt) buffer = '%40' + buffer;
-          seenAt = true;
-          bufferCodePoints = arrayFrom(buffer);
-          for (var i = 0; i < bufferCodePoints.length; i++) {
-            var codePoint = bufferCodePoints[i];
-            if (codePoint == ':' && !seenPasswordToken) {
-              seenPasswordToken = true;
-              continue;
-            }
-            var encodedCodePoints = percentEncode(codePoint, userinfoPercentEncodeSet);
-            if (seenPasswordToken) url.password += encodedCodePoints;
-            else url.username += encodedCodePoints;
-          }
-          buffer = '';
-        } else if (
-          char == EOF || char == '/' || char == '?' || char == '#' ||
-          (char == '\\' && isSpecial(url))
-        ) {
-          if (seenAt && buffer == '') return INVALID_AUTHORITY;
-          pointer -= arrayFrom(buffer).length + 1;
-          buffer = '';
-          state = HOST;
-        } else buffer += char;
-        break;
-
-      case HOST:
-      case HOSTNAME:
-        if (stateOverride && url.scheme == 'file') {
-          state = FILE_HOST;
-          continue;
-        } else if (char == ':' && !seenBracket) {
-          if (buffer == '') return INVALID_HOST;
-          failure = parseHost(url, buffer);
-          if (failure) return failure;
-          buffer = '';
-          state = PORT;
-          if (stateOverride == HOSTNAME) return;
-        } else if (
-          char == EOF || char == '/' || char == '?' || char == '#' ||
-          (char == '\\' && isSpecial(url))
-        ) {
-          if (isSpecial(url) && buffer == '') return INVALID_HOST;
-          if (stateOverride && buffer == '' && (includesCredentials(url) || url.port !== null)) return;
-          failure = parseHost(url, buffer);
-          if (failure) return failure;
-          buffer = '';
-          state = PATH_START;
-          if (stateOverride) return;
-          continue;
-        } else {
-          if (char == '[') seenBracket = true;
-          else if (char == ']') seenBracket = false;
-          buffer += char;
-        } break;
-
-      case PORT:
-        if (DIGIT.test(char)) {
-          buffer += char;
-        } else if (
-          char == EOF || char == '/' || char == '?' || char == '#' ||
-          (char == '\\' && isSpecial(url)) ||
-          stateOverride
-        ) {
-          if (buffer != '') {
-            var port = parseInt(buffer, 10);
-            if (port > 0xFFFF) return INVALID_PORT;
-            url.port = (isSpecial(url) && port === specialSchemes[url.scheme]) ? null : port;
-            buffer = '';
-          }
-          if (stateOverride) return;
-          state = PATH_START;
-          continue;
-        } else return INVALID_PORT;
-        break;
-
-      case FILE:
-        url.scheme = 'file';
-        if (char == '/' || char == '\\') state = FILE_SLASH;
-        else if (base && base.scheme == 'file') {
-          if (char == EOF) {
-            url.host = base.host;
-            url.path = base.path.slice();
-            url.query = base.query;
-          } else if (char == '?') {
-            url.host = base.host;
-            url.path = base.path.slice();
-            url.query = '';
-            state = QUERY;
-          } else if (char == '#') {
-            url.host = base.host;
-            url.path = base.path.slice();
-            url.query = base.query;
-            url.fragment = '';
-            state = FRAGMENT;
-          } else {
-            if (!startsWithWindowsDriveLetter(codePoints.slice(pointer).join(''))) {
-              url.host = base.host;
-              url.path = base.path.slice();
-              shortenURLsPath(url);
-            }
-            state = PATH;
-            continue;
-          }
-        } else {
-          state = PATH;
-          continue;
-        } break;
-
-      case FILE_SLASH:
-        if (char == '/' || char == '\\') {
-          state = FILE_HOST;
-          break;
-        }
-        if (base && base.scheme == 'file' && !startsWithWindowsDriveLetter(codePoints.slice(pointer).join(''))) {
-          if (isWindowsDriveLetter(base.path[0], true)) url.path.push(base.path[0]);
-          else url.host = base.host;
-        }
-        state = PATH;
-        continue;
-
-      case FILE_HOST:
-        if (char == EOF || char == '/' || char == '\\' || char == '?' || char == '#') {
-          if (!stateOverride && isWindowsDriveLetter(buffer)) {
-            state = PATH;
-          } else if (buffer == '') {
-            url.host = '';
-            if (stateOverride) return;
-            state = PATH_START;
-          } else {
-            failure = parseHost(url, buffer);
-            if (failure) return failure;
-            if (url.host == 'localhost') url.host = '';
-            if (stateOverride) return;
-            buffer = '';
-            state = PATH_START;
-          } continue;
-        } else buffer += char;
-        break;
-
-      case PATH_START:
-        if (isSpecial(url)) {
-          state = PATH;
-          if (char != '/' && char != '\\') continue;
-        } else if (!stateOverride && char == '?') {
-          url.query = '';
-          state = QUERY;
-        } else if (!stateOverride && char == '#') {
-          url.fragment = '';
-          state = FRAGMENT;
-        } else if (char != EOF) {
-          state = PATH;
-          if (char != '/') continue;
-        } break;
-
-      case PATH:
-        if (
-          char == EOF || char == '/' ||
-          (char == '\\' && isSpecial(url)) ||
-          (!stateOverride && (char == '?' || char == '#'))
-        ) {
-          if (isDoubleDot(buffer)) {
-            shortenURLsPath(url);
-            if (char != '/' && !(char == '\\' && isSpecial(url))) {
-              url.path.push('');
-            }
-          } else if (isSingleDot(buffer)) {
-            if (char != '/' && !(char == '\\' && isSpecial(url))) {
-              url.path.push('');
-            }
-          } else {
-            if (url.scheme == 'file' && !url.path.length && isWindowsDriveLetter(buffer)) {
-              if (url.host) url.host = '';
-              buffer = buffer.charAt(0) + ':'; // normalize windows drive letter
-            }
-            url.path.push(buffer);
-          }
-          buffer = '';
-          if (url.scheme == 'file' && (char == EOF || char == '?' || char == '#')) {
-            while (url.path.length > 1 && url.path[0] === '') {
-              url.path.shift();
-            }
-          }
-          if (char == '?') {
-            url.query = '';
-            state = QUERY;
-          } else if (char == '#') {
-            url.fragment = '';
-            state = FRAGMENT;
-          }
-        } else {
-          buffer += percentEncode(char, pathPercentEncodeSet);
-        } break;
-
-      case CANNOT_BE_A_BASE_URL_PATH:
-        if (char == '?') {
-          url.query = '';
-          state = QUERY;
-        } else if (char == '#') {
-          url.fragment = '';
-          state = FRAGMENT;
-        } else if (char != EOF) {
-          url.path[0] += percentEncode(char, C0ControlPercentEncodeSet);
-        } break;
-
-      case QUERY:
-        if (!stateOverride && char == '#') {
-          url.fragment = '';
-          state = FRAGMENT;
-        } else if (char != EOF) {
-          if (char == "'" && isSpecial(url)) url.query += '%27';
-          else if (char == '#') url.query += '%23';
-          else url.query += percentEncode(char, C0ControlPercentEncodeSet);
-        } break;
-
-      case FRAGMENT:
-        if (char != EOF) url.fragment += percentEncode(char, fragmentPercentEncodeSet);
-        break;
-    }
-
-    pointer++;
-  }
-};
-
-// `URL` constructor
-// https://url.spec.whatwg.org/#url-class
-var URLConstructor = function URL(url /* , base */) {
-  var that = anInstance(this, URLConstructor, 'URL');
-  var base = arguments.length > 1 ? arguments[1] : undefined;
-  var urlString = String(url);
-  var state = setInternalState$4(that, { type: 'URL' });
-  var baseState, failure;
-  if (base !== undefined) {
-    if (base instanceof URLConstructor) baseState = getInternalURLState(base);
-    else {
-      failure = parseURL(baseState = {}, String(base));
-      if (failure) throw TypeError(failure);
-    }
-  }
-  failure = parseURL(state, urlString, null, baseState);
-  if (failure) throw TypeError(failure);
-  var searchParams = state.searchParams = new URLSearchParams$1();
-  var searchParamsState = getInternalSearchParamsState(searchParams);
-  searchParamsState.updateSearchParams(state.query);
-  searchParamsState.updateURL = function () {
-    state.query = String(searchParams) || null;
-  };
-  if (!descriptors) {
-    that.href = serializeURL.call(that);
-    that.origin = getOrigin.call(that);
-    that.protocol = getProtocol.call(that);
-    that.username = getUsername.call(that);
-    that.password = getPassword.call(that);
-    that.host = getHost.call(that);
-    that.hostname = getHostname.call(that);
-    that.port = getPort.call(that);
-    that.pathname = getPathname.call(that);
-    that.search = getSearch.call(that);
-    that.searchParams = getSearchParams.call(that);
-    that.hash = getHash.call(that);
-  }
-};
-
-var URLPrototype = URLConstructor.prototype;
-
-var serializeURL = function () {
-  var url = getInternalURLState(this);
-  var scheme = url.scheme;
-  var username = url.username;
-  var password = url.password;
-  var host = url.host;
-  var port = url.port;
-  var path = url.path;
-  var query = url.query;
-  var fragment = url.fragment;
-  var output = scheme + ':';
-  if (host !== null) {
-    output += '//';
-    if (includesCredentials(url)) {
-      output += username + (password ? ':' + password : '') + '@';
-    }
-    output += serializeHost(host);
-    if (port !== null) output += ':' + port;
-  } else if (scheme == 'file') output += '//';
-  output += url.cannotBeABaseURL ? path[0] : path.length ? '/' + path.join('/') : '';
-  if (query !== null) output += '?' + query;
-  if (fragment !== null) output += '#' + fragment;
-  return output;
-};
-
-var getOrigin = function () {
-  var url = getInternalURLState(this);
-  var scheme = url.scheme;
-  var port = url.port;
-  if (scheme == 'blob') try {
-    return new URL(scheme.path[0]).origin;
-  } catch (error) {
-    return 'null';
-  }
-  if (scheme == 'file' || !isSpecial(url)) return 'null';
-  return scheme + '://' + serializeHost(url.host) + (port !== null ? ':' + port : '');
-};
-
-var getProtocol = function () {
-  return getInternalURLState(this).scheme + ':';
-};
-
-var getUsername = function () {
-  return getInternalURLState(this).username;
-};
-
-var getPassword = function () {
-  return getInternalURLState(this).password;
-};
-
-var getHost = function () {
-  var url = getInternalURLState(this);
-  var host = url.host;
-  var port = url.port;
-  return host === null ? ''
-    : port === null ? serializeHost(host)
-    : serializeHost(host) + ':' + port;
-};
-
-var getHostname = function () {
-  var host = getInternalURLState(this).host;
-  return host === null ? '' : serializeHost(host);
-};
-
-var getPort = function () {
-  var port = getInternalURLState(this).port;
-  return port === null ? '' : String(port);
-};
-
-var getPathname = function () {
-  var url = getInternalURLState(this);
-  var path = url.path;
-  return url.cannotBeABaseURL ? path[0] : path.length ? '/' + path.join('/') : '';
-};
-
-var getSearch = function () {
-  var query = getInternalURLState(this).query;
-  return query ? '?' + query : '';
-};
-
-var getSearchParams = function () {
-  return getInternalURLState(this).searchParams;
-};
-
-var getHash = function () {
-  var fragment = getInternalURLState(this).fragment;
-  return fragment ? '#' + fragment : '';
-};
-
-var accessorDescriptor = function (getter, setter) {
-  return { get: getter, set: setter, configurable: true, enumerable: true };
-};
-
-if (descriptors) {
-  objectDefineProperties(URLPrototype, {
-    // `URL.prototype.href` accessors pair
-    // https://url.spec.whatwg.org/#dom-url-href
-    href: accessorDescriptor(serializeURL, function (href) {
-      var url = getInternalURLState(this);
-      var urlString = String(href);
-      var failure = parseURL(url, urlString);
-      if (failure) throw TypeError(failure);
-      getInternalSearchParamsState(url.searchParams).updateSearchParams(url.query);
-    }),
-    // `URL.prototype.origin` getter
-    // https://url.spec.whatwg.org/#dom-url-origin
-    origin: accessorDescriptor(getOrigin),
-    // `URL.prototype.protocol` accessors pair
-    // https://url.spec.whatwg.org/#dom-url-protocol
-    protocol: accessorDescriptor(getProtocol, function (protocol) {
-      var url = getInternalURLState(this);
-      parseURL(url, String(protocol) + ':', SCHEME_START);
-    }),
-    // `URL.prototype.username` accessors pair
-    // https://url.spec.whatwg.org/#dom-url-username
-    username: accessorDescriptor(getUsername, function (username) {
-      var url = getInternalURLState(this);
-      var codePoints = arrayFrom(String(username));
-      if (cannotHaveUsernamePasswordPort(url)) return;
-      url.username = '';
-      for (var i = 0; i < codePoints.length; i++) {
-        url.username += percentEncode(codePoints[i], userinfoPercentEncodeSet);
-      }
-    }),
-    // `URL.prototype.password` accessors pair
-    // https://url.spec.whatwg.org/#dom-url-password
-    password: accessorDescriptor(getPassword, function (password) {
-      var url = getInternalURLState(this);
-      var codePoints = arrayFrom(String(password));
-      if (cannotHaveUsernamePasswordPort(url)) return;
-      url.password = '';
-      for (var i = 0; i < codePoints.length; i++) {
-        url.password += percentEncode(codePoints[i], userinfoPercentEncodeSet);
-      }
-    }),
-    // `URL.prototype.host` accessors pair
-    // https://url.spec.whatwg.org/#dom-url-host
-    host: accessorDescriptor(getHost, function (host) {
-      var url = getInternalURLState(this);
-      if (url.cannotBeABaseURL) return;
-      parseURL(url, String(host), HOST);
-    }),
-    // `URL.prototype.hostname` accessors pair
-    // https://url.spec.whatwg.org/#dom-url-hostname
-    hostname: accessorDescriptor(getHostname, function (hostname) {
-      var url = getInternalURLState(this);
-      if (url.cannotBeABaseURL) return;
-      parseURL(url, String(hostname), HOSTNAME);
-    }),
-    // `URL.prototype.port` accessors pair
-    // https://url.spec.whatwg.org/#dom-url-port
-    port: accessorDescriptor(getPort, function (port) {
-      var url = getInternalURLState(this);
-      if (cannotHaveUsernamePasswordPort(url)) return;
-      port = String(port);
-      if (port == '') url.port = null;
-      else parseURL(url, port, PORT);
-    }),
-    // `URL.prototype.pathname` accessors pair
-    // https://url.spec.whatwg.org/#dom-url-pathname
-    pathname: accessorDescriptor(getPathname, function (pathname) {
-      var url = getInternalURLState(this);
-      if (url.cannotBeABaseURL) return;
-      url.path = [];
-      parseURL(url, pathname + '', PATH_START);
-    }),
-    // `URL.prototype.search` accessors pair
-    // https://url.spec.whatwg.org/#dom-url-search
-    search: accessorDescriptor(getSearch, function (search) {
-      var url = getInternalURLState(this);
-      search = String(search);
-      if (search == '') {
-        url.query = null;
-      } else {
-        if ('?' == search.charAt(0)) search = search.slice(1);
-        url.query = '';
-        parseURL(url, search, QUERY);
-      }
-      getInternalSearchParamsState(url.searchParams).updateSearchParams(url.query);
-    }),
-    // `URL.prototype.searchParams` getter
-    // https://url.spec.whatwg.org/#dom-url-searchparams
-    searchParams: accessorDescriptor(getSearchParams),
-    // `URL.prototype.hash` accessors pair
-    // https://url.spec.whatwg.org/#dom-url-hash
-    hash: accessorDescriptor(getHash, function (hash) {
-      var url = getInternalURLState(this);
-      hash = String(hash);
-      if (hash == '') {
-        url.fragment = null;
-        return;
-      }
-      if ('#' == hash.charAt(0)) hash = hash.slice(1);
-      url.fragment = '';
-      parseURL(url, hash, FRAGMENT);
-    })
-  });
-}
-
-// `URL.prototype.toJSON` method
-// https://url.spec.whatwg.org/#dom-url-tojson
-redefine(URLPrototype, 'toJSON', function toJSON() {
-  return serializeURL.call(this);
-}, { enumerable: true });
-
-// `URL.prototype.toString` method
-// https://url.spec.whatwg.org/#URL-stringification-behavior
-redefine(URLPrototype, 'toString', function toString() {
-  return serializeURL.call(this);
-}, { enumerable: true });
-
-if (NativeURL) {
-  var nativeCreateObjectURL = NativeURL.createObjectURL;
-  var nativeRevokeObjectURL = NativeURL.revokeObjectURL;
-  // `URL.createObjectURL` method
-  // https://developer.mozilla.org/en-US/docs/Web/API/URL/createObjectURL
-  // eslint-disable-next-line no-unused-vars
-  if (nativeCreateObjectURL) redefine(URLConstructor, 'createObjectURL', function createObjectURL(blob) {
-    return nativeCreateObjectURL.apply(NativeURL, arguments);
-  });
-  // `URL.revokeObjectURL` method
-  // https://developer.mozilla.org/en-US/docs/Web/API/URL/revokeObjectURL
-  // eslint-disable-next-line no-unused-vars
-  if (nativeRevokeObjectURL) redefine(URLConstructor, 'revokeObjectURL', function revokeObjectURL(url) {
-    return nativeRevokeObjectURL.apply(NativeURL, arguments);
-  });
-}
-
-setToStringTag(URLConstructor, 'URL');
-
-_export({ global: true, forced: !nativeUrl, sham: !descriptors }, {
-  URL: URLConstructor
-});
-
 var nativeGetOwnPropertyNames = objectGetOwnPropertyNames.f;
 
 var toString$1 = {}.toString;
@@ -3783,11 +1977,11 @@ var wellKnownSymbolWrapped = {
 	f: f$7
 };
 
-var defineProperty$3 = objectDefineProperty.f;
+var defineProperty$2 = objectDefineProperty.f;
 
 var defineWellKnownSymbol = function (NAME) {
   var Symbol = path.Symbol || (path.Symbol = {});
-  if (!has(Symbol, NAME)) defineProperty$3(Symbol, NAME, {
+  if (!has(Symbol, NAME)) defineProperty$2(Symbol, NAME, {
     value: wellKnownSymbolWrapped.f(NAME)
   });
 };
@@ -3798,8 +1992,8 @@ var HIDDEN = sharedKey('hidden');
 var SYMBOL = 'Symbol';
 var PROTOTYPE$1 = 'prototype';
 var TO_PRIMITIVE = wellKnownSymbol('toPrimitive');
-var setInternalState$5 = internalState.set;
-var getInternalState$3 = internalState.getterFor(SYMBOL);
+var setInternalState$2 = internalState.set;
+var getInternalState$2 = internalState.getterFor(SYMBOL);
 var ObjectPrototype$1 = Object[PROTOTYPE$1];
 var $Symbol = global_1.Symbol;
 var $stringify = getBuiltIn('JSON', 'stringify');
@@ -3832,7 +2026,7 @@ var setSymbolDescriptor = descriptors && fails(function () {
 
 var wrap = function (tag, description) {
   var symbol = AllSymbols[tag] = objectCreate($Symbol[PROTOTYPE$1]);
-  setInternalState$5(symbol, {
+  setInternalState$2(symbol, {
     type: SYMBOL,
     tag: tag,
     description: description
@@ -3933,7 +2127,7 @@ if (!nativeSymbol) {
   };
 
   redefine($Symbol[PROTOTYPE$1], 'toString', function toString() {
-    return getInternalState$3(this).tag;
+    return getInternalState$2(this).tag;
   });
 
   redefine($Symbol, 'withoutSetter', function (description) {
@@ -3955,7 +2149,7 @@ if (!nativeSymbol) {
     nativeDefineProperty$1($Symbol[PROTOTYPE$1], 'description', {
       configurable: true,
       get: function description() {
-        return getInternalState$3(this).description;
+        return getInternalState$2(this).description;
       }
     });
     {
@@ -4068,7 +2262,7 @@ setToStringTag($Symbol, SYMBOL);
 
 hiddenKeys[HIDDEN] = true;
 
-var defineProperty$4 = objectDefineProperty.f;
+var defineProperty$3 = objectDefineProperty.f;
 
 
 var NativeSymbol = global_1.Symbol;
@@ -4095,7 +2289,7 @@ if (descriptors && typeof NativeSymbol == 'function' && (!('description' in Nati
   var symbolToString = symbolPrototype.toString;
   var native = String(NativeSymbol('test')) == 'Symbol(test)';
   var regexp = /^Symbol\((.*)\)[^)]+$/;
-  defineProperty$4(symbolPrototype, 'description', {
+  defineProperty$3(symbolPrototype, 'description', {
     configurable: true,
     get: function description() {
       var symbol = isObject(this) ? this.valueOf() : this;
@@ -4142,6 +2336,12 @@ _export({ target: 'Array', proto: true, forced: [].forEach != arrayForEach }, {
   forEach: arrayForEach
 });
 
+var createProperty = function (object, key, value) {
+  var propertyKey = toPrimitive(key);
+  if (propertyKey in object) objectDefineProperty.f(object, propertyKey, createPropertyDescriptor(0, value));
+  else object[propertyKey] = value;
+};
+
 var HAS_SPECIES_SUPPORT$1 = arrayMethodHasSpeciesSupport('slice');
 var USES_TO_LENGTH$3 = arrayMethodUsesToLength('slice', { ACCESSORS: true, 0: 0, 1: 2 });
 
@@ -4180,7 +2380,7 @@ _export({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT$1 || !USES_
   }
 });
 
-var defineProperty$5 = objectDefineProperty.f;
+var defineProperty$4 = objectDefineProperty.f;
 
 var FunctionPrototype = Function.prototype;
 var FunctionPrototypeToString = FunctionPrototype.toString;
@@ -4190,7 +2390,7 @@ var NAME = 'name';
 // Function instances `.name` property
 // https://tc39.github.io/ecma262/#sec-function-instances-name
 if (descriptors && !(NAME in FunctionPrototype)) {
-  defineProperty$5(FunctionPrototype, NAME, {
+  defineProperty$4(FunctionPrototype, NAME, {
     configurable: true,
     get: function () {
       try {
@@ -4259,6 +2459,60 @@ if (NOT_GENERIC || INCORRECT_NAME) {
     return '/' + p + '/' + f;
   }, { unsafe: true });
 }
+
+// `String.prototype.{ codePointAt, at }` methods implementation
+var createMethod$2 = function (CONVERT_TO_STRING) {
+  return function ($this, pos) {
+    var S = String(requireObjectCoercible($this));
+    var position = toInteger(pos);
+    var size = S.length;
+    var first, second;
+    if (position < 0 || position >= size) return CONVERT_TO_STRING ? '' : undefined;
+    first = S.charCodeAt(position);
+    return first < 0xD800 || first > 0xDBFF || position + 1 === size
+      || (second = S.charCodeAt(position + 1)) < 0xDC00 || second > 0xDFFF
+        ? CONVERT_TO_STRING ? S.charAt(position) : first
+        : CONVERT_TO_STRING ? S.slice(position, position + 2) : (first - 0xD800 << 10) + (second - 0xDC00) + 0x10000;
+  };
+};
+
+var stringMultibyte = {
+  // `String.prototype.codePointAt` method
+  // https://tc39.github.io/ecma262/#sec-string.prototype.codepointat
+  codeAt: createMethod$2(false),
+  // `String.prototype.at` method
+  // https://github.com/mathiasbynens/String.prototype.at
+  charAt: createMethod$2(true)
+};
+
+var charAt = stringMultibyte.charAt;
+
+
+
+var STRING_ITERATOR = 'String Iterator';
+var setInternalState$3 = internalState.set;
+var getInternalState$3 = internalState.getterFor(STRING_ITERATOR);
+
+// `String.prototype[@@iterator]` method
+// https://tc39.github.io/ecma262/#sec-string.prototype-@@iterator
+defineIterator(String, 'String', function (iterated) {
+  setInternalState$3(this, {
+    type: STRING_ITERATOR,
+    string: String(iterated),
+    index: 0
+  });
+// `%StringIteratorPrototype%.next` method
+// https://tc39.github.io/ecma262/#sec-%stringiteratorprototype%.next
+}, function next() {
+  var state = getInternalState$3(this);
+  var string = state.string;
+  var index = state.index;
+  var point;
+  if (index >= string.length) return { value: undefined, done: true };
+  point = charAt(string, index);
+  state.index += point.length;
+  return { value: point, done: false };
+});
 
 for (var COLLECTION_NAME$1 in domIterables) {
   var Collection$1 = global_1[COLLECTION_NAME$1];
@@ -5256,8 +3510,8 @@ var HAS_SPECIES_SUPPORT$2 = arrayMethodHasSpeciesSupport('splice');
 var USES_TO_LENGTH$4 = arrayMethodUsesToLength('splice', { ACCESSORS: true, 0: 0, 1: 2 });
 
 var max$2 = Math.max;
-var min$3 = Math.min;
-var MAX_SAFE_INTEGER$1 = 0x1FFFFFFFFFFFFF;
+var min$2 = Math.min;
+var MAX_SAFE_INTEGER = 0x1FFFFFFFFFFFFF;
 var MAXIMUM_ALLOWED_LENGTH_EXCEEDED = 'Maximum allowed length exceeded';
 
 // `Array.prototype.splice` method
@@ -5277,9 +3531,9 @@ _export({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT$2 || !USES_
       actualDeleteCount = len - actualStart;
     } else {
       insertCount = argumentsLength - 2;
-      actualDeleteCount = min$3(max$2(toInteger(deleteCount), 0), len - actualStart);
+      actualDeleteCount = min$2(max$2(toInteger(deleteCount), 0), len - actualStart);
     }
-    if (len + insertCount - actualDeleteCount > MAX_SAFE_INTEGER$1) {
+    if (len + insertCount - actualDeleteCount > MAX_SAFE_INTEGER) {
       throw TypeError(MAXIMUM_ALLOWED_LENGTH_EXCEEDED);
     }
     A = arraySpeciesCreate(O, actualDeleteCount);
@@ -5380,6 +3634,54 @@ var EventTarget = /*#__PURE__*/function () {
   return EventTarget;
 }();
 
+var IS_CONCAT_SPREADABLE = wellKnownSymbol('isConcatSpreadable');
+var MAX_SAFE_INTEGER$1 = 0x1FFFFFFFFFFFFF;
+var MAXIMUM_ALLOWED_INDEX_EXCEEDED = 'Maximum allowed index exceeded';
+
+// We can't use this feature detection in V8 since it causes
+// deoptimization and serious performance degradation
+// https://github.com/zloirock/core-js/issues/679
+var IS_CONCAT_SPREADABLE_SUPPORT = engineV8Version >= 51 || !fails(function () {
+  var array = [];
+  array[IS_CONCAT_SPREADABLE] = false;
+  return array.concat()[0] !== array;
+});
+
+var SPECIES_SUPPORT = arrayMethodHasSpeciesSupport('concat');
+
+var isConcatSpreadable = function (O) {
+  if (!isObject(O)) return false;
+  var spreadable = O[IS_CONCAT_SPREADABLE];
+  return spreadable !== undefined ? !!spreadable : isArray(O);
+};
+
+var FORCED$1 = !IS_CONCAT_SPREADABLE_SUPPORT || !SPECIES_SUPPORT;
+
+// `Array.prototype.concat` method
+// https://tc39.github.io/ecma262/#sec-array.prototype.concat
+// with adding support of @@isConcatSpreadable and @@species
+_export({ target: 'Array', proto: true, forced: FORCED$1 }, {
+  concat: function concat(arg) { // eslint-disable-line no-unused-vars
+    var O = toObject(this);
+    var A = arraySpeciesCreate(O, 0);
+    var n = 0;
+    var i, k, length, len, E;
+    for (i = -1, length = arguments.length; i < length; i++) {
+      E = i === -1 ? O : arguments[i];
+      if (isConcatSpreadable(E)) {
+        len = toLength(E.length);
+        if (n + len > MAX_SAFE_INTEGER$1) throw TypeError(MAXIMUM_ALLOWED_INDEX_EXCEEDED);
+        for (k = 0; k < len; k++, n++) if (k in E) createProperty(A, n, E[k]);
+      } else {
+        if (n >= MAX_SAFE_INTEGER$1) throw TypeError(MAXIMUM_ALLOWED_INDEX_EXCEEDED);
+        createProperty(A, n++, E);
+      }
+    }
+    A.length = n;
+    return A;
+  }
+});
+
 // `Array.prototype.fill` method implementation
 // https://tc39.github.io/ecma262/#sec-array.prototype.fill
 var arrayFill = function fill(value /* , start = 0, end = @length */) {
@@ -5415,7 +3717,7 @@ _export({ target: 'Array', proto: true, forced: ES3_STRINGS || !STRICT_METHOD$2 
   }
 });
 
-var min$4 = Math.min;
+var min$3 = Math.min;
 var nativeLastIndexOf = [].lastIndexOf;
 var NEGATIVE_ZERO$1 = !!nativeLastIndexOf && 1 / [1].lastIndexOf(1, -0) < 0;
 var STRICT_METHOD$3 = arrayMethodIsStrict('lastIndexOf');
@@ -5431,7 +3733,7 @@ var arrayLastIndexOf = FORCED$2 ? function lastIndexOf(searchElement /* , fromIn
   var O = toIndexedObject(this);
   var length = toLength(O.length);
   var index = length - 1;
-  if (arguments.length > 1) index = min$4(index, toInteger(arguments[1]));
+  if (arguments.length > 1) index = min$3(index, toInteger(arguments[1]));
   if (index < 0) index = length + index;
   for (;index >= 0; index--) if (index in O && O[index] === searchElement) return index || 0;
   return -1;
@@ -5459,8 +3761,8 @@ var toIndex = function (it) {
 // eslint-disable-next-line no-shadow-restricted-names
 var Infinity$1 = 1 / 0;
 var abs = Math.abs;
-var pow$1 = Math.pow;
-var floor$3 = Math.floor;
+var pow = Math.pow;
+var floor$1 = Math.floor;
 var log = Math.log;
 var LN2 = Math.LN2;
 
@@ -5469,7 +3771,7 @@ var pack = function (number, mantissaLength, bytes) {
   var exponentLength = bytes * 8 - mantissaLength - 1;
   var eMax = (1 << exponentLength) - 1;
   var eBias = eMax >> 1;
-  var rt = mantissaLength === 23 ? pow$1(2, -24) - pow$1(2, -77) : 0;
+  var rt = mantissaLength === 23 ? pow(2, -24) - pow(2, -77) : 0;
   var sign = number < 0 || number === 0 && 1 / number < 0 ? 1 : 0;
   var index = 0;
   var exponent, mantissa, c;
@@ -5480,15 +3782,15 @@ var pack = function (number, mantissaLength, bytes) {
     mantissa = number != number ? 1 : 0;
     exponent = eMax;
   } else {
-    exponent = floor$3(log(number) / LN2);
-    if (number * (c = pow$1(2, -exponent)) < 1) {
+    exponent = floor$1(log(number) / LN2);
+    if (number * (c = pow(2, -exponent)) < 1) {
       exponent--;
       c *= 2;
     }
     if (exponent + eBias >= 1) {
       number += rt / c;
     } else {
-      number += rt * pow$1(2, 1 - eBias);
+      number += rt * pow(2, 1 - eBias);
     }
     if (number * c >= 2) {
       exponent++;
@@ -5498,10 +3800,10 @@ var pack = function (number, mantissaLength, bytes) {
       mantissa = 0;
       exponent = eMax;
     } else if (exponent + eBias >= 1) {
-      mantissa = (number * c - 1) * pow$1(2, mantissaLength);
+      mantissa = (number * c - 1) * pow(2, mantissaLength);
       exponent = exponent + eBias;
     } else {
-      mantissa = number * pow$1(2, eBias - 1) * pow$1(2, mantissaLength);
+      mantissa = number * pow(2, eBias - 1) * pow(2, mantissaLength);
       exponent = 0;
     }
   }
@@ -5534,9 +3836,9 @@ var unpack = function (buffer, mantissaLength) {
   } else if (exponent === eMax) {
     return mantissa ? NaN : sign ? -Infinity$1 : Infinity$1;
   } else {
-    mantissa = mantissa + pow$1(2, mantissaLength);
+    mantissa = mantissa + pow(2, mantissaLength);
     exponent = exponent - eBias;
-  } return (sign ? -1 : 1) * mantissa * pow$1(2, exponent - mantissaLength);
+  } return (sign ? -1 : 1) * mantissa * pow(2, exponent - mantissaLength);
 };
 
 var ieee754 = {
@@ -5545,13 +3847,13 @@ var ieee754 = {
 };
 
 var getOwnPropertyNames = objectGetOwnPropertyNames.f;
-var defineProperty$6 = objectDefineProperty.f;
+var defineProperty$5 = objectDefineProperty.f;
 
 
 
 
 var getInternalState$4 = internalState.get;
-var setInternalState$6 = internalState.set;
+var setInternalState$4 = internalState.set;
 var ARRAY_BUFFER = 'ArrayBuffer';
 var DATA_VIEW = 'DataView';
 var PROTOTYPE$2 = 'prototype';
@@ -5592,7 +3894,7 @@ var packFloat64 = function (number) {
 };
 
 var addGetter = function (Constructor, key) {
-  defineProperty$6(Constructor[PROTOTYPE$2], key, { get: function () { return getInternalState$4(this)[key]; } });
+  defineProperty$5(Constructor[PROTOTYPE$2], key, { get: function () { return getInternalState$4(this)[key]; } });
 };
 
 var get$1 = function (view, count, index, isLittleEndian) {
@@ -5619,7 +3921,7 @@ if (!arrayBufferNative) {
   $ArrayBuffer = function ArrayBuffer(length) {
     anInstance(this, $ArrayBuffer, ARRAY_BUFFER);
     var byteLength = toIndex(length);
-    setInternalState$6(this, {
+    setInternalState$4(this, {
       bytes: arrayFill.call(new Array(byteLength), 0),
       byteLength: byteLength
     });
@@ -5634,7 +3936,7 @@ if (!arrayBufferNative) {
     if (offset < 0 || offset > bufferLength) throw RangeError$1('Wrong offset');
     byteLength = byteLength === undefined ? bufferLength - offset : toLength(byteLength);
     if (offset + byteLength > bufferLength) throw RangeError$1(WRONG_LENGTH);
-    setInternalState$6(this, {
+    setInternalState$4(this, {
       buffer: buffer,
       byteLength: byteLength,
       byteOffset: offset
@@ -5831,8 +4133,8 @@ var stringTrim = {
 };
 
 var getOwnPropertyNames$1 = objectGetOwnPropertyNames.f;
-var getOwnPropertyDescriptor$4 = objectGetOwnPropertyDescriptor.f;
-var defineProperty$7 = objectDefineProperty.f;
+var getOwnPropertyDescriptor$3 = objectGetOwnPropertyDescriptor.f;
+var defineProperty$6 = objectDefineProperty.f;
 var trim = stringTrim.trim;
 
 var NUMBER = 'Number';
@@ -5890,13 +4192,22 @@ if (isForced_1(NUMBER, !NativeNumber(' 0o1') || !NativeNumber('0b1') || NativeNu
     'MIN_SAFE_INTEGER,parseFloat,parseInt,isInteger'
   ).split(','), j$1 = 0, key$1; keys$2.length > j$1; j$1++) {
     if (has(NativeNumber, key$1 = keys$2[j$1]) && !has(NumberWrapper, key$1)) {
-      defineProperty$7(NumberWrapper, key$1, getOwnPropertyDescriptor$4(NativeNumber, key$1));
+      defineProperty$6(NumberWrapper, key$1, getOwnPropertyDescriptor$3(NativeNumber, key$1));
     }
   }
   NumberWrapper.prototype = NumberPrototype;
   NumberPrototype.constructor = NumberWrapper;
   redefine(global_1, NUMBER, NumberWrapper);
 }
+
+var MATCH = wellKnownSymbol('match');
+
+// `IsRegExp` abstract operation
+// https://tc39.github.io/ecma262/#sec-isregexp
+var isRegexp = function (it) {
+  var isRegExp;
+  return isObject(it) && ((isRegExp = it[MATCH]) !== undefined ? !!isRegExp : classofRaw(it) == 'RegExp');
+};
 
 // babel-minify transpiles RegExp('a', 'y') -> /a/y and it causes SyntaxError,
 // so we use an intermediate function.
@@ -5923,18 +4234,18 @@ var regexpStickyHelpers = {
 	BROKEN_CARET: BROKEN_CARET
 };
 
-var defineProperty$8 = objectDefineProperty.f;
+var defineProperty$7 = objectDefineProperty.f;
 var getOwnPropertyNames$2 = objectGetOwnPropertyNames.f;
 
 
 
 
 
-var setInternalState$7 = internalState.set;
+var setInternalState$5 = internalState.set;
 
 
 
-var MATCH$2 = wellKnownSymbol('match');
+var MATCH$1 = wellKnownSymbol('match');
 var NativeRegExp = global_1.RegExp;
 var RegExpPrototype$1 = NativeRegExp.prototype;
 var re1 = /a/g;
@@ -5946,7 +4257,7 @@ var CORRECT_NEW = new NativeRegExp(re1) !== re1;
 var UNSUPPORTED_Y$1 = regexpStickyHelpers.UNSUPPORTED_Y;
 
 var FORCED$3 = descriptors && isForced_1('RegExp', (!CORRECT_NEW || UNSUPPORTED_Y$1 || fails(function () {
-  re2[MATCH$2] = false;
+  re2[MATCH$1] = false;
   // RegExp constructor can alter flags and IsRegExp works correct with @@match
   return NativeRegExp(re1) != re1 || NativeRegExp(re2) == re2 || NativeRegExp(re1, 'i') != '/a/i';
 })));
@@ -5982,12 +4293,12 @@ if (FORCED$3) {
       RegExpWrapper
     );
 
-    if (UNSUPPORTED_Y$1 && sticky) setInternalState$7(result, { sticky: sticky });
+    if (UNSUPPORTED_Y$1 && sticky) setInternalState$5(result, { sticky: sticky });
 
     return result;
   };
   var proxy = function (key) {
-    key in RegExpWrapper || defineProperty$8(RegExpWrapper, key, {
+    key in RegExpWrapper || defineProperty$7(RegExpWrapper, key, {
       configurable: true,
       get: function () { return NativeRegExp[key]; },
       set: function (it) { NativeRegExp[key] = it; }
@@ -6282,8 +4593,8 @@ fixRegexpWellKnownSymbolLogic('match', 1, function (MATCH, nativeMatch, maybeCal
 });
 
 var max$3 = Math.max;
-var min$5 = Math.min;
-var floor$4 = Math.floor;
+var min$4 = Math.min;
+var floor$2 = Math.floor;
 var SUBSTITUTION_SYMBOLS = /\$([$&'`]|\d\d?|<[^>]*>)/g;
 var SUBSTITUTION_SYMBOLS_NO_NAMED = /\$([$&'`]|\d\d?)/g;
 
@@ -6347,7 +4658,7 @@ fixRegexpWellKnownSymbolLogic('replace', 2, function (REPLACE, nativeReplace, ma
         result = results[i];
 
         var matched = String(result[0]);
-        var position = max$3(min$5(toInteger(result.index), S.length), 0);
+        var position = max$3(min$4(toInteger(result.index), S.length), 0);
         var captures = [];
         // NOTE: This is equivalent to
         //   captures = result.slice(1).map(maybeToString)
@@ -6395,7 +4706,7 @@ fixRegexpWellKnownSymbolLogic('replace', 2, function (REPLACE, nativeReplace, ma
           var n = +ch;
           if (n === 0) return match;
           if (n > m) {
-            var f = floor$4(n / 10);
+            var f = floor$2(n / 10);
             if (f === 0) return match;
             if (f <= m) return captures[f - 1] === undefined ? ch.charAt(1) : captures[f - 1] + ch.charAt(1);
             return match;
@@ -6443,7 +4754,7 @@ fixRegexpWellKnownSymbolLogic('search', 1, function (SEARCH, nativeSearch, maybe
 });
 
 var arrayPush = [].push;
-var min$6 = Math.min;
+var min$5 = Math.min;
 var MAX_UINT32 = 0xFFFFFFFF;
 
 // babel-minify transpiles RegExp('x', 'y') -> /x/y and it causes SyntaxError
@@ -6546,7 +4857,7 @@ fixRegexpWellKnownSymbolLogic('split', 2, function (SPLIT, nativeSplit, maybeCal
         var e;
         if (
           z === null ||
-          (e = min$6(toLength(splitter.lastIndex + (SUPPORTS_Y ? 0 : q)), S.length)) === p
+          (e = min$5(toLength(splitter.lastIndex + (SUPPORTS_Y ? 0 : q)), S.length)) === p
         ) {
           q = advanceStringIndex(S, q, unicodeMatching);
         } else {
@@ -6586,7 +4897,7 @@ _export({ target: 'String', proto: true, forced: stringTrimForced('trim') }, {
   }
 });
 
-var defineProperty$9 = objectDefineProperty.f;
+var defineProperty$8 = objectDefineProperty.f;
 
 
 
@@ -6713,7 +5024,7 @@ if (NATIVE_ARRAY_BUFFER_VIEWS && objectGetPrototypeOf(Uint8ClampedArrayPrototype
 
 if (descriptors && !has(TypedArrayPrototype, TO_STRING_TAG$4)) {
   TYPED_ARRAY_TAG_REQIRED = true;
-  defineProperty$9(TypedArrayPrototype, TO_STRING_TAG$4, { get: function () {
+  defineProperty$8(TypedArrayPrototype, TO_STRING_TAG$4, { get: function () {
     return isObject(this) ? this[TYPED_ARRAY_TAG] : undefined;
   } });
   for (NAME$1 in TypedArrayConstructorsList) if (global_1[NAME$1]) {
@@ -7037,7 +5348,7 @@ typedArrayConstructor('Float64', function (init) {
   };
 });
 
-var min$7 = Math.min;
+var min$6 = Math.min;
 
 // `Array.prototype.copyWithin` method implementation
 // https://tc39.github.io/ecma262/#sec-array.prototype.copywithin
@@ -7047,7 +5358,7 @@ var arrayCopyWithin = [].copyWithin || function copyWithin(target /* = 0 */, sta
   var to = toAbsoluteIndex(target, len);
   var from = toAbsoluteIndex(start, len);
   var end = arguments.length > 2 ? arguments[2] : undefined;
-  var count = min$7((end === undefined ? len : toAbsoluteIndex(end, len)) - from, len - to);
+  var count = min$6((end === undefined ? len : toAbsoluteIndex(end, len)) - from, len - to);
   var inc = 1;
   if (from < to && to < from + count) {
     inc = -1;
@@ -7166,14 +5477,14 @@ exportTypedArrayMethod$9('indexOf', function indexOf(searchElement /* , fromInde
   return $indexOf$1(aTypedArray$9(this), searchElement, arguments.length > 1 ? arguments[1] : undefined);
 });
 
-var ITERATOR$8 = wellKnownSymbol('iterator');
+var ITERATOR$6 = wellKnownSymbol('iterator');
 var Uint8Array = global_1.Uint8Array;
 var arrayValues = es_array_iterator.values;
 var arrayKeys = es_array_iterator.keys;
 var arrayEntries = es_array_iterator.entries;
 var aTypedArray$a = arrayBufferViewCore.aTypedArray;
 var exportTypedArrayMethod$a = arrayBufferViewCore.exportTypedArrayMethod;
-var nativeTypedArrayIterator = Uint8Array && Uint8Array.prototype[ITERATOR$8];
+var nativeTypedArrayIterator = Uint8Array && Uint8Array.prototype[ITERATOR$6];
 
 var CORRECT_ITER_NAME = !!nativeTypedArrayIterator
   && (nativeTypedArrayIterator.name == 'values' || nativeTypedArrayIterator.name == undefined);
@@ -7197,7 +5508,7 @@ exportTypedArrayMethod$a('keys', function keys() {
 exportTypedArrayMethod$a('values', typedArrayValues, !CORRECT_ITER_NAME);
 // `%TypedArray%.prototype[@@iterator]` method
 // https://tc39.github.io/ecma262/#sec-%typedarray%.prototype-@@iterator
-exportTypedArrayMethod$a(ITERATOR$8, typedArrayValues, !CORRECT_ITER_NAME);
+exportTypedArrayMethod$a(ITERATOR$6, typedArrayValues, !CORRECT_ITER_NAME);
 
 var aTypedArray$b = arrayBufferViewCore.aTypedArray;
 var exportTypedArrayMethod$b = arrayBufferViewCore.exportTypedArrayMethod;
@@ -7295,14 +5606,14 @@ exportTypedArrayMethod$f('reduceRight', function reduceRight(callbackfn /* , ini
 
 var aTypedArray$g = arrayBufferViewCore.aTypedArray;
 var exportTypedArrayMethod$g = arrayBufferViewCore.exportTypedArrayMethod;
-var floor$5 = Math.floor;
+var floor$3 = Math.floor;
 
 // `%TypedArray%.prototype.reverse` method
 // https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.reverse
 exportTypedArrayMethod$g('reverse', function reverse() {
   var that = this;
   var length = aTypedArray$g(that).length;
-  var middle = floor$5(length / 2);
+  var middle = floor$3(length / 2);
   var index = 0;
   var value;
   while (index < middle) {
@@ -7435,6 +5746,1642 @@ var IS_NOT_ARRAY_METHOD = Uint8ArrayPrototype.toString != arrayToString;
 // `%TypedArray%.prototype.toString` method
 // https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.tostring
 exportTypedArrayMethod$n('toString', arrayToString, IS_NOT_ARRAY_METHOD);
+
+var ITERATOR$7 = wellKnownSymbol('iterator');
+
+var nativeUrl = !fails(function () {
+  var url = new URL('b?a=1&b=2&c=3', 'http://a');
+  var searchParams = url.searchParams;
+  var result = '';
+  url.pathname = 'c%20d';
+  searchParams.forEach(function (value, key) {
+    searchParams['delete']('b');
+    result += key + value;
+  });
+  return (isPure && !url.toJSON)
+    || !searchParams.sort
+    || url.href !== 'http://a/c%20d?a=1&c=3'
+    || searchParams.get('c') !== '3'
+    || String(new URLSearchParams('?a=1')) !== 'a=1'
+    || !searchParams[ITERATOR$7]
+    // throws in Edge
+    || new URL('https://a@b').username !== 'a'
+    || new URLSearchParams(new URLSearchParams('a=b')).get('a') !== 'b'
+    // not punycoded in Edge
+    || new URL('http://тест').host !== 'xn--e1aybc'
+    // not escaped in Chrome 62-
+    || new URL('http://a#б').hash !== '#%D0%B1'
+    // fails in Chrome 66-
+    || result !== 'a1c3'
+    // throws in Safari
+    || new URL('http://x', undefined).host !== 'x';
+});
+
+var nativeAssign = Object.assign;
+var defineProperty$9 = Object.defineProperty;
+
+// `Object.assign` method
+// https://tc39.github.io/ecma262/#sec-object.assign
+var objectAssign = !nativeAssign || fails(function () {
+  // should have correct order of operations (Edge bug)
+  if (descriptors && nativeAssign({ b: 1 }, nativeAssign(defineProperty$9({}, 'a', {
+    enumerable: true,
+    get: function () {
+      defineProperty$9(this, 'b', {
+        value: 3,
+        enumerable: false
+      });
+    }
+  }), { b: 2 })).b !== 1) return true;
+  // should work with symbols and should have deterministic property order (V8 bug)
+  var A = {};
+  var B = {};
+  // eslint-disable-next-line no-undef
+  var symbol = Symbol();
+  var alphabet = 'abcdefghijklmnopqrst';
+  A[symbol] = 7;
+  alphabet.split('').forEach(function (chr) { B[chr] = chr; });
+  return nativeAssign({}, A)[symbol] != 7 || objectKeys(nativeAssign({}, B)).join('') != alphabet;
+}) ? function assign(target, source) { // eslint-disable-line no-unused-vars
+  var T = toObject(target);
+  var argumentsLength = arguments.length;
+  var index = 1;
+  var getOwnPropertySymbols = objectGetOwnPropertySymbols.f;
+  var propertyIsEnumerable = objectPropertyIsEnumerable.f;
+  while (argumentsLength > index) {
+    var S = indexedObject(arguments[index++]);
+    var keys = getOwnPropertySymbols ? objectKeys(S).concat(getOwnPropertySymbols(S)) : objectKeys(S);
+    var length = keys.length;
+    var j = 0;
+    var key;
+    while (length > j) {
+      key = keys[j++];
+      if (!descriptors || propertyIsEnumerable.call(S, key)) T[key] = S[key];
+    }
+  } return T;
+} : nativeAssign;
+
+// `Array.from` method implementation
+// https://tc39.github.io/ecma262/#sec-array.from
+var arrayFrom = function from(arrayLike /* , mapfn = undefined, thisArg = undefined */) {
+  var O = toObject(arrayLike);
+  var C = typeof this == 'function' ? this : Array;
+  var argumentsLength = arguments.length;
+  var mapfn = argumentsLength > 1 ? arguments[1] : undefined;
+  var mapping = mapfn !== undefined;
+  var iteratorMethod = getIteratorMethod(O);
+  var index = 0;
+  var length, result, step, iterator, next, value;
+  if (mapping) mapfn = functionBindContext(mapfn, argumentsLength > 2 ? arguments[2] : undefined, 2);
+  // if the target is not iterable or it's an array with the default iterator - use a simple case
+  if (iteratorMethod != undefined && !(C == Array && isArrayIteratorMethod(iteratorMethod))) {
+    iterator = iteratorMethod.call(O);
+    next = iterator.next;
+    result = new C();
+    for (;!(step = next.call(iterator)).done; index++) {
+      value = mapping ? callWithSafeIterationClosing(iterator, mapfn, [step.value, index], true) : step.value;
+      createProperty(result, index, value);
+    }
+  } else {
+    length = toLength(O.length);
+    result = new C(length);
+    for (;length > index; index++) {
+      value = mapping ? mapfn(O[index], index) : O[index];
+      createProperty(result, index, value);
+    }
+  }
+  result.length = index;
+  return result;
+};
+
+// based on https://github.com/bestiejs/punycode.js/blob/master/punycode.js
+var maxInt = 2147483647; // aka. 0x7FFFFFFF or 2^31-1
+var base = 36;
+var tMin = 1;
+var tMax = 26;
+var skew = 38;
+var damp = 700;
+var initialBias = 72;
+var initialN = 128; // 0x80
+var delimiter = '-'; // '\x2D'
+var regexNonASCII = /[^\0-\u007E]/; // non-ASCII chars
+var regexSeparators = /[.\u3002\uFF0E\uFF61]/g; // RFC 3490 separators
+var OVERFLOW_ERROR = 'Overflow: input needs wider integers to process';
+var baseMinusTMin = base - tMin;
+var floor$4 = Math.floor;
+var stringFromCharCode = String.fromCharCode;
+
+/**
+ * Creates an array containing the numeric code points of each Unicode
+ * character in the string. While JavaScript uses UCS-2 internally,
+ * this function will convert a pair of surrogate halves (each of which
+ * UCS-2 exposes as separate characters) into a single code point,
+ * matching UTF-16.
+ */
+var ucs2decode = function (string) {
+  var output = [];
+  var counter = 0;
+  var length = string.length;
+  while (counter < length) {
+    var value = string.charCodeAt(counter++);
+    if (value >= 0xD800 && value <= 0xDBFF && counter < length) {
+      // It's a high surrogate, and there is a next character.
+      var extra = string.charCodeAt(counter++);
+      if ((extra & 0xFC00) == 0xDC00) { // Low surrogate.
+        output.push(((value & 0x3FF) << 10) + (extra & 0x3FF) + 0x10000);
+      } else {
+        // It's an unmatched surrogate; only append this code unit, in case the
+        // next code unit is the high surrogate of a surrogate pair.
+        output.push(value);
+        counter--;
+      }
+    } else {
+      output.push(value);
+    }
+  }
+  return output;
+};
+
+/**
+ * Converts a digit/integer into a basic code point.
+ */
+var digitToBasic = function (digit) {
+  //  0..25 map to ASCII a..z or A..Z
+  // 26..35 map to ASCII 0..9
+  return digit + 22 + 75 * (digit < 26);
+};
+
+/**
+ * Bias adaptation function as per section 3.4 of RFC 3492.
+ * https://tools.ietf.org/html/rfc3492#section-3.4
+ */
+var adapt = function (delta, numPoints, firstTime) {
+  var k = 0;
+  delta = firstTime ? floor$4(delta / damp) : delta >> 1;
+  delta += floor$4(delta / numPoints);
+  for (; delta > baseMinusTMin * tMax >> 1; k += base) {
+    delta = floor$4(delta / baseMinusTMin);
+  }
+  return floor$4(k + (baseMinusTMin + 1) * delta / (delta + skew));
+};
+
+/**
+ * Converts a string of Unicode symbols (e.g. a domain name label) to a
+ * Punycode string of ASCII-only symbols.
+ */
+// eslint-disable-next-line  max-statements
+var encode = function (input) {
+  var output = [];
+
+  // Convert the input in UCS-2 to an array of Unicode code points.
+  input = ucs2decode(input);
+
+  // Cache the length.
+  var inputLength = input.length;
+
+  // Initialize the state.
+  var n = initialN;
+  var delta = 0;
+  var bias = initialBias;
+  var i, currentValue;
+
+  // Handle the basic code points.
+  for (i = 0; i < input.length; i++) {
+    currentValue = input[i];
+    if (currentValue < 0x80) {
+      output.push(stringFromCharCode(currentValue));
+    }
+  }
+
+  var basicLength = output.length; // number of basic code points.
+  var handledCPCount = basicLength; // number of code points that have been handled;
+
+  // Finish the basic string with a delimiter unless it's empty.
+  if (basicLength) {
+    output.push(delimiter);
+  }
+
+  // Main encoding loop:
+  while (handledCPCount < inputLength) {
+    // All non-basic code points < n have been handled already. Find the next larger one:
+    var m = maxInt;
+    for (i = 0; i < input.length; i++) {
+      currentValue = input[i];
+      if (currentValue >= n && currentValue < m) {
+        m = currentValue;
+      }
+    }
+
+    // Increase `delta` enough to advance the decoder's <n,i> state to <m,0>, but guard against overflow.
+    var handledCPCountPlusOne = handledCPCount + 1;
+    if (m - n > floor$4((maxInt - delta) / handledCPCountPlusOne)) {
+      throw RangeError(OVERFLOW_ERROR);
+    }
+
+    delta += (m - n) * handledCPCountPlusOne;
+    n = m;
+
+    for (i = 0; i < input.length; i++) {
+      currentValue = input[i];
+      if (currentValue < n && ++delta > maxInt) {
+        throw RangeError(OVERFLOW_ERROR);
+      }
+      if (currentValue == n) {
+        // Represent delta as a generalized variable-length integer.
+        var q = delta;
+        for (var k = base; /* no condition */; k += base) {
+          var t = k <= bias ? tMin : (k >= bias + tMax ? tMax : k - bias);
+          if (q < t) break;
+          var qMinusT = q - t;
+          var baseMinusT = base - t;
+          output.push(stringFromCharCode(digitToBasic(t + qMinusT % baseMinusT)));
+          q = floor$4(qMinusT / baseMinusT);
+        }
+
+        output.push(stringFromCharCode(digitToBasic(q)));
+        bias = adapt(delta, handledCPCountPlusOne, handledCPCount == basicLength);
+        delta = 0;
+        ++handledCPCount;
+      }
+    }
+
+    ++delta;
+    ++n;
+  }
+  return output.join('');
+};
+
+var stringPunycodeToAscii = function (input) {
+  var encoded = [];
+  var labels = input.toLowerCase().replace(regexSeparators, '\u002E').split('.');
+  var i, label;
+  for (i = 0; i < labels.length; i++) {
+    label = labels[i];
+    encoded.push(regexNonASCII.test(label) ? 'xn--' + encode(label) : label);
+  }
+  return encoded.join('.');
+};
+
+var getIterator = function (it) {
+  var iteratorMethod = getIteratorMethod(it);
+  if (typeof iteratorMethod != 'function') {
+    throw TypeError(String(it) + ' is not iterable');
+  } return anObject(iteratorMethod.call(it));
+};
+
+// TODO: in core-js@4, move /modules/ dependencies to public entries for better optimization by tools like `preset-env`
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+var $fetch$1 = getBuiltIn('fetch');
+var Headers = getBuiltIn('Headers');
+var ITERATOR$8 = wellKnownSymbol('iterator');
+var URL_SEARCH_PARAMS = 'URLSearchParams';
+var URL_SEARCH_PARAMS_ITERATOR = URL_SEARCH_PARAMS + 'Iterator';
+var setInternalState$6 = internalState.set;
+var getInternalParamsState = internalState.getterFor(URL_SEARCH_PARAMS);
+var getInternalIteratorState = internalState.getterFor(URL_SEARCH_PARAMS_ITERATOR);
+
+var plus = /\+/g;
+var sequences = Array(4);
+
+var percentSequence = function (bytes) {
+  return sequences[bytes - 1] || (sequences[bytes - 1] = RegExp('((?:%[\\da-f]{2}){' + bytes + '})', 'gi'));
+};
+
+var percentDecode = function (sequence) {
+  try {
+    return decodeURIComponent(sequence);
+  } catch (error) {
+    return sequence;
+  }
+};
+
+var deserialize = function (it) {
+  var result = it.replace(plus, ' ');
+  var bytes = 4;
+  try {
+    return decodeURIComponent(result);
+  } catch (error) {
+    while (bytes) {
+      result = result.replace(percentSequence(bytes--), percentDecode);
+    }
+    return result;
+  }
+};
+
+var find = /[!'()~]|%20/g;
+
+var replace = {
+  '!': '%21',
+  "'": '%27',
+  '(': '%28',
+  ')': '%29',
+  '~': '%7E',
+  '%20': '+'
+};
+
+var replacer = function (match) {
+  return replace[match];
+};
+
+var serialize = function (it) {
+  return encodeURIComponent(it).replace(find, replacer);
+};
+
+var parseSearchParams = function (result, query) {
+  if (query) {
+    var attributes = query.split('&');
+    var index = 0;
+    var attribute, entry;
+    while (index < attributes.length) {
+      attribute = attributes[index++];
+      if (attribute.length) {
+        entry = attribute.split('=');
+        result.push({
+          key: deserialize(entry.shift()),
+          value: deserialize(entry.join('='))
+        });
+      }
+    }
+  }
+};
+
+var updateSearchParams = function (query) {
+  this.entries.length = 0;
+  parseSearchParams(this.entries, query);
+};
+
+var validateArgumentsLength = function (passed, required) {
+  if (passed < required) throw TypeError('Not enough arguments');
+};
+
+var URLSearchParamsIterator = createIteratorConstructor(function Iterator(params, kind) {
+  setInternalState$6(this, {
+    type: URL_SEARCH_PARAMS_ITERATOR,
+    iterator: getIterator(getInternalParamsState(params).entries),
+    kind: kind
+  });
+}, 'Iterator', function next() {
+  var state = getInternalIteratorState(this);
+  var kind = state.kind;
+  var step = state.iterator.next();
+  var entry = step.value;
+  if (!step.done) {
+    step.value = kind === 'keys' ? entry.key : kind === 'values' ? entry.value : [entry.key, entry.value];
+  } return step;
+});
+
+// `URLSearchParams` constructor
+// https://url.spec.whatwg.org/#interface-urlsearchparams
+var URLSearchParamsConstructor = function URLSearchParams(/* init */) {
+  anInstance(this, URLSearchParamsConstructor, URL_SEARCH_PARAMS);
+  var init = arguments.length > 0 ? arguments[0] : undefined;
+  var that = this;
+  var entries = [];
+  var iteratorMethod, iterator, next, step, entryIterator, entryNext, first, second, key;
+
+  setInternalState$6(that, {
+    type: URL_SEARCH_PARAMS,
+    entries: entries,
+    updateURL: function () { /* empty */ },
+    updateSearchParams: updateSearchParams
+  });
+
+  if (init !== undefined) {
+    if (isObject(init)) {
+      iteratorMethod = getIteratorMethod(init);
+      if (typeof iteratorMethod === 'function') {
+        iterator = iteratorMethod.call(init);
+        next = iterator.next;
+        while (!(step = next.call(iterator)).done) {
+          entryIterator = getIterator(anObject(step.value));
+          entryNext = entryIterator.next;
+          if (
+            (first = entryNext.call(entryIterator)).done ||
+            (second = entryNext.call(entryIterator)).done ||
+            !entryNext.call(entryIterator).done
+          ) throw TypeError('Expected sequence with length 2');
+          entries.push({ key: first.value + '', value: second.value + '' });
+        }
+      } else for (key in init) if (has(init, key)) entries.push({ key: key, value: init[key] + '' });
+    } else {
+      parseSearchParams(entries, typeof init === 'string' ? init.charAt(0) === '?' ? init.slice(1) : init : init + '');
+    }
+  }
+};
+
+var URLSearchParamsPrototype = URLSearchParamsConstructor.prototype;
+
+redefineAll(URLSearchParamsPrototype, {
+  // `URLSearchParams.prototype.appent` method
+  // https://url.spec.whatwg.org/#dom-urlsearchparams-append
+  append: function append(name, value) {
+    validateArgumentsLength(arguments.length, 2);
+    var state = getInternalParamsState(this);
+    state.entries.push({ key: name + '', value: value + '' });
+    state.updateURL();
+  },
+  // `URLSearchParams.prototype.delete` method
+  // https://url.spec.whatwg.org/#dom-urlsearchparams-delete
+  'delete': function (name) {
+    validateArgumentsLength(arguments.length, 1);
+    var state = getInternalParamsState(this);
+    var entries = state.entries;
+    var key = name + '';
+    var index = 0;
+    while (index < entries.length) {
+      if (entries[index].key === key) entries.splice(index, 1);
+      else index++;
+    }
+    state.updateURL();
+  },
+  // `URLSearchParams.prototype.get` method
+  // https://url.spec.whatwg.org/#dom-urlsearchparams-get
+  get: function get(name) {
+    validateArgumentsLength(arguments.length, 1);
+    var entries = getInternalParamsState(this).entries;
+    var key = name + '';
+    var index = 0;
+    for (; index < entries.length; index++) {
+      if (entries[index].key === key) return entries[index].value;
+    }
+    return null;
+  },
+  // `URLSearchParams.prototype.getAll` method
+  // https://url.spec.whatwg.org/#dom-urlsearchparams-getall
+  getAll: function getAll(name) {
+    validateArgumentsLength(arguments.length, 1);
+    var entries = getInternalParamsState(this).entries;
+    var key = name + '';
+    var result = [];
+    var index = 0;
+    for (; index < entries.length; index++) {
+      if (entries[index].key === key) result.push(entries[index].value);
+    }
+    return result;
+  },
+  // `URLSearchParams.prototype.has` method
+  // https://url.spec.whatwg.org/#dom-urlsearchparams-has
+  has: function has(name) {
+    validateArgumentsLength(arguments.length, 1);
+    var entries = getInternalParamsState(this).entries;
+    var key = name + '';
+    var index = 0;
+    while (index < entries.length) {
+      if (entries[index++].key === key) return true;
+    }
+    return false;
+  },
+  // `URLSearchParams.prototype.set` method
+  // https://url.spec.whatwg.org/#dom-urlsearchparams-set
+  set: function set(name, value) {
+    validateArgumentsLength(arguments.length, 1);
+    var state = getInternalParamsState(this);
+    var entries = state.entries;
+    var found = false;
+    var key = name + '';
+    var val = value + '';
+    var index = 0;
+    var entry;
+    for (; index < entries.length; index++) {
+      entry = entries[index];
+      if (entry.key === key) {
+        if (found) entries.splice(index--, 1);
+        else {
+          found = true;
+          entry.value = val;
+        }
+      }
+    }
+    if (!found) entries.push({ key: key, value: val });
+    state.updateURL();
+  },
+  // `URLSearchParams.prototype.sort` method
+  // https://url.spec.whatwg.org/#dom-urlsearchparams-sort
+  sort: function sort() {
+    var state = getInternalParamsState(this);
+    var entries = state.entries;
+    // Array#sort is not stable in some engines
+    var slice = entries.slice();
+    var entry, entriesIndex, sliceIndex;
+    entries.length = 0;
+    for (sliceIndex = 0; sliceIndex < slice.length; sliceIndex++) {
+      entry = slice[sliceIndex];
+      for (entriesIndex = 0; entriesIndex < sliceIndex; entriesIndex++) {
+        if (entries[entriesIndex].key > entry.key) {
+          entries.splice(entriesIndex, 0, entry);
+          break;
+        }
+      }
+      if (entriesIndex === sliceIndex) entries.push(entry);
+    }
+    state.updateURL();
+  },
+  // `URLSearchParams.prototype.forEach` method
+  forEach: function forEach(callback /* , thisArg */) {
+    var entries = getInternalParamsState(this).entries;
+    var boundFunction = functionBindContext(callback, arguments.length > 1 ? arguments[1] : undefined, 3);
+    var index = 0;
+    var entry;
+    while (index < entries.length) {
+      entry = entries[index++];
+      boundFunction(entry.value, entry.key, this);
+    }
+  },
+  // `URLSearchParams.prototype.keys` method
+  keys: function keys() {
+    return new URLSearchParamsIterator(this, 'keys');
+  },
+  // `URLSearchParams.prototype.values` method
+  values: function values() {
+    return new URLSearchParamsIterator(this, 'values');
+  },
+  // `URLSearchParams.prototype.entries` method
+  entries: function entries() {
+    return new URLSearchParamsIterator(this, 'entries');
+  }
+}, { enumerable: true });
+
+// `URLSearchParams.prototype[@@iterator]` method
+redefine(URLSearchParamsPrototype, ITERATOR$8, URLSearchParamsPrototype.entries);
+
+// `URLSearchParams.prototype.toString` method
+// https://url.spec.whatwg.org/#urlsearchparams-stringification-behavior
+redefine(URLSearchParamsPrototype, 'toString', function toString() {
+  var entries = getInternalParamsState(this).entries;
+  var result = [];
+  var index = 0;
+  var entry;
+  while (index < entries.length) {
+    entry = entries[index++];
+    result.push(serialize(entry.key) + '=' + serialize(entry.value));
+  } return result.join('&');
+}, { enumerable: true });
+
+setToStringTag(URLSearchParamsConstructor, URL_SEARCH_PARAMS);
+
+_export({ global: true, forced: !nativeUrl }, {
+  URLSearchParams: URLSearchParamsConstructor
+});
+
+// Wrap `fetch` for correct work with polyfilled `URLSearchParams`
+// https://github.com/zloirock/core-js/issues/674
+if (!nativeUrl && typeof $fetch$1 == 'function' && typeof Headers == 'function') {
+  _export({ global: true, enumerable: true, forced: true }, {
+    fetch: function fetch(input /* , init */) {
+      var args = [input];
+      var init, body, headers;
+      if (arguments.length > 1) {
+        init = arguments[1];
+        if (isObject(init)) {
+          body = init.body;
+          if (classof(body) === URL_SEARCH_PARAMS) {
+            headers = init.headers ? new Headers(init.headers) : new Headers();
+            if (!headers.has('content-type')) {
+              headers.set('content-type', 'application/x-www-form-urlencoded;charset=UTF-8');
+            }
+            init = objectCreate(init, {
+              body: createPropertyDescriptor(0, String(body)),
+              headers: createPropertyDescriptor(0, headers)
+            });
+          }
+        }
+        args.push(init);
+      } return $fetch$1.apply(this, args);
+    }
+  });
+}
+
+var web_urlSearchParams = {
+  URLSearchParams: URLSearchParamsConstructor,
+  getState: getInternalParamsState
+};
+
+// TODO: in core-js@4, move /modules/ dependencies to public entries for better optimization by tools like `preset-env`
+
+
+
+
+
+
+
+
+
+
+
+var codeAt = stringMultibyte.codeAt;
+
+
+
+
+
+var NativeURL = global_1.URL;
+var URLSearchParams$1 = web_urlSearchParams.URLSearchParams;
+var getInternalSearchParamsState = web_urlSearchParams.getState;
+var setInternalState$7 = internalState.set;
+var getInternalURLState = internalState.getterFor('URL');
+var floor$5 = Math.floor;
+var pow$1 = Math.pow;
+
+var INVALID_AUTHORITY = 'Invalid authority';
+var INVALID_SCHEME = 'Invalid scheme';
+var INVALID_HOST = 'Invalid host';
+var INVALID_PORT = 'Invalid port';
+
+var ALPHA = /[A-Za-z]/;
+var ALPHANUMERIC = /[\d+-.A-Za-z]/;
+var DIGIT = /\d/;
+var HEX_START = /^(0x|0X)/;
+var OCT = /^[0-7]+$/;
+var DEC = /^\d+$/;
+var HEX = /^[\dA-Fa-f]+$/;
+// eslint-disable-next-line no-control-regex
+var FORBIDDEN_HOST_CODE_POINT = /[\u0000\u0009\u000A\u000D #%/:?@[\\]]/;
+// eslint-disable-next-line no-control-regex
+var FORBIDDEN_HOST_CODE_POINT_EXCLUDING_PERCENT = /[\u0000\u0009\u000A\u000D #/:?@[\\]]/;
+// eslint-disable-next-line no-control-regex
+var LEADING_AND_TRAILING_C0_CONTROL_OR_SPACE = /^[\u0000-\u001F ]+|[\u0000-\u001F ]+$/g;
+// eslint-disable-next-line no-control-regex
+var TAB_AND_NEW_LINE = /[\u0009\u000A\u000D]/g;
+var EOF;
+
+var parseHost = function (url, input) {
+  var result, codePoints, index;
+  if (input.charAt(0) == '[') {
+    if (input.charAt(input.length - 1) != ']') return INVALID_HOST;
+    result = parseIPv6(input.slice(1, -1));
+    if (!result) return INVALID_HOST;
+    url.host = result;
+  // opaque host
+  } else if (!isSpecial(url)) {
+    if (FORBIDDEN_HOST_CODE_POINT_EXCLUDING_PERCENT.test(input)) return INVALID_HOST;
+    result = '';
+    codePoints = arrayFrom(input);
+    for (index = 0; index < codePoints.length; index++) {
+      result += percentEncode(codePoints[index], C0ControlPercentEncodeSet);
+    }
+    url.host = result;
+  } else {
+    input = stringPunycodeToAscii(input);
+    if (FORBIDDEN_HOST_CODE_POINT.test(input)) return INVALID_HOST;
+    result = parseIPv4(input);
+    if (result === null) return INVALID_HOST;
+    url.host = result;
+  }
+};
+
+var parseIPv4 = function (input) {
+  var parts = input.split('.');
+  var partsLength, numbers, index, part, radix, number, ipv4;
+  if (parts.length && parts[parts.length - 1] == '') {
+    parts.pop();
+  }
+  partsLength = parts.length;
+  if (partsLength > 4) return input;
+  numbers = [];
+  for (index = 0; index < partsLength; index++) {
+    part = parts[index];
+    if (part == '') return input;
+    radix = 10;
+    if (part.length > 1 && part.charAt(0) == '0') {
+      radix = HEX_START.test(part) ? 16 : 8;
+      part = part.slice(radix == 8 ? 1 : 2);
+    }
+    if (part === '') {
+      number = 0;
+    } else {
+      if (!(radix == 10 ? DEC : radix == 8 ? OCT : HEX).test(part)) return input;
+      number = parseInt(part, radix);
+    }
+    numbers.push(number);
+  }
+  for (index = 0; index < partsLength; index++) {
+    number = numbers[index];
+    if (index == partsLength - 1) {
+      if (number >= pow$1(256, 5 - partsLength)) return null;
+    } else if (number > 255) return null;
+  }
+  ipv4 = numbers.pop();
+  for (index = 0; index < numbers.length; index++) {
+    ipv4 += numbers[index] * pow$1(256, 3 - index);
+  }
+  return ipv4;
+};
+
+// eslint-disable-next-line max-statements
+var parseIPv6 = function (input) {
+  var address = [0, 0, 0, 0, 0, 0, 0, 0];
+  var pieceIndex = 0;
+  var compress = null;
+  var pointer = 0;
+  var value, length, numbersSeen, ipv4Piece, number, swaps, swap;
+
+  var char = function () {
+    return input.charAt(pointer);
+  };
+
+  if (char() == ':') {
+    if (input.charAt(1) != ':') return;
+    pointer += 2;
+    pieceIndex++;
+    compress = pieceIndex;
+  }
+  while (char()) {
+    if (pieceIndex == 8) return;
+    if (char() == ':') {
+      if (compress !== null) return;
+      pointer++;
+      pieceIndex++;
+      compress = pieceIndex;
+      continue;
+    }
+    value = length = 0;
+    while (length < 4 && HEX.test(char())) {
+      value = value * 16 + parseInt(char(), 16);
+      pointer++;
+      length++;
+    }
+    if (char() == '.') {
+      if (length == 0) return;
+      pointer -= length;
+      if (pieceIndex > 6) return;
+      numbersSeen = 0;
+      while (char()) {
+        ipv4Piece = null;
+        if (numbersSeen > 0) {
+          if (char() == '.' && numbersSeen < 4) pointer++;
+          else return;
+        }
+        if (!DIGIT.test(char())) return;
+        while (DIGIT.test(char())) {
+          number = parseInt(char(), 10);
+          if (ipv4Piece === null) ipv4Piece = number;
+          else if (ipv4Piece == 0) return;
+          else ipv4Piece = ipv4Piece * 10 + number;
+          if (ipv4Piece > 255) return;
+          pointer++;
+        }
+        address[pieceIndex] = address[pieceIndex] * 256 + ipv4Piece;
+        numbersSeen++;
+        if (numbersSeen == 2 || numbersSeen == 4) pieceIndex++;
+      }
+      if (numbersSeen != 4) return;
+      break;
+    } else if (char() == ':') {
+      pointer++;
+      if (!char()) return;
+    } else if (char()) return;
+    address[pieceIndex++] = value;
+  }
+  if (compress !== null) {
+    swaps = pieceIndex - compress;
+    pieceIndex = 7;
+    while (pieceIndex != 0 && swaps > 0) {
+      swap = address[pieceIndex];
+      address[pieceIndex--] = address[compress + swaps - 1];
+      address[compress + --swaps] = swap;
+    }
+  } else if (pieceIndex != 8) return;
+  return address;
+};
+
+var findLongestZeroSequence = function (ipv6) {
+  var maxIndex = null;
+  var maxLength = 1;
+  var currStart = null;
+  var currLength = 0;
+  var index = 0;
+  for (; index < 8; index++) {
+    if (ipv6[index] !== 0) {
+      if (currLength > maxLength) {
+        maxIndex = currStart;
+        maxLength = currLength;
+      }
+      currStart = null;
+      currLength = 0;
+    } else {
+      if (currStart === null) currStart = index;
+      ++currLength;
+    }
+  }
+  if (currLength > maxLength) {
+    maxIndex = currStart;
+    maxLength = currLength;
+  }
+  return maxIndex;
+};
+
+var serializeHost = function (host) {
+  var result, index, compress, ignore0;
+  // ipv4
+  if (typeof host == 'number') {
+    result = [];
+    for (index = 0; index < 4; index++) {
+      result.unshift(host % 256);
+      host = floor$5(host / 256);
+    } return result.join('.');
+  // ipv6
+  } else if (typeof host == 'object') {
+    result = '';
+    compress = findLongestZeroSequence(host);
+    for (index = 0; index < 8; index++) {
+      if (ignore0 && host[index] === 0) continue;
+      if (ignore0) ignore0 = false;
+      if (compress === index) {
+        result += index ? ':' : '::';
+        ignore0 = true;
+      } else {
+        result += host[index].toString(16);
+        if (index < 7) result += ':';
+      }
+    }
+    return '[' + result + ']';
+  } return host;
+};
+
+var C0ControlPercentEncodeSet = {};
+var fragmentPercentEncodeSet = objectAssign({}, C0ControlPercentEncodeSet, {
+  ' ': 1, '"': 1, '<': 1, '>': 1, '`': 1
+});
+var pathPercentEncodeSet = objectAssign({}, fragmentPercentEncodeSet, {
+  '#': 1, '?': 1, '{': 1, '}': 1
+});
+var userinfoPercentEncodeSet = objectAssign({}, pathPercentEncodeSet, {
+  '/': 1, ':': 1, ';': 1, '=': 1, '@': 1, '[': 1, '\\': 1, ']': 1, '^': 1, '|': 1
+});
+
+var percentEncode = function (char, set) {
+  var code = codeAt(char, 0);
+  return code > 0x20 && code < 0x7F && !has(set, char) ? char : encodeURIComponent(char);
+};
+
+var specialSchemes = {
+  ftp: 21,
+  file: null,
+  http: 80,
+  https: 443,
+  ws: 80,
+  wss: 443
+};
+
+var isSpecial = function (url) {
+  return has(specialSchemes, url.scheme);
+};
+
+var includesCredentials = function (url) {
+  return url.username != '' || url.password != '';
+};
+
+var cannotHaveUsernamePasswordPort = function (url) {
+  return !url.host || url.cannotBeABaseURL || url.scheme == 'file';
+};
+
+var isWindowsDriveLetter = function (string, normalized) {
+  var second;
+  return string.length == 2 && ALPHA.test(string.charAt(0))
+    && ((second = string.charAt(1)) == ':' || (!normalized && second == '|'));
+};
+
+var startsWithWindowsDriveLetter = function (string) {
+  var third;
+  return string.length > 1 && isWindowsDriveLetter(string.slice(0, 2)) && (
+    string.length == 2 ||
+    ((third = string.charAt(2)) === '/' || third === '\\' || third === '?' || third === '#')
+  );
+};
+
+var shortenURLsPath = function (url) {
+  var path = url.path;
+  var pathSize = path.length;
+  if (pathSize && (url.scheme != 'file' || pathSize != 1 || !isWindowsDriveLetter(path[0], true))) {
+    path.pop();
+  }
+};
+
+var isSingleDot = function (segment) {
+  return segment === '.' || segment.toLowerCase() === '%2e';
+};
+
+var isDoubleDot = function (segment) {
+  segment = segment.toLowerCase();
+  return segment === '..' || segment === '%2e.' || segment === '.%2e' || segment === '%2e%2e';
+};
+
+// States:
+var SCHEME_START = {};
+var SCHEME = {};
+var NO_SCHEME = {};
+var SPECIAL_RELATIVE_OR_AUTHORITY = {};
+var PATH_OR_AUTHORITY = {};
+var RELATIVE = {};
+var RELATIVE_SLASH = {};
+var SPECIAL_AUTHORITY_SLASHES = {};
+var SPECIAL_AUTHORITY_IGNORE_SLASHES = {};
+var AUTHORITY = {};
+var HOST = {};
+var HOSTNAME = {};
+var PORT = {};
+var FILE = {};
+var FILE_SLASH = {};
+var FILE_HOST = {};
+var PATH_START = {};
+var PATH = {};
+var CANNOT_BE_A_BASE_URL_PATH = {};
+var QUERY = {};
+var FRAGMENT = {};
+
+// eslint-disable-next-line max-statements
+var parseURL = function (url, input, stateOverride, base) {
+  var state = stateOverride || SCHEME_START;
+  var pointer = 0;
+  var buffer = '';
+  var seenAt = false;
+  var seenBracket = false;
+  var seenPasswordToken = false;
+  var codePoints, char, bufferCodePoints, failure;
+
+  if (!stateOverride) {
+    url.scheme = '';
+    url.username = '';
+    url.password = '';
+    url.host = null;
+    url.port = null;
+    url.path = [];
+    url.query = null;
+    url.fragment = null;
+    url.cannotBeABaseURL = false;
+    input = input.replace(LEADING_AND_TRAILING_C0_CONTROL_OR_SPACE, '');
+  }
+
+  input = input.replace(TAB_AND_NEW_LINE, '');
+
+  codePoints = arrayFrom(input);
+
+  while (pointer <= codePoints.length) {
+    char = codePoints[pointer];
+    switch (state) {
+      case SCHEME_START:
+        if (char && ALPHA.test(char)) {
+          buffer += char.toLowerCase();
+          state = SCHEME;
+        } else if (!stateOverride) {
+          state = NO_SCHEME;
+          continue;
+        } else return INVALID_SCHEME;
+        break;
+
+      case SCHEME:
+        if (char && (ALPHANUMERIC.test(char) || char == '+' || char == '-' || char == '.')) {
+          buffer += char.toLowerCase();
+        } else if (char == ':') {
+          if (stateOverride && (
+            (isSpecial(url) != has(specialSchemes, buffer)) ||
+            (buffer == 'file' && (includesCredentials(url) || url.port !== null)) ||
+            (url.scheme == 'file' && !url.host)
+          )) return;
+          url.scheme = buffer;
+          if (stateOverride) {
+            if (isSpecial(url) && specialSchemes[url.scheme] == url.port) url.port = null;
+            return;
+          }
+          buffer = '';
+          if (url.scheme == 'file') {
+            state = FILE;
+          } else if (isSpecial(url) && base && base.scheme == url.scheme) {
+            state = SPECIAL_RELATIVE_OR_AUTHORITY;
+          } else if (isSpecial(url)) {
+            state = SPECIAL_AUTHORITY_SLASHES;
+          } else if (codePoints[pointer + 1] == '/') {
+            state = PATH_OR_AUTHORITY;
+            pointer++;
+          } else {
+            url.cannotBeABaseURL = true;
+            url.path.push('');
+            state = CANNOT_BE_A_BASE_URL_PATH;
+          }
+        } else if (!stateOverride) {
+          buffer = '';
+          state = NO_SCHEME;
+          pointer = 0;
+          continue;
+        } else return INVALID_SCHEME;
+        break;
+
+      case NO_SCHEME:
+        if (!base || (base.cannotBeABaseURL && char != '#')) return INVALID_SCHEME;
+        if (base.cannotBeABaseURL && char == '#') {
+          url.scheme = base.scheme;
+          url.path = base.path.slice();
+          url.query = base.query;
+          url.fragment = '';
+          url.cannotBeABaseURL = true;
+          state = FRAGMENT;
+          break;
+        }
+        state = base.scheme == 'file' ? FILE : RELATIVE;
+        continue;
+
+      case SPECIAL_RELATIVE_OR_AUTHORITY:
+        if (char == '/' && codePoints[pointer + 1] == '/') {
+          state = SPECIAL_AUTHORITY_IGNORE_SLASHES;
+          pointer++;
+        } else {
+          state = RELATIVE;
+          continue;
+        } break;
+
+      case PATH_OR_AUTHORITY:
+        if (char == '/') {
+          state = AUTHORITY;
+          break;
+        } else {
+          state = PATH;
+          continue;
+        }
+
+      case RELATIVE:
+        url.scheme = base.scheme;
+        if (char == EOF) {
+          url.username = base.username;
+          url.password = base.password;
+          url.host = base.host;
+          url.port = base.port;
+          url.path = base.path.slice();
+          url.query = base.query;
+        } else if (char == '/' || (char == '\\' && isSpecial(url))) {
+          state = RELATIVE_SLASH;
+        } else if (char == '?') {
+          url.username = base.username;
+          url.password = base.password;
+          url.host = base.host;
+          url.port = base.port;
+          url.path = base.path.slice();
+          url.query = '';
+          state = QUERY;
+        } else if (char == '#') {
+          url.username = base.username;
+          url.password = base.password;
+          url.host = base.host;
+          url.port = base.port;
+          url.path = base.path.slice();
+          url.query = base.query;
+          url.fragment = '';
+          state = FRAGMENT;
+        } else {
+          url.username = base.username;
+          url.password = base.password;
+          url.host = base.host;
+          url.port = base.port;
+          url.path = base.path.slice();
+          url.path.pop();
+          state = PATH;
+          continue;
+        } break;
+
+      case RELATIVE_SLASH:
+        if (isSpecial(url) && (char == '/' || char == '\\')) {
+          state = SPECIAL_AUTHORITY_IGNORE_SLASHES;
+        } else if (char == '/') {
+          state = AUTHORITY;
+        } else {
+          url.username = base.username;
+          url.password = base.password;
+          url.host = base.host;
+          url.port = base.port;
+          state = PATH;
+          continue;
+        } break;
+
+      case SPECIAL_AUTHORITY_SLASHES:
+        state = SPECIAL_AUTHORITY_IGNORE_SLASHES;
+        if (char != '/' || buffer.charAt(pointer + 1) != '/') continue;
+        pointer++;
+        break;
+
+      case SPECIAL_AUTHORITY_IGNORE_SLASHES:
+        if (char != '/' && char != '\\') {
+          state = AUTHORITY;
+          continue;
+        } break;
+
+      case AUTHORITY:
+        if (char == '@') {
+          if (seenAt) buffer = '%40' + buffer;
+          seenAt = true;
+          bufferCodePoints = arrayFrom(buffer);
+          for (var i = 0; i < bufferCodePoints.length; i++) {
+            var codePoint = bufferCodePoints[i];
+            if (codePoint == ':' && !seenPasswordToken) {
+              seenPasswordToken = true;
+              continue;
+            }
+            var encodedCodePoints = percentEncode(codePoint, userinfoPercentEncodeSet);
+            if (seenPasswordToken) url.password += encodedCodePoints;
+            else url.username += encodedCodePoints;
+          }
+          buffer = '';
+        } else if (
+          char == EOF || char == '/' || char == '?' || char == '#' ||
+          (char == '\\' && isSpecial(url))
+        ) {
+          if (seenAt && buffer == '') return INVALID_AUTHORITY;
+          pointer -= arrayFrom(buffer).length + 1;
+          buffer = '';
+          state = HOST;
+        } else buffer += char;
+        break;
+
+      case HOST:
+      case HOSTNAME:
+        if (stateOverride && url.scheme == 'file') {
+          state = FILE_HOST;
+          continue;
+        } else if (char == ':' && !seenBracket) {
+          if (buffer == '') return INVALID_HOST;
+          failure = parseHost(url, buffer);
+          if (failure) return failure;
+          buffer = '';
+          state = PORT;
+          if (stateOverride == HOSTNAME) return;
+        } else if (
+          char == EOF || char == '/' || char == '?' || char == '#' ||
+          (char == '\\' && isSpecial(url))
+        ) {
+          if (isSpecial(url) && buffer == '') return INVALID_HOST;
+          if (stateOverride && buffer == '' && (includesCredentials(url) || url.port !== null)) return;
+          failure = parseHost(url, buffer);
+          if (failure) return failure;
+          buffer = '';
+          state = PATH_START;
+          if (stateOverride) return;
+          continue;
+        } else {
+          if (char == '[') seenBracket = true;
+          else if (char == ']') seenBracket = false;
+          buffer += char;
+        } break;
+
+      case PORT:
+        if (DIGIT.test(char)) {
+          buffer += char;
+        } else if (
+          char == EOF || char == '/' || char == '?' || char == '#' ||
+          (char == '\\' && isSpecial(url)) ||
+          stateOverride
+        ) {
+          if (buffer != '') {
+            var port = parseInt(buffer, 10);
+            if (port > 0xFFFF) return INVALID_PORT;
+            url.port = (isSpecial(url) && port === specialSchemes[url.scheme]) ? null : port;
+            buffer = '';
+          }
+          if (stateOverride) return;
+          state = PATH_START;
+          continue;
+        } else return INVALID_PORT;
+        break;
+
+      case FILE:
+        url.scheme = 'file';
+        if (char == '/' || char == '\\') state = FILE_SLASH;
+        else if (base && base.scheme == 'file') {
+          if (char == EOF) {
+            url.host = base.host;
+            url.path = base.path.slice();
+            url.query = base.query;
+          } else if (char == '?') {
+            url.host = base.host;
+            url.path = base.path.slice();
+            url.query = '';
+            state = QUERY;
+          } else if (char == '#') {
+            url.host = base.host;
+            url.path = base.path.slice();
+            url.query = base.query;
+            url.fragment = '';
+            state = FRAGMENT;
+          } else {
+            if (!startsWithWindowsDriveLetter(codePoints.slice(pointer).join(''))) {
+              url.host = base.host;
+              url.path = base.path.slice();
+              shortenURLsPath(url);
+            }
+            state = PATH;
+            continue;
+          }
+        } else {
+          state = PATH;
+          continue;
+        } break;
+
+      case FILE_SLASH:
+        if (char == '/' || char == '\\') {
+          state = FILE_HOST;
+          break;
+        }
+        if (base && base.scheme == 'file' && !startsWithWindowsDriveLetter(codePoints.slice(pointer).join(''))) {
+          if (isWindowsDriveLetter(base.path[0], true)) url.path.push(base.path[0]);
+          else url.host = base.host;
+        }
+        state = PATH;
+        continue;
+
+      case FILE_HOST:
+        if (char == EOF || char == '/' || char == '\\' || char == '?' || char == '#') {
+          if (!stateOverride && isWindowsDriveLetter(buffer)) {
+            state = PATH;
+          } else if (buffer == '') {
+            url.host = '';
+            if (stateOverride) return;
+            state = PATH_START;
+          } else {
+            failure = parseHost(url, buffer);
+            if (failure) return failure;
+            if (url.host == 'localhost') url.host = '';
+            if (stateOverride) return;
+            buffer = '';
+            state = PATH_START;
+          } continue;
+        } else buffer += char;
+        break;
+
+      case PATH_START:
+        if (isSpecial(url)) {
+          state = PATH;
+          if (char != '/' && char != '\\') continue;
+        } else if (!stateOverride && char == '?') {
+          url.query = '';
+          state = QUERY;
+        } else if (!stateOverride && char == '#') {
+          url.fragment = '';
+          state = FRAGMENT;
+        } else if (char != EOF) {
+          state = PATH;
+          if (char != '/') continue;
+        } break;
+
+      case PATH:
+        if (
+          char == EOF || char == '/' ||
+          (char == '\\' && isSpecial(url)) ||
+          (!stateOverride && (char == '?' || char == '#'))
+        ) {
+          if (isDoubleDot(buffer)) {
+            shortenURLsPath(url);
+            if (char != '/' && !(char == '\\' && isSpecial(url))) {
+              url.path.push('');
+            }
+          } else if (isSingleDot(buffer)) {
+            if (char != '/' && !(char == '\\' && isSpecial(url))) {
+              url.path.push('');
+            }
+          } else {
+            if (url.scheme == 'file' && !url.path.length && isWindowsDriveLetter(buffer)) {
+              if (url.host) url.host = '';
+              buffer = buffer.charAt(0) + ':'; // normalize windows drive letter
+            }
+            url.path.push(buffer);
+          }
+          buffer = '';
+          if (url.scheme == 'file' && (char == EOF || char == '?' || char == '#')) {
+            while (url.path.length > 1 && url.path[0] === '') {
+              url.path.shift();
+            }
+          }
+          if (char == '?') {
+            url.query = '';
+            state = QUERY;
+          } else if (char == '#') {
+            url.fragment = '';
+            state = FRAGMENT;
+          }
+        } else {
+          buffer += percentEncode(char, pathPercentEncodeSet);
+        } break;
+
+      case CANNOT_BE_A_BASE_URL_PATH:
+        if (char == '?') {
+          url.query = '';
+          state = QUERY;
+        } else if (char == '#') {
+          url.fragment = '';
+          state = FRAGMENT;
+        } else if (char != EOF) {
+          url.path[0] += percentEncode(char, C0ControlPercentEncodeSet);
+        } break;
+
+      case QUERY:
+        if (!stateOverride && char == '#') {
+          url.fragment = '';
+          state = FRAGMENT;
+        } else if (char != EOF) {
+          if (char == "'" && isSpecial(url)) url.query += '%27';
+          else if (char == '#') url.query += '%23';
+          else url.query += percentEncode(char, C0ControlPercentEncodeSet);
+        } break;
+
+      case FRAGMENT:
+        if (char != EOF) url.fragment += percentEncode(char, fragmentPercentEncodeSet);
+        break;
+    }
+
+    pointer++;
+  }
+};
+
+// `URL` constructor
+// https://url.spec.whatwg.org/#url-class
+var URLConstructor = function URL(url /* , base */) {
+  var that = anInstance(this, URLConstructor, 'URL');
+  var base = arguments.length > 1 ? arguments[1] : undefined;
+  var urlString = String(url);
+  var state = setInternalState$7(that, { type: 'URL' });
+  var baseState, failure;
+  if (base !== undefined) {
+    if (base instanceof URLConstructor) baseState = getInternalURLState(base);
+    else {
+      failure = parseURL(baseState = {}, String(base));
+      if (failure) throw TypeError(failure);
+    }
+  }
+  failure = parseURL(state, urlString, null, baseState);
+  if (failure) throw TypeError(failure);
+  var searchParams = state.searchParams = new URLSearchParams$1();
+  var searchParamsState = getInternalSearchParamsState(searchParams);
+  searchParamsState.updateSearchParams(state.query);
+  searchParamsState.updateURL = function () {
+    state.query = String(searchParams) || null;
+  };
+  if (!descriptors) {
+    that.href = serializeURL.call(that);
+    that.origin = getOrigin.call(that);
+    that.protocol = getProtocol.call(that);
+    that.username = getUsername.call(that);
+    that.password = getPassword.call(that);
+    that.host = getHost.call(that);
+    that.hostname = getHostname.call(that);
+    that.port = getPort.call(that);
+    that.pathname = getPathname.call(that);
+    that.search = getSearch.call(that);
+    that.searchParams = getSearchParams.call(that);
+    that.hash = getHash.call(that);
+  }
+};
+
+var URLPrototype = URLConstructor.prototype;
+
+var serializeURL = function () {
+  var url = getInternalURLState(this);
+  var scheme = url.scheme;
+  var username = url.username;
+  var password = url.password;
+  var host = url.host;
+  var port = url.port;
+  var path = url.path;
+  var query = url.query;
+  var fragment = url.fragment;
+  var output = scheme + ':';
+  if (host !== null) {
+    output += '//';
+    if (includesCredentials(url)) {
+      output += username + (password ? ':' + password : '') + '@';
+    }
+    output += serializeHost(host);
+    if (port !== null) output += ':' + port;
+  } else if (scheme == 'file') output += '//';
+  output += url.cannotBeABaseURL ? path[0] : path.length ? '/' + path.join('/') : '';
+  if (query !== null) output += '?' + query;
+  if (fragment !== null) output += '#' + fragment;
+  return output;
+};
+
+var getOrigin = function () {
+  var url = getInternalURLState(this);
+  var scheme = url.scheme;
+  var port = url.port;
+  if (scheme == 'blob') try {
+    return new URL(scheme.path[0]).origin;
+  } catch (error) {
+    return 'null';
+  }
+  if (scheme == 'file' || !isSpecial(url)) return 'null';
+  return scheme + '://' + serializeHost(url.host) + (port !== null ? ':' + port : '');
+};
+
+var getProtocol = function () {
+  return getInternalURLState(this).scheme + ':';
+};
+
+var getUsername = function () {
+  return getInternalURLState(this).username;
+};
+
+var getPassword = function () {
+  return getInternalURLState(this).password;
+};
+
+var getHost = function () {
+  var url = getInternalURLState(this);
+  var host = url.host;
+  var port = url.port;
+  return host === null ? ''
+    : port === null ? serializeHost(host)
+    : serializeHost(host) + ':' + port;
+};
+
+var getHostname = function () {
+  var host = getInternalURLState(this).host;
+  return host === null ? '' : serializeHost(host);
+};
+
+var getPort = function () {
+  var port = getInternalURLState(this).port;
+  return port === null ? '' : String(port);
+};
+
+var getPathname = function () {
+  var url = getInternalURLState(this);
+  var path = url.path;
+  return url.cannotBeABaseURL ? path[0] : path.length ? '/' + path.join('/') : '';
+};
+
+var getSearch = function () {
+  var query = getInternalURLState(this).query;
+  return query ? '?' + query : '';
+};
+
+var getSearchParams = function () {
+  return getInternalURLState(this).searchParams;
+};
+
+var getHash = function () {
+  var fragment = getInternalURLState(this).fragment;
+  return fragment ? '#' + fragment : '';
+};
+
+var accessorDescriptor = function (getter, setter) {
+  return { get: getter, set: setter, configurable: true, enumerable: true };
+};
+
+if (descriptors) {
+  objectDefineProperties(URLPrototype, {
+    // `URL.prototype.href` accessors pair
+    // https://url.spec.whatwg.org/#dom-url-href
+    href: accessorDescriptor(serializeURL, function (href) {
+      var url = getInternalURLState(this);
+      var urlString = String(href);
+      var failure = parseURL(url, urlString);
+      if (failure) throw TypeError(failure);
+      getInternalSearchParamsState(url.searchParams).updateSearchParams(url.query);
+    }),
+    // `URL.prototype.origin` getter
+    // https://url.spec.whatwg.org/#dom-url-origin
+    origin: accessorDescriptor(getOrigin),
+    // `URL.prototype.protocol` accessors pair
+    // https://url.spec.whatwg.org/#dom-url-protocol
+    protocol: accessorDescriptor(getProtocol, function (protocol) {
+      var url = getInternalURLState(this);
+      parseURL(url, String(protocol) + ':', SCHEME_START);
+    }),
+    // `URL.prototype.username` accessors pair
+    // https://url.spec.whatwg.org/#dom-url-username
+    username: accessorDescriptor(getUsername, function (username) {
+      var url = getInternalURLState(this);
+      var codePoints = arrayFrom(String(username));
+      if (cannotHaveUsernamePasswordPort(url)) return;
+      url.username = '';
+      for (var i = 0; i < codePoints.length; i++) {
+        url.username += percentEncode(codePoints[i], userinfoPercentEncodeSet);
+      }
+    }),
+    // `URL.prototype.password` accessors pair
+    // https://url.spec.whatwg.org/#dom-url-password
+    password: accessorDescriptor(getPassword, function (password) {
+      var url = getInternalURLState(this);
+      var codePoints = arrayFrom(String(password));
+      if (cannotHaveUsernamePasswordPort(url)) return;
+      url.password = '';
+      for (var i = 0; i < codePoints.length; i++) {
+        url.password += percentEncode(codePoints[i], userinfoPercentEncodeSet);
+      }
+    }),
+    // `URL.prototype.host` accessors pair
+    // https://url.spec.whatwg.org/#dom-url-host
+    host: accessorDescriptor(getHost, function (host) {
+      var url = getInternalURLState(this);
+      if (url.cannotBeABaseURL) return;
+      parseURL(url, String(host), HOST);
+    }),
+    // `URL.prototype.hostname` accessors pair
+    // https://url.spec.whatwg.org/#dom-url-hostname
+    hostname: accessorDescriptor(getHostname, function (hostname) {
+      var url = getInternalURLState(this);
+      if (url.cannotBeABaseURL) return;
+      parseURL(url, String(hostname), HOSTNAME);
+    }),
+    // `URL.prototype.port` accessors pair
+    // https://url.spec.whatwg.org/#dom-url-port
+    port: accessorDescriptor(getPort, function (port) {
+      var url = getInternalURLState(this);
+      if (cannotHaveUsernamePasswordPort(url)) return;
+      port = String(port);
+      if (port == '') url.port = null;
+      else parseURL(url, port, PORT);
+    }),
+    // `URL.prototype.pathname` accessors pair
+    // https://url.spec.whatwg.org/#dom-url-pathname
+    pathname: accessorDescriptor(getPathname, function (pathname) {
+      var url = getInternalURLState(this);
+      if (url.cannotBeABaseURL) return;
+      url.path = [];
+      parseURL(url, pathname + '', PATH_START);
+    }),
+    // `URL.prototype.search` accessors pair
+    // https://url.spec.whatwg.org/#dom-url-search
+    search: accessorDescriptor(getSearch, function (search) {
+      var url = getInternalURLState(this);
+      search = String(search);
+      if (search == '') {
+        url.query = null;
+      } else {
+        if ('?' == search.charAt(0)) search = search.slice(1);
+        url.query = '';
+        parseURL(url, search, QUERY);
+      }
+      getInternalSearchParamsState(url.searchParams).updateSearchParams(url.query);
+    }),
+    // `URL.prototype.searchParams` getter
+    // https://url.spec.whatwg.org/#dom-url-searchparams
+    searchParams: accessorDescriptor(getSearchParams),
+    // `URL.prototype.hash` accessors pair
+    // https://url.spec.whatwg.org/#dom-url-hash
+    hash: accessorDescriptor(getHash, function (hash) {
+      var url = getInternalURLState(this);
+      hash = String(hash);
+      if (hash == '') {
+        url.fragment = null;
+        return;
+      }
+      if ('#' == hash.charAt(0)) hash = hash.slice(1);
+      url.fragment = '';
+      parseURL(url, hash, FRAGMENT);
+    })
+  });
+}
+
+// `URL.prototype.toJSON` method
+// https://url.spec.whatwg.org/#dom-url-tojson
+redefine(URLPrototype, 'toJSON', function toJSON() {
+  return serializeURL.call(this);
+}, { enumerable: true });
+
+// `URL.prototype.toString` method
+// https://url.spec.whatwg.org/#URL-stringification-behavior
+redefine(URLPrototype, 'toString', function toString() {
+  return serializeURL.call(this);
+}, { enumerable: true });
+
+if (NativeURL) {
+  var nativeCreateObjectURL = NativeURL.createObjectURL;
+  var nativeRevokeObjectURL = NativeURL.revokeObjectURL;
+  // `URL.createObjectURL` method
+  // https://developer.mozilla.org/en-US/docs/Web/API/URL/createObjectURL
+  // eslint-disable-next-line no-unused-vars
+  if (nativeCreateObjectURL) redefine(URLConstructor, 'createObjectURL', function createObjectURL(blob) {
+    return nativeCreateObjectURL.apply(NativeURL, arguments);
+  });
+  // `URL.revokeObjectURL` method
+  // https://developer.mozilla.org/en-US/docs/Web/API/URL/revokeObjectURL
+  // eslint-disable-next-line no-unused-vars
+  if (nativeRevokeObjectURL) redefine(URLConstructor, 'revokeObjectURL', function revokeObjectURL(url) {
+    return nativeRevokeObjectURL.apply(NativeURL, arguments);
+  });
+}
+
+setToStringTag(URLConstructor, 'URL');
+
+_export({ global: true, forced: !nativeUrl, sham: !descriptors }, {
+  URL: URLConstructor
+});
 
 /**
 * @name L.gmxUtil
@@ -25198,14 +25145,16 @@ var Content = L$1.Control.extend({
                           return component.open(options);
 
                         case 6:
-                          _context2.next = 10;
+                          _context2.next = 9;
                           break;
 
                         case 8:
-                          L$1.DomUtil.addClass(el, 'hidden');
-                          component.close();
+                          if (!L$1.DomUtil.hasClass(el, 'hidden')) {
+                            L$1.DomUtil.addClass(el, 'hidden');
+                            component.close();
+                          }
 
-                        case 10:
+                        case 9:
                         case "end":
                           return _context2.stop();
                       }
@@ -36376,101 +36325,36 @@ var Component = /*#__PURE__*/function (_EventTarget) {
 
   var _super = _createSuper(Component);
 
-  function Component(container, options) {
+  function Component(container) {
     var _this;
 
     _classCallCheck(this, Component);
 
     _this = _super.call(this);
     _this._container = container;
-    _this._options = options;
     L$1.DomEvent.disableScrollPropagation(_this._container);
     return _this;
   }
 
   _createClass(Component, [{
-    key: "_styleHook",
-    value: function _styleHook(item) {
-      return {};
-    }
-  }, {
-    key: "_click",
+    key: "open",
     value: function () {
-      var _click2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e) {
+      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+        var event;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                L$1.DomEvent.stopPropagation(e);
-
-              case 1:
-              case "end":
-                return _context.stop();
-            }
-          }
-        }, _callee);
-      }));
-
-      function _click(_x) {
-        return _click2.apply(this, arguments);
-      }
-
-      return _click;
-    }()
-  }, {
-    key: "open",
-    value: function () {
-      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
-        var _this2 = this;
-
-        var event;
-        return regeneratorRuntime.wrap(function _callee3$(_context3) {
-          while (1) {
-            switch (_context3.prev = _context3.next) {
-              case 0:
-                if (this._options.layer) {
-                  this._options.layer.setStyleHook(this._styleHook.bind(this));
-
-                  this._options.layer.repaint();
-
-                  if (this._options.clickable) {
-                    this._options.layer.on('click', /*#__PURE__*/function () {
-                      var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(e) {
-                        return regeneratorRuntime.wrap(function _callee2$(_context2) {
-                          while (1) {
-                            switch (_context2.prev = _context2.next) {
-                              case 0:
-                                _context2.next = 2;
-                                return _this2._click(e);
-
-                              case 2:
-                                return _context2.abrupt("return", _context2.sent);
-
-                              case 3:
-                              case "end":
-                                return _context2.stop();
-                            }
-                          }
-                        }, _callee2);
-                      }));
-
-                      return function (_x2) {
-                        return _ref.apply(this, arguments);
-                      };
-                    }(), this);
-                  }
-                }
-
                 event = document.createEvent('Event');
                 event.initEvent('open', false, false);
                 this.dispatchEvent(event);
 
-              case 4:
+              case 3:
               case "end":
-                return _context3.stop();
+                return _context.stop();
             }
           }
-        }, _callee3, this);
+        }, _callee, this);
       }));
 
       function open() {
@@ -36482,16 +36366,6 @@ var Component = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "close",
     value: function close() {
-      if (this._options.layer) {
-        this._options.layer.removeStyleHook();
-
-        this._options.layer.repaint();
-
-        if (this._options.clickable) {
-          this._options.layer.off('click', this._click, this);
-        }
-      }
-
       var event = document.createEvent('Event');
       event.initEvent('close', false, false);
       this.dispatchEvent(event);
@@ -36501,7 +36375,108 @@ var Component = /*#__PURE__*/function (_EventTarget) {
   return Component;
 }(EventTarget);
 
+var floor$7 = Math.floor;
+
+// `Number.isInteger` method implementation
+// https://tc39.github.io/ecma262/#sec-number.isinteger
+var isInteger = function isInteger(it) {
+  return !isObject(it) && isFinite(it) && floor$7(it) === it;
+};
+
+// `Number.isInteger` method
+// https://tc39.github.io/ecma262/#sec-number.isinteger
+_export({ target: 'Number', stat: true }, {
+  isInteger: isInteger
+});
+
 var translate$3 = T.getText.bind(T);
+T.addText('rus', {
+  pager: {
+    previous: 'Предыдущая',
+    next: 'Следующая'
+  }
+});
+
+var Pager = /*#__PURE__*/function (_EventTarget) {
+  _inherits(Pager, _EventTarget);
+
+  var _super = _createSuper(Pager);
+
+  function Pager(container) {
+    var _this;
+
+    _classCallCheck(this, Pager);
+
+    _this = _super.call(this);
+    _this._container = container;
+    _this._container.innerHTML = "<table class=\"scanex-forestry-pager\" cellpadding=\"0\" cellspacing=\"0\">\n            <tr>\n                <td>\n                    <button class=\"first\">1</button>\n                </td>                \n                <td>\n                    <button class=\"previous\">".concat(translate$3('pager.previous'), "</button>\n                </td>\n                <td>\n                    <input type=\"text\" value=\"\" />\n                </td>\n                <td>\n                    <button class=\"next\">").concat(translate$3('pager.next'), "</button>\n                </td>                \n                <td>\n                    <button class=\"last\"></button>\n                </td>\n            </tr>\n        </table>");
+
+    _this._container.querySelector('.first').addEventListener('click', function (e) {
+      e.stopPropagation();
+      _this.page = 1;
+    });
+
+    _this._container.querySelector('.previous').addEventListener('click', function (e) {
+      e.stopPropagation();
+      _this.page -= 1;
+    });
+
+    _this._container.querySelector('.next').addEventListener('click', function (e) {
+      e.stopPropagation();
+      _this.page += 1;
+    });
+
+    _this._container.querySelector('.last').addEventListener('click', function (e) {
+      e.stopPropagation();
+      _this.page = _this.pages;
+    });
+
+    _this._current = _this._container.querySelector('input');
+
+    _this._current.addEventListener('change', function (e) {
+      e.stopPropagation();
+      _this.page = parseInt(_this._current.value, 10);
+    });
+
+    _this._last = _this._container.querySelector('.last');
+    _this._pages = 1;
+    _this.page = 1;
+    return _this;
+  }
+
+  _createClass(Pager, [{
+    key: "page",
+    get: function get() {
+      return this._page;
+    },
+    set: function set(page) {
+      if (Number.isInteger(page) && 1 <= page && page <= this.pages) {
+        this._page = page;
+        this._current.value = this._page;
+        var event = document.createEvent('Event');
+        event.initEvent('change', false, false);
+        this.dispatchEvent(event);
+      } else {
+        this._current.value = this._page;
+      }
+    }
+  }, {
+    key: "pages",
+    get: function get() {
+      return this._pages;
+    },
+    set: function set(pages) {
+      if (Number.isInteger(pages) && 1 <= this.page && this.page <= pages) {
+        this._pages = pages;
+        this._last.innerText = pages;
+      }
+    }
+  }]);
+
+  return Pager;
+}(EventTarget);
+
+var translate$4 = T.getText.bind(T);
 T.addText('rus', {
   project: {
     id: 'ID',
@@ -36537,23 +36512,26 @@ var Requests = /*#__PURE__*/function (_Component) {
     var _this;
 
     var layer = _ref.layer,
+        path = _ref.path,
         _ref$columns = _ref.columns,
         columns = _ref$columns === void 0 ? ['id', 'status', 'title', 'forestry'] : _ref$columns,
-        serviceEndpoint = _ref.serviceEndpoint;
+        _ref$pageSize = _ref.pageSize,
+        pageSize = _ref$pageSize === void 0 ? 7 : _ref$pageSize;
 
     _classCallCheck(this, Requests);
 
-    _this = _super.call(this, container, {
-      layer: layer
-    });
+    _this = _super.call(this, container);
+    _this._layer = layer;
+    _this._path = path;
 
     _this._container.classList.add('scanex-forestry-requests');
 
     _this._columns = columns;
-    _this._serviceEndpoint = serviceEndpoint;
+    _this._page = 0;
+    _this._pageSize = pageSize;
 
-    var _this$_options$layer$ = _this._options.layer.getGmxProperties(),
-        attributes = _this$_options$layer$.attributes;
+    var _this$_layer$getGmxPr = _this._layer.getGmxProperties(),
+        attributes = _this$_layer$getGmxPr.attributes;
 
     _this._statusIndex = attributes.indexOf('status_calc');
 
@@ -36561,9 +36539,9 @@ var Requests = /*#__PURE__*/function (_Component) {
       _this._statusIndex += 1;
     }
 
-    _this._container.innerHTML = "<table class=\"header\" cellpadding=\"0\" cellspacing=\"0\">\n            <tbody>\n                <tr>\n                    <td>\n                        <label class=\"title\">".concat(translate$3('project.header'), "</label>\n                    </td>                    \n                    <td>\n                        <button class=\"create\">").concat(translate$3('project.create'), "</button>\n                    </td>\n                </tr>\n            </tbody>\n        </table>        \n        <table class=\"content\" cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>").concat(_this._columns.map(function (id) {
-      return "<th>".concat(translate$3("project.".concat(id)), "</th>");
-    }).join(''), "</tr>\n            </thead>\n            <tbody class=\"items\"></tbody>\n        </table>");
+    _this._container.innerHTML = "<table class=\"header\" cellpadding=\"0\" cellspacing=\"0\">\n            <tbody>\n                <tr>\n                    <td>\n                        <label class=\"title\">".concat(translate$4('project.header'), "</label>\n                    </td>                    \n                    <td>\n                        <button class=\"create\">").concat(translate$4('project.create'), "</button>\n                    </td>\n                </tr>\n            </tbody>\n        </table>\n        <div class=\"content\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <thead>\n                    <tr>").concat(_this._columns.map(function (id) {
+      return "<th>".concat(translate$4("project.".concat(id)), "</th>");
+    }).join(''), "</tr>\n                </thead>\n                <tbody class=\"items\"></tbody>\n            </table>\n        </div>\n        <div class=\"pager\"></div>");
     _this._content = _this._container.querySelector('.items');
 
     _this._container.querySelector('.create').addEventListener('click', function (e) {
@@ -36574,13 +36552,32 @@ var Requests = /*#__PURE__*/function (_Component) {
       _this.dispatchEvent(event);
     });
 
+    _this._pager = new Pager(_this._container.querySelector('.pager'));
+
+    _this._pager.addEventListener('change', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+      return regeneratorRuntime.wrap(function _callee$(_context) {
+        while (1) {
+          switch (_context.prev = _context.next) {
+            case 0:
+              _this._page = _this._pager.page - 1;
+              _context.next = 3;
+              return _this.open();
+
+            case 3:
+            case "end":
+              return _context.stop();
+          }
+        }
+      }, _callee);
+    })));
+
     return _this;
   }
 
   _createClass(Requests, [{
     key: "_styleHook",
-    value: function _styleHook(_ref2) {
-      var properties = _ref2.properties;
+    value: function _styleHook(_ref3) {
+      var properties = _ref3.properties;
 
       if (this._statusIndex >= 0) {
         switch (properties[this._statusIndex]) {
@@ -36603,35 +36600,37 @@ var Requests = /*#__PURE__*/function (_Component) {
   }, {
     key: "open",
     value: function () {
-      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
         var _this2 = this;
 
-        var response, items, rows, _loop, i;
+        var response, items, rows, count, _loop, i;
 
-        return regeneratorRuntime.wrap(function _callee$(_context) {
+        return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
-            switch (_context.prev = _context.next) {
+            switch (_context2.prev = _context2.next) {
               case 0:
-                _context.prev = 0;
-                _context.next = 3;
-                return fetch("".concat(this._serviceEndpoint, "/Forest/GetPlotProjectsList?StartPosition=0"), {
+                _context2.prev = 0;
+                _context2.next = 3;
+                return fetch("".concat(this._path, "/Forest/GetPlotProjectsList?StartPosition=").concat(this._page, "&PageSize=").concat(this._pageSize), {
                   method: 'GET',
                   credentials: 'include'
                 });
 
               case 3:
-                response = _context.sent;
-                _context.next = 6;
+                response = _context2.sent;
+                _context2.next = 6;
                 return response.json();
 
               case 6:
-                items = _context.sent;
+                items = _context2.sent;
                 this._content.innerHTML = items.map(function (item) {
                   return "<tr class=\"request\">".concat(_this2._columns.map(function (col) {
                     return "<td>".concat(item[col], "</td>");
                   }).join(''), "</tr>");
                 }).join('');
                 rows = this._content.querySelectorAll('.request');
+                count = rows.length;
+                this._pager.pages = Math.ceil(count / this._pageSize);
 
                 _loop = function _loop(i) {
                   var row = rows[i];
@@ -36646,30 +36645,34 @@ var Requests = /*#__PURE__*/function (_Component) {
                   });
                 };
 
-                for (i = 0; i < rows.length; ++i) {
+                for (i = 0; i < count; ++i) {
                   _loop(i);
                 }
 
-                _context.next = 13;
+                this._layer.setStyleHook(this._styleHook.bind(this));
+
+                this._layer.repaint();
+
+                _context2.next = 17;
                 return _get(_getPrototypeOf(Requests.prototype), "open", this).call(this);
 
-              case 13:
-                _context.next = 20;
+              case 17:
+                _context2.next = 24;
                 break;
 
-              case 15:
-                _context.prev = 15;
-                _context.t0 = _context["catch"](0);
-                console.log(_context.t0);
-                alert(translate$3('error.requests'));
+              case 19:
+                _context2.prev = 19;
+                _context2.t0 = _context2["catch"](0);
+                console.log(_context2.t0);
+                alert(translate$4('error.requests'));
                 this.close();
 
-              case 20:
+              case 24:
               case "end":
-                return _context.stop();
+                return _context2.stop();
             }
           }
-        }, _callee, this, [[0, 15]]);
+        }, _callee2, this, [[0, 19]]);
       }));
 
       function open() {
@@ -36678,6 +36681,15 @@ var Requests = /*#__PURE__*/function (_Component) {
 
       return open;
     }()
+  }, {
+    key: "close",
+    value: function close() {
+      this._layer.removeStyleHook();
+
+      this._layer.repaint();
+
+      _get(_getPrototypeOf(Requests.prototype), "close", this).call(this);
+    }
   }]);
 
   return Requests;
@@ -36700,6 +36712,26 @@ _export({ target: 'Array', proto: true, forced: !USES_TO_LENGTH$9 }, {
 // https://tc39.github.io/ecma262/#sec-array.prototype-@@unscopables
 addToUnscopables('includes');
 
+var notARegexp = function (it) {
+  if (isRegexp(it)) {
+    throw TypeError("The method doesn't accept regular expressions");
+  } return it;
+};
+
+var MATCH$2 = wellKnownSymbol('match');
+
+var correctIsRegexpLogic = function (METHOD_NAME) {
+  var regexp = /./;
+  try {
+    '/./'[METHOD_NAME](regexp);
+  } catch (e) {
+    try {
+      regexp[MATCH$2] = false;
+      return '/./'[METHOD_NAME](regexp);
+    } catch (f) { /* empty */ }
+  } return false;
+};
+
 // `String.prototype.includes` method
 // https://tc39.github.io/ecma262/#sec-string.prototype.includes
 _export({ target: 'String', proto: true, forced: !correctIsRegexpLogic('includes') }, {
@@ -36709,7 +36741,7 @@ _export({ target: 'String', proto: true, forced: !correctIsRegexpLogic('includes
   }
 });
 
-var translate$4 = T.getText.bind(T);
+var translate$5 = T.getText.bind(T);
 T.addText('rus', {
   quadrants: 'Кварталы'
 }); // список кварталов
@@ -36775,7 +36807,7 @@ var Quadrants = /*#__PURE__*/function (_EventTarget) {
       var _this2 = this;
 
       this._items = Array.isArray(items) && items || [];
-      this._container.innerHTML = this._items.length ? "<div class=\"title\">".concat(translate$4('quadrants'), "</div>\n        <div class=\"content\">\n            <table cellpadding=\"0\" cellspacing=\"0\">            \n                <tbody>").concat(this._items.map(function (_ref) {
+      this._container.innerHTML = this._items.length ? "<div class=\"title\">".concat(translate$5('quadrants'), "</div>\n        <div class=\"content\">\n            <table cellpadding=\"0\" cellspacing=\"0\">            \n                <tbody>").concat(this._items.map(function (_ref) {
         var local_forestry = _ref.local_forestry,
             num = _ref.num;
         return "<tr class=\"quadrant\">\n                        <td>".concat(local_forestry, "</td>\n                        <td>").concat(num, "</td>\n                    </tr>");
@@ -36824,7 +36856,7 @@ var Quadrants = /*#__PURE__*/function (_EventTarget) {
   return Quadrants;
 }(EventTarget);
 
-var translate$5 = T.getText.bind(T);
+var translate$6 = T.getText.bind(T);
 
 var SpeciesTable = /*#__PURE__*/function (_EventTarget) {
   _inherits(SpeciesTable, _EventTarget);
@@ -36859,7 +36891,7 @@ var SpeciesTable = /*#__PURE__*/function (_EventTarget) {
             total_stock = _ref.total_stock;
         return "<tr class=\"type\">\n                <td class=\"label\">".concat(species, "</td>\n                <td class=\"value\">").concat(permitted_stock.toFixed(2), "</td>\n                <td class=\"value\">").concat(probable_stock.toFixed(2), "</td>\n                <td class=\"value\">").concat(total_stock.toFixed(2), "</td>\n            </tr>");
       }).join('');
-      this._container.innerHTML = rows ? "<div class=\"title\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\t\t\t\t\t\t\t\n                    <tr>\n                        <td>".concat(translate$5('species'), "</td>\n                        <td colspan=\"3\">").concat(translate$5('stock.label'), ", ").concat(translate$5('unit.m'), "<sup>3</sup></td>\n                    </tr>\n                    <tr>\n                        <td></td>\n                        <td>").concat(translate$5('stock.permitted'), "</td>\n                        <td>").concat(translate$5('stock.probable'), "</td>\n                        <td>").concat(translate$5('stock.total'), "</td>\n                    </tr>\t\t\t\t\t\t\t\n                </table>\n            </div>\n            <div class=\"content\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>").concat(rows, "</tbody>\n                </table>\n            </div>") : '';
+      this._container.innerHTML = rows ? "<div class=\"title\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\t\t\t\t\t\t\t\n                    <tr>\n                        <td>".concat(translate$6('species'), "</td>\n                        <td colspan=\"3\">").concat(translate$6('stock.label'), ", ").concat(translate$6('unit.m'), "<sup>3</sup></td>\n                    </tr>\n                    <tr>\n                        <td></td>\n                        <td>").concat(translate$6('stock.permitted'), "</td>\n                        <td>").concat(translate$6('stock.probable'), "</td>\n                        <td>").concat(translate$6('stock.total'), "</td>\n                    </tr>\t\t\t\t\t\t\t\n                </table>\n            </div>\n            <div class=\"content\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>").concat(rows, "</tbody>\n                </table>\n            </div>") : '';
     }
   }]);
 
@@ -54081,7 +54113,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
   module.exports = Yt;
 });
 
-var translate$6 = T.getText.bind(T);
+var translate$7 = T.getText.bind(T);
 var stock = {
   permitted: 'Таксация',
   probable: 'Прогноз',
@@ -54108,7 +54140,7 @@ var Species = /*#__PURE__*/function () {
 
     this._species = [];
     this._container = container;
-    this._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<thead class=\"menu\">\n\t\t\t\t<tr>\n\t\t\t\t\t<th colspan=\"3\">\n\t\t\t\t\t\t<button class=\"stock active\">".concat(translate$6('stock.table'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\t\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"total\">").concat(translate$6('stock.total'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"probable\">").concat(translate$6('stock.probable'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"permitted\">").concat(translate$6('stock.permitted'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td colspan=\"4\">\n\t\t\t\t\t\t<div class=\"table\"></div>\n\t\t\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t\t</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
+    this._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<thead class=\"menu\">\n\t\t\t\t<tr>\n\t\t\t\t\t<th colspan=\"3\">\n\t\t\t\t\t\t<button class=\"stock active\">".concat(translate$7('stock.table'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\t\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"total\">").concat(translate$7('stock.total'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"probable\">").concat(translate$7('stock.probable'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"permitted\">").concat(translate$7('stock.permitted'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td colspan=\"4\">\n\t\t\t\t\t\t<div class=\"table\"></div>\n\t\t\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t\t</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
     this._buttons = this._container.querySelectorAll('button');
 
     var btnStock = this._container.querySelector('.stock');
@@ -54158,7 +54190,7 @@ var Species = /*#__PURE__*/function () {
               show: true,
               value: {
                 formatter: function formatter(val) {
-                  return "".concat(val, " ").concat(translate$6('unit.m3'));
+                  return "".concat(val, " ").concat(translate$7('unit.m3'));
                 },
                 fontSize: '12px'
               },
@@ -54167,9 +54199,9 @@ var Species = /*#__PURE__*/function () {
                   var series = _ref.config.series;
                   return "".concat(series.reduce(function (p, c) {
                     return p + c;
-                  }, 0), " ").concat(translate$6('unit.m3'));
+                  }, 0), " ").concat(translate$7('unit.m3'));
                 },
-                label: translate$6('stock.all'),
+                label: translate$7('stock.all'),
                 show: true,
                 fontSize: '12px'
               }
@@ -54282,7 +54314,7 @@ var Species = /*#__PURE__*/function () {
   return Species;
 }();
 
-var translate$7 = T.getText.bind(T);
+var translate$8 = T.getText.bind(T);
 T.addText('rus', {
   plot: {
     title: 'Создание проекта лесного участка',
@@ -54321,19 +54353,18 @@ var Plot = /*#__PURE__*/function (_Component) {
     var _this;
 
     var layer = _ref.layer,
-        serviceEndpoint = _ref.serviceEndpoint;
+        path = _ref.path;
 
     _classCallCheck(this, Plot);
 
-    _this = _super.call(this, container, {
-      layer: layer,
-      clickable: true
-    });
+    _this = _super.call(this, container);
+    _this._layer = layer;
+    _this._path = path;
 
     _this._container.classList.add('scanex-forestry-plot');
 
-    var _this$_options$layer$ = _this._options.layer.getGmxProperties(),
-        attributes = _this$_options$layer$.attributes;
+    var _this$_layer$getGmxPr = _this._layer.getGmxProperties(),
+        attributes = _this$_layer$getGmxPr.attributes;
 
     _this._statusIndex = attributes.indexOf('status_calc');
 
@@ -54341,7 +54372,6 @@ var Plot = /*#__PURE__*/function (_Component) {
       _this._statusIndex += 1;
     }
 
-    _this._serviceEndpoint = serviceEndpoint;
     return _this;
   }
 
@@ -54419,9 +54449,9 @@ var Plot = /*#__PURE__*/function (_Component) {
                   this._quadrants.items = valid.SquareStat;
                   this._species.items = valid.ForestStat;
 
-                  this._options.layer.repaint();
+                  this._layer.repaint();
                 } else {
-                  alert(translate$7('quadrant.invalid'));
+                  alert(translate$8('quadrant.invalid'));
                 }
 
               case 13:
@@ -54432,7 +54462,7 @@ var Plot = /*#__PURE__*/function (_Component) {
                 _context.prev = 15;
                 _context.t0 = _context["catch"](0);
                 console.log(_context.t0);
-                alert(translate$7('error.quadrant'));
+                alert(translate$8('error.quadrant'));
 
               case 19:
               case "end":
@@ -54452,33 +54482,36 @@ var Plot = /*#__PURE__*/function (_Component) {
     key: "_save",
     value: function () {
       var _save2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
-        var fd, response;
+        var response;
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
               case 0:
-                fd = new FormData();
-                fd.append('Title', "".concat(new Date().toLocaleDateString()));
-                fd.append('ForestQs', this._quadrants.items.map(function (_ref3) {
-                  var gmx_id = _ref3.gmx_id;
-                  return gmx_id.toString();
-                }).join(','));
-                _context2.next = 5;
-                return fetch("".concat(this._serviceEndpoint, "/Forest/StoreDraftForestProjectGmxIds"), {
+                _context2.next = 2;
+                return fetch("".concat(this._path, "/Forest/StoreDraftForestProjectGmxIds"), {
                   method: 'POST',
                   credentials: 'include',
-                  body: fd
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    Title: new Date().toLocaleDateString(),
+                    ForestQs: this._quadrants.items.map(function (_ref3) {
+                      var gmx_id = _ref3.gmx_id;
+                      return gmx_id;
+                    })
+                  })
                 });
 
-              case 5:
+              case 2:
                 response = _context2.sent;
-                _context2.next = 8;
+                _context2.next = 5;
                 return response.json();
 
-              case 8:
+              case 5:
                 return _context2.abrupt("return", _context2.sent);
 
-              case 9:
+              case 6:
               case "end":
                 return _context2.stop();
             }
@@ -54496,36 +54529,37 @@ var Plot = /*#__PURE__*/function (_Component) {
     key: "_validate",
     value: function () {
       var _validate2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(ids) {
-        var fd, response, _yield$response$json, Status, ForestStat, SquareStat;
+        var response, _yield$response$json, Status, ForestStat, SquareStat;
 
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
               case 0:
-                fd = new FormData();
-                fd.append('ForestBlocks', ids.map(function (id) {
-                  return id.toString();
-                }).join(','));
-                _context3.next = 4;
-                return fetch("".concat(this._serviceEndpoint, "/Forest/ValidateForestProjectGmxIds"), {
+                _context3.next = 2;
+                return fetch("".concat(this._path, "/Forest/ValidateForestProjectGmxIds"), {
                   method: 'POST',
                   credentials: 'include',
-                  body: fd
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    ForestBlocks: ids
+                  })
                 });
 
-              case 4:
+              case 2:
                 response = _context3.sent;
-                _context3.next = 7;
+                _context3.next = 5;
                 return response.json();
 
-              case 7:
+              case 5:
                 _yield$response$json = _context3.sent;
                 Status = _yield$response$json.Status;
                 ForestStat = _yield$response$json.ForestStat;
                 SquareStat = _yield$response$json.SquareStat;
 
                 if (!(Status === 'valid')) {
-                  _context3.next = 15;
+                  _context3.next = 13;
                   break;
                 }
 
@@ -54534,10 +54568,10 @@ var Plot = /*#__PURE__*/function (_Component) {
                   SquareStat: SquareStat
                 });
 
-              case 15:
+              case 13:
                 return _context3.abrupt("return", false);
 
-              case 16:
+              case 14:
               case "end":
                 return _context3.stop();
             }
@@ -54562,6 +54596,50 @@ var Plot = /*#__PURE__*/function (_Component) {
       this._quadrants.unhilite(id);
     }
   }, {
+    key: "open",
+    value: function () {
+      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
+        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+          while (1) {
+            switch (_context4.prev = _context4.next) {
+              case 0:
+                this._layer.setStyleHook(this._styleHook.bind(this));
+
+                this._layer.repaint();
+
+                this._layer.off('click', this._click, this);
+
+                this._layer.on('click', this._click, this);
+
+                _context4.next = 6;
+                return _get(_getPrototypeOf(Plot.prototype), "open", this).call(this);
+
+              case 6:
+              case "end":
+                return _context4.stop();
+            }
+          }
+        }, _callee4, this);
+      }));
+
+      function open() {
+        return _open.apply(this, arguments);
+      }
+
+      return open;
+    }()
+  }, {
+    key: "close",
+    value: function close() {
+      this._layer.removeStyleHook();
+
+      this._layer.repaint();
+
+      this._layer.off('click', this._click, this);
+
+      _get(_getPrototypeOf(Plot.prototype), "close", this).call(this);
+    }
+  }, {
     key: "quadrants",
     get: function get() {
       return this._quadrants.items.map(function (_ref4) {
@@ -54583,15 +54661,15 @@ var CreatePlot = /*#__PURE__*/function (_Plot) {
     var _this2;
 
     var layer = _ref5.layer,
-        serviceEndpoint = _ref5.serviceEndpoint;
+        path = _ref5.path;
 
     _classCallCheck(this, CreatePlot);
 
     _this2 = _super2.call(this, container, {
       layer: layer,
-      serviceEndpoint: serviceEndpoint
+      path: path
     });
-    _this2._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th colspan=\"2\">\n                        <button class=\"backward\"></button>\n                        <label class=\"head\">".concat(translate$7('plot.title'), "</label>                        \n                        <button class=\"create\">").concat(translate$7('plot.create'), "</button>\n                    </th>\n                </tr>\n            </thead>\n            <tbody>\n                <tr>                    \n                    <td>                                                \n                        <div class=\"species\"></div>\n                    </td>\n                    <td>\n                        <div class=\"quadrants\"></div>\n                    </td>\n                </tr>\n            </tbody>\n        </table>");
+    _this2._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th colspan=\"2\">\n                        <button class=\"backward\"></button>\n                        <label class=\"head\">".concat(translate$8('plot.title'), "</label>                        \n                        <button class=\"create\">").concat(translate$8('plot.create'), "</button>\n                    </th>\n                </tr>\n            </thead>\n            <tbody>\n                <tr>                    \n                    <td>                                                \n                        <div class=\"species\"></div>\n                    </td>\n                    <td>\n                        <div class=\"quadrants\"></div>\n                    </td>\n                </tr>\n            </tbody>\n        </table>");
 
     _this2._container.querySelector('.backward').addEventListener('click', function (e) {
       e.stopPropagation();
@@ -54602,18 +54680,18 @@ var CreatePlot = /*#__PURE__*/function (_Plot) {
     var btnCreate = _this2._container.querySelector('.create');
 
     btnCreate.addEventListener('click', /*#__PURE__*/function () {
-      var _ref6 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(e) {
+      var _ref6 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(e) {
         var data, event;
-        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+        return regeneratorRuntime.wrap(function _callee5$(_context5) {
           while (1) {
-            switch (_context4.prev = _context4.next) {
+            switch (_context5.prev = _context5.next) {
               case 0:
                 e.stopPropagation();
-                _context4.next = 3;
+                _context5.next = 3;
                 return _this2._save();
 
               case 3:
-                data = _context4.sent;
+                data = _context5.sent;
                 event = document.createEvent('Event');
                 event.initEvent('save', false, false);
                 event.detail = data;
@@ -54622,10 +54700,10 @@ var CreatePlot = /*#__PURE__*/function (_Plot) {
 
               case 8:
               case "end":
-                return _context4.stop();
+                return _context5.stop();
             }
           }
-        }, _callee4);
+        }, _callee5);
       }));
 
       return function (_x3) {
@@ -54673,15 +54751,15 @@ var EditPlot = /*#__PURE__*/function (_Plot2) {
     var _this3;
 
     var layer = _ref7.layer,
-        serviceEndpoint = _ref7.serviceEndpoint;
+        path = _ref7.path;
 
     _classCallCheck(this, EditPlot);
 
     _this3 = _super3.call(this, container, {
       layer: layer,
-      serviceEndpoint: serviceEndpoint
+      path: path
     });
-    _this3._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th colspan=\"2\">\n                        <button class=\"backward\"></button>\n                        <label class=\"head\">".concat(translate$7('plot.title'), "</label>                        \n                        <button class=\"save\">").concat(translate$7('plot.save'), "</button>\n                        <button class=\"request\">").concat(translate$7('plot.request'), "</button>\n                    </th>\n                </tr>\n            </thead>\n            <tbody>\n                <tr>                    \n                    <td>                                                \n                        <div class=\"species\"></div>\n                    </td>\n                    <td>\n                        <div class=\"quadrants\"></div>\n                    </td>\n                </tr>\n            </tbody>\n        </table>");
+    _this3._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th colspan=\"2\">\n                        <button class=\"backward\"></button>\n                        <label class=\"head\">".concat(translate$8('plot.title'), "</label>                        \n                        <button class=\"save\">").concat(translate$8('plot.save'), "</button>\n                        <button class=\"request\">").concat(translate$8('plot.request'), "</button>\n                    </th>\n                </tr>\n            </thead>\n            <tbody>\n                <tr>                    \n                    <td>                                                \n                        <div class=\"species\"></div>\n                    </td>\n                    <td>\n                        <div class=\"quadrants\"></div>\n                    </td>\n                </tr>\n            </tbody>\n        </table>");
 
     _this3._container.querySelector('.backward').addEventListener('click', function (e) {
       e.stopPropagation();
@@ -54692,18 +54770,18 @@ var EditPlot = /*#__PURE__*/function (_Plot2) {
     var btnSave = _this3._container.querySelector('.save');
 
     btnSave.addEventListener('click', /*#__PURE__*/function () {
-      var _ref8 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(e) {
+      var _ref8 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(e) {
         var data, event;
-        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+        return regeneratorRuntime.wrap(function _callee6$(_context6) {
           while (1) {
-            switch (_context5.prev = _context5.next) {
+            switch (_context6.prev = _context6.next) {
               case 0:
                 e.stopPropagation();
-                _context5.next = 3;
+                _context6.next = 3;
                 return _this3._save();
 
               case 3:
-                data = _context5.sent;
+                data = _context6.sent;
                 event = document.createEvent('Event');
                 event.initEvent('save', false, false);
                 event.detail = data;
@@ -54712,10 +54790,10 @@ var EditPlot = /*#__PURE__*/function (_Plot2) {
 
               case 8:
               case "end":
-                return _context5.stop();
+                return _context6.stop();
             }
           }
-        }, _callee5);
+        }, _callee6);
       }));
 
       return function (_x4) {
@@ -54726,15 +54804,15 @@ var EditPlot = /*#__PURE__*/function (_Plot2) {
     var btnRequest = _this3._container.querySelector('.request');
 
     btnRequest.addEventListener('click', /*#__PURE__*/function () {
-      var _ref9 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(e) {
+      var _ref9 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(e) {
         var event;
-        return regeneratorRuntime.wrap(function _callee6$(_context6) {
+        return regeneratorRuntime.wrap(function _callee7$(_context7) {
           while (1) {
-            switch (_context6.prev = _context6.next) {
+            switch (_context7.prev = _context7.next) {
               case 0:
                 e.stopPropagation();
-                _context6.prev = 1;
-                _context6.next = 4;
+                _context7.prev = 1;
+                _context7.next = 4;
                 return _this3._createRequest();
 
               case 4:
@@ -54744,21 +54822,21 @@ var EditPlot = /*#__PURE__*/function (_Plot2) {
 
                 _this3.dispatchEvent(event);
 
-                _context6.next = 14;
+                _context7.next = 14;
                 break;
 
               case 10:
-                _context6.prev = 10;
-                _context6.t0 = _context6["catch"](1);
-                console.log(_context6.t0);
-                alert(translate$7('error.request.create'));
+                _context7.prev = 10;
+                _context7.t0 = _context7["catch"](1);
+                console.log(_context7.t0);
+                alert(translate$8('error.request.create'));
 
               case 14:
               case "end":
-                return _context6.stop();
+                return _context7.stop();
             }
           }
-        }, _callee6, null, [[1, 10]]);
+        }, _callee7, null, [[1, 10]]);
       }));
 
       return function (_x5) {
@@ -54797,35 +54875,38 @@ var EditPlot = /*#__PURE__*/function (_Plot2) {
   _createClass(EditPlot, [{
     key: "_createRequest",
     value: function () {
-      var _createRequest2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7() {
-        var fd, response;
-        return regeneratorRuntime.wrap(function _callee7$(_context7) {
+      var _createRequest2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8() {
+        var response;
+        return regeneratorRuntime.wrap(function _callee8$(_context8) {
           while (1) {
-            switch (_context7.prev = _context7.next) {
+            switch (_context8.prev = _context8.next) {
               case 0:
-                fd = new FormData();
-                fd.append('ForestProjectID', this._valid);
-                _context7.next = 4;
-                return fetch("".concat(this._serviceEndpoint, "/Forest/CreateApplicationFromDraft"), {
+                _context8.next = 2;
+                return fetch("".concat(this._path, "/Forest/CreateApplicationFromDraft"), {
                   method: 'POST',
                   credentials: 'include',
-                  body: fd
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    ForestProjectID: this._valid
+                  })
                 });
 
-              case 4:
-                response = _context7.sent;
-                _context7.next = 7;
+              case 2:
+                response = _context8.sent;
+                _context8.next = 5;
                 return response.json();
 
-              case 7:
-                return _context7.abrupt("return", _context7.sent);
+              case 5:
+                return _context8.abrupt("return", _context8.sent);
 
-              case 8:
+              case 6:
               case "end":
-                return _context7.stop();
+                return _context8.stop();
             }
           }
-        }, _callee7, this);
+        }, _callee8, this);
       }));
 
       function _createRequest() {
@@ -54837,40 +54918,43 @@ var EditPlot = /*#__PURE__*/function (_Plot2) {
   }, {
     key: "_save",
     value: function () {
-      var _save3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8() {
-        var fd, response;
-        return regeneratorRuntime.wrap(function _callee8$(_context8) {
+      var _save3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9() {
+        var response;
+        return regeneratorRuntime.wrap(function _callee9$(_context9) {
           while (1) {
-            switch (_context8.prev = _context8.next) {
+            switch (_context9.prev = _context9.next) {
               case 0:
-                fd = new FormData();
-                fd.append('ForestProjectID', this._valid);
-                fd.append('Title', "".concat(new Date().toLocaleDateString()));
-                fd.append('ForestQs', this._quadrants.items.map(function (_ref10) {
-                  var gmx_id = _ref10.gmx_id;
-                  return gmx_id.toString();
-                }).join(','));
-                _context8.next = 6;
-                return fetch("".concat(this._serviceEndpoint, "/Forest/StoreDraftForestProjectGmxIds"), {
+                _context9.next = 2;
+                return fetch("".concat(this._path, "/Forest/StoreDraftForestProjectGmxIds"), {
                   method: 'POST',
                   credentials: 'include',
-                  body: fd
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    ForestProjectID: this._valid,
+                    Title: new Date().toLocaleDateString(),
+                    ForestQs: this._quadrants.items.map(function (_ref10) {
+                      var gmx_id = _ref10.gmx_id;
+                      return gmx_id;
+                    })
+                  })
                 });
 
-              case 6:
-                response = _context8.sent;
-                _context8.next = 9;
+              case 2:
+                response = _context9.sent;
+                _context9.next = 5;
                 return response.json();
 
-              case 9:
-                return _context8.abrupt("return", _context8.sent);
+              case 5:
+                return _context9.abrupt("return", _context9.sent);
 
-              case 10:
+              case 6:
               case "end":
-                return _context8.stop();
+                return _context9.stop();
             }
           }
-        }, _callee8, this);
+        }, _callee9, this);
       }));
 
       function _save() {
@@ -54882,75 +54966,78 @@ var EditPlot = /*#__PURE__*/function (_Plot2) {
   }, {
     key: "open",
     value: function () {
-      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9(id) {
+      var _open2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(id) {
         var response, _yield$response$json2, gmxIds, result;
 
-        return regeneratorRuntime.wrap(function _callee9$(_context9) {
+        return regeneratorRuntime.wrap(function _callee10$(_context10) {
           while (1) {
-            switch (_context9.prev = _context9.next) {
+            switch (_context10.prev = _context10.next) {
               case 0:
-                _context9.prev = 0;
-                _context9.next = 3;
-                return fetch("".concat(this._serviceEndpoint, "/Forest/GetPlotProjectDraft?ForestProjectID=").concat(id), {
+                _context10.prev = 0;
+                _context10.next = 3;
+                return fetch("".concat(this._path, "/Forest/GetPlotProjectDraft?ForestProjectID=").concat(id), {
                   method: 'GET',
-                  credentials: 'include'
+                  credentials: 'include',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  }
                 });
 
               case 3:
-                response = _context9.sent;
-                _context9.next = 6;
+                response = _context10.sent;
+                _context10.next = 6;
                 return response.json();
 
               case 6:
-                _yield$response$json2 = _context9.sent;
+                _yield$response$json2 = _context10.sent;
                 gmxIds = _yield$response$json2.gmxIds;
-                _context9.next = 10;
+                _context10.next = 10;
                 return this._validate(gmxIds);
 
               case 10:
-                result = _context9.sent;
+                result = _context10.sent;
 
                 if (!result) {
-                  _context9.next = 19;
+                  _context10.next = 19;
                   break;
                 }
 
                 this._valid = id;
                 this._quadrants.items = result.SquareStat;
                 this._species.items = result.ForestStat;
-                _context9.next = 17;
+                _context10.next = 17;
                 return _get(_getPrototypeOf(EditPlot.prototype), "open", this).call(this);
 
               case 17:
-                _context9.next = 20;
+                _context10.next = 20;
                 break;
 
               case 19:
-                throw translate$7('quadrant.invalid');
+                throw translate$8('quadrant.invalid');
 
               case 20:
-                _context9.next = 27;
+                _context10.next = 27;
                 break;
 
               case 22:
-                _context9.prev = 22;
-                _context9.t0 = _context9["catch"](0);
+                _context10.prev = 22;
+                _context10.t0 = _context10["catch"](0);
 
                 this._back();
 
-                console.log(_context9.t0);
-                alert(translate$7('error.plot.edit'));
+                console.log(_context10.t0);
+                alert(translate$8('error.plot.edit'));
 
               case 27:
               case "end":
-                return _context9.stop();
+                return _context10.stop();
             }
           }
-        }, _callee9, this, [[0, 22]]);
+        }, _callee10, this, [[0, 22]]);
       }));
 
       function open(_x6) {
-        return _open.apply(this, arguments);
+        return _open2.apply(this, arguments);
       }
 
       return open;
@@ -54960,7 +55047,7 @@ var EditPlot = /*#__PURE__*/function (_Plot2) {
   return EditPlot;
 }(Plot);
 
-var translate$8 = T.getText.bind(T);
+var translate$9 = T.getText.bind(T);
 T.addText('rus', {
   quadrant: {
     Stock: 'Объем древесины',
@@ -54991,18 +55078,17 @@ var Quadrant = /*#__PURE__*/function (_Component) {
     var _this;
 
     var layer = _ref.layer,
-        serviceEndpoint = _ref.serviceEndpoint;
+        path = _ref.path;
 
     _classCallCheck(this, Quadrant);
 
-    _this = _super.call(this, container, {
-      layer: layer
-    });
-    _this._serviceEndpoint = serviceEndpoint;
+    _this = _super.call(this, container);
+    _this._layer = layer;
+    _this._path = path;
 
     _this._container.classList.add('scanex-forestry-quadrant');
 
-    _this._container.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n\t\t\t<thead>\n\t\t\t\t<tr>\n\t\t\t\t\t<th class=\"title\">".concat(translate$8('quadrant.title'), "</th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th class=\"forestry\"></th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th class=\"stock\">").concat(translate$8('quadrant.Stock'), "</th>\t\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th class=\"about\">").concat(translate$8('quadrant.about'), "</th>\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"chart\"></td>\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
+    _this._container.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n\t\t\t<thead>\n\t\t\t\t<tr>\n\t\t\t\t\t<th class=\"title\">".concat(translate$9('quadrant.title'), "</th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th class=\"forestry\"></th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th class=\"stock\">").concat(translate$9('quadrant.Stock'), "</th>\t\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th class=\"about\">").concat(translate$9('quadrant.about'), "</th>\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"chart\"></td>\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
     _this._forestry = _this._container.querySelector('.forestry');
     _this._chart = new apexcharts_common(_this._container.querySelector('.chart'), {
       chart: {
@@ -55024,7 +55110,7 @@ var Quadrant = /*#__PURE__*/function (_Component) {
               show: true,
               value: {
                 formatter: function formatter(val) {
-                  return "".concat(val, " ").concat(translate$8('unit.m3'));
+                  return "".concat(val, " ").concat(translate$9('unit.m3'));
                 },
                 fontSize: '12px'
               },
@@ -55033,9 +55119,9 @@ var Quadrant = /*#__PURE__*/function (_Component) {
                   var series = _ref2.config.series;
                   return "".concat(series.reduce(function (p, c) {
                     return p + c;
-                  }, 0), " ").concat(translate$8('unit.m3'));
+                  }, 0), " ").concat(translate$9('unit.m3'));
                 },
-                label: translate$8('stock.all'),
+                label: translate$9('stock.all'),
                 show: true,
                 fontSize: '12px'
               }
@@ -55053,7 +55139,7 @@ var Quadrant = /*#__PURE__*/function (_Component) {
   _createClass(Quadrant, [{
     key: "_render",
     value: function _render(data) {
-      this._forestry.innerText = "".concat(translate$8('quadrant.Forestry'), ": ").concat(data.Forestry, ", ").concat(translate$8('quadrant.LocalForestry'), ": ").concat(data.LocalForestry);
+      this._forestry.innerText = "".concat(translate$9('quadrant.Forestry'), ": ").concat(data.Forestry, ", ").concat(translate$9('quadrant.LocalForestry'), ": ").concat(data.LocalForestry);
 
       var _data$Stock$reduce = data.Stock.reduce(function (a, s) {
         a.labels.push(s.species);
@@ -55094,31 +55180,35 @@ var Quadrant = /*#__PURE__*/function (_Component) {
                 }
 
                 this.close();
-                _context.next = 15;
+                _context.next = 17;
                 break;
 
               case 5:
+                this._layer.setStyleHook(this._styleHook.bind(this));
+
+                this._layer.repaint();
+
                 this._gmx_id = gmx_id;
-                _context.next = 8;
-                return fetch("".concat(this._serviceEndpoint, "/Forest/GetQuadrantInformation?QuadrantID=").concat(id), {
+                _context.next = 10;
+                return fetch("".concat(this._path, "/Forest/GetQuadrantInformation?QuadrantID=").concat(id), {
                   method: 'GET',
                   credentials: 'include'
                 });
 
-              case 8:
+              case 10:
                 response = _context.sent;
-                _context.next = 11;
+                _context.next = 13;
                 return response.json();
 
-              case 11:
+              case 13:
                 data = _context.sent;
 
                 this._render(data);
 
-                _context.next = 15;
+                _context.next = 17;
                 return _get(_getPrototypeOf(Quadrant.prototype), "open", this).call(this);
 
-              case 15:
+              case 17:
               case "end":
                 return _context.stop();
             }
@@ -55136,6 +55226,10 @@ var Quadrant = /*#__PURE__*/function (_Component) {
     key: "close",
     value: function close() {
       this._gmx_id = null;
+
+      this._layer.removeStyleHook();
+
+      this._layer.repaint();
 
       _get(_getPrototypeOf(Quadrant.prototype), "close", this).call(this);
     }
@@ -56306,107 +56400,6 @@ var pikaday = createCommonjsModule(function (module, exports) {
   });
 });
 
-var floor$7 = Math.floor;
-
-// `Number.isInteger` method implementation
-// https://tc39.github.io/ecma262/#sec-number.isinteger
-var isInteger = function isInteger(it) {
-  return !isObject(it) && isFinite(it) && floor$7(it) === it;
-};
-
-// `Number.isInteger` method
-// https://tc39.github.io/ecma262/#sec-number.isinteger
-_export({ target: 'Number', stat: true }, {
-  isInteger: isInteger
-});
-
-var translate$9 = T.getText.bind(T);
-T.addText('rus', {
-  pager: {
-    previous: 'Предыдущая',
-    next: 'Следующая'
-  }
-});
-
-var Pager = /*#__PURE__*/function (_EventTarget) {
-  _inherits(Pager, _EventTarget);
-
-  var _super = _createSuper(Pager);
-
-  function Pager(container) {
-    var _this;
-
-    _classCallCheck(this, Pager);
-
-    _this = _super.call(this);
-    _this._container = container;
-    _this._container.innerHTML = "<table class=\"scanex-forestry-pager\" cellpadding=\"0\" cellspacing=\"0\">\n            <tr>\n                <td>\n                    <button class=\"first\">1</button>\n                </td>                \n                <td>\n                    <button class=\"previous\">".concat(translate$9('pager.previous'), "</button>\n                </td>\n                <td>\n                    <input type=\"text\" value=\"\" />\n                </td>\n                <td>\n                    <button class=\"next\">").concat(translate$9('pager.next'), "</button>\n                </td>                \n                <td>\n                    <button class=\"last\"></button>\n                </td>\n            </tr>\n        </table>");
-
-    _this._container.querySelector('.first').addEventListener('click', function (e) {
-      e.stopPropagation();
-      _this.page = 1;
-    });
-
-    _this._container.querySelector('.previous').addEventListener('click', function (e) {
-      e.stopPropagation();
-      _this.page -= 1;
-    });
-
-    _this._container.querySelector('.next').addEventListener('click', function (e) {
-      e.stopPropagation();
-      _this.page += 1;
-    });
-
-    _this._container.querySelector('.last').addEventListener('click', function (e) {
-      e.stopPropagation();
-      _this.page = _this.pages;
-    });
-
-    _this._current = _this._container.querySelector('input');
-
-    _this._current.addEventListener('change', function (e) {
-      e.stopPropagation();
-      _this.page = parseInt(_this._current.value, 10);
-    });
-
-    _this._last = _this._container.querySelector('.last');
-    _this._pages = 1;
-    _this.page = 1;
-    return _this;
-  }
-
-  _createClass(Pager, [{
-    key: "page",
-    get: function get() {
-      return this._page;
-    },
-    set: function set(page) {
-      if (Number.isInteger(page) && 1 <= page && page <= this.pages) {
-        this._page = page;
-        this._current.value = this._page;
-        var event = document.createEvent('Event');
-        event.initEvent('change', false, false);
-        this.dispatchEvent(event);
-      } else {
-        this._current.value = this._page;
-      }
-    }
-  }, {
-    key: "pages",
-    get: function get() {
-      return this._pages;
-    },
-    set: function set(pages) {
-      if (Number.isInteger(pages) && 1 <= this.page && this.page <= pages) {
-        this._pages = pages;
-        this._last.innerText = pages;
-      }
-    }
-  }]);
-
-  return Pager;
-}(EventTarget);
-
 var translate$a = T.getText.bind(T);
 T.addText('rus', {
   uploaded: {
@@ -56429,7 +56422,7 @@ var Uploaded = /*#__PURE__*/function (_Component) {
   function Uploaded(container, _ref) {
     var _this;
 
-    var serviceEndpoint = _ref.serviceEndpoint,
+    var path = _ref.path,
         _ref$columns = _ref.columns,
         columns = _ref$columns === void 0 ? ['type', 'date', 'name'] : _ref$columns,
         _ref$types = _ref.types,
@@ -56443,7 +56436,7 @@ var Uploaded = /*#__PURE__*/function (_Component) {
     _this._columns = columns;
     _this._types = types;
     _this._pageSize = pageSize;
-    _this._serviceEndpoint = serviceEndpoint;
+    _this._path = path;
     _this._page = 0;
 
     _this._container.classList.add('scanex-forestry-uploaded');
@@ -56475,7 +56468,7 @@ var Uploaded = /*#__PURE__*/function (_Component) {
             case 0:
               _this._page = _this._pager.page;
               _context.next = 3;
-              return _this.update();
+              return _this.open();
 
             case 3:
             case "end":
@@ -56511,12 +56504,12 @@ var Uploaded = /*#__PURE__*/function (_Component) {
                 fd.append('pagesize', pageSize.toString());
                 fd.append('page', page.toString());
                 _context2.next = 7;
-                return fetch("".concat(this._serviceEndpoint, "/Layer/Search2.ashx?WrapStyle=None"), {
+                return fetch("".concat(this._path, "/Layer/Search2.ashx?WrapStyle=None"), {
                   method: 'POST',
+                  credentials: 'include',
                   headers: {
                     'Content-Type': 'application/x-www-form-urlencoded'
                   },
-                  credentials: 'include',
                   body: fd
                 });
 
@@ -56533,23 +56526,13 @@ var Uploaded = /*#__PURE__*/function (_Component) {
                   break;
                 }
 
-                items = [{
-                  type: 'shp',
-                  date: '05.11.2019',
-                  name: 'Проект лесного участка 1'
-                }, {
-                  type: 'shp',
-                  date: '08.10.2019',
-                  name: 'Проект лесного участка 2'
-                }, {
-                  type: 'shp',
-                  date: '20.05.2020',
-                  name: 'Лесосека'
-                }, {
-                  type: 'tiff',
-                  date: '21.06.2020',
-                  name: 'Мой снимок 1'
-                }];
+                // const items = [
+                //     {type: 'shp', date: '05.11.2019', name: 'Проект лесного участка 1'},
+                //     {type: 'shp', date: '08.10.2019', name: 'Проект лесного участка 2'},
+                //     {type: 'shp', date: '20.05.2020', name: 'Лесосека'},
+                //     {type: 'tiff', date: '21.06.2020', name: 'Мой снимок 1'},
+                // ];
+                items = [];
                 return _context2.abrupt("return", {
                   items: items,
                   count: items.length
@@ -56697,18 +56680,15 @@ var Analytics = /*#__PURE__*/function (_Component) {
   function Analytics(container, _ref) {
     var _this;
 
-    var layer = _ref.layer,
-        serviceEndpoint = _ref.serviceEndpoint;
+    var path = _ref.path;
 
     _classCallCheck(this, Analytics);
 
-    _this = _super.call(this, container, {
-      layer: layer
-    });
+    _this = _super.call(this, container);
 
     _this._container.classList.add('scanex-forestry-analytics');
 
-    _this._serviceEndpoint = serviceEndpoint;
+    _this._path = path;
     return _this;
   }
 
@@ -56722,7 +56702,7 @@ var Analytics = /*#__PURE__*/function (_Component) {
             switch (_context.prev = _context.next) {
               case 0:
                 _context.next = 2;
-                return fetch("".concat(this._serviceEndpoint, "/Forest/GetReportHeaderData"), {
+                return fetch("".concat(this._path, "/Forest/GetReportHeaderData"), {
                   method: 'GET',
                   credentials: 'include'
                 });
@@ -56842,7 +56822,7 @@ var Analytics = /*#__PURE__*/function (_Component) {
                     DateBegin: d1 ? d1.toISOString() : '',
                     DateEnd: d2 ? d2.toISOString() : ''
                   };
-                  url = _this2._serviceEndpoint;
+                  url = _this2._path;
 
                   if (_this2.currentType === 0) {
                     url += '/Forest/GetSpeciesAnalytics';
@@ -57048,18 +57028,12 @@ var NaturalPark = /*#__PURE__*/function (_Component) {
 
   var _super = _createSuper(NaturalPark);
 
-  function NaturalPark(container, _ref) {
+  function NaturalPark(container) {
     var _this;
-
-    var layer = _ref.layer,
-        serviceEndpoint = _ref.serviceEndpoint;
 
     _classCallCheck(this, NaturalPark);
 
-    _this = _super.call(this, container, {
-      layer: layer
-    });
-    _this._serviceEndpoint = serviceEndpoint;
+    _this = _super.call(this, container);
 
     _this._container.classList.add('scanex-forestry-naturalpark');
 
@@ -57129,14 +57103,13 @@ var Stand = /*#__PURE__*/function (_Component) {
     var _this;
 
     var layer = _ref.layer,
-        serviceEndpoint = _ref.serviceEndpoint;
+        path = _ref.path;
 
     _classCallCheck(this, Stand);
 
-    _this = _super.call(this, container, {
-      layer: layer
-    });
-    _this._serviceEndpoint = serviceEndpoint;
+    _this = _super.call(this, container);
+    _this._layer = layer;
+    _this._path = path;
 
     _this._container.classList.add('scanex-forestry-stand');
 
@@ -57263,31 +57236,35 @@ var Stand = /*#__PURE__*/function (_Component) {
                 }
 
                 this.close();
-                _context.next = 15;
+                _context.next = 17;
                 break;
 
               case 5:
+                this._layer.setStyleHook(this._styleHook.bind(this));
+
+                this._layer.repaint();
+
                 this._gmx_id = gmx_id;
-                _context.next = 8;
-                return fetch("".concat(this._serviceEndpoint, "/Forest/GetStandInformation?StandID=").concat(id), {
+                _context.next = 10;
+                return fetch("".concat(this._path, "/Forest/GetStandInformation?StandID=").concat(id), {
                   method: 'GET',
                   credentials: 'include'
                 });
 
-              case 8:
+              case 10:
                 response = _context.sent;
-                _context.next = 11;
+                _context.next = 13;
                 return response.json();
 
-              case 11:
+              case 13:
                 data = _context.sent;
 
                 this._render(data);
 
-                _context.next = 15;
+                _context.next = 17;
                 return _get(_getPrototypeOf(Stand.prototype), "open", this).call(this);
 
-              case 15:
+              case 17:
               case "end":
                 return _context.stop();
             }
@@ -57305,6 +57282,10 @@ var Stand = /*#__PURE__*/function (_Component) {
     key: "close",
     value: function close() {
       this._gmx_id = null;
+
+      this._layer.removeStyleHook();
+
+      this._layer.repaint();
 
       _get(_getPrototypeOf(Stand.prototype), "close", this).call(this);
     }
@@ -57355,14 +57336,13 @@ var Declaration = /*#__PURE__*/function (_Component) {
     var _this;
 
     var layer = _ref.layer,
-        serviceEndpoint = _ref.serviceEndpoint;
+        path = _ref.path;
 
     _classCallCheck(this, Declaration);
 
-    _this = _super.call(this, container, {
-      layer: layer
-    });
-    _this._serviceEndpoint = serviceEndpoint;
+    _this = _super.call(this, container);
+    _this._layer = layer;
+    _this._path = path;
 
     _this._container.classList.add('scanex-forestry-declaration');
 
@@ -57439,31 +57419,35 @@ var Declaration = /*#__PURE__*/function (_Component) {
                 }
 
                 this.close();
-                _context.next = 15;
+                _context.next = 17;
                 break;
 
               case 5:
+                this._layer.setStyleHook(this._styleHook.bind(this));
+
+                this._layer.repaint();
+
                 this._gmx_id = gmx_id;
-                _context.next = 8;
-                return fetch("".concat(this._serviceEndpoint, "/Forest/GetForestDeclarationInformation?ForestDeclarationID=").concat(id, "&debug=true"), {
+                _context.next = 10;
+                return fetch("".concat(this._path, "/Forest/GetForestDeclarationInformation?ForestDeclarationID=").concat(id, "&debug=true"), {
                   method: 'GET',
                   credentials: 'include'
                 });
 
-              case 8:
+              case 10:
                 response = _context.sent;
-                _context.next = 11;
+                _context.next = 13;
                 return response.json();
 
-              case 11:
+              case 13:
                 data = _context.sent;
 
                 this._render(data);
 
-                _context.next = 15;
+                _context.next = 17;
                 return _get(_getPrototypeOf(Declaration.prototype), "open", this).call(this);
 
-              case 15:
+              case 17:
               case "end":
                 return _context.stop();
             }
@@ -57481,6 +57465,10 @@ var Declaration = /*#__PURE__*/function (_Component) {
     key: "close",
     value: function close() {
       this._gmx_id = null;
+
+      this._layer.removeStyleHook();
+
+      this._layer.repaint();
 
       _get(_getPrototypeOf(Declaration.prototype), "close", this).call(this);
     }
@@ -57608,13 +57596,13 @@ var Incident = /*#__PURE__*/function (_Component) {
   function Incident(container, _ref) {
     var _this;
 
-    var serviceEndpoint = _ref.serviceEndpoint,
-        layer = _ref.layer;
+    var layer = _ref.layer,
+        path = _ref.path;
 
     _classCallCheck(this, Incident);
 
     _this = _super.call(this, container, {});
-    _this._serviceEndpoint = serviceEndpoint;
+    _this._path = path;
     _this._layer = layer;
 
     _this._container.classList.add('scanex-forestry-incident');
@@ -57996,13 +57984,16 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
   var _super = _createSuper(Map);
 
-  function Map(container, _ref) {
+  function Map(container) {
     var _this;
 
-    var _ref$apiKey = _ref.apiKey,
+    var _ref = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
+        _ref$gmxPath = _ref.gmxPath,
+        gmxPath = _ref$gmxPath === void 0 ? '/gis' : _ref$gmxPath,
+        _ref$apiPath = _ref.apiPath,
+        apiPath = _ref$apiPath === void 0 ? '/service' : _ref$apiPath,
+        _ref$apiKey = _ref.apiKey,
         apiKey = _ref$apiKey === void 0 ? 'I9ELMZU8GD' : _ref$apiKey,
-        gmxEndpoint = _ref.gmxEndpoint,
-        serviceEndpoint = _ref.serviceEndpoint,
         _ref$center = _ref.center,
         center = _ref$center === void 0 ? [51.331898, 111.28051] : _ref$center,
         _ref$zoom = _ref.zoom,
@@ -58017,23 +58008,9 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
     _this._container.classList.add('scanex-forestry-map');
 
-    _this._gmxEndpoint = gmxEndpoint;
     _this._apiKey = apiKey;
-
-    var _URL = new URL(_this._gmxEndpoint),
-        hostname = _URL.hostname,
-        pathname = _URL.pathname,
-        port = _URL.port;
-
-    _this._hostName = port ? "".concat(hostname, ":").concat(port) : hostname;
-
-    if (pathname.endsWith('/')) {
-      _this._gmxPath = pathname;
-    } else {
-      _this._gmxPath = "".concat(pathname, "/");
-    }
-
-    _this._serviceEndpoint = serviceEndpoint;
+    _this._gmxPath = gmxPath;
+    _this._apiPath = apiPath;
     _this._map = L$1.map(_this._container, {
       // renderer: L.canvas(),
       zoomControl: false
@@ -58086,7 +58063,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
             switch (_context2.prev = _context2.next) {
               case 0:
                 _context2.next = 2;
-                return fetch("".concat(this._gmxEndpoint, "/User/GetUserInfo.ashx?WrapStyle=None"), {
+                return fetch("".concat(this._gmxPath, "/User/GetUserInfo.ashx?WrapStyle=None"), {
                   method: 'GET',
                   credentials: 'include'
                 });
@@ -58166,8 +58143,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
                 if (!this._content.hasComponent('analytics')) {
                   this._content.addComponent('analytics', Analytics, {
-                    layer: this._quadrants,
-                    serviceEndpoint: this._serviceEndpoint
+                    path: this._apiPath
                   });
                 }
 
@@ -58215,7 +58191,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 if (!this._content.hasComponent('requests')) {
                   component = this._content.addComponent('requests', Requests, {
                     layer: this._quadrants,
-                    serviceEndpoint: this._serviceEndpoint
+                    path: this._apiPath
                   });
                   component.on('create', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5() {
                     return regeneratorRuntime.wrap(function _callee5$(_context5) {
@@ -58301,7 +58277,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 if (!this._content.hasComponent('edit-plot')) {
                   component = this._content.addComponent('edit-plot', EditPlot, {
                     layer: this._quadrants,
-                    serviceEndpoint: this._serviceEndpoint
+                    path: this._apiPath
                   });
                   component.on('save', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8() {
                     return regeneratorRuntime.wrap(function _callee8$(_context8) {
@@ -58408,7 +58384,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 if (!this._content.hasComponent('create-plot')) {
                   component = this._content.addComponent('create-plot', CreatePlot, {
                     layer: this._quadrants,
-                    serviceEndpoint: this._serviceEndpoint
+                    path: this._apiPath
                   });
                   component.on('save', /*#__PURE__*/function () {
                     var _ref8 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee12(e) {
@@ -58512,7 +58488,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_showNaturalPark",
     value: function () {
-      var _showNaturalPark2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee16(id) {
+      var _showNaturalPark2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee16(properties) {
         return regeneratorRuntime.wrap(function _callee16$(_context16) {
           while (1) {
             switch (_context16.prev = _context16.next) {
@@ -58520,14 +58496,11 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 _context16.prev = 0;
 
                 if (!this._content.hasComponent('naturalpark')) {
-                  this._content.addComponent('naturalpark', NaturalPark, {
-                    layer: this._quadrants,
-                    serviceEndpoint: this._serviceEndpoint
-                  });
+                  this._content.addComponent('naturalpark', NaturalPark);
                 }
 
                 _context16.next = 4;
-                return this._content.showComponent('naturalpark', id);
+                return this._content.showComponent('naturalpark', properties);
 
               case 4:
                 _context16.next = 11;
@@ -58577,7 +58550,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 fd.append('geometry', 'true');
                 fd.append('layer', LayerID);
                 _context17.next = 10;
-                return fetch("//".concat(this._hostName, "/VectorLayer/Search.ashx?WrapStyle=None"), {
+                return fetch("".concat(this._gmxPath, "/VectorLayer/Search.ashx?WrapStyle=None"), {
                   method: 'POST',
                   credentials: 'include',
                   body: fd
@@ -58635,7 +58608,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
                 if (!this._content.hasComponent('uploaded')) {
                   this._content.addComponent('uploaded', Uploaded, {
-                    serviceEndpoint: "//".concat(this._hostName)
+                    path: "".concat(this._gmxPath)
                   });
                 }
 
@@ -58680,7 +58653,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 if (!this._content.hasComponent('quadrant')) {
                   this._content.addComponent('quadrant', Quadrant, {
                     layer: this._quadrants,
-                    serviceEndpoint: this._serviceEndpoint
+                    path: this._apiPath
                   });
                 }
 
@@ -58728,7 +58701,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 if (!this._content.hasComponent('stand')) {
                   this._content.addComponent('stand', Stand, {
                     layer: this._stands,
-                    serviceEndpoint: this._serviceEndpoint
+                    path: this._apiPath
                   });
                 }
 
@@ -58776,7 +58749,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 if (!this._content.hasComponent('declaration')) {
                   this._content.addComponent('declaration', Declaration, {
                     layer: this._declarations,
-                    serviceEndpoint: this._serviceEndpoint
+                    path: this._apiPath
                   });
                 }
 
@@ -58824,7 +58797,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 if (!this._content.hasComponent('incident')) {
                   this._content.addComponent('incident', Incident, {
                     layer: this._incidents,
-                    serviceEndpoint: this._serviceEndpoint
+                    path: this._apiPath
                   });
                 }
 
@@ -59294,14 +59267,14 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 return L$1.gmx.loadMap(mapId, {
                   // apiKey: this._apiKey,
                   leafletMap: this._map,
-                  hostName: this._hostName,
+                  hostName: '/',
                   setZIndex: true,
                   gmxEndPoints: {
-                    checkVersion: "".concat(this._gmxPath, "Layer/CheckVersion.ashx"),
-                    layerProps: "".concat(this._gmxPath, "Layer/GetLayerJson.ashx"),
-                    searchLayerItem: "".concat(this._gmxPath, "VectorLayer/Search.ashx"),
-                    tileProps: "".concat(this._gmxPath, "TileSender.ashx"),
-                    mapProps: "".concat(this._gmxPath, "TileSender.ashx")
+                    checkVersion: "".concat(this._gmxPath, "/Layer/CheckVersion.ashx"),
+                    layerProps: "".concat(this._gmxPath, "/Layer/GetLayerJson.ashx"),
+                    searchLayerItem: "".concat(this._gmxPath, "/VectorLayer/Search.ashx"),
+                    tileProps: "".concat(this._gmxPath, "/TileSender.ashx"),
+                    mapProps: "".concat(this._gmxPath, "/TileSender.ashx")
                   }
                 });
 
