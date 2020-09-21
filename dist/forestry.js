@@ -21621,9 +21621,10 @@ L.gmx.RasterLayer = L.gmx.VectorLayer.extend({
       properties: vectorProperties,
       rawProperties: ph.properties
     });
+    var endPoint = this.options.gmxEndPoints ? this.options.gmxEndPoints.tileProps : '/TileSender.ashx';
 
     gmx.rasterBGfunc = function (x, y, z) {
-      var url = L.gmxUtil.protocol + '//' + gmx.hostName + '/' + 'TileSender.ashx?ModeKey=tile&ftc=osm' + '&z=' + z + '&x=' + x + '&y=' + y;
+      var url = L.gmxUtil.protocol + '//' + gmx.hostName + endPoint + '?ModeKey=tile&ftc=osm' + '&z=' + z + '&x=' + x + '&y=' + y;
 
       if (gmx.srs) {
         url += '&srs=' + gmx.srs;
@@ -57672,11 +57673,14 @@ var Incident = /*#__PURE__*/function (_Component) {
     value: function _toggleRaster(e) {
       e.stopPropagation();
       var map = this._layer._map;
+      var rastr = this._layer.verifyRaster;
 
-      if (this._layer.verifyRaster._map) {
-        map.removeLayer(this._layer.verifyRaster);
-      } else {
-        map.addLayer(this._layer.verifyRaster);
+      if (rastr) {
+        if (rastr._map) {
+          map.removeLayer(rastr);
+        } else {
+          map.addLayer(rastr);
+        }
       }
     }
   }, {
@@ -57689,7 +57693,7 @@ var Incident = /*#__PURE__*/function (_Component) {
         date: '15.07.2019',
         specialCommon: 'Береза'
       };
-      this._container.innerHTML = "\n           <div class=\"map-popup-part2__header\">".concat(translate$f('incident.title'), "</div>\n            <div class=\"map-popup-part2__wrapper-in style-4\">\n                <div class=\"map-popup-part2__wrapper-in__table1\">\n\t\t\t\t\t<div class=\"buttonsCont\">\n\t\t\t\t\t\t<button class=\"map-popup-part2__header_right_button_2 width-50 verRastr\">").concat(translate$f('incident.verRastr'), "</button>\n\t\t\t\t\t</div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.status'), "<span>").concat(data.state, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaAll'), "<span>").concat(data.areaAll, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaArenda'), "<span>").concat(data.areaArenda, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.date'), "<span>").concat(data.date, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.specialCommon'), "<span>").concat(data.specialCommon, "</span></div>\n                </div>\n            </div>\n\t\t");
+      this._container.innerHTML = "\n           <div class=\"map-popup-part2__header\">".concat(translate$f('incident.titleFire'), "</div>\n            <div class=\"map-popup-part2__wrapper-in style-4\">\n                <div class=\"map-popup-part2__wrapper-in__table1\">\n\t\t\t\t\t<div class=\"buttonsCont\">\n\t\t\t\t\t\t<button class=\"map-popup-part2__header_right_button_2 width-50 verRastr\">").concat(translate$f('incident.verRastr'), "</button>\n\t\t\t\t\t</div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.status'), "<span>").concat(data.state, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaAll'), "<span>").concat(data.areaAll, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaArenda'), "<span>").concat(data.areaArenda, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.date'), "<span>").concat(data.date, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.specialCommon'), "<span>").concat(data.specialCommon, "</span></div>\n                </div>\n            </div>\n\t\t");
     }
   }, {
     key: "_setForm3",
@@ -57796,6 +57800,14 @@ var Incident = /*#__PURE__*/function (_Component) {
     key: "close",
     value: function close() {
       this._gmx_id = null;
+      var map = this._layer._map;
+      var rastr = this._layer.verifyRaster;
+
+      if (rastr) {
+        if (rastr._map) {
+          map.removeLayer(rastr);
+        }
+      }
 
       _get(_getPrototypeOf(Incident.prototype), "close", this).call(this);
     }
@@ -59329,6 +59341,11 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
                 _loop = function _loop(i) {
                   var layer = _this5._gmxMap.layers[i];
+
+                  if (layer._map) {
+                    _this5._map.removeLayer(layer);
+                  }
+
                   var props = layer.getGmxProperties();
 
                   if (props.IsRasterCatalog) {

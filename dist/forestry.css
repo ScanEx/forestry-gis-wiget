@@ -27,6 +27,60 @@
     margin-left: 20px;
 }
 
+﻿button.findFiresButton
+{
+	margin-top: 3px;
+	padding: 2px;
+}
+
+#checkContainer
+{
+	margin-top: 5px;
+}
+
+#checkContainer td
+{
+	padding: 3px 0px
+}
+
+#checkContainer td
+{
+	font-family: sans-serif;
+	font-size: 11px;
+}
+
+#checkContainer input
+{
+	margin: 0px 0px 0px 3px;
+	width: 13px;
+	height: 13px;
+}
+
+#fireMappletInfo *
+{
+	margin: 0px;
+	padding: 0px;
+}
+
+#fireMappletInfo
+{
+	border-spacing: 0px;
+}
+
+.fireMappletHours
+{
+    font-family: sans-serif;
+	font-size: 11px;
+    margin: 4px 0px 0px 23px;
+}
+
+.fireMappletLabel {
+    margin-left: 3px;
+}
+
+.fireMappletContainer {
+    margin-left: 4px;
+}
 /*ICON STYLES BELOW*/
 .logo-left {
     background-image: url("data:image/svg+xml;charset=utf8,%3Csvg width='40' height='40' viewBox='0 0 40 40' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M26.0622 17L20 8L13.9378 17H16.5359L10.4737 27.5H18V31H22V27.5H29.5263L23.4641 17H26.0622Z' fill='white'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M40 20C40 31.0457 31.0457 40 20 40C8.9543 40 0 31.0457 0 20C0 8.9543 8.9543 0 20 0C31.0457 0 40 8.9543 40 20ZM38 20C38 29.9411 29.9411 38 20 38C10.0589 38 2 29.9411 2 20C2 10.0589 10.0589 2 20 2C29.9411 2 38 10.0589 38 20Z' fill='white'/%3E%3C/svg%3E");
@@ -257,60 +311,6 @@
     width: 16px;
     height: 16px;
     min-width: 16px;
-}
-﻿button.findFiresButton
-{
-	margin-top: 3px;
-	padding: 2px;
-}
-
-#checkContainer
-{
-	margin-top: 5px;
-}
-
-#checkContainer td
-{
-	padding: 3px 0px
-}
-
-#checkContainer td
-{
-	font-family: sans-serif;
-	font-size: 11px;
-}
-
-#checkContainer input
-{
-	margin: 0px 0px 0px 3px;
-	width: 13px;
-	height: 13px;
-}
-
-#fireMappletInfo *
-{
-	margin: 0px;
-	padding: 0px;
-}
-
-#fireMappletInfo
-{
-	border-spacing: 0px;
-}
-
-.fireMappletHours
-{
-    font-family: sans-serif;
-	font-size: 11px;
-    margin: 4px 0px 0px 23px;
-}
-
-.fireMappletLabel {
-    margin-left: 3px;
-}
-
-.fireMappletContainer {
-    margin-left: 4px;
 }
 .gmxTimeline * {
     font-family: tahoma;
@@ -2028,165 +2028,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
 	border-right-color: #fff;
 	}
 
-.map-top-right-wrapper__zoom {
-    width: 116px;
-    height: 100%;
-    display: -webkit-inline-box;
-    display: -ms-inline-flexbox;
-    display: inline-flex;
-    -webkit-box-pack: justify;
-    -ms-flex-pack: justify;
-    justify-content: space-between;
-    -webkit-box-align: center;
-    -ms-flex-align: center;
-    align-items: center;
-    border-radius: 10px;
-    background: #FFF;
-    padding: 7px 0;
-    margin-right: 15px;
-    border: 1px solid #E0E0E0;
-}
-
-.map-top-right-wrapper__zoom-left {
-    width: 33.3%;
-    height: 100%;
-    border-top-left-radius: 10px;
-    border-bottom-left-radius: 10px;
-    display: -webkit-box;
-    display: -ms-flexbox;
-    display: flex;
-    -webkit-box-pack: center;
-    -ms-flex-pack: center;
-    justify-content: center;
-    -webkit-box-align: center;
-    -ms-flex-align: center;
-    align-items: center;
-    cursor: pointer;
-}
-
-.map-top-right-wrapper__zoom-middle {
-    width: 33.3%;
-    height: 100%;
-    display: -webkit-box;
-    display: -ms-flexbox;
-    display: flex;
-    -webkit-box-pack: center;
-    -ms-flex-pack: center;
-    justify-content: center;
-    -webkit-box-align: center;
-    -ms-flex-align: center;
-    align-items: center;
-    cursor: default;
-    font-style: normal;
-    font-weight: 600;
-    font-size: 14px;
-    line-height: 19px;
-    color: #453D3D;
-    border-left: 1px solid #E3E8F1;
-    border-right: 1px solid #E3E8F1;
-}
-
-.map-top-right-wrapper__zoom-right {
-    width: 33.3%;
-    height: 100%;
-    border-top-right-radius: 10px;
-    border-bottom-right-radius: 10px;
-    display: -webkit-box;
-    display: -ms-flexbox;
-    display: flex;
-    -webkit-box-pack: center;
-    -ms-flex-pack: center;
-    justify-content: center;
-    -webkit-box-align: center;
-    -ms-flex-align: center;
-    align-items: center;
-    cursor: pointer;
-}
-.scanex-baselayers {
-	min-width: 56px;
-    width: 56;
-    height: 40px;
-    position: absolute;
-    top: 65px;
-    right: 20px;
-    background: #FFF;
-    z-index: 500;
-    border: 1px solid #E0E0E0;
-    border-radius: 12px;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.scanex-baselayers .substrates {
-  background-image: url("data:image/svg+xml;charset=utf8,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M9 0H1C0.447715 0 0 0.447715 0 1V11C0 11.5523 0.447715 12 1 12H9C9.55229 12 10 11.5523 10 11V1C10 0.447715 9.55229 0 9 0Z' fill='%23453D3D'/%3E%3Cpath d='M15.1238 4.08496L12.1238 3.70996L11.8758 5.69396L13.8828 5.94496L12.8878 13.883L5.94185 13.012L5.69385 15L13.6318 16C13.6733 16.0051 13.7151 16.0077 13.7568 16.008C14.0005 16.0079 14.2358 15.9188 14.4185 15.7575C14.6012 15.5962 14.7186 15.3738 14.7488 15.132L15.9918 5.19996C16.0247 4.93688 15.9517 4.67154 15.7889 4.46226C15.6261 4.25299 15.3869 4.11692 15.1238 4.08396V4.08496Z' fill='%23453D3D'/%3E%3C/svg%3E");
-    width: 16px;
-    height: 16px;
-    min-width: 16px;
-    min-height: 16px;
-}
-
-.scanex-baselayers .table-baselayers-popup {
-    background-color: white;
-    position: absolute;
-    width: auto;
-    height: auto;
-    border: 1px solid #E0E0E0;
-    border-radius: 12px;
-    display: -webkit-box;
-    display: -ms-flexbox;
-    display: flex;
-    top: 50px;
-    right: 0;
-    -webkit-box-orient: vertical;
-    -webkit-box-direction: normal;
-    -ms-flex-direction: column;
-    flex-direction: column;
-    -webkit-box-pack: start;
-    -ms-flex-pack: start;
-    justify-content: flex-start;
-    -webkit-box-align: center;
-    -ms-flex-align: center;
-    align-items: center;
-    padding: 15px;
-    position: absolute;
-    width: 290px;
-    top: 0;
-    right: 63px;
-}
-.table-baselayers-popup img {
-    cursor: pointer;
-    border-radius: 13px;
-    margin: 1px;
-}
-.scanex-baselayers .baseLayer.active {
-	border: dashed;
-}
-
-.table-baselayers-popup label {
-    font-family: Open Sans;
-    font-style: normal;
-    font-weight: 600;
-    font-size: 16px;
-    line-height: 24px;
-    color: #453D3D;
-}
-.scanex-baselayers .map-right {
-    width: 100%;
-    height: 100%;
-    cursor: pointer;
-    border-radius: 12px;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-}
-
-.scanex-baselayers.baselayer-map-right.leaflet-control {
-    margin-right: -10px;
-}
 .scanex-forestry-legend .component {
     padding: 5px 0px 5px 0px;
 }
@@ -2319,6 +2160,165 @@ svg.leaflet-image-layer.leaflet-interactive path {
     width: 320px;
 }
 
+.scanex-baselayers {
+	min-width: 56px;
+    width: 56;
+    height: 40px;
+    position: absolute;
+    top: 65px;
+    right: 20px;
+    background: #FFF;
+    z-index: 500;
+    border: 1px solid #E0E0E0;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.scanex-baselayers .substrates {
+  background-image: url("data:image/svg+xml;charset=utf8,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M9 0H1C0.447715 0 0 0.447715 0 1V11C0 11.5523 0.447715 12 1 12H9C9.55229 12 10 11.5523 10 11V1C10 0.447715 9.55229 0 9 0Z' fill='%23453D3D'/%3E%3Cpath d='M15.1238 4.08496L12.1238 3.70996L11.8758 5.69396L13.8828 5.94496L12.8878 13.883L5.94185 13.012L5.69385 15L13.6318 16C13.6733 16.0051 13.7151 16.0077 13.7568 16.008C14.0005 16.0079 14.2358 15.9188 14.4185 15.7575C14.6012 15.5962 14.7186 15.3738 14.7488 15.132L15.9918 5.19996C16.0247 4.93688 15.9517 4.67154 15.7889 4.46226C15.6261 4.25299 15.3869 4.11692 15.1238 4.08396V4.08496Z' fill='%23453D3D'/%3E%3C/svg%3E");
+    width: 16px;
+    height: 16px;
+    min-width: 16px;
+    min-height: 16px;
+}
+
+.scanex-baselayers .table-baselayers-popup {
+    background-color: white;
+    position: absolute;
+    width: auto;
+    height: auto;
+    border: 1px solid #E0E0E0;
+    border-radius: 12px;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    top: 50px;
+    right: 0;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    -webkit-box-pack: start;
+    -ms-flex-pack: start;
+    justify-content: flex-start;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+    padding: 15px;
+    position: absolute;
+    width: 290px;
+    top: 0;
+    right: 63px;
+}
+.table-baselayers-popup img {
+    cursor: pointer;
+    border-radius: 13px;
+    margin: 1px;
+}
+.scanex-baselayers .baseLayer.active {
+	border: dashed;
+}
+
+.table-baselayers-popup label {
+    font-family: Open Sans;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 24px;
+    color: #453D3D;
+}
+.scanex-baselayers .map-right {
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.scanex-baselayers.baselayer-map-right.leaflet-control {
+    margin-right: -10px;
+}
+.map-top-right-wrapper__zoom {
+    width: 116px;
+    height: 100%;
+    display: -webkit-inline-box;
+    display: -ms-inline-flexbox;
+    display: inline-flex;
+    -webkit-box-pack: justify;
+    -ms-flex-pack: justify;
+    justify-content: space-between;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+    border-radius: 10px;
+    background: #FFF;
+    padding: 7px 0;
+    margin-right: 15px;
+    border: 1px solid #E0E0E0;
+}
+
+.map-top-right-wrapper__zoom-left {
+    width: 33.3%;
+    height: 100%;
+    border-top-left-radius: 10px;
+    border-bottom-left-radius: 10px;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-pack: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+    cursor: pointer;
+}
+
+.map-top-right-wrapper__zoom-middle {
+    width: 33.3%;
+    height: 100%;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-pack: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+    cursor: default;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 19px;
+    color: #453D3D;
+    border-left: 1px solid #E3E8F1;
+    border-right: 1px solid #E3E8F1;
+}
+
+.map-top-right-wrapper__zoom-right {
+    width: 33.3%;
+    height: 100%;
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-pack: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+    cursor: pointer;
+}
 .scanex-hotspottimeline.leaflet-control {
 	background-color: #d3d3d3b5;
 	width: 100%;
@@ -2364,6 +2364,98 @@ svg.leaflet-image-layer.leaflet-interactive path {
     padding-bottom: 10px;
 }
 
+.scanex-forestry-quadrant {    
+    height: 416px;
+}
+.scanex-forestry-quadrant > table,
+.scanex-forestry-quadrant > table > tbody > tr > td {
+    width: 100%;
+}
+.scanex-forestry-quadrant > table th,
+.scanex-forestry-quadrant > table td {
+    text-align: left;
+}
+.scanex-forestry-quadrant .chart {    
+    height: 200px;
+}
+.scanex-forestry-quadrant .forestry {
+    margin-bottom: 20px;
+	margin-top: 14px;
+}
+.scanex-forestry-quadrant .title {
+    font-size: large;
+}
+
+
+.scanex-forestry-requests {    
+    height: 416px;             
+}
+.scanex-forestry-requests > table.header {
+    margin-bottom: 30px;
+}
+.scanex-forestry-requests > table.content thead {
+    background-color: #F3F3F3;
+    color: #6B707B;   
+}
+.scanex-forestry-requests > table.content thead th {
+    height: 42px;
+    font-size: 14px;
+    text-align: left;
+    padding: 5px 10px;
+}
+.scanex-forestry-requests > table,
+.scanex-forestry-requests > table.header > tbody > tr > td:first-child {
+    width: 100%;
+}
+.scanex-forestry-requests.leaflet-control {
+    margin-bottom: 15px;
+    margin-right: 10px;
+}
+.scanex-forestry-requests label,
+.scanex-forestry-requests button,
+.scanex-forestry-requests th,
+.scanex-forestry-requests td {
+    white-space: nowrap;
+}
+.scanex-forestry-requests label.title {
+    font-style: normal;
+    font-family: 'Montserrat';
+    font-style: normal;
+    font-weight: bold;
+    font-size: 24px;
+    line-height: 40px;
+    color: #000000;        
+    white-space: nowrap;    
+}
+.scanex-forestry-requests button.create {
+    float: right;
+    width: 240px;
+    height: 48px;
+    border: 1px solid #067A57;
+    border-radius: 24px;    
+    font-style: normal;
+    font-weight: 600;
+    font-size: 18px;
+    line-height: 24px;
+    text-align: center;
+    color: #FFF;
+    cursor: pointer;
+    background: #067A57;
+    outline: none;
+    margin-right: 13px;
+}
+.scanex-forestry-requests table.content .items td {
+    cursor: pointer;
+    font-family: 'Open Sans';
+    font-style: normal;
+    font-weight: normal;
+    font-size: 14px;
+    line-height: 19px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    padding: 5px 10px;
+    height: 42px;
+}
 .scanex-forestry-plot {    
     height: 467px;    
 }
@@ -2459,98 +2551,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
 .scanex-forestry-plot .hidden {
     display: none;
 }
-.scanex-forestry-requests {    
-    height: 416px;             
-}
-.scanex-forestry-requests > table.header {
-    margin-bottom: 30px;
-}
-.scanex-forestry-requests > table.content thead {
-    background-color: #F3F3F3;
-    color: #6B707B;   
-}
-.scanex-forestry-requests > table.content thead th {
-    height: 42px;
-    font-size: 14px;
-    text-align: left;
-    padding: 5px 10px;
-}
-.scanex-forestry-requests > table,
-.scanex-forestry-requests > table.header > tbody > tr > td:first-child {
-    width: 100%;
-}
-.scanex-forestry-requests.leaflet-control {
-    margin-bottom: 15px;
-    margin-right: 10px;
-}
-.scanex-forestry-requests label,
-.scanex-forestry-requests button,
-.scanex-forestry-requests th,
-.scanex-forestry-requests td {
-    white-space: nowrap;
-}
-.scanex-forestry-requests label.title {
-    font-style: normal;
-    font-family: 'Montserrat';
-    font-style: normal;
-    font-weight: bold;
-    font-size: 24px;
-    line-height: 40px;
-    color: #000000;        
-    white-space: nowrap;    
-}
-.scanex-forestry-requests button.create {
-    float: right;
-    width: 240px;
-    height: 48px;
-    border: 1px solid #067A57;
-    border-radius: 24px;    
-    font-style: normal;
-    font-weight: 600;
-    font-size: 18px;
-    line-height: 24px;
-    text-align: center;
-    color: #FFF;
-    cursor: pointer;
-    background: #067A57;
-    outline: none;
-    margin-right: 13px;
-}
-.scanex-forestry-requests table.content .items td {
-    cursor: pointer;
-    font-family: 'Open Sans';
-    font-style: normal;
-    font-weight: normal;
-    font-size: 14px;
-    line-height: 19px;
-    padding-top: 5px;
-    padding-bottom: 5px;
-    padding: 5px 10px;
-    height: 42px;
-}
-.scanex-forestry-quadrant {    
-    height: 416px;
-}
-.scanex-forestry-quadrant > table,
-.scanex-forestry-quadrant > table > tbody > tr > td {
-    width: 100%;
-}
-.scanex-forestry-quadrant > table th,
-.scanex-forestry-quadrant > table td {
-    text-align: left;
-}
-.scanex-forestry-quadrant .chart {    
-    height: 200px;
-}
-.scanex-forestry-quadrant .forestry {
-    margin-bottom: 20px;
-	margin-top: 14px;
-}
-.scanex-forestry-quadrant .title {
-    font-size: large;
-}
-
-
 .scanex-forestry-uploaded {    
     height: 416px;
 }
@@ -2719,6 +2719,129 @@ svg.leaflet-image-layer.leaflet-interactive path {
 }
 .scanex-forestry-naturalpark .value {
 	text-align: right;
+}
+.scanex-forestry-stand {
+    padding: 23px;
+    background-color: #FFFFFF;
+    height: 540px;
+    border-radius: 6px;
+    overflow-y: scroll;
+}
+.scanex-forestry-stand .header1 {
+    font-family: Montserrat;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 24px;
+    line-height: 40px;
+}
+.scanex-forestry-stand .header2 {
+    font-family: Open Sans;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 14px;
+    line-height: 40px;
+}
+.scanex-forestry-stand td {
+    font-family: Open Sans;
+    font-style: normal;
+    font-weight: normal;
+    font-size: 12px;
+    line-height: 16px;    
+    color: #453D3D;
+    padding: 5px 25px 5px 0px;
+}
+.scanex-forestry-stand > table,
+.scanex-forestry-stand > table > tbody > tr > td:first-child,
+.scanex-forestry-stand .events > table,
+.scanex-forestry-stand .events > table > tbody > tr > td:first-child {
+    width: 100%;
+}
+.scanex-forestry-stand > table > thead > tr > th {
+    text-align: left;
+}
+.scanex-forestry-stand td {
+    vertical-align: top;
+    white-space: nowrap;
+}
+.scanex-forestry-stand .chart {    
+    height: 200px;
+}
+.scanex-forestry-stand .events .percentage {
+    text-align: right;
+}
+.scanex-forestry-declaration {        
+    height: 416px;
+}
+.scanex-forestry-declaration .header {
+    margin-bottom: 17px;
+}
+.scanex-forestry-declaration table {
+    table-layout: fixed;
+}
+.scanex-forestry-declaration table,
+.scanex-forestry-declaration table > tbody > tr > td:last-child {
+    width: 100%;
+}
+.scanex-forestry-declaration .header > * {
+    font-family: 'Montserrat', sans-serif;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 24px;
+    line-height: 40px;
+}
+.scanex-forestry-declaration td:first-child {
+    width: 350px;
+}
+.scanex-forestry-declaration td {
+    font-family: 'Open Sans', sans-serif;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 19px;
+    white-space: nowrap;
+    padding: 5px 23px 5px 0px;    
+}
+.scanex-forestry-declaration th {
+    white-space: nowrap;
+    text-align: left;
+}
+.scanex-forestry-declaration .scanex-declaration-icon {
+    background-repeat: no-repeat;
+    background-position: center;    
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    display: inline-block;
+    vertical-align: middle;
+    margin-bottom: 4px;
+
+}
+.scanex-forestry-declaration .open-doc {
+    font-family: 'Open Sans', sans-serif;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 24px;    
+    color: #067A57;
+    border: none;
+    background-color: transparent;
+    vertical-align: middle;
+    margin-bottom: 10px;
+}
+.scanex-forestry-declaration .federal-subject,
+.scanex-forestry-declaration .executive,
+.scanex-forestry-declaration .officer,
+.scanex-forestry-declaration .lessee,
+.scanex-forestry-declaration .contract {
+    text-align: left;
+    width: 100%;
+}
+.scanex-forestry-declaration .content {
+    overflow-y: auto;
+    max-height: 200px;
+}
+.scanex-forestry-declaration .num > td {
+    border-top: 1px solid grey;
 }
 .scanex-forestry-incident {    
     height: 720px;
@@ -3385,129 +3508,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
     height: 500px;
     margin-bottom: -378px;
     overflow-x: auto;
-}
-.scanex-forestry-declaration {        
-    height: 416px;
-}
-.scanex-forestry-declaration .header {
-    margin-bottom: 17px;
-}
-.scanex-forestry-declaration table {
-    table-layout: fixed;
-}
-.scanex-forestry-declaration table,
-.scanex-forestry-declaration table > tbody > tr > td:last-child {
-    width: 100%;
-}
-.scanex-forestry-declaration .header > * {
-    font-family: 'Montserrat', sans-serif;
-    font-style: normal;
-    font-weight: bold;
-    font-size: 24px;
-    line-height: 40px;
-}
-.scanex-forestry-declaration td:first-child {
-    width: 350px;
-}
-.scanex-forestry-declaration td {
-    font-family: 'Open Sans', sans-serif;
-    font-style: normal;
-    font-weight: 600;
-    font-size: 14px;
-    line-height: 19px;
-    white-space: nowrap;
-    padding: 5px 23px 5px 0px;    
-}
-.scanex-forestry-declaration th {
-    white-space: nowrap;
-    text-align: left;
-}
-.scanex-forestry-declaration .scanex-declaration-icon {
-    background-repeat: no-repeat;
-    background-position: center;    
-    cursor: pointer;
-    width: 24px;
-    height: 24px;
-    display: inline-block;
-    vertical-align: middle;
-    margin-bottom: 4px;
-
-}
-.scanex-forestry-declaration .open-doc {
-    font-family: 'Open Sans', sans-serif;
-    font-style: normal;
-    font-weight: 600;
-    font-size: 16px;
-    line-height: 24px;    
-    color: #067A57;
-    border: none;
-    background-color: transparent;
-    vertical-align: middle;
-    margin-bottom: 10px;
-}
-.scanex-forestry-declaration .federal-subject,
-.scanex-forestry-declaration .executive,
-.scanex-forestry-declaration .officer,
-.scanex-forestry-declaration .lessee,
-.scanex-forestry-declaration .contract {
-    text-align: left;
-    width: 100%;
-}
-.scanex-forestry-declaration .content {
-    overflow-y: auto;
-    max-height: 200px;
-}
-.scanex-forestry-declaration .num > td {
-    border-top: 1px solid grey;
-}
-.scanex-forestry-stand {
-    padding: 23px;
-    background-color: #FFFFFF;
-    height: 540px;
-    border-radius: 6px;
-    overflow-y: scroll;
-}
-.scanex-forestry-stand .header1 {
-    font-family: Montserrat;
-    font-style: normal;
-    font-weight: bold;
-    font-size: 24px;
-    line-height: 40px;
-}
-.scanex-forestry-stand .header2 {
-    font-family: Open Sans;
-    font-style: normal;
-    font-weight: bold;
-    font-size: 14px;
-    line-height: 40px;
-}
-.scanex-forestry-stand td {
-    font-family: Open Sans;
-    font-style: normal;
-    font-weight: normal;
-    font-size: 12px;
-    line-height: 16px;    
-    color: #453D3D;
-    padding: 5px 25px 5px 0px;
-}
-.scanex-forestry-stand > table,
-.scanex-forestry-stand > table > tbody > tr > td:first-child,
-.scanex-forestry-stand .events > table,
-.scanex-forestry-stand .events > table > tbody > tr > td:first-child {
-    width: 100%;
-}
-.scanex-forestry-stand > table > thead > tr > th {
-    text-align: left;
-}
-.scanex-forestry-stand td {
-    vertical-align: top;
-    white-space: nowrap;
-}
-.scanex-forestry-stand .chart {    
-    height: 200px;
-}
-.scanex-forestry-stand .events .percentage {
-    text-align: right;
 }
 .scanex-forestry-content {
     width: 100%;
