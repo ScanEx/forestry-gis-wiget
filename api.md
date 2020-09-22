@@ -2,9 +2,10 @@
 * Объект: Map
   * Инициализация:
 	```js
-	var map = new Map(mapContainer, {gmxPath: '/gis', apiPath: '/service', center: [51.331898, 111.28051], zoom: 9});
+	var map = new Map(mapContainer, {permissions, gmxPath: '/gis', apiPath: '/service', center: [51.331898, 111.28051], zoom: 9});
 	```
   	* mapContainer - DOM-элемент, содержащий карту	
+  	* permissions - объект, содержащий разрешения для элементов интерфейса
   	* gmxPath - путь к Геомиксеру (значение по умолчанию '/gis')
   	* apiPath - путь к API (значение по умолчанию '/service')
   	* center - координаты начального центра карты (широта, долгота в градусах) (значение по умолчанию [51.331898, 111.28051])
