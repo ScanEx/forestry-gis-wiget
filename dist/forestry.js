@@ -36436,6 +36436,7 @@ T.addText('rus', {
     id: 'ID',
     status: 'Статус',
     title: 'Описание',
+    totalSquare: 'Площадь',
     forestry: 'Субъект Федерации / Лесничество',
     header: 'Выбор проекта лесного участка',
     edit: 'Редактировать',
@@ -36468,7 +36469,7 @@ var Requests = /*#__PURE__*/function (_Component) {
     var layer = _ref.layer,
         path = _ref.path,
         _ref$columns = _ref.columns,
-        columns = _ref$columns === void 0 ? ['id', 'status', 'title', 'forestry'] : _ref$columns,
+        columns = _ref$columns === void 0 ? ['id', 'status', 'title', 'forestry', 'totalSquare'] : _ref$columns,
         _ref$pageSize = _ref.pageSize,
         pageSize = _ref$pageSize === void 0 ? 5 : _ref$pageSize;
 
@@ -36557,7 +36558,7 @@ var Requests = /*#__PURE__*/function (_Component) {
       var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
         var _this2 = this;
 
-        var response, items, rows, count, _loop, i;
+        var response, _yield$response$json, count, plotProjectsList, rows, _loop, i;
 
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
@@ -36568,7 +36569,7 @@ var Requests = /*#__PURE__*/function (_Component) {
                 _get(_getPrototypeOf(Requests.prototype), "open", this).call(this);
 
                 _context2.next = 4;
-                return fetch("".concat(this._path, "/Forest/GetPlotProjectsList?StartPosition=").concat(this._page, "&PageSize=").concat(this._pageSize), {
+                return fetch("".concat(this._path, "/Forest/GetPlotProjectsList?StartPosition=").concat(this._page * this._pageSize, "&PageSize=").concat(this._pageSize), {
                   method: 'GET',
                   credentials: 'include'
                 });
@@ -36579,19 +36580,20 @@ var Requests = /*#__PURE__*/function (_Component) {
                 return response.json();
 
               case 7:
-                items = _context2.sent;
-                this._content.innerHTML = items.map(function (item) {
+                _yield$response$json = _context2.sent;
+                count = _yield$response$json.count;
+                plotProjectsList = _yield$response$json.plotProjectsList;
+                this._content.innerHTML = plotProjectsList.map(function (item) {
                   return "<tr class=\"request\">".concat(_this2._columns.map(function (col) {
                     return "<td>".concat(item[col], "</td>");
                   }).join(''), "<td><i class=\"scanex-requests-icon remove\"></i></td></tr>");
                 }).join('');
                 rows = this._content.querySelectorAll('.request');
-                count = rows.length;
                 this._pager.pages = Math.ceil(count / this._pageSize);
 
                 _loop = function _loop(i) {
                   var row = rows[i];
-                  var item = items[i];
+                  var item = plotProjectsList[i];
                   row.querySelector('.scanex-requests-icon').addEventListener('click', function (e) {
                     e.stopPropagation();
                     var event = document.createEvent('Event');
@@ -36610,7 +36612,7 @@ var Requests = /*#__PURE__*/function (_Component) {
                   });
                 };
 
-                for (i = 0; i < count; ++i) {
+                for (i = 0; i < rows.length; ++i) {
                   _loop(i);
                 }
 
@@ -36618,22 +36620,22 @@ var Requests = /*#__PURE__*/function (_Component) {
 
                 this._layer.repaint();
 
-                _context2.next = 23;
+                _context2.next = 24;
                 break;
 
-              case 18:
-                _context2.prev = 18;
+              case 19:
+                _context2.prev = 19;
                 _context2.t0 = _context2["catch"](0);
                 console.log(_context2.t0);
                 alert(translate$4('error.requests'));
                 this.close();
 
-              case 23:
+              case 24:
               case "end":
                 return _context2.stop();
             }
           }
-        }, _callee2, this, [[0, 18]]);
+        }, _callee2, this, [[0, 19]]);
       }));
 
       function open() {
@@ -36847,10 +36849,13 @@ var SpeciesTable = /*#__PURE__*/function (_EventTarget) {
         }
       }).map(function (_ref) {
         var permitted_stock = _ref.permitted_stock,
+            permitted_stock_deal = _ref.permitted_stock_deal,
             probable_stock = _ref.probable_stock,
+            probable_stock_deal = _ref.probable_stock_deal,
             species = _ref.species,
-            total_stock = _ref.total_stock;
-        return "<tr class=\"type\">\n                <td class=\"label\">".concat(species, "</td>\n                <td class=\"value\">").concat(permitted_stock.toFixed(2), "</td>\n                <td class=\"value\">").concat(probable_stock.toFixed(2), "</td>\n                <td class=\"value\">").concat(total_stock.toFixed(2), "</td>\n            </tr>");
+            total_stock = _ref.total_stock,
+            total_stock_deal = _ref.total_stock_deal;
+        return "<tr class=\"type\">\n                <td class=\"label\">".concat(species, "</td>\n                <td class=\"value\">").concat(permitted_stock.toFixed(2), " / ").concat(permitted_stock_deal.toFixed(2), "</td>\n                <td class=\"value\">").concat(probable_stock.toFixed(2), " / ").concat(probable_stock_deal.toFixed(2), "</td>\n                <td class=\"value\">").concat(total_stock.toFixed(2), " / ").concat(total_stock_deal.toFixed(2), "</td>\n            </tr>");
       }).join('');
       this._container.innerHTML = rows ? "<div class=\"title\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\t\t\t\t\t\t\t\n                    <tr>\n                        <td>".concat(translate$6('species'), "</td>\n                        <td colspan=\"3\">").concat(translate$6('stock.label'), ", ").concat(translate$6('unit.m'), "<sup>3</sup></td>\n                    </tr>\n                    <tr>\n                        <td></td>\n                        <td>").concat(translate$6('stock.permitted'), "</td>\n                        <td>").concat(translate$6('stock.probable'), "</td>\n                        <td>").concat(translate$6('stock.total'), "</td>\n                    </tr>\t\t\t\t\t\t\t\n                </table>\n            </div>\n            <div class=\"content\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>").concat(rows, "</tbody>\n                </table>\n            </div>") : '';
     }
@@ -54142,7 +54147,10 @@ var Species = /*#__PURE__*/function () {
       legend: {
         position: 'right',
         fontSize: '15px',
-        width: '200px'
+        width: '200px',
+        formatter: function formatter(seriesName, opts) {
+          return [seriesName, " - ", opts.w.globals.series[opts.seriesIndex]];
+        }
       },
       plotOptions: {
         pie: {
@@ -54292,7 +54300,20 @@ T.addText('rus', {
 });
 var STYLES$1 = {
   SELECTED: {
-    fillStyle: 'rgba(42, 121,31)'
+    fillStyle: document.createElement('canvas').getContext('2d').createPattern(L$1.gmxUtil.getPatternIcon(null, {
+      type: '',
+      color: parseInt('FFB801', 16),
+      opacity: 1,
+      weight: 1,
+      fillOpacity: 0.64,
+      fillPattern: {
+        style: 'diagonal1',
+        width: 8,
+        step: 0,
+        colors: [parseInt('FFB801', 16), parseInt('61E9F1', 16)]
+      },
+      common: true
+    }).canvas, 'repeat')
   },
   BID: {
     fillStyle: 'rgba(144, 112, 29)'
@@ -59578,49 +59599,57 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                         break;
 
                       case 'parks':
-                        _this5._parks = layer;
+                        if (_this5._permissions.SPNA) {
+                          _this5._parks = layer;
 
-                        _this5._parks.setStyles(PARKS);
+                          _this5._parks.setStyles(PARKS);
 
-                        _this5._parks.on('click', _this5._parkClick, _this5);
+                          _this5._parks.on('click', _this5._parkClick, _this5);
+                        }
 
                         break;
 
                       case 'stands':
-                        _this5._stands = layer;
+                        if (_this5._permissions.ForestStands) {
+                          _this5._stands = layer;
 
-                        _this5._stands.setStyles(STANDS);
+                          _this5._stands.setStyles(STANDS);
 
-                        _this5._stands.on('click', _this5._standClick, _this5);
+                          _this5._stands.on('click', _this5._standClick, _this5);
+                        }
 
                         break;
 
                       case 'fires':
-                        if (_this5._permissions.ForestFires || _this5._permissions.ForestFiresTimeLine) {
+                        if (_this5._permissions.ForestFires) {
                           _this5._fires = layer;
                         }
 
                         break;
 
                       case 'declarations':
-                        _this5._declarations = layer;
+                        if (_this5._permissions.ForestDeclarations) {
+                          _this5._declarations = layer;
 
-                        _this5._declarations.setStyles(DECLARATIONS);
+                          _this5._declarations.setStyles(DECLARATIONS);
 
-                        _this5._declarations.on('click', _this5._declarationClick, _this5);
+                          _this5._declarations.on('click', _this5._declarationClick, _this5);
+                        }
 
                         break;
 
                       case 'incidents':
-                        _this5._incidents = layer;
+                        if (_this5._permissions.ForestIncidents) {
+                          _this5._incidents = layer;
 
-                        _this5._incidents.setStyles(QUADRANTS);
+                          _this5._incidents.setStyles(QUADRANTS);
 
-                        _this5._incidents.verifyRaster = _this5._gmxMap.layersByID['5728425F25B04F73871EDF47CC8EFBC0'];
+                          _this5._incidents.verifyRaster = _this5._gmxMap.layersByID['5728425F25B04F73871EDF47CC8EFBC0'];
 
-                        _this5._incidents.on('click', _this5._incidentClick, _this5);
+                          _this5._incidents.on('click', _this5._incidentClick, _this5);
 
-                        _this5._map.addLayer(_this5._incidents);
+                          _this5._map.addLayer(_this5._incidents);
+                        }
 
                         break;
 
