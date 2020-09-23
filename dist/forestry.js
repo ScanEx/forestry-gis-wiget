@@ -1114,6 +1114,57 @@ _export({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT || !USES_TO
   }
 });
 
+// `Array.prototype.{ reduce, reduceRight }` methods implementation
+var createMethod$2 = function (IS_RIGHT) {
+  return function (that, callbackfn, argumentsLength, memo) {
+    aFunction$1(callbackfn);
+    var O = toObject(that);
+    var self = indexedObject(O);
+    var length = toLength(O.length);
+    var index = IS_RIGHT ? length - 1 : 0;
+    var i = IS_RIGHT ? -1 : 1;
+    if (argumentsLength < 2) while (true) {
+      if (index in self) {
+        memo = self[index];
+        index += i;
+        break;
+      }
+      index += i;
+      if (IS_RIGHT ? index < 0 : length <= index) {
+        throw TypeError('Reduce of empty array with no initial value');
+      }
+    }
+    for (;IS_RIGHT ? index >= 0 : length > index; index += i) if (index in self) {
+      memo = callbackfn(memo, self[index], index, O);
+    }
+    return memo;
+  };
+};
+
+var arrayReduce = {
+  // `Array.prototype.reduce` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype.reduce
+  left: createMethod$2(false),
+  // `Array.prototype.reduceRight` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype.reduceright
+  right: createMethod$2(true)
+};
+
+var $reduce = arrayReduce.left;
+
+
+
+var STRICT_METHOD$1 = arrayMethodIsStrict('reduce');
+var USES_TO_LENGTH$2 = arrayMethodUsesToLength('reduce', { 1: 0 });
+
+// `Array.prototype.reduce` method
+// https://tc39.github.io/ecma262/#sec-array.prototype.reduce
+_export({ target: 'Array', proto: true, forced: !STRICT_METHOD$1 || !USES_TO_LENGTH$2 }, {
+  reduce: function reduce(callbackfn /* , initialValue */) {
+    return $reduce(this, callbackfn, arguments.length, arguments.length > 1 ? arguments[1] : undefined);
+  }
+});
+
 var TO_STRING_TAG$1 = wellKnownSymbol('toStringTag');
 var test = {};
 
@@ -2321,12 +2372,12 @@ var $forEach$1 = arrayIteration.forEach;
 
 
 
-var STRICT_METHOD$1 = arrayMethodIsStrict('forEach');
-var USES_TO_LENGTH$2 = arrayMethodUsesToLength('forEach');
+var STRICT_METHOD$2 = arrayMethodIsStrict('forEach');
+var USES_TO_LENGTH$3 = arrayMethodUsesToLength('forEach');
 
 // `Array.prototype.forEach` method implementation
 // https://tc39.github.io/ecma262/#sec-array.prototype.foreach
-var arrayForEach = (!STRICT_METHOD$1 || !USES_TO_LENGTH$2) ? function forEach(callbackfn /* , thisArg */) {
+var arrayForEach = (!STRICT_METHOD$2 || !USES_TO_LENGTH$3) ? function forEach(callbackfn /* , thisArg */) {
   return $forEach$1(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
 } : [].forEach;
 
@@ -2343,7 +2394,7 @@ var createProperty = function (object, key, value) {
 };
 
 var HAS_SPECIES_SUPPORT$1 = arrayMethodHasSpeciesSupport('slice');
-var USES_TO_LENGTH$3 = arrayMethodUsesToLength('slice', { ACCESSORS: true, 0: 0, 1: 2 });
+var USES_TO_LENGTH$4 = arrayMethodUsesToLength('slice', { ACCESSORS: true, 0: 0, 1: 2 });
 
 var SPECIES$5 = wellKnownSymbol('species');
 var nativeSlice = [].slice;
@@ -2352,7 +2403,7 @@ var max$1 = Math.max;
 // `Array.prototype.slice` method
 // https://tc39.github.io/ecma262/#sec-array.prototype.slice
 // fallback for not array-like ES3 strings and DOM objects
-_export({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT$1 || !USES_TO_LENGTH$3 }, {
+_export({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT$1 || !USES_TO_LENGTH$4 }, {
   slice: function slice(start, end) {
     var O = toIndexedObject(this);
     var length = toLength(O.length);
@@ -2461,7 +2512,7 @@ if (NOT_GENERIC || INCORRECT_NAME) {
 }
 
 // `String.prototype.{ codePointAt, at }` methods implementation
-var createMethod$2 = function (CONVERT_TO_STRING) {
+var createMethod$3 = function (CONVERT_TO_STRING) {
   return function ($this, pos) {
     var S = String(requireObjectCoercible($this));
     var position = toInteger(pos);
@@ -2479,10 +2530,10 @@ var createMethod$2 = function (CONVERT_TO_STRING) {
 var stringMultibyte = {
   // `String.prototype.codePointAt` method
   // https://tc39.github.io/ecma262/#sec-string.prototype.codepointat
-  codeAt: createMethod$2(false),
+  codeAt: createMethod$3(false),
   // `String.prototype.at` method
   // https://github.com/mathiasbynens/String.prototype.at
-  charAt: createMethod$2(true)
+  charAt: createMethod$3(true)
 };
 
 var charAt = stringMultibyte.charAt;
@@ -3507,7 +3558,7 @@ var runtime_1 = createCommonjsModule(function (module) {
 });
 
 var HAS_SPECIES_SUPPORT$2 = arrayMethodHasSpeciesSupport('splice');
-var USES_TO_LENGTH$4 = arrayMethodUsesToLength('splice', { ACCESSORS: true, 0: 0, 1: 2 });
+var USES_TO_LENGTH$5 = arrayMethodUsesToLength('splice', { ACCESSORS: true, 0: 0, 1: 2 });
 
 var max$2 = Math.max;
 var min$2 = Math.min;
@@ -3517,7 +3568,7 @@ var MAXIMUM_ALLOWED_LENGTH_EXCEEDED = 'Maximum allowed length exceeded';
 // `Array.prototype.splice` method
 // https://tc39.github.io/ecma262/#sec-array.prototype.splice
 // with adding support of @@species
-_export({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT$2 || !USES_TO_LENGTH$4 }, {
+_export({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT$2 || !USES_TO_LENGTH$5 }, {
   splice: function splice(start, deleteCount /* , ...items */) {
     var O = toObject(this);
     var len = toLength(O.length);
@@ -3707,11 +3758,11 @@ addToUnscopables('fill');
 var nativeJoin = [].join;
 
 var ES3_STRINGS = indexedObject != Object;
-var STRICT_METHOD$2 = arrayMethodIsStrict('join', ',');
+var STRICT_METHOD$3 = arrayMethodIsStrict('join', ',');
 
 // `Array.prototype.join` method
 // https://tc39.github.io/ecma262/#sec-array.prototype.join
-_export({ target: 'Array', proto: true, forced: ES3_STRINGS || !STRICT_METHOD$2 }, {
+_export({ target: 'Array', proto: true, forced: ES3_STRINGS || !STRICT_METHOD$3 }, {
   join: function join(separator) {
     return nativeJoin.call(toIndexedObject(this), separator === undefined ? ',' : separator);
   }
@@ -3720,10 +3771,10 @@ _export({ target: 'Array', proto: true, forced: ES3_STRINGS || !STRICT_METHOD$2 
 var min$3 = Math.min;
 var nativeLastIndexOf = [].lastIndexOf;
 var NEGATIVE_ZERO$1 = !!nativeLastIndexOf && 1 / [1].lastIndexOf(1, -0) < 0;
-var STRICT_METHOD$3 = arrayMethodIsStrict('lastIndexOf');
+var STRICT_METHOD$4 = arrayMethodIsStrict('lastIndexOf');
 // For preventing possible almost infinite loop in non-standard implementations, test the forward version of the method
-var USES_TO_LENGTH$5 = arrayMethodUsesToLength('indexOf', { ACCESSORS: true, 1: 0 });
-var FORCED$2 = NEGATIVE_ZERO$1 || !STRICT_METHOD$3 || !USES_TO_LENGTH$5;
+var USES_TO_LENGTH$6 = arrayMethodUsesToLength('indexOf', { ACCESSORS: true, 1: 0 });
+var FORCED$2 = NEGATIVE_ZERO$1 || !STRICT_METHOD$4 || !USES_TO_LENGTH$6;
 
 // `Array.prototype.lastIndexOf` method implementation
 // https://tc39.github.io/ecma262/#sec-array.prototype.lastindexof
@@ -4111,7 +4162,7 @@ var ltrim = RegExp('^' + whitespace + whitespace + '*');
 var rtrim = RegExp(whitespace + whitespace + '*$');
 
 // `String.prototype.{ trim, trimStart, trimEnd, trimLeft, trimRight }` methods implementation
-var createMethod$3 = function (TYPE) {
+var createMethod$4 = function (TYPE) {
   return function ($this) {
     var string = String(requireObjectCoercible($this));
     if (TYPE & 1) string = string.replace(ltrim, '');
@@ -4123,13 +4174,13 @@ var createMethod$3 = function (TYPE) {
 var stringTrim = {
   // `String.prototype.{ trimLeft, trimStart }` methods
   // https://tc39.github.io/ecma262/#sec-string.prototype.trimstart
-  start: createMethod$3(1),
+  start: createMethod$4(1),
   // `String.prototype.{ trimRight, trimEnd }` methods
   // https://tc39.github.io/ecma262/#sec-string.prototype.trimend
-  end: createMethod$3(2),
+  end: createMethod$4(2),
   // `String.prototype.trim` method
   // https://tc39.github.io/ecma262/#sec-string.prototype.trim
-  trim: createMethod$3(3)
+  trim: createMethod$4(3)
 };
 
 var getOwnPropertyNames$1 = objectGetOwnPropertyNames.f;
@@ -5546,43 +5597,7 @@ exportTypedArrayMethod$d('map', function map(mapfn /* , thisArg */) {
   });
 });
 
-// `Array.prototype.{ reduce, reduceRight }` methods implementation
-var createMethod$4 = function (IS_RIGHT) {
-  return function (that, callbackfn, argumentsLength, memo) {
-    aFunction$1(callbackfn);
-    var O = toObject(that);
-    var self = indexedObject(O);
-    var length = toLength(O.length);
-    var index = IS_RIGHT ? length - 1 : 0;
-    var i = IS_RIGHT ? -1 : 1;
-    if (argumentsLength < 2) while (true) {
-      if (index in self) {
-        memo = self[index];
-        index += i;
-        break;
-      }
-      index += i;
-      if (IS_RIGHT ? index < 0 : length <= index) {
-        throw TypeError('Reduce of empty array with no initial value');
-      }
-    }
-    for (;IS_RIGHT ? index >= 0 : length > index; index += i) if (index in self) {
-      memo = callbackfn(memo, self[index], index, O);
-    }
-    return memo;
-  };
-};
-
-var arrayReduce = {
-  // `Array.prototype.reduce` method
-  // https://tc39.github.io/ecma262/#sec-array.prototype.reduce
-  left: createMethod$4(false),
-  // `Array.prototype.reduceRight` method
-  // https://tc39.github.io/ecma262/#sec-array.prototype.reduceright
-  right: createMethod$4(true)
-};
-
-var $reduce = arrayReduce.left;
+var $reduce$1 = arrayReduce.left;
 
 var aTypedArray$e = arrayBufferViewCore.aTypedArray;
 var exportTypedArrayMethod$e = arrayBufferViewCore.exportTypedArrayMethod;
@@ -5590,7 +5605,7 @@ var exportTypedArrayMethod$e = arrayBufferViewCore.exportTypedArrayMethod;
 // `%TypedArray%.prototype.reduce` method
 // https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.reduce
 exportTypedArrayMethod$e('reduce', function reduce(callbackfn /* , initialValue */) {
-  return $reduce(aTypedArray$e(this), callbackfn, arguments.length, arguments.length > 1 ? arguments[1] : undefined);
+  return $reduce$1(aTypedArray$e(this), callbackfn, arguments.length, arguments.length > 1 ? arguments[1] : undefined);
 });
 
 var $reduceRight = arrayReduce.right;
@@ -14543,29 +14558,14 @@ var $filter$1 = arrayIteration.filter;
 
 var HAS_SPECIES_SUPPORT$3 = arrayMethodHasSpeciesSupport('filter');
 // Edge 14- issue
-var USES_TO_LENGTH$6 = arrayMethodUsesToLength('filter');
+var USES_TO_LENGTH$7 = arrayMethodUsesToLength('filter');
 
 // `Array.prototype.filter` method
 // https://tc39.github.io/ecma262/#sec-array.prototype.filter
 // with adding support of @@species
-_export({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT$3 || !USES_TO_LENGTH$6 }, {
+_export({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT$3 || !USES_TO_LENGTH$7 }, {
   filter: function filter(callbackfn /* , thisArg */) {
     return $filter$1(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
-  }
-});
-
-var $reduce$1 = arrayReduce.left;
-
-
-
-var STRICT_METHOD$4 = arrayMethodIsStrict('reduce');
-var USES_TO_LENGTH$7 = arrayMethodUsesToLength('reduce', { 1: 0 });
-
-// `Array.prototype.reduce` method
-// https://tc39.github.io/ecma262/#sec-array.prototype.reduce
-_export({ target: 'Array', proto: true, forced: !STRICT_METHOD$4 || !USES_TO_LENGTH$7 }, {
-  reduce: function reduce(callbackfn /* , initialValue */) {
-    return $reduce$1(this, callbackfn, arguments.length, arguments.length > 1 ? arguments[1] : undefined);
   }
 });
 
@@ -36470,7 +36470,7 @@ var Requests = /*#__PURE__*/function (_Component) {
         _ref$columns = _ref.columns,
         columns = _ref$columns === void 0 ? ['id', 'status', 'title', 'forestry'] : _ref$columns,
         _ref$pageSize = _ref.pageSize,
-        pageSize = _ref$pageSize === void 0 ? 7 : _ref$pageSize;
+        pageSize = _ref$pageSize === void 0 ? 5 : _ref$pageSize;
 
     _classCallCheck(this, Requests);
 
@@ -36495,7 +36495,7 @@ var Requests = /*#__PURE__*/function (_Component) {
 
     _this._container.innerHTML = "<table class=\"header\" cellpadding=\"0\" cellspacing=\"0\">\n            <tbody>\n                <tr>\n                    <td>\n                        <label class=\"title\">".concat(translate$4('project.header'), "</label>\n                    </td>                    \n                    <td>\n                        <button class=\"create\">").concat(translate$4('project.create'), "</button>\n                    </td>\n                </tr>\n            </tbody>\n        </table>\n        <div class=\"content\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <thead>\n                    <tr>").concat(_this._columns.map(function (id) {
       return "<th>".concat(translate$4("project.".concat(id)), "</th>");
-    }).join(''), "</tr>\n                </thead>\n                <tbody class=\"items\"></tbody>\n            </table>\n        </div>\n        <div class=\"pager\"></div>");
+    }).join(''), "<th></th></tr>\n                </thead>\n                <tbody class=\"items\"></tbody>\n            </table>\n        </div>\n        <div class=\"pager\"></div>");
     _this._content = _this._container.querySelector('.items');
 
     _this._container.querySelector('.create').addEventListener('click', function (e) {
@@ -36583,7 +36583,7 @@ var Requests = /*#__PURE__*/function (_Component) {
                 this._content.innerHTML = items.map(function (item) {
                   return "<tr class=\"request\">".concat(_this2._columns.map(function (col) {
                     return "<td>".concat(item[col], "</td>");
-                  }).join(''), "</tr>");
+                  }).join(''), "<td><i class=\"scanex-requests-icon remove\"></i></td></tr>");
                 }).join('');
                 rows = this._content.querySelectorAll('.request');
                 count = rows.length;
@@ -36592,6 +36592,14 @@ var Requests = /*#__PURE__*/function (_Component) {
                 _loop = function _loop(i) {
                   var row = rows[i];
                   var item = items[i];
+                  row.querySelector('.scanex-requests-icon').addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    var event = document.createEvent('Event');
+                    event.initEvent('remove', false, false);
+                    event.detail = item.id;
+
+                    _this2.dispatchEvent(event);
+                  });
                   row.addEventListener('click', function (e) {
                     e.stopPropagation();
                     var event = document.createEvent('Event');
@@ -55011,7 +55019,8 @@ T.addText('rus', {
     title: 'Квартал',
     Forestry: 'Лесничество',
     LocalForestry: 'Участковое лесничество',
-    invalid: 'Недопустимый состав участка'
+    invalid: 'Недопустимый состав участка',
+    na: 'Нет данных по объему древесины'
   },
   unit: {
     m: 'тыс. м',
@@ -55020,7 +55029,20 @@ T.addText('rus', {
   }
 });
 var STYLES$2 = {
-  fillStyle: 'rgba(255, 184, 1)',
+  fillStyle: document.createElement('canvas').getContext('2d').createPattern(L.gmxUtil.getPatternIcon(null, {
+    type: '',
+    color: parseInt('FFB801', 16),
+    opacity: 1,
+    weight: 1,
+    fillOpacity: 0.64,
+    fillPattern: {
+      style: 'diagonal1',
+      width: 8,
+      step: 0,
+      colors: [parseInt('FFB801', 16), parseInt('61E9F1', 16)]
+    },
+    common: true
+  }).canvas, 'repeat'),
   strokeStyle: '#FFB801',
   lineWidth: 2
 };
@@ -55097,22 +55119,26 @@ var Quadrant = /*#__PURE__*/function (_Component) {
     value: function _render(data) {
       this._forestry.innerText = "".concat(translate$9('quadrant.Forestry'), ": ").concat(data.Forestry, ", ").concat(translate$9('quadrant.LocalForestry'), ": ").concat(data.LocalForestry);
 
-      var _data$Stock$reduce = data.Stock.reduce(function (a, s) {
-        a.labels.push(s.species);
-        a.series.push(s.stock);
-        return a;
-      }, {
-        labels: [],
-        series: []
-      }),
-          labels = _data$Stock$reduce.labels,
-          series = _data$Stock$reduce.series;
+      if (Array.isArray(data.Stock)) {
+        var _data$Stock$reduce = data.Stock.reduce(function (a, s) {
+          a.labels.push(s.species);
+          a.series.push(s.stock);
+          return a;
+        }, {
+          labels: [],
+          series: []
+        }),
+            labels = _data$Stock$reduce.labels,
+            series = _data$Stock$reduce.series;
 
-      this._chart.updateOptions({
-        labels: labels
-      });
+        this._chart.updateOptions({
+          labels: labels
+        });
 
-      this._chart.updateSeries(series);
+        this._chart.updateSeries(series);
+      } else {
+        alert(translate$9('quadrant.na'));
+      }
     }
   }, {
     key: "_styleHook",
@@ -57045,8 +57071,23 @@ T.addText('rus', {
   }
 });
 var STYLES$3 = {
-  fillStyle: 'rgba(255, 184, 1)',
-  strokeStyle: '#FFB801'
+  fillStyle: document.createElement('canvas').getContext('2d').createPattern(L.gmxUtil.getPatternIcon(null, {
+    type: '',
+    color: parseInt('FFB801', 16),
+    opacity: 1,
+    weight: 1,
+    fillOpacity: 0.64,
+    fillPattern: {
+      style: 'diagonal1',
+      width: 8,
+      step: 0,
+      colors: [parseInt('FFB801', 16), parseInt('61E9F1', 16)]
+    },
+    dashArray: [10, 10],
+    common: true
+  }).canvas, 'repeat'),
+  strokeStyle: '#FFB801',
+  lineWidth: 2
 };
 
 var Stand = /*#__PURE__*/function (_Component) {
@@ -57771,6 +57812,132 @@ var Incident = /*#__PURE__*/function (_Component) {
   return Incident;
 }(Component);
 
+var QUADRANTS = [{
+  MinZoom: 10,
+  MaxZoom: 21,
+  BalloonEnable: false,
+  disabled: false,
+  RenderStyle: {
+    stroke: true,
+    color: parseInt('FFB801', 16),
+    weight: 1,
+    opacity: 1,
+    fillColor: parseInt('FFB801', 16),
+    fillOpacity: 0.08
+  },
+  HoverStyle: {
+    stroke: true,
+    color: parseInt('FFB801', 16),
+    weight: 1,
+    opacity: 1,
+    fillColor: parseInt('FFB801', 16),
+    fillOpacity: 0.08
+  }
+}];
+var STANDS = [{
+  MinZoom: 12,
+  MaxZoom: 21,
+  BalloonEnable: false,
+  RenderStyle: {
+    stroke: true,
+    color: parseInt('FFB801', 16),
+    weight: 1,
+    opacity: 1,
+    fillColor: parseInt('FFB801', 16),
+    fillOpacity: 0.08,
+    dashArray: [10, 10]
+  },
+  HoverStyle: {
+    stroke: true,
+    color: parseInt('FFB801', 16),
+    weight: 1,
+    opacity: 1,
+    fillColor: parseInt('FFB801', 16),
+    fillOpacity: 0.08,
+    dashArray: [10, 10]
+  }
+}];
+var DECLARATIONS = [{
+  MinZoom: 12,
+  MaxZoom: 21,
+  RenderStyle: {
+    stroke: true,
+    color: parseInt('65FFC8', 16),
+    weight: 1,
+    opacity: 1,
+    fillColor: parseInt('65FFC8', 16),
+    fillOpacity: 0.4
+  },
+  HoverStyle: {
+    stroke: true,
+    color: parseInt('65FFC8', 16),
+    weight: 1,
+    opacity: 1,
+    fillColor: parseInt('65FFC8', 16),
+    fillOpacity: 0.4
+  }
+}];
+var PARKS = [{
+  MinZoom: 4,
+  MaxZoom: 21,
+  RenderStyle: {
+    stroke: true,
+    color: parseInt('AD3D2D', 16),
+    weight: 1,
+    opacity: 1,
+    fillColor: parseInt('AD3D2D', 16),
+    fillOpacity: 0.4
+  },
+  HoverStyle: {
+    stroke: true,
+    color: parseInt('AD3D2D', 16),
+    weight: 1,
+    opacity: 1,
+    fillColor: parseInt('AD3D2D', 16),
+    fillOpacity: 0.4
+  }
+}];
+var PLOTS = [{
+  MinZoom: 9,
+  MaxZoom: 21,
+  RenderStyle: {
+    stroke: true,
+    color: parseInt('59FF41', 16),
+    weight: 1,
+    opacity: 1,
+    fillColor: parseInt('6D6D6D', 16),
+    fillOpacity: 0.4
+  },
+  HoverStyle: {
+    stroke: true,
+    color: parseInt('59FF41', 16),
+    weight: 1,
+    opacity: 1,
+    fillColor: parseInt('6D6D6D', 16),
+    fillOpacity: 0.4
+  }
+}];
+var REGIONS = [{
+  MinZoom: 4,
+  MaxZoom: 21,
+  RenderStyle: {
+    stroke: true,
+    color: parseInt('AD3D2D', 16),
+    weight: 1,
+    opacity: 1,
+    fillColor: parseInt('AD3D2D', 16),
+    fillOpacity: 0.4
+  },
+  HoverStyle: {
+    stroke: true,
+    color: parseInt('AD3D2D', 16),
+    weight: 1,
+    opacity: 1,
+    fillColor: parseInt('AD3D2D', 16),
+    fillOpacity: 0.4
+  }
+}];
+
 var translate$g = T.getText.bind(T);
 T.addText('rus', {
   measure: {
@@ -57857,7 +58024,8 @@ T.addText('rus', {
     requests: 'Ошибка при отображении списка запросов',
     plot: {
       create: 'Ошибка при создании запроса',
-      edit: 'Ошибка при редактировании запроса'
+      edit: 'Ошибка при редактировании запроса',
+      remove: 'Ошибка при удаление запроса'
     },
     incident: 'Ошибка при отображении инцидента',
     naturalpark: 'Ошибка при отображении ООПТ',
@@ -57874,56 +58042,6 @@ T.addText('rus', {
 //     lineWidth: 2,
 // };
 
-var STYLE_FILTER = {
-  QUADRANTS: {
-    stroke: true,
-    color: parseInt('FFB801', 16),
-    weight: 1,
-    opacity: 1,
-    fillColor: parseInt('FFB801', 16),
-    fillOpacity: 0.08
-  },
-  STANDS: {
-    stroke: true,
-    color: parseInt('FFB801', 16),
-    weight: 1,
-    opacity: 1,
-    fillColor: parseInt('FFB801', 16),
-    fillOpacity: 0.08
-  },
-  DECLARATIONS: {
-    stroke: true,
-    color: parseInt('65FFC8', 16),
-    weight: 1,
-    opacity: 1,
-    fillColor: parseInt('65FFC8', 16),
-    fillOpacity: 0.4
-  },
-  PARKS: {
-    stroke: true,
-    color: parseInt('AD3D2D', 16),
-    weight: 1,
-    opacity: 1,
-    fillColor: parseInt('AD3D2D', 16),
-    fillOpacity: 0.4
-  },
-  PLOTS: {
-    stroke: true,
-    color: parseInt('59FF41', 16),
-    weight: 1,
-    opacity: 1,
-    fillColor: parseInt('6D6D6D', 16),
-    fillOpacity: 0.4
-  },
-  REGIONS: {
-    stroke: true,
-    color: parseInt('AD3D2D', 16),
-    weight: 1,
-    opacity: 1,
-    fillColor: parseInt('AD3D2D', 16),
-    fillOpacity: 0.4
-  }
-};
 var STYLES$5 = {
   QUADRANT: {
     DEFAULT: {
@@ -58063,7 +58181,10 @@ var Map = /*#__PURE__*/function (_EventTarget) {
     _this = _super.call(this);
     _this._layers = {};
     _this._hilited = {};
-    _this._permissions = permissions;
+    _this._permissions = permissions.reduce(function (a, k) {
+      a[k] = true;
+      return a;
+    }, {});
     _this._container = container;
 
     _this._container.classList.add('scanex-forestry-map');
@@ -58113,76 +58234,26 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }
 
   _createClass(Map, [{
-    key: "getUserInfo",
+    key: "showMain",
     value: function () {
-      var _getUserInfo = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
-        var response, _yield$response$json, Status, Result;
-
+      var _showMain = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
-              case 0:
-                _context2.next = 2;
-                return fetch("".concat(this._gmxPath, "/User/GetUserInfo.ashx?WrapStyle=None"), {
-                  method: 'GET',
-                  credentials: 'include'
-                });
-
-              case 2:
-                response = _context2.sent;
-                _context2.next = 5;
-                return response.json();
-
-              case 5:
-                _yield$response$json = _context2.sent;
-                Status = _yield$response$json.Status;
-                Result = _yield$response$json.Result;
-
-                if (!(Status === 'ok')) {
-                  _context2.next = 12;
-                  break;
-                }
-
-                return _context2.abrupt("return", Result);
-
-              case 12:
-                return _context2.abrupt("return", false);
-
-              case 13:
-              case "end":
-                return _context2.stop();
-            }
-          }
-        }, _callee2, this);
-      }));
-
-      function getUserInfo() {
-        return _getUserInfo.apply(this, arguments);
-      }
-
-      return getUserInfo;
-    }()
-  }, {
-    key: "showMain",
-    value: function () {
-      var _showMain = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
-        return regeneratorRuntime.wrap(function _callee3$(_context3) {
-          while (1) {
-            switch (_context3.prev = _context3.next) {
               case 0:
                 this._legend.showPanel(false);
 
                 this._baselayers.showPanel(false);
 
-                _context3.next = 4;
+                _context2.next = 4;
                 return this._content.showDefault();
 
               case 4:
               case "end":
-                return _context3.stop();
+                return _context2.stop();
             }
           }
-        }, _callee3, this);
+        }, _callee2, this);
       }));
 
       function showMain() {
@@ -58194,12 +58265,12 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "showAnalytics",
     value: function () {
-      var _showAnalytics = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
-        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+      var _showAnalytics = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
+        return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
-            switch (_context4.prev = _context4.next) {
+            switch (_context3.prev = _context3.next) {
               case 0:
-                _context4.prev = 0;
+                _context3.prev = 0;
 
                 if (!this._content.hasComponent('analytics')) {
                   this._content.addComponent('analytics', Analytics, {
@@ -58207,26 +58278,26 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   });
                 }
 
-                _context4.next = 4;
+                _context3.next = 4;
                 return this._content.showComponent('analytics');
 
               case 4:
-                _context4.next = 11;
+                _context3.next = 11;
                 break;
 
               case 6:
-                _context4.prev = 6;
-                _context4.t0 = _context4["catch"](0);
-                console.log(_context4.t0);
+                _context3.prev = 6;
+                _context3.t0 = _context3["catch"](0);
+                console.log(_context3.t0);
                 alert(translate$g('error.analytics'));
                 this.showMain();
 
               case 11:
               case "end":
-                return _context4.stop();
+                return _context3.stop();
             }
           }
-        }, _callee4, this, [[0, 6]]);
+        }, _callee3, this, [[0, 6]]);
       }));
 
       function showAnalytics() {
@@ -58246,42 +58317,82 @@ var Map = /*#__PURE__*/function (_EventTarget) {
           while (1) {
             switch (_context7.prev = _context7.next) {
               case 0:
-                _context7.prev = 0;
+                if (!this._permissions.ForestProjectsView) {
+                  _context7.next = 13;
+                  break;
+                }
+
+                _context7.prev = 1;
 
                 if (!this._content.hasComponent('requests')) {
                   component = this._content.addComponent('requests', Requests, {
                     layer: this._quadrants,
                     path: this._apiPath
                   });
-                  component.on('create', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5() {
+                  component.on('create', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
                     var state;
-                    return regeneratorRuntime.wrap(function _callee5$(_context5) {
+                    return regeneratorRuntime.wrap(function _callee4$(_context4) {
                       while (1) {
-                        switch (_context5.prev = _context5.next) {
+                        switch (_context4.prev = _context4.next) {
                           case 0:
                             state = _this2._legend.state('quadrants');
-                            _context5.next = 3;
+                            _context4.next = 3;
                             return _this2._showCreatePlot(state);
 
                           case 3:
                           case "end":
-                            return _context5.stop();
+                            return _context4.stop();
                         }
                       }
-                    }, _callee5);
-                  })));
-                  component.on('edit', /*#__PURE__*/function () {
-                    var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(e) {
+                    }, _callee4);
+                  }))).on('edit', /*#__PURE__*/function () {
+                    var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(e) {
                       var state;
+                      return regeneratorRuntime.wrap(function _callee5$(_context5) {
+                        while (1) {
+                          switch (_context5.prev = _context5.next) {
+                            case 0:
+                              if (!_this2._permissions.ForestProjectsEdit) {
+                                _context5.next = 4;
+                                break;
+                              }
+
+                              state = _this2._legend.state('quadrants');
+                              _context5.next = 4;
+                              return _this2._showEditPlot(e.detail, state);
+
+                            case 4:
+                            case "end":
+                              return _context5.stop();
+                          }
+                        }
+                      }, _callee5);
+                    }));
+
+                    return function (_x2) {
+                      return _ref4.apply(this, arguments);
+                    };
+                  }()).on('remove', /*#__PURE__*/function () {
+                    var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(e) {
+                      var id;
                       return regeneratorRuntime.wrap(function _callee6$(_context6) {
                         while (1) {
                           switch (_context6.prev = _context6.next) {
                             case 0:
-                              state = _this2._legend.state('quadrants');
-                              _context6.next = 3;
-                              return _this2._showEditPlot(e.detail, state);
+                              if (!_this2._permissions.ForestProjectsRemove) {
+                                _context6.next = 6;
+                                break;
+                              }
 
-                            case 3:
+                              id = e.detail;
+                              _context6.next = 4;
+                              return _this2._removeRequest(id);
+
+                            case 4:
+                              _context6.next = 6;
+                              return _this2.showRequests();
+
+                            case 6:
                             case "end":
                               return _context6.stop();
                           }
@@ -58289,34 +58400,34 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                       }, _callee6);
                     }));
 
-                    return function (_x2) {
-                      return _ref4.apply(this, arguments);
+                    return function (_x3) {
+                      return _ref5.apply(this, arguments);
                     };
                   }());
                 }
 
-                _context7.next = 4;
+                _context7.next = 5;
                 return this._content.showComponent('requests');
 
-              case 4:
+              case 5:
                 this._legend.enable('plot_project');
 
-                _context7.next = 12;
+                _context7.next = 13;
                 break;
 
-              case 7:
-                _context7.prev = 7;
-                _context7.t0 = _context7["catch"](0);
+              case 8:
+                _context7.prev = 8;
+                _context7.t0 = _context7["catch"](1);
                 console.log(_context7.t0);
                 alert(translate$g('error.requests'));
                 this.showMain();
 
-              case 12:
+              case 13:
               case "end":
                 return _context7.stop();
             }
           }
-        }, _callee7, this, [[0, 7]]);
+        }, _callee7, this, [[1, 8]]);
       }));
 
       function showRequests() {
@@ -58326,63 +58437,114 @@ var Map = /*#__PURE__*/function (_EventTarget) {
       return showRequests;
     }()
   }, {
+    key: "_removeRequest",
+    value: function () {
+      var _removeRequest2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(id) {
+        var response;
+        return regeneratorRuntime.wrap(function _callee8$(_context8) {
+          while (1) {
+            switch (_context8.prev = _context8.next) {
+              case 0:
+                _context8.prev = 0;
+                _context8.next = 3;
+                return fetch("".concat(this._apiPath, "/Forest/RemoveDraftForestProject"), {
+                  method: 'POST',
+                  credentials: 'include',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    forestProjectID: id
+                  })
+                });
+
+              case 3:
+                response = _context8.sent;
+                _context8.next = 6;
+                return response.json();
+
+              case 6:
+                return _context8.abrupt("return", _context8.sent);
+
+              case 9:
+                _context8.prev = 9;
+                _context8.t0 = _context8["catch"](0);
+                console.log(_context8.t0);
+                alert(translate$g('error.plot.remove'));
+                this.showRequests();
+
+              case 14:
+              case "end":
+                return _context8.stop();
+            }
+          }
+        }, _callee8, this, [[0, 9]]);
+      }));
+
+      function _removeRequest(_x4) {
+        return _removeRequest2.apply(this, arguments);
+      }
+
+      return _removeRequest;
+    }()
+  }, {
     key: "_showEditPlot",
     value: function () {
-      var _showEditPlot2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11(id, state) {
+      var _showEditPlot2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee12(id, state) {
         var _this3 = this;
 
         var component;
-        return regeneratorRuntime.wrap(function _callee11$(_context11) {
+        return regeneratorRuntime.wrap(function _callee12$(_context12) {
           while (1) {
-            switch (_context11.prev = _context11.next) {
+            switch (_context12.prev = _context12.next) {
               case 0:
-                _context11.prev = 0;
+                _context12.prev = 0;
 
                 if (!this._content.hasComponent('edit-plot')) {
                   component = this._content.addComponent('edit-plot', EditPlot, {
                     layer: this._quadrants,
                     path: this._apiPath
                   });
-                  component.on('save', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8() {
-                    return regeneratorRuntime.wrap(function _callee8$(_context8) {
+                  component.on('save', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9() {
+                    return regeneratorRuntime.wrap(function _callee9$(_context9) {
                       while (1) {
-                        switch (_context8.prev = _context8.next) {
+                        switch (_context9.prev = _context9.next) {
                           case 0:
-                            _context8.next = 2;
+                            _context9.next = 2;
                             return _this3.showRequests();
 
                           case 2:
                           case "end":
-                            return _context8.stop();
+                            return _context9.stop();
                         }
                       }
-                    }, _callee8);
+                    }, _callee9);
                   }))).on('quadrant:click', /*#__PURE__*/function () {
-                    var _ref6 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9(e) {
+                    var _ref7 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(e) {
                       var id;
-                      return regeneratorRuntime.wrap(function _callee9$(_context9) {
+                      return regeneratorRuntime.wrap(function _callee10$(_context10) {
                         while (1) {
-                          switch (_context9.prev = _context9.next) {
+                          switch (_context10.prev = _context10.next) {
                             case 0:
                               id = e.detail;
-                              _context9.next = 3;
+                              _context10.next = 3;
                               return _this3._fitBounds(id);
 
                             case 3:
                             case "end":
-                              return _context9.stop();
+                              return _context10.stop();
                           }
                         }
-                      }, _callee9);
+                      }, _callee10);
                     }));
 
-                    return function (_x5) {
-                      return _ref6.apply(this, arguments);
+                    return function (_x7) {
+                      return _ref7.apply(this, arguments);
                     };
-                  }()).on('backward', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10() {
-                    return regeneratorRuntime.wrap(function _callee10$(_context10) {
+                  }()).on('backward', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11() {
+                    return regeneratorRuntime.wrap(function _callee11$(_context11) {
                       while (1) {
-                        switch (_context10.prev = _context10.next) {
+                        switch (_context11.prev = _context11.next) {
                           case 0:
                             if (state) {
                               _this3._legend.enable('quadrants');
@@ -58390,15 +58552,15 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                               _this3._legend.disable('quadrants');
                             }
 
-                            _context10.next = 3;
+                            _context11.next = 3;
                             return _this3.showRequests();
 
                           case 3:
                           case "end":
-                            return _context10.stop();
+                            return _context11.stop();
                         }
                       }
-                    }, _callee10);
+                    }, _callee11);
                   }))).on('create', function (e) {
                     var event = document.createEvent('Event');
                     event.initEvent('request:create', false, false);
@@ -58408,31 +58570,31 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   });
                 }
 
-                _context11.next = 4;
+                _context12.next = 4;
                 return this._content.showComponent('edit-plot', id);
 
               case 4:
                 this._legend.enable('quadrants');
 
-                _context11.next = 12;
+                _context12.next = 12;
                 break;
 
               case 7:
-                _context11.prev = 7;
-                _context11.t0 = _context11["catch"](0);
-                console.log(_context11.t0);
+                _context12.prev = 7;
+                _context12.t0 = _context12["catch"](0);
+                console.log(_context12.t0);
                 alert(translate$g('error.plot.edit'));
                 this.showMain();
 
               case 12:
               case "end":
-                return _context11.stop();
+                return _context12.stop();
             }
           }
-        }, _callee11, this, [[0, 7]]);
+        }, _callee12, this, [[0, 7]]);
       }));
 
-      function _showEditPlot(_x3, _x4) {
+      function _showEditPlot(_x5, _x6) {
         return _showEditPlot2.apply(this, arguments);
       }
 
@@ -58441,15 +58603,15 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_showCreatePlot",
     value: function () {
-      var _showCreatePlot2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee15(state) {
+      var _showCreatePlot2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee16(state) {
         var _this4 = this;
 
         var component;
-        return regeneratorRuntime.wrap(function _callee15$(_context15) {
+        return regeneratorRuntime.wrap(function _callee16$(_context16) {
           while (1) {
-            switch (_context15.prev = _context15.next) {
+            switch (_context16.prev = _context16.next) {
               case 0:
-                _context15.prev = 0;
+                _context16.prev = 0;
 
                 if (!this._content.hasComponent('create-plot')) {
                   component = this._content.addComponent('create-plot', CreatePlot, {
@@ -58457,37 +58619,15 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                     path: this._apiPath
                   });
                   component.on('save', /*#__PURE__*/function () {
-                    var _ref8 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee12(e) {
-                      return regeneratorRuntime.wrap(function _callee12$(_context12) {
-                        while (1) {
-                          switch (_context12.prev = _context12.next) {
-                            case 0:
-                              _context12.next = 2;
-                              return _this4.showRequests();
-
-                            case 2:
-                            case "end":
-                              return _context12.stop();
-                          }
-                        }
-                      }, _callee12);
-                    }));
-
-                    return function (_x7) {
-                      return _ref8.apply(this, arguments);
-                    };
-                  }()).on('quadrant:click', /*#__PURE__*/function () {
                     var _ref9 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee13(e) {
-                      var id;
                       return regeneratorRuntime.wrap(function _callee13$(_context13) {
                         while (1) {
                           switch (_context13.prev = _context13.next) {
                             case 0:
-                              id = e.detail;
-                              _context13.next = 3;
-                              return _this4._fitBounds(id);
+                              _context13.next = 2;
+                              return _this4.showRequests();
 
-                            case 3:
+                            case 2:
                             case "end":
                               return _context13.stop();
                           }
@@ -58495,8 +58635,30 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                       }, _callee13);
                     }));
 
-                    return function (_x8) {
+                    return function (_x9) {
                       return _ref9.apply(this, arguments);
+                    };
+                  }()).on('quadrant:click', /*#__PURE__*/function () {
+                    var _ref10 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee14(e) {
+                      var id;
+                      return regeneratorRuntime.wrap(function _callee14$(_context14) {
+                        while (1) {
+                          switch (_context14.prev = _context14.next) {
+                            case 0:
+                              id = e.detail;
+                              _context14.next = 3;
+                              return _this4._fitBounds(id);
+
+                            case 3:
+                            case "end":
+                              return _context14.stop();
+                          }
+                        }
+                      }, _callee14);
+                    }));
+
+                    return function (_x10) {
+                      return _ref10.apply(this, arguments);
                     };
                   }()) // .on('quadrant:over', e => {
                   //     const id = e.detail;
@@ -58508,10 +58670,10 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   //     delete this._hilited[id];
                   //     this._quadrants.repaint();
                   // })
-                  .on('backward', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee14() {
-                    return regeneratorRuntime.wrap(function _callee14$(_context14) {
+                  .on('backward', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee15() {
+                    return regeneratorRuntime.wrap(function _callee15$(_context15) {
                       while (1) {
-                        switch (_context14.prev = _context14.next) {
+                        switch (_context15.prev = _context15.next) {
                           case 0:
                             if (state) {
                               _this4._legend.enable('quadrants');
@@ -58519,43 +58681,43 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                               _this4._legend.disable('quadrants');
                             }
 
-                            _context14.next = 3;
+                            _context15.next = 3;
                             return _this4.showRequests();
 
                           case 3:
                           case "end":
-                            return _context14.stop();
+                            return _context15.stop();
                         }
                       }
-                    }, _callee14);
+                    }, _callee15);
                   })));
                 }
 
-                _context15.next = 4;
+                _context16.next = 4;
                 return this._content.showComponent('create-plot');
 
               case 4:
                 this._legend.enable('quadrants');
 
-                _context15.next = 12;
+                _context16.next = 12;
                 break;
 
               case 7:
-                _context15.prev = 7;
-                _context15.t0 = _context15["catch"](0);
-                console.log(_context15.t0);
+                _context16.prev = 7;
+                _context16.t0 = _context16["catch"](0);
+                console.log(_context16.t0);
                 alert(translate$g('error.plot.create'));
                 this.showMain();
 
               case 12:
               case "end":
-                return _context15.stop();
+                return _context16.stop();
             }
           }
-        }, _callee15, this, [[0, 7]]);
+        }, _callee16, this, [[0, 7]]);
       }));
 
-      function _showCreatePlot(_x6) {
+      function _showCreatePlot(_x8) {
         return _showCreatePlot2.apply(this, arguments);
       }
 
@@ -58564,40 +58726,40 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_showNaturalPark",
     value: function () {
-      var _showNaturalPark2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee16(properties) {
-        return regeneratorRuntime.wrap(function _callee16$(_context16) {
+      var _showNaturalPark2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee17(properties) {
+        return regeneratorRuntime.wrap(function _callee17$(_context17) {
           while (1) {
-            switch (_context16.prev = _context16.next) {
+            switch (_context17.prev = _context17.next) {
               case 0:
-                _context16.prev = 0;
+                _context17.prev = 0;
 
                 if (!this._content.hasComponent('naturalpark')) {
                   this._content.addComponent('naturalpark', NaturalPark);
                 }
 
-                _context16.next = 4;
+                _context17.next = 4;
                 return this._content.showComponent('naturalpark', properties);
 
               case 4:
-                _context16.next = 11;
+                _context17.next = 11;
                 break;
 
               case 6:
-                _context16.prev = 6;
-                _context16.t0 = _context16["catch"](0);
-                console.log(_context16.t0);
+                _context17.prev = 6;
+                _context17.t0 = _context17["catch"](0);
+                console.log(_context17.t0);
                 alert(translate$g('error.naturalpark'));
                 this.showMain();
 
               case 11:
               case "end":
-                return _context16.stop();
+                return _context17.stop();
             }
           }
-        }, _callee16, this, [[0, 6]]);
+        }, _callee17, this, [[0, 6]]);
       }));
 
-      function _showNaturalPark(_x9) {
+      function _showNaturalPark(_x11) {
         return _showNaturalPark2.apply(this, arguments);
       }
 
@@ -58606,15 +58768,15 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_fitBounds",
     value: function () {
-      var _fitBounds2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee17(id) {
-        var _this$_quadrants$getG, LayerID, fd, response, _yield$response$json2, Status, Result, fields, values, i, _L$gmxUtil$convertGeo, coordinates, g, b;
+      var _fitBounds2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee18(id) {
+        var _this$_quadrants$getG, LayerID, fd, response, _yield$response$json, Status, Result, fields, values, i, _L$gmxUtil$convertGeo, coordinates, g, b;
 
-        return regeneratorRuntime.wrap(function _callee17$(_context17) {
+        return regeneratorRuntime.wrap(function _callee18$(_context18) {
           while (1) {
-            switch (_context17.prev = _context17.next) {
+            switch (_context18.prev = _context18.next) {
               case 0:
                 if (!this._quadrants) {
-                  _context17.next = 17;
+                  _context18.next = 17;
                   break;
                 }
 
@@ -58625,7 +58787,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 fd.append('pagesize', '1');
                 fd.append('geometry', 'true');
                 fd.append('layer', LayerID);
-                _context17.next = 10;
+                _context18.next = 10;
                 return fetch("".concat(this._gmxPath, "/VectorLayer/Search.ashx?WrapStyle=None"), {
                   method: 'POST',
                   credentials: 'include',
@@ -58633,14 +58795,14 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 });
 
               case 10:
-                response = _context17.sent;
-                _context17.next = 13;
+                response = _context18.sent;
+                _context18.next = 13;
                 return response.json();
 
               case 13:
-                _yield$response$json2 = _context17.sent;
-                Status = _yield$response$json2.Status;
-                Result = _yield$response$json2.Result;
+                _yield$response$json = _context18.sent;
+                Status = _yield$response$json.Status;
+                Result = _yield$response$json.Result;
 
                 if (Status === 'ok') {
                   fields = Result.fields, values = Result.values;
@@ -58660,13 +58822,13 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
               case 17:
               case "end":
-                return _context17.stop();
+                return _context18.stop();
             }
           }
-        }, _callee17, this);
+        }, _callee18, this);
       }));
 
-      function _fitBounds(_x10) {
+      function _fitBounds(_x12) {
         return _fitBounds2.apply(this, arguments);
       }
 
@@ -58675,12 +58837,12 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "showUploaded",
     value: function () {
-      var _showUploaded = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee18() {
-        return regeneratorRuntime.wrap(function _callee18$(_context18) {
+      var _showUploaded = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee19() {
+        return regeneratorRuntime.wrap(function _callee19$(_context19) {
           while (1) {
-            switch (_context18.prev = _context18.next) {
+            switch (_context19.prev = _context19.next) {
               case 0:
-                _context18.prev = 0;
+                _context19.prev = 0;
 
                 if (!this._content.hasComponent('uploaded')) {
                   this._content.addComponent('uploaded', Uploaded, {
@@ -58688,26 +58850,26 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   });
                 }
 
-                _context18.next = 4;
+                _context19.next = 4;
                 return this._content.showComponent('uploaded');
 
               case 4:
-                _context18.next = 11;
+                _context19.next = 11;
                 break;
 
               case 6:
-                _context18.prev = 6;
-                _context18.t0 = _context18["catch"](0);
-                console.log(_context18.t0);
+                _context19.prev = 6;
+                _context19.t0 = _context19["catch"](0);
+                console.log(_context19.t0);
                 alert(translate$g('error.uploaded'));
                 this.showMain();
 
               case 11:
               case "end":
-                return _context18.stop();
+                return _context19.stop();
             }
           }
-        }, _callee18, this, [[0, 6]]);
+        }, _callee19, this, [[0, 6]]);
       }));
 
       function showUploaded() {
@@ -58719,12 +58881,12 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_showQuadrant",
     value: function () {
-      var _showQuadrant2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee19(id, gmx_id) {
-        return regeneratorRuntime.wrap(function _callee19$(_context19) {
+      var _showQuadrant2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee20(id, gmx_id) {
+        return regeneratorRuntime.wrap(function _callee20$(_context20) {
           while (1) {
-            switch (_context19.prev = _context19.next) {
+            switch (_context20.prev = _context20.next) {
               case 0:
-                _context19.prev = 0;
+                _context20.prev = 0;
 
                 if (!this._content.hasComponent('quadrant')) {
                   this._content.addComponent('quadrant', Quadrant, {
@@ -58733,56 +58895,8 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   });
                 }
 
-                _context19.next = 4;
-                return this._content.showComponent('quadrant', {
-                  id: id,
-                  gmx_id: gmx_id
-                });
-
-              case 4:
-                _context19.next = 11;
-                break;
-
-              case 6:
-                _context19.prev = 6;
-                _context19.t0 = _context19["catch"](0);
-                console.log(_context19.t0);
-                alert(translate$g('error.quadrant'));
-                this.showMain();
-
-              case 11:
-              case "end":
-                return _context19.stop();
-            }
-          }
-        }, _callee19, this, [[0, 6]]);
-      }));
-
-      function _showQuadrant(_x11, _x12) {
-        return _showQuadrant2.apply(this, arguments);
-      }
-
-      return _showQuadrant;
-    }()
-  }, {
-    key: "_showStand",
-    value: function () {
-      var _showStand2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee20(id, gmx_id) {
-        return regeneratorRuntime.wrap(function _callee20$(_context20) {
-          while (1) {
-            switch (_context20.prev = _context20.next) {
-              case 0:
-                _context20.prev = 0;
-
-                if (!this._content.hasComponent('stand')) {
-                  this._content.addComponent('stand', Stand, {
-                    layer: this._stands,
-                    path: this._apiPath
-                  });
-                }
-
                 _context20.next = 4;
-                return this._content.showComponent('stand', {
+                return this._content.showComponent('quadrant', {
                   id: id,
                   gmx_id: gmx_id
                 });
@@ -58795,7 +58909,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 _context20.prev = 6;
                 _context20.t0 = _context20["catch"](0);
                 console.log(_context20.t0);
-                alert(translate$g('error.stand'));
+                alert(translate$g('error.quadrant'));
                 this.showMain();
 
               case 11:
@@ -58806,31 +58920,31 @@ var Map = /*#__PURE__*/function (_EventTarget) {
         }, _callee20, this, [[0, 6]]);
       }));
 
-      function _showStand(_x13, _x14) {
-        return _showStand2.apply(this, arguments);
+      function _showQuadrant(_x13, _x14) {
+        return _showQuadrant2.apply(this, arguments);
       }
 
-      return _showStand;
+      return _showQuadrant;
     }()
   }, {
-    key: "_showDeclaration",
+    key: "_showStand",
     value: function () {
-      var _showDeclaration2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee21(id, gmx_id) {
+      var _showStand2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee21(id, gmx_id) {
         return regeneratorRuntime.wrap(function _callee21$(_context21) {
           while (1) {
             switch (_context21.prev = _context21.next) {
               case 0:
                 _context21.prev = 0;
 
-                if (!this._content.hasComponent('declaration')) {
-                  this._content.addComponent('declaration', Declaration, {
-                    layer: this._declarations,
+                if (!this._content.hasComponent('stand')) {
+                  this._content.addComponent('stand', Stand, {
+                    layer: this._stands,
                     path: this._apiPath
                   });
                 }
 
                 _context21.next = 4;
-                return this._content.showComponent('declaration', {
+                return this._content.showComponent('stand', {
                   id: id,
                   gmx_id: gmx_id
                 });
@@ -58843,7 +58957,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 _context21.prev = 6;
                 _context21.t0 = _context21["catch"](0);
                 console.log(_context21.t0);
-                alert(translate$g('error.declaration'));
+                alert(translate$g('error.stand'));
                 this.showMain();
 
               case 11:
@@ -58854,34 +58968,32 @@ var Map = /*#__PURE__*/function (_EventTarget) {
         }, _callee21, this, [[0, 6]]);
       }));
 
-      function _showDeclaration(_x15, _x16) {
-        return _showDeclaration2.apply(this, arguments);
+      function _showStand(_x15, _x16) {
+        return _showStand2.apply(this, arguments);
       }
 
-      return _showDeclaration;
+      return _showStand;
     }()
   }, {
-    key: "_showIncident",
+    key: "_showDeclaration",
     value: function () {
-      var _showIncident2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee22(props, gmx_id) {
+      var _showDeclaration2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee22(id, gmx_id) {
         return regeneratorRuntime.wrap(function _callee22$(_context22) {
           while (1) {
             switch (_context22.prev = _context22.next) {
               case 0:
                 _context22.prev = 0;
 
-                if (!this._content.hasComponent('incident')) {
-                  this._content.addComponent('incident', Incident, {
-                    permissions: this._permissions,
-                    user: this._user,
-                    layer: this._incidents,
+                if (!this._content.hasComponent('declaration')) {
+                  this._content.addComponent('declaration', Declaration, {
+                    layer: this._declarations,
                     path: this._apiPath
                   });
                 }
 
                 _context22.next = 4;
-                return this._content.showComponent('incident', {
-                  props: props,
+                return this._content.showComponent('declaration', {
+                  id: id,
                   gmx_id: gmx_id
                 });
 
@@ -58893,7 +59005,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 _context22.prev = 6;
                 _context22.t0 = _context22["catch"](0);
                 console.log(_context22.t0);
-                alert(translate$g('error.incident'));
+                alert(translate$g('error.declaration'));
                 this.showMain();
 
               case 11:
@@ -58904,7 +59016,57 @@ var Map = /*#__PURE__*/function (_EventTarget) {
         }, _callee22, this, [[0, 6]]);
       }));
 
-      function _showIncident(_x17, _x18) {
+      function _showDeclaration(_x17, _x18) {
+        return _showDeclaration2.apply(this, arguments);
+      }
+
+      return _showDeclaration;
+    }()
+  }, {
+    key: "_showIncident",
+    value: function () {
+      var _showIncident2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee23(props, gmx_id) {
+        return regeneratorRuntime.wrap(function _callee23$(_context23) {
+          while (1) {
+            switch (_context23.prev = _context23.next) {
+              case 0:
+                _context23.prev = 0;
+
+                if (!this._content.hasComponent('incident')) {
+                  this._content.addComponent('incident', Incident, {
+                    permissions: this._permissions,
+                    user: this._user,
+                    layer: this._incidents,
+                    path: this._apiPath
+                  });
+                }
+
+                _context23.next = 4;
+                return this._content.showComponent('incident', {
+                  props: props,
+                  gmx_id: gmx_id
+                });
+
+              case 4:
+                _context23.next = 11;
+                break;
+
+              case 6:
+                _context23.prev = 6;
+                _context23.t0 = _context23["catch"](0);
+                console.log(_context23.t0);
+                alert(translate$g('error.incident'));
+                this.showMain();
+
+              case 11:
+              case "end":
+                return _context23.stop();
+            }
+          }
+        }, _callee23, this, [[0, 6]]);
+      }));
+
+      function _showIncident(_x19, _x20) {
         return _showIncident2.apply(this, arguments);
       }
 
@@ -58913,128 +59075,128 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_showLayer",
     value: function () {
-      var _showLayer2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee23(_ref11) {
+      var _showLayer2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee24(_ref12) {
         var id, visible, mode;
-        return regeneratorRuntime.wrap(function _callee23$(_context23) {
+        return regeneratorRuntime.wrap(function _callee24$(_context24) {
           while (1) {
-            switch (_context23.prev = _context23.next) {
+            switch (_context24.prev = _context24.next) {
               case 0:
-                id = _ref11.id, visible = _ref11.visible;
+                id = _ref12.id, visible = _ref12.visible;
                 mode = this._content.getCurrentId();
-                _context23.t0 = id;
-                _context23.next = _context23.t0 === 'quadrants' ? 5 : _context23.t0 === 'parks' ? 19 : _context23.t0 === 'stands' ? 33 : _context23.t0 === 'fires' ? 47 : _context23.t0 === 'declarations' ? 49 : _context23.t0 === 'incidents' ? 63 : _context23.t0 === 'plot-projects' ? 77 : 79;
+                _context24.t0 = id;
+                _context24.next = _context24.t0 === 'quadrants' ? 5 : _context24.t0 === 'parks' ? 19 : _context24.t0 === 'stands' ? 33 : _context24.t0 === 'fires' ? 47 : _context24.t0 === 'declarations' ? 49 : _context24.t0 === 'incidents' ? 63 : _context24.t0 === 'plot-projects' ? 77 : 79;
                 break;
 
               case 5:
                 if (!this._quadrants) {
-                  _context23.next = 18;
+                  _context24.next = 18;
                   break;
                 }
 
                 if (!visible) {
-                  _context23.next = 10;
+                  _context24.next = 10;
                   break;
                 }
 
                 this._map.addLayer(this._quadrants);
 
-                _context23.next = 18;
+                _context24.next = 18;
                 break;
 
               case 10:
-                _context23.t1 = mode;
-                _context23.next = _context23.t1 === 'create-plot' ? 13 : _context23.t1 === 'edit-plot' ? 13 : _context23.t1 === 'quadrant' ? 13 : 16;
+                _context24.t1 = mode;
+                _context24.next = _context24.t1 === 'create-plot' ? 13 : _context24.t1 === 'edit-plot' ? 13 : _context24.t1 === 'quadrant' ? 13 : 16;
                 break;
 
               case 13:
-                _context23.next = 15;
+                _context24.next = 15;
                 return this.showMain();
 
               case 15:
-                return _context23.abrupt("break", 17);
+                return _context24.abrupt("break", 17);
 
               case 16:
-                return _context23.abrupt("break", 17);
+                return _context24.abrupt("break", 17);
 
               case 17:
                 this._map.removeLayer(this._quadrants);
 
               case 18:
-                return _context23.abrupt("break", 80);
+                return _context24.abrupt("break", 80);
 
               case 19:
                 if (!this._parks) {
-                  _context23.next = 32;
+                  _context24.next = 32;
                   break;
                 }
 
                 if (!visible) {
-                  _context23.next = 24;
+                  _context24.next = 24;
                   break;
                 }
 
                 this._map.addLayer(this._parks);
 
-                _context23.next = 32;
+                _context24.next = 32;
                 break;
 
               case 24:
-                _context23.t2 = mode;
-                _context23.next = _context23.t2 === 'naturalpark' ? 27 : 30;
+                _context24.t2 = mode;
+                _context24.next = _context24.t2 === 'naturalpark' ? 27 : 30;
                 break;
 
               case 27:
-                _context23.next = 29;
+                _context24.next = 29;
                 return this.showMain();
 
               case 29:
-                return _context23.abrupt("break", 31);
+                return _context24.abrupt("break", 31);
 
               case 30:
-                return _context23.abrupt("break", 31);
+                return _context24.abrupt("break", 31);
 
               case 31:
                 this._map.removeLayer(this._parks);
 
               case 32:
-                return _context23.abrupt("break", 80);
+                return _context24.abrupt("break", 80);
 
               case 33:
                 if (!this._stands) {
-                  _context23.next = 46;
+                  _context24.next = 46;
                   break;
                 }
 
                 if (!visible) {
-                  _context23.next = 38;
+                  _context24.next = 38;
                   break;
                 }
 
                 this._map.addLayer(this._stands);
 
-                _context23.next = 46;
+                _context24.next = 46;
                 break;
 
               case 38:
-                _context23.t3 = mode;
-                _context23.next = _context23.t3 === 'stand' ? 41 : 44;
+                _context24.t3 = mode;
+                _context24.next = _context24.t3 === 'stand' ? 41 : 44;
                 break;
 
               case 41:
-                _context23.next = 43;
+                _context24.next = 43;
                 return this.showMain();
 
               case 43:
-                return _context23.abrupt("break", 45);
+                return _context24.abrupt("break", 45);
 
               case 44:
-                return _context23.abrupt("break", 45);
+                return _context24.abrupt("break", 45);
 
               case 45:
                 this._map.removeLayer(this._stands);
 
               case 46:
-                return _context23.abrupt("break", 80);
+                return _context24.abrupt("break", 80);
 
               case 47:
                 if (visible) {
@@ -59051,81 +59213,81 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   }
                 }
 
-                return _context23.abrupt("break", 80);
+                return _context24.abrupt("break", 80);
 
               case 49:
                 if (!this._declarations) {
-                  _context23.next = 62;
+                  _context24.next = 62;
                   break;
                 }
 
                 if (!visible) {
-                  _context23.next = 54;
+                  _context24.next = 54;
                   break;
                 }
 
                 this._map.addLayer(this._declarations);
 
-                _context23.next = 62;
+                _context24.next = 62;
                 break;
 
               case 54:
-                _context23.t4 = mode;
-                _context23.next = _context23.t4 === 'declaration' ? 57 : 60;
+                _context24.t4 = mode;
+                _context24.next = _context24.t4 === 'declaration' ? 57 : 60;
                 break;
 
               case 57:
-                _context23.next = 59;
+                _context24.next = 59;
                 return this.showMain();
 
               case 59:
-                return _context23.abrupt("break", 61);
+                return _context24.abrupt("break", 61);
 
               case 60:
-                return _context23.abrupt("break", 61);
+                return _context24.abrupt("break", 61);
 
               case 61:
                 this._map.removeLayer(this._declarations);
 
               case 62:
-                return _context23.abrupt("break", 80);
+                return _context24.abrupt("break", 80);
 
               case 63:
                 if (!this._incidents) {
-                  _context23.next = 76;
+                  _context24.next = 76;
                   break;
                 }
 
                 if (!visible) {
-                  _context23.next = 68;
+                  _context24.next = 68;
                   break;
                 }
 
                 this._map.addLayer(this._incidents);
 
-                _context23.next = 76;
+                _context24.next = 76;
                 break;
 
               case 68:
-                _context23.t5 = mode;
-                _context23.next = _context23.t5 === 'incident' ? 71 : 74;
+                _context24.t5 = mode;
+                _context24.next = _context24.t5 === 'incident' ? 71 : 74;
                 break;
 
               case 71:
-                _context23.next = 73;
+                _context24.next = 73;
                 return this.showMain();
 
               case 73:
-                return _context23.abrupt("break", 75);
+                return _context24.abrupt("break", 75);
 
               case 74:
-                return _context23.abrupt("break", 75);
+                return _context24.abrupt("break", 75);
 
               case 75:
                 this._map.removeLayer(this._incidents);
 
               case 76:
-                return _context23.abrupt("break", 80);
+                return _context24.abrupt("break", 80);
 
               case 77:
                 if (this._plotProject) {
@@ -59136,20 +59298,20 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   }
                 }
 
-                return _context23.abrupt("break", 80);
+                return _context24.abrupt("break", 80);
 
               case 79:
-                return _context23.abrupt("break", 80);
+                return _context24.abrupt("break", 80);
 
               case 80:
               case "end":
-                return _context23.stop();
+                return _context24.stop();
             }
           }
-        }, _callee23, this);
+        }, _callee24, this);
       }));
 
-      function _showLayer(_x19) {
+      function _showLayer(_x21) {
         return _showLayer2.apply(this, arguments);
       }
 
@@ -59158,34 +59320,34 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_quadrantClick",
     value: function () {
-      var _quadrantClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee24(e) {
+      var _quadrantClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee25(e) {
         var mode, _e$gmx, id, properties;
 
-        return regeneratorRuntime.wrap(function _callee24$(_context24) {
+        return regeneratorRuntime.wrap(function _callee25$(_context25) {
           while (1) {
-            switch (_context24.prev = _context24.next) {
+            switch (_context25.prev = _context25.next) {
               case 0:
                 L$1.DomEvent.stopPropagation(e);
                 mode = this._content.getCurrentId();
 
                 if (!(!mode || mode === 'quadrant')) {
-                  _context24.next = 6;
+                  _context25.next = 6;
                   break;
                 }
 
                 _e$gmx = e.gmx, id = _e$gmx.id, properties = _e$gmx.properties;
-                _context24.next = 6;
+                _context25.next = 6;
                 return this._showQuadrant(properties.id, id);
 
               case 6:
               case "end":
-                return _context24.stop();
+                return _context25.stop();
             }
           }
-        }, _callee24, this);
+        }, _callee25, this);
       }));
 
-      function _quadrantClick(_x20) {
+      function _quadrantClick(_x22) {
         return _quadrantClick2.apply(this, arguments);
       }
 
@@ -59194,26 +59356,26 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_parkClick",
     value: function () {
-      var _parkClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee25(e) {
+      var _parkClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee26(e) {
         var properties;
-        return regeneratorRuntime.wrap(function _callee25$(_context25) {
+        return regeneratorRuntime.wrap(function _callee26$(_context26) {
           while (1) {
-            switch (_context25.prev = _context25.next) {
+            switch (_context26.prev = _context26.next) {
               case 0:
                 L$1.DomEvent.stopPropagation(e);
                 properties = e.gmx.properties;
-                _context25.next = 4;
+                _context26.next = 4;
                 return this._showNaturalPark(properties);
 
               case 4:
               case "end":
-                return _context25.stop();
+                return _context26.stop();
             }
           }
-        }, _callee25, this);
+        }, _callee26, this);
       }));
 
-      function _parkClick(_x21) {
+      function _parkClick(_x23) {
         return _parkClick2.apply(this, arguments);
       }
 
@@ -59222,34 +59384,34 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_standClick",
     value: function () {
-      var _standClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee26(e) {
+      var _standClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee27(e) {
         var mode, _e$gmx2, id, properties;
 
-        return regeneratorRuntime.wrap(function _callee26$(_context26) {
+        return regeneratorRuntime.wrap(function _callee27$(_context27) {
           while (1) {
-            switch (_context26.prev = _context26.next) {
+            switch (_context27.prev = _context27.next) {
               case 0:
                 L$1.DomEvent.stopPropagation(e);
                 mode = this._content.getCurrentId();
 
                 if (!(!mode || mode === 'stand')) {
-                  _context26.next = 6;
+                  _context27.next = 6;
                   break;
                 }
 
                 _e$gmx2 = e.gmx, id = _e$gmx2.id, properties = _e$gmx2.properties;
-                _context26.next = 6;
+                _context27.next = 6;
                 return this._showStand(properties.id, id);
 
               case 6:
               case "end":
-                return _context26.stop();
+                return _context27.stop();
             }
           }
-        }, _callee26, this);
+        }, _callee27, this);
       }));
 
-      function _standClick(_x22) {
+      function _standClick(_x24) {
         return _standClick2.apply(this, arguments);
       }
 
@@ -59258,46 +59420,17 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_declarationClick",
     value: function () {
-      var _declarationClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee27(e) {
+      var _declarationClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee28(e) {
         var _e$gmx3, id, properties;
-
-        return regeneratorRuntime.wrap(function _callee27$(_context27) {
-          while (1) {
-            switch (_context27.prev = _context27.next) {
-              case 0:
-                L$1.DomEvent.stopPropagation(e);
-                _e$gmx3 = e.gmx, id = _e$gmx3.id, properties = _e$gmx3.properties;
-                _context27.next = 4;
-                return this._showDeclaration(properties.id, id);
-
-              case 4:
-              case "end":
-                return _context27.stop();
-            }
-          }
-        }, _callee27, this);
-      }));
-
-      function _declarationClick(_x23) {
-        return _declarationClick2.apply(this, arguments);
-      }
-
-      return _declarationClick;
-    }()
-  }, {
-    key: "_incidentClick",
-    value: function () {
-      var _incidentClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee28(e) {
-        var _e$gmx4, id, properties;
 
         return regeneratorRuntime.wrap(function _callee28$(_context28) {
           while (1) {
             switch (_context28.prev = _context28.next) {
               case 0:
                 L$1.DomEvent.stopPropagation(e);
-                _e$gmx4 = e.gmx, id = _e$gmx4.id, properties = _e$gmx4.properties;
+                _e$gmx3 = e.gmx, id = _e$gmx3.id, properties = _e$gmx3.properties;
                 _context28.next = 4;
-                return this._showIncident(properties, id);
+                return this._showDeclaration(properties.id, id);
 
               case 4:
               case "end":
@@ -59307,7 +59440,36 @@ var Map = /*#__PURE__*/function (_EventTarget) {
         }, _callee28, this);
       }));
 
-      function _incidentClick(_x24) {
+      function _declarationClick(_x25) {
+        return _declarationClick2.apply(this, arguments);
+      }
+
+      return _declarationClick;
+    }()
+  }, {
+    key: "_incidentClick",
+    value: function () {
+      var _incidentClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee29(e) {
+        var _e$gmx4, id, properties;
+
+        return regeneratorRuntime.wrap(function _callee29$(_context29) {
+          while (1) {
+            switch (_context29.prev = _context29.next) {
+              case 0:
+                L$1.DomEvent.stopPropagation(e);
+                _e$gmx4 = e.gmx, id = _e$gmx4.id, properties = _e$gmx4.properties;
+                _context29.next = 4;
+                return this._showIncident(properties, id);
+
+              case 4:
+              case "end":
+                return _context29.stop();
+            }
+          }
+        }, _callee29, this);
+      }));
+
+      function _incidentClick(_x26) {
         return _incidentClick2.apply(this, arguments);
       }
 
@@ -59316,17 +59478,17 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "load",
     value: function () {
-      var _load = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee30() {
+      var _load = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee31() {
         var _this5 = this;
 
         var mapId, incidentStyleHook, _loop, i, _this$_plotProject$ge, attributes, statusIndex, incidents, p, _this$_incidents$getG, _attributes, cid, sid, end, start;
 
-        return regeneratorRuntime.wrap(function _callee30$(_context30) {
+        return regeneratorRuntime.wrap(function _callee31$(_context31) {
           while (1) {
-            switch (_context30.prev = _context30.next) {
+            switch (_context31.prev = _context31.next) {
               case 0:
                 mapId = 'default';
-                _context30.next = 3;
+                _context31.next = 3;
                 return L$1.gmx.loadMap(mapId, {
                   // apiKey: this._apiKey,
                   leafletMap: this._map,
@@ -59342,7 +59504,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 });
 
               case 3:
-                this._gmxMap = _context30.sent;
+                this._gmxMap = _context31.sent;
                 this._zoom = new Zoom();
 
                 this._zoom.addTo(this._map);
@@ -59405,30 +59567,20 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   if (kind) {
                     switch (kind.Value) {
                       case 'quadrants':
-                        _this5._quadrants = layer;
+                        if (_this5._permissions.ForestBlocks) {
+                          _this5._quadrants = layer;
 
-                        _this5._quadrants.setStyles([{
-                          MinZoom: 10,
-                          MaxZoom: 21,
-                          BalloonEnable: false,
-                          RenderStyle: STYLE_FILTER.QUADRANTS,
-                          HoverStyle: STYLE_FILTER.QUADRANTS
-                        }]);
+                          _this5._quadrants.setStyles(QUADRANTS);
 
-                        _this5._quadrants.on('click', _this5._quadrantClick, _this5);
+                          _this5._quadrants.on('click', _this5._quadrantClick, _this5);
+                        }
 
                         break;
 
                       case 'parks':
                         _this5._parks = layer;
 
-                        _this5._parks.setStyles([{
-                          MinZoom: 4,
-                          MaxZoom: 21,
-                          BalloonEnable: false,
-                          RenderStyle: STYLE_FILTER.PARKS,
-                          HoverStyle: STYLE_FILTER.PARKS
-                        }]);
+                        _this5._parks.setStyles(PARKS);
 
                         _this5._parks.on('click', _this5._parkClick, _this5);
 
@@ -59437,32 +59589,23 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                       case 'stands':
                         _this5._stands = layer;
 
-                        _this5._stands.setStyles([{
-                          MinZoom: 12,
-                          MaxZoom: 21,
-                          BalloonEnable: false,
-                          RenderStyle: STYLE_FILTER.STANDS,
-                          HoverStyle: STYLE_FILTER.STANDS
-                        }]);
+                        _this5._stands.setStyles(STANDS);
 
                         _this5._stands.on('click', _this5._standClick, _this5);
 
                         break;
 
                       case 'fires':
-                        _this5._fires = layer;
+                        if (_this5._permissions.ForestFires || _this5._permissions.ForestFiresTimeLine) {
+                          _this5._fires = layer;
+                        }
+
                         break;
 
                       case 'declarations':
                         _this5._declarations = layer;
 
-                        _this5._declarations.setStyles([{
-                          MinZoom: 12,
-                          MaxZoom: 21,
-                          BalloonEnable: false,
-                          RenderStyle: STYLE_FILTER.DECLARATIONS,
-                          HoverStyle: STYLE_FILTER.DECLARATIONS
-                        }]);
+                        _this5._declarations.setStyles(DECLARATIONS);
 
                         _this5._declarations.on('click', _this5._declarationClick, _this5);
 
@@ -59471,13 +59614,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                       case 'incidents':
                         _this5._incidents = layer;
 
-                        _this5._incidents.setStyles([{
-                          MinZoom: 7,
-                          MaxZoom: 21,
-                          BalloonEnable: false,
-                          RenderStyle: STYLE_FILTER.QUADRANTS,
-                          HoverStyle: STYLE_FILTER.QUADRANTS
-                        }]);
+                        _this5._incidents.setStyles(QUADRANTS);
 
                         _this5._incidents.verifyRaster = _this5._gmxMap.layersByID['5728425F25B04F73871EDF47CC8EFBC0'];
 
@@ -59490,26 +59627,14 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                       case 'plot_project':
                         _this5._plotProject = layer;
 
-                        _this5._plotProject.setStyles([{
-                          MinZoom: 9,
-                          MaxZoom: 21,
-                          BalloonEnable: false,
-                          RenderStyle: STYLE_FILTER.PLOTS,
-                          HoverStyle: STYLE_FILTER.PLOTS
-                        }]);
+                        _this5._plotProject.setStyles(PLOTS);
 
                         break;
 
                       case 'regions':
                         _this5._regions = layer;
 
-                        _this5._regions.setStyles([{
-                          MinZoom: 4,
-                          MaxZoom: 21,
-                          BalloonEnable: false,
-                          RenderStyle: STYLE_FILTER.REGIONS,
-                          HoverStyle: STYLE_FILTER.REGIONS
-                        }]);
+                        _this5._regions.setStyles(REGIONS);
 
                         break;
                     }
@@ -59548,8 +59673,8 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                     statusIndex += 1;
                   }
 
-                  this._plotProject.setStyleHook(function (_ref12) {
-                    var properties = _ref12.properties;
+                  this._plotProject.setStyleHook(function (_ref13) {
+                    var properties = _ref13.properties;
 
                     if (statusIndex >= 0) {
                       switch (properties[statusIndex]) {
@@ -59619,8 +59744,8 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                     sid += 1;
                   }
 
-                  incidentStyleHook = function incidentStyleHook(_ref13) {
-                    var properties = _ref13.properties;
+                  incidentStyleHook = function incidentStyleHook(_ref14) {
+                    var properties = _ref14.properties;
                     var c = properties[cid];
                     var s = properties[sid];
 
@@ -59706,15 +59831,15 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 }
 
                 this._legend.on('click', /*#__PURE__*/function () {
-                  var _ref14 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee29(e) {
+                  var _ref15 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee30(e) {
                     var id, visible;
-                    return regeneratorRuntime.wrap(function _callee29$(_context29) {
+                    return regeneratorRuntime.wrap(function _callee30$(_context30) {
                       while (1) {
-                        switch (_context29.prev = _context29.next) {
+                        switch (_context30.prev = _context30.next) {
                           case 0:
                             id = e.id, visible = e.visible;
-                            _context29.t0 = id;
-                            _context29.next = _context29.t0 === 'cut-unconfirmed' ? 4 : _context29.t0 === 'cut-working' ? 4 : _context29.t0 === 'cut-faux' ? 4 : _context29.t0 === 'cut-confirmed' ? 4 : _context29.t0 === 'windthrow-unconfirmed' ? 4 : _context29.t0 === 'windthrow-working' ? 4 : _context29.t0 === 'windthrow-faux' ? 4 : _context29.t0 === 'windthrow-confirmed' ? 4 : _context29.t0 === 'disease-unconfirmed' ? 4 : _context29.t0 === 'disease-working' ? 4 : _context29.t0 === 'disease-faux' ? 4 : _context29.t0 === 'disease-confirmed' ? 4 : _context29.t0 === 'burn-unconfirmed' ? 4 : _context29.t0 === 'burn-working' ? 4 : _context29.t0 === 'burn-faux' ? 4 : _context29.t0 === 'burn-confirmed' ? 4 : 8;
+                            _context30.t0 = id;
+                            _context30.next = _context30.t0 === 'cut-unconfirmed' ? 4 : _context30.t0 === 'cut-working' ? 4 : _context30.t0 === 'cut-faux' ? 4 : _context30.t0 === 'cut-confirmed' ? 4 : _context30.t0 === 'windthrow-unconfirmed' ? 4 : _context30.t0 === 'windthrow-working' ? 4 : _context30.t0 === 'windthrow-faux' ? 4 : _context30.t0 === 'windthrow-confirmed' ? 4 : _context30.t0 === 'disease-unconfirmed' ? 4 : _context30.t0 === 'disease-working' ? 4 : _context30.t0 === 'disease-faux' ? 4 : _context30.t0 === 'disease-confirmed' ? 4 : _context30.t0 === 'burn-unconfirmed' ? 4 : _context30.t0 === 'burn-working' ? 4 : _context30.t0 === 'burn-faux' ? 4 : _context30.t0 === 'burn-confirmed' ? 4 : 8;
                             break;
 
                           case 4:
@@ -59724,60 +59849,49 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
                             _this5._incidents.repaint();
 
-                            return _context29.abrupt("break", 11);
+                            return _context30.abrupt("break", 11);
 
                           case 8:
-                            _context29.next = 10;
+                            _context30.next = 10;
                             return _this5._showLayer(e);
 
                           case 10:
-                            return _context29.abrupt("break", 11);
+                            return _context30.abrupt("break", 11);
 
                           case 11:
                           case "end":
-                            return _context29.stop();
+                            return _context30.stop();
                         }
                       }
-                    }, _callee29);
+                    }, _callee30);
                   }));
 
-                  return function (_x25) {
-                    return _ref14.apply(this, arguments);
+                  return function (_x27) {
+                    return _ref15.apply(this, arguments);
                   };
                 }(), this);
 
-                _context30.next = 27;
-                return this.getUserInfo();
+                if (this._ForestFiresTimeLine) {
+                  this._hotspottimeline = new HotSpotTimeLine();
+                  this._user = true;
+                } else if (this._fires) {
+                  end = new Date();
+                  start = new Date(end.getTime() - 2 * 60 * 60 * 24 * 1000);
 
-              case 27:
-                if (!_context30.sent) {
-                  _context30.next = 32;
-                  break;
+                  this._fires.setDateInterval(start, end);
                 }
 
-                this._hotspottimeline = new HotSpotTimeLine();
-                this._user = true;
-                _context30.next = 35;
-                break;
-
-              case 32:
-                end = new Date();
-                start = new Date(end.getTime() - 2 * 60 * 60 * 24 * 1000);
-
-                this._fires.setDateInterval(start, end);
-
-              case 35:
                 this._baselayers.toggle('sputnik'); // const CRLayer = this._gmxMap.layersByID['958E59D9911E4889AB3E787DE2AC028B'];	// Каталог растров
                 // this._map.addControl(nsGmx.gmxTimeLine.afterViewer({gmxMap: this._gmxMap}, this._map));	// Контрол таймлайна CR
                 // this._map.addLayer(CRLayer);
 
 
-              case 36:
+              case 27:
               case "end":
-                return _context30.stop();
+                return _context31.stop();
             }
           }
-        }, _callee30, this);
+        }, _callee31, this);
       }));
 
       function load() {
