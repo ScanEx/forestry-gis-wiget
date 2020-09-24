@@ -57614,8 +57614,7 @@ var Incident = /*#__PURE__*/function (_Component) {
 
     var permissions = _ref.permissions,
         layer = _ref.layer,
-        path = _ref.path,
-        user = _ref.user;
+        path = _ref.path;
 
     _classCallCheck(this, Incident);
 
@@ -57623,7 +57622,7 @@ var Incident = /*#__PURE__*/function (_Component) {
     _this._path = path;
     _this._layer = layer;
     _this._permission = permissions;
-    _this._downloadStr = user ? "<button class=\"download button\">".concat(translate$f('incident.downloadGeo'), "</button>") : '';
+    _this._downloadStr = _this._permission.IncidentEdit ? "\n\t\t\t<button class=\"download button\">".concat(translate$f('incident.downloadGeo'), "</button>\n\t\t") : '';
 
     _this._container.classList.add('scanex-forestry-incident');
 
@@ -57676,11 +57675,13 @@ var Incident = /*#__PURE__*/function (_Component) {
 
       this._container.querySelector('.verRastr').addEventListener('click', this._toggleRaster.bind(this));
 
-      var downloadNode = this._container.querySelector('.download');
+      var node = this._container.querySelector('.download');
 
-      if (downloadNode) {
-        downloadNode.addEventListener('click', this._download.bind(this));
+      if (node) {
+        node.addEventListener('click', this._download.bind(this));
       }
+
+      this._rastId = props.prob_raster_id;
     }
   }, {
     key: "_download",
@@ -57706,6 +57707,10 @@ var Incident = /*#__PURE__*/function (_Component) {
         if (rastr._map) {
           map.removeLayer(rastr);
         } else {
+          if (this._rastId) {
+            rastr = this._layer.verifyRaster = L.tileLayer('/gis/TileSender.ashx?ModeKey=tile&ftc=osm&z={z}&x={x}&y={y}&srs=3857&LayerName=' + this._rastId, {});
+          }
+
           map.addLayer(rastr);
         }
       }
@@ -60139,7 +60144,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   };
                 }(), this);
 
-                if (this._ForestFiresTimeLine) {
+                if (this._permissions.ForestFiresTimeLine) {
                   this._hotspottimeline = new HotSpotTimeLine();
                   this._user = true;
                 } else if (this._fires) {
