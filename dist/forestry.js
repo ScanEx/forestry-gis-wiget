@@ -58261,10 +58261,10 @@ var Map = /*#__PURE__*/function (_EventTarget) {
     _this = _super.call(this);
     _this._layers = {};
     _this._hilited = {};
-    _this._permissions = permissions.reduce(function (a, k) {
+    _this._permissions = Array.isArray(permissions) && permissions.reduce(function (a, k) {
       a[k] = true;
       return a;
-    }, {});
+    }, {}) || {};
     _this._container = container;
 
     _this._container.classList.add('scanex-forestry-map');
