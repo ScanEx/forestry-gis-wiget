@@ -57943,19 +57943,59 @@ var REGIONS = [{
   MaxZoom: 21,
   RenderStyle: {
     stroke: true,
-    color: parseInt('AD3D2D', 16),
+    color: parseInt('B22222', 16),
     weight: 1,
-    opacity: 1,
-    fillColor: parseInt('AD3D2D', 16),
-    fillOpacity: 0.4
+    opacity: 1 // fillColor: parseInt('AD3D2D', 16),
+    // fillOpacity: 0.4,
+
   },
   HoverStyle: {
     stroke: true,
-    color: parseInt('AD3D2D', 16),
+    color: parseInt('B22222', 16),
     weight: 1,
-    opacity: 1,
-    fillColor: parseInt('AD3D2D', 16),
-    fillOpacity: 0.4
+    opacity: 1 // fillColor: parseInt('AD3D2D', 16),
+    // fillOpacity: 0.4,
+
+  }
+}];
+var FORESTRIES = [{
+  MinZoom: 4,
+  MaxZoom: 21,
+  RenderStyle: {
+    stroke: true,
+    color: parseInt('B8860B', 16),
+    weight: 1,
+    opacity: 1 // fillColor: parseInt('AD3D2D', 16),
+    // fillOpacity: 0.4,
+
+  },
+  HoverStyle: {
+    stroke: true,
+    color: parseInt('B8860B', 16),
+    weight: 1,
+    opacity: 1 // fillColor: parseInt('AD3D2D', 16),
+    // fillOpacity: 0.4,
+
+  }
+}];
+var FORESTRIES_LOCAL = [{
+  MinZoom: 4,
+  MaxZoom: 21,
+  RenderStyle: {
+    stroke: true,
+    color: parseInt('BDB76B', 16),
+    weight: 1,
+    opacity: 1 // fillColor: parseInt('AD3D2D', 16),
+    // fillOpacity: 0.4,
+
+  },
+  HoverStyle: {
+    stroke: true,
+    color: parseInt('BDB76B', 16),
+    weight: 1,
+    opacity: 1 // fillColor: parseInt('AD3D2D', 16),
+    // fillOpacity: 0.4,
+
   }
 }];
 
@@ -58014,6 +58054,10 @@ T.addText('rus', {
     declarations: 'Декларации',
     incidents: 'Мониторинг',
     plotProjects: 'Проекты участков',
+    borders: 'Административные границы',
+    regions: 'Регионы',
+    forestries: 'Лесничества',
+    localForestries: 'Участковые лесничества',
     burn: {
       unconfirmed: 'Гарь неподтвержденная',
       working: 'Гарь в работе',
@@ -58049,10 +58093,25 @@ T.addText('rus', {
       remove: 'Ошибка при удаление запроса'
     },
     incident: 'Ошибка при отображении инцидента',
-    naturalpark: 'Ошибка при отображении ООПТ',
+    park: 'Ошибка при отображении ООПТ',
     quadrant: 'Ошибка при отображении квартала',
     stand: 'Ошибка при отображении выдела',
     uploaded: 'Ошибка при отображении данных'
+  },
+  forbidden: {
+    analytics: 'Нет разрешения для отображения аналитики',
+    declaration: 'Нет разрешения для отображения декларации',
+    requests: 'Нет разрешения для отображения списка запросов',
+    plot: {
+      create: 'Нет разрешения для создания запроса',
+      edit: 'Нет разрешения для редактирования запроса',
+      remove: 'Нет разрешения для удаления запроса'
+    },
+    incident: 'Нет разрешения для отображения инцидента',
+    park: 'Нет разрешения для отображения ООПТ',
+    quadrant: 'Нет разрешения для отображения квартала',
+    stand: 'Нет разрешения для отображения выдела',
+    uploaded: 'Нет разрешения для отображения данных'
   }
 }); // const defaultStyle = {
 //     fillStyle: 'rgba(28, 224, 0, 0.4)',
@@ -58291,7 +58350,12 @@ var Map = /*#__PURE__*/function (_EventTarget) {
           while (1) {
             switch (_context3.prev = _context3.next) {
               case 0:
-                _context3.prev = 0;
+                if (!this._permissions.AnaliticData) {
+                  _context3.next = 14;
+                  break;
+                }
+
+                _context3.prev = 1;
 
                 if (!this._content.hasComponent('analytics')) {
                   this._content.addComponent('analytics', Analytics, {
@@ -58299,26 +58363,33 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   });
                 }
 
-                _context3.next = 4;
+                _context3.next = 5;
                 return this._content.showComponent('analytics');
 
-              case 4:
-                _context3.next = 11;
+              case 5:
+                _context3.next = 12;
                 break;
 
-              case 6:
-                _context3.prev = 6;
-                _context3.t0 = _context3["catch"](0);
+              case 7:
+                _context3.prev = 7;
+                _context3.t0 = _context3["catch"](1);
                 console.log(_context3.t0);
                 alert(translate$g('error.analytics'));
                 this.showMain();
 
-              case 11:
+              case 12:
+                _context3.next = 15;
+                break;
+
+              case 14:
+                alert(translate$g('forbidden.analytics'));
+
+              case 15:
               case "end":
                 return _context3.stop();
             }
           }
-        }, _callee3, this, [[0, 6]]);
+        }, _callee3, this, [[1, 7]]);
       }));
 
       function showAnalytics() {
@@ -58339,7 +58410,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
             switch (_context7.prev = _context7.next) {
               case 0:
                 if (!this._permissions.ForestProjectsView) {
-                  _context7.next = 13;
+                  _context7.next = 15;
                   break;
                 }
 
@@ -58373,16 +58444,11 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                         while (1) {
                           switch (_context5.prev = _context5.next) {
                             case 0:
-                              if (!_this2._permissions.ForestProjectsEdit) {
-                                _context5.next = 4;
-                                break;
-                              }
-
                               state = _this2._legend.state('quadrants');
-                              _context5.next = 4;
+                              _context5.next = 3;
                               return _this2._showEditPlot(e.detail, state);
 
-                            case 4:
+                            case 3:
                             case "end":
                               return _context5.stop();
                           }
@@ -58400,20 +58466,15 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                         while (1) {
                           switch (_context6.prev = _context6.next) {
                             case 0:
-                              if (!_this2._permissions.ForestProjectsRemove) {
-                                _context6.next = 6;
-                                break;
-                              }
-
                               id = e.detail;
-                              _context6.next = 4;
+                              _context6.next = 3;
                               return _this2._removeRequest(id);
 
-                            case 4:
-                              _context6.next = 6;
+                            case 3:
+                              _context6.next = 5;
                               return _this2.showRequests();
 
-                            case 6:
+                            case 5:
                             case "end":
                               return _context6.stop();
                           }
@@ -58444,6 +58505,13 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 this.showMain();
 
               case 13:
+                _context7.next = 16;
+                break;
+
+              case 15:
+                alert(translate$g('forbidden.requests'));
+
+              case 16:
               case "end":
                 return _context7.stop();
             }
@@ -58466,8 +58534,13 @@ var Map = /*#__PURE__*/function (_EventTarget) {
           while (1) {
             switch (_context8.prev = _context8.next) {
               case 0:
-                _context8.prev = 0;
-                _context8.next = 3;
+                if (!this._permissions.ForestProjectsRemove) {
+                  _context8.next = 17;
+                  break;
+                }
+
+                _context8.prev = 1;
+                _context8.next = 4;
                 return fetch("".concat(this._apiPath, "/Forest/RemoveDraftForestProject"), {
                   method: 'POST',
                   credentials: 'include',
@@ -58479,27 +58552,34 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   })
                 });
 
-              case 3:
+              case 4:
                 response = _context8.sent;
-                _context8.next = 6;
+                _context8.next = 7;
                 return response.json();
 
-              case 6:
+              case 7:
                 return _context8.abrupt("return", _context8.sent);
 
-              case 9:
-                _context8.prev = 9;
-                _context8.t0 = _context8["catch"](0);
+              case 10:
+                _context8.prev = 10;
+                _context8.t0 = _context8["catch"](1);
                 console.log(_context8.t0);
                 alert(translate$g('error.plot.remove'));
                 this.showRequests();
 
-              case 14:
+              case 15:
+                _context8.next = 18;
+                break;
+
+              case 17:
+                alert(translate$g('forbidden.plot.remove'));
+
+              case 18:
               case "end":
                 return _context8.stop();
             }
           }
-        }, _callee8, this, [[0, 9]]);
+        }, _callee8, this, [[1, 10]]);
       }));
 
       function _removeRequest(_x4) {
@@ -58519,7 +58599,12 @@ var Map = /*#__PURE__*/function (_EventTarget) {
           while (1) {
             switch (_context12.prev = _context12.next) {
               case 0:
-                _context12.prev = 0;
+                if (!this._permissions.ForestProjectsEdit) {
+                  _context12.next = 15;
+                  break;
+                }
+
+                _context12.prev = 1;
 
                 if (!this._content.hasComponent('edit-plot')) {
                   component = this._content.addComponent('edit-plot', EditPlot, {
@@ -58591,28 +58676,35 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   });
                 }
 
-                _context12.next = 4;
+                _context12.next = 5;
                 return this._content.showComponent('edit-plot', id);
 
-              case 4:
+              case 5:
                 this._legend.enable('quadrants');
 
-                _context12.next = 12;
+                _context12.next = 13;
                 break;
 
-              case 7:
-                _context12.prev = 7;
-                _context12.t0 = _context12["catch"](0);
+              case 8:
+                _context12.prev = 8;
+                _context12.t0 = _context12["catch"](1);
                 console.log(_context12.t0);
                 alert(translate$g('error.plot.edit'));
                 this.showMain();
 
-              case 12:
+              case 13:
+                _context12.next = 16;
+                break;
+
+              case 15:
+                alert(translate$g('forbidden.plot.edit'));
+
+              case 16:
               case "end":
                 return _context12.stop();
             }
           }
-        }, _callee12, this, [[0, 7]]);
+        }, _callee12, this, [[1, 8]]);
       }));
 
       function _showEditPlot(_x5, _x6) {
@@ -58632,7 +58724,12 @@ var Map = /*#__PURE__*/function (_EventTarget) {
           while (1) {
             switch (_context16.prev = _context16.next) {
               case 0:
-                _context16.prev = 0;
+                if (!this._permissions.ApplicationMake) {
+                  _context16.next = 15;
+                  break;
+                }
+
+                _context16.prev = 1;
 
                 if (!this._content.hasComponent('create-plot')) {
                   component = this._content.addComponent('create-plot', CreatePlot, {
@@ -58714,28 +58811,35 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   })));
                 }
 
-                _context16.next = 4;
+                _context16.next = 5;
                 return this._content.showComponent('create-plot');
 
-              case 4:
+              case 5:
                 this._legend.enable('quadrants');
 
-                _context16.next = 12;
+                _context16.next = 13;
                 break;
 
-              case 7:
-                _context16.prev = 7;
-                _context16.t0 = _context16["catch"](0);
+              case 8:
+                _context16.prev = 8;
+                _context16.t0 = _context16["catch"](1);
                 console.log(_context16.t0);
                 alert(translate$g('error.plot.create'));
                 this.showMain();
 
-              case 12:
+              case 13:
+                _context16.next = 16;
+                break;
+
+              case 15:
+                alert(translate$g('forbidden.plot.create'));
+
+              case 16:
               case "end":
                 return _context16.stop();
             }
           }
-        }, _callee16, this, [[0, 7]]);
+        }, _callee16, this, [[1, 8]]);
       }));
 
       function _showCreatePlot(_x8) {
@@ -58752,32 +58856,44 @@ var Map = /*#__PURE__*/function (_EventTarget) {
           while (1) {
             switch (_context17.prev = _context17.next) {
               case 0:
-                _context17.prev = 0;
-
-                if (!this._content.hasComponent('naturalpark')) {
-                  this._content.addComponent('naturalpark', NaturalPark);
+                if (!this._permissions.SPNA) {
+                  _context17.next = 14;
+                  break;
                 }
 
-                _context17.next = 4;
-                return this._content.showComponent('naturalpark', properties);
+                _context17.prev = 1;
 
-              case 4:
-                _context17.next = 11;
+                if (!this._content.hasComponent('park')) {
+                  this._content.addComponent('park', NaturalPark);
+                }
+
+                _context17.next = 5;
+                return this._content.showComponent('park', properties);
+
+              case 5:
+                _context17.next = 12;
                 break;
 
-              case 6:
-                _context17.prev = 6;
-                _context17.t0 = _context17["catch"](0);
+              case 7:
+                _context17.prev = 7;
+                _context17.t0 = _context17["catch"](1);
                 console.log(_context17.t0);
-                alert(translate$g('error.naturalpark'));
+                alert(translate$g('error.park'));
                 this.showMain();
 
-              case 11:
+              case 12:
+                _context17.next = 15;
+                break;
+
+              case 14:
+                alert(translate$g('forbidden.park'));
+
+              case 15:
               case "end":
                 return _context17.stop();
             }
           }
-        }, _callee17, this, [[0, 6]]);
+        }, _callee17, this, [[1, 7]]);
       }));
 
       function _showNaturalPark(_x11) {
@@ -58863,7 +58979,12 @@ var Map = /*#__PURE__*/function (_EventTarget) {
           while (1) {
             switch (_context19.prev = _context19.next) {
               case 0:
-                _context19.prev = 0;
+                if (!this._permissions.MyData) {
+                  _context19.next = 14;
+                  break;
+                }
+
+                _context19.prev = 1;
 
                 if (!this._content.hasComponent('uploaded')) {
                   this._content.addComponent('uploaded', Uploaded, {
@@ -58871,26 +58992,33 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   });
                 }
 
-                _context19.next = 4;
+                _context19.next = 5;
                 return this._content.showComponent('uploaded');
 
-              case 4:
-                _context19.next = 11;
+              case 5:
+                _context19.next = 12;
                 break;
 
-              case 6:
-                _context19.prev = 6;
-                _context19.t0 = _context19["catch"](0);
+              case 7:
+                _context19.prev = 7;
+                _context19.t0 = _context19["catch"](1);
                 console.log(_context19.t0);
                 alert(translate$g('error.uploaded'));
                 this.showMain();
 
-              case 11:
+              case 12:
+                _context19.next = 15;
+                break;
+
+              case 14:
+                alert(translate$g('forbidden.uploaded'));
+
+              case 15:
               case "end":
                 return _context19.stop();
             }
           }
-        }, _callee19, this, [[0, 6]]);
+        }, _callee19, this, [[1, 7]]);
       }));
 
       function showUploaded() {
@@ -58907,7 +59035,12 @@ var Map = /*#__PURE__*/function (_EventTarget) {
           while (1) {
             switch (_context20.prev = _context20.next) {
               case 0:
-                _context20.prev = 0;
+                if (!this._permissions.ForestBlocks) {
+                  _context20.next = 14;
+                  break;
+                }
+
+                _context20.prev = 1;
 
                 if (!this._content.hasComponent('quadrant')) {
                   this._content.addComponent('quadrant', Quadrant, {
@@ -58916,29 +59049,36 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   });
                 }
 
-                _context20.next = 4;
+                _context20.next = 5;
                 return this._content.showComponent('quadrant', {
                   id: id,
                   gmx_id: gmx_id
                 });
 
-              case 4:
-                _context20.next = 11;
+              case 5:
+                _context20.next = 12;
                 break;
 
-              case 6:
-                _context20.prev = 6;
-                _context20.t0 = _context20["catch"](0);
+              case 7:
+                _context20.prev = 7;
+                _context20.t0 = _context20["catch"](1);
                 console.log(_context20.t0);
                 alert(translate$g('error.quadrant'));
                 this.showMain();
 
-              case 11:
+              case 12:
+                _context20.next = 15;
+                break;
+
+              case 14:
+                alert(translate$g('forbidden.quadrant'));
+
+              case 15:
               case "end":
                 return _context20.stop();
             }
           }
-        }, _callee20, this, [[0, 6]]);
+        }, _callee20, this, [[1, 7]]);
       }));
 
       function _showQuadrant(_x13, _x14) {
@@ -58955,7 +59095,12 @@ var Map = /*#__PURE__*/function (_EventTarget) {
           while (1) {
             switch (_context21.prev = _context21.next) {
               case 0:
-                _context21.prev = 0;
+                if (!this._permissions.ForestStands) {
+                  _context21.next = 14;
+                  break;
+                }
+
+                _context21.prev = 1;
 
                 if (!this._content.hasComponent('stand')) {
                   this._content.addComponent('stand', Stand, {
@@ -58964,29 +59109,36 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   });
                 }
 
-                _context21.next = 4;
+                _context21.next = 5;
                 return this._content.showComponent('stand', {
                   id: id,
                   gmx_id: gmx_id
                 });
 
-              case 4:
-                _context21.next = 11;
+              case 5:
+                _context21.next = 12;
                 break;
 
-              case 6:
-                _context21.prev = 6;
-                _context21.t0 = _context21["catch"](0);
+              case 7:
+                _context21.prev = 7;
+                _context21.t0 = _context21["catch"](1);
                 console.log(_context21.t0);
                 alert(translate$g('error.stand'));
                 this.showMain();
 
-              case 11:
+              case 12:
+                _context21.next = 15;
+                break;
+
+              case 14:
+                alert(translate$g('forbidden.stand'));
+
+              case 15:
               case "end":
                 return _context21.stop();
             }
           }
-        }, _callee21, this, [[0, 6]]);
+        }, _callee21, this, [[1, 7]]);
       }));
 
       function _showStand(_x15, _x16) {
@@ -59003,7 +59155,12 @@ var Map = /*#__PURE__*/function (_EventTarget) {
           while (1) {
             switch (_context22.prev = _context22.next) {
               case 0:
-                _context22.prev = 0;
+                if (!this._permissions.ForestDeclarations) {
+                  _context22.next = 14;
+                  break;
+                }
+
+                _context22.prev = 1;
 
                 if (!this._content.hasComponent('declaration')) {
                   this._content.addComponent('declaration', Declaration, {
@@ -59012,29 +59169,36 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   });
                 }
 
-                _context22.next = 4;
+                _context22.next = 5;
                 return this._content.showComponent('declaration', {
                   id: id,
                   gmx_id: gmx_id
                 });
 
-              case 4:
-                _context22.next = 11;
+              case 5:
+                _context22.next = 12;
                 break;
 
-              case 6:
-                _context22.prev = 6;
-                _context22.t0 = _context22["catch"](0);
+              case 7:
+                _context22.prev = 7;
+                _context22.t0 = _context22["catch"](1);
                 console.log(_context22.t0);
                 alert(translate$g('error.declaration'));
                 this.showMain();
 
-              case 11:
+              case 12:
+                _context22.next = 15;
+                break;
+
+              case 14:
+                alert(translate$g('forbidden.declaration'));
+
+              case 15:
               case "end":
                 return _context22.stop();
             }
           }
-        }, _callee22, this, [[0, 6]]);
+        }, _callee22, this, [[1, 7]]);
       }));
 
       function _showDeclaration(_x17, _x18) {
@@ -59051,7 +59215,12 @@ var Map = /*#__PURE__*/function (_EventTarget) {
           while (1) {
             switch (_context23.prev = _context23.next) {
               case 0:
-                _context23.prev = 0;
+                if (!this._permissions.ForestIncidents) {
+                  _context23.next = 14;
+                  break;
+                }
+
+                _context23.prev = 1;
 
                 if (!this._content.hasComponent('incident')) {
                   this._content.addComponent('incident', Incident, {
@@ -59062,29 +59231,36 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   });
                 }
 
-                _context23.next = 4;
+                _context23.next = 5;
                 return this._content.showComponent('incident', {
                   props: props,
                   gmx_id: gmx_id
                 });
 
-              case 4:
-                _context23.next = 11;
+              case 5:
+                _context23.next = 12;
                 break;
 
-              case 6:
-                _context23.prev = 6;
-                _context23.t0 = _context23["catch"](0);
+              case 7:
+                _context23.prev = 7;
+                _context23.t0 = _context23["catch"](1);
                 console.log(_context23.t0);
                 alert(translate$g('error.incident'));
                 this.showMain();
 
-              case 11:
+              case 12:
+                _context23.next = 15;
+                break;
+
+              case 14:
+                alert(translate$g('forbidden.incident'));
+
+              case 15:
               case "end":
                 return _context23.stop();
             }
           }
-        }, _callee23, this, [[0, 6]]);
+        }, _callee23, this, [[1, 7]]);
       }));
 
       function _showIncident(_x19, _x20) {
@@ -59105,7 +59281,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 id = _ref12.id, visible = _ref12.visible;
                 mode = this._content.getCurrentId();
                 _context24.t0 = id;
-                _context24.next = _context24.t0 === 'quadrants' ? 5 : _context24.t0 === 'parks' ? 19 : _context24.t0 === 'stands' ? 33 : _context24.t0 === 'fires' ? 47 : _context24.t0 === 'declarations' ? 49 : _context24.t0 === 'incidents' ? 63 : _context24.t0 === 'plot-projects' ? 77 : 79;
+                _context24.next = _context24.t0 === 'quadrants' ? 5 : _context24.t0 === 'parks' ? 19 : _context24.t0 === 'stands' ? 33 : _context24.t0 === 'fires' ? 47 : _context24.t0 === 'declarations' ? 49 : _context24.t0 === 'incidents' ? 63 : _context24.t0 === 'plot-projects' ? 77 : _context24.t0 === 'regions' ? 79 : _context24.t0 === 'forestries' ? 81 : _context24.t0 === 'forestries-local' ? 83 : 85;
                 break;
 
               case 5:
@@ -59143,7 +59319,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 this._map.removeLayer(this._quadrants);
 
               case 18:
-                return _context24.abrupt("break", 80);
+                return _context24.abrupt("break", 86);
 
               case 19:
                 if (!this._parks) {
@@ -59163,7 +59339,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
               case 24:
                 _context24.t2 = mode;
-                _context24.next = _context24.t2 === 'naturalpark' ? 27 : 30;
+                _context24.next = _context24.t2 === 'park' ? 27 : 30;
                 break;
 
               case 27:
@@ -59180,7 +59356,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 this._map.removeLayer(this._parks);
 
               case 32:
-                return _context24.abrupt("break", 80);
+                return _context24.abrupt("break", 86);
 
               case 33:
                 if (!this._stands) {
@@ -59217,7 +59393,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 this._map.removeLayer(this._stands);
 
               case 46:
-                return _context24.abrupt("break", 80);
+                return _context24.abrupt("break", 86);
 
               case 47:
                 if (visible) {
@@ -59234,7 +59410,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   }
                 }
 
-                return _context24.abrupt("break", 80);
+                return _context24.abrupt("break", 86);
 
               case 49:
                 if (!this._declarations) {
@@ -59271,7 +59447,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 this._map.removeLayer(this._declarations);
 
               case 62:
-                return _context24.abrupt("break", 80);
+                return _context24.abrupt("break", 86);
 
               case 63:
                 if (!this._incidents) {
@@ -59308,7 +59484,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 this._map.removeLayer(this._incidents);
 
               case 76:
-                return _context24.abrupt("break", 80);
+                return _context24.abrupt("break", 86);
 
               case 77:
                 if (this._plotProject) {
@@ -59319,12 +59495,45 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   }
                 }
 
-                return _context24.abrupt("break", 80);
+                return _context24.abrupt("break", 86);
 
               case 79:
-                return _context24.abrupt("break", 80);
+                if (this._regions) {
+                  if (visible) {
+                    this._map.addLayer(this._regions);
+                  } else {
+                    this._map.removeLayer(this._regions);
+                  }
+                }
 
-              case 80:
+                return _context24.abrupt("break", 86);
+
+              case 81:
+                if (this._forestries) {
+                  if (visible) {
+                    this._map.addLayer(this._forestries);
+                  } else {
+                    this._map.removeLayer(this._forestries);
+                  }
+                }
+
+                return _context24.abrupt("break", 86);
+
+              case 83:
+                if (this._localForestries) {
+                  if (visible) {
+                    this._map.addLayer(this._localForestries);
+                  } else {
+                    this._map.removeLayer(this._localForestries);
+                  }
+                }
+
+                return _context24.abrupt("break", 86);
+
+              case 85:
+                return _context24.abrupt("break", 86);
+
+              case 86:
               case "end":
                 return _context24.stop();
             }
@@ -59502,7 +59711,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
       var _load = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee31() {
         var _this5 = this;
 
-        var mapId, incidentStyleHook, _loop, i, _this$_plotProject$ge, attributes, statusIndex, incidents, p, _this$_incidents$getG, _attributes, cid, sid, end, start;
+        var mapId, incidentStyleHook, _loop, i, _this$_plotProject$ge, attributes, statusIndex, p, incidents, _p, _this$_incidents$getG, _attributes, cid, sid, end, start;
 
         return regeneratorRuntime.wrap(function _callee31$(_context31) {
           while (1) {
@@ -59666,6 +59875,20 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                         _this5._regions.setStyles(REGIONS);
 
                         break;
+
+                      case 'forestries':
+                        _this5._forestries = layer;
+
+                        _this5._forestries.setStyles(FORESTRIES);
+
+                        break;
+
+                      case 'forestries-local':
+                        _this5._localForestries = layer;
+
+                        _this5._localForestries.setStyles(FORESTRIES_LOCAL);
+
+                        break;
                     }
                   }
                 };
@@ -59727,38 +59950,54 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   this._legend.addComponent('plot-projects', translate$g('legend.plotProjects'));
                 }
 
+                if (this._regions || this._forestries || this._localForestries) {
+                  p = this._legend.addGroup('borders', translate$g('legend.borders'));
+
+                  if (this._regions) {
+                    this._legend.addComponent('regions', translate$g('legend.regions'), p);
+                  }
+
+                  if (this._forestries) {
+                    this._legend.addComponent('forestries', translate$g('legend.forestries'), p);
+                  }
+
+                  if (this._localForestries) {
+                    this._legend.addComponent('forestries-local', translate$g('legend.localForestries'), p);
+                  }
+                }
+
                 incidents = {};
 
                 if (this._incidents) {
-                  p = this._legend.addGroup('incidents', translate$g('legend.incidents'));
+                  _p = this._legend.addGroup('incidents', translate$g('legend.incidents'));
 
-                  this._legend.addComponent('cut-unconfirmed', translate$g('legend.cut.unconfirmed'), p);
+                  this._legend.addComponent('cut-unconfirmed', translate$g('legend.cut.unconfirmed'), _p);
 
-                  this._legend.addComponent('cut-working', translate$g('legend.cut.working'), p);
+                  this._legend.addComponent('cut-working', translate$g('legend.cut.working'), _p);
 
-                  this._legend.addComponent('cut-faux', translate$g('legend.cut.faux'), p);
+                  this._legend.addComponent('cut-faux', translate$g('legend.cut.faux'), _p);
 
-                  this._legend.addComponent('cut-confirmed', translate$g('legend.cut.confirmed'), p); // this._legend.addComponent('windthrow-unconfirmed', translate('legend.windthrow.unconfirmed'), p);
+                  this._legend.addComponent('cut-confirmed', translate$g('legend.cut.confirmed'), _p); // this._legend.addComponent('windthrow-unconfirmed', translate('legend.windthrow.unconfirmed'), p);
                   // this._legend.addComponent('windthrow-working', translate('legend.windthrow.working'), p);
                   // this._legend.addComponent('windthrow-faux', translate('legend.windthrow.faux'), p);
                   // this._legend.addComponent('windthrow-confirmed', translate('legend.windthrow.confirmed'), p);
 
 
-                  this._legend.addComponent('disease-unconfirmed', translate$g('legend.disease.unconfirmed'), p);
+                  this._legend.addComponent('disease-unconfirmed', translate$g('legend.disease.unconfirmed'), _p);
 
-                  this._legend.addComponent('disease-working', translate$g('legend.disease.working'), p);
+                  this._legend.addComponent('disease-working', translate$g('legend.disease.working'), _p);
 
-                  this._legend.addComponent('disease-faux', translate$g('legend.disease.faux'), p);
+                  this._legend.addComponent('disease-faux', translate$g('legend.disease.faux'), _p);
 
-                  this._legend.addComponent('disease-confirmed', translate$g('legend.disease.confirmed'), p);
+                  this._legend.addComponent('disease-confirmed', translate$g('legend.disease.confirmed'), _p);
 
-                  this._legend.addComponent('burn-unconfirmed', translate$g('legend.burn.unconfirmed'), p);
+                  this._legend.addComponent('burn-unconfirmed', translate$g('legend.burn.unconfirmed'), _p);
 
-                  this._legend.addComponent('burn-working', translate$g('legend.burn.working'), p);
+                  this._legend.addComponent('burn-working', translate$g('legend.burn.working'), _p);
 
-                  this._legend.addComponent('burn-faux', translate$g('legend.burn.faux'), p);
+                  this._legend.addComponent('burn-faux', translate$g('legend.burn.faux'), _p);
 
-                  this._legend.addComponent('burn-confirmed', translate$g('legend.burn.confirmed'), p);
+                  this._legend.addComponent('burn-confirmed', translate$g('legend.burn.confirmed'), _p);
 
                   _this$_incidents$getG = this._incidents.getGmxProperties(), _attributes = _this$_incidents$getG.attributes;
                   cid = _attributes.indexOf('class_id');
@@ -59915,7 +60154,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 // this._map.addLayer(CRLayer);
 
 
-              case 27:
+              case 28:
               case "end":
                 return _context31.stop();
             }
