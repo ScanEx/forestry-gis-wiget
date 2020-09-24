@@ -36855,9 +36855,9 @@ var SpeciesTable = /*#__PURE__*/function (_EventTarget) {
             species = _ref.species,
             total_stock = _ref.total_stock,
             total_stock_deal = _ref.total_stock_deal;
-        return "<tr class=\"type\">\n                <td class=\"label\">".concat(species, "</td>\n                <td class=\"value\">").concat(permitted_stock.toFixed(2), " / ").concat(permitted_stock_deal.toFixed(2), "</td>\n                <td class=\"value\">").concat(probable_stock.toFixed(2), " / ").concat(probable_stock_deal.toFixed(2), "</td>\n                <td class=\"value\">").concat(total_stock.toFixed(2), " / ").concat(total_stock_deal.toFixed(2), "</td>\n            </tr>");
+        return "<tr class=\"type\">\n                <td class=\"label\">".concat(species, "</td>\n                <td class=\"value\">").concat(permitted_stock.toFixed(2), " / ").concat(permitted_stock_deal.toFixed(2), "</td>                \n                <td class=\"value\">").concat(probable_stock.toFixed(2), " / ").concat(probable_stock_deal.toFixed(2), "</td>\n                <td class=\"value\">").concat(total_stock.toFixed(2), " / ").concat(total_stock_deal.toFixed(2), "</td>                \n            </tr>");
       }).join('');
-      this._container.innerHTML = rows ? "<div class=\"title\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\t\t\t\t\t\t\t\n                    <tr>\n                        <td>".concat(translate$6('species'), "</td>\n                        <td colspan=\"3\">").concat(translate$6('stock.label'), ", ").concat(translate$6('unit.m'), "<sup>3</sup></td>\n                    </tr>\n                    <tr>\n                        <td></td>\n                        <td>").concat(translate$6('stock.permitted'), "</td>\n                        <td>").concat(translate$6('stock.probable'), "</td>\n                        <td>").concat(translate$6('stock.total'), "</td>\n                    </tr>\t\t\t\t\t\t\t\n                </table>\n            </div>\n            <div class=\"content\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>").concat(rows, "</tbody>\n                </table>\n            </div>") : '';
+      this._container.innerHTML = rows ? "<div class=\"title\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\t\t\t\t\t\t\t\n                    <tr>\n                        <td>".concat(translate$6('species'), "</td>\n                        <td colspan=\"3\">").concat(translate$6('stock.label'), ", ").concat(translate$6('unit.m'), "<sup>3</sup></td>\n                    </tr>\n                    <tr>\n                        <td></td>\n                        <td>").concat(translate$6('stock.permitted'), "</td>                        \n                        <td>").concat(translate$6('stock.probable'), "</td>\n                        <td>").concat(translate$6('stock.total'), "</td>                        \n                    </tr>\t\t\t\t\t\t\t\n                </table>\n            </div>\n            <div class=\"content\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>").concat(rows, "</tbody>\n                </table>\n            </div>") : '';
     }
   }]);
 
@@ -54081,9 +54081,9 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
 
 var translate$7 = T.getText.bind(T);
 var stock = {
-  permitted: 'Таксация',
+  permitted: 'Доступный',
   probable: 'Прогноз',
-  total: 'Доступный',
+  total: 'Таксация',
   table: 'Данные о запасах',
   label: 'Запас',
   all: 'Весь'
@@ -54106,7 +54106,7 @@ var Species = /*#__PURE__*/function () {
 
     this._species = [];
     this._container = container;
-    this._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<thead class=\"menu\">\n\t\t\t\t<tr>\n\t\t\t\t\t<th colspan=\"3\">\n\t\t\t\t\t\t<button class=\"stock active\">".concat(translate$7('stock.table'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\t\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"total\">").concat(translate$7('stock.total'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"probable\">").concat(translate$7('stock.probable'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"permitted\">").concat(translate$7('stock.permitted'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td colspan=\"4\">\n\t\t\t\t\t\t<div class=\"table\"></div>\n\t\t\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t\t</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
+    this._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<thead class=\"menu\">\n\t\t\t\t<tr>\n\t\t\t\t\t<th colspan=\"3\">\n\t\t\t\t\t\t<button class=\"stock active\">".concat(translate$7('stock.table'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"permitted\">").concat(translate$7('stock.permitted'), "</button>\n\t\t\t\t\t</th>\t\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"probable\">").concat(translate$7('stock.probable'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"total\">").concat(translate$7('stock.total'), "</button>\n\t\t\t\t\t</th>\t\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td colspan=\"4\">\n\t\t\t\t\t\t<div class=\"table\"></div>\n\t\t\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t\t</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
     this._buttons = this._container.querySelectorAll('button');
 
     var btnStock = this._container.querySelector('.stock');
@@ -54116,11 +54116,11 @@ var Species = /*#__PURE__*/function () {
       _this.mode = 'stock';
     });
 
-    var btnTotal = this._container.querySelector('.total');
+    var btnPermitted = this._container.querySelector('.permitted');
 
-    btnTotal.addEventListener('click', function (e) {
+    btnPermitted.addEventListener('click', function (e) {
       e.stopPropagation();
-      _this.mode = 'total';
+      _this.mode = 'permitted';
     });
 
     var btnProbable = this._container.querySelector('.probable');
@@ -54130,11 +54130,11 @@ var Species = /*#__PURE__*/function () {
       _this.mode = 'probable';
     });
 
-    var btnPermitted = this._container.querySelector('.permitted');
+    var btnTotal = this._container.querySelector('.total');
 
-    btnPermitted.addEventListener('click', function (e) {
+    btnTotal.addEventListener('click', function (e) {
       e.stopPropagation();
-      _this.mode = 'permitted';
+      _this.mode = 'total';
     });
     this._chart = new apexcharts_common(this._container.querySelector('.chart'), {
       chart: {
@@ -54244,11 +54244,11 @@ var Species = /*#__PURE__*/function () {
             a.labels.push(s.species);
 
             switch (_this2.mode) {
-              case 1:
+              case 'permitted':
                 a.series.push(s.permitted_stock);
                 break;
 
-              case 2:
+              case 'probable':
                 a.series.push(s.probable_stock);
                 break;
 
