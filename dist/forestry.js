@@ -25049,14 +25049,6 @@ var Zoom = L$1.Control.extend({
   onRemove: function onRemove() {}
 });
 
-var chain = function chain(tasks, state) {
-  return tasks.reduce(function (prev, next) {
-    return prev.then(next);
-  }, new Promise(function (resolve, reject) {
-    return resolve(state);
-  }));
-};
-
 var Content = L$1.Control.extend({
   options: {
     position: 'bottom'
@@ -25073,10 +25065,19 @@ var Content = L$1.Control.extend({
   },
   onRemove: function onRemove(map) {},
   addComponent: function addComponent(id, Component, options) {
+    var _this = this;
+
     if (!this._components[id]) {
       var container = L$1.DomUtil.create('div', 'component hidden', this._container);
       container.setAttribute('data-id', id);
-      this._components[id] = new Component(container, options);
+      var component = new Component(container, options);
+      component.on('open', function () {
+        _this._current = id;
+      });
+      component.on('close', function () {
+        _this._current = null;
+      });
+      this._components[id] = component;
     }
 
     return this._components[id];
@@ -25090,11 +25091,10 @@ var Content = L$1.Control.extend({
         while (1) {
           switch (_context.prev = _context.next) {
             case 0:
-              this._current = null;
-              _context.next = 3;
+              _context.next = 2;
               return this.showComponent();
 
-            case 3:
+            case 2:
             case "end":
               return _context.stop();
           }
@@ -25111,55 +25111,56 @@ var Content = L$1.Control.extend({
   isDefault: function isDefault() {
     return !this.getCurrentId();
   },
-  showComponent: function showComponent(id, options) {
-    var _this = this;
+  showComponent: function () {
+    var _showComponent = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(id, options) {
+      var cid, component;
+      return regeneratorRuntime.wrap(function _callee2$(_context2) {
+        while (1) {
+          switch (_context2.prev = _context2.next) {
+            case 0:
+              cid = this.getCurrentId();
 
-    return new Promise(function (resolve) {
-      var tasks = Object.keys(_this._components).map(function (k) {
-        return function () {
-          return new Promise(function (resolve) {
-            var component = _this._components[k];
+              if (cid && cid !== id) {
+                this._components[cid].close();
+              }
 
-            if (k === id) {
-              _this._current = id;
-              component.open(options).then(function () {
-                resolve();
-              }).catch(function (e) {
-                console.log(e);
-                component.close();
-                resolve();
-              });
-            } else {
+              component = this._components[id];
+
+              if (!component) {
+                _context2.next = 13;
+                break;
+              }
+
+              _context2.prev = 4;
+              _context2.next = 7;
+              return component.open(options);
+
+            case 7:
+              _context2.next = 13;
+              break;
+
+            case 9:
+              _context2.prev = 9;
+              _context2.t0 = _context2["catch"](4);
+              console.log(_context2.t0);
               component.close();
-              resolve();
-            }
-          });
-        };
-      });
-      chain(tasks).then(function () {
-        return resolve();
-      });
-    });
-  },
-  getCurrentId: function getCurrentId() {
-    var _iterator = _createForOfIteratorHelper(this._container.querySelectorAll('[data-id]')),
-        _step;
 
-    try {
-      for (_iterator.s(); !(_step = _iterator.n()).done;) {
-        var el = _step.value;
-
-        if (!L$1.DomUtil.hasClass(el, 'hidden')) {
-          return el.getAttribute('data-id');
+            case 13:
+            case "end":
+              return _context2.stop();
+          }
         }
-      }
-    } catch (err) {
-      _iterator.e(err);
-    } finally {
-      _iterator.f();
+      }, _callee2, this, [[4, 9]]);
+    }));
+
+    function showComponent(_x, _x2) {
+      return _showComponent.apply(this, arguments);
     }
 
-    return null;
+    return showComponent;
+  }(),
+  getCurrentId: function getCurrentId() {
+    return this._current;
   }
 });
 
@@ -36318,11 +36319,19 @@ var Component = /*#__PURE__*/function (_EventTarget) {
     key: "open",
     value: function open() {
       this._target.classList.remove('hidden');
+
+      var event = document.createEvent('Event');
+      event.initEvent('open', false, false);
+      this.dispatchEvent(event);
     }
   }, {
     key: "close",
     value: function close() {
       this._target.classList.add('hidden');
+
+      var event = document.createEvent('Event');
+      event.initEvent('close', false, false);
+      this.dispatchEvent(event);
     }
   }]);
 
@@ -54139,7 +54148,7 @@ var Species = /*#__PURE__*/function () {
     this._chart = new apexcharts_common(this._container.querySelector('.chart'), {
       chart: {
         type: 'donut',
-        width: '500px',
+        width: '600px',
         height: '200px'
       },
       labels: [],
@@ -54149,7 +54158,16 @@ var Species = /*#__PURE__*/function () {
         fontSize: '15px',
         width: '200px',
         formatter: function formatter(seriesName, opts) {
-          return [seriesName, " - ", opts.w.globals.series[opts.seriesIndex]];
+          switch (_this._mode) {
+            case 'permitted':
+              return [seriesName, ' - ', opts.w.globals.series[opts.seriesIndex], ' / ', _this._species[opts.seriesIndex].permitted_stock_deal];
+
+            case 'probable':
+              return [seriesName, ' - ', opts.w.globals.series[opts.seriesIndex], ' / ', _this._species[opts.seriesIndex].probable_stock_deal];
+
+            default:
+              return [seriesName, ' - ', opts.w.globals.series[opts.seriesIndex], ' / ', _this._species[opts.seriesIndex].total_stock_deal];
+          }
         }
       },
       plotOptions: {
@@ -54168,7 +54186,7 @@ var Species = /*#__PURE__*/function () {
                   var series = _ref.config.series;
                   return "".concat(series.reduce(function (p, c) {
                     return p + c;
-                  }, 0), " ").concat(translate$7('unit.m3'));
+                  }, 0).toFixed(1), " ").concat(translate$7('unit.m3'));
                 },
                 label: translate$7('stock.all'),
                 show: true,
@@ -54240,6 +54258,8 @@ var Species = /*#__PURE__*/function () {
         } else {
           this.showSpecies();
 
+          this._chart.render();
+
           var _this$_species$reduce = this._species.reduce(function (a, s) {
             a.labels.push(s.species);
 
@@ -54286,11 +54306,16 @@ var Species = /*#__PURE__*/function () {
 var translate$8 = T.getText.bind(T);
 T.addText('rus', {
   plot: {
-    title: 'Создание проекта лесного участка',
+    title: {
+      create: 'Создание проекта лесного участка',
+      edit: 'Редактирование проекта лесного участка'
+    },
     create: 'Создать проект',
     edit: 'Редактировать проект',
     request: 'Создать заявку',
-    save: 'Сохранить проект'
+    save: 'Сохранить проект',
+    description: 'Описание',
+    default: 'Проект ЛУ'
   },
   error: {
     request: {
@@ -54467,7 +54492,7 @@ var Plot = /*#__PURE__*/function (_Component) {
   }, {
     key: "_save",
     value: function () {
-      var _save2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
+      var _save2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(description) {
         var response;
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
@@ -54481,7 +54506,7 @@ var Plot = /*#__PURE__*/function (_Component) {
                     'Content-Type': 'application/json'
                   },
                   body: JSON.stringify({
-                    Title: new Date().toLocaleDateString(),
+                    Title: description,
                     ForestQs: this._quadrants.items.map(function (_ref3) {
                       var gmx_id = _ref3.gmx_id;
                       return gmx_id;
@@ -54505,7 +54530,7 @@ var Plot = /*#__PURE__*/function (_Component) {
         }, _callee2, this);
       }));
 
-      function _save() {
+      function _save(_x2) {
         return _save2.apply(this, arguments);
       }
 
@@ -54565,7 +54590,7 @@ var Plot = /*#__PURE__*/function (_Component) {
         }, _callee3, this);
       }));
 
-      function _validate(_x2) {
+      function _validate(_x3) {
         return _validate2.apply(this, arguments);
       }
 
@@ -54654,13 +54679,18 @@ var CreatePlot = /*#__PURE__*/function (_Plot) {
       layer: layer,
       path: path
     });
-    _this2._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th colspan=\"2\">\n                        <button class=\"backward\"></button>\n                        <label class=\"head\">".concat(translate$8('plot.title'), "</label>                        \n                        <button class=\"create\">").concat(translate$8('plot.create'), "</button>\n                    </th>\n                </tr>\n            </thead>\n            <tbody>\n                <tr>                    \n                    <td>                                                \n                        <div class=\"species\"></div>\n                    </td>\n                    <td>\n                        <div class=\"quadrants\"></div>\n                    </td>\n                </tr>\n            </tbody>\n        </table>");
+    _this2._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th colspan=\"2\">\n                        <button class=\"backward\"></button>\n                        <label class=\"head\">".concat(translate$8('plot.title.create'), "</label>                        \n                        <button class=\"create\">").concat(translate$8('plot.create'), "</button>\n                    </th>\n                </tr>\n            </thead>\n            <tbody>\n                <tr>                    \n                    <td>                                                \n                        <div class=\"species\"></div>\n                    </td>\n                    <td>\n                        <div class=\"description\">                            \n                            <input type=\"text\" value=\"\" />\n                        </div>\n                        <div class=\"quadrants\"></div>\n                    </td>\n                </tr>\n            </tbody>\n        </table>");
 
     _this2._container.querySelector('.backward').addEventListener('click', function (e) {
       e.stopPropagation();
 
       _this2._back();
     });
+
+    var description = _this2._container.querySelector('.description');
+
+    _this2._description = description.querySelector('input');
+    _this2._description.value = "".concat(translate$8('plot.default'), " - ").concat(new Date().toLocaleDateString());
 
     var btnCreate = _this2._container.querySelector('.create');
 
@@ -54673,7 +54703,7 @@ var CreatePlot = /*#__PURE__*/function (_Plot) {
               case 0:
                 e.stopPropagation();
                 _context5.next = 3;
-                return _this2._save();
+                return _this2._save(_this2._description.value);
 
               case 3:
                 data = _context5.sent;
@@ -54691,7 +54721,7 @@ var CreatePlot = /*#__PURE__*/function (_Plot) {
         }, _callee5);
       }));
 
-      return function (_x3) {
+      return function (_x4) {
         return _ref6.apply(this, arguments);
       };
     }());
@@ -54744,7 +54774,7 @@ var EditPlot = /*#__PURE__*/function (_Plot2) {
       layer: layer,
       path: path
     });
-    _this3._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th colspan=\"2\">\n                        <button class=\"backward\"></button>\n                        <label class=\"head\">".concat(translate$8('plot.title'), "</label>                        \n                        <button class=\"save\">").concat(translate$8('plot.save'), "</button>\n                        <button class=\"request\">").concat(translate$8('plot.request'), "</button>\n                    </th>\n                </tr>\n            </thead>\n            <tbody>\n                <tr>                    \n                    <td>                                                \n                        <div class=\"species\"></div>\n                    </td>\n                    <td>\n                        <div class=\"quadrants\"></div>\n                    </td>\n                </tr>\n            </tbody>\n        </table>");
+    _this3._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th colspan=\"2\">\n                        <button class=\"backward\"></button>\n                        <label class=\"head\">".concat(translate$8('plot.title.edit'), "</label>                        \n                        <button class=\"save\">").concat(translate$8('plot.save'), "</button>\n                        <button class=\"request\">").concat(translate$8('plot.request'), "</button>\n                    </th>\n                </tr>\n            </thead>\n            <tbody>\n                <tr>                    \n                    <td>                                                \n                        <div class=\"species\"></div>\n                    </td>\n                    <td>\n                        <div class=\"description\">                            \n                            <label></label>\n                        </div>\n                        <div class=\"quadrants\"></div>\n                    </td>\n                </tr>\n            </tbody>\n        </table>");
 
     _this3._container.querySelector('.backward').addEventListener('click', function (e) {
       e.stopPropagation();
@@ -54781,10 +54811,14 @@ var EditPlot = /*#__PURE__*/function (_Plot2) {
         }, _callee6);
       }));
 
-      return function (_x4) {
+      return function (_x5) {
         return _ref8.apply(this, arguments);
       };
     }());
+
+    var description = _this3._container.querySelector('.description');
+
+    _this3._description = description.querySelector('label');
 
     var btnRequest = _this3._container.querySelector('.request');
 
@@ -54824,7 +54858,7 @@ var EditPlot = /*#__PURE__*/function (_Plot2) {
         }, _callee7, null, [[1, 10]]);
       }));
 
-      return function (_x5) {
+      return function (_x6) {
         return _ref9.apply(this, arguments);
       };
     }());
@@ -54952,7 +54986,7 @@ var EditPlot = /*#__PURE__*/function (_Plot2) {
     key: "open",
     value: function () {
       var _open2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(id) {
-        var response, _yield$response$json2, gmxIds, result;
+        var response, _yield$response$json2, title, gmxIds, result;
 
         return regeneratorRuntime.wrap(function _callee10$(_context10) {
           while (1) {
@@ -54979,33 +55013,35 @@ var EditPlot = /*#__PURE__*/function (_Plot2) {
 
               case 8:
                 _yield$response$json2 = _context10.sent;
+                title = _yield$response$json2.title;
                 gmxIds = _yield$response$json2.gmxIds;
-                _context10.next = 12;
+                _context10.next = 13;
                 return this._validate(gmxIds);
 
-              case 12:
+              case 13:
                 result = _context10.sent;
 
                 if (!result) {
-                  _context10.next = 19;
+                  _context10.next = 21;
                   break;
                 }
 
                 this._valid = id;
+                this._description.innerText = title;
                 this._quadrants.items = result.SquareStat;
                 this._species.items = result.ForestStat;
-                _context10.next = 20;
+                _context10.next = 22;
                 break;
 
-              case 19:
+              case 21:
                 throw translate$8('quadrant.invalid');
 
-              case 20:
-                _context10.next = 27;
+              case 22:
+                _context10.next = 29;
                 break;
 
-              case 22:
-                _context10.prev = 22;
+              case 24:
+                _context10.prev = 24;
                 _context10.t0 = _context10["catch"](0);
 
                 this._back();
@@ -55013,15 +55049,15 @@ var EditPlot = /*#__PURE__*/function (_Plot2) {
                 console.log(_context10.t0);
                 alert(translate$8('error.plot.edit'));
 
-              case 27:
+              case 29:
               case "end":
                 return _context10.stop();
             }
           }
-        }, _callee10, this, [[0, 22]]);
+        }, _callee10, this, [[0, 24]]);
       }));
 
-      function open(_x6) {
+      function open(_x7) {
         return _open2.apply(this, arguments);
       }
 
@@ -58497,7 +58533,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 return this._content.showComponent('requests');
 
               case 5:
-                this._legend.enable('plot_project');
+                this._legend.enable('plot-projects');
 
                 _context7.next = 13;
                 break;
@@ -59307,7 +59343,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
               case 10:
                 _context24.t1 = mode;
-                _context24.next = _context24.t1 === 'create-plot' ? 13 : _context24.t1 === 'edit-plot' ? 13 : _context24.t1 === 'quadrant' ? 13 : 16;
+                _context24.next = _context24.t1 === 'quadrant' ? 13 : 16;
                 break;
 
               case 13:
