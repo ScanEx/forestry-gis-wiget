@@ -1932,6 +1932,40 @@ _export({ target: PROMISE, stat: true, forced: INCORRECT_ITERATION }, {
   }
 });
 
+// `RegExp.prototype.flags` getter implementation
+// https://tc39.github.io/ecma262/#sec-get-regexp.prototype.flags
+var regexpFlags = function () {
+  var that = anObject(this);
+  var result = '';
+  if (that.global) result += 'g';
+  if (that.ignoreCase) result += 'i';
+  if (that.multiline) result += 'm';
+  if (that.dotAll) result += 's';
+  if (that.unicode) result += 'u';
+  if (that.sticky) result += 'y';
+  return result;
+};
+
+var TO_STRING = 'toString';
+var RegExpPrototype = RegExp.prototype;
+var nativeToString = RegExpPrototype[TO_STRING];
+
+var NOT_GENERIC = fails(function () { return nativeToString.call({ source: 'a', flags: 'b' }) != '/a/b'; });
+// FF44- RegExp#toString has a wrong name
+var INCORRECT_NAME = nativeToString.name != TO_STRING;
+
+// `RegExp.prototype.toString` method
+// https://tc39.github.io/ecma262/#sec-regexp.prototype.tostring
+if (NOT_GENERIC || INCORRECT_NAME) {
+  redefine(RegExp.prototype, TO_STRING, function toString() {
+    var R = anObject(this);
+    var p = String(R.source);
+    var rf = R.flags;
+    var f = String(rf === undefined && R instanceof RegExp && !('flags' in RegExpPrototype) ? regexpFlags.call(R) : rf);
+    return '/' + p + '/' + f;
+  }, { unsafe: true });
+}
+
 // iterable DOM collections
 // flag - `iterable` interface - 'entries', 'keys', 'values', 'forEach' methods
 var domIterables = {
@@ -2476,40 +2510,6 @@ _export({ target: 'Object', stat: true, forced: FAILS_ON_PRIMITIVES, sham: !corr
 _export({ target: 'Object', stat: true }, {
   setPrototypeOf: objectSetPrototypeOf
 });
-
-// `RegExp.prototype.flags` getter implementation
-// https://tc39.github.io/ecma262/#sec-get-regexp.prototype.flags
-var regexpFlags = function () {
-  var that = anObject(this);
-  var result = '';
-  if (that.global) result += 'g';
-  if (that.ignoreCase) result += 'i';
-  if (that.multiline) result += 'm';
-  if (that.dotAll) result += 's';
-  if (that.unicode) result += 'u';
-  if (that.sticky) result += 'y';
-  return result;
-};
-
-var TO_STRING = 'toString';
-var RegExpPrototype = RegExp.prototype;
-var nativeToString = RegExpPrototype[TO_STRING];
-
-var NOT_GENERIC = fails(function () { return nativeToString.call({ source: 'a', flags: 'b' }) != '/a/b'; });
-// FF44- RegExp#toString has a wrong name
-var INCORRECT_NAME = nativeToString.name != TO_STRING;
-
-// `RegExp.prototype.toString` method
-// https://tc39.github.io/ecma262/#sec-regexp.prototype.tostring
-if (NOT_GENERIC || INCORRECT_NAME) {
-  redefine(RegExp.prototype, TO_STRING, function toString() {
-    var R = anObject(this);
-    var p = String(R.source);
-    var rf = R.flags;
-    var f = String(rf === undefined && R instanceof RegExp && !('flags' in RegExpPrototype) ? regexpFlags.call(R) : rf);
-    return '/' + p + '/' + f;
-  }, { unsafe: true });
-}
 
 // `String.prototype.{ codePointAt, at }` methods implementation
 var createMethod$3 = function (CONVERT_TO_STRING) {
@@ -21203,8 +21203,13 @@ L.gmx.VectorLayer.include({
           workerParams = [],
           bboxStr = WORLDBBOX,
           chkHost = function chkHost(hostName, busyFlag) {
-        var layersData = hosts[hostName],
-            endPoint = layersData[0].endPoint || script,
+        var layersData = hosts[hostName];
+
+        if (!layersData) {
+          return;
+        }
+
+        var endPoint = layersData[0].endPoint || script,
             url = L.gmxUtil.protocol + '//' + hostName + endPoint,
             layersStr = JSON.stringify(layersData);
         var ph = {
@@ -25026,16 +25031,16 @@ var Zoom = L$1.Control.extend({
     position: 'topright'
   },
   onAdd: function onAdd(map) {
-    var container = L$1.DomUtil.create('div', 'map-top-right-wrapper__zoom');
-    var plus = L$1.DomUtil.create('div', 'plus-event map-top-right-wrapper__zoom-left', container);
-    plus.innerHTML = '<div class="plus"></div>';
+    var container = L$1.DomUtil.create('div', 'scanex-forestry-zoom');
+    L$1.DomEvent.disableScrollPropagation(container);
+    L$1.DomEvent.disableClickPropagation(container);
+    var plus = L$1.DomUtil.create('i', 'scanex-zoom-icon plus', container);
     L$1.DomEvent.on(plus, 'click', function () {
       return map.zoomIn(1);
     }, map);
-    var middle = L$1.DomUtil.create('div', 'middle map-top-right-wrapper__zoom-middle', container);
+    var middle = L$1.DomUtil.create('label', 'middle', container);
     middle.innerHTML = map.getZoom();
-    var minus = L$1.DomUtil.create('div', 'minus-event map-top-right-wrapper__zoom-right', container);
-    minus.innerHTML = '<div class="minus"></div>';
+    var minus = L$1.DomUtil.create('i', 'scanex-zoom-icon minus', container);
     L$1.DomEvent.on(minus, 'click', function () {
       return map.zoomOut(1);
     }, map);
@@ -25554,7 +25559,11 @@ var HotSpotTimeLine = L$1.Control.extend({
     chkZoom();
 
     if (!this._hp) {
-      this._getLayers();
+      if (this.options.layer) {
+        this._getObserver(this.options.layer);
+      } else {
+        this._getLayers();
+      }
     } else {
       this._reSetDateInterval();
 
@@ -25581,76 +25590,83 @@ var HotSpotTimeLine = L$1.Control.extend({
   _setBounds: function _setBounds() {
     this._hp._observer.setBounds(this._map.getBounds());
   },
+  _getObserver: function _getObserver(layer) {
+    var hp = layer;
+    var map = this._map;
+
+    var _this = this;
+
+    this._hp = hp;
+    hp._gmx.rawProperties.maxShownPeriod = null;
+    hp.options.minZoom = this.options.minZoom;
+    var lprops = hp.getGmxProperties();
+    var hpDm = hp.getDataManager();
+    var tmpKeyNum = hpDm.tileAttributeIndexes[lprops.TemporalColumnName];
+    var day = 60 * 60 * 24;
+    var observer = hpDm.addObserver({
+      type: 'resend',
+      filters: ['clipFilter', 'userFilter', 'userFilter_timeline', 'styleFilter'],
+      active: false,
+      needBbox: true,
+      layerID: lprops.name,
+      itemHook: function itemHook(it) {
+        if (!this.cache) {
+          this.cache = {};
+        }
+
+        var arr = it.properties;
+
+        if (this.intersectsWithGeometry(arr[arr.length - 1])) {
+          var utm = day * Math.floor(Number(arr[tmpKeyNum]) / day);
+          this.cache[utm] = 1 + (this.cache[utm] || 0);
+        }
+      },
+      callback: function callback() {
+        var out = this.cache || {}; // console.log('observer', hotSpotLayerID, Object.keys(out).length);
+
+        this.cache = {};
+        var data = Object.keys(out).map(function (tStamp) {
+          return {
+            start: new Date(tStamp * 1000),
+            content: "Термоточек " + out[tStamp],
+            items: out[tStamp]
+          };
+        });
+
+        _this._timeline.setData(data); // Перерисовка таймлайна
+
+      }
+    });
+    this._hp._observer = observer;
+    this._interval = [new Date(lprops.DateBeginUTC * 1000), new Date(lprops.DateEndUTC * 1000)];
+
+    _this._timeline.setVisibleChartRange(this._interval[0], this._interval[1]);
+
+    observer.setDateInterval(this._interval[0], new Date());
+
+    this._setBounds();
+
+    map.on('moveend', this._setBounds, this);
+
+    this._reSetDateInterval();
+
+    observer.activate();
+    map.addLayer(hp);
+  },
   _getLayers: function _getLayers() {
     L$1.gmx.loadLayers([{
       mapID: '9746DBC72F3D438C99EB9C76855B5FBC',
       // слой лежит в карте "Forestry" на maps.kosmosnimki.ru
       layerID: hotSpotLayerID
     }], {}).then(function (arr) {
-      var hp = arr[0];
-      var map = this._map;
+      var layer = arr[0];
 
-      var _this = this;
+      this._getObserver(layer);
 
-      this._hp = hp;
-      hp.options.minZoom = this.options.minZoom;
-      hp.bindPopup('', {
+      layer.bindPopup('', {
         popupopen: this.showInfo.bind(this),
         className: 'hidden'
       });
-      var lprops = hp.getGmxProperties();
-      var hpDm = hp.getDataManager();
-      var tmpKeyNum = hpDm.tileAttributeIndexes[lprops.TemporalColumnName];
-      var day = 60 * 60 * 24;
-      var observer = hpDm.addObserver({
-        type: 'resend',
-        filters: ['clipFilter', 'userFilter', 'userFilter_timeline', 'styleFilter'],
-        active: false,
-        needBbox: true,
-        layerID: hotSpotLayerID,
-        itemHook: function itemHook(it) {
-          if (!this.cache) {
-            this.cache = {};
-          }
-
-          var arr = it.properties;
-
-          if (this.intersectsWithGeometry(arr[arr.length - 1])) {
-            var utm = day * Math.floor(Number(arr[tmpKeyNum]) / day);
-            this.cache[utm] = 1 + (this.cache[utm] || 0);
-          }
-        },
-        callback: function callback() {
-          var out = this.cache || {}; // console.log('observer', hotSpotLayerID, Object.keys(out).length);
-
-          this.cache = {};
-          var data = Object.keys(out).map(function (tStamp) {
-            return {
-              start: new Date(tStamp * 1000),
-              content: "Термоточек " + out[tStamp],
-              items: out[tStamp]
-            };
-          });
-
-          _this._timeline.setData(data); // Перерисовка таймлайна
-
-        }
-      });
-      this._hp._observer = observer;
-      this._interval = [new Date(lprops.DateBeginUTC * 1000), new Date(lprops.DateEndUTC * 1000)];
-
-      _this._timeline.setVisibleChartRange(this._interval[0], this._interval[1]);
-
-      observer.setDateInterval(this._interval[0], new Date());
-
-      this._setBounds();
-
-      map.on('moveend', this._setBounds, this);
-
-      this._reSetDateInterval();
-
-      observer.activate();
-      map.addLayer(hp);
     }.bind(this));
   },
   showInfo: function showInfo(ev) {
@@ -36303,7 +36319,7 @@ var Component = /*#__PURE__*/function (_EventTarget) {
 
     _this = _super.call(this);
     _this._target = container;
-    _this._target.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <tbody>\n                <tr>\n                    <td class=\"container\"></td>\n                    <td>\n                        <i class=\"scanex-component-icon close\"></i>\n                    </td>\n                </tr>\n            </tbody>\n        </table>";
+    _this._target.innerHTML = "<i class=\"scanex-component-icon close\"></i>\n        <div class=\"container\"></div>";
     _this._container = _this._target.querySelector('.container');
     var btn = container.querySelector('.scanex-component-icon');
     btn.addEventListener('click', function (e) {
@@ -36480,7 +36496,7 @@ var Requests = /*#__PURE__*/function (_Component) {
         _ref$columns = _ref.columns,
         columns = _ref$columns === void 0 ? ['id', 'status', 'title', 'forestry', 'totalSquare'] : _ref$columns,
         _ref$pageSize = _ref.pageSize,
-        pageSize = _ref$pageSize === void 0 ? 5 : _ref$pageSize;
+        pageSize = _ref$pageSize === void 0 ? 4 : _ref$pageSize;
 
     _classCallCheck(this, Requests);
 
@@ -36602,22 +36618,44 @@ var Requests = /*#__PURE__*/function (_Component) {
 
                 _loop = function _loop(i) {
                   var row = rows[i];
-                  var item = plotProjectsList[i];
+                  var _plotProjectsList$i = plotProjectsList[i],
+                      id = _plotProjectsList$i.id,
+                      forestryID = _plotProjectsList$i.forestryID,
+                      statusID = _plotProjectsList$i.statusID;
                   row.querySelector('.scanex-requests-icon').addEventListener('click', function (e) {
                     e.stopPropagation();
                     var event = document.createEvent('Event');
                     event.initEvent('remove', false, false);
-                    event.detail = item.id;
+                    event.detail = id;
 
                     _this2.dispatchEvent(event);
                   });
                   row.addEventListener('click', function (e) {
                     e.stopPropagation();
-                    var event = document.createEvent('Event');
-                    event.initEvent('edit', false, false);
-                    event.detail = item.id;
+                    var event;
 
-                    _this2.dispatchEvent(event);
+                    switch (statusID) {
+                      case 1:
+                        event = document.createEvent('Event');
+                        event.initEvent('edit', false, false);
+                        event.detail = {
+                          id: id,
+                          forestryID: forestryID
+                        };
+
+                        _this2.dispatchEvent(event);
+
+                        break;
+
+                      default:
+                        event = document.createEvent('Event');
+                        event.initEvent('existing', false, false);
+                        event.detail = id;
+
+                        _this2.dispatchEvent(event);
+
+                        break;
+                    }
                   });
                 };
 
@@ -54115,7 +54153,7 @@ var Species = /*#__PURE__*/function () {
 
     this._species = [];
     this._container = container;
-    this._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<thead class=\"menu\">\n\t\t\t\t<tr>\n\t\t\t\t\t<th colspan=\"3\">\n\t\t\t\t\t\t<button class=\"stock active\">".concat(translate$7('stock.table'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"permitted\">").concat(translate$7('stock.permitted'), "</button>\n\t\t\t\t\t</th>\t\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"probable\">").concat(translate$7('stock.probable'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"total\">").concat(translate$7('stock.total'), "</button>\n\t\t\t\t\t</th>\t\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td colspan=\"4\">\n\t\t\t\t\t\t<div class=\"table\"></div>\n\t\t\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t\t</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
+    this._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<thead class=\"menu\">\n\t\t\t\t<tr>\n\t\t\t\t\t<th colspan=\"3\">\n\t\t\t\t\t\t<button class=\"stock active\">".concat(translate$7('stock.table'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"permitted\">").concat(translate$7('stock.permitted'), "</button>\n\t\t\t\t\t</th>\t\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"probable\">").concat(translate$7('stock.probable'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"total\">").concat(translate$7('stock.total'), "</button>\n\t\t\t\t\t</th>\t\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td colspan=\"3\">\n\t\t\t\t\t\t<div class=\"table\"></div>\n\t\t\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t\t</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
     this._buttons = this._container.querySelectorAll('button');
 
     var btnStock = this._container.querySelector('.stock');
@@ -54149,24 +54187,41 @@ var Species = /*#__PURE__*/function () {
       chart: {
         type: 'donut',
         width: '600px',
-        height: '200px'
+        height: '160px'
       },
       labels: [],
       series: [],
       legend: {
         position: 'right',
-        fontSize: '15px',
+        // fontSize: '15px',
         width: '200px',
+        offsetY: -10,
         formatter: function formatter(seriesName, opts) {
+          var i = opts.seriesIndex;
+          var s = _this._species[i];
+
           switch (_this._mode) {
             case 'permitted':
-              return [seriesName, ' - ', opts.w.globals.series[opts.seriesIndex], ' / ', _this._species[opts.seriesIndex].permitted_stock_deal];
+              if (s && s.permitted_stock_deal) {
+                return [seriesName, ' - ', opts.w.globals.series[i], ' / ', s.permitted_stock_deal];
+              } else {
+                return [seriesName, ' - ', opts.w.globals.series[i]];
+              }
 
             case 'probable':
-              return [seriesName, ' - ', opts.w.globals.series[opts.seriesIndex], ' / ', _this._species[opts.seriesIndex].probable_stock_deal];
+              if (s && s.probable_stock_deal) {
+                return [seriesName, ' - ', opts.w.globals.series[i], ' / ', s.probable_stock_deal];
+              } else {
+                return [seriesName, ' - ', opts.w.globals.series[i]];
+              }
 
             default:
-              return [seriesName, ' - ', opts.w.globals.series[opts.seriesIndex], ' / ', _this._species[opts.seriesIndex].total_stock_deal];
+              if (s && s.total_stock_deal) {
+                return [seriesName, ' - ', opts.w.globals.series[i], ' / ', s.total_stock_deal];
+              } else {
+                return [seriesName, ' - ', opts.w.globals.series[i]];
+              }
+
           }
         }
       },
@@ -54179,7 +54234,7 @@ var Species = /*#__PURE__*/function () {
                 formatter: function formatter(val) {
                   return "".concat(val, " ").concat(translate$7('unit.m3'));
                 },
-                fontSize: '12px'
+                fontSize: '10px'
               },
               total: {
                 formatter: function formatter(_ref) {
@@ -54190,15 +54245,13 @@ var Species = /*#__PURE__*/function () {
                 },
                 label: translate$7('stock.all'),
                 show: true,
-                fontSize: '12px'
+                fontSize: '10px'
               }
             }
           }
         }
       }
-    });
-
-    this._chart.render();
+    }); // this._chart.render();
 
     this.mode = 'stock';
   }
@@ -54310,6 +54363,8 @@ T.addText('rus', {
       create: 'Создание проекта лесного участка',
       edit: 'Редактирование проекта лесного участка'
     },
+    forestry: 'Лесничество',
+    localForestry: 'Участковое лесничество',
     create: 'Создать проект',
     edit: 'Редактировать проект',
     request: 'Создать заявку',
@@ -54384,31 +54439,8 @@ var Plot = /*#__PURE__*/function (_Component) {
 
   _createClass(Plot, [{
     key: "_styleHook",
-    value: function _styleHook(_ref2) {
-      var id = _ref2.id,
-          properties = _ref2.properties;
-
-      if (this.quadrants.includes(id)) {
-        return STYLES$1.SELECTED;
-      } else {
-        if (this._statusIndex >= 0) {
-          switch (properties[this._statusIndex]) {
-            case 1:
-              return STYLES$1.OWN;
-
-            case 2:
-              return STYLES$1.BID;
-
-            case 3:
-              return STYLES$1.LEASED;
-
-            default:
-              return {};
-          }
-        } else {
-          return {};
-        }
-      }
+    value: function _styleHook() {
+      return {};
     }
   }, {
     key: "_back",
@@ -54507,8 +54539,8 @@ var Plot = /*#__PURE__*/function (_Component) {
                   },
                   body: JSON.stringify({
                     Title: description,
-                    ForestQs: this._quadrants.items.map(function (_ref3) {
-                      var gmx_id = _ref3.gmx_id;
+                    ForestQs: this._quadrants.items.map(function (_ref2) {
+                      var gmx_id = _ref2.gmx_id;
                       return gmx_id;
                     })
                   })
@@ -54652,8 +54684,8 @@ var Plot = /*#__PURE__*/function (_Component) {
   }, {
     key: "quadrants",
     get: function get() {
-      return this._quadrants.items.map(function (_ref4) {
-        var gmx_id = _ref4.gmx_id;
+      return this._quadrants.items.map(function (_ref3) {
+        var gmx_id = _ref3.gmx_id;
         return gmx_id;
       });
     }
@@ -54667,11 +54699,11 @@ var CreatePlot = /*#__PURE__*/function (_Plot) {
 
   var _super2 = _createSuper(CreatePlot);
 
-  function CreatePlot(container, _ref5) {
+  function CreatePlot(container, _ref4) {
     var _this2;
 
-    var layer = _ref5.layer,
-        path = _ref5.path;
+    var layer = _ref4.layer,
+        path = _ref4.path;
 
     _classCallCheck(this, CreatePlot);
 
@@ -54679,9 +54711,9 @@ var CreatePlot = /*#__PURE__*/function (_Plot) {
       layer: layer,
       path: path
     });
-    _this2._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th colspan=\"2\">\n                        <button class=\"backward\"></button>\n                        <label class=\"head\">".concat(translate$8('plot.title.create'), "</label>                        \n                        <button class=\"create\">").concat(translate$8('plot.create'), "</button>\n                    </th>\n                </tr>\n            </thead>\n            <tbody>\n                <tr>                    \n                    <td>                                                \n                        <div class=\"species\"></div>\n                    </td>\n                    <td>\n                        <div class=\"description\">                            \n                            <input type=\"text\" value=\"\" />\n                        </div>\n                        <div class=\"quadrants\"></div>\n                    </td>\n                </tr>\n            </tbody>\n        </table>");
+    _this2._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th colspan=\"2\">\n                        <div class=\"header-left\">\n                            <button class=\"scanex-requests-icon back\"></button>\n                            <label class=\"head\">".concat(translate$8('plot.title.create'), "</label>                            \n                        </div>\n                        <div class=\"header-right\">\n                            <button class=\"create\">").concat(translate$8('plot.create'), "</button>\n                        </div>\n                    </th>\n                </tr>\n            </thead>\n            <tbody>\n                <tr>                    \n                    <td>                                                \n                        <div class=\"species\"></div>\n                    </td>\n                    <td>\n                        <div class=\"description\">                            \n                            <input type=\"text\" value=\"\" />\n                        </div>\n                        <div class=\"quadrants\"></div>\n                    </td>\n                </tr>\n            </tbody>\n        </table>");
 
-    _this2._container.querySelector('.backward').addEventListener('click', function (e) {
+    _this2._container.querySelector('.back').addEventListener('click', function (e) {
       e.stopPropagation();
 
       _this2._back();
@@ -54695,7 +54727,7 @@ var CreatePlot = /*#__PURE__*/function (_Plot) {
     var btnCreate = _this2._container.querySelector('.create');
 
     btnCreate.addEventListener('click', /*#__PURE__*/function () {
-      var _ref6 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(e) {
+      var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(e) {
         var data, event;
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
           while (1) {
@@ -54722,7 +54754,7 @@ var CreatePlot = /*#__PURE__*/function (_Plot) {
       }));
 
       return function (_x4) {
-        return _ref6.apply(this, arguments);
+        return _ref5.apply(this, arguments);
       };
     }());
     _this2._quadrants = new Quadrants(_this2._container.querySelector('.quadrants'));
@@ -54762,11 +54794,11 @@ var EditPlot = /*#__PURE__*/function (_Plot2) {
 
   var _super3 = _createSuper(EditPlot);
 
-  function EditPlot(container, _ref7) {
+  function EditPlot(container, _ref6) {
     var _this3;
 
-    var layer = _ref7.layer,
-        path = _ref7.path;
+    var layer = _ref6.layer,
+        path = _ref6.path;
 
     _classCallCheck(this, EditPlot);
 
@@ -54774,9 +54806,19 @@ var EditPlot = /*#__PURE__*/function (_Plot2) {
       layer: layer,
       path: path
     });
-    _this3._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th colspan=\"2\">\n                        <button class=\"backward\"></button>\n                        <label class=\"head\">".concat(translate$8('plot.title.edit'), "</label>                        \n                        <button class=\"save\">").concat(translate$8('plot.save'), "</button>\n                        <button class=\"request\">").concat(translate$8('plot.request'), "</button>\n                    </th>\n                </tr>\n            </thead>\n            <tbody>\n                <tr>                    \n                    <td>                                                \n                        <div class=\"species\"></div>\n                    </td>\n                    <td>\n                        <div class=\"description\">                            \n                            <label></label>\n                        </div>\n                        <div class=\"quadrants\"></div>\n                    </td>\n                </tr>\n            </tbody>\n        </table>");
 
-    _this3._container.querySelector('.backward').addEventListener('click', function (e) {
+    var _this3$_layer$getGmxP = _this3._layer.getGmxProperties(),
+        attributes = _this3$_layer$getGmxP.attributes;
+
+    _this3._forestryIndex = attributes && attributes.indexOf('forestry_id') || -1;
+
+    if (_this3._forestryIndex >= 0) {
+      _this3._forestryIndex += 1;
+    }
+
+    _this3._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th colspan=\"2\">\n                            <div class=\"header-left\">\n                                <button class=\"scanex-requests-icon back\"></button>\n                                <label class=\"head\">".concat(translate$8('plot.title.edit'), "</label>\n                            </div>\n                            <div class=\"header-right\">                                \n                                <button class=\"request\">").concat(translate$8('plot.request'), "</button>\n                                <button class=\"save\">").concat(translate$8('plot.save'), "</button>\n                            </div>\n                        </div>\n                    </th>\n                </tr>\n            </thead>\n            <tbody>\n                <tr>                    \n                    <td>                                                \n                        <div class=\"species\"></div>\n                    </td>\n                    <td>\n                        <div class=\"description\">                            \n                            <label></label>\n                        </div>\n                        <div class=\"quadrants\"></div>\n                    </td>\n                </tr>\n            </tbody>\n        </table>");
+
+    _this3._container.querySelector('.back').addEventListener('click', function (e) {
       e.stopPropagation();
 
       _this3._back();
@@ -54785,7 +54827,7 @@ var EditPlot = /*#__PURE__*/function (_Plot2) {
     var btnSave = _this3._container.querySelector('.save');
 
     btnSave.addEventListener('click', /*#__PURE__*/function () {
-      var _ref8 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(e) {
+      var _ref7 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(e) {
         var data, event;
         return regeneratorRuntime.wrap(function _callee6$(_context6) {
           while (1) {
@@ -54812,7 +54854,7 @@ var EditPlot = /*#__PURE__*/function (_Plot2) {
       }));
 
       return function (_x5) {
-        return _ref8.apply(this, arguments);
+        return _ref7.apply(this, arguments);
       };
     }());
 
@@ -54823,7 +54865,7 @@ var EditPlot = /*#__PURE__*/function (_Plot2) {
     var btnRequest = _this3._container.querySelector('.request');
 
     btnRequest.addEventListener('click', /*#__PURE__*/function () {
-      var _ref9 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(e) {
+      var _ref8 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(e) {
         var event;
         return regeneratorRuntime.wrap(function _callee7$(_context7) {
           while (1) {
@@ -54859,7 +54901,7 @@ var EditPlot = /*#__PURE__*/function (_Plot2) {
       }));
 
       return function (_x6) {
-        return _ref9.apply(this, arguments);
+        return _ref8.apply(this, arguments);
       };
     }());
     _this3._quadrants = new Quadrants(_this3._container.querySelector('.quadrants'));
@@ -54871,27 +54913,41 @@ var EditPlot = /*#__PURE__*/function (_Plot2) {
       event.detail = id;
 
       _this3.dispatchEvent(event);
-    }).on('item:over', function (e) {
-      var id = e.detail;
-      var event = document.createEvent('Event');
-      event.initEvent('quadrant:over', false, false);
-      event.detail = id;
+    }); // .on('item:over', e => {
+    //     const id = e.detail;
+    //     let event = document.createEvent('Event');
+    //     event.initEvent('quadrant:over', false, false);
+    //     event.detail = id;
+    //     this.dispatchEvent(event);
+    // })
+    // .on('item:out', e => {
+    //     const id = e.detail;
+    //     let event = document.createEvent('Event');
+    //     event.initEvent('quadrant:out', false, false);
+    //     event.detail = id;
+    //     this.dispatchEvent(event);
+    // });
 
-      _this3.dispatchEvent(event);
-    }).on('item:out', function (e) {
-      var id = e.detail;
-      var event = document.createEvent('Event');
-      event.initEvent('quadrant:out', false, false);
-      event.detail = id;
-
-      _this3.dispatchEvent(event);
-    });
 
     _this3._species = new Species(_this3._container.querySelector('.species'));
     return _this3;
   }
 
   _createClass(EditPlot, [{
+    key: "_styleHook",
+    value: function _styleHook(_ref9) {
+      var id = _ref9.id,
+          properties = _ref9.properties;
+
+      if (this.quadrants.includes(id)) {
+        return STYLES$1.SELECTED;
+      } else if (this._forestryIndex >= 0 && properties[this._forestryIndex] === this._forestryID) {
+        return {};
+      } else {
+        return null;
+      }
+    }
+  }, {
     key: "_createRequest",
     value: function () {
       var _createRequest2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8() {
@@ -54985,19 +55041,21 @@ var EditPlot = /*#__PURE__*/function (_Plot2) {
   }, {
     key: "open",
     value: function () {
-      var _open2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(id) {
-        var response, _yield$response$json2, title, gmxIds, result;
+      var _open2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(_ref11) {
+        var id, forestryID, response, _yield$response$json2, title, gmxIds, result;
 
         return regeneratorRuntime.wrap(function _callee10$(_context10) {
           while (1) {
             switch (_context10.prev = _context10.next) {
               case 0:
-                _context10.prev = 0;
-                _context10.next = 3;
+                id = _ref11.id, forestryID = _ref11.forestryID;
+                _context10.prev = 1;
+                this._forestryID = forestryID;
+                _context10.next = 5;
                 return _get(_getPrototypeOf(EditPlot.prototype), "open", this).call(this);
 
-              case 3:
-                _context10.next = 5;
+              case 5:
+                _context10.next = 7;
                 return fetch("".concat(this._path, "/Forest/GetPlotProjectDraft?ForestProjectID=").concat(id), {
                   method: 'GET',
                   credentials: 'include',
@@ -55006,23 +55064,23 @@ var EditPlot = /*#__PURE__*/function (_Plot2) {
                   }
                 });
 
-              case 5:
+              case 7:
                 response = _context10.sent;
-                _context10.next = 8;
+                _context10.next = 10;
                 return response.json();
 
-              case 8:
+              case 10:
                 _yield$response$json2 = _context10.sent;
                 title = _yield$response$json2.title;
                 gmxIds = _yield$response$json2.gmxIds;
-                _context10.next = 13;
+                _context10.next = 15;
                 return this._validate(gmxIds);
 
-              case 13:
+              case 15:
                 result = _context10.sent;
 
                 if (!result) {
-                  _context10.next = 21;
+                  _context10.next = 23;
                   break;
                 }
 
@@ -55030,31 +55088,31 @@ var EditPlot = /*#__PURE__*/function (_Plot2) {
                 this._description.innerText = title;
                 this._quadrants.items = result.SquareStat;
                 this._species.items = result.ForestStat;
-                _context10.next = 22;
+                _context10.next = 24;
                 break;
 
-              case 21:
+              case 23:
                 throw translate$8('quadrant.invalid');
 
-              case 22:
-                _context10.next = 29;
+              case 24:
+                _context10.next = 31;
                 break;
 
-              case 24:
-                _context10.prev = 24;
-                _context10.t0 = _context10["catch"](0);
+              case 26:
+                _context10.prev = 26;
+                _context10.t0 = _context10["catch"](1);
 
                 this._back();
 
                 console.log(_context10.t0);
                 alert(translate$8('error.plot.edit'));
 
-              case 29:
+              case 31:
               case "end":
                 return _context10.stop();
             }
           }
-        }, _callee10, this, [[0, 24]]);
+        }, _callee10, this, [[1, 26]]);
       }));
 
       function open(_x7) {
@@ -55066,6 +55124,146 @@ var EditPlot = /*#__PURE__*/function (_Plot2) {
   }]);
 
   return EditPlot;
+}(Plot);
+
+var ViewPlot = /*#__PURE__*/function (_Plot3) {
+  _inherits(ViewPlot, _Plot3);
+
+  var _super4 = _createSuper(ViewPlot);
+
+  function ViewPlot(container, _ref12) {
+    var _this4;
+
+    var layer = _ref12.layer,
+        path = _ref12.path;
+
+    _classCallCheck(this, ViewPlot);
+
+    _this4 = _super4.call(this, container, {
+      layer: layer,
+      path: path
+    });
+    _this4._container.innerHTML = "<div class=\"head\">\n        </div>\n        <div>\n            <label>".concat(translate$8('plot.forestry'), "</label>\n            <label class=\"forestry\"></label>\n        </div>\n        <div>\n            <label>").concat(translate$8('plot.localForestry'), "</label>\n            <label class=\"forestry-local\"></label>\n        </div>\n        <div class=\"content\">\n            <div class=\"stats\"></div>\n            <div class=\"chart\"></div>\n        </div>");
+    _this4._forestry = _this4._container.querySelector('.forestry');
+    _this4._localForestry = _this4._container.querySelector('.forestry-local');
+    _this4._stats = _this4._container.querySelector('.stats');
+    _this4._chart = _this4._container.querySelector('.stats');
+    return _this4;
+  }
+
+  _createClass(ViewPlot, [{
+    key: "_click",
+    value: function () {
+      var _click3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11(e) {
+        return regeneratorRuntime.wrap(function _callee11$(_context11) {
+          while (1) {
+            switch (_context11.prev = _context11.next) {
+              case 0:
+              case "end":
+                return _context11.stop();
+            }
+          }
+        }, _callee11);
+      }));
+
+      function _click(_x8) {
+        return _click3.apply(this, arguments);
+      }
+
+      return _click;
+    }()
+  }, {
+    key: "open",
+    value: function () {
+      var _open3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee12(id) {
+        var response, _yield$response$json3, Addres, ApplicationForm, ApproveDate, ApproveName, AuctionEnd, AuctionStart, AuctionURL, CadastralNum, Comments, DeclineDate, EgrFile, ForestAvailable, ForestBlocks, ForestProjectGeo, ForestProjectID, ForestStat, Forestry, OGRN, Opf, OrganizationName, OwnerID, PeriodUsage, Phone, PostAddress, RentCost, RentFile, Square, SquareStat, Status, TargetUsage, Title;
+
+        return regeneratorRuntime.wrap(function _callee12$(_context12) {
+          while (1) {
+            switch (_context12.prev = _context12.next) {
+              case 0:
+                _context12.prev = 0;
+                _context12.next = 3;
+                return _get(_getPrototypeOf(ViewPlot.prototype), "open", this).call(this);
+
+              case 3:
+                _context12.next = 5;
+                return fetch("".concat(this._path, "/Forest/GetPlotProjectApplication?ForestProjectID=").concat(id), {
+                  method: 'GET',
+                  credentials: 'include',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  }
+                });
+
+              case 5:
+                response = _context12.sent;
+                _context12.next = 8;
+                return response.json();
+
+              case 8:
+                _yield$response$json3 = _context12.sent;
+                Addres = _yield$response$json3.Addres;
+                ApplicationForm = _yield$response$json3.ApplicationForm;
+                ApproveDate = _yield$response$json3.ApproveDate;
+                ApproveName = _yield$response$json3.ApproveName;
+                AuctionEnd = _yield$response$json3.AuctionEnd;
+                AuctionStart = _yield$response$json3.AuctionStart;
+                AuctionURL = _yield$response$json3.AuctionURL;
+                CadastralNum = _yield$response$json3.CadastralNum;
+                Comments = _yield$response$json3.Comments;
+                DeclineDate = _yield$response$json3.DeclineDate;
+                EgrFile = _yield$response$json3.EgrFile;
+                ForestAvailable = _yield$response$json3.ForestAvailable;
+                ForestBlocks = _yield$response$json3.ForestBlocks;
+                ForestProjectGeo = _yield$response$json3.ForestProjectGeo;
+                ForestProjectID = _yield$response$json3.ForestProjectID;
+                ForestStat = _yield$response$json3.ForestStat;
+                Forestry = _yield$response$json3.Forestry;
+                OGRN = _yield$response$json3.OGRN;
+                Opf = _yield$response$json3.Opf;
+                OrganizationName = _yield$response$json3.OrganizationName;
+                OwnerID = _yield$response$json3.OwnerID;
+                PeriodUsage = _yield$response$json3.PeriodUsage;
+                Phone = _yield$response$json3.Phone;
+                PostAddress = _yield$response$json3.PostAddress;
+                RentCost = _yield$response$json3.RentCost;
+                RentFile = _yield$response$json3.RentFile;
+                Square = _yield$response$json3.Square;
+                SquareStat = _yield$response$json3.SquareStat;
+                Status = _yield$response$json3.Status;
+                TargetUsage = _yield$response$json3.TargetUsage;
+                Title = _yield$response$json3.Title;
+                this._forestry.innerText = Forestry;
+                this._localForestry.innerText = '';
+                this._stats.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody></tbody>\n            </table>";
+                _context12.next = 50;
+                break;
+
+              case 45:
+                _context12.prev = 45;
+                _context12.t0 = _context12["catch"](0);
+                this.close();
+                console.log(_context12.t0);
+                alert(translate$8('error.plot.view'));
+
+              case 50:
+              case "end":
+                return _context12.stop();
+            }
+          }
+        }, _callee12, this, [[0, 45]]);
+      }));
+
+      function open(_x9) {
+        return _open3.apply(this, arguments);
+      }
+
+      return open;
+    }()
+  }]);
+
+  return ViewPlot;
 }(Plot);
 
 var translate$9 = T.getText.bind(T);
@@ -55194,7 +55392,7 @@ var Quadrant = /*#__PURE__*/function (_Component) {
 
         this._chart.updateSeries(series);
       } else {
-        alert(translate$9('quadrant.na'));
+        throw new Error(translate$9('quadrant.na'));
       }
     }
   }, {
@@ -55212,17 +55410,18 @@ var Quadrant = /*#__PURE__*/function (_Component) {
             switch (_context.prev = _context.next) {
               case 0:
                 id = _ref3.id, gmx_id = _ref3.gmx_id;
+                _context.prev = 1;
 
                 if (!(this._gmx_id && this._gmx_id === gmx_id)) {
-                  _context.next = 5;
+                  _context.next = 6;
                   break;
                 }
 
                 this.close();
-                _context.next = 16;
+                _context.next = 17;
                 break;
 
-              case 5:
+              case 6:
                 _get(_getPrototypeOf(Quadrant.prototype), "open", this).call(this);
 
                 this._layer.setStyleHook(this._styleHook.bind(this));
@@ -55230,28 +55429,38 @@ var Quadrant = /*#__PURE__*/function (_Component) {
                 this._layer.repaint();
 
                 this._gmx_id = gmx_id;
-                _context.next = 11;
+                _context.next = 12;
                 return fetch("".concat(this._path, "/Forest/GetQuadrantInformation?QuadrantID=").concat(id), {
                   method: 'GET',
                   credentials: 'include'
                 });
 
-              case 11:
+              case 12:
                 response = _context.sent;
-                _context.next = 14;
+                _context.next = 15;
                 return response.json();
 
-              case 14:
+              case 15:
                 data = _context.sent;
 
                 this._render(data);
 
-              case 16:
+              case 17:
+                _context.next = 23;
+                break;
+
+              case 19:
+                _context.prev = 19;
+                _context.t0 = _context["catch"](1);
+                alert(_context.t0.toString());
+                this.close();
+
+              case 23:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, this);
+        }, _callee, this, [[1, 19]]);
       }));
 
       function open(_x) {
@@ -57122,9 +57331,24 @@ T.addText('rus', {
     targetSpecies: 'Целевая порода',
     mainSpecies: 'Преобладающая порода',
     age: 'Группа возраста',
-    klass: 'Бонитет',
+    klass: 'Класс возраста',
+    bonitet: 'Бонитет',
     type: 'Тип леса',
-    percentage: 'Процент выполнения'
+    percentage: 'Процент выполнения',
+    na: 'Нет данных по объему древесины',
+    storey: {
+      title: 'Ярус',
+      age: 'Возраст, лет',
+      basal_area_sum: 'Сумма площадей сечений, м2',
+      dbh: 'Диаметр, см',
+      density: 'Полнота',
+      gross_volume: 'Запас на 1 га, м3',
+      height: 'Высота, м',
+      marketability_class: 'Класс товарности',
+      origin_id: 'Происхождение',
+      rate: 'Коэфициент состава',
+      species: 'Породный состав'
+    }
   }
 });
 var STYLES$3 = {
@@ -57166,20 +57390,20 @@ var Stand = /*#__PURE__*/function (_Component) {
 
     _this._container.classList.add('scanex-forestry-stand');
 
-    _this._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th class=\"header1\" colspan=\"3\">".concat(translate$d('stand.title'), "</th>\n                </tr>\n                <tr>\n                    <th class=\"header2\" colspan=\"3\"></th>\n                </tr>\n            </thead>\n            <tbody>\n                <tr>\n                    <td class=\"stats\"></td>\n                    <td class=\"chart\"></td>                    \n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"levels\"></td>\n\t\t\t\t\t<td class=\"events\"></td>\n\t\t\t\t</tr>\n            </tbody>\n\t\t</table>");
+    _this._container.innerHTML = "\n\t\t<div class=\"header1\">".concat(translate$d('stand.title'), "</div>\n\t\t<div class=\"header2\"></div>\n\t\t<div class=\"scrollable\">\n\t\t\t<table cellpadding=\"0\" cellspacing=\"0\">            \n\t\t\t\t<tbody>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t<div class=\"stats\"></div>\n\t\t\t\t\t\t</td>\n\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t\t\t</td>                    \n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t<div class=\"levels\"></div>\n\t\t\t\t\t\t</td>\n\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t<div class=\"events\"></div>\n\t\t\t\t\t\t</td>\n\t\t\t\t\t</tr>\n\t\t\t\t</tbody>\n\t\t\t</table>\n\t\t</div>");
     _this._header = _this._container.querySelector('.header2');
     _this._stats = _this._container.querySelector('.stats');
     _this._chart = new apexcharts_common(_this._container.querySelector('.chart'), {
       chart: {
         type: 'donut',
         width: '400px',
-        height: '200px'
+        height: '180px'
       },
       labels: [],
       series: [],
       legend: {
         position: 'right',
-        fontSize: '15px',
+        // fontSize: '15px',
         width: '200px'
       },
       plotOptions: {
@@ -57191,7 +57415,7 @@ var Stand = /*#__PURE__*/function (_Component) {
                 formatter: function formatter(val) {
                   return "".concat(val, " ").concat(translate$d('unit.m3'));
                 },
-                fontSize: '12px'
+                fontSize: '10px'
               },
               total: {
                 formatter: function formatter(_ref2) {
@@ -57202,7 +57426,7 @@ var Stand = /*#__PURE__*/function (_Component) {
                 },
                 label: translate$d('stock.all'),
                 show: true,
-                fontSize: '12px'
+                fontSize: '10px'
               }
             }
           }
@@ -57236,36 +57460,65 @@ var Stand = /*#__PURE__*/function (_Component) {
           PredominantSpecies = data.PredominantSpecies,
           AgeGroup = data.AgeGroup,
           AgeClass = data.AgeClass,
+          Bonitet = data.Bonitet,
           Stock = data.Stock,
+          StoreyInfo = data.StoreyInfo,
           Events = data.Events;
-      this._header.innerText = [Forestry, LocalForestry, Stow, Quadrant, Stand].join(', ');
-      this._stats.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<tbody>\n                <tr>\n                    <td>".concat(translate$d('stand.usage'), "</td>\n                    <td>").concat(ForestUseType, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$d('stand.year'), "</td>\n                    <td>").concat(UpdatingYear, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$d('stand.area'), "</td>\n                    <td>").concat(Square, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$d('stand.category'), "</td>\n                    <td>").concat(LandCategory, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$d('stand.protected'), "</td>\n                    <td>").concat(OZU, "</td>                    \n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$d('stand.slope'), "</td>\n                    <td>").concat(Exposition, " / ").concat(Steepness, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$d('stand.targetSpecies'), "</td>\n                    <td>").concat(TargetSpecies, "</td>                    \n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$d('stand.mainSpecies'), "</td>\n                    <td>").concat(PredominantSpecies, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$d('stand.age'), "</td>\n                    <td>").concat(AgeGroup, "</td>                    \n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$d('stand.klass'), "</td>\n                    <td>").concat(AgeClass, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n                    <td>").concat(translate$d('stand.type'), "</td>\n                    <td></td>                    \n                </tr>\n            </tbody>\n\t\t</table>");
 
-      var _Stock$reduce = Stock.reduce(function (a, _ref3) {
-        var stock = _ref3.stock,
-            species = _ref3.species;
-        a.labels.push(species);
-        a.series.push(stock);
-        return a;
-      }, {
-        labels: [],
-        series: []
-      }),
-          labels = _Stock$reduce.labels,
-          series = _Stock$reduce.series;
+      if (Array.isArray(Stock)) {
+        this._header.innerText = [Forestry, LocalForestry, Stow, Quadrant, Stand].join(', ');
+        this._stats.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t\t<tbody>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>".concat(translate$d('stand.usage'), "</td>\n\t\t\t\t\t\t<td>").concat(ForestUseType, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$d('stand.year'), "</td>\n\t\t\t\t\t\t<td>").concat(UpdatingYear, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$d('stand.area'), "</td>\n\t\t\t\t\t\t<td>").concat(Square, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$d('stand.category'), "</td>\n\t\t\t\t\t\t<td>").concat(LandCategory, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$d('stand.protected'), "</td>\n\t\t\t\t\t\t<td>").concat(OZU, "</td>                    \n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$d('stand.slope'), "</td>\n\t\t\t\t\t\t<td>").concat(Exposition, " / ").concat(Steepness, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$d('stand.targetSpecies'), "</td>\n\t\t\t\t\t\t<td>").concat(TargetSpecies, "</td>                    \n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$d('stand.mainSpecies'), "</td>\n\t\t\t\t\t\t<td>").concat(PredominantSpecies, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$d('stand.age'), "</td>\n\t\t\t\t\t\t<td>").concat(AgeGroup, "</td>                    \n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$d('stand.klass'), "</td>\n\t\t\t\t\t\t<td>").concat(AgeClass, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$d('stand.bonitet'), "</td>\n\t\t\t\t\t\t<td>").concat(Bonitet, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$d('stand.type'), "</td>\n\t\t\t\t\t\t<td></td>                    \n\t\t\t\t\t</tr>\n\t\t\t\t</tbody>\n\t\t\t</table>");
 
-      this._chart.updateOptions({
-        labels: labels
-      });
+        var _Stock$reduce = Stock.reduce(function (a, _ref3) {
+          var stock = _ref3.stock,
+              species = _ref3.species;
+          a.labels.push(species);
+          a.series.push(stock);
+          return a;
+        }, {
+          labels: [],
+          series: []
+        }),
+            labels = _Stock$reduce.labels,
+            series = _Stock$reduce.series;
 
-      this._chart.updateSeries(series);
+        this._chart.updateOptions({
+          labels: labels
+        });
 
-      this._events.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<tbody>".concat(Events.map(function (_ref4) {
-        var name = _ref4.name,
-            activity = _ref4.activity,
-            fillingpercent = _ref4.fillingpercent;
-        return "<tr>\n\t\t\t\t\t<td>".concat(name, "</td>\n\t\t\t\t\t<td>").concat(activity, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td>").concat(translate$d('stand.percentage'), "</td>\n\t\t\t\t\t<td class=\"percentage\">").concat(fillingpercent, "</td>\n\t\t\t\t</tr>");
-      }).join(''), "</tbody>\n\t\t</table>");
+        this._chart.updateSeries(series);
+
+        if (Array.isArray(StoreyInfo)) {
+          this._levels.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t\t\t<tbody>".concat(StoreyInfo.map(function (_ref4) {
+            var storey = _ref4.storey,
+                species_info = _ref4.species_info;
+            return "<tr class=\"storey\">\n\t\t\t\t\t\t\t<td>".concat(translate$d('stand.storey.title'), "</td>\n\t\t\t\t\t\t\t<td>").concat(storey, "</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t").concat(Array.isArray(species_info) ? species_info.map(function (_ref5) {
+              var age = _ref5.age,
+                  basal_area_sum = _ref5.basal_area_sum,
+                  dbh = _ref5.dbh,
+                  density = _ref5.density,
+                  gross_volume = _ref5.gross_volume,
+                  height = _ref5.height,
+                  marketability_class = _ref5.marketability_class,
+                  origin_id = _ref5.origin_id,
+                  rate = _ref5.rate,
+                  species = _ref5.species;
+              return "<tr>\n\t\t\t\t\t\t\t\t<td>".concat(translate$d('stand.storey.age'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(age, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$d('stand.storey.basal_area_sum'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(basal_area_sum, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$d('stand.storey.dbh'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(dbh, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$d('stand.storey.density'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(density, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$d('stand.storey.gross_volume'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(gross_volume, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$d('stand.storey.height'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(height, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$d('stand.storey.marketability_class'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(marketability_class, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$d('stand.storey.origin_id'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(origin_id, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$d('stand.storey.rate'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(rate, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$d('stand.storey.species'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(species, "</td>\n\t\t\t\t\t\t\t</tr>");
+            }).join('') : '');
+          }).join(''), "</tbody>\n\t\t\t\t</table>");
+        }
+
+        if (Array.isArray(Events)) {
+          this._events.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t\t\t<tbody>".concat(Events.map(function (_ref6) {
+            var name = _ref6.name,
+                activity = _ref6.activity,
+                fillingpercent = _ref6.fillingpercent;
+            return "<tr>\n\t\t\t\t\t\t\t<td>".concat(name, "</td>\n\t\t\t\t\t\t\t<td>").concat(activity, "</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t<td>").concat(translate$d('stand.percentage'), "</td>\n\t\t\t\t\t\t\t<td class=\"percentage\">").concat(fillingpercent, "</td>\n\t\t\t\t\t\t</tr>");
+          }).join(''), "</tbody>\n\t\t\t\t</table>");
+        }
+      } else {
+        throw new Error(translate$d('stand.na'));
+      }
     }
   }, {
     key: "_styleHook",
@@ -57275,54 +57528,65 @@ var Stand = /*#__PURE__*/function (_Component) {
   }, {
     key: "open",
     value: function () {
-      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(_ref5) {
+      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(_ref7) {
         var id, gmx_id, response, data;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                id = _ref5.id, gmx_id = _ref5.gmx_id;
+                id = _ref7.id, gmx_id = _ref7.gmx_id;
+                _context.prev = 1;
 
                 if (!(this._gmx_id && this._gmx_id === gmx_id)) {
-                  _context.next = 5;
+                  _context.next = 6;
                   break;
                 }
 
                 this.close();
-                _context.next = 17;
+                _context.next = 18;
                 break;
 
-              case 5:
+              case 6:
                 this._layer.setStyleHook(this._styleHook.bind(this));
 
                 this._layer.repaint();
 
                 this._gmx_id = gmx_id;
-                _context.next = 10;
+                _context.next = 11;
                 return fetch("".concat(this._path, "/Forest/GetStandInformation?StandID=").concat(id), {
                   method: 'GET',
                   credentials: 'include'
                 });
 
-              case 10:
+              case 11:
                 response = _context.sent;
-                _context.next = 13;
+                _context.next = 14;
                 return response.json();
 
-              case 13:
+              case 14:
                 data = _context.sent;
 
                 this._render(data);
 
-                _context.next = 17;
+                _context.next = 18;
                 return _get(_getPrototypeOf(Stand.prototype), "open", this).call(this);
 
-              case 17:
+              case 18:
+                _context.next = 24;
+                break;
+
+              case 20:
+                _context.prev = 20;
+                _context.t0 = _context["catch"](1);
+                alert(_context.t0.toString());
+                this.close();
+
+              case 24:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, this);
+        }, _callee, this, [[1, 20]]);
       }));
 
       function open(_x) {
@@ -57399,7 +57663,7 @@ var Declaration = /*#__PURE__*/function (_Component) {
 
     _this._container.classList.add('scanex-forestry-declaration');
 
-    _this._container.innerHTML = "<div class=\"header\">\n            <label>".concat(translate$e('declaration.title'), "</label>            \n            <label class=\"number\"></label>\n        </div>\n        <table cellspacing=\"0\" cellpadding=\"0\">\n            <tbody>\n                <!--\n                <tr>\n                    <td>").concat(translate$e('declaration.federalSubject'), "</td>\n                    <td class=\"federal-subject\"></td>\n                </tr>\n                -->\n                <tr>\n                    <td>").concat(translate$e('declaration.executive'), "</td>\n                    <td class=\"executive\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.officer'), "</td>\n                    <td class=\"officer\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.lessee'), "</td>\n                    <td class=\"lessee\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.contract'), "</td>\n                    <td class=\"contract\"></td>\n                </tr>\n            </tbody>\n        </table>\n        <div>\n            <i class=\"scanex-declaration-icon doc\"></i>\n            <button class=\"open-doc\">").concat(translate$e('declaration.doc'), "</button>\n        </div>\n        <table cellspacing=\"0\" cellpadding=\"0\">\n            <tbody>\n                <tr>\n                    <td>").concat(translate$e('declaration.purpose_of_forest'), "</td>\n                    <td class=\"purpose_of_forest\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.protective_forest_category'), "</td>\n                    <td class=\"protective_forest_category\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.forestry_name'), "</td>\n                    <td class=\"forestry_name\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.local_forestry_name'), "</td>\n                    <td class=\"local_forestry_name\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.tract_name'), "</td>\n                    <td class=\"tract_name\"></td>\n                </tr>                                \n                <tr>\n                    <td>").concat(translate$e('declaration.quadrant_number'), "</td>\n                    <td class=\"quadrant_number\"></td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$e('declaration.forest_inventory_unit_number'), "</td>\n                    <td class=\"forest_inventory_unit_number\"></td>\n                </tr>\n            </tbody>\n        </table>\n        <div class=\"content\"></div>");
+    _this._container.innerHTML = "<div class=\"header\">\n            <label>".concat(translate$e('declaration.title'), "</label>            \n            <label class=\"number\"></label>\n        </div>\n        <div class=\"scrollable\">\n            <table cellspacing=\"0\" cellpadding=\"0\">\n                <tbody>\n                    <!--\n                    <tr>\n                        <td>").concat(translate$e('declaration.federalSubject'), "</td>\n                        <td class=\"federal-subject\"></td>\n                    </tr>\n                    -->\n                    <tr>\n                        <td>").concat(translate$e('declaration.executive'), "</td>\n                        <td class=\"executive\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$e('declaration.officer'), "</td>\n                        <td class=\"officer\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$e('declaration.lessee'), "</td>\n                        <td class=\"lessee\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$e('declaration.contract'), "</td>\n                        <td class=\"contract\"></td>\n                    </tr>\n                </tbody>\n            </table>\n            <div>\n                <i class=\"scanex-declaration-icon doc\"></i>\n                <button class=\"open-doc\">").concat(translate$e('declaration.doc'), "</button>\n            </div>        \n            <table cellspacing=\"0\" cellpadding=\"0\">\n                <tbody>\n                    <tr>\n                        <td>").concat(translate$e('declaration.purpose_of_forest'), "</td>\n                        <td class=\"purpose_of_forest\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$e('declaration.protective_forest_category'), "</td>\n                        <td class=\"protective_forest_category\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$e('declaration.forestry_name'), "</td>\n                        <td class=\"forestry_name\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$e('declaration.local_forestry_name'), "</td>\n                        <td class=\"local_forestry_name\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$e('declaration.tract_name'), "</td>\n                        <td class=\"tract_name\"></td>\n                    </tr>                                \n                    <tr>\n                        <td>").concat(translate$e('declaration.quadrant_number'), "</td>\n                        <td class=\"quadrant_number\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$e('declaration.forest_inventory_unit_number'), "</td>\n                        <td class=\"forest_inventory_unit_number\"></td>\n                    </tr>\n                </tbody>\n            </table>\n            <div class=\"content\"></div>\n        </div>");
     return _this;
   }
 
@@ -57545,9 +57809,9 @@ T.addText('rus', {
     titleValue: 'Объем изменений запасов древесины',
     estimValue: 'по прогнозам системы',
     checkedValue: 'по данным натурной проверки',
-    otvet: 'Ответственный эксперт',
-    otvetCheck: 'Ответственный за проверку инцидента',
-    procVer: 'Процент вероятности инцидента',
+    Expert: 'Ответственный эксперт',
+    CheckingExpert: 'Ответственный за проверку инцидента',
+    Probability: 'Процент вероятности инцидента',
     tochn: 'Точность для детектированных изменений',
     date: 'Дата обнаружения',
     dateInspect: 'Дата обследования',
@@ -57563,13 +57827,14 @@ T.addText('rus', {
     bplaLoad: 'Загрузить',
     bplaDel: 'Удалить',
     docs: 'Документы',
+    detail: 'Детали',
     editGeo: 'Редактировать контур',
     saveGeo: 'Сохранить изменения',
     downloadGeo: 'Выгрузить контур',
     verRastr: 'Растр вероятности',
     maskWater: 'Маски облачности и воды',
-    checkedInc: 'Подтвердить инцидент',
-    declineInc: 'Отклонить инцидент'
+    IncidentAccept: 'Подтвердить инцидент',
+    IncidentDecline: 'Отклонить инцидент'
   },
   unit: {
     m: 'м',
@@ -57577,67 +57842,18 @@ T.addText('rus', {
     ha: 'га'
   }
 });
-var testData = {
-  title: 'Читинское лесничество, Городское участковое лесничество, Колхоз “Вечерняя зорька”, Квартал № 115, Выдел № 58',
-  props: {
-    status: 'Инцидент в работе',
-    otvet: 'Иванов И.И.',
-    otvetCheck: 'Петров П.П',
-    procVer: 85,
-    tochn: 11,
-    date: '15.07.2019',
-    areaAll: 250,
-    dateCheck: '25.05.2019'
-  },
-  bpla: {
-    date: '02.07.2020, 12:24'
-  },
-  vyd: [{
-    title: 'Читинское лесничество, Городское участковое лесничество, Колхоз “Вечерняя зорька”, Квартал № 115, Выдел № 58',
-    firm: 'ООО “Дельфин”',
-    species: [{
-      name: 'Береза',
-      prog: 240,
-      real: 40
-    }, {
-      name: 'Береза',
-      prog: 240,
-      real: 240
-    }]
-  }, {
-    title: 'Читинское лесничество, Городское участковое лесничество, Колхоз “Вечерняя зорька”, Квартал № 115, Выдел № 58',
-    firm: 'ООО “Дельфин1”',
-    species: [{
-      name: 'Береза',
-      prog: 560,
-      real: 140
-    }, {
-      name: 'Береза',
-      prog: 240,
-      real: 240
-    }, {
-      name: 'Дуб',
-      prog: 560,
-      real: 140
-    }, {
-      name: 'Береза',
-      prog: 240,
-      real: 240
-    }]
-  }]
-};
 
 var _parseVyd = function _parseVyd(arr) {
   return arr.map(function (data) {
-    var str = data.species.map(function (it) {
-      return "\n\t\t\t<div class=\"map-popup-part2__wrapper-in__table1_row padding-left-34\">".concat(it.name, " <span class=\"inline-flex-row-end\">").concat(it.real, " ").concat(translate$f('unit.m3'), "<span class=\"span-gray\">").concat(it.real, " ").concat(translate$f('unit.m3'), "</span></span></div>\n\t\t\t");
+    var str = data.volumes.map(function (it) {
+      return "\n\t\t\t<tr>\n\t\t\t\t<td class=\"species\">".concat(it.species, "</td>\n\t\t\t\t<td class=\"confirmed_vol\">").concat(it.confirmed_vol, " ").concat(translate$f('unit.m3'), "</td>\n\t\t\t\t<td class=\"probable_volume\"><span class=\"span-gray\">").concat(it.probable_volume, " ").concat(translate$f('unit.m3'), "</span></td>\n\t\t\t</tr>\n\t\t\t");
     }).join('\n');
-    return "\n\t\t\t<div class=\"vydel\">\n\t\t\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">".concat(data.title, "</div>\n\t\t\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.arend'), " <span>").concat(data.firm, "</span></div>\n\t\t\t\t").concat(str, "\n\t\t\t</div>");
+    return "\n\t\t\t<div class=\"vydel\">\n\t\t\t\t<div class=\"table1_row\">".concat(translate$f('incident.arend'), " <span>").concat(data.renter, "</span></div>\n\t\t\t\t<table cellspacing=\"0\" cellpadding=\"0\">\n\t\t\t\t\t<tbody>\n\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t<th class=\"species\">").concat(translate$f('incident.titleValue'), "</th>\n\t\t\t\t\t\t\t<th class=\"confirmed_vol\">").concat(translate$f('incident.estimValue'), "</th>\n\t\t\t\t\t\t\t<th class=\"probable_volume\">").concat(translate$f('incident.checkedValue'), "</th>\n\n\t\t\t\t\t\t</tr>\n\t\t\t\t").concat(str, "\n\t\t\t\t\t</tbody>\n\t\t\t\t</table>\n\t\t\t</div>");
   }).join('\n');
 };
 
 var _parseProps = function _parseProps(props) {
-  return "\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">".concat(translate$f('incident.status'), " <span>").concat(props.status, "</span></div>\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.otvet'), " <span>").concat(props.otvet, "</span></div>\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.otvetCheck'), " <span>").concat(props.otvetCheck, "</span></div>\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.procVer'), " <span>").concat(props.procVer, " %</span></div>\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.tochn'), " <span>").concat(props.tochn, " ").concat(translate$f('unit.m'), "</span></div>\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.date'), " <span>").concat(props.date, "</span></div>\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaAll'), " <span>").concat(props.areaAll, "</span></div>\n\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.dateCheck'), " <span class=\"span-gray\">").concat(props.dateCheck, "</span></div>\n\t");
+  return "\n\t\t<div class=\"table1_row\">".concat(translate$f('incident.status'), " <span>").concat(props.Status, "</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$f('incident.Expert'), " <span>").concat(props.Expert || 'Иванов И.И.', "</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$f('incident.CheckingExpert'), " <span>").concat(props.CheckingExpert || 'Петров П.П.', "</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$f('incident.Probability'), " <span>").concat(Math.floor(10000 * (props.Probability || 0.85)) / 100, " %</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$f('incident.tochn'), " <span>").concat(props.tochn || 11, " ").concat(translate$f('unit.m'), "</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$f('incident.date'), " <span>").concat(props.Detected || '', "</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$f('incident.areaAll'), " <span>").concat(props.Area || 250, "</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$f('incident.dateCheck'), " <span class=\"span-gray\">").concat(props.CheckDate || '', "</span></div>\n\t");
 };
 
 var Incident = /*#__PURE__*/function (_Component) {
@@ -57646,7 +57862,7 @@ var Incident = /*#__PURE__*/function (_Component) {
   var _super = _createSuper(Incident);
 
   function Incident(container, _ref) {
-    var _this;
+    var _this2;
 
     var permissions = _ref.permissions,
         layer = _ref.layer,
@@ -57654,70 +57870,212 @@ var Incident = /*#__PURE__*/function (_Component) {
 
     _classCallCheck(this, Incident);
 
-    _this = _super.call(this, container, {});
-    _this._path = path;
-    _this._layer = layer;
-    _this._permission = permissions;
-    _this._downloadStr = _this._permission.IncidentEdit ? "\n\t\t\t<button class=\"download button\">".concat(translate$f('incident.downloadGeo'), "</button>\n\t\t") : '';
+    _this2 = _super.call(this, container, {});
+    _this2._path = path;
+    _this2._layer = layer;
+    _this2._permission = permissions;
+    _this2._buttonsStr = '';
 
-    _this._container.classList.add('scanex-forestry-incident');
+    if (_this2._permission.IncidentDocuments) {
+      _this2._buttonsStr += "<button class=\"detailBtn button\">".concat(translate$f('incident.detail'), "</button>");
+    }
 
-    return _this;
+    if (_this2._permission.IncidentEdit) {
+      _this2._buttonsStr += "<button class=\"editGeo button\">".concat(translate$f('incident.editGeo'), "</button>");
+    }
+
+    if (_this2._permission.IncidentSave) {
+      _this2._buttonsStr += "<button class=\"saveGeo button hidden\">".concat(translate$f('incident.saveGeo'), "</button>");
+    }
+
+    if (_this2._permission.ContiurUnload) {
+      _this2._buttonsStr += "<button class=\"download button\">".concat(translate$f('incident.downloadGeo'), "</button>");
+    }
+
+    if (_this2._permission.ProbabilityRasterView) {
+      _this2._buttonsStr += "<button class=\"verRastr button\">".concat(translate$f('incident.verRastr'), "</button>");
+    }
+
+    if (_this2._permission.CloudMaskView) {
+      _this2._buttonsStr += "<button class=\"maskWater button\">".concat(translate$f('incident.maskWater'), "</button>");
+    }
+
+    _this2._container.classList.add('scanex-forestry-incident');
+
+    return _this2;
   }
 
   _createClass(Incident, [{
     key: "_render",
     value: function _render(props, data) {
+      data = data || {};
+      var title = '';
+
       switch (props.class_id) {
         case 1:
           // Рубка
-          this._container.classList.add('minHeight');
-
-          this._setForm1();
-
+          title = "<div class=\"header1\">".concat(translate$f('incident.title'), "</div>");
           break;
 
         case 2:
-          // Гарь
-          this._container.classList.add('minHeight');
-
-          this._setForm2();
-
+          // ветровалы 
+          title = "<div class=\"header1\">".concat(translate$f('incident.titleFire'), "</div>");
           break;
 
         case 3:
           // Патология
-          this._container.classList.add('minHeight');
-
-          this._setForm3();
-
+          title = "<div class=\"header1\">".concat(translate$f('incident.titleDisease'), "</div>");
           break;
 
         case 4:
           // Гарь
-          this._container.classList.add('minHeight');
-
-          this._setForm4();
-
+          title = "<div class=\"header1\">".concat(translate$f('incident.titleFire'), "</div>");
           break;
 
         default:
-          this._container.classList.remove('minHeight');
-
-          this._setForm1(data);
-
+          title = "<div class=\"header1\">".concat(translate$f('incident.title'), "</div>");
           break;
       }
 
-      this._container.querySelector('.verRastr').addEventListener('click', this._toggleRaster.bind(this));
+      this._container.classList.add('minHeight');
 
-      var node = this._container.querySelector('.download');
+      var str1 = _parseVyd(data.ForestChange);
+
+      var str2 = _parseProps(data);
+
+      this._container.innerHTML = "\n\t\t\t".concat(title, "\n\n\t\t\t<div class=\"inside\">\n\t\t\t\t<div class=\"inside_left\">\n\t\t\t\t\t<div class=\"table1\">\n\t\t\t\t\t\t").concat(str2, "\n\n\t\t\t\t\t\t<div class=\"table1_row\">").concat(translate$f('incident.comment'), "</div>\n\t\t\t\t\t\t<textarea class=\"usr-text-area\">").concat(data.Comments || '', "</textarea>\n\t\t\t\t\t\t<div class=\"table1_row hidden\">").concat(translate$f('incident.bpla'), ":</div>\n\n\t\t\t\t\t\t<div class=\"table1_row hidden\">\n\n\t\t\t\t\t\t\t<span>").concat(data.bplaDate || '02.07.2020, 12:24', "</span>\n\t\t\t\t\t\t\t<span>").concat(translate$f('incident.bplaTitle'), "</span>\n\t\t\t\t\t\t\t<div class=\"group_buttons\">\n\t\t\t\t\t\t\t\t<div class=\"mini-green-but\">").concat(translate$f('incident.bplaView'), "</div>\n\t\t\t\t\t\t\t\t<div class=\"mini-green-but\">").concat(translate$f('incident.bplaLoad'), "</div>\n\t\t\t\t\t\t\t\t<div class=\"mini-green-but\">").concat(translate$f('incident.bplaDel'), "</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t").concat(str1, "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"rubka\">\n\t\t\t\t\t<div class=\"right-wrapper-top \">\n\t\t\t\t\t\t").concat(this._buttonsStr, "\n\t\t\t\t\t </div>\n\t\t\t\t\t<hr />\n\t\t\t\t\t <div class=\"right-wrapper-bottom \">\n\t\t\t\t\t\t").concat(this._permission.IncidentAccept ? "<button class=\"IncidentAccept button\">".concat(translate$f('incident.IncidentAccept'), "</button>") : '', "\n\t\t\t\t\t\t").concat(this._permission.IncidentDecline ? "<button class=\"IncidentDecline button\">".concat(translate$f('incident.IncidentDecline'), "</button>") : '', "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>");
+
+      var node = this._container.querySelector('.verRastr');
+
+      if (node) {
+        node.addEventListener('click', this._toggleRaster.bind(this));
+      }
+
+      node = this._container.querySelector('.download');
 
       if (node) {
         node.addEventListener('click', this._download.bind(this));
       }
 
+      node = this._container.querySelector('.detailBtn');
+
+      if (node) {
+        node.addEventListener('click', this._docs.bind(this));
+      }
+
+      node = this._container.querySelector('.editGeo');
+
+      if (node) {
+        node.addEventListener('click', this._getItem.bind(this));
+      }
+
+      node = this._container.querySelector('.saveGeo');
+
+      if (node) {
+        node.addEventListener('click', this._saveItem.bind(this)); // node.classList.add('hidden');
+
+        this._saveGeoNode = node;
+      }
+
+      node = this._container.querySelector('.IncidentAccept');
+
+      if (node) {
+        node.addEventListener('click', this._IncidentAccept.bind(this));
+      }
+
+      node = this._container.querySelector('.IncidentDecline');
+
+      if (node) {
+        node.addEventListener('click', this._IncidentDecline.bind(this));
+      }
+
       this._rastId = props.prob_raster_id;
+    }
+  }, {
+    key: "_IncidentAccept",
+    value: function _IncidentAccept() {
+      console.log('_IncidentAccept');
+    }
+  }, {
+    key: "_IncidentDecline",
+    value: function _IncidentDecline() {
+      console.log('_IncidentDecline');
+    }
+  }, {
+    key: "_saveItem",
+    value: function _saveItem() {
+      var params = {
+        LayerName: this._layer.getGmxProperties().LayerID,
+        WrapStyle: 'message',
+        geometry_cs: 'EPSG:4326',
+        objects: JSON.stringify([{
+          action: 'update',
+          id: this._gmx_id,
+          geometry: this._drawingObj[0].toGeoJSON().geometry
+        }])
+      };
+      L.gmxUtil.sendCrossDomainPostRequest('/gis/VectorLayer/ModifyVectorObjects.ashx', params, function (res) {
+        if (res.Status === 'ok') {
+          L.gmx.layersVersion.now();
+        } else {
+          console.log(res);
+        }
+      }.bind(this));
+
+      this._removeDrawing();
+    }
+  }, {
+    key: "_removeDrawing",
+    value: function _removeDrawing() {
+      this._layer._map.gmxDrawing.remove(this._drawingObj[0]);
+
+      this._drawingObj = null;
+
+      if (this._saveGeoNode) {
+        this._saveGeoNode.classList.add('hidden');
+      }
+    }
+  }, {
+    key: "_getItem",
+    value: function _getItem() {
+      if (this._drawingObj) {
+        this._removeDrawing();
+      } else {
+        var params = {
+          layer: this._layer.getGmxProperties().LayerID,
+          WrapStyle: 'message',
+          page: 0,
+          pagesize: 1,
+          orderby: 'rec_id',
+          geometry: true,
+          query: '"rec_id"=' + this._gmx_id
+        };
+
+        var map = this._layer._map;
+        L.gmxUtil.sendCrossDomainPostRequest('/gis/VectorLayer/Search.ashx', params, function (res) {
+          if (res && res.Status === 'ok') {
+            var prp = res.Result.values[0];
+            var geom = L.gmxUtil.geometryToGeoJSON(prp[prp.length - 1], true);
+
+            if (geom) {
+              this._drawingObj = map.gmxDrawing.addGeoJSON(new L.GeoJSON(geom), {});
+
+              if (this._saveGeoNode) {
+                this._saveGeoNode.classList.remove('hidden');
+              }
+            }
+          }
+        }.bind(this));
+      }
+    }
+  }, {
+    key: "_docs",
+    value: function _docs(e) {
+      e.stopPropagation();
+      var event = document.createEvent('Event');
+      event.initEvent('incident:docs', false, false);
+      event.detail = this._props.id;
+      this.dispatchEvent(event);
     }
   }, {
     key: "_download",
@@ -57752,95 +58110,48 @@ var Incident = /*#__PURE__*/function (_Component) {
       }
     }
   }, {
-    key: "_setForm4",
-    value: function _setForm4(data) {
-      data = data || {
-        state: 'Неподтвержденный инцидент',
-        areaAll: 250,
-        areaArenda: 250,
-        date: '15.07.2019',
-        specialCommon: 'Береза'
-      };
-      this._container.innerHTML = "\n           <div class=\"map-popup-part2__header\">".concat(translate$f('incident.titleFire'), "</div>\n            <div class=\"map-popup-part2__wrapper-in style-4\">\n\t\t\t\t<table cellspacing=\"0\" cellpadding=\"0\">\n\t\t\t\t\t<tbody>\n\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t<td class=\"descr\">\n\t\t\t\t\t\t\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.status'), "<span>").concat(data.state, "</span></div>\n\t\t\t\t\t\t\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaAll'), "<span>").concat(data.areaAll, "</span></div>\n\t\t\t\t\t\t\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaArenda'), "<span>").concat(data.areaArenda, "</span></div>\n\t\t\t\t\t\t\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.date'), "<span>").concat(data.date, "</span></div>\n\t\t\t\t\t\t\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.specialCommon'), "<span>").concat(data.specialCommon, "</span></div>\n\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t<td class=\"buttons\">\n\t\t\t\t\t\t\t\t<div class=\"buttonsCont\">\n\t\t\t\t\t\t\t\t\t<button class=\"verRastr button\">").concat(translate$f('incident.verRastr'), "</button>\n\t\t\t\t\t\t\t\t\t").concat(this._downloadStr, "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t</tbody>\n\t\t\t\t</table>\n            </div>\n\t\t");
-    }
-  }, {
-    key: "_setForm3",
-    value: function _setForm3(data) {
-      data = data || {
-        state: 'Неподтвержденный инцидент',
-        areaAll: 250,
-        areaArenda: 250,
-        date: '15.07.2019',
-        specialCommon: 'Береза'
-      };
-      this._container.innerHTML = "\n           <div class=\"map-popup-part2__header\">".concat(translate$f('incident.titleDisease'), "</div>\n            <div class=\"map-popup-part2__wrapper-in style-4\">\n\t\t\t\t<table cellspacing=\"0\" cellpadding=\"0\">\n\t\t\t\t\t<tbody>\n\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t<td class=\"descr\">\n\t\t\t\t\t\t\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.status'), "<span>").concat(data.state, "</span></div>\n\t\t\t\t\t\t\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaAll'), "<span>").concat(data.areaAll, "</span></div>\n\t\t\t\t\t\t\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaArenda'), "<span>").concat(data.areaArenda, "</span></div>\n\t\t\t\t\t\t\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.date'), "<span>").concat(data.date, "</span></div>\n\t\t\t\t\t\t\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.specialCommon'), "<span>").concat(data.specialCommon, "</span></div>\n\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t<td class=\"buttons\">\n\t\t\t\t\t\t\t\t<div class=\"buttonsCont\">\n\t\t\t\t\t\t\t\t\t<button class=\"verRastr button\">").concat(translate$f('incident.verRastr'), "</button>\n\t\t\t\t\t\t\t\t\t").concat(this._downloadStr, "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t</tbody>\n\t\t\t\t</table>\n            </div>\n\t\t");
-    }
-  }, {
-    key: "_setForm2",
-    value: function _setForm2(data) {
-      data = data || {
-        state: 'Подтвержденный инцидент',
-        areaFire: 250,
-        areaFire1: 250,
-        areaSpec: 250,
-        areaSpecNew: 250,
-        areaFireLast: 250,
-        areaSpecNot: 250,
-        date: '15.07.2019',
-        dateInspect: '20.08.2020',
-        specialCommon: 'Береза'
-      };
-      this._container.innerHTML = "\n           <div class=\"map-popup-part2__header\">".concat(translate$f('incident.titleFire'), "</div>\n            <div class=\"map-popup-part2__wrapper-in style-4\">\n\t\t\t\t<table cellspacing=\"0\" cellpadding=\"0\">\n\t\t\t\t\t<tbody>\n\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t<td class=\"descr\">\n\t\t\t\t\t\t\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.status'), "<span>").concat(data.state, "</span></div>\n\t\t\t\t\t\t\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.specialCommon'), "<span>").concat(data.specialCommon, "</span></div>\n\t\t\t\t\t\t\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaFire'), "<span>").concat(data.areaFire, "</span></div>\n\t\t\t\t\t\t\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaFire1'), "<span>").concat(data.areaFire1, "</span></div>\n\t\t\t\t\t\t\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaSpec'), "<span>").concat(data.areaSpec, "</span></div>\n\t\t\t\t\t\t\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaSpecNew'), "<span>").concat(data.areaSpecNew, "</span></div>\n\t\t\t\t\t\t\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaFireLast'), "<span>").concat(data.areaFireLast, "</span></div>\n\t\t\t\t\t\t\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaSpecNot'), "<span>").concat(data.areaSpecNot, "</span></div>\n\t\t\t\t\t\t\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.date'), "<span>").concat(data.date, "</span></div>\n\t\t\t\t\t\t\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.dateInspect'), "<span>").concat(data.dateInspect, "</span></div>\n\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t<td class=\"buttons\">\n\t\t\t\t\t\t\t\t<div class=\"buttonsCont\">\n\t\t\t\t\t\t\t\t\t<button class=\"verRastr button\">").concat(translate$f('incident.verRastr'), "</button>\n\t\t\t\t\t\t\t\t\t").concat(this._downloadStr, "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t</tbody>\n\t\t\t\t</table>\n            </div>\n\t\t");
-    }
-  }, {
-    key: "_setForm1",
-    value: function _setForm1(data) {
-      data = data || {
-        state: 'Подтвержденный инцидент',
-        areaFire: 250,
-        areaFire1: 250,
-        areaSpec: 250,
-        areaSpecNew: 250,
-        areaFireLast: 250,
-        areaSpecNot: 250,
-        date: '15.07.2019',
-        dateInspect: '20.08.2020',
-        specialCommon: 'Береза'
-      };
-      this._container.innerHTML = "\n           <div class=\"map-popup-part2__header\">".concat(translate$f('incident.title'), "</div>\n            <div class=\"map-popup-part2__wrapper-in style-4\">\n\t\t\t\t<table cellspacing=\"0\" cellpadding=\"0\">\n\t\t\t\t\t<tbody>\n\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t<td class=\"descr\">\n\t\t\t\t\t<div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.status'), "<span>").concat(data.state, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.specialCommon'), "<span>").concat(data.specialCommon, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaFire'), "<span>").concat(data.areaFire, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaFire1'), "<span>").concat(data.areaFire1, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaSpec'), "<span>").concat(data.areaSpec, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaSpecNew'), "<span>").concat(data.areaSpecNew, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaFireLast'), "<span>").concat(data.areaFireLast, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.areaSpecNot'), "<span>").concat(data.areaSpecNot, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.date'), "<span>").concat(data.date, "</span></div>\n                    <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.dateInspect'), "<span>").concat(data.dateInspect, "</span></div>\n\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t<td class=\"buttons\">\n\t\t\t\t\t<div class=\"buttonsCont\">\n\t\t\t\t\t\t<button class=\"verRastr button\">").concat(translate$f('incident.verRastr'), "</button>\n\t\t\t\t\t\t").concat(this._downloadStr, "\n\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t</tbody>\n\t\t\t\t</table>\n            </div>\n\t\t");
-    }
-  }, {
-    key: "_setForm0",
-    value: function _setForm0(data) {
-      // console.log('_render', data);
-      var str1 = _parseVyd(data.vyd);
-
-      var str2 = _parseProps(data.props);
-
-      this._container.innerHTML = "\n            <div class=\"map-popup-part2__header\">".concat(translate$f('incident.title'), "</div>\n            <div class=\"map-popup-part2__wrapper-in wrapper-full-height\">\n                <div class=\"map-popup-part2__wrapper-in-inside\">\n                    <div class=\"inside_left\">\n                        <div class=\"header\">\n                            <div class=\"text\">").concat(data.title, "</div>\n                        </div>\n                        <div class=\"spacer-23\"></div>\n                        <div class=\"map-popup-part2__wrapper-in__table1\">\n\t\t\t\t\t\t\t").concat(str2, "\n\n                            <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.comment'), "</div>\n                            <textarea class=\"usr-text-area\">                            </textarea>\n                            <div class=\"map-popup-part2__wrapper-in__table1_row\">").concat(translate$f('incident.bpla'), ":</div>\n\n                            <div class=\"map-popup-part2__wrapper-in__table1_row\">\n\n                                <span>").concat(data.bpla.date, "</span>\n                                <span>").concat(translate$f('incident.bplaTitle'), "</span>\n                                <div class=\"group_buttons\">\n                                    <div class=\"mini-green-but\">").concat(translate$f('incident.bplaView'), "</div>\n                                    <div class=\"mini-green-but\">").concat(translate$f('incident.bplaLoad'), "</div>\n                                    <div class=\"mini-green-but\">").concat(translate$f('incident.bplaDel'), "</div>\n                                </div>\n                            </div>\n                            <div class=\"map-popup-part2__wrapper-in__table1_row margin-top-35\"><span class=\"span_bold\">").concat(translate$f('incident.titleValue'), "</span> <span class=\"span_bold\">").concat(translate$f('incident.estimValue'), "</span> <span class=\"span_bold\">").concat(translate$f('incident.checkedValue'), "</span></div>\n\t\t\t\t\t\t\t").concat(str1, "\n                        </div>\n                    </div>\n                    <div class=\"map-popup-part2__wrapper-in-inside__right rubka\">\n                        <div class=\"right-wrapper-top \">\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$f('incident.docs'), "</button>\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$f('incident.editGeo'), "</button>\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$f('incident.saveGeo'), "</button>\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$f('incident.downloadGeo'), "</button>\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$f('incident.verRastr'), "</button>\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$f('incident.maskWater'), "</button>\n                        </div>\n\n                         <div class=\"right-wrapper-bottom \">\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$f('incident.checkedInc'), "</button>\n                            <button class=\"map-popup-part2__header_right_button_2 width-50\">").concat(translate$f('incident.declineInc'), "</button>\n                        </div>\n\n                    </div>\n                </div>\n            </div>");
-    }
-  }, {
     key: "open",
     value: function () {
       var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(_ref2) {
-        var props, gmx_id;
+        var props, gmx_id, response;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
                 props = _ref2.props, gmx_id = _ref2.gmx_id;
 
-                if (this._gmx_id && this._gmx_id === gmx_id) {
-                  this.close();
-                } else {
-                  _get(_getPrototypeOf(Incident.prototype), "open", this).call(this);
-
-                  this._gmx_id = gmx_id;
-
-                  this._render(props, testData);
+                if (!(this._gmx_id && this._gmx_id === gmx_id)) {
+                  _context.next = 5;
+                  break;
                 }
 
-              case 2:
+                this.close();
+                _context.next = 15;
+                break;
+
+              case 5:
+                _get(_getPrototypeOf(Incident.prototype), "open", this).call(this);
+
+                this._gmx_id = gmx_id;
+                this._props = props; // this._render(props, testData);
+
+                _context.next = 10;
+                return fetch("".concat(this._path, "/Monitoring/GetIncident?IncidentID=").concat(props.id), {
+                  method: 'GET',
+                  credentials: 'include'
+                });
+
+              case 10:
+                response = _context.sent;
+                _context.next = 13;
+                return response.json();
+
+              case 13:
+                this._data = _context.sent;
+
+                this._render(props, this._data);
+
+              case 15:
               case "end":
                 return _context.stop();
             }
@@ -57874,171 +58185,3352 @@ var Incident = /*#__PURE__*/function (_Component) {
   return Incident;
 }(Component);
 
-var QUADRANTS = [{
-  MinZoom: 10,
-  MaxZoom: 21,
-  BalloonEnable: false,
-  disabled: false,
-  RenderStyle: {
-    stroke: true,
-    color: parseInt('FFB801', 16),
-    weight: 1,
-    opacity: 1,
-    fillColor: parseInt('FFB801', 16),
-    fillOpacity: 0.08
-  },
-  HoverStyle: {
-    stroke: true,
-    color: parseInt('FFB801', 16),
-    weight: 1,
-    opacity: 1,
-    fillColor: parseInt('FFB801', 16),
-    fillOpacity: 0.08
+var GmxDrawingContextMenu = /*#__PURE__*/function () {
+  function GmxDrawingContextMenu() {
+    var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
+      points: [],
+      lines: [],
+      fill: []
+    };
+
+    _classCallCheck(this, GmxDrawingContextMenu);
+
+    this.options = options;
   }
-}];
-var STANDS = [{
-  MinZoom: 12,
-  MaxZoom: 21,
-  BalloonEnable: false,
-  RenderStyle: {
-    stroke: true,
-    color: parseInt('FFB801', 16),
-    weight: 1,
-    opacity: 1,
-    fillColor: parseInt('FFB801', 16),
-    fillOpacity: 0.08,
-    dashArray: [10, 10]
+
+  _createClass(GmxDrawingContextMenu, [{
+    key: "insertItem",
+    value: function insertItem(obj, index, type) {
+      var optKey = type || 'points';
+
+      if (index === undefined) {
+        index = this.options[optKey].length;
+      }
+
+      this.options[optKey].splice(index, 0, obj);
+      return this;
+    }
+  }, {
+    key: "removeItem",
+    value: function removeItem(obj, type) {
+      var optKey = type || 'points';
+
+      for (var i = 0, len = this.options[optKey].length; i < len; i++) {
+        if (this.options[optKey][i].callback === obj.callback) {
+          this.options[optKey].splice(i, 1);
+          break;
+        }
+      }
+
+      return this;
+    }
+  }, {
+    key: "removeAllItems",
+    value: function removeAllItems(type) {
+      if (!type) {
+        this.options = {
+          points: [],
+          lines: []
+        };
+      } else if (type === 'lines') {
+        this.options.lines = [];
+      } else {
+        this.options.points = [];
+      }
+
+      return this;
+    }
+  }, {
+    key: "getItems",
+    value: function getItems() {
+      return this.options;
+    }
+  }]);
+
+  return GmxDrawingContextMenu;
+}();
+
+L$1.GmxDrawingContextMenu = GmxDrawingContextMenu;
+var GmxDrawingContextMenu$1 = L$1.GmxDrawingContextMenu;
+
+var rectDelta = 0.0000001;
+var stateVersion = '1.0.0';
+L$1.GmxDrawing = L$1.Class.extend({
+  options: {
+    type: ''
   },
-  HoverStyle: {
-    stroke: true,
-    color: parseInt('FFB801', 16),
-    weight: 1,
-    opacity: 1,
-    fillColor: parseInt('FFB801', 16),
-    fillOpacity: 0.08,
-    dashArray: [10, 10]
-  }
-}];
-var DECLARATIONS = [{
-  MinZoom: 12,
-  MaxZoom: 21,
-  RenderStyle: {
-    stroke: true,
-    color: parseInt('65FFC8', 16),
-    weight: 1,
-    opacity: 1,
-    fillColor: parseInt('65FFC8', 16),
-    fillOpacity: 0.4
+  includes: L$1.Evented ? L$1.Evented.prototype : L$1.Mixin.Events,
+  initialize: function initialize(map) {
+    this._map = map;
+    this.items = [];
+    this.current = null;
+    this.contextmenu = new GmxDrawingContextMenu$1({
+      // points: [], // [{text: 'Remove point'}, {text: 'Delete feature'}],
+      points: [{
+        text: 'Move'
+      }, {
+        text: 'Rotate'
+      }, {
+        text: 'Remove point'
+      }, {
+        text: 'Delete feature'
+      }],
+      // , {text: 'Rotate around Point'}
+      bbox: [{
+        text: 'Save'
+      }, {
+        text: 'Cancel'
+      }],
+      fill: [{
+        text: 'Rotate'
+      }, {
+        text: 'Move'
+      }]
+    });
+
+    if (L$1.gmxUtil && L$1.gmxUtil.prettifyDistance) {
+      var svgNS = 'http://www.w3.org/2000/svg';
+      var tooltip = document.createElementNS(svgNS, 'g');
+      L$1.DomUtil.addClass(tooltip, 'gmxTooltip');
+      var bg = document.createElementNS(svgNS, 'rect');
+      bg.setAttributeNS(null, 'rx', 4);
+      bg.setAttributeNS(null, 'ry', 4);
+      bg.setAttributeNS(null, 'height', 16);
+      L$1.DomUtil.addClass(bg, 'gmxTooltipBG');
+      var text = document.createElementNS(svgNS, 'text');
+      var userSelectProperty = L$1.DomUtil.testProp(['userSelect', 'WebkitUserSelect', 'OUserSelect', 'MozUserSelect', 'msUserSelect']);
+      text.style[userSelectProperty] = 'none';
+      tooltip.appendChild(bg);
+      tooltip.appendChild(text);
+
+      this.hideTooltip = function () {
+        tooltip.setAttributeNS(null, 'visibility', 'hidden');
+      };
+
+      this.showTooltip = function (point, mouseovertext) {
+        var x = point.x + 11,
+            y = point.y - 14;
+        text.setAttributeNS(null, 'x', x);
+        text.setAttributeNS(null, 'y', y);
+        text.textContent = mouseovertext;
+
+        if (tooltip.getAttributeNS(null, 'visibility') !== 'visible') {
+          (this._map._pathRoot || this._map._renderer._container).appendChild(tooltip);
+
+          tooltip.setAttributeNS(null, 'visibility', 'visible');
+        }
+
+        var length = text.getComputedTextLength();
+        bg.setAttributeNS(null, 'width', length + 8);
+        bg.setAttributeNS(null, 'x', x - 4);
+        bg.setAttributeNS(null, 'y', y - 12);
+      };
+    }
+
+    this.on('drawstop drawstart', function (ev) {
+      this.drawMode = this._drawMode = ev.mode;
+
+      this._map.doubleClickZoom[this.drawMode === 'edit' ? 'disable' : 'enable']();
+    }, this);
   },
-  HoverStyle: {
-    stroke: true,
-    color: parseInt('65FFC8', 16),
-    weight: 1,
-    opacity: 1,
-    fillColor: parseInt('65FFC8', 16),
-    fillOpacity: 0.4
-  }
-}];
-var PARKS = [{
-  MinZoom: 4,
-  MaxZoom: 21,
-  RenderStyle: {
-    stroke: true,
-    color: parseInt('AD3D2D', 16),
-    weight: 1,
-    opacity: 1,
-    fillColor: parseInt('AD3D2D', 16),
-    fillOpacity: 0.4
+  bringToFront: function bringToFront() {
+    for (var i = 0, len = this.items.length; i < len; i++) {
+      var item = this.items[i];
+
+      if (item._map && 'bringToFront' in item) {
+        item.bringToFront();
+      }
+    }
   },
-  HoverStyle: {
-    stroke: true,
-    color: parseInt('AD3D2D', 16),
-    weight: 1,
-    opacity: 1,
-    fillColor: parseInt('AD3D2D', 16),
-    fillOpacity: 0.4
-  }
-}];
-var PLOTS = [{
-  MinZoom: 9,
-  MaxZoom: 21,
-  RenderStyle: {
-    stroke: true,
-    color: parseInt('59FF41', 16),
-    weight: 1,
-    opacity: 1,
-    fillColor: parseInt('6D6D6D', 16),
-    fillOpacity: 0.4
+  addGeoJSON: function addGeoJSON(obj, options) {
+    var arr = [],
+        isLGeoJSON = obj instanceof L$1.GeoJSON;
+
+    if (!isLGeoJSON) {
+      obj = L$1.geoJson(obj, options);
+    }
+
+    if (obj instanceof L$1.GeoJSON) {
+      var layers = obj.getLayers();
+
+      if (layers) {
+        var parseLayer = function parseLayer(it) {
+          var _originalStyle = null;
+
+          if (it.setStyle && options && options.lineStyle) {
+            _originalStyle = {};
+
+            for (var key in options.lineStyle) {
+              _originalStyle[key] = options.lineStyle[key];
+            }
+
+            it.setStyle(options.lineStyle);
+          }
+
+          var f = this.add(it, options);
+          f._originalStyle = _originalStyle;
+          arr.push(f);
+        };
+
+        for (var i = 0, len = layers.length; i < len; i++) {
+          var layer = layers[i];
+
+          if (layer.feature.geometry.type !== 'GeometryCollection') {
+            layer = L$1.layerGroup([layer]);
+          }
+
+          layer.eachLayer(parseLayer, this);
+        }
+      }
+    }
+
+    return arr;
   },
-  HoverStyle: {
-    stroke: true,
-    color: parseInt('59FF41', 16),
-    weight: 1,
-    opacity: 1,
-    fillColor: parseInt('6D6D6D', 16),
-    fillOpacity: 0.4
+  add: function add(obj, options) {
+    var item = null;
+    options = options || {};
+
+    if (obj) {
+      if (obj instanceof L$1.GmxDrawing.Feature) {
+        item = obj;
+      } else {
+        var calcOptions = {};
+
+        if (obj.feature && obj.feature.geometry) {
+          var type = obj.feature.geometry.type;
+
+          if (type === 'Point') {
+            obj = new L$1.Marker(obj._latlng);
+          } else if (type === 'MultiPolygon') {
+            calcOptions.type = type;
+          }
+        } // if (!L.MultiPolygon) { L.MultiPolygon = L.Polygon; }
+        // if (!L.MultiPolyline) { L.MultiPolyline = L.Polyline; }
+
+
+        if (!options || !('editable' in options)) {
+          calcOptions.editable = true;
+        }
+
+        if (obj.geometry) {
+          calcOptions.type = obj.geometry.type;
+        } else if (obj instanceof L$1.Rectangle) {
+          calcOptions.type = 'Rectangle';
+        } else if (obj instanceof L$1.Polygon) {
+          calcOptions.type = calcOptions.type || 'Polygon';
+        } else if (L$1.MultiPolygon && obj instanceof L$1.MultiPolygon) {
+          calcOptions.type = 'MultiPolygon';
+        } else if (obj instanceof L$1.Polyline) {
+          calcOptions.type = 'Polyline';
+        } else if (L$1.MultiPolyline && obj instanceof L$1.MultiPolyline) {
+          calcOptions.type = 'MultiPolyline';
+        } else if (obj.setIcon || obj instanceof L$1.Marker) {
+          calcOptions.type = 'Point';
+          calcOptions.editable = false;
+          obj.options.draggable = true;
+        }
+
+        options = this._chkDrawOptions(calcOptions.type, options);
+        L$1.extend(options, calcOptions);
+
+        if (obj.geometry) {
+          var iconStyle = options.markerStyle && options.markerStyle.iconStyle;
+
+          if (options.type === 'Point' && !options.pointToLayer && iconStyle) {
+            options.icon = L$1.icon(iconStyle);
+
+            options.pointToLayer = function (geojson, latlng) {
+              return new L$1.Marker(latlng, options);
+            };
+          }
+
+          return this.addGeoJSON(obj, options);
+        }
+
+        item = new L$1.GmxDrawing.Feature(this, obj, options);
+      }
+
+      if (!('map' in options)) {
+        options.map = true;
+      }
+
+      if (options.map && !item._map && this._map) {
+        this._map.addLayer(item);
+      } else {
+        this._addItem(item);
+      } //if (!item._map) this._map.addLayer(item);
+      //if (item.points) item.points._path.setAttribute('fill-rule', 'inherit');
+
+
+      if ('setEditMode' in item) {
+        item.setEditMode();
+      }
+    }
+
+    return item;
+  },
+  _disableDrag: function _disableDrag() {
+    if (this._map) {
+      this._map.dragging.disable();
+
+      L$1.DomUtil.disableTextSelection();
+      L$1.DomUtil.disableImageDrag();
+
+      this._map.doubleClickZoom.removeHooks();
+    }
+  },
+  _enableDrag: function _enableDrag() {
+    if (this._map) {
+      this._map.dragging.enable();
+
+      L$1.DomUtil.enableTextSelection();
+      L$1.DomUtil.enableImageDrag();
+
+      this._map.doubleClickZoom.addHooks();
+    }
+  },
+  clearCreate: function clearCreate() {
+    this._clearCreate();
+  },
+  _clearCreate: function _clearCreate() {
+    if (this._createKey && this._map) {
+      if (this._createKey.type === 'Rectangle' && L$1.Browser.mobile) {
+        L$1.DomEvent.off(this._map._container, 'touchstart', this._createKey.fn, this);
+      } else {
+        this._map.off(this._createKey.eventName, this._createKey.fn, this);
+
+        this._map.off('mousemove', this._onMouseMove, this);
+      }
+
+      this._enableDrag();
+    }
+
+    if (this._firstPoint) {
+      this._map.removeLayer(this._firstPoint);
+
+      this._firstPoint = null;
+    }
+
+    this._createKey = null;
+  },
+  _chkDrawOptions: function _chkDrawOptions(type, drawOptions) {
+    var defaultStyles = L$1.GmxDrawing.utils.defaultStyles,
+        resultStyles = {};
+
+    if (!drawOptions) {
+      drawOptions = L$1.extend({}, defaultStyles);
+    }
+
+    if (type === 'Point') {
+      L$1.extend(resultStyles, defaultStyles.markerStyle.options.icon, drawOptions);
+    } else {
+      L$1.extend(resultStyles, drawOptions);
+      resultStyles.lineStyle = L$1.extend({}, defaultStyles.lineStyle, drawOptions.lineStyle);
+      resultStyles.pointStyle = L$1.extend({}, defaultStyles.pointStyle, drawOptions.pointStyle);
+      resultStyles.holeStyle = L$1.extend({}, defaultStyles.holeStyle, drawOptions.holeStyle);
+    }
+
+    if (resultStyles.iconUrl) {
+      var iconStyle = {
+        iconUrl: resultStyles.iconUrl
+      };
+      delete resultStyles.iconUrl;
+
+      if (resultStyles.iconAnchor) {
+        iconStyle.iconAnchor = resultStyles.iconAnchor;
+        delete resultStyles.iconAnchor;
+      }
+
+      if (resultStyles.iconSize) {
+        iconStyle.iconSize = resultStyles.iconSize;
+        delete resultStyles.iconSize;
+      }
+
+      if (resultStyles.popupAnchor) {
+        iconStyle.popupAnchor = resultStyles.popupAnchor;
+        delete resultStyles.popupAnchor;
+      }
+
+      if (resultStyles.shadowSize) {
+        iconStyle.shadowSize = resultStyles.shadowSize;
+        delete resultStyles.shadowSize;
+      }
+
+      resultStyles.markerStyle = {
+        iconStyle: iconStyle
+      };
+    }
+
+    return resultStyles;
+  },
+  create: function create(type, options) {
+    this._clearCreate(null);
+
+    if (type && this._map) {
+      var map = this._map,
+          drawOptions = this._chkDrawOptions(type, options),
+          my = this;
+
+      if (type === 'Rectangle') {
+        //map._initPathRoot();
+        map.dragging.disable();
+      }
+
+      this._createKey = {
+        type: type,
+        eventName: type === 'Rectangle' ? L$1.Browser.mobile ? 'touchstart' : 'mousedown' : 'click',
+        fn: function fn(ev) {
+          var originalEvent = ev && ev.originalEvent,
+              ctrlKey = false,
+              shiftKey = false,
+              altKey = false;
+
+          if (originalEvent) {
+            ctrlKey = originalEvent.ctrlKey;
+            shiftKey = originalEvent.shiftKey;
+            altKey = originalEvent.altKey;
+            var clickOnTag = originalEvent.target.tagName;
+
+            if (clickOnTag === 'g' || clickOnTag === 'path') {
+              return;
+            }
+          }
+
+          my._createType = '';
+          var obj,
+              key,
+              opt = {},
+              latlng = ev.latlng;
+
+          for (key in drawOptions) {
+            if (!(key in L$1.GmxDrawing.utils.defaultStyles)) {
+              opt[key] = drawOptions[key];
+            }
+          }
+
+          if (ctrlKey && my._firstPoint && my._firstPoint._snaped) {
+            latlng = my._firstPoint._snaped;
+          }
+
+          if (type === 'Point') {
+            var markerStyle = drawOptions.markerStyle || {},
+                markerOpt = {
+              draggable: true
+            };
+
+            if (originalEvent) {
+              markerOpt.ctrlKey = ctrlKey;
+              markerOpt.shiftKey = shiftKey;
+              markerOpt.altKey = altKey;
+            }
+
+            if (markerStyle.iconStyle) {
+              markerOpt.icon = L$1.icon(markerStyle.iconStyle);
+            }
+
+            obj = my.add(new L$1.Marker(latlng, markerOpt), opt);
+          } else {
+            if (drawOptions.pointStyle) {
+              opt.pointStyle = drawOptions.pointStyle;
+            }
+
+            if (drawOptions.lineStyle) {
+              opt.lineStyle = drawOptions.lineStyle;
+            }
+
+            if (type === 'Rectangle') {
+              // if (L.Browser.mobile) {
+              // var downAttr = L.GmxDrawing.utils.getDownType.call(my, ev, my._map);
+              // latlng = downAttr.latlng;
+              // }
+              opt.mode = 'edit';
+              obj = my.add(L$1.rectangle(L$1.latLngBounds(L$1.latLng(latlng.lat + rectDelta, latlng.lng - rectDelta), latlng)), opt);
+
+              if (L$1.Browser.mobile) {
+                obj._startTouchMove(ev, true);
+              } else {
+                obj._pointDown(ev);
+              }
+
+              obj.rings[0].ring._drawstop = true;
+            } else if (type === 'Polygon') {
+              opt.mode = 'add';
+              obj = my.add(L$1.polygon([latlng]), opt);
+              obj.setAddMode();
+            } else if (type === 'Polyline') {
+              opt.mode = 'add';
+              obj = my.add(L$1.polyline([latlng]), opt).setAddMode();
+            }
+          }
+
+          my._clearCreate();
+        }
+      };
+
+      if (type === 'Rectangle' && L$1.Browser.mobile) {
+        L$1.DomEvent.on(map._container, 'touchstart', this._createKey.fn, this);
+      } else {
+        map.on(this._createKey.eventName, this._createKey.fn, this);
+        map.on('mousemove', this._onMouseMove, this);
+      }
+
+      this._createType = type;
+      L$1.DomUtil.addClass(map._mapPane, 'leaflet-clickable');
+      this.fire('drawstart', {
+        mode: type
+      });
+    }
+
+    this.options.type = type;
+  },
+  _onMouseMove: function _onMouseMove(ev) {
+    var latlngs = [ev.latlng];
+
+    if (!this._firstPoint) {
+      this._firstPoint = new L$1.GmxDrawing.PointMarkers(latlngs, {
+        interactive: false
+      });
+
+      this._map.addLayer(this._firstPoint);
+    } else {
+      this._firstPoint.setLatLngs(latlngs);
+    }
+  },
+  extendDefaultStyles: function extendDefaultStyles(drawOptions) {
+    var defaultStyles = L$1.GmxDrawing.utils.defaultStyles;
+    drawOptions = drawOptions || {};
+
+    if (drawOptions.iconUrl) {
+      var iconStyle = defaultStyles.markerStyle.options.icon;
+      iconStyle.iconUrl = drawOptions.iconUrl;
+      delete drawOptions.iconUrl;
+
+      if (drawOptions.iconAnchor) {
+        iconStyle.iconAnchor = drawOptions.iconAnchor;
+        delete drawOptions.iconAnchor;
+      }
+
+      if (drawOptions.iconSize) {
+        iconStyle.iconSize = drawOptions.iconSize;
+        delete drawOptions.iconSize;
+      }
+
+      if (drawOptions.popupAnchor) {
+        iconStyle.popupAnchor = drawOptions.popupAnchor;
+        delete drawOptions.popupAnchor;
+      }
+
+      if (drawOptions.shadowSize) {
+        iconStyle.shadowSize = drawOptions.shadowSize;
+        delete drawOptions.shadowSize;
+      }
+    }
+
+    if (drawOptions.lineStyle) {
+      L$1.extend(defaultStyles.lineStyle, drawOptions.lineStyle);
+      delete drawOptions.lineStyle;
+    }
+
+    if (drawOptions.pointStyle) {
+      L$1.extend(defaultStyles.pointStyle, drawOptions.pointStyle);
+      delete drawOptions.pointStyle;
+    }
+
+    if (drawOptions.holeStyle) {
+      L$1.extend(defaultStyles.holeStyle, drawOptions.holeStyle);
+      delete drawOptions.holeStyle;
+    }
+
+    L$1.extend(defaultStyles, drawOptions);
+    return this;
+  },
+  getFeatures: function getFeatures() {
+    var out = [];
+
+    for (var i = 0, len = this.items.length; i < len; i++) {
+      out.push(this.items[i]);
+    }
+
+    return out;
+  },
+  loadState: function loadState(data) {
+    //if (data.version !== stateVersion) return;
+    var _this = this,
+        featureCollection = data.featureCollection;
+
+    L$1.geoJson(featureCollection, {
+      onEachFeature: function onEachFeature(feature, layer) {
+        var options = feature.properties,
+            popupOpened = options.popupOpened;
+
+        if (options.type === 'Rectangle') {
+          layer = L$1.rectangle(layer.getBounds());
+        } else if (options.type === 'Point') {
+          options = options.options;
+          var icon = options.icon;
+
+          if (icon) {
+            delete options.icon;
+
+            if (icon.iconUrl) {
+              options.icon = L$1.icon(icon);
+            }
+          }
+
+          layer = L$1.marker(layer.getLatLng(), options);
+        }
+
+        if (layer.setStyle && options && options.lineStyle) {
+          layer.setStyle(options.lineStyle);
+        }
+
+        _this.add(layer, options);
+
+        if (popupOpened) {
+          layer.openPopup();
+        }
+      }
+    });
+  },
+  saveState: function saveState() {
+    var featureGroup = L$1.featureGroup();
+    var points = [];
+
+    for (var i = 0, len = this.items.length; i < len; i++) {
+      var it = this.items[i];
+
+      if (it.options.type === 'Point') {
+        var geojson = it.toGeoJSON();
+        geojson.properties = L$1.GmxDrawing.utils.getNotDefaults(it.options, L$1.GmxDrawing.utils.defaultStyles.markerStyle);
+
+        if (!it._map) {
+          geojson.properties.map = false;
+        } else if (it._map.hasLayer(it.getPopup())) {
+          geojson.properties.popupOpened = true;
+        }
+
+        var res = L$1.GmxDrawing.utils.getNotDefaults(it._obj.options, L$1.GmxDrawing.utils.defaultStyles.markerStyle.options);
+
+        if (Object.keys(res).length) {
+          geojson.properties.options = res;
+        }
+
+        res = L$1.GmxDrawing.utils.getNotDefaults(it._obj.options.icon.options, L$1.GmxDrawing.utils.defaultStyles.markerStyle.options.icon);
+
+        if (Object.keys(res).length) {
+          if (!geojson.properties.options) {
+            geojson.properties.options = {};
+          }
+
+          geojson.properties.options.icon = res;
+        }
+
+        points.push(geojson);
+      } else {
+        featureGroup.addLayer(it);
+      }
+    }
+
+    var featureCollection = featureGroup.toGeoJSON();
+    featureCollection.features = featureCollection.features.concat(points);
+    return {
+      version: stateVersion,
+      featureCollection: featureCollection
+    };
+  },
+  _addItem: function _addItem(item) {
+    var addFlag = true;
+
+    for (var i = 0, len = this.items.length; i < len; i++) {
+      var it = this.items[i];
+
+      if (it === item) {
+        addFlag = false;
+        break;
+      }
+    }
+
+    if (addFlag) {
+      this.items.push(item);
+    }
+
+    this.fire('add', {
+      mode: item.mode,
+      object: item
+    });
+  },
+  _removeItem: function _removeItem(obj, remove) {
+    for (var i = 0, len = this.items.length; i < len; i++) {
+      var item = this.items[i];
+
+      if (item === obj) {
+        if (remove) {
+          this.items.splice(i, 1);
+          var ev = {
+            type: item.options.type,
+            mode: item.mode,
+            object: item
+          };
+          this.fire('remove', ev);
+          item.fire('remove', ev);
+        }
+
+        return item;
+      }
+    }
+
+    return null;
+  },
+  clear: function clear() {
+    for (var i = 0, len = this.items.length; i < len; i++) {
+      var item = this.items[i];
+
+      if (item && item._map) {
+        item._map.removeLayer(item);
+      }
+
+      var ev = {
+        type: item.options.type,
+        mode: item.mode,
+        object: item
+      };
+      this.fire('remove', ev);
+      item.fire('remove', ev);
+    }
+
+    this.items = [];
+    return this;
+  },
+  remove: function remove(obj) {
+    var item = this._removeItem(obj, true);
+
+    if (item && item._map) {
+      item._map.removeLayer(item);
+    }
+
+    return item;
   }
-}];
-var REGIONS = [{
-  MinZoom: 4,
-  MaxZoom: 21,
-  RenderStyle: {
-    stroke: true,
-    color: parseInt('B22222', 16),
-    weight: 1,
-    opacity: 1 // fillColor: parseInt('AD3D2D', 16),
-    // fillOpacity: 0.4,
+});
+L$1.Map.addInitHook(function () {
+  this.gmxDrawing = new L$1.GmxDrawing(this);
+});
+L$1.GmxDrawing;
+
+L$1.GmxDrawing.Feature = L$1.LayerGroup.extend({
+  options: {
+    endTooltip: '',
+    smoothFactor: 0,
+    mode: '' // add, edit
 
   },
-  HoverStyle: {
-    stroke: true,
-    color: parseInt('B22222', 16),
-    weight: 1,
-    opacity: 1 // fillColor: parseInt('AD3D2D', 16),
-    // fillOpacity: 0.4,
+  includes: L$1.Evented ? L$1.Evented.prototype : L$1.Mixin.Events,
+  simplify: function simplify() {
+    var i, j, len, len1, hole;
 
-  }
-}];
-var FORESTRIES = [{
-  MinZoom: 4,
-  MaxZoom: 21,
-  RenderStyle: {
-    stroke: true,
-    color: parseInt('B8860B', 16),
-    weight: 1,
-    opacity: 1 // fillColor: parseInt('AD3D2D', 16),
-    // fillOpacity: 0.4,
+    for (i = 0, len = this.rings.length; i < len; i++) {
+      var it = this.rings[i],
+          ring = it.ring;
+      ring.setLatLngs(ring.points.getPathLatLngs());
 
+      for (j = 0, len1 = it.holes.length; j < len1; j++) {
+        hole = it.holes[j];
+        hole.setLatLngs(hole.points.getPathLatLngs());
+      }
+    }
+
+    return this;
   },
-  HoverStyle: {
-    stroke: true,
-    color: parseInt('B8860B', 16),
-    weight: 1,
-    opacity: 1 // fillColor: parseInt('AD3D2D', 16),
-    // fillOpacity: 0.4,
-
-  }
-}];
-var FORESTRIES_LOCAL = [{
-  MinZoom: 4,
-  MaxZoom: 21,
-  RenderStyle: {
-    stroke: true,
-    color: parseInt('BDB76B', 16),
-    weight: 1,
-    opacity: 1 // fillColor: parseInt('AD3D2D', 16),
-    // fillOpacity: 0.4,
-
+  bringToFront: function bringToFront() {
+    this.rings.forEach(function (it) {
+      it.ring.bringToFront();
+    });
+    return this; // return this.invoke('bringToFront');
   },
-  HoverStyle: {
-    stroke: true,
-    color: parseInt('BDB76B', 16),
-    weight: 1,
-    opacity: 1 // fillColor: parseInt('AD3D2D', 16),
-    // fillOpacity: 0.4,
+  bringToBack: function bringToBack() {
+    this.rings.forEach(function (it) {
+      it.ring.bringToBack();
+    });
+    return this; // return this.invoke('bringToBack');
+  },
+  onAdd: function onAdd(map) {
+    L$1.LayerGroup.prototype.onAdd.call(this, map);
 
+    this._parent._addItem(this);
+
+    if (this.options.type === 'Point') {
+      map.addLayer(this._obj);
+      requestIdleCallback(function () {
+        this._fireEvent('drawstop', this._obj.options);
+      }.bind(this), {
+        timeout: 0
+      });
+    } else {
+      var svgContainer = this._map._pathRoot || this._map._renderer && this._map._renderer._container;
+
+      if (svgContainer && svgContainer.getAttribute('pointer-events') !== 'visible') {
+        svgContainer.setAttribute('pointer-events', 'visible');
+      }
+    }
+
+    this._fireEvent('addtomap');
+  },
+  onRemove: function onRemove(map) {
+    if ('hideTooltip' in this) {
+      this.hideTooltip();
+    }
+
+    this._removeStaticTooltip();
+
+    L$1.LayerGroup.prototype.onRemove.call(this, map);
+
+    if (this.options.type === 'Point') {
+      map.removeLayer(this._obj);
+    }
+
+    this._fireEvent('removefrommap');
+  },
+  remove: function remove(ring) {
+    if (ring) {
+      var i, j, len, len1, hole;
+
+      for (i = 0, len = this.rings.length; i < len; i++) {
+        if (ring.options.hole) {
+          for (j = 0, len1 = this.rings[i].holes.length; j < len1; j++) {
+            hole = this.rings[i].holes[j];
+
+            if (ring === hole) {
+              this.rings[i].holes.splice(j, 1);
+
+              if (hole._map) {
+                hole._map.removeLayer(hole);
+              }
+
+              break;
+            }
+          }
+
+          if (!ring._map) {
+            break;
+          }
+        } else if (ring === this.rings[i].ring) {
+          for (j = 0, len1 = this.rings[i].holes.length; j < len1; j++) {
+            hole = this.rings[i].holes[j];
+
+            if (hole._map) {
+              hole._map.removeLayer(hole);
+            }
+          }
+
+          this.rings.splice(i, 1);
+
+          if (ring._map) {
+            ring._map.removeLayer(ring);
+          }
+
+          break;
+        }
+      }
+    } else {
+      this.rings = [];
+    }
+
+    if (this.rings.length < 1) {
+      if (this._originalStyle) {
+        this._obj.setStyle(this._originalStyle);
+      }
+
+      this._parent.remove(this);
+    }
+
+    return this;
+  },
+  _fireEvent: function _fireEvent(name, options) {
+    //console.log('_fireEvent', name);
+    if (name === 'removefrommap' && this.rings.length > 1) {
+      return;
+    }
+
+    var event = L$1.extend({}, {
+      mode: this.mode || '',
+      object: this
+    }, options);
+    this.fire(name, event);
+
+    this._parent.fire(name, event);
+
+    if (name === 'drawstop' && this._map) {
+      L$1.DomUtil.removeClass(this._map._mapPane, 'leaflet-clickable');
+    }
+  },
+  getStyle: function getStyle() {
+    var resultStyles = L$1.extend({}, this._drawOptions);
+    delete resultStyles.holeStyle;
+
+    if (resultStyles.type === 'Point') {
+      L$1.extend(resultStyles, resultStyles.markerStyle.iconStyle);
+      delete resultStyles.markerStyle;
+    }
+
+    return resultStyles;
+  },
+  setOptions: function setOptions(options) {
+    if (options.lineStyle) {
+      this._setStyleOptions(options.lineStyle, 'lines');
+    }
+
+    if (options.pointStyle) {
+      this._setStyleOptions(options.pointStyle, 'points');
+    }
+
+    if ('editable' in options) {
+      if (options.editable) {
+        this.enableEdit();
+      } else {
+        this.disableEdit();
+      }
+    }
+
+    L$1.setOptions(this, options);
+
+    this._fireEvent('optionschange');
+
+    return this;
+  },
+  _setStyleOptions: function _setStyleOptions(options, type) {
+    for (var i = 0, len = this.rings.length; i < len; i++) {
+      var it = this.rings[i].ring[type];
+      it.setStyle(options);
+      it.redraw();
+
+      for (var j = 0, len1 = this.rings[i].holes.length; j < len1; j++) {
+        it = this.rings[i].holes[j][type];
+        it.setStyle(options);
+        it.redraw();
+      }
+    }
+
+    this._fireEvent('stylechange');
+  },
+  _setLinesStyle: function _setLinesStyle(options) {
+    this._setStyleOptions(options, 'lines');
+  },
+  _setPointsStyle: function _setPointsStyle(options) {
+    this._setStyleOptions(options, 'points');
+  },
+  getOptions: function getOptions() {
+    var options = this.options,
+        data = L$1.extend({}, options);
+    data.lineStyle = options.lineStyle;
+    data.pointStyle = options.pointStyle;
+    var res = L$1.GmxDrawing.utils.getNotDefaults(data, L$1.GmxDrawing.utils.defaultStyles);
+
+    if (!Object.keys(res.lineStyle).length) {
+      delete res.lineStyle;
+    }
+
+    if (!Object.keys(res.pointStyle).length) {
+      delete res.pointStyle;
+    }
+
+    if (!this._map) {
+      res.map = false;
+    }
+
+    if (options.type === 'Point') {
+      var opt = L$1.GmxDrawing.utils.getNotDefaults(this._obj.options, L$1.GmxDrawing.utils.defaultStyles.markerStyle.options);
+
+      if (Object.keys(opt).length) {
+        res.options = opt;
+      }
+
+      opt = L$1.GmxDrawing.utils.getNotDefaults(this._obj.options.icon.options, L$1.GmxDrawing.utils.defaultStyles.markerStyle.options.icon);
+
+      if (Object.keys(opt).length) {
+        res.options.icon = opt;
+      }
+    }
+
+    return res;
+  },
+  _latLngsToCoords: function _latLngsToCoords(latlngs, closed) {
+    var coords = L$1.GeoJSON.latLngsToCoords(L$1.GmxDrawing.utils.isOldVersion ? latlngs : latlngs[0]);
+
+    if (closed) {
+      var lastCoord = coords[coords.length - 1];
+
+      if (lastCoord[0] !== coords[0][0] || lastCoord[1] !== coords[0][1]) {
+        coords.push(coords[0]);
+      }
+    }
+
+    return coords;
+  },
+  _latlngsAddShift: function _latlngsAddShift(latlngs, shiftPixel) {
+    var arr = [];
+
+    for (var i = 0, len = latlngs.length; i < len; i++) {
+      arr.push(L$1.GmxDrawing.utils.getShiftLatlng(latlngs[i], this._map, shiftPixel));
+    }
+
+    return arr;
+  },
+  getPixelOffset: function getPixelOffset() {
+    var p = this.shiftPixel;
+
+    if (!p && this._map) {
+      var mInPixel = 256 / L$1.gmxUtil.tileSizes[this._map._zoom];
+      p = this.shiftPixel = new L$1.Point(Math.floor(mInPixel * this._dx), -Math.floor(mInPixel * this._dy));
+    }
+
+    return p || new L$1.Point(0, 0);
+  },
+  setOffsetToGeometry: function setOffsetToGeometry(dx, dy) {
+    var i,
+        len,
+        j,
+        len1,
+        ring,
+        latlngs,
+        mInPixel = 256 / L$1.gmxUtil.tileSizes[this._map._zoom],
+        shiftPixel = new L$1.Point(mInPixel * (this._dx || dx || 0), -mInPixel * (this._dy || dy || 0));
+
+    for (i = 0, len = this.rings.length; i < len; i++) {
+      var it = this.rings[i];
+      ring = it.ring;
+      latlngs = ring.points.getLatLngs();
+      ring.setLatLngs(this._latlngsAddShift(latlngs, shiftPixel));
+
+      if (it.holes && it.holes.length) {
+        for (j = 0, len1 = it.holes.length; j < len1; j++) {
+          ring = it.holes[j].ring;
+          latlngs = ring.points.getLatLngs();
+          ring.setLatLngs(this._latlngsAddShift(latlngs, shiftPixel));
+        }
+      }
+    }
+
+    this.setPositionOffset();
+    return this;
+  },
+  setPositionOffset: function setPositionOffset(mercX, mercY) {
+    this._dx = mercX || 0;
+    this._dy = mercY || 0;
+
+    if (this._map) {
+      this.shiftPixel = null;
+      var p = this.getPixelOffset();
+
+      for (var i = 0, len = this.rings.length; i < len; i++) {
+        this.rings[i].ring.setPositionOffset(p);
+
+        for (var j = 0, len1 = this.rings[i].holes.length; j < len1; j++) {
+          this.rings[i].holes[j].setPositionOffset(p);
+        }
+      }
+    }
+  },
+  _getCoords: function _getCoords(withoutShift) {
+    var type = this.options.type,
+        closed = type === 'Polygon' || type === 'Rectangle' || type === 'MultiPolygon',
+        shiftPixel = withoutShift ? null : this.shiftPixel,
+        coords = [];
+
+    for (var i = 0, len = this.rings.length; i < len; i++) {
+      var it = this.rings[i],
+          arr = this._latLngsToCoords(it.ring.points.getLatLngs(), closed, shiftPixel);
+
+      if (closed) {
+        arr = [arr];
+      }
+
+      if (it.holes && it.holes.length) {
+        for (var j = 0, len1 = it.holes.length; j < len1; j++) {
+          arr.push(this._latLngsToCoords(it.holes[j].points.getLatLngs(), closed, shiftPixel));
+        }
+      }
+
+      coords.push(arr);
+    }
+
+    if (type === 'Polyline' || closed && type !== 'MultiPolygon') {
+      coords = coords[0];
+    }
+
+    return coords;
+  },
+  _geoJsonToLayer: function _geoJsonToLayer(geoJson) {
+    return L$1.geoJson(geoJson).getLayers()[0];
+  },
+  setGeoJSON: function setGeoJSON(geoJson) {
+    this._initialize(this._parent, geoJson);
+
+    return this;
+  },
+  toGeoJSON: function toGeoJSON() {
+    return this._toGeoJSON(true);
+  },
+  _toGeoJSON: function _toGeoJSON(withoutShift) {
+    var type = this.options.type,
+        properties = this.getOptions(),
+        coords;
+    delete properties.mode;
+
+    if (!this.options.editable || type === 'Point') {
+      var obj = this._obj;
+
+      if (obj instanceof L$1.GeoJSON) {
+        obj = L$1.GmxDrawing.utils._getLastObject(obj).getLayers()[0];
+      }
+
+      var geojson = obj.toGeoJSON();
+      geojson.properties = properties;
+      return geojson;
+    } else if (this.rings) {
+      coords = this._getCoords(withoutShift);
+
+      if (type === 'Rectangle') {
+        type = 'Polygon';
+      } else if (type === 'Polyline') {
+        type = 'LineString';
+      } else if (type === 'MultiPolyline') {
+        type = 'MultiLineString';
+      }
+    }
+
+    return L$1.GeoJSON.getFeature({
+      feature: {
+        type: 'Feature',
+        properties: properties
+      }
+    }, {
+      type: type,
+      coordinates: coords
+    });
+  },
+  getType: function getType() {
+    return this.options.type;
+  },
+  hideFill: function hideFill() {
+    if (this._fill._map) {
+      this._map.removeLayer(this._fill);
+    }
+  },
+  showFill: function showFill() {
+    var geoJSON = this.toGeoJSON(),
+        obj = L$1.GeoJSON.geometryToLayer(geoJSON, null, null, {
+      weight: 0
+    });
+
+    this._fill.clearLayers();
+
+    if (obj instanceof L$1.LayerGroup) {
+      obj.eachLayer(function (layer) {
+        this._fill.addLayer(layer);
+      }, this);
+    } else {
+      obj.setStyle({
+        smoothFactor: 0,
+        weight: 0,
+        fill: true,
+        fillColor: '#0033ff'
+      });
+
+      this._fill.addLayer(obj);
+    }
+
+    if (!this._fill._map) {
+      this._map.addLayer(this._fill);
+
+      this._fill.bringToBack();
+    }
+
+    return this;
+  },
+  getBounds: function getBounds() {
+    var bounds = new L$1.LatLngBounds();
+
+    if (this.options.type === 'Point') {
+      var latLng = this._obj.getLatLng();
+
+      bounds.extend(latLng);
+    } else {
+      bounds = this._getBounds();
+    }
+
+    return bounds;
+  },
+  _getBounds: function _getBounds(item) {
+    var layer = item || this,
+        bounds = new L$1.LatLngBounds(),
+        latLng;
+
+    if (layer instanceof L$1.LayerGroup) {
+      layer.eachLayer(function (it) {
+        latLng = this._getBounds(it);
+        bounds.extend(latLng);
+      }, this);
+      return bounds;
+    } else if (layer instanceof L$1.Marker) {
+      latLng = layer.getLatLng();
+    } else {
+      latLng = layer.getBounds();
+    }
+
+    bounds.extend(latLng);
+    return bounds;
+  },
+  initialize: function initialize(parent, obj, options) {
+    options = options || {};
+    this.contextmenu = new L$1.GmxDrawingContextMenu();
+    options.mode = '';
+    this._drawOptions = L$1.extend({}, options);
+    var type = options.type;
+
+    if (type === 'Point') {
+      delete options.pointStyle;
+      delete options.lineStyle;
+    } else {
+      delete options.iconUrl;
+      delete options.iconAnchor;
+      delete options.iconSize;
+      delete options.popupAnchor;
+      delete options.shadowSize;
+      delete options.markerStyle;
+    }
+
+    delete options.holeStyle;
+    L$1.setOptions(this, options);
+    this._layers = {};
+    this._obj = obj;
+    this._parent = parent;
+    this._dx = 0;
+    this._dy = 0;
+
+    this._initialize(parent, obj);
+  },
+  enableEdit: function enableEdit() {
+    this.options.mode = 'edit';
+    var type = this.options.type;
+
+    if (type !== 'Point') {
+      // for (var i = 0, len = this.rings.length; i < len; i++) {
+      // var it = this.rings[i];
+      // it.ring.options.editable = this.options.editable;
+      // it.ring.setEditMode();
+      // for (var j = 0, len1 = it.holes.length; j < len1; j++) {
+      // var hole = it.holes[j];
+      // hole.options.editable = this.options.editable;
+      // hole.setEditMode();
+      // }
+      // }
+      var geojson = L$1.geoJson(this.toGeoJSON()),
+          items = geojson.getLayers();
+      this.options.editable = true;
+
+      if (items.length) {
+        this._initialize(this._parent, items[0]);
+      }
+    }
+
+    return this;
+  },
+  disableEdit: function disableEdit() {
+    var type = this.options.type;
+
+    if (type !== 'Point') {
+      this._originalStyle = this.options.lineStyle;
+      var geojson = L$1.geoJson(this.toGeoJSON().geometry, this._originalStyle).getLayers()[0];
+
+      for (var i = 0, len = this.rings.length; i < len; i++) {
+        var it = this.rings[i];
+        it.ring.removeEditMode();
+        it.ring.options.editable = false;
+
+        for (var j = 0, len1 = it.holes.length; j < len1; j++) {
+          var hole = it.holes[j];
+          hole.removeEditMode();
+          hole.options.editable = false;
+        }
+      }
+
+      this._obj = geojson;
+      this.options.editable = false;
+
+      this._initialize(this._parent, this._obj);
+    }
+
+    return this;
+  },
+  getArea: function getArea() {
+    var out = 0;
+
+    if (L$1.gmxUtil.geoJSONGetArea) {
+      out = L$1.gmxUtil.geoJSONGetArea(this.toGeoJSON());
+    }
+
+    return out;
+  },
+  getLength: function getLength() {
+    var out = 0;
+
+    if (L$1.gmxUtil.geoJSONGetLength) {
+      out = L$1.gmxUtil.geoJSONGetLength(this.toGeoJSON());
+    }
+
+    return out;
+  },
+  getLatLng: function getLatLng() {
+    return this.lastAddLatLng;
+  },
+  _getTooltipAnchor: function _getTooltipAnchor() {
+    return this.lastAddLatLng;
+  },
+  getSummary: function getSummary() {
+    var str = '',
+        mapOpt = this._map ? this._map.options : {},
+        type = this.options.type;
+
+    if (type === 'Polyline' || type === 'MultiPolyline') {
+      str = L$1.gmxUtil.prettifyDistance(this.getLength(), mapOpt.distanceUnit);
+    } else if (type === 'Polygon' || type === 'MultiPolygon' || type === 'Rectangle') {
+      str = L$1.gmxUtil.prettifyArea(this.getArea(), mapOpt.squareUnit);
+    } else if (type === 'Point') {
+      var latLng = this._obj.getLatLng();
+
+      str = L$1.gmxUtil.formatCoordinates(latLng);
+    }
+
+    return str;
+  },
+  _initialize: function _initialize(parent, obj) {
+    var _this2 = this;
+
+    this.clearLayers();
+    this.rings = [];
+    this.mode = '';
+    this.lastAddLatLng = L$1.latLng(0, 0); // последняя из добавленных точек
+
+    this._fill = L$1.featureGroup();
+
+    if (this._fill.options) {
+      this._fill.options.smoothFactor = 0;
+    }
+
+    if (this.options.editable) {
+      var arr = [];
+
+      if (L$1.GmxDrawing.utils.isOldVersion) {
+        arr = obj.getLayers ? L$1.GmxDrawing.utils._getLastObject(obj).getLayers() : [obj];
+      } else {
+        arr = obj.getLayers ? L$1.GmxDrawing.utils._getLastObject(obj) : [obj];
+
+        if (obj.type && obj.coordinates) {
+          var type = obj.type;
+          obj = this._geoJsonToLayer(obj);
+
+          if (type === 'Polygon') {
+            var it1 = obj.getLatLngs();
+            arr = [{
+              _latlngs: it1.shift(),
+              _holes: it1
+            }];
+          } else if (type === 'MultiPolygon') {
+            arr = obj.getLatLngs().map(function (it) {
+              return {
+                _latlngs: it.shift(),
+                _holes: it
+              };
+            });
+          } else if (type === 'LineString') {
+            arr = [{
+              _latlngs: obj.getLatLngs()
+            }];
+          } else if (type === 'MultiLineString') {
+            arr = obj.getLatLngs().map(function (it) {
+              return {
+                _latlngs: it
+              };
+            });
+          } else if (type === 'Point') {
+            this._obj = new L$1.Marker(obj.getLatLng(), {
+              draggable: true
+            });
+
+            this._setMarker(this._obj);
+
+            return;
+          } else if (type === 'MultiPoint') {
+            obj.getLayers().forEach(function (it) {
+              this._setMarker(new L$1.Marker(it.getLatLng(), {
+                draggable: true
+              }));
+            }.bind(this));
+            return;
+          }
+        } else if (this.options.type === 'MultiPolygon') {
+          arr = (obj.getLayers ? obj.getLayers()[0] : obj).getLatLngs().map(function (it) {
+            return {
+              _latlngs: it.shift(),
+              _holes: it
+            };
+          });
+        } else if (this.options.type === 'Polygon') {
+          var _latlngs = (obj.getLayers ? obj.getLayers()[0] : obj).getLatLngs();
+
+          arr = [{
+            _latlngs: _latlngs.shift(),
+            _holes: _latlngs
+          }];
+        }
+      }
+
+      for (var i = 0, len = arr.length; i < len; i++) {
+        var it = arr[i],
+            holes = [],
+            ring = new L$1.GmxDrawing.Ring(this, it._latlngs, {
+          ring: true,
+          editable: this.options.editable
+        });
+        ring.on('click', function (e) {
+          _this2.fire('click', e);
+        });
+        this.addLayer(ring);
+
+        if (it._holes) {
+          for (var j = 0, len1 = it._holes.length; j < len1; j++) {
+            var hole = new L$1.GmxDrawing.Ring(this, it._holes[j], {
+              hole: true,
+              editable: this.options.editable
+            });
+            this.addLayer(hole);
+            holes.push(hole);
+          }
+        }
+
+        this.rings.push({
+          ring: ring,
+          holes: holes
+        });
+      }
+
+      if (this.options.endTooltip && L$1.tooltip) {
+        this._initStaticTooltip();
+      }
+
+      if (L$1.gmxUtil && L$1.gmxUtil.prettifyDistance && !this._showTooltip) {
+        var _gtxt = L$1.GmxDrawing.utils.getLocale;
+        var my = this;
+
+        this._showTooltip = function (type, ev) {
+          var ring = ev.ring,
+              originalEvent = ev.originalEvent,
+              down = type !== 'angle' && (originalEvent.buttons || originalEvent.button);
+
+          if (ring && (ring.downObject || !down)) {
+            var mapOpt = my._map ? my._map.options : {},
+                distanceUnit = mapOpt.distanceUnit,
+                squareUnit = mapOpt.squareUnit,
+                azimutUnit = mapOpt.azimutUnit || false,
+                str = '';
+
+            if (type === 'Area' && ring.mode === 'add') {
+              type = 'Length';
+            }
+
+            if (type === 'Area') {
+              if (!L$1.gmxUtil.getArea) {
+                return;
+              }
+
+              if (originalEvent && originalEvent.ctrlKey) {
+                str = _gtxt('Perimeter') + ': ' + L$1.gmxUtil.prettifyDistance(my.getLength(), distanceUnit);
+              } else {
+                str = _gtxt(type) + ': ' + L$1.gmxUtil.prettifyArea(my.getArea(), squareUnit);
+              }
+
+              my._parent.showTooltip(ev.layerPoint, str);
+            } else if (type === 'Length') {
+              var downAttr = L$1.GmxDrawing.utils.getDownType.call(my, ev, my._map, my),
+                  angleLeg = azimutUnit ? ring.getAngleLength(downAttr) : null;
+
+              if (angleLeg && angleLeg.length && (my.options.type === 'Polyline' || ring.mode === 'add')) {
+                str = _gtxt('angleLength') + ': ' + angleLeg.angle + '(' + L$1.gmxUtil.prettifyDistance(angleLeg.length, distanceUnit) + ')';
+              } else {
+                var length = ring.getLength(downAttr),
+                    titleName = (downAttr.mode === 'edit' || downAttr.num > 1 ? downAttr.type : '') + type,
+                    title = _gtxt(titleName);
+
+                str = (title === titleName ? _gtxt(type) : title) + ': ' + L$1.gmxUtil.prettifyDistance(length, distanceUnit);
+              }
+
+              my._parent.showTooltip(ev.layerPoint, str);
+            } else if (type === 'angle') {
+              str = _gtxt('Angle') + ': ' + Math.floor(180.0 * ring._angle / Math.PI) + '°';
+
+              my._parent.showTooltip(ev.layerPoint, str);
+            }
+
+            my._fireEvent('onMouseOver');
+          }
+        };
+
+        this.hideTooltip = function () {
+          this._parent.hideTooltip();
+
+          this._fireEvent('onMouseOut');
+        };
+
+        this.getTitle = _gtxt;
+      }
+    } else if (this.options.type === 'Point') {
+      this._setMarker(obj);
+    } else {
+      this.addLayer(obj);
+    }
+  },
+  _initStaticTooltip: function _initStaticTooltip() {
+    this.on('drawstop editstop', function (ev) {
+      if (this.staticTooltip) {
+        this._removeStaticTooltip();
+      }
+
+      var latlng = ev.latlng,
+          map = this._map,
+          mapOpt = map ? map.options : {},
+          distanceUnit = mapOpt.distanceUnit,
+          squareUnit = mapOpt.squareUnit,
+          tCont = L$1.DomUtil.create('div', 'content'),
+          info = L$1.DomUtil.create('div', 'infoTooltip', tCont),
+          closeBtn = L$1.DomUtil.create('div', 'closeBtn', tCont),
+          polygon = this.options.type === 'Polygon',
+          tOptions = {
+        interactive: true,
+        sticky: true,
+        permanent: true,
+        className: 'staticTooltip'
+      };
+
+      if (polygon) {
+        if (this.options.endTooltip === 'center') {
+          tOptions.direction = 'center';
+          latlng = this.getBounds().getCenter();
+        }
+
+        info.innerHTML = L$1.gmxUtil.prettifyArea(this.getArea(), squareUnit);
+      } else {
+        tOptions.offset = L$1.point(10, 0);
+        var arr = this.rings[0].ring.points.getLatLngs()[0];
+        latlng = arr[arr.length - 1];
+        info.innerHTML = L$1.gmxUtil.prettifyDistance(this.getLength(), distanceUnit);
+      }
+
+      closeBtn.innerHTML = '×';
+      L$1.DomEvent.on(closeBtn, 'click', function () {
+        this._removeStaticTooltip();
+
+        this.remove();
+      }, this);
+      this.staticTooltip = L$1.tooltip(tOptions).setLatLng(latlng).setContent(tCont).addTo(this._map);
+      requestIdleCallback(function () {
+        this.on('edit', this._removeStaticTooltip, this);
+      }.bind(this), {
+        timeout: 0
+      });
+    }, this);
+  },
+  _removeStaticTooltip: function _removeStaticTooltip() {
+    if (this.staticTooltip) {
+      this._map.removeLayer(this.staticTooltip);
+
+      this.staticTooltip = null;
+    }
+  },
+  _enableDrag: function _enableDrag() {
+    this._parent._enableDrag();
+  },
+  _disableDrag: function _disableDrag() {
+    this._parent._disableDrag();
+  },
+  _setMarker: function _setMarker(marker) {
+    var _this = this,
+        _parent = this._parent,
+        _map = _parent._map,
+        mapOpt = _map ? _map.options : {};
+
+    marker.bindPopup(null, {
+      maxWidth: 1000,
+      closeOnClick: mapOpt.maxPopupCount > 1 ? false : true
+    }).on('dblclick', function () {
+      if (_map) {
+        _map.removeLayer(this);
+      }
+
+      _this.remove(); //_parent.remove(this);
+
+    }).on('dragstart', function () {
+      _this._fireEvent('dragstart');
+    }).on('drag', function (ev) {
+      if (ev.originalEvent && ev.originalEvent.ctrlKey) {
+        marker.setLatLng(L$1.GmxDrawing.utils.snapPoint(marker.getLatLng(), marker, _map));
+      }
+
+      _this._fireEvent('drag');
+
+      _this._fireEvent('edit');
+    }).on('dragend', function () {
+      _this._fireEvent('dragend');
+    }).on('popupopen', function (ev) {
+      var popup = ev.popup;
+
+      if (!popup._input) {
+        popup._input = L$1.DomUtil.create('textarea', 'leaflet-gmx-popup-textarea', popup._contentNode); // popup._input.placeholder = _this.options.title || marker.options.title || '';
+
+        popup._input.value = _this.options.title || marker.options.title || '';
+        popup._contentNode.style.width = 'auto';
+      }
+
+      L$1.DomEvent.on(popup._input, 'keyup', function () {
+        var rows = this.value.split('\n'),
+            cols = this.cols || 0;
+        rows.forEach(function (str) {
+          if (str.length > cols) {
+            cols = str.length;
+          }
+        });
+        this.rows = rows.length;
+
+        if (cols) {
+          this.cols = cols;
+        }
+
+        popup.update();
+        _this.options.title = marker.options.title = this.value;
+        this.focus();
+      }, popup._input);
+      popup.update();
+    });
+
+    _map.addLayer(marker);
+
+    _this.openPopup = marker.openPopup = function () {
+      if (marker._popup && marker._map && !marker._map.hasLayer(marker._popup)) {
+        marker._popup.setLatLng(marker._latlng);
+
+        var gmxDrawing = marker._map.gmxDrawing;
+
+        if (gmxDrawing._drawMode) {
+          marker._map.fire(gmxDrawing._createType ? 'click' : 'mouseup', {
+            latlng: marker._latlng,
+            delta: 1
+          });
+        } else {
+          marker._popup.addTo(marker._map);
+
+          marker._popup._isOpen = true;
+        }
+      }
+
+      return marker;
+    };
+  },
+  setAddMode: function setAddMode() {
+    if (this.rings.length) {
+      this.rings[0].ring.setAddMode();
+    }
+
+    return this;
+  },
+  _pointDown: function _pointDown(ev) {
+    if (this.rings.length) {
+      this.rings[0].ring._pointDown(ev);
+    }
+  },
+  getPopup: function getPopup() {
+    if (this.options.type === 'Point') {
+      return this._obj.getPopup();
+    }
   }
-}];
+});
+L$1.GmxDrawing.Feature;
+
+L$1.GmxDrawing.utils = {
+  snaping: 10,
+  // snap distance
+  isOldVersion: L$1.version.substr(0, 3) === '0.7',
+  defaultStyles: {
+    mode: '',
+    map: true,
+    editable: true,
+    holeStyle: {
+      opacity: 0.5,
+      color: '#003311'
+    },
+    lineStyle: {
+      opacity: 1,
+      weight: 2,
+      clickable: false,
+      className: 'leaflet-drawing-lines',
+      color: '#0033ff',
+      dashArray: null,
+      lineCap: null,
+      lineJoin: null,
+      fill: false,
+      fillColor: null,
+      fillOpacity: 0.2,
+      smoothFactor: 0,
+      noClip: true,
+      stroke: true
+    },
+    pointStyle: {
+      className: 'leaflet-drawing-points',
+      smoothFactor: 0,
+      noClip: true,
+      opacity: 1,
+      shape: 'circle',
+      fill: true,
+      fillColor: '#ffffff',
+      fillOpacity: 1,
+      size: L$1.Browser.mobile ? 40 : 8,
+      weight: 2,
+      clickable: true,
+      color: '#0033ff',
+      dashArray: null,
+      lineCap: null,
+      lineJoin: null,
+      stroke: true
+    },
+    markerStyle: {
+      mode: '',
+      editable: false,
+      title: 'Text example',
+      options: {
+        alt: '',
+        //title: '',
+        clickable: true,
+        draggable: false,
+        keyboard: true,
+        opacity: 1,
+        zIndexOffset: 0,
+        riseOffset: 250,
+        riseOnHover: false,
+        icon: {
+          className: '',
+          iconUrl: '',
+          iconAnchor: [12, 41],
+          iconSize: [25, 41],
+          popupAnchor: [1, -34],
+          shadowSize: [41, 41]
+        }
+      }
+    }
+  },
+  getClosestOnGeometry: function getClosestOnGeometry(latlng, gmxGeoJson, map) {
+    if (L$1.GeometryUtil && map) {
+      return L$1.GeometryUtil.closestLayerSnap(map, [L$1.geoJson(L$1.gmxUtil.geometryToGeoJSON(gmxGeoJson, true, true))], latlng, Number(map.options.snaping || L$1.GmxDrawing.utils.snaping), true);
+    }
+
+    return null;
+  },
+  snapPoint: function snapPoint(latlng, obj, map) {
+    var res = latlng;
+
+    if (L$1.GeometryUtil) {
+      var drawingObjects = map.gmxDrawing.getFeatures().filter(function (it) {
+        return it !== obj._parent && it._obj !== obj;
+      }).map(function (it) {
+        return it.options.type === 'Point' ? it._obj : it;
+      }),
+          snaping = Number(map.options.snaping || L$1.GmxDrawing.utils.snaping),
+          closest = L$1.GeometryUtil.closestLayerSnap(map, drawingObjects, latlng, snaping, true);
+
+      if (closest) {
+        res = closest.latlng;
+      }
+    }
+
+    return res;
+  },
+  getNotDefaults: function getNotDefaults(from, def) {
+    var res = {};
+
+    for (var key in from) {
+      if (key === 'icon' || key === 'map') {
+        continue;
+      } else if (key === 'iconAnchor' || key === 'iconSize' || key === 'popupAnchor' || key === 'shadowSize') {
+        if (!def[key]) {
+          continue;
+        }
+
+        if (def[key][0] !== from[key][0] || def[key][1] !== from[key][1]) {
+          res[key] = from[key];
+        }
+      } else if (key === 'lineStyle' || key === 'pointStyle' || key === 'markerStyle') {
+        res[key] = this.getNotDefaults(from[key], def[key]);
+      } else if (!def || def[key] !== from[key] || key === 'fill') {
+        res[key] = from[key];
+      }
+    }
+
+    return res;
+  },
+  getShiftLatlng: function getShiftLatlng(latlng, map, shiftPixel) {
+    if (shiftPixel && map) {
+      var p = map.latLngToLayerPoint(latlng)._add(shiftPixel);
+
+      latlng = map.layerPointToLatLng(p);
+    }
+
+    return latlng;
+  },
+  getDownType: function getDownType(ev, map, feature) {
+    var layerPoint = ev.layerPoint,
+        originalEvent = ev.originalEvent,
+        ctrlKey = false,
+        shiftKey = false,
+        altKey = false,
+        latlng = ev.latlng;
+
+    if (originalEvent) {
+      ctrlKey = originalEvent.ctrlKey;
+      shiftKey = originalEvent.shiftKey;
+      altKey = originalEvent.altKey;
+    }
+
+    if (ev.touches && ev.touches.length === 1) {
+      var first = ev.touches[0],
+          containerPoint = map.mouseEventToContainerPoint(first);
+      layerPoint = map.containerPointToLayerPoint(containerPoint);
+      latlng = map.layerPointToLatLng(layerPoint);
+    }
+
+    var out = {
+      type: '',
+      latlng: latlng,
+      ctrlKey: ctrlKey,
+      shiftKey: shiftKey,
+      altKey: altKey
+    },
+        ring = this.points ? this : ev.ring || ev.relatedEvent,
+        points = ring.points._originalPoints || ring.points._parts[0] || [],
+        len = points.length;
+
+    if (len === 0) {
+      return out;
+    }
+
+    var size = (ring.points.options.size || 10) / 2;
+    size += 1 + (ring.points.options.weight || 2);
+    var cursorBounds = new L$1.Bounds(L$1.point(layerPoint.x - size, layerPoint.y - size), L$1.point(layerPoint.x + size, layerPoint.y + size)),
+        prev = points[len - 1],
+        lastIndex = len - (ring.mode === 'add' ? 2 : 1);
+    out = {
+      mode: ring.mode,
+      layerPoint: ev.layerPoint,
+      ctrlKey: ctrlKey,
+      shiftKey: shiftKey,
+      altKey: altKey,
+      latlng: latlng
+    };
+
+    for (var i = 0; i < len; i++) {
+      var point = points[i];
+
+      if (feature.shiftPixel) {
+        point = points[i].add(feature.shiftPixel);
+      }
+
+      if (cursorBounds.contains(point)) {
+        out.type = 'node';
+        out.num = i;
+        out.end = i === 0 || i === lastIndex ? true : false;
+        break;
+      }
+
+      var dist = L$1.LineUtil.pointToSegmentDistance(layerPoint, prev, point);
+
+      if (dist < size) {
+        out.type = 'edge';
+        out.num = i === 0 ? len : i;
+      }
+
+      prev = point;
+    }
+
+    return out;
+  },
+  _getLastObject: function _getLastObject(obj) {
+    if (obj.getLayers) {
+      var layer = obj.getLayers().shift();
+      return layer.getLayers ? this._getLastObject(layer) : obj;
+    }
+
+    return obj;
+  },
+  getMarkerByPos: function getMarkerByPos(pos, features) {
+    for (var i = 0, len = features.length; i < len; i++) {
+      var feature = features[i],
+          fobj = feature._obj ? feature._obj : null,
+          mpos = fobj && fobj._icon ? fobj._icon._leaflet_pos : null;
+
+      if (mpos && mpos.x === pos.x && mpos.y === pos.y) {
+        return fobj._latlng;
+      }
+    }
+
+    return null;
+  },
+  getLocale: function getLocale(key) {
+    var res = L$1.gmxLocale ? L$1.gmxLocale.getText(key) : null;
+    return res || key;
+  }
+};
+var Utils = L$1.GmxDrawing.utils;
+
+L$1.GmxDrawing.Ring = L$1.LayerGroup.extend({
+  options: {
+    className: 'leaflet-drawing-ring',
+    //noClip: true,
+    maxPoints: 0,
+    smoothFactor: 0,
+    noClip: true,
+    opacity: 1,
+    shape: 'circle',
+    fill: true,
+    fillColor: '#ffffff',
+    fillOpacity: 1,
+    size: L$1.Browser.mobile ? 40 : 8,
+    weight: 2
+  },
+  includes: L$1.Evented ? L$1.Evented.prototype : L$1.Mixin.Events,
+  initialize: function initialize(parent, coords, options) {
+    options = options || {};
+    this.contextmenu = new GmxDrawingContextMenu$1();
+    options.mode = '';
+    this._activeZIndex = options.activeZIndex || 7;
+    this._notActiveZIndex = options.notActiveZIndex || 6;
+    this.options = L$1.extend({}, this.options, parent.getStyle(), options);
+    this._layers = {};
+    this._coords = coords;
+    this._legLength = [];
+    this._parent = parent;
+
+    this._initialize(parent, coords);
+  },
+  _initialize: function _initialize(parent, coords) {
+    var _this2 = this;
+
+    this.clearLayers();
+    delete this.lines;
+    delete this.fill;
+    delete this.points;
+    this.downObject = false;
+    this.mode = '';
+    this.lineType = this.options.type.indexOf('Polyline') !== -1;
+
+    if (this.options.type === 'Rectangle') {
+      this.options.disableAddPoints = true;
+    }
+
+    var pointStyle = this.options.pointStyle;
+    var lineStyle = {
+      opacity: 1,
+      weight: 2,
+      noClip: true,
+      clickable: false,
+      className: 'leaflet-drawing-lines'
+    };
+
+    if (!this.lineType) {
+      lineStyle.fill = 'fill' in this.options ? this.options.fill : true;
+    }
+
+    if (this.options.lineStyle) {
+      for (var key in this.options.lineStyle) {
+        if (key !== 'fill' || !this.lineType) {
+          lineStyle[key] = this.options.lineStyle[key];
+        }
+      }
+    }
+
+    if (this.options.hole) {
+      lineStyle = L$1.extend({}, lineStyle, Utils.defaultStyles.holeStyle);
+      pointStyle = L$1.extend({}, pointStyle, Utils.defaultStyles.holeStyle);
+    }
+
+    var latlngs = coords,
+        _this = this,
+        mode = this.options.mode || (latlngs.length ? 'edit' : 'add');
+
+    this.fill = new L$1.Polyline(latlngs, {
+      className: 'leaflet-drawing-lines-fill',
+      opacity: 0,
+      smoothFactor: 0,
+      noClip: true,
+      fill: false,
+      size: 10,
+      weight: 10
+    });
+    this.fill.on('click', function (e) {
+      _this2._parent.fire('click', e);
+    });
+    this.addLayer(this.fill);
+    this.lines = new L$1.Polyline(latlngs, lineStyle);
+    this.addLayer(this.lines);
+
+    if (!this.lineType && mode === 'edit') {
+      var latlng = latlngs[0][0] || latlngs[0];
+      this.lines.addLatLng(latlng);
+      this.fill.addLatLng(latlng);
+    }
+
+    this.mode = mode;
+    this.points = new L$1.GmxDrawing.PointMarkers(latlngs, pointStyle);
+    this.points._parent = this;
+    this.addLayer(this.points);
+    this.points.on('mouseover', function (ev) {
+      this.toggleTooltip(ev, true, _this.lineType ? 'Length' : 'Area');
+
+      if (ev.type === 'mouseover') {
+        _this._recheckContextItems('points', _this._map);
+      }
+    }, this).on('mouseout', this.toggleTooltip, this);
+    this.fill.on('mouseover mousemove', function (ev) {
+      this.toggleTooltip(ev, true);
+    }, this).on('mouseout', this.toggleTooltip, this);
+
+    if (this.points.bindContextMenu) {
+      this.points.bindContextMenu({
+        contextmenu: false,
+        contextmenuInheritItems: false,
+        contextmenuItems: []
+      });
+    }
+
+    if (this.fill.bindContextMenu) {
+      this.fill.bindContextMenu({
+        contextmenu: false,
+        contextmenuInheritItems: false,
+        contextmenuItems: []
+      });
+      this.fill.on('mouseover', function (ev) {
+        if (ev.type === 'mouseover') {
+          this._recheckContextItems('fill', this._map);
+        }
+      }, this);
+    }
+
+    this._parent.on('rotate', function (ev) {
+      this.toggleTooltip(ev, true, 'angle');
+    }, this);
+
+    L$1.DomEvent.on(document, 'keydown keyup', this._toggleBboxClass, this);
+  },
+  bringToFront: function bringToFront() {
+    if (this.lines) {
+      this.lines.bringToFront();
+    }
+
+    if (this.fill) {
+      this.fill.bringToFront();
+    }
+
+    if (this.points) {
+      this.points.bringToFront();
+    }
+
+    return this;
+  },
+  bringToBack: function bringToBack() {
+    if (this.lines) {
+      this.lines.bringToBack();
+    }
+
+    if (this.fill) {
+      this.fill.bringToBack();
+    }
+
+    if (this.points) {
+      this.points.bringToBack();
+    }
+
+    return this;
+  },
+  _toggleBboxClass: function _toggleBboxClass(ev) {
+    if (ev.type === 'keydown' && this.mode === 'add') {
+      var key = ev.key,
+          points = this._getLatLngsArr();
+
+      if (key === 'Backspace') {
+        this._legLength = [];
+        points.splice(points.length - 1, 1);
+
+        this._setPoint(points[0], 0);
+      }
+
+      if (key === 'Escape' || key === 'Backspace' && points.length < 2) {
+        this._parent.remove(this);
+
+        this._parent._parent._clearCreate();
+
+        this._fireEvent('drawstop');
+      }
+    }
+
+    if (this.bbox) {
+      var flagRotate = this._needRotate;
+
+      if (!ev.altKey) {
+        flagRotate = !flagRotate;
+      }
+
+      if (ev.type === 'keyup' && !ev.altKey) {
+        flagRotate = !this._needRotate;
+      }
+
+      L$1.DomUtil[flagRotate ? 'removeClass' : 'addClass'](this.bbox._path, 'Rotate');
+    }
+  },
+  toggleTooltip: function toggleTooltip(ev, flag, type) {
+    if ('hideTooltip' in this._parent) {
+      ev.ring = this;
+
+      if (flag) {
+        type = type || 'Length';
+
+        this._parent._showTooltip(type, ev);
+      } else if (this.mode !== 'add') {
+        this._parent.hideTooltip(ev);
+      }
+    }
+  },
+  _recheckContextItems: function _recheckContextItems(type, map) {
+    var _this = this;
+
+    this[type].options.contextmenuItems = (map.gmxDrawing.contextmenu.getItems()[type] || []).concat(this._parent.contextmenu.getItems()[type] || []).concat(this.contextmenu.getItems()[type] || []).map(function (obj) {
+      var ph = {
+        id: obj.text,
+        text: Utils.getLocale(obj.text),
+        icon: obj.icon,
+        retinaIcon: obj.retinaIcon,
+        iconCls: obj.iconCls,
+        retinaIconCls: obj.retinaIconCls,
+        callback: function callback(ev) {
+          _this._eventsCmd(obj, ev);
+        },
+        context: obj.context || _this,
+        disabled: 'disabled' in obj ? obj.disabled : false,
+        separator: obj.separator,
+        hideOnSelect: 'hideOnSelect' in obj ? obj.hideOnSelect : true
+      };
+      return ph;
+    });
+    return this[type].options.contextmenuItems;
+  },
+  _eventsCmd: function _eventsCmd(obj, ev) {
+    var ring = ev.relatedTarget && ev.relatedTarget._parent || this;
+    var downAttr = Utils.getDownType.call(this, ev, this._map, this._parent);
+
+    if (downAttr) {
+      var type = obj.text;
+
+      if (obj.callback) {
+        obj.callback(downAttr, this._parent);
+      } else if (type === 'Delete feature') {
+        this._parent.remove(this); // this._parent._parent._clearCreate();
+
+
+        this._fireEvent('drawstop');
+      } else if (type === 'Remove point') {
+        ring._removePoint(downAttr.num);
+
+        this._fireEvent('editstop', ev);
+      } else if (type === 'Save' || type === 'Move' || type === 'Rotate' || type === 'Rotate around Point') {
+        this._toggleRotate(type, downAttr);
+      } else if (type === 'Cancel' && this._editHistory.length) {
+        if (this._editHistory.length) {
+          this.setLatLngs(this._editHistory[0]);
+          this._editHistory = [];
+        }
+
+        this._toggleRotate('Save', downAttr);
+      }
+    }
+  },
+  getFeature: function getFeature() {
+    return this._parent;
+  },
+  onAdd: function onAdd(map) {
+    L$1.LayerGroup.prototype.onAdd.call(this, map);
+    this.setEditMode();
+
+    if (this.points.bindContextMenu) {
+      var contextmenuItems = this._recheckContextItems('points', map);
+
+      this.points.bindContextMenu({
+        contextmenu: true,
+        contextmenuInheritItems: false,
+        contextmenuItems: contextmenuItems
+      });
+    }
+  },
+  onRemove: function onRemove(map) {
+    if (this.points) {
+      this._pointUp();
+
+      this.removeAddMode();
+      this.removeEditMode();
+
+      if ('hideTooltip' in this._parent) {
+        this._parent.hideTooltip();
+      }
+    }
+
+    L$1.LayerGroup.prototype.onRemove.call(this, map);
+
+    if (this.options.type === 'Point') {
+      map.removeLayer(this._obj);
+    }
+
+    this._fireEvent('removefrommap');
+  },
+  getAngleLength: function getAngleLength(downAttr) {
+    if (L$1.GeometryUtil && downAttr && downAttr.num) {
+      var num = downAttr.num,
+          latlngs = this.points._latlngs[0],
+          prev = latlngs[num - 1],
+          curr = latlngs[num] || downAttr.latlng,
+          _parts = this.points._parts[0],
+          angle = L$1.GeometryUtil.computeAngle(_parts[num - 1], _parts[num] || downAttr.layerPoint);
+      angle += 90;
+      angle %= 360;
+      angle += angle < 0 ? 360 : 0;
+      return {
+        length: L$1.gmxUtil.distVincenty(prev.lng, prev.lat, curr.lng, curr.lat),
+        angle: L$1.gmxUtil.formatDegrees(angle, 0)
+      };
+    }
+
+    return null;
+  },
+  getLength: function getLength(downAttr) {
+    var length = 0,
+        latlngs = this._getLatLngsArr(),
+        len = latlngs.length;
+
+    if (len) {
+      var beg = 1,
+          prev = latlngs[0];
+
+      if (downAttr) {
+        if (downAttr.type === 'node') {
+          len = downAttr.num + 1;
+        } else {
+          beg = downAttr.num;
+
+          if (beg === len) {
+            prev = latlngs[beg - 1];
+            beg = 0;
+          } else {
+            prev = latlngs[beg - 1];
+          }
+
+          len = beg + 1;
+        }
+      }
+
+      for (var i = beg; i < len; i++) {
+        var leg = this._legLength[i] || null;
+
+        if (leg === null) {
+          leg = L$1.gmxUtil.distVincenty(prev.lng, prev.lat, latlngs[i].lng, latlngs[i].lat);
+          this._legLength[i] = leg;
+        }
+
+        prev = latlngs[i];
+        length += leg;
+      }
+    }
+
+    return length;
+  },
+  _setPoint: function _setPoint(latlng, nm, type) {
+    if (!this.points) {
+      return;
+    }
+
+    var latlngs = this._getLatLngsArr();
+
+    if (this.options.type === 'Rectangle') {
+      if (type === 'edge') {
+        nm--;
+
+        if (nm === 0) {
+          latlngs[0].lng = latlngs[1].lng = latlng.lng;
+        } else if (nm === 1) {
+          latlngs[1].lat = latlngs[2].lat = latlng.lat;
+        } else if (nm === 2) {
+          latlngs[2].lng = latlngs[3].lng = latlng.lng;
+        } else if (nm === 3) {
+          latlngs[0].lat = latlngs[3].lat = latlng.lat;
+        }
+      } else {
+        latlngs[nm] = latlng;
+
+        if (nm === 0) {
+          latlngs[3].lat = latlng.lat;
+          latlngs[1].lng = latlng.lng;
+        } else if (nm === 1) {
+          latlngs[2].lat = latlng.lat;
+          latlngs[0].lng = latlng.lng;
+        } else if (nm === 2) {
+          latlngs[1].lat = latlng.lat;
+          latlngs[3].lng = latlng.lng;
+        } else if (nm === 3) {
+          latlngs[0].lat = latlng.lat;
+          latlngs[2].lng = latlng.lng;
+        }
+      }
+
+      this._legLength = [];
+    } else {
+      latlngs[nm] = latlng;
+      this._legLength[nm] = null;
+      this._legLength[nm + 1] = null;
+    }
+
+    this.setLatLngs(latlngs);
+  },
+  addLatLng: function addLatLng(point, delta) {
+    this._legLength = [];
+
+    if (this.points) {
+      var points = this._getLatLngsArr(),
+          maxPoints = this.options.maxPoints,
+          len = points.length,
+          lastPoint = points[len - 2],
+          flag = !lastPoint || !lastPoint.equals(point);
+
+      if (maxPoints && len >= maxPoints) {
+        this.setEditMode();
+
+        this._fireEvent('drawstop', {
+          latlng: point
+        });
+
+        len--;
+      }
+
+      if (flag) {
+        if (delta) {
+          len -= delta;
+        } // reset existing point
+
+
+        this._setPoint(point, len, 'node');
+      }
+
+      this._parent.lastAddLatLng = point;
+    } else if ('addLatLng' in this._obj) {
+      this._obj.addLatLng(point);
+    }
+  },
+  setPositionOffset: function setPositionOffset(p) {
+    L$1.DomUtil.setPosition(this.points._container, p);
+    L$1.DomUtil.setPosition(this.fill._container, p);
+    L$1.DomUtil.setPosition(this.lines._container, p);
+  },
+  setLatLngs: function setLatLngs(latlngs) {
+    // TODO: latlngs не учитывает дырки полигонов
+    if (this.points) {
+      var points = this.points;
+      this.fill.setLatLngs(latlngs);
+      this.lines.setLatLngs(latlngs);
+
+      if (!this.lineType && this.mode === 'edit' && latlngs.length > 2) {
+        this.lines.addLatLng(latlngs[0]);
+        this.fill.addLatLng(latlngs[0]);
+      }
+
+      if (this.bbox) {
+        this.bbox.setBounds(this.lines._bounds);
+      }
+
+      points.setLatLngs(latlngs);
+    } else if ('setLatLngs' in this._obj) {
+      this._obj.setLatLngs(latlngs);
+    }
+
+    this._fireEvent('edit');
+  },
+  _getLatLngsArr: function _getLatLngsArr() {
+    return Utils.isOldVersion ? this.points._latlngs : this.points._latlngs[0];
+  },
+  // edit mode
+  _pointDown: function _pointDown(ev) {
+    if (!this._map) {
+      return;
+    }
+
+    if (L$1.Browser.ie || L$1.gmxUtil && L$1.gmxUtil.gtIE11) {
+      this._map.dragging._draggable._onUp(ev); // error in IE
+
+    }
+
+    if (ev.originalEvent) {
+      var originalEvent = ev.originalEvent;
+
+      if (originalEvent.altKey) {
+        // altKey, shiftKey
+        this._onDragStart(ev);
+
+        return;
+      } else if (originalEvent.which !== 1 && originalEvent.button !== 1) {
+        return;
+      }
+    }
+
+    var downAttr = Utils.getDownType.call(this, ev, this._map, this._parent),
+        type = downAttr.type,
+        opt = this.options;
+    this._lastDownTime = Date.now() + 100;
+    this.down = downAttr;
+
+    if (type === 'edge' && downAttr.ctrlKey && opt.type !== 'Rectangle') {
+      if (opt.disableAddPoints) {
+        return;
+      }
+
+      this._legLength = [];
+
+      var num = downAttr.num,
+          points = this._getLatLngsArr();
+
+      points.splice(num, 0, points[num]);
+
+      this._setPoint(ev.latlng, num, type);
+    }
+
+    this.downObject = true;
+
+    this._parent._disableDrag();
+
+    this._map.on('mousemove', this._pointMove, this).on('mouseup', this._mouseupPoint, this);
+  },
+  _mouseupPoint: function _mouseupPoint(ev) {
+    this._pointUp(ev);
+
+    if (this.__mouseupPointTimer) {
+      cancelIdleCallback(this.__mouseupPointTimer);
+    }
+
+    this.__mouseupPointTimer = requestIdleCallback(function () {
+      this._fireEvent('editstop', ev);
+    }.bind(this), {
+      timeout: 250
+    });
+  },
+  _pointMove: function _pointMove(ev) {
+    if (this.down && this._lastDownTime < Date.now()) {
+      if (!this.lineType) {
+        this._parent.showFill();
+      }
+
+      this._clearLineAddPoint();
+
+      this._moved = true;
+      var latlng = ev.originalEvent.ctrlKey ? Utils.snapPoint(ev.latlng, this, this._map) : ev.latlng;
+
+      this._setPoint(latlng, this.down.num, this.down.type);
+
+      if ('_showTooltip' in this._parent) {
+        ev.ring = this;
+
+        this._parent._showTooltip(this.lineType ? 'Length' : 'Area', ev);
+      }
+    }
+  },
+  _pointUp: function _pointUp(ev) {
+    this.downObject = false;
+
+    this._parent._enableDrag();
+
+    if (!this.points) {
+      return;
+    }
+
+    if (this._map) {
+      this._map.off('mousemove', this._pointMove, this).off('mouseup', this._mouseupPoint, this);
+
+      var target = ev && ev.originalEvent ? ev.originalEvent.target : null;
+
+      if (target && target._leaflet_pos && /leaflet-marker-icon/.test(target.className)) {
+        var latlng = Utils.getMarkerByPos(target._leaflet_pos, this._map.gmxDrawing.getFeatures());
+
+        this._setPoint(latlng, this.down.num, this.down.type);
+      }
+
+      this._map._skipClick = true; // for EventsManager
+    }
+
+    if (this._drawstop) {
+      this._fireEvent('drawstop', ev);
+    }
+
+    this._drawstop = false;
+    this.down = null;
+    var lineStyle = this.options.lineStyle || {};
+
+    if (!lineStyle.fill && !this.lineType) {
+      this._parent.hideFill();
+    }
+  },
+  _lastPointClickTime: 0,
+  // Hack for emulate dblclick on Point
+  _removePoint: function _removePoint(num) {
+    var points = this._getLatLngsArr();
+
+    if (points.length > num) {
+      this._legLength = [];
+      points.splice(num, 1);
+
+      if (this.options.type === 'Rectangle' || points.length < 2 || points.length < 3 && !this.lineType) {
+        this._parent.remove(this);
+      } else {
+        this._setPoint(points[0], 0);
+      }
+    }
+  },
+  _clearLineAddPoint: function _clearLineAddPoint() {
+    if (this._lineAddPointID) {
+      clearTimeout(this._lineAddPointID);
+    }
+
+    this._lineAddPointID = null;
+  },
+  _pointDblClick: function _pointDblClick(ev) {
+    this._clearLineAddPoint();
+
+    if (!this.options.disableAddPoints && (!this._lastAddTime || Date.now() > this._lastAddTime)) {
+      var downAttr = Utils.getDownType.call(this, ev, this._map, this._parent);
+
+      this._removePoint(downAttr.num);
+    }
+  },
+  _pointClick: function _pointClick(ev) {
+    if (ev.originalEvent && ev.originalEvent.ctrlKey) {
+      return;
+    }
+
+    var clickTime = Date.now(),
+        prevClickTime = this._lastPointClickTime;
+    this._lastPointClickTime = clickTime + 300;
+
+    if (this._moved || clickTime < prevClickTime) {
+      this._moved = false;
+      return;
+    }
+
+    var downAttr = Utils.getDownType.call(this, ev, this._map, this._parent),
+        mode = this.mode;
+
+    if (downAttr.type === 'node') {
+      var num = downAttr.num;
+
+      if (downAttr.end) {
+        // this is click on first or last Point
+        if (mode === 'add') {
+          this._pointUp();
+
+          this.setEditMode();
+
+          if (this.lineType && num === 0) {
+            this._parent.options.type = this.options.type = 'Polygon';
+            this.lineType = false;
+
+            this._removePoint(this._getLatLngsArr().length - 1);
+          }
+
+          this._fireEvent('drawstop', downAttr);
+
+          this._fireEvent('editstop', downAttr);
+
+          this._removePoint(num);
+        } else if (this.lineType) {
+          this._clearLineAddPoint();
+
+          this._lineAddPointID = setTimeout(function () {
+            if (num === 0) {
+              this._getLatLngsArr().reverse();
+            }
+
+            this.points.addLatLng(downAttr.latlng);
+            this.setAddMode();
+
+            this._fireEvent('drawstop', downAttr);
+          }.bind(this), 250);
+        }
+      } else if (mode === 'add') {
+        // this is add pont
+        this.addLatLng(ev.latlng);
+      }
+    }
+  },
+  _editHistory: [],
+  // _dragType: 'Save',
+  _needRotate: false,
+  _toggleRotate: function _toggleRotate(type, downAttr) {
+    this._needRotate = type === 'Rotate' || type === 'Rotate around Point';
+    this._editHistory = [];
+
+    if (this.bbox) {
+      this.bbox.off('contextmenu', this._onContextmenu, this).off('mousedown', this._onRotateStart, this);
+      this.removeLayer(this.bbox);
+      this.bbox = null;
+    } else {
+      L$1.DomUtil.TRANSFORM_ORIGIN = L$1.DomUtil.TRANSFORM_ORIGIN || L$1.DomUtil.testProp(['transformOrigin', 'WebkitTransformOrigin', 'OTransformOrigin', 'MozTransformOrigin', 'msTransformOrigin']);
+      this.bbox = L$1.rectangle(this.lines.getBounds(), {
+        color: this.lines.options.color,
+        //||'rgb(51, 136, 255)',
+        opacity: this.lines.options.opacity,
+        className: 'leaflet-drawing-bbox ' + type,
+        dashArray: '6, 3',
+        smoothFactor: 0,
+        noClip: true,
+        fillOpacity: 0,
+        fill: true,
+        weight: 1
+      });
+      this.addLayer(this.bbox);
+      this.bbox.on('contextmenu', this._onContextmenu, this).on('mousedown', this._onRotateStart, this);
+
+      if (this.bbox.bindContextMenu) {
+        this.bbox.bindContextMenu({
+          contextmenu: false,
+          contextmenuInheritItems: false,
+          contextmenuItems: []
+        });
+      }
+
+      this._recheckContextItems('bbox', this._map);
+
+      this._rotateCenterPoint = type === 'Rotate' ? this.bbox.getCenter() : downAttr.latlng;
+    }
+  },
+  _onContextmenu: function _onContextmenu() {
+    this.bbox.options.contextmenuItems[1].disabled = this._editHistory.length < 1;
+  },
+  _isContextMenuEvent: function _isContextMenuEvent(ev) {
+    var e = ev.originalEvent;
+    return e.which !== 1 && e.button !== 1 && !e.touches;
+  },
+  _onRotateStart: function _onRotateStart(ev) {
+    if (this._isContextMenuEvent(ev)) {
+      return;
+    }
+
+    this._editHistory.push(this._getLatLngsArr().map(function (it) {
+      return it.clone();
+    }));
+
+    var flagRotate = this._needRotate;
+
+    if (ev.originalEvent.altKey) {
+      flagRotate = !flagRotate;
+    }
+
+    if (this._map.contextmenu) {
+      this._map.contextmenu.hide();
+    }
+
+    if (flagRotate) {
+      this._rotateStartPoint = ev.latlng;
+      this._rotateCenter = this._rotateCenterPoint;
+
+      this._map.on('mouseup', this._onRotateEnd, this).on('mousemove', this._onRotate, this);
+
+      this._parent._disableDrag();
+
+      this._fireEvent('rotatestart', ev);
+    } else {
+      this._onDragStart(ev);
+    }
+  },
+  _onRotateEnd: function _onRotateEnd(ev) {
+    // TODO: не учитывает дырки полигонов
+    this._map.off('mouseup', this._onRotateEnd, this).off('mousemove', this._onRotate, this);
+
+    this.toggleTooltip(ev);
+
+    if (this._center) {
+      var center = this._center,
+          shiftPoint = this._map.getPixelOrigin().add(center),
+          cos = Math.cos(-this._angle),
+          sin = Math.sin(-this._angle),
+          map = this._map,
+          _latlngs = this.points._parts[0].map(function (p) {
+        var ps = p.subtract(center);
+        return map.unproject(L$1.point(ps.x * cos + ps.y * sin, ps.y * cos - ps.x * sin).add(shiftPoint));
+      });
+
+      this.setLatLngs(_latlngs);
+
+      this._rotateItem();
+
+      this.bbox.setBounds(this.lines._bounds); // console.log('_onRotateEnd', this.mode, this.points._latlngs, _latlngs);
+    }
+
+    this._parent._enableDrag();
+
+    this._fireEvent('rotateend', ev);
+  },
+  _onRotate: function _onRotate(ev) {
+    var pos = ev.latlng,
+        // текущая точка
+    s = this._rotateStartPoint,
+        // точка начала вращения
+    c = this._rotateCenter; // центр объекта
+
+    this._rotateItem(Math.atan2(s.lat - c.lat, s.lng - c.lng) - Math.atan2(pos.lat - c.lat, pos.lng - c.lng), this._map.project(c).subtract(this._map.getPixelOrigin()));
+
+    this._fireEvent('rotate', ev);
+  },
+  _rotateItem: function _rotateItem(angle, center) {
+    var originStr = '',
+        rotate = '';
+
+    if (center) {
+      originStr = center.x + 'px ' + center.y + 'px';
+      rotate = 'rotate(' + angle + 'rad)';
+    }
+
+    this._angle = angle;
+    this._center = center;
+    [this.bbox, this.lines, this.fill, this.points].forEach(function (it) {
+      it._path.style[L$1.DomUtil.TRANSFORM_ORIGIN] = originStr;
+      it._path.style.transform = rotate;
+    });
+  },
+  _onDragEnd: function _onDragEnd() {
+    this._map.off('mouseup', this._onDragEnd, this).off('mousemove', this._onDrag, this);
+
+    this._parent._enableDrag();
+
+    this._fireEvent('dragend');
+  },
+  _onDragStart: function _onDragStart(ev) {
+    this._dragstartPoint = ev.latlng;
+
+    this._map.on('mouseup', this._onDragEnd, this).on('mousemove', this._onDrag, this);
+
+    this._parent._disableDrag();
+
+    this._fireEvent('dragstart');
+  },
+  _onDrag: function _onDrag(ev) {
+    var lat = this._dragstartPoint.lat - ev.latlng.lat,
+        lng = this._dragstartPoint.lng - ev.latlng.lng,
+        points = this._getLatLngsArr();
+
+    points.forEach(function (item) {
+      item.lat -= lat;
+      item.lng -= lng;
+    });
+    this._dragstartPoint = ev.latlng;
+    this._legLength = [];
+    this.setLatLngs(points);
+
+    this._fireEvent('drag');
+  },
+  _fireEvent: function _fireEvent(name, options) {
+    this._parent._fireEvent(name, options);
+  },
+  _startTouchMove: function _startTouchMove(ev, drawstop) {
+    var downAttr = Utils.getDownType.call(this, ev, this._map, this._parent);
+
+    if (downAttr.type === 'node') {
+      this._parent._disableDrag();
+
+      this.down = downAttr; //var num = downAttr.num;
+
+      var my = this;
+
+      var _touchmove = function _touchmove(ev) {
+        downAttr = Utils.getDownType.call(my, ev, my._map, this._parent);
+
+        if (ev.touches.length === 1) {
+          // Only deal with one finger
+          my._pointMove(downAttr);
+        }
+      };
+
+      var _touchend = function _touchend() {
+        L$1.DomEvent.off(my._map._container, 'touchmove', _touchmove, my).off(my._map._container, 'touchend', _touchend, my);
+
+        my._parent._enableDrag();
+
+        if (drawstop) {
+          my._parent.fire('drawstop', {
+            mode: my.options.type,
+            object: my
+          });
+        }
+      };
+
+      L$1.DomEvent.on(my._map._container, 'touchmove', _touchmove, my).on(my._map._container, 'touchend', _touchend, my);
+    }
+  },
+  _editHandlers: function _editHandlers(flag) {
+    //if (!this.points) { return; }
+    var stop = L$1.DomEvent.stopPropagation,
+        prevent = L$1.DomEvent.preventDefault;
+
+    if (this.touchstart) {
+      L$1.DomEvent.off(this.points._container, 'touchstart', this.touchstart, this);
+    }
+
+    if (this.touchstartFill) {
+      L$1.DomEvent.off(this.fill._container, 'touchstart', this.touchstartFill, this);
+    }
+
+    this.touchstart = null;
+    this.touchstartFill = null;
+
+    if (flag) {
+      this.points.on('dblclick click', stop, this).on('dblclick click', prevent, this).on('dblclick', this._pointDblClick, this).on('click', this._pointClick, this);
+
+      if (L$1.Browser.mobile) {
+        if (this._EditOpacity) {
+          this._parent._setPointsStyle({
+            fillOpacity: this._EditOpacity
+          });
+        }
+
+        var my = this;
+
+        this.touchstart = function (ev) {
+          my._startTouchMove(ev);
+        };
+
+        L$1.DomEvent.on(this.points._container, 'touchstart', this.touchstart, this);
+
+        this.touchstartFill = function (ev) {
+          var downAttr = Utils.getDownType.call(my, ev, my._map, this._parent);
+
+          if (downAttr.type === 'edge' && my.options.type !== 'Rectangle') {
+            var points = my.points._latlngs;
+            points.splice(downAttr.num, 0, points[downAttr.num]);
+            my._legLength = [];
+
+            my._setPoint(downAttr.latlng, downAttr.num, downAttr.type);
+          }
+        };
+
+        L$1.DomEvent.on(this.fill._container, 'touchstart', this.touchstartFill, this);
+      } else {
+        this.points.on('mousemove', stop).on('mousedown', this._pointDown, this);
+        this.lines.on('mousedown', this._pointDown, this);
+        this.fill.on('dblclick click', stop, this).on('mousedown', this._pointDown, this);
+
+        this._fireEvent('editmode');
+      }
+    } else {
+      this._pointUp();
+
+      this.points.off('dblclick click', stop, this).off('dblclick click', prevent, this).off('dblclick', this._pointDblClick, this).off('click', this._pointClick, this);
+
+      if (!L$1.Browser.mobile) {
+        this.points.off('mousemove', stop).off('mousedown', this._pointDown, this);
+        this.lines.off('mousedown', this._pointDown, this);
+        this.fill.off('dblclick click', stop, this).off('mousedown', this._pointDown, this);
+      }
+    }
+  },
+  _createHandlers: function _createHandlers(flag) {
+    if (!this.points || !this._map) {
+      return;
+    }
+
+    var stop = L$1.DomEvent.stopPropagation;
+
+    if (flag) {
+      if (this._map.contextmenu) {
+        this._map.contextmenu.disable();
+      }
+
+      this._parent._enableDrag();
+
+      this._map.on('dblclick', stop).on('mousedown', this._mouseDown, this).on('mouseup', this._mouseUp, this).on('mousemove', this._moseMove, this);
+
+      this.points.on('click', this._pointClick, this);
+
+      this._fireEvent('addmode');
+
+      if (!this.lineType) {
+        this.lines.setStyle({
+          fill: true
+        });
+      }
+    } else {
+      if (this._map) {
+        this._map.off('dblclick', stop).off('mouseup', this._mouseUp, this).off('mousemove', this._moseMove, this);
+
+        this.points.off('click', this._pointClick, this);
+      }
+
+      var lineStyle = this.options.lineStyle || {};
+
+      if (!this.lineType && !lineStyle.fill) {
+        this.lines.setStyle({
+          fill: false
+        });
+      }
+    }
+  },
+  setEditMode: function setEditMode() {
+    if (this.options.editable) {
+      this._editHandlers(false);
+
+      this._createHandlers(false);
+
+      this._editHandlers(true);
+
+      this.mode = 'edit';
+    }
+
+    return this;
+  },
+  setAddMode: function setAddMode() {
+    if (this.options.editable) {
+      this._editHandlers(false);
+
+      this._createHandlers(false);
+
+      this._createHandlers(true);
+
+      this.mode = 'add';
+    }
+
+    return this;
+  },
+  removeAddMode: function removeAddMode() {
+    this._createHandlers(false);
+
+    this.mode = '';
+  },
+  removeEditMode: function removeEditMode() {
+    this._editHandlers(false);
+
+    this.mode = '';
+  },
+  // add mode
+  _moseMove: function _moseMove(ev) {
+    if (this.points) {
+      var points = this._getLatLngsArr(),
+          latlng = ev.latlng;
+
+      if (ev.originalEvent.ctrlKey) {
+        latlng = Utils.snapPoint(latlng, this, this._map);
+      }
+
+      if (points.length === 1) {
+        this._setPoint(latlng, 1);
+      }
+
+      this._setPoint(latlng, points.length - 1);
+
+      this.toggleTooltip(ev, true, this.lineType ? 'Length' : 'Area');
+    }
+  },
+  _mouseDown: function _mouseDown() {
+    this._lastMouseDownTime = Date.now() + 200;
+
+    if (this._map && this._map.contextmenu) {
+      this._map.contextmenu.hide();
+    }
+
+    if ('hideTooltip' in this._parent) {
+      this._parent.hideTooltip();
+    }
+  },
+  _mouseUp: function _mouseUp(ev) {
+    var timeStamp = Date.now();
+
+    if (ev.delta || timeStamp < this._lastMouseDownTime) {
+      this._lastAddTime = timeStamp + 1000;
+
+      var _latlngs = this._getLatLngsArr();
+
+      if (ev.originalEvent && ev.originalEvent.which === 3 && this.points && _latlngs && _latlngs.length) {
+        // for click right button
+        this.setEditMode();
+
+        this._removePoint(_latlngs.length - 1);
+
+        this._pointUp();
+
+        this._fireEvent('drawstop');
+
+        if (this._map && this._map.contextmenu) {
+          requestIdleCallback(this._map.contextmenu.enable.bind(this._map.contextmenu), {
+            timeout: 250
+          });
+        }
+      } else {
+        var latlng = ev._latlng || ev.latlng;
+
+        if (ev.delta) {
+          this.addLatLng(latlng, ev.delta);
+        } // for click on marker
+
+
+        this.addLatLng(latlng);
+      }
+
+      this._parent._parent._clearCreate();
+    }
+  }
+});
+L$1.GmxDrawing.Ring;
+
+L$1.GmxDrawing.PointMarkers = L$1.Polygon.extend({
+  options: {
+    className: 'leaflet-drawing-points',
+    noClip: true,
+    smoothFactor: 0,
+    opacity: 1,
+    shape: 'circle',
+    fill: true,
+    fillColor: '#ffffff',
+    fillOpacity: 1,
+    size: L$1.Browser.mobile ? 40 : 8,
+    weight: 2
+  },
+  _convertLatLngs: function _convertLatLngs(latlngs) {
+    return L$1.Polyline.prototype._convertLatLngs.call(this, latlngs);
+  },
+  getRing: function getRing() {
+    return this._parent;
+  },
+  getFeature: function getFeature() {
+    return this.getRing()._parent;
+  },
+  getPathLatLngs: function getPathLatLngs() {
+    var out = [],
+        size = this.options.size,
+        dontsmooth = this._parent.options.type === 'Rectangle',
+        points = this._parts[0],
+        prev;
+
+    for (var i = 0, len = points.length, p; i < len; i++) {
+      p = points[i];
+
+      if (i === 0 || dontsmooth || Math.abs(prev.x - p.x) > size || Math.abs(prev.y - p.y) > size) {
+        out.push(this._latlngs[i]);
+        prev = p;
+      }
+    }
+
+    return out;
+  },
+  _getPathPartStr: function _getPathPartStr(points) {
+    var round = L$1.Path.VML,
+        size = this.options.size / 2,
+        dontsmooth = this._parent && this._parent.options.type === 'Rectangle',
+        skipLastPoint = this._parent && this._parent.mode === 'add' && !L$1.Browser.mobile ? 1 : 0,
+        radius = this.options.shape === 'circle' ? true : false,
+        prev;
+
+    for (var j = 0, len2 = points.length - skipLastPoint, str = '', p; j < len2; j++) {
+      p = points[j];
+
+      if (round) {
+        p._round();
+      }
+
+      if (j === 0 || dontsmooth || Math.abs(prev.x - p.x) > this.options.size || Math.abs(prev.y - p.y) > this.options.size) {
+        if (radius) {
+          str += 'M' + p.x + ',' + (p.y - size) + ' A' + size + ',' + size + ',0,1,1,' + (p.x - 0.1) + ',' + (p.y - size) + ' ';
+        } else {
+          var px = p.x,
+              px1 = px - size,
+              px2 = px + size,
+              py = p.y,
+              py1 = py - size,
+              py2 = py + size;
+          str += 'M' + px1 + ' ' + py1 + 'L' + px2 + ' ' + py1 + 'L' + px2 + ' ' + py2 + 'L' + px1 + ' ' + py2 + 'L' + px1 + ' ' + py1;
+        }
+
+        prev = p;
+      }
+    }
+
+    return str;
+  },
+  _onMouseClick: function _onMouseClick(e) {
+    //if (this._map.dragging && this._map.dragging.moved()) { return; }
+    this._fireMouseEvent(e);
+  },
+  _updatePath: function _updatePath() {
+    if (Utils.isOldVersion) {
+      if (!this._map) {
+        return;
+      }
+
+      this._clipPoints();
+
+      this.projectLatlngs();
+      var pathStr = this.getPathString();
+
+      if (pathStr !== this._pathStr) {
+        this._pathStr = pathStr;
+
+        if (this._path.getAttribute('fill-rule') !== 'inherit') {
+          this._path.setAttribute('fill-rule', 'inherit');
+        }
+
+        this._path.setAttribute('d', this._pathStr || 'M0 0');
+      }
+    } else {
+      var str = this._parts.length ? this._getPathPartStr(this._parts[0]) : '';
+
+      this._renderer._setPath(this, str);
+    }
+  }
+});
+L$1.GmxDrawing.PointMarkers;
+
+L$1.GmxDrawing.utils = {
+  snaping: 10,
+  // snap distance
+  isOldVersion: L$1.version.substr(0, 3) === '0.7',
+  defaultStyles: {
+    mode: '',
+    map: true,
+    editable: true,
+    holeStyle: {
+      opacity: 0.5,
+      color: '#003311'
+    },
+    lineStyle: {
+      opacity: 1,
+      weight: 2,
+      clickable: false,
+      className: 'leaflet-drawing-lines',
+      color: '#0033ff',
+      dashArray: null,
+      lineCap: null,
+      lineJoin: null,
+      fill: false,
+      fillColor: null,
+      fillOpacity: 0.2,
+      smoothFactor: 0,
+      noClip: true,
+      stroke: true
+    },
+    pointStyle: {
+      className: 'leaflet-drawing-points',
+      smoothFactor: 0,
+      noClip: true,
+      opacity: 1,
+      shape: 'circle',
+      fill: true,
+      fillColor: '#ffffff',
+      fillOpacity: 1,
+      size: L$1.Browser.mobile ? 40 : 8,
+      weight: 2,
+      clickable: true,
+      color: '#0033ff',
+      dashArray: null,
+      lineCap: null,
+      lineJoin: null,
+      stroke: true
+    },
+    markerStyle: {
+      mode: '',
+      editable: false,
+      title: 'Text example',
+      options: {
+        alt: '',
+        //title: '',
+        clickable: true,
+        draggable: false,
+        keyboard: true,
+        opacity: 1,
+        zIndexOffset: 0,
+        riseOffset: 250,
+        riseOnHover: false,
+        icon: {
+          className: '',
+          iconUrl: '',
+          iconAnchor: [12, 41],
+          iconSize: [25, 41],
+          popupAnchor: [1, -34],
+          shadowSize: [41, 41]
+        }
+      }
+    }
+  },
+  getClosestOnGeometry: function getClosestOnGeometry(latlng, gmxGeoJson, map) {
+    if (L$1.GeometryUtil && map) {
+      return L$1.GeometryUtil.closestLayerSnap(map, [L$1.geoJson(L$1.gmxUtil.geometryToGeoJSON(gmxGeoJson, true, true))], latlng, Number(map.options.snaping || L$1.GmxDrawing.utils.snaping), true);
+    }
+
+    return null;
+  },
+  snapPoint: function snapPoint(latlng, obj, map) {
+    var res = latlng;
+
+    if (L$1.GeometryUtil) {
+      var drawingObjects = map.gmxDrawing.getFeatures().filter(function (it) {
+        return it !== obj._parent && it._obj !== obj;
+      }).map(function (it) {
+        return it.options.type === 'Point' ? it._obj : it;
+      }),
+          snaping = Number(map.options.snaping || L$1.GmxDrawing.utils.snaping),
+          closest = L$1.GeometryUtil.closestLayerSnap(map, drawingObjects, latlng, snaping, true);
+
+      if (closest) {
+        res = closest.latlng;
+      }
+    }
+
+    return res;
+  },
+  getNotDefaults: function getNotDefaults(from, def) {
+    var res = {};
+
+    for (var key in from) {
+      if (key === 'icon' || key === 'map') {
+        continue;
+      } else if (key === 'iconAnchor' || key === 'iconSize' || key === 'popupAnchor' || key === 'shadowSize') {
+        if (!def[key]) {
+          continue;
+        }
+
+        if (def[key][0] !== from[key][0] || def[key][1] !== from[key][1]) {
+          res[key] = from[key];
+        }
+      } else if (key === 'lineStyle' || key === 'pointStyle' || key === 'markerStyle') {
+        res[key] = this.getNotDefaults(from[key], def[key]);
+      } else if (!def || def[key] !== from[key] || key === 'fill') {
+        res[key] = from[key];
+      }
+    }
+
+    return res;
+  },
+  getShiftLatlng: function getShiftLatlng(latlng, map, shiftPixel) {
+    if (shiftPixel && map) {
+      var p = map.latLngToLayerPoint(latlng)._add(shiftPixel);
+
+      latlng = map.layerPointToLatLng(p);
+    }
+
+    return latlng;
+  },
+  getDownType: function getDownType(ev, map, feature) {
+    var layerPoint = ev.layerPoint,
+        originalEvent = ev.originalEvent,
+        ctrlKey = false,
+        shiftKey = false,
+        altKey = false,
+        latlng = ev.latlng;
+
+    if (originalEvent) {
+      ctrlKey = originalEvent.ctrlKey;
+      shiftKey = originalEvent.shiftKey;
+      altKey = originalEvent.altKey;
+    }
+
+    if (ev.touches && ev.touches.length === 1) {
+      var first = ev.touches[0],
+          containerPoint = map.mouseEventToContainerPoint(first);
+      layerPoint = map.containerPointToLayerPoint(containerPoint);
+      latlng = map.layerPointToLatLng(layerPoint);
+    }
+
+    var out = {
+      type: '',
+      latlng: latlng,
+      ctrlKey: ctrlKey,
+      shiftKey: shiftKey,
+      altKey: altKey
+    },
+        ring = this.points ? this : ev.ring || ev.relatedEvent,
+        points = ring.points._originalPoints || ring.points._parts[0] || [],
+        len = points.length;
+
+    if (len === 0) {
+      return out;
+    }
+
+    var size = (ring.points.options.size || 10) / 2;
+    size += 1 + (ring.points.options.weight || 2);
+    var cursorBounds = new L$1.Bounds(L$1.point(layerPoint.x - size, layerPoint.y - size), L$1.point(layerPoint.x + size, layerPoint.y + size)),
+        prev = points[len - 1],
+        lastIndex = len - (ring.mode === 'add' ? 2 : 1);
+    out = {
+      mode: ring.mode,
+      layerPoint: ev.layerPoint,
+      ctrlKey: ctrlKey,
+      shiftKey: shiftKey,
+      altKey: altKey,
+      latlng: latlng
+    };
+
+    for (var i = 0; i < len; i++) {
+      var point = points[i];
+
+      if (feature.shiftPixel) {
+        point = points[i].add(feature.shiftPixel);
+      }
+
+      if (cursorBounds.contains(point)) {
+        out.type = 'node';
+        out.num = i;
+        out.end = i === 0 || i === lastIndex ? true : false;
+        break;
+      }
+
+      var dist = L$1.LineUtil.pointToSegmentDistance(layerPoint, prev, point);
+
+      if (dist < size) {
+        out.type = 'edge';
+        out.num = i === 0 ? len : i;
+      }
+
+      prev = point;
+    }
+
+    return out;
+  },
+  _getLastObject: function _getLastObject(obj) {
+    if (obj.getLayers) {
+      var layer = obj.getLayers().shift();
+      return layer.getLayers ? this._getLastObject(layer) : obj;
+    }
+
+    return obj;
+  },
+  getMarkerByPos: function getMarkerByPos(pos, features) {
+    for (var i = 0, len = features.length; i < len; i++) {
+      var feature = features[i],
+          fobj = feature._obj ? feature._obj : null,
+          mpos = fobj && fobj._icon ? fobj._icon._leaflet_pos : null;
+
+      if (mpos && mpos.x === pos.x && mpos.y === pos.y) {
+        return fobj._latlng;
+      }
+    }
+
+    return null;
+  },
+  getLocale: function getLocale(key) {
+    var res = L$1.gmxLocale ? L$1.gmxLocale.getText(key) : null;
+    return res || key;
+  }
+};
+L$1.GmxDrawing.utils;
 
 var translate$g = T.getText.bind(T);
 T.addText('rus', {
@@ -58095,6 +61587,7 @@ T.addText('rus', {
     declarations: 'Декларации',
     incidents: 'Мониторинг',
     plotProjects: 'Проекты участков',
+    plots: 'Участки',
     borders: 'Административные границы',
     regions: 'Регионы',
     forestries: 'Лесничества',
@@ -58129,9 +61622,10 @@ T.addText('rus', {
     declaration: 'Ошибка при отображении декларации',
     requests: 'Ошибка при отображении списка запросов',
     plot: {
-      create: 'Ошибка при создании запроса',
-      edit: 'Ошибка при редактировании запроса',
-      remove: 'Ошибка при удаление запроса'
+      create: 'Ошибка при создании заявки',
+      edit: 'Ошибка при редактировании заявки',
+      remove: 'Ошибка при удаление заявки',
+      view: 'Ошибка при просмотре заявки'
     },
     incident: 'Ошибка при отображении инцидента',
     park: 'Ошибка при отображении ООПТ',
@@ -58144,9 +61638,9 @@ T.addText('rus', {
     declaration: 'Нет разрешения для отображения декларации',
     requests: 'Нет разрешения для отображения списка запросов',
     plot: {
-      create: 'Нет разрешения для создания запроса',
-      edit: 'Нет разрешения для редактирования запроса',
-      remove: 'Нет разрешения для удаления запроса'
+      create: 'Нет разрешения для создания заявки',
+      edit: 'Нет разрешения для редактирования заявки',
+      remove: 'Нет разрешения для удаления заявки'
     },
     incident: 'Нет разрешения для отображения инцидента',
     park: 'Нет разрешения для отображения ООПТ',
@@ -58154,125 +61648,7 @@ T.addText('rus', {
     stand: 'Нет разрешения для отображения выдела',
     uploaded: 'Нет разрешения для отображения данных'
   }
-}); // const defaultStyle = {
-//     fillStyle: 'rgba(28, 224, 0, 0.4)',
-// };
-// const hiliteStyle = {
-//     fillStyle: 'rgba(28, 224, 0, 0.4)',
-//     strokeStyle: '#1CE000',
-//     lineWidth: 2,
-// };
-
-var STYLES$5 = {
-  QUADRANT: {
-    DEFAULT: {
-      fillStyle: '#453F30',
-      strokeStyle: '#B14527',
-      lineWidth: 1
-    }
-  },
-  PLOT: {
-    BID: {
-      fillStyle: 'rgba(144, 112, 29)'
-    },
-    LEASED: {
-      fillStyle: 'rgba(100, 39, 39)'
-    },
-    OWN: {
-      fillStyle: 'rgba(42, 121,31, 0.5)'
-    }
-  },
-  INCIDENTS: {
-    CUT: {
-      UNCONFIRMED: {
-        fillStyle: 'rgba(253, 185, 255, 0.5)',
-        strokeStyle: '#FDB9FF',
-        lineWidth: 1
-      },
-      WORKING: {
-        fillStyle: 'rgba(255, 85, 177, 0.5)',
-        strokeStyle: '#FDB9FF',
-        lineWidth: 1
-      },
-      FAUX: {
-        fillStyle: 'rgba(126, 46, 77, 0.5)',
-        strokeStyle: '#FDB9FF',
-        lineWidth: 1
-      },
-      CONFIRMED: {
-        fillStyle: 'rgba(215, 0, 76, 0.4)',
-        strokeStyle: '#FDB9FF',
-        lineWidth: 1
-      }
-    },
-    WINDTHROW: {
-      UNCONFIRMED: {
-        fillStyle: 'rgba(253, 185, 255, 0.5)',
-        strokeStyle: '#F8C278',
-        lineWidth: 1
-      },
-      WORKING: {
-        fillStyle: 'rgba(255, 85, 177, 0.5)',
-        strokeStyle: '#F8C278',
-        lineWidth: 1
-      },
-      FAUX: {
-        fillStyle: 'rgba(126, 46, 77, 0.5)',
-        strokeStyle: '#F8C278',
-        lineWidth: 1
-      },
-      CONFIRMED: {
-        fillStyle: 'rgba(215, 0, 76, 0.4)',
-        strokeStyle: '#F8C278',
-        lineWidth: 1
-      }
-    },
-    DISEASE: {
-      UNCONFIRMED: {
-        fillStyle: 'rgba(151, 168, 255, 0.5)',
-        strokeStyle: '#97A8FF',
-        lineWidth: 1
-      },
-      WORKING: {
-        fillStyle: 'rgba(61, 81, 254, 0.5)',
-        strokeStyle: '#97A8FF',
-        lineWidth: 1
-      },
-      FAUX: {
-        fillStyle: 'rgba(76, 84, 125, 0.5)',
-        strokeStyle: '#97A8FF',
-        lineWidth: 1
-      },
-      CONFIRMED: {
-        fillStyle: 'rgba(70, 5, 255, 0.5)',
-        strokeStyle: '#97A8FF',
-        lineWidth: 1
-      }
-    },
-    BURN: {
-      UNCONFIRMED: {
-        fillStyle: 'rgba(255, 168, 67, 0.45)',
-        strokeStyle: '#F8C278',
-        lineWidth: 1
-      },
-      WORKING: {
-        fillStyle: 'rgba(255, 122, 0, 0.5)',
-        strokeStyle: '#F8C278',
-        lineWidth: 1
-      },
-      FAUX: {
-        fillStyle: 'rgba(241, 207, 166, 0.45)',
-        strokeStyle: '#F8C278',
-        lineWidth: 1
-      },
-      CONFIRMED: {
-        fillStyle: 'rgba(239, 78, 9, 0.5)',
-        strokeStyle: '#F8C278',
-        lineWidth: 1
-      }
-    }
-  }
-};
+});
 
 var Map = /*#__PURE__*/function (_EventTarget) {
   _inherits(Map, _EventTarget);
@@ -58290,6 +61666,8 @@ var Map = /*#__PURE__*/function (_EventTarget) {
         gmxPath = _ref$gmxPath === void 0 ? '/gis' : _ref$gmxPath,
         _ref$apiPath = _ref.apiPath,
         apiPath = _ref$apiPath === void 0 ? '/service' : _ref$apiPath,
+        _ref$monPath = _ref.monPath,
+        monPath = _ref$monPath === void 0 ? '/monitoring' : _ref$monPath,
         _ref$apiKey = _ref.apiKey,
         apiKey = _ref$apiKey === void 0 ? 'I9ELMZU8GD' : _ref$apiKey,
         _ref$center = _ref.center,
@@ -58313,10 +61691,38 @@ var Map = /*#__PURE__*/function (_EventTarget) {
     _this._apiKey = apiKey;
     _this._gmxPath = gmxPath;
     _this._apiPath = apiPath;
+    _this._monPath = monPath;
     _this._map = L$1.map(_this._container, {
       // renderer: L.canvas(),
       zoomControl: false
-    }).setView(center, zoom);
+    });
+
+    _this._map.on('moveend', function (e) {
+      var _this$_map$getCenter = _this._map.getCenter(),
+          lat = _this$_map$getCenter.lat,
+          lng = _this$_map$getCenter.lng;
+
+      window.localStorage.setItem('center', JSON.stringify([lat, lng]));
+    }, _assertThisInitialized(_this));
+
+    _this._map.on('zoomend', function (e) {
+      var z = _this._map.getZoom();
+
+      window.localStorage.setItem('zoom', z.toString());
+    }, _assertThisInitialized(_this));
+
+    var c = window.localStorage.getItem('center');
+
+    try {
+      c = c && JSON.parse(c) || center;
+    } catch (_unused) {
+      c = center;
+    }
+
+    var z = window.localStorage.getItem('zoom');
+    z = z && parseInt(z, 10) || zoom;
+
+    _this._map.setView(c, z);
 
     _this._map.on('click', /*#__PURE__*/function () {
       var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e) {
@@ -58326,7 +61732,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
               case 0:
                 L$1.DomEvent.stopPropagation(e);
 
-                if (e.gmx) {
+                if (!(!e.gmx && e.originalEvent.target.tagName !== 'g')) {
                   _context.next = 4;
                   break;
                 }
@@ -58478,18 +61884,26 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                         }
                       }
                     }, _callee4);
-                  }))).on('edit', /*#__PURE__*/function () {
+                  }))).on('existing', function (e) {
+                    var event = document.createEvent('Event');
+                    event.initEvent('request:create', false, false);
+                    event.detail = e.detail;
+
+                    _this2.dispatchEvent(event);
+                  }).on('edit', /*#__PURE__*/function () {
                     var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(e) {
-                      var state;
+                      var state, _e$detail, id, forestryID;
+
                       return regeneratorRuntime.wrap(function _callee5$(_context5) {
                         while (1) {
                           switch (_context5.prev = _context5.next) {
                             case 0:
                               state = _this2._legend.state('quadrants');
-                              _context5.next = 3;
-                              return _this2._showEditPlot(e.detail, state);
+                              _e$detail = e.detail, id = _e$detail.id, forestryID = _e$detail.forestryID;
+                              _context5.next = 4;
+                              return _this2._showEditPlot(id, forestryID, state);
 
-                            case 3:
+                            case 4:
                             case "end":
                               return _context5.stop();
                           }
@@ -58632,20 +62046,21 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_showEditPlot",
     value: function () {
-      var _showEditPlot2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee12(id, state) {
+      var _showEditPlot2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11(id, forestryID, state) {
         var _this3 = this;
 
-        var component;
-        return regeneratorRuntime.wrap(function _callee12$(_context12) {
+        var component, _this$_plotProject$ge, LayerID;
+
+        return regeneratorRuntime.wrap(function _callee11$(_context11) {
           while (1) {
-            switch (_context12.prev = _context12.next) {
+            switch (_context11.prev = _context11.next) {
               case 0:
                 if (!this._permissions.ForestProjectsEdit) {
-                  _context12.next = 15;
+                  _context11.next = 19;
                   break;
                 }
 
-                _context12.prev = 1;
+                _context11.prev = 1;
 
                 if (!this._content.hasComponent('edit-plot')) {
                   component = this._content.addComponent('edit-plot', EditPlot, {
@@ -58666,32 +62081,10 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                         }
                       }
                     }, _callee9);
-                  }))).on('quadrant:click', /*#__PURE__*/function () {
-                    var _ref7 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(e) {
-                      var id;
-                      return regeneratorRuntime.wrap(function _callee10$(_context10) {
-                        while (1) {
-                          switch (_context10.prev = _context10.next) {
-                            case 0:
-                              id = e.detail;
-                              _context10.next = 3;
-                              return _this3._fitBounds(id);
-
-                            case 3:
-                            case "end":
-                              return _context10.stop();
-                          }
-                        }
-                      }, _callee10);
-                    }));
-
-                    return function (_x7) {
-                      return _ref7.apply(this, arguments);
-                    };
-                  }()).on('backward', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11() {
-                    return regeneratorRuntime.wrap(function _callee11$(_context11) {
+                  }))).on('backward', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10() {
+                    return regeneratorRuntime.wrap(function _callee10$(_context10) {
                       while (1) {
-                        switch (_context11.prev = _context11.next) {
+                        switch (_context10.prev = _context10.next) {
                           case 0:
                             if (state) {
                               _this3._legend.enable('quadrants');
@@ -58699,15 +62092,15 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                               _this3._legend.disable('quadrants');
                             }
 
-                            _context11.next = 3;
+                            _context10.next = 3;
                             return _this3.showRequests();
 
                           case 3:
                           case "end":
-                            return _context11.stop();
+                            return _context10.stop();
                         }
                       }
-                    }, _callee11);
+                    }, _callee10);
                   }))).on('create', function (e) {
                     var event = document.createEvent('Event');
                     event.initEvent('request:create', false, false);
@@ -58717,38 +62110,51 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   });
                 }
 
-                _context12.next = 5;
-                return this._content.showComponent('edit-plot', id);
+                _context11.next = 5;
+                return this._content.showComponent('edit-plot', {
+                  id: id,
+                  forestryID: forestryID
+                });
 
               case 5:
                 this._legend.enable('quadrants');
 
-                _context12.next = 13;
+                if (!this._plotProject) {
+                  _context11.next = 10;
+                  break;
+                }
+
+                _this$_plotProject$ge = this._plotProject.getGmxProperties(), LayerID = _this$_plotProject$ge.LayerID;
+                _context11.next = 10;
+                return this._viewObject(LayerID, id, 10);
+
+              case 10:
+                _context11.next = 17;
                 break;
 
-              case 8:
-                _context12.prev = 8;
-                _context12.t0 = _context12["catch"](1);
-                console.log(_context12.t0);
+              case 12:
+                _context11.prev = 12;
+                _context11.t0 = _context11["catch"](1);
+                console.log(_context11.t0);
                 alert(translate$g('error.plot.edit'));
                 this.showMain();
 
-              case 13:
-                _context12.next = 16;
+              case 17:
+                _context11.next = 20;
                 break;
 
-              case 15:
+              case 19:
                 alert(translate$g('forbidden.plot.edit'));
 
-              case 16:
+              case 20:
               case "end":
-                return _context12.stop();
+                return _context11.stop();
             }
           }
-        }, _callee12, this, [[1, 8]]);
+        }, _callee11, this, [[1, 12]]);
       }));
 
-      function _showEditPlot(_x5, _x6) {
+      function _showEditPlot(_x5, _x6, _x7) {
         return _showEditPlot2.apply(this, arguments);
       }
 
@@ -58757,20 +62163,20 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_showCreatePlot",
     value: function () {
-      var _showCreatePlot2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee16(state) {
+      var _showCreatePlot2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee14(state) {
         var _this4 = this;
 
         var component;
-        return regeneratorRuntime.wrap(function _callee16$(_context16) {
+        return regeneratorRuntime.wrap(function _callee14$(_context14) {
           while (1) {
-            switch (_context16.prev = _context16.next) {
+            switch (_context14.prev = _context14.next) {
               case 0:
                 if (!this._permissions.ApplicationMake) {
-                  _context16.next = 15;
+                  _context14.next = 15;
                   break;
                 }
 
-                _context16.prev = 1;
+                _context14.prev = 1;
 
                 if (!this._content.hasComponent('create-plot')) {
                   component = this._content.addComponent('create-plot', CreatePlot, {
@@ -58778,61 +62184,29 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                     path: this._apiPath
                   });
                   component.on('save', /*#__PURE__*/function () {
-                    var _ref9 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee13(e) {
-                      return regeneratorRuntime.wrap(function _callee13$(_context13) {
+                    var _ref8 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee12(e) {
+                      return regeneratorRuntime.wrap(function _callee12$(_context12) {
                         while (1) {
-                          switch (_context13.prev = _context13.next) {
+                          switch (_context12.prev = _context12.next) {
                             case 0:
-                              _context13.next = 2;
+                              _context12.next = 2;
                               return _this4.showRequests();
 
                             case 2:
                             case "end":
-                              return _context13.stop();
+                              return _context12.stop();
                           }
                         }
-                      }, _callee13);
+                      }, _callee12);
                     }));
 
                     return function (_x9) {
-                      return _ref9.apply(this, arguments);
+                      return _ref8.apply(this, arguments);
                     };
-                  }()).on('quadrant:click', /*#__PURE__*/function () {
-                    var _ref10 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee14(e) {
-                      var id;
-                      return regeneratorRuntime.wrap(function _callee14$(_context14) {
-                        while (1) {
-                          switch (_context14.prev = _context14.next) {
-                            case 0:
-                              id = e.detail;
-                              _context14.next = 3;
-                              return _this4._fitBounds(id);
-
-                            case 3:
-                            case "end":
-                              return _context14.stop();
-                          }
-                        }
-                      }, _callee14);
-                    }));
-
-                    return function (_x10) {
-                      return _ref10.apply(this, arguments);
-                    };
-                  }()) // .on('quadrant:over', e => {
-                  //     const id = e.detail;
-                  //     this._hilited[id] = id;                    
-                  //     this._quadrants.repaint();
-                  // })
-                  // .on('quadrant:out', e => {
-                  //     const id = e.detail;
-                  //     delete this._hilited[id];
-                  //     this._quadrants.repaint();
-                  // })
-                  .on('backward', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee15() {
-                    return regeneratorRuntime.wrap(function _callee15$(_context15) {
+                  }()).on('backward', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee13() {
+                    return regeneratorRuntime.wrap(function _callee13$(_context13) {
                       while (1) {
-                        switch (_context15.prev = _context15.next) {
+                        switch (_context13.prev = _context13.next) {
                           case 0:
                             if (state) {
                               _this4._legend.enable('quadrants');
@@ -58840,36 +62214,36 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                               _this4._legend.disable('quadrants');
                             }
 
-                            _context15.next = 3;
+                            _context13.next = 3;
                             return _this4.showRequests();
 
                           case 3:
                           case "end":
-                            return _context15.stop();
+                            return _context13.stop();
                         }
                       }
-                    }, _callee15);
+                    }, _callee13);
                   })));
                 }
 
-                _context16.next = 5;
+                _context14.next = 5;
                 return this._content.showComponent('create-plot');
 
               case 5:
                 this._legend.enable('quadrants');
 
-                _context16.next = 13;
+                _context14.next = 13;
                 break;
 
               case 8:
-                _context16.prev = 8;
-                _context16.t0 = _context16["catch"](1);
-                console.log(_context16.t0);
+                _context14.prev = 8;
+                _context14.t0 = _context14["catch"](1);
+                console.log(_context14.t0);
                 alert(translate$g('error.plot.create'));
                 this.showMain();
 
               case 13:
-                _context16.next = 16;
+                _context14.next = 16;
                 break;
 
               case 15:
@@ -58877,10 +62251,10 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
               case 16:
               case "end":
-                return _context16.stop();
+                return _context14.stop();
             }
           }
-        }, _callee16, this, [[1, 8]]);
+        }, _callee14, this, [[1, 8]]);
       }));
 
       function _showCreatePlot(_x8) {
@@ -58890,40 +62264,97 @@ var Map = /*#__PURE__*/function (_EventTarget) {
       return _showCreatePlot;
     }()
   }, {
-    key: "_showNaturalPark",
+    key: "_showViewPlot",
     value: function () {
-      var _showNaturalPark2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee17(properties) {
-        return regeneratorRuntime.wrap(function _callee17$(_context17) {
+      var _showViewPlot2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee15(id) {
+        return regeneratorRuntime.wrap(function _callee15$(_context15) {
           while (1) {
-            switch (_context17.prev = _context17.next) {
+            switch (_context15.prev = _context15.next) {
               case 0:
-                if (!this._permissions.SPNA) {
-                  _context17.next = 14;
+                if (!this._permissions.ForestProjectsEdit) {
+                  _context15.next = 14;
                   break;
                 }
 
-                _context17.prev = 1;
+                _context15.prev = 1;
+
+                if (!this._content.hasComponent('view-plot')) {
+                  this._content.addComponent('view-plot', ViewPlot, {
+                    layer: this._quadrants,
+                    path: this._apiPath
+                  });
+                }
+
+                _context15.next = 5;
+                return this._content.showComponent('view-plot', id);
+
+              case 5:
+                _context15.next = 12;
+                break;
+
+              case 7:
+                _context15.prev = 7;
+                _context15.t0 = _context15["catch"](1);
+                console.log(_context15.t0);
+                alert(translate$g('error.plot.edit'));
+                this.showMain();
+
+              case 12:
+                _context15.next = 15;
+                break;
+
+              case 14:
+                alert(translate$g('forbidden.plot.edit'));
+
+              case 15:
+              case "end":
+                return _context15.stop();
+            }
+          }
+        }, _callee15, this, [[1, 7]]);
+      }));
+
+      function _showViewPlot(_x10) {
+        return _showViewPlot2.apply(this, arguments);
+      }
+
+      return _showViewPlot;
+    }()
+  }, {
+    key: "_showNaturalPark",
+    value: function () {
+      var _showNaturalPark2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee16(properties) {
+        return regeneratorRuntime.wrap(function _callee16$(_context16) {
+          while (1) {
+            switch (_context16.prev = _context16.next) {
+              case 0:
+                if (!this._permissions.SPNA) {
+                  _context16.next = 14;
+                  break;
+                }
+
+                _context16.prev = 1;
 
                 if (!this._content.hasComponent('park')) {
                   this._content.addComponent('park', NaturalPark);
                 }
 
-                _context17.next = 5;
+                _context16.next = 5;
                 return this._content.showComponent('park', properties);
 
               case 5:
-                _context17.next = 12;
+                _context16.next = 12;
                 break;
 
               case 7:
-                _context17.prev = 7;
-                _context17.t0 = _context17["catch"](1);
-                console.log(_context17.t0);
+                _context16.prev = 7;
+                _context16.t0 = _context16["catch"](1);
+                console.log(_context16.t0);
                 alert(translate$g('error.park'));
                 this.showMain();
 
               case 12:
-                _context17.next = 15;
+                _context16.next = 15;
                 break;
 
               case 14:
@@ -58931,10 +62362,10 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
               case 15:
               case "end":
-                return _context17.stop();
+                return _context16.stop();
             }
           }
-        }, _callee17, this, [[1, 7]]);
+        }, _callee16, this, [[1, 7]]);
       }));
 
       function _showNaturalPark(_x11) {
@@ -58944,41 +62375,40 @@ var Map = /*#__PURE__*/function (_EventTarget) {
       return _showNaturalPark;
     }()
   }, {
-    key: "_fitBounds",
+    key: "_viewObject",
     value: function () {
-      var _fitBounds2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee18(id) {
-        var _this$_quadrants$getG, LayerID, fd, response, _yield$response$json, Status, Result, fields, values, i, _L$gmxUtil$convertGeo, coordinates, g, b;
+      var _viewObject2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee17(layerID, id, zoom) {
+        var fd, response, _yield$response$json, Status, Result, fields, values, i, _L$gmxUtil$convertGeo, coordinates, g, b, c, z;
 
-        return regeneratorRuntime.wrap(function _callee18$(_context18) {
+        return regeneratorRuntime.wrap(function _callee17$(_context17) {
           while (1) {
-            switch (_context18.prev = _context18.next) {
+            switch (_context17.prev = _context17.next) {
               case 0:
                 if (!this._quadrants) {
-                  _context18.next = 17;
+                  _context17.next = 16;
                   break;
                 }
 
-                _this$_quadrants$getG = this._quadrants.getGmxProperties(), LayerID = _this$_quadrants$getG.LayerID;
                 fd = new FormData();
-                fd.append('query', "[rec_id]=".concat(id));
+                fd.append('query', "[id]='".concat(id, "'"));
                 fd.append('page', '0');
                 fd.append('pagesize', '1');
                 fd.append('geometry', 'true');
-                fd.append('layer', LayerID);
-                _context18.next = 10;
+                fd.append('layer', layerID);
+                _context17.next = 9;
                 return fetch("".concat(this._gmxPath, "/VectorLayer/Search.ashx?WrapStyle=None"), {
                   method: 'POST',
                   credentials: 'include',
                   body: fd
                 });
 
-              case 10:
-                response = _context18.sent;
-                _context18.next = 13;
+              case 9:
+                response = _context17.sent;
+                _context17.next = 12;
                 return response.json();
 
-              case 13:
-                _yield$response$json = _context18.sent;
+              case 12:
+                _yield$response$json = _context17.sent;
                 Status = _yield$response$json.Status;
                 Result = _yield$response$json.Result;
 
@@ -58994,38 +62424,40 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                     }
                   });
                   b = g.getBounds();
+                  c = b.getCenter();
+                  z = zoom || this._map.getZoom();
 
-                  this._map.fitBounds(b);
+                  this._map.setView(c, z);
                 }
 
-              case 17:
+              case 16:
               case "end":
-                return _context18.stop();
+                return _context17.stop();
             }
           }
-        }, _callee18, this);
+        }, _callee17, this);
       }));
 
-      function _fitBounds(_x12) {
-        return _fitBounds2.apply(this, arguments);
+      function _viewObject(_x12, _x13, _x14) {
+        return _viewObject2.apply(this, arguments);
       }
 
-      return _fitBounds;
+      return _viewObject;
     }()
   }, {
     key: "showUploaded",
     value: function () {
-      var _showUploaded = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee19() {
-        return regeneratorRuntime.wrap(function _callee19$(_context19) {
+      var _showUploaded = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee18() {
+        return regeneratorRuntime.wrap(function _callee18$(_context18) {
           while (1) {
-            switch (_context19.prev = _context19.next) {
+            switch (_context18.prev = _context18.next) {
               case 0:
                 if (!this._permissions.MyData) {
-                  _context19.next = 14;
+                  _context18.next = 14;
                   break;
                 }
 
-                _context19.prev = 1;
+                _context18.prev = 1;
 
                 if (!this._content.hasComponent('uploaded')) {
                   this._content.addComponent('uploaded', Uploaded, {
@@ -59033,22 +62465,22 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   });
                 }
 
-                _context19.next = 5;
+                _context18.next = 5;
                 return this._content.showComponent('uploaded');
 
               case 5:
-                _context19.next = 12;
+                _context18.next = 12;
                 break;
 
               case 7:
-                _context19.prev = 7;
-                _context19.t0 = _context19["catch"](1);
-                console.log(_context19.t0);
+                _context18.prev = 7;
+                _context18.t0 = _context18["catch"](1);
+                console.log(_context18.t0);
                 alert(translate$g('error.uploaded'));
                 this.showMain();
 
               case 12:
-                _context19.next = 15;
+                _context18.next = 15;
                 break;
 
               case 14:
@@ -59056,10 +62488,10 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
               case 15:
               case "end":
-                return _context19.stop();
+                return _context18.stop();
             }
           }
-        }, _callee19, this, [[1, 7]]);
+        }, _callee18, this, [[1, 7]]);
       }));
 
       function showUploaded() {
@@ -59071,17 +62503,17 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_showQuadrant",
     value: function () {
-      var _showQuadrant2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee20(id, gmx_id) {
-        return regeneratorRuntime.wrap(function _callee20$(_context20) {
+      var _showQuadrant2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee19(id, gmx_id) {
+        return regeneratorRuntime.wrap(function _callee19$(_context19) {
           while (1) {
-            switch (_context20.prev = _context20.next) {
+            switch (_context19.prev = _context19.next) {
               case 0:
                 if (!this._permissions.ForestBlocks) {
-                  _context20.next = 14;
+                  _context19.next = 14;
                   break;
                 }
 
-                _context20.prev = 1;
+                _context19.prev = 1;
 
                 if (!this._content.hasComponent('quadrant')) {
                   this._content.addComponent('quadrant', Quadrant, {
@@ -59090,8 +62522,68 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   });
                 }
 
-                _context20.next = 5;
+                _context19.next = 5;
                 return this._content.showComponent('quadrant', {
+                  id: id,
+                  gmx_id: gmx_id
+                });
+
+              case 5:
+                _context19.next = 12;
+                break;
+
+              case 7:
+                _context19.prev = 7;
+                _context19.t0 = _context19["catch"](1);
+                console.log(_context19.t0);
+                alert(translate$g('error.quadrant'));
+                this.showMain();
+
+              case 12:
+                _context19.next = 15;
+                break;
+
+              case 14:
+                alert(translate$g('forbidden.quadrant'));
+
+              case 15:
+              case "end":
+                return _context19.stop();
+            }
+          }
+        }, _callee19, this, [[1, 7]]);
+      }));
+
+      function _showQuadrant(_x15, _x16) {
+        return _showQuadrant2.apply(this, arguments);
+      }
+
+      return _showQuadrant;
+    }()
+  }, {
+    key: "_showStand",
+    value: function () {
+      var _showStand2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee20(id, gmx_id) {
+        return regeneratorRuntime.wrap(function _callee20$(_context20) {
+          while (1) {
+            switch (_context20.prev = _context20.next) {
+              case 0:
+                if (!this._permissions.ForestStands) {
+                  _context20.next = 14;
+                  break;
+                }
+
+                _context20.prev = 1;
+
+                if (!this._content.hasComponent('stand')) {
+                  this._content.addComponent('stand', Stand, {
+                    layer: this._stands,
+                    path: this._apiPath
+                  });
+                }
+
+                _context20.next = 5;
+                return this._content.showComponent('stand', {
                   id: id,
                   gmx_id: gmx_id
                 });
@@ -59104,7 +62596,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 _context20.prev = 7;
                 _context20.t0 = _context20["catch"](1);
                 console.log(_context20.t0);
-                alert(translate$g('error.quadrant'));
+                alert(translate$g('error.stand'));
                 this.showMain();
 
               case 12:
@@ -59112,7 +62604,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 break;
 
               case 14:
-                alert(translate$g('forbidden.quadrant'));
+                alert(translate$g('forbidden.stand'));
 
               case 15:
               case "end":
@@ -59122,36 +62614,36 @@ var Map = /*#__PURE__*/function (_EventTarget) {
         }, _callee20, this, [[1, 7]]);
       }));
 
-      function _showQuadrant(_x13, _x14) {
-        return _showQuadrant2.apply(this, arguments);
+      function _showStand(_x17, _x18) {
+        return _showStand2.apply(this, arguments);
       }
 
-      return _showQuadrant;
+      return _showStand;
     }()
   }, {
-    key: "_showStand",
+    key: "_showDeclaration",
     value: function () {
-      var _showStand2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee21(id, gmx_id) {
+      var _showDeclaration2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee21(id, gmx_id) {
         return regeneratorRuntime.wrap(function _callee21$(_context21) {
           while (1) {
             switch (_context21.prev = _context21.next) {
               case 0:
-                if (!this._permissions.ForestStands) {
+                if (!this._permissions.ForestDeclarations) {
                   _context21.next = 14;
                   break;
                 }
 
                 _context21.prev = 1;
 
-                if (!this._content.hasComponent('stand')) {
-                  this._content.addComponent('stand', Stand, {
-                    layer: this._stands,
+                if (!this._content.hasComponent('declaration')) {
+                  this._content.addComponent('declaration', Declaration, {
+                    layer: this._declarations,
                     path: this._apiPath
                   });
                 }
 
                 _context21.next = 5;
-                return this._content.showComponent('stand', {
+                return this._content.showComponent('declaration', {
                   id: id,
                   gmx_id: gmx_id
                 });
@@ -59164,7 +62656,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 _context21.prev = 7;
                 _context21.t0 = _context21["catch"](1);
                 console.log(_context21.t0);
-                alert(translate$g('error.stand'));
+                alert(translate$g('error.declaration'));
                 this.showMain();
 
               case 12:
@@ -59172,7 +62664,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 break;
 
               case 14:
-                alert(translate$g('forbidden.stand'));
+                alert(translate$g('forbidden.declaration'));
 
               case 15:
               case "end":
@@ -59182,37 +62674,48 @@ var Map = /*#__PURE__*/function (_EventTarget) {
         }, _callee21, this, [[1, 7]]);
       }));
 
-      function _showStand(_x15, _x16) {
-        return _showStand2.apply(this, arguments);
+      function _showDeclaration(_x19, _x20) {
+        return _showDeclaration2.apply(this, arguments);
       }
 
-      return _showStand;
+      return _showDeclaration;
     }()
   }, {
-    key: "_showDeclaration",
+    key: "_showIncident",
     value: function () {
-      var _showDeclaration2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee22(id, gmx_id) {
+      var _showIncident2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee22(props, gmx_id) {
+        var _this5 = this;
+
+        var component;
         return regeneratorRuntime.wrap(function _callee22$(_context22) {
           while (1) {
             switch (_context22.prev = _context22.next) {
               case 0:
-                if (!this._permissions.ForestDeclarations) {
+                if (!this._permissions.ForestIncidents) {
                   _context22.next = 14;
                   break;
                 }
 
                 _context22.prev = 1;
 
-                if (!this._content.hasComponent('declaration')) {
-                  this._content.addComponent('declaration', Declaration, {
-                    layer: this._declarations,
-                    path: this._apiPath
+                if (!this._content.hasComponent('incident')) {
+                  component = this._content.addComponent('incident', Incident, {
+                    permissions: this._permissions,
+                    layer: this._incidents,
+                    path: this._monPath
+                  });
+                  component.on('incident:docs', function (e) {
+                    var event = document.createEvent('Event');
+                    event.initEvent('incident:docs', false, false);
+                    event.detail = e.detail;
+
+                    _this5.dispatchEvent(event);
                   });
                 }
 
                 _context22.next = 5;
-                return this._content.showComponent('declaration', {
-                  id: id,
+                return this._content.showComponent('incident', {
+                  props: props,
                   gmx_id: gmx_id
                 });
 
@@ -59224,7 +62727,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 _context22.prev = 7;
                 _context22.t0 = _context22["catch"](1);
                 console.log(_context22.t0);
-                alert(translate$g('error.declaration'));
+                alert(translate$g('error.incident'));
                 this.showMain();
 
               case 12:
@@ -59232,7 +62735,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 break;
 
               case 14:
-                alert(translate$g('forbidden.declaration'));
+                alert(translate$g('forbidden.incident'));
 
               case 15:
               case "end":
@@ -59242,69 +62745,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
         }, _callee22, this, [[1, 7]]);
       }));
 
-      function _showDeclaration(_x17, _x18) {
-        return _showDeclaration2.apply(this, arguments);
-      }
-
-      return _showDeclaration;
-    }()
-  }, {
-    key: "_showIncident",
-    value: function () {
-      var _showIncident2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee23(props, gmx_id) {
-        return regeneratorRuntime.wrap(function _callee23$(_context23) {
-          while (1) {
-            switch (_context23.prev = _context23.next) {
-              case 0:
-                if (!this._permissions.ForestIncidents) {
-                  _context23.next = 14;
-                  break;
-                }
-
-                _context23.prev = 1;
-
-                if (!this._content.hasComponent('incident')) {
-                  this._content.addComponent('incident', Incident, {
-                    permissions: this._permissions,
-                    user: this._user,
-                    layer: this._incidents,
-                    path: this._apiPath
-                  });
-                }
-
-                _context23.next = 5;
-                return this._content.showComponent('incident', {
-                  props: props,
-                  gmx_id: gmx_id
-                });
-
-              case 5:
-                _context23.next = 12;
-                break;
-
-              case 7:
-                _context23.prev = 7;
-                _context23.t0 = _context23["catch"](1);
-                console.log(_context23.t0);
-                alert(translate$g('error.incident'));
-                this.showMain();
-
-              case 12:
-                _context23.next = 15;
-                break;
-
-              case 14:
-                alert(translate$g('forbidden.incident'));
-
-              case 15:
-              case "end":
-                return _context23.stop();
-            }
-          }
-        }, _callee23, this, [[1, 7]]);
-      }));
-
-      function _showIncident(_x19, _x20) {
+      function _showIncident(_x21, _x22) {
         return _showIncident2.apply(this, arguments);
       }
 
@@ -59313,128 +62754,128 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_showLayer",
     value: function () {
-      var _showLayer2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee24(_ref12) {
+      var _showLayer2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee23(_ref10) {
         var id, visible, mode;
-        return regeneratorRuntime.wrap(function _callee24$(_context24) {
+        return regeneratorRuntime.wrap(function _callee23$(_context23) {
           while (1) {
-            switch (_context24.prev = _context24.next) {
+            switch (_context23.prev = _context23.next) {
               case 0:
-                id = _ref12.id, visible = _ref12.visible;
+                id = _ref10.id, visible = _ref10.visible;
                 mode = this._content.getCurrentId();
-                _context24.t0 = id;
-                _context24.next = _context24.t0 === 'quadrants' ? 5 : _context24.t0 === 'parks' ? 19 : _context24.t0 === 'stands' ? 33 : _context24.t0 === 'fires' ? 47 : _context24.t0 === 'declarations' ? 49 : _context24.t0 === 'incidents' ? 63 : _context24.t0 === 'plot-projects' ? 77 : _context24.t0 === 'regions' ? 79 : _context24.t0 === 'forestries' ? 81 : _context24.t0 === 'forestries-local' ? 83 : 85;
+                _context23.t0 = id;
+                _context23.next = _context23.t0 === 'quadrants' ? 5 : _context23.t0 === 'parks' ? 19 : _context23.t0 === 'stands' ? 33 : _context23.t0 === 'fires' ? 47 : _context23.t0 === 'declarations' ? 49 : _context23.t0 === 'incidents' ? 63 : _context23.t0 === 'plot-projects' ? 77 : _context23.t0 === 'plots' ? 79 : _context23.t0 === 'regions' ? 81 : _context23.t0 === 'forestries' ? 83 : _context23.t0 === 'forestries-local' ? 85 : 87;
                 break;
 
               case 5:
                 if (!this._quadrants) {
-                  _context24.next = 18;
+                  _context23.next = 18;
                   break;
                 }
 
                 if (!visible) {
-                  _context24.next = 10;
+                  _context23.next = 10;
                   break;
                 }
 
                 this._map.addLayer(this._quadrants);
 
-                _context24.next = 18;
+                _context23.next = 18;
                 break;
 
               case 10:
-                _context24.t1 = mode;
-                _context24.next = _context24.t1 === 'quadrant' ? 13 : 16;
+                _context23.t1 = mode;
+                _context23.next = _context23.t1 === 'quadrant' ? 13 : 16;
                 break;
 
               case 13:
-                _context24.next = 15;
+                _context23.next = 15;
                 return this.showMain();
 
               case 15:
-                return _context24.abrupt("break", 17);
+                return _context23.abrupt("break", 17);
 
               case 16:
-                return _context24.abrupt("break", 17);
+                return _context23.abrupt("break", 17);
 
               case 17:
                 this._map.removeLayer(this._quadrants);
 
               case 18:
-                return _context24.abrupt("break", 86);
+                return _context23.abrupt("break", 88);
 
               case 19:
                 if (!this._parks) {
-                  _context24.next = 32;
+                  _context23.next = 32;
                   break;
                 }
 
                 if (!visible) {
-                  _context24.next = 24;
+                  _context23.next = 24;
                   break;
                 }
 
                 this._map.addLayer(this._parks);
 
-                _context24.next = 32;
+                _context23.next = 32;
                 break;
 
               case 24:
-                _context24.t2 = mode;
-                _context24.next = _context24.t2 === 'park' ? 27 : 30;
+                _context23.t2 = mode;
+                _context23.next = _context23.t2 === 'park' ? 27 : 30;
                 break;
 
               case 27:
-                _context24.next = 29;
+                _context23.next = 29;
                 return this.showMain();
 
               case 29:
-                return _context24.abrupt("break", 31);
+                return _context23.abrupt("break", 31);
 
               case 30:
-                return _context24.abrupt("break", 31);
+                return _context23.abrupt("break", 31);
 
               case 31:
                 this._map.removeLayer(this._parks);
 
               case 32:
-                return _context24.abrupt("break", 86);
+                return _context23.abrupt("break", 88);
 
               case 33:
                 if (!this._stands) {
-                  _context24.next = 46;
+                  _context23.next = 46;
                   break;
                 }
 
                 if (!visible) {
-                  _context24.next = 38;
+                  _context23.next = 38;
                   break;
                 }
 
                 this._map.addLayer(this._stands);
 
-                _context24.next = 46;
+                _context23.next = 46;
                 break;
 
               case 38:
-                _context24.t3 = mode;
-                _context24.next = _context24.t3 === 'stand' ? 41 : 44;
+                _context23.t3 = mode;
+                _context23.next = _context23.t3 === 'stand' ? 41 : 44;
                 break;
 
               case 41:
-                _context24.next = 43;
+                _context23.next = 43;
                 return this.showMain();
 
               case 43:
-                return _context24.abrupt("break", 45);
+                return _context23.abrupt("break", 45);
 
               case 44:
-                return _context24.abrupt("break", 45);
+                return _context23.abrupt("break", 45);
 
               case 45:
                 this._map.removeLayer(this._stands);
 
               case 46:
-                return _context24.abrupt("break", 86);
+                return _context23.abrupt("break", 88);
 
               case 47:
                 if (visible) {
@@ -59451,81 +62892,81 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   }
                 }
 
-                return _context24.abrupt("break", 86);
+                return _context23.abrupt("break", 88);
 
               case 49:
                 if (!this._declarations) {
-                  _context24.next = 62;
+                  _context23.next = 62;
                   break;
                 }
 
                 if (!visible) {
-                  _context24.next = 54;
+                  _context23.next = 54;
                   break;
                 }
 
                 this._map.addLayer(this._declarations);
 
-                _context24.next = 62;
+                _context23.next = 62;
                 break;
 
               case 54:
-                _context24.t4 = mode;
-                _context24.next = _context24.t4 === 'declaration' ? 57 : 60;
+                _context23.t4 = mode;
+                _context23.next = _context23.t4 === 'declaration' ? 57 : 60;
                 break;
 
               case 57:
-                _context24.next = 59;
+                _context23.next = 59;
                 return this.showMain();
 
               case 59:
-                return _context24.abrupt("break", 61);
+                return _context23.abrupt("break", 61);
 
               case 60:
-                return _context24.abrupt("break", 61);
+                return _context23.abrupt("break", 61);
 
               case 61:
                 this._map.removeLayer(this._declarations);
 
               case 62:
-                return _context24.abrupt("break", 86);
+                return _context23.abrupt("break", 88);
 
               case 63:
                 if (!this._incidents) {
-                  _context24.next = 76;
+                  _context23.next = 76;
                   break;
                 }
 
                 if (!visible) {
-                  _context24.next = 68;
+                  _context23.next = 68;
                   break;
                 }
 
                 this._map.addLayer(this._incidents);
 
-                _context24.next = 76;
+                _context23.next = 76;
                 break;
 
               case 68:
-                _context24.t5 = mode;
-                _context24.next = _context24.t5 === 'incident' ? 71 : 74;
+                _context23.t5 = mode;
+                _context23.next = _context23.t5 === 'incident' ? 71 : 74;
                 break;
 
               case 71:
-                _context24.next = 73;
+                _context23.next = 73;
                 return this.showMain();
 
               case 73:
-                return _context24.abrupt("break", 75);
+                return _context23.abrupt("break", 75);
 
               case 74:
-                return _context24.abrupt("break", 75);
+                return _context23.abrupt("break", 75);
 
               case 75:
                 this._map.removeLayer(this._incidents);
 
               case 76:
-                return _context24.abrupt("break", 86);
+                return _context23.abrupt("break", 88);
 
               case 77:
                 if (this._plotProject) {
@@ -59536,9 +62977,20 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   }
                 }
 
-                return _context24.abrupt("break", 86);
+                return _context23.abrupt("break", 88);
 
               case 79:
+                if (this._plots) {
+                  if (visible) {
+                    this._map.addLayer(this._plots);
+                  } else {
+                    this._map.removeLayer(this._plots);
+                  }
+                }
+
+                return _context23.abrupt("break", 88);
+
+              case 81:
                 if (this._regions) {
                   if (visible) {
                     this._map.addLayer(this._regions);
@@ -59547,9 +62999,9 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   }
                 }
 
-                return _context24.abrupt("break", 86);
+                return _context23.abrupt("break", 88);
 
-              case 81:
+              case 83:
                 if (this._forestries) {
                   if (visible) {
                     this._map.addLayer(this._forestries);
@@ -59558,9 +63010,9 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   }
                 }
 
-                return _context24.abrupt("break", 86);
+                return _context23.abrupt("break", 88);
 
-              case 83:
+              case 85:
                 if (this._localForestries) {
                   if (visible) {
                     this._map.addLayer(this._localForestries);
@@ -59569,20 +63021,20 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   }
                 }
 
-                return _context24.abrupt("break", 86);
+                return _context23.abrupt("break", 88);
 
-              case 85:
-                return _context24.abrupt("break", 86);
+              case 87:
+                return _context23.abrupt("break", 88);
 
-              case 86:
+              case 88:
               case "end":
-                return _context24.stop();
+                return _context23.stop();
             }
           }
-        }, _callee24, this);
+        }, _callee23, this);
       }));
 
-      function _showLayer(_x21) {
+      function _showLayer(_x23) {
         return _showLayer2.apply(this, arguments);
       }
 
@@ -59591,34 +63043,34 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_quadrantClick",
     value: function () {
-      var _quadrantClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee25(e) {
+      var _quadrantClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee24(e) {
         var mode, _e$gmx, id, properties;
 
-        return regeneratorRuntime.wrap(function _callee25$(_context25) {
+        return regeneratorRuntime.wrap(function _callee24$(_context24) {
           while (1) {
-            switch (_context25.prev = _context25.next) {
+            switch (_context24.prev = _context24.next) {
               case 0:
                 L$1.DomEvent.stopPropagation(e);
                 mode = this._content.getCurrentId();
 
                 if (!(!mode || mode === 'quadrant')) {
-                  _context25.next = 6;
+                  _context24.next = 6;
                   break;
                 }
 
                 _e$gmx = e.gmx, id = _e$gmx.id, properties = _e$gmx.properties;
-                _context25.next = 6;
+                _context24.next = 6;
                 return this._showQuadrant(properties.id, id);
 
               case 6:
               case "end":
-                return _context25.stop();
+                return _context24.stop();
             }
           }
-        }, _callee25, this);
+        }, _callee24, this);
       }));
 
-      function _quadrantClick(_x22) {
+      function _quadrantClick(_x24) {
         return _quadrantClick2.apply(this, arguments);
       }
 
@@ -59627,26 +63079,26 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_parkClick",
     value: function () {
-      var _parkClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee26(e) {
+      var _parkClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee25(e) {
         var properties;
-        return regeneratorRuntime.wrap(function _callee26$(_context26) {
+        return regeneratorRuntime.wrap(function _callee25$(_context25) {
           while (1) {
-            switch (_context26.prev = _context26.next) {
+            switch (_context25.prev = _context25.next) {
               case 0:
                 L$1.DomEvent.stopPropagation(e);
                 properties = e.gmx.properties;
-                _context26.next = 4;
+                _context25.next = 4;
                 return this._showNaturalPark(properties);
 
               case 4:
               case "end":
-                return _context26.stop();
+                return _context25.stop();
             }
           }
-        }, _callee26, this);
+        }, _callee25, this);
       }));
 
-      function _parkClick(_x23) {
+      function _parkClick(_x25) {
         return _parkClick2.apply(this, arguments);
       }
 
@@ -59655,34 +63107,34 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_standClick",
     value: function () {
-      var _standClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee27(e) {
+      var _standClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee26(e) {
         var mode, _e$gmx2, id, properties;
 
-        return regeneratorRuntime.wrap(function _callee27$(_context27) {
+        return regeneratorRuntime.wrap(function _callee26$(_context26) {
           while (1) {
-            switch (_context27.prev = _context27.next) {
+            switch (_context26.prev = _context26.next) {
               case 0:
                 L$1.DomEvent.stopPropagation(e);
                 mode = this._content.getCurrentId();
 
                 if (!(!mode || mode === 'stand')) {
-                  _context27.next = 6;
+                  _context26.next = 6;
                   break;
                 }
 
                 _e$gmx2 = e.gmx, id = _e$gmx2.id, properties = _e$gmx2.properties;
-                _context27.next = 6;
+                _context26.next = 6;
                 return this._showStand(properties.id, id);
 
               case 6:
               case "end":
-                return _context27.stop();
+                return _context26.stop();
             }
           }
-        }, _callee27, this);
+        }, _callee26, this);
       }));
 
-      function _standClick(_x24) {
+      function _standClick(_x26) {
         return _standClick2.apply(this, arguments);
       }
 
@@ -59691,17 +63143,46 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "_declarationClick",
     value: function () {
-      var _declarationClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee28(e) {
+      var _declarationClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee27(e) {
         var _e$gmx3, id, properties;
+
+        return regeneratorRuntime.wrap(function _callee27$(_context27) {
+          while (1) {
+            switch (_context27.prev = _context27.next) {
+              case 0:
+                L$1.DomEvent.stopPropagation(e);
+                _e$gmx3 = e.gmx, id = _e$gmx3.id, properties = _e$gmx3.properties;
+                _context27.next = 4;
+                return this._showDeclaration(properties.id, id);
+
+              case 4:
+              case "end":
+                return _context27.stop();
+            }
+          }
+        }, _callee27, this);
+      }));
+
+      function _declarationClick(_x27) {
+        return _declarationClick2.apply(this, arguments);
+      }
+
+      return _declarationClick;
+    }()
+  }, {
+    key: "_incidentClick",
+    value: function () {
+      var _incidentClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee28(e) {
+        var _e$gmx4, id, properties;
 
         return regeneratorRuntime.wrap(function _callee28$(_context28) {
           while (1) {
             switch (_context28.prev = _context28.next) {
               case 0:
                 L$1.DomEvent.stopPropagation(e);
-                _e$gmx3 = e.gmx, id = _e$gmx3.id, properties = _e$gmx3.properties;
+                _e$gmx4 = e.gmx, id = _e$gmx4.id, properties = _e$gmx4.properties;
                 _context28.next = 4;
-                return this._showDeclaration(properties.id, id);
+                return this._showIncident(properties, id);
 
               case 4:
               case "end":
@@ -59711,28 +63192,41 @@ var Map = /*#__PURE__*/function (_EventTarget) {
         }, _callee28, this);
       }));
 
-      function _declarationClick(_x25) {
-        return _declarationClick2.apply(this, arguments);
+      function _incidentClick(_x28) {
+        return _incidentClick2.apply(this, arguments);
       }
 
-      return _declarationClick;
+      return _incidentClick;
     }()
   }, {
-    key: "_incidentClick",
+    key: "_plotProjectClick",
     value: function () {
-      var _incidentClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee29(e) {
-        var _e$gmx4, id, properties;
+      var _plotProjectClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee29(e) {
+        var _e$gmx$properties, id, status_calc, forestry_id, plot_project_status_id, state, event;
 
         return regeneratorRuntime.wrap(function _callee29$(_context29) {
           while (1) {
             switch (_context29.prev = _context29.next) {
               case 0:
                 L$1.DomEvent.stopPropagation(e);
-                _e$gmx4 = e.gmx, id = _e$gmx4.id, properties = _e$gmx4.properties;
-                _context29.next = 4;
-                return this._showIncident(properties, id);
+                _e$gmx$properties = e.gmx.properties, id = _e$gmx$properties.id, status_calc = _e$gmx$properties.status_calc, forestry_id = _e$gmx$properties.forestry_id, plot_project_status_id = _e$gmx$properties.plot_project_status_id;
 
-              case 4:
+                if (status_calc === 1) {
+                  if (plot_project_status_id === 1) {
+                    state = this._legend.state('quadrants');
+
+                    this._showEditPlot(id, forestry_id, state);
+                  } else {
+                    event = document.createEvent('Event');
+                    event.initEvent('request:create', false, false);
+                    event.detail = id;
+                    this.dispatchEvent(event);
+                  }
+                } else {
+                  this._showViewPlot(id);
+                }
+
+              case 3:
               case "end":
                 return _context29.stop();
             }
@@ -59740,19 +63234,19 @@ var Map = /*#__PURE__*/function (_EventTarget) {
         }, _callee29, this);
       }));
 
-      function _incidentClick(_x26) {
-        return _incidentClick2.apply(this, arguments);
+      function _plotProjectClick(_x29) {
+        return _plotProjectClick2.apply(this, arguments);
       }
 
-      return _incidentClick;
+      return _plotProjectClick;
     }()
   }, {
     key: "load",
     value: function () {
       var _load = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee31() {
-        var _this5 = this;
+        var _this6 = this;
 
-        var mapId, incidentStyleHook, _loop, i, _this$_plotProject$ge, attributes, statusIndex, p, incidents, _p, _this$_incidents$getG, _attributes, cid, sid, end, start;
+        var mapId, incidentStyleHook, _loop, i, p, incidents, _p, _this$_incidents$getG, attributes, cid, sid, end, start;
 
         return regeneratorRuntime.wrap(function _callee31$(_context31) {
           while (1) {
@@ -59761,7 +63255,6 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 mapId = 'default';
                 _context31.next = 3;
                 return L$1.gmx.loadMap(mapId, {
-                  // apiKey: this._apiKey,
                   leafletMap: this._map,
                   hostName: '/',
                   setZIndex: true,
@@ -59781,8 +63274,8 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 this._zoom.addTo(this._map);
 
                 this._map.on('zoomend', function (e) {
-                  if (_this5._grid) {
-                    _this5._grid.repaint();
+                  if (_this6._grid) {
+                    _this6._grid.repaint();
                   }
                 });
 
@@ -59797,11 +63290,11 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 this._legend.addTo(this._map);
 
                 this._legend.on('activate', function () {
-                  _this5._baselayers.showPanel(false);
+                  _this6._baselayers.showPanel(false);
                 });
 
                 this._baselayers.on('activate', function () {
-                  _this5._legend.showPanel(false);
+                  _this6._legend.showPanel(false);
                 });
 
                 incidentStyleHook = function incidentStyleHook() {
@@ -59809,10 +63302,10 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 };
 
                 _loop = function _loop(i) {
-                  var layer = _this5._gmxMap.layers[i];
+                  var layer = _this6._gmxMap.layers[i];
 
                   if (layer._map) {
-                    _this5._map.removeLayer(layer);
+                    _this6._map.removeLayer(layer);
                   }
 
                   var props = layer.getGmxProperties();
@@ -59838,97 +63331,82 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   if (kind) {
                     switch (kind.Value) {
                       case 'quadrants':
-                        if (_this5._permissions.ForestBlocks) {
-                          _this5._quadrants = layer;
+                        if (_this6._permissions.ForestBlocks) {
+                          _this6._quadrants = layer;
 
-                          _this5._quadrants.setStyles(QUADRANTS);
-
-                          _this5._quadrants.on('click', _this5._quadrantClick, _this5);
+                          _this6._quadrants.on('click', _this6._quadrantClick, _this6);
                         }
 
                         break;
 
                       case 'parks':
-                        if (_this5._permissions.SPNA) {
-                          _this5._parks = layer;
+                        if (_this6._permissions.SPNA) {
+                          _this6._parks = layer;
 
-                          _this5._parks.setStyles(PARKS);
-
-                          _this5._parks.on('click', _this5._parkClick, _this5);
+                          _this6._parks.on('click', _this6._parkClick, _this6);
                         }
 
                         break;
 
                       case 'stands':
-                        if (_this5._permissions.ForestStands) {
-                          _this5._stands = layer;
+                        if (_this6._permissions.ForestStands) {
+                          _this6._stands = layer;
 
-                          _this5._stands.setStyles(STANDS);
-
-                          _this5._stands.on('click', _this5._standClick, _this5);
+                          _this6._stands.on('click', _this6._standClick, _this6);
                         }
 
                         break;
 
                       case 'fires':
-                        if (_this5._permissions.ForestFires) {
-                          _this5._fires = layer;
+                        if (_this6._permissions.ForestFires) {
+                          _this6._fires = layer;
                         }
 
                         break;
 
                       case 'declarations':
-                        if (_this5._permissions.ForestDeclarations) {
-                          _this5._declarations = layer;
+                        if (_this6._permissions.ForestDeclarations) {
+                          _this6._declarations = layer;
 
-                          _this5._declarations.setStyles(DECLARATIONS);
-
-                          _this5._declarations.on('click', _this5._declarationClick, _this5);
+                          _this6._declarations.on('click', _this6._declarationClick, _this6);
                         }
 
                         break;
 
                       case 'incidents':
-                        if (_this5._permissions.ForestIncidents) {
-                          _this5._incidents = layer;
+                        if (_this6._permissions.ForestIncidents) {
+                          _this6._incidents = layer;
+                          _this6._incidents.verifyRaster = _this6._gmxMap.layersByID['5728425F25B04F73871EDF47CC8EFBC0'];
 
-                          _this5._incidents.setStyles(QUADRANTS);
+                          _this6._incidents.on('click', _this6._incidentClick, _this6);
 
-                          _this5._incidents.verifyRaster = _this5._gmxMap.layersByID['5728425F25B04F73871EDF47CC8EFBC0'];
-
-                          _this5._incidents.on('click', _this5._incidentClick, _this5);
-
-                          _this5._map.addLayer(_this5._incidents);
+                          _this6._map.addLayer(_this6._incidents);
                         }
 
                         break;
 
                       case 'plot_project':
-                        _this5._plotProject = layer;
+                        _this6._plotProject = layer;
 
-                        _this5._plotProject.setStyles(PLOTS);
+                        _this6._plotProject.on('click', _this6._plotProjectClick, _this6);
+
+                        break;
+
+                      case 'plots':
+                        _this6._plots = layer; // this._plots.on('click', this._plotProjectClick, this);
 
                         break;
 
                       case 'regions':
-                        _this5._regions = layer;
-
-                        _this5._regions.setStyles(REGIONS);
-
+                        _this6._regions = layer;
                         break;
 
                       case 'forestries':
-                        _this5._forestries = layer;
-
-                        _this5._forestries.setStyles(FORESTRIES);
-
+                        _this6._forestries = layer;
                         break;
 
                       case 'forestries-local':
-                        _this5._localForestries = layer;
-
-                        _this5._localForestries.setStyles(FORESTRIES_LOCAL);
-
+                        _this6._localForestries = layer;
                         break;
                     }
                   }
@@ -59959,36 +63437,11 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 }
 
                 if (this._plotProject) {
-                  _this$_plotProject$ge = this._plotProject.getGmxProperties(), attributes = _this$_plotProject$ge.attributes;
-                  statusIndex = attributes && attributes.indexOf('status_calc') || -1;
-
-                  if (statusIndex >= 0) {
-                    statusIndex += 1;
-                  }
-
-                  this._plotProject.setStyleHook(function (_ref13) {
-                    var properties = _ref13.properties;
-
-                    if (statusIndex >= 0) {
-                      switch (properties[statusIndex]) {
-                        case 1:
-                          return STYLES$5.PLOT.OWN;
-
-                        case 2:
-                          return STYLES$5.PLOT.BID;
-
-                        case 3:
-                          return STYLES$5.PLOT.LEASED;
-
-                        default:
-                          return {};
-                      }
-                    }
-
-                    return {};
-                  });
-
                   this._legend.addComponent('plot-projects', translate$g('legend.plotProjects'));
+                }
+
+                if (this._plots) {
+                  this._legend.addComponent('plots', translate$g('legend.plots'));
                 }
 
                 if (this._regions || this._forestries || this._localForestries) {
@@ -60040,21 +63493,21 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
                   this._legend.addComponent('burn-confirmed', translate$g('legend.burn.confirmed'), _p);
 
-                  _this$_incidents$getG = this._incidents.getGmxProperties(), _attributes = _this$_incidents$getG.attributes;
-                  cid = _attributes.indexOf('class_id');
+                  _this$_incidents$getG = this._incidents.getGmxProperties(), attributes = _this$_incidents$getG.attributes;
+                  cid = attributes.indexOf('class_id');
 
                   if (cid >= 0) {
                     cid += 1;
                   }
 
-                  sid = _attributes.indexOf('status_id');
+                  sid = attributes.indexOf('status_id');
 
                   if (sid >= 0) {
                     sid += 1;
                   }
 
-                  incidentStyleHook = function incidentStyleHook(_ref14) {
-                    var properties = _ref14.properties;
+                  incidentStyleHook = function incidentStyleHook(_ref11) {
+                    var properties = _ref11.properties;
                     var c = properties[cid];
                     var s = properties[sid];
 
@@ -60062,16 +63515,16 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                       case 1:
                         switch (s) {
                           case 1:
-                            return incidents['cut-unconfirmed'] ? STYLES$5.INCIDENTS.CUT.UNCONFIRMED : null;
+                            return incidents['cut-unconfirmed'] ? {} : null;
 
                           case 2:
-                            return incidents['cut-working'] ? STYLES$5.INCIDENTS.CUT.WORKING : null;
+                            return incidents['cut-working'] ? {} : null;
 
                           case 3:
-                            return incidents['cut-faux'] ? STYLES$5.INCIDENTS.CUT.FAUX : null;
+                            return incidents['cut-faux'] ? {} : null;
 
                           case 4:
-                            return incidents['cut-confirmed'] ? STYLES$5.INCIDENTS.CUT.CONFIRMED : null;
+                            return incidents['cut-confirmed'] ? {} : null;
 
                           default:
                             return null;
@@ -60080,16 +63533,16 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                       case 2:
                         switch (s) {
                           case 1:
-                            return incidents['windthrow-unconfirmed'] ? STYLES$5.INCIDENTS.WINDTHROW.UNCONFIRMED : null;
+                            return incidents['windthrow-unconfirmed'] ? {} : null;
 
                           case 2:
-                            return incidents['windthrow-working'] ? STYLES$5.INCIDENTS.WINDTHROW.WORKING : null;
+                            return incidents['windthrow-working'] ? {} : null;
 
                           case 3:
-                            return incidents['windthrow-faux'] ? STYLES$5.INCIDENTS.WINDTHROW.FAUX : null;
+                            return incidents['windthrow-faux'] ? {} : null;
 
                           case 4:
-                            return incidents['windthrow-confirmed'] ? STYLES$5.INCIDENTS.WINDTHROW.CONFIRMED : null;
+                            return incidents['windthrow-confirmed'] ? {} : null;
 
                           default:
                             return null;
@@ -60098,16 +63551,16 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                       case 3:
                         switch (s) {
                           case 1:
-                            return incidents['disease-unconfirmed'] ? STYLES$5.INCIDENTS.DISEASE.UNCONFIRMED : null;
+                            return incidents['disease-unconfirmed'] ? {} : null;
 
                           case 2:
-                            return incidents['disease-working'] ? STYLES$5.INCIDENTS.DISEASE.WORKING : null;
+                            return incidents['disease-working'] ? {} : null;
 
                           case 3:
-                            return incidents['disease-faux'] ? STYLES$5.INCIDENTS.DISEASE.FAUX : null;
+                            return incidents['disease-faux'] ? {} : null;
 
                           case 4:
-                            return incidents['disease-confirmed'] ? STYLES$5.INCIDENTS.DISEASE.CONFIRMED : null;
+                            return incidents['disease-confirmed'] ? {} : null;
 
                           default:
                             return null;
@@ -60116,16 +63569,16 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                       case 4:
                         switch (s) {
                           case 1:
-                            return incidents['burn-unconfirmed'] ? STYLES$5.INCIDENTS.BURN.UNCONFIRMED : null;
+                            return incidents['burn-unconfirmed'] ? {} : null;
 
                           case 2:
-                            return incidents['burn-working'] ? STYLES$5.INCIDENTS.BURN.WORKING : null;
+                            return incidents['burn-working'] ? {} : null;
 
                           case 3:
-                            return incidents['burn-faux'] ? STYLES$5.INCIDENTS.BURN.FAUX : null;
+                            return incidents['burn-faux'] ? {} : null;
 
                           case 4:
-                            return incidents['burn-confirmed'] ? STYLES$5.INCIDENTS.BURN.CONFIRMED : null;
+                            return incidents['burn-confirmed'] ? {} : null;
 
                           default:
                             return null;
@@ -60140,7 +63593,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 }
 
                 this._legend.on('click', /*#__PURE__*/function () {
-                  var _ref15 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee30(e) {
+                  var _ref12 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee30(e) {
                     var id, visible;
                     return regeneratorRuntime.wrap(function _callee30$(_context30) {
                       while (1) {
@@ -60154,15 +63607,15 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                           case 4:
                             incidents[id] = visible;
 
-                            _this5._incidents.setStyleHook(incidentStyleHook);
+                            _this6._incidents.setStyleHook(incidentStyleHook);
 
-                            _this5._incidents.repaint();
+                            _this6._incidents.repaint();
 
                             return _context30.abrupt("break", 11);
 
                           case 8:
                             _context30.next = 10;
-                            return _this5._showLayer(e);
+                            return _this6._showLayer(e);
 
                           case 10:
                             return _context30.abrupt("break", 11);
@@ -60175,14 +63628,13 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                     }, _callee30);
                   }));
 
-                  return function (_x27) {
-                    return _ref15.apply(this, arguments);
+                  return function (_x30) {
+                    return _ref12.apply(this, arguments);
                   };
                 }(), this);
 
                 if (this._permissions.ForestFiresTimeLine) {
                   this._hotspottimeline = new HotSpotTimeLine();
-                  this._user = true;
                 } else if (this._fires) {
                   end = new Date();
                   start = new Date(end.getTime() - 2 * 60 * 60 * 24 * 1000);
@@ -60190,12 +63642,14 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   this._fires.setDateInterval(start, end);
                 }
 
-                this._baselayers.toggle('sputnik'); // const CRLayer = this._gmxMap.layersByID['958E59D9911E4889AB3E787DE2AC028B'];	// Каталог растров
+                this._baselayers.toggle('sputnik');
+
+                this._legend.showPanel(true); // const CRLayer = this._gmxMap.layersByID['958E59D9911E4889AB3E787DE2AC028B'];	// Каталог растров
                 // this._map.addControl(nsGmx.gmxTimeLine.afterViewer({gmxMap: this._gmxMap}, this._map));	// Контрол таймлайна CR
                 // this._map.addLayer(CRLayer);
 
 
-              case 28:
+              case 30:
               case "end":
                 return _context31.stop();
             }
