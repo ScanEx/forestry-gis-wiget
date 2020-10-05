@@ -753,6 +753,25 @@ var arrayMethodIsStrict = function (METHOD_NAME, argument) {
   });
 };
 
+var $forEach = arrayIteration.forEach;
+
+
+
+var STRICT_METHOD = arrayMethodIsStrict('forEach');
+var USES_TO_LENGTH$1 = arrayMethodUsesToLength('forEach');
+
+// `Array.prototype.forEach` method implementation
+// https://tc39.github.io/ecma262/#sec-array.prototype.foreach
+var arrayForEach = (!STRICT_METHOD || !USES_TO_LENGTH$1) ? function forEach(callbackfn /* , thisArg */) {
+  return $forEach(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+} : [].forEach;
+
+// `Array.prototype.forEach` method
+// https://tc39.github.io/ecma262/#sec-array.prototype.foreach
+_export({ target: 'Array', proto: true, forced: [].forEach != arrayForEach }, {
+  forEach: arrayForEach
+});
+
 var $indexOf = arrayIncludes.indexOf;
 
 
@@ -760,12 +779,12 @@ var $indexOf = arrayIncludes.indexOf;
 var nativeIndexOf = [].indexOf;
 
 var NEGATIVE_ZERO = !!nativeIndexOf && 1 / [1].indexOf(1, -0) < 0;
-var STRICT_METHOD = arrayMethodIsStrict('indexOf');
-var USES_TO_LENGTH$1 = arrayMethodUsesToLength('indexOf', { ACCESSORS: true, 1: 0 });
+var STRICT_METHOD$1 = arrayMethodIsStrict('indexOf');
+var USES_TO_LENGTH$2 = arrayMethodUsesToLength('indexOf', { ACCESSORS: true, 1: 0 });
 
 // `Array.prototype.indexOf` method
 // https://tc39.github.io/ecma262/#sec-array.prototype.indexof
-_export({ target: 'Array', proto: true, forced: NEGATIVE_ZERO || !STRICT_METHOD || !USES_TO_LENGTH$1 }, {
+_export({ target: 'Array', proto: true, forced: NEGATIVE_ZERO || !STRICT_METHOD$1 || !USES_TO_LENGTH$2 }, {
   indexOf: function indexOf(searchElement /* , fromIndex = 0 */) {
     return NEGATIVE_ZERO
       // convert -0 to +0
@@ -780,12 +799,12 @@ var $map = arrayIteration.map;
 
 var HAS_SPECIES_SUPPORT$1 = arrayMethodHasSpeciesSupport('map');
 // FF49- issue
-var USES_TO_LENGTH$2 = arrayMethodUsesToLength('map');
+var USES_TO_LENGTH$3 = arrayMethodUsesToLength('map');
 
 // `Array.prototype.map` method
 // https://tc39.github.io/ecma262/#sec-array.prototype.map
 // with adding support of @@species
-_export({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT$1 || !USES_TO_LENGTH$2 }, {
+_export({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT$1 || !USES_TO_LENGTH$3 }, {
   map: function map(callbackfn /* , thisArg */) {
     return $map(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
   }
@@ -831,14 +850,30 @@ var $reduce = arrayReduce.left;
 
 
 
-var STRICT_METHOD$1 = arrayMethodIsStrict('reduce');
-var USES_TO_LENGTH$3 = arrayMethodUsesToLength('reduce', { 1: 0 });
+var STRICT_METHOD$2 = arrayMethodIsStrict('reduce');
+var USES_TO_LENGTH$4 = arrayMethodUsesToLength('reduce', { 1: 0 });
 
 // `Array.prototype.reduce` method
 // https://tc39.github.io/ecma262/#sec-array.prototype.reduce
-_export({ target: 'Array', proto: true, forced: !STRICT_METHOD$1 || !USES_TO_LENGTH$3 }, {
+_export({ target: 'Array', proto: true, forced: !STRICT_METHOD$2 || !USES_TO_LENGTH$4 }, {
   reduce: function reduce(callbackfn /* , initialValue */) {
     return $reduce(this, callbackfn, arguments.length, arguments.length > 1 ? arguments[1] : undefined);
+  }
+});
+
+// `Object.keys` method
+// https://tc39.github.io/ecma262/#sec-object.keys
+var objectKeys = Object.keys || function keys(O) {
+  return objectKeysInternal(O, enumBugKeys);
+};
+
+var FAILS_ON_PRIMITIVES = fails(function () { objectKeys(1); });
+
+// `Object.keys` method
+// https://tc39.github.io/ecma262/#sec-object.keys
+_export({ target: 'Object', stat: true, forced: FAILS_ON_PRIMITIVES }, {
+  keys: function keys(it) {
+    return objectKeys(toObject(it));
   }
 });
 
@@ -918,11 +953,52 @@ if (NOT_GENERIC || INCORRECT_NAME) {
   }, { unsafe: true });
 }
 
-// `Object.keys` method
-// https://tc39.github.io/ecma262/#sec-object.keys
-var objectKeys = Object.keys || function keys(O) {
-  return objectKeysInternal(O, enumBugKeys);
+// iterable DOM collections
+// flag - `iterable` interface - 'entries', 'keys', 'values', 'forEach' methods
+var domIterables = {
+  CSSRuleList: 0,
+  CSSStyleDeclaration: 0,
+  CSSValueList: 0,
+  ClientRectList: 0,
+  DOMRectList: 0,
+  DOMStringList: 0,
+  DOMTokenList: 1,
+  DataTransferItemList: 0,
+  FileList: 0,
+  HTMLAllCollection: 0,
+  HTMLCollection: 0,
+  HTMLFormElement: 0,
+  HTMLSelectElement: 0,
+  MediaList: 0,
+  MimeTypeArray: 0,
+  NamedNodeMap: 0,
+  NodeList: 1,
+  PaintRequestList: 0,
+  Plugin: 0,
+  PluginArray: 0,
+  SVGLengthList: 0,
+  SVGNumberList: 0,
+  SVGPathSegList: 0,
+  SVGPointList: 0,
+  SVGStringList: 0,
+  SVGTransformList: 0,
+  SourceBufferList: 0,
+  StyleSheetList: 0,
+  TextTrackCueList: 0,
+  TextTrackList: 0,
+  TouchList: 0
 };
+
+for (var COLLECTION_NAME in domIterables) {
+  var Collection = global_1[COLLECTION_NAME];
+  var CollectionPrototype = Collection && Collection.prototype;
+  // some Chrome versions have non-configurable methods on DOMTokenList
+  if (CollectionPrototype && CollectionPrototype.forEach !== arrayForEach) try {
+    createNonEnumerableProperty(CollectionPrototype, 'forEach', arrayForEach);
+  } catch (error) {
+    CollectionPrototype.forEach = arrayForEach;
+  }
+}
 
 // `Object.defineProperties` method
 // https://tc39.github.io/ecma262/#sec-object.defineproperties
@@ -1062,7 +1138,7 @@ var setToStringTag = function (it, TAG, STATIC) {
   }
 };
 
-var $forEach = arrayIteration.forEach;
+var $forEach$1 = arrayIteration.forEach;
 
 var HIDDEN = sharedKey('hidden');
 var SYMBOL = 'Symbol';
@@ -1137,7 +1213,7 @@ var $defineProperties = function defineProperties(O, Properties) {
   anObject(O);
   var properties = toIndexedObject(Properties);
   var keys = objectKeys(properties).concat($getOwnPropertySymbols(properties));
-  $forEach(keys, function (key) {
+  $forEach$1(keys, function (key) {
     if (!descriptors || $propertyIsEnumerable.call(properties, key)) $defineProperty(O, key, properties[key]);
   });
   return O;
@@ -1168,7 +1244,7 @@ var $getOwnPropertyDescriptor = function getOwnPropertyDescriptor(O, P) {
 var $getOwnPropertyNames = function getOwnPropertyNames(O) {
   var names = nativeGetOwnPropertyNames$1(toIndexedObject(O));
   var result = [];
-  $forEach(names, function (key) {
+  $forEach$1(names, function (key) {
     if (!has(AllSymbols, key) && !has(hiddenKeys, key)) result.push(key);
   });
   return result;
@@ -1178,7 +1254,7 @@ var $getOwnPropertySymbols = function getOwnPropertySymbols(O) {
   var IS_OBJECT_PROTOTYPE = O === ObjectPrototype;
   var names = nativeGetOwnPropertyNames$1(IS_OBJECT_PROTOTYPE ? ObjectPrototypeSymbols : toIndexedObject(O));
   var result = [];
-  $forEach(names, function (key) {
+  $forEach$1(names, function (key) {
     if (has(AllSymbols, key) && (!IS_OBJECT_PROTOTYPE || has(ObjectPrototype, key))) {
       result.push(AllSymbols[key]);
     }
@@ -1238,7 +1314,7 @@ _export({ global: true, wrap: true, forced: !nativeSymbol, sham: !nativeSymbol }
   Symbol: $Symbol
 });
 
-$forEach(objectKeys(WellKnownSymbolsStore$1), function (name) {
+$forEach$1(objectKeys(WellKnownSymbolsStore$1), function (name) {
   defineWellKnownSymbol(name);
 });
 
@@ -1392,25 +1468,6 @@ defineWellKnownSymbol('iterator');
 // `Symbol.toStringTag` well-known symbol
 // https://tc39.github.io/ecma262/#sec-symbol.tostringtag
 defineWellKnownSymbol('toStringTag');
-
-var $forEach$1 = arrayIteration.forEach;
-
-
-
-var STRICT_METHOD$2 = arrayMethodIsStrict('forEach');
-var USES_TO_LENGTH$4 = arrayMethodUsesToLength('forEach');
-
-// `Array.prototype.forEach` method implementation
-// https://tc39.github.io/ecma262/#sec-array.prototype.foreach
-var arrayForEach = (!STRICT_METHOD$2 || !USES_TO_LENGTH$4) ? function forEach(callbackfn /* , thisArg */) {
-  return $forEach$1(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
-} : [].forEach;
-
-// `Array.prototype.forEach` method
-// https://tc39.github.io/ecma262/#sec-array.prototype.foreach
-_export({ target: 'Array', proto: true, forced: [].forEach != arrayForEach }, {
-  forEach: arrayForEach
-});
 
 var UNSCOPABLES = wellKnownSymbol('unscopables');
 var ArrayPrototype = Array.prototype;
@@ -1723,11 +1780,11 @@ setToStringTag(global_1.JSON, 'JSON', true);
 // https://tc39.github.io/ecma262/#sec-math-@@tostringtag
 setToStringTag(Math, 'Math', true);
 
-var FAILS_ON_PRIMITIVES = fails(function () { objectGetPrototypeOf(1); });
+var FAILS_ON_PRIMITIVES$1 = fails(function () { objectGetPrototypeOf(1); });
 
 // `Object.getPrototypeOf` method
 // https://tc39.github.io/ecma262/#sec-object.getprototypeof
-_export({ target: 'Object', stat: true, forced: FAILS_ON_PRIMITIVES, sham: !correctPrototypeGetter }, {
+_export({ target: 'Object', stat: true, forced: FAILS_ON_PRIMITIVES$1, sham: !correctPrototypeGetter }, {
   getPrototypeOf: function getPrototypeOf(it) {
     return objectGetPrototypeOf(toObject(it));
   }
@@ -2517,53 +2574,6 @@ defineIterator(String, 'String', function (iterated) {
   state.index += point.length;
   return { value: point, done: false };
 });
-
-// iterable DOM collections
-// flag - `iterable` interface - 'entries', 'keys', 'values', 'forEach' methods
-var domIterables = {
-  CSSRuleList: 0,
-  CSSStyleDeclaration: 0,
-  CSSValueList: 0,
-  ClientRectList: 0,
-  DOMRectList: 0,
-  DOMStringList: 0,
-  DOMTokenList: 1,
-  DataTransferItemList: 0,
-  FileList: 0,
-  HTMLAllCollection: 0,
-  HTMLCollection: 0,
-  HTMLFormElement: 0,
-  HTMLSelectElement: 0,
-  MediaList: 0,
-  MimeTypeArray: 0,
-  NamedNodeMap: 0,
-  NodeList: 1,
-  PaintRequestList: 0,
-  Plugin: 0,
-  PluginArray: 0,
-  SVGLengthList: 0,
-  SVGNumberList: 0,
-  SVGPathSegList: 0,
-  SVGPointList: 0,
-  SVGStringList: 0,
-  SVGTransformList: 0,
-  SourceBufferList: 0,
-  StyleSheetList: 0,
-  TextTrackCueList: 0,
-  TextTrackList: 0,
-  TouchList: 0
-};
-
-for (var COLLECTION_NAME in domIterables) {
-  var Collection = global_1[COLLECTION_NAME];
-  var CollectionPrototype = Collection && Collection.prototype;
-  // some Chrome versions have non-configurable methods on DOMTokenList
-  if (CollectionPrototype && CollectionPrototype.forEach !== arrayForEach) try {
-    createNonEnumerableProperty(CollectionPrototype, 'forEach', arrayForEach);
-  } catch (error) {
-    CollectionPrototype.forEach = arrayForEach;
-  }
-}
 
 var ITERATOR$5 = wellKnownSymbol('iterator');
 var TO_STRING_TAG$3 = wellKnownSymbol('toStringTag');
@@ -4698,8 +4708,8 @@ _export({ target: 'Object', stat: true, forced: Object.assign !== objectAssign }
 var nativeGetOwnPropertyDescriptor$2 = objectGetOwnPropertyDescriptor.f;
 
 
-var FAILS_ON_PRIMITIVES$1 = fails(function () { nativeGetOwnPropertyDescriptor$2(1); });
-var FORCED$4 = !descriptors || FAILS_ON_PRIMITIVES$1;
+var FAILS_ON_PRIMITIVES$2 = fails(function () { nativeGetOwnPropertyDescriptor$2(1); });
+var FORCED$4 = !descriptors || FAILS_ON_PRIMITIVES$2;
 
 // `Object.getOwnPropertyDescriptor` method
 // https://tc39.github.io/ecma262/#sec-object.getownpropertydescriptor
@@ -4711,11 +4721,11 @@ _export({ target: 'Object', stat: true, forced: FORCED$4, sham: !descriptors }, 
 
 var nativeGetOwnPropertyNames$2 = objectGetOwnPropertyNamesExternal.f;
 
-var FAILS_ON_PRIMITIVES$2 = fails(function () { return !Object.getOwnPropertyNames(1); });
+var FAILS_ON_PRIMITIVES$3 = fails(function () { return !Object.getOwnPropertyNames(1); });
 
 // `Object.getOwnPropertyNames` method
 // https://tc39.github.io/ecma262/#sec-object.getownpropertynames
-_export({ target: 'Object', stat: true, forced: FAILS_ON_PRIMITIVES$2 }, {
+_export({ target: 'Object', stat: true, forced: FAILS_ON_PRIMITIVES$3 }, {
   getOwnPropertyNames: nativeGetOwnPropertyNames$2
 });
 
@@ -4730,16 +4740,6 @@ var sameValue = Object.is || function is(x, y) {
 // https://tc39.github.io/ecma262/#sec-object.is
 _export({ target: 'Object', stat: true }, {
   is: sameValue
-});
-
-var FAILS_ON_PRIMITIVES$3 = fails(function () { objectKeys(1); });
-
-// `Object.keys` method
-// https://tc39.github.io/ecma262/#sec-object.keys
-_export({ target: 'Object', stat: true, forced: FAILS_ON_PRIMITIVES$3 }, {
-  keys: function keys(it) {
-    return objectKeys(toObject(it));
-  }
 });
 
 var MATCH = wellKnownSymbol('match');
@@ -43716,6 +43716,651 @@ var Uploaded$1 = /*#__PURE__*/function (_EventTarget) {
   return Uploaded$1;
 }(EventTarget);
 
+L$1.Control.GmxCenter = L$1.Control.extend({
+  options: {
+    position: 'center',
+    id: 'center',
+    notHide: true,
+    color: '#216b9c'
+  },
+  onRemove: function onRemove(map) {
+    if (map.gmxControlsManager) {
+      map.gmxControlsManager.remove(this);
+    }
+
+    map.fire('controlremove', this);
+  },
+  onAdd: function onAdd(map) {
+    var className = 'leaflet-gmx-center',
+        svgNS = 'http://www.w3.org/2000/svg',
+        container = L$1.DomUtil.create('div', className),
+        div = L$1.DomUtil.create('div', className),
+        svg = document.createElementNS(svgNS, 'svg'),
+        g = document.createElementNS(svgNS, 'g'),
+        path = document.createElementNS(svgNS, 'path');
+    this._container = container;
+    container._id = this.options.id;
+
+    if (this.options.notHide) {
+      container._notHide = true;
+    }
+
+    path.setAttribute('stroke-width', 1);
+    path.setAttribute('stroke-opacity', 1);
+    path.setAttribute('d', 'M6 0L6 12M0 6L12 6');
+    this._path = path;
+    g.appendChild(path);
+    svg.appendChild(g);
+    svg.setAttribute('width', 12);
+    svg.setAttribute('height', 12);
+    div.appendChild(svg);
+    container.appendChild(div);
+    this.setColor(this.options.color);
+    map.fire('controladd', this);
+
+    if (map.gmxControlsManager) {
+      map.gmxControlsManager.add(this);
+    }
+
+    return container;
+  },
+  setColor: function setColor(color) {
+    this.options.color = color;
+
+    if (this._map) {
+      this._path.setAttribute('stroke', color);
+    }
+
+    return this;
+  }
+});
+L$1.Control.gmxCenter = L$1.Control.GmxCenter;
+
+L$1.control.gmxCenter = function (options) {
+  return new L$1.Control.GmxCenter(options);
+};
+
+var Center = L$1.Control.GmxCenter;
+
+T.addText('eng', {
+  gmxLocation: {
+    locationChange: 'Сhange the map center:',
+    locationTxt: 'Current center coordinates',
+    coordFormatChange: 'Toggle coordinates format',
+    scaleBarChange: 'Toggle scale bar format'
+  },
+  units: {
+    km: 'km',
+    m: 'm'
+  }
+});
+T.addText('rus', {
+  gmxLocation: {
+    locationChange: 'Переместить центр карты:',
+    locationTxt: 'Текущие координаты центра карты',
+    coordFormatChange: 'Сменить формат координат',
+    scaleBarChange: 'Сменить формат масштаба'
+  },
+  units: {
+    km: 'км',
+    m: 'м'
+  }
+});
+var _mzoom = ['M 1:500 000 000', //  0   156543.03392804
+'M 1:300 000 000', //  1   78271.51696402
+'M 1:150 000 000', //  2   39135.75848201
+'M 1:80 000 000', //  3   19567.879241005
+'M 1:40 000 000', //  4   9783.9396205025
+'M 1:20 000 000', //  5   4891.96981025125
+'M 1:10 000 000', //  6   2445.98490512563
+'M 1:5 000 000', //  7   1222.99245256281
+'M 1:2500 000', //  8   611.496226281406
+'M 1:1 000 000', //  9   305.748113140703
+'M 1:500 000', //  10  152.874056570352
+'M 1:300 000', //  11  76.437028285176
+'M 1:150 000', //  12  38.218514142588
+'M 1:80 000', //  13  19.109257071294
+'M 1:40 000', //  14  9.554628535647
+'M 1:20 000', //  15  4.777314267823
+'M 1:10 000', //  16  2.388657133912
+'M 1:5 000', //  17  1.194328566956
+'M 1:2 500', //  18  0.597164283478
+'M 1:1 250', //  19  0.298582141739
+'M 1:625' //  20  0.149291070869
+];
+var coordFormats = ['', '', ' (EPSG:3395)', ' (EPSG:3857)'];
+L$1.Control.GmxLocation = L$1.Control.extend({
+  includes: L$1.Evented ? L$1.Evented.prototype : L$1.Mixin.Events,
+  options: {
+    position: 'gmxbottomright',
+    id: 'location',
+    gmxPopup: 'internal',
+    notHide: true,
+    coordinatesFormat: 0,
+    scaleFormat: 'bar' // or text
+
+  },
+  setScaleFormat: function setScaleFormat(type) {
+    this.options.scaleFormat = type === 'bar' ? 'bar' : 'text';
+    this.scaleBar.style.visibility = type === 'bar' ? 'visible' : 'hidden';
+
+    this._checkPositionChanged();
+  },
+  onAdd: function onAdd(map) {
+    var className = 'leaflet-gmx-location',
+        container = L$1.DomUtil.create('div', className),
+        utils = L$1.Control.GmxLocation.Utils,
+        my = this;
+    this._container = container;
+    container._id = this.options.id;
+
+    if (this.options.notHide) {
+      container._notHide = true;
+    }
+
+    this.prevCoordinates = '';
+    var corner = map._controlCorners[this.options.position];
+
+    if (corner) {
+      this._window = L$1.DomUtil.create('div', 'leaflet-gmx-location-window', container);
+      this._window.style.display = 'none';
+      var closeButton = L$1.DomUtil.create('div', 'closeButton', this._window);
+      closeButton.innerHTML = '&#215;';
+      L$1.DomEvent.disableClickPropagation(this._window);
+      L$1.DomEvent.on(this._window, 'contextmenu', L$1.DomEvent.fakeStop || L$1.DomEvent._fakeStop);
+      L$1.DomEvent.on(closeButton, 'click', function () {
+        var style = my._window.style;
+        style.display = style.display === 'none' ? 'block' : 'none';
+      }, this);
+      map.on('click', function () {
+        my._window.style.display = 'none';
+      }, this);
+      this._windowContent = L$1.DomUtil.create('div', 'windowContent', this._window);
+    }
+
+    this.locationTxt = L$1.DomUtil.create('span', 'leaflet-gmx-locationTxt', container);
+    this.locationTxt.title = T.getText('gmxLocation.locationTxt');
+    this.coordFormatChange = L$1.DomUtil.create('span', 'leaflet-gmx-coordFormatChange', container);
+    this.coordFormatChange.title = T.getText('gmxLocation.coordFormatChange');
+    this.scaleBar = L$1.DomUtil.create('span', 'leaflet-gmx-scaleBar', container);
+    this.scaleBarTxt = L$1.DomUtil.create('span', 'leaflet-gmx-scaleBarTxt', container);
+    this.scaleBarTxt.title = this.scaleBar.title = T.getText('gmxLocation.scaleBarChange');
+    this._map = map;
+    var util = {
+      coordFormat: this.options.coordinatesFormat || 0,
+      len: coordFormats.length,
+      setCoordinatesFormat: function setCoordinatesFormat(num) {
+        num = num || this.coordFormat || 0;
+
+        if (num < 0) {
+          num = util.len - 1;
+        } else if (num >= util.len) {
+          num = 0;
+        }
+
+        this.coordFormat = num;
+        var res = utils.getCoordinatesString(my._map.getCenter(), this.coordFormat);
+
+        if (res && my.prevCoordinates !== res) {
+          my.locationTxt.innerHTML = res;
+        }
+
+        my.prevCoordinates = res;
+
+        if (this._redrawTimer) {
+          clearTimeout(this._redrawTimer);
+        }
+
+        this._redrawTimer = setTimeout(function () {
+          if (my._map) {
+            my._map.fire('onChangeLocationSize', {
+              locationSize: container.clientWidth
+            });
+          }
+        }, 100);
+        my.fire('coordinatesformatchange', {
+          coordinatesFormat: this.coordFormat
+        });
+      },
+      goTo: function goTo(value) {
+        var coord = L$1.Control.gmxLocation.Utils.parseCoordinates(value);
+
+        my._map.panTo(coord);
+      },
+      showCoordinates: function showCoordinates(ev) {
+        //окошко с координатами
+        var oldText = utils.getCoordinatesString(my._map.getCenter(), this.coordFormat);
+
+        if (my.options.onCoordinatesClick) {
+          my.options.onCoordinatesClick(oldText, ev);
+        } else if (L$1.control.gmxPopup) {
+          var div = L$1.DomUtil.create('div', 'gmxLocation-popup'),
+              span = L$1.DomUtil.create('div', '', div),
+              input = L$1.DomUtil.create('input', 'gmxLocation-input', div),
+              button = L$1.DomUtil.create('button', '', div);
+          button.innerHTML = 'Ok';
+          L$1.DomEvent.on(button, 'click', function () {
+            util.goTo(input.value);
+          });
+          span.innerHTML = T.getText('gmxLocation.locationChange');
+          input.value = oldText;
+          L$1.DomEvent.on(input, 'keydown', function (ev) {
+            if (ev.which === 13) {
+              util.goTo(this.value);
+            }
+          });
+
+          if (my.options.gmxPopup === 'internal' && my._window) {
+            my._windowContent.innerHTML = '';
+
+            my._windowContent.appendChild(div);
+
+            var style = my._window.style;
+            style.display = style.display === 'none' ? 'block' : 'none';
+          } else {
+            var opt = {};
+
+            if (my.options.gmxPopup === 'tip') {
+              var pos = my._map.mouseEventToContainerPoint(ev);
+
+              opt = {
+                tip: true,
+                anchor: new L$1.Point(pos.x, pos.y - 5)
+              };
+            }
+
+            L$1.control.gmxPopup(opt).setContent(div).openOn(my._map);
+          }
+        } else {
+          //if (this.coordFormat > 2) { return; } // только для стандартных форматов.
+          var text = window.prompt(my.locationTxt.title + ':', oldText);
+
+          if (text && text !== oldText) {
+            var point = utils.parseCoordinates(text);
+
+            if (point) {
+              my._map.panTo(point);
+            }
+          }
+        }
+      },
+      nextCoordinatesFormat: function nextCoordinatesFormat() {
+        this.coordFormat += 1;
+        this.setCoordinatesFormat(this.coordFormat || 0);
+      }
+    };
+
+    this.getCoordinatesFormat = function () {
+      return util.coordFormat;
+    };
+
+    this._checkPositionChanged = function () {
+      var z = map.getZoom();
+
+      if (z && !map._animatingZoom) {
+        var attr = {
+          txt: _mzoom[z],
+          width: 0
+        };
+
+        if (this.options.scaleFormat === 'bar') {
+          attr = utils.getScaleBarDistance(z, map.getCenter());
+        }
+
+        if (!attr || attr.txt === my._scaleBarText && attr.width === my._scaleBarWidth) {
+          return;
+        }
+
+        my._scaleBarText = attr.txt;
+        my._scaleBarWidth = attr.width;
+
+        if (my._scaleBarText) {
+          my.scaleBar.style.width = my._scaleBarWidth + 'px'; //, 4);
+
+          my.scaleBarTxt.innerHTML = my._scaleBarText;
+        }
+
+        util.setCoordinatesFormat(util.coordFormat || 0);
+      }
+    };
+
+    this._setCoordinatesFormat = function () {
+      util.setCoordinatesFormat(util.coordFormat || 0);
+    };
+
+    this.setCoordinatesFormat = function (nm) {
+      if (!map._animatingZoom) {
+        if (nm === 0) {
+          util.coordFormat = 0;
+        }
+
+        util.setCoordinatesFormat(nm);
+      }
+    };
+
+    var toggleScaleFormat = function toggleScaleFormat() {
+      this.setScaleFormat(this.options.scaleFormat === 'bar' ? 'text' : 'bar');
+    };
+
+    this._toggleHandlers = function (flag) {
+      var op = flag ? 'on' : 'off',
+          func = L$1.DomEvent[op],
+          stop = L$1.DomEvent.stopPropagation;
+      func(container, 'mousemove', stop);
+      func(this.coordFormatChange, 'click', stop);
+      func(this.coordFormatChange, 'click', util.nextCoordinatesFormat, util);
+      func(this.locationTxt, 'click', stop);
+      func(this.locationTxt, 'click', util.showCoordinates, util);
+      func(this.scaleBarTxt, 'click', stop);
+      func(this.scaleBarTxt, 'click', toggleScaleFormat, this);
+      func(this.scaleBar, 'click', stop);
+      func(this.scaleBar, 'click', toggleScaleFormat, this);
+
+      if (!L$1.Browser.mobile && !L$1.Browser.ie) {
+        func(this.coordFormatChange, 'dblclick', stop);
+        func(this.scaleBarTxt, 'dblclick', stop);
+        func(this.scaleBar, 'dblclick', stop);
+      }
+
+      map[op]('moveend', this._checkPositionChanged, this);
+      map[op]('move', this._setCoordinatesFormat, this);
+    };
+
+    this._toggleHandlers(true);
+
+    this.setScaleFormat(this.options.scaleFormat);
+
+    this._checkPositionChanged();
+
+    map.fire('controladd', this);
+
+    if (map.gmxControlsManager) {
+      map.gmxControlsManager.add(this);
+    }
+
+    return container;
+  },
+  onRemove: function onRemove(map) {
+    if (map.gmxControlsManager) {
+      map.gmxControlsManager.remove(this);
+    }
+
+    map.fire('controlremove', this);
+    this.prevCoordinates = this._scaleBarText = null;
+
+    this._toggleHandlers(false);
+  }
+});
+var utils$1 = {
+  getScaleBarDistance: function getScaleBarDistance(z, pos) {
+    var merc = L$1.Projection.Mercator.project(pos),
+        pos1 = L$1.Projection.Mercator.unproject(new L$1.Point(merc.x + 40, merc.y + 30)),
+        metersPerPixel = Math.pow(2, -z) * 156543.033928041 * this.distVincenty(pos.lng, pos.lat, pos1.lng, pos1.lat) / 50;
+
+    for (var i = 0; i < 30; i++) {
+      var distance = [1, 2, 5][i % 3] * Math.pow(10, Math.floor(i / 3)),
+          w = Math.floor(distance / metersPerPixel);
+
+      if (w > 50) {
+        return {
+          txt: this.prettifyDistance(distance),
+          width: w
+        };
+      }
+    }
+
+    return null;
+  }
+};
+
+if (L$1.gmxUtil) {
+  utils$1.getCoordinatesString = L$1.gmxUtil.getCoordinatesString;
+  utils$1.prettifyDistance = L$1.gmxUtil.prettifyDistance;
+  utils$1.formatDegrees = L$1.gmxUtil.formatDegrees;
+  utils$1.pad2 = L$1.gmxUtil.pad2;
+  utils$1.trunc = L$1.gmxUtil.trunc;
+  utils$1.latLonFormatCoordinates = L$1.gmxUtil.latLonFormatCoordinates;
+  utils$1.latLonFormatCoordinates2 = L$1.gmxUtil.latLonFormatCoordinates2;
+  utils$1.degRad = L$1.gmxUtil.degRad;
+  utils$1.distVincenty = L$1.gmxUtil.distVincenty;
+  utils$1.parseCoordinates = L$1.gmxUtil.parseCoordinates;
+} else {
+  utils$1.prettifyDistance = function (length) {
+    var type = '',
+        //map.DistanceUnit
+    txt = T.getText('units.km') || 'km',
+        km = ' ' + txt;
+
+    if (length < 2000 || type === 'm') {
+      txt = T.getText('units.m') || 'm';
+      return Math.round(length) + ' ' + txt;
+    } else if (length < 200000) {
+      return Math.round(length / 10) / 100 + km;
+    }
+
+    return Math.round(length / 1000) + km;
+  };
+
+  utils$1.formatDegrees = function (angle) {
+    angle = Math.round(10000000 * angle) / 10000000 + 0.00000001;
+    var a1 = Math.floor(angle),
+        a2 = Math.floor(60 * (angle - a1)),
+        a3 = this.pad2(3600 * (angle - a1 - a2 / 60)).substring(0, 2);
+    return this.pad2(a1) + '°' + this.pad2(a2) + '\'' + a3 + '"';
+  };
+
+  utils$1.pad2 = function (t) {
+    return t < 10 ? '0' + t : '' + t;
+  };
+
+  utils$1.trunc = function (x) {
+    return ('' + (Math.round(10000000 * x) / 10000000 + 0.00000001)).substring(0, 9);
+  };
+
+  utils$1.latLonFormatCoordinates = function (x, y) {
+    return this.formatDegrees(Math.abs(y)) + (y > 0 ? ' N, ' : ' S, ') + this.formatDegrees(Math.abs(x)) + (x > 0 ? ' E' : ' W');
+  };
+
+  utils$1.latLonFormatCoordinates2 = function (x, y) {
+    return this.trunc(Math.abs(y)) + (y > 0 ? ' N, ' : ' S, ') + this.trunc(Math.abs(x)) + (x > 0 ? ' E' : ' W');
+  };
+
+  utils$1.degRad = function (ang) {
+    return ang * (Math.PI / 180.0);
+  };
+
+  utils$1.distVincenty = function (lon1, lat1, lon2, lat2) {
+    var p1 = {};
+    var p2 = {};
+    p1.lon = this.degRad(lon1);
+    p1.lat = this.degRad(lat1);
+    p2.lon = this.degRad(lon2);
+    p2.lat = this.degRad(lat2);
+    var a = 6378137,
+        b = 6356752.3142,
+        f = 1 / 298.257223563; // WGS-84 ellipsiod
+
+    var L = p2.lon - p1.lon;
+    var U1 = Math.atan((1 - f) * Math.tan(p1.lat));
+    var U2 = Math.atan((1 - f) * Math.tan(p2.lat));
+    var sinU1 = Math.sin(U1),
+        cosU1 = Math.cos(U1);
+    var sinU2 = Math.sin(U2),
+        cosU2 = Math.cos(U2);
+    var lambda = L,
+        lambdaP = 2 * Math.PI;
+    var iterLimit = 20;
+
+    while (Math.abs(lambda - lambdaP) > 1e-12 && --iterLimit > 0) {
+      var sinLambda = Math.sin(lambda),
+          cosLambda = Math.cos(lambda);
+      var sinSigma = Math.sqrt(cosU2 * sinLambda * (cosU2 * sinLambda) + (cosU1 * sinU2 - sinU1 * cosU2 * cosLambda) * (cosU1 * sinU2 - sinU1 * cosU2 * cosLambda));
+
+      if (sinSigma === 0) {
+        return 0;
+      }
+
+      var cosSigma = sinU1 * sinU2 + cosU1 * cosU2 * cosLambda;
+      var sigma = Math.atan2(sinSigma, cosSigma);
+      var sinAlpha = cosU1 * cosU2 * sinLambda / sinSigma;
+      var cosSqAlpha = 1 - sinAlpha * sinAlpha;
+      var cos2SigmaM = cosSigma - 2 * sinU1 * sinU2 / cosSqAlpha;
+
+      if (isNaN(cos2SigmaM)) {
+        cos2SigmaM = 0;
+      }
+
+      var C = f / 16 * cosSqAlpha * (4 + f * (4 - 3 * cosSqAlpha));
+      lambdaP = lambda;
+      lambda = L + (1 - C) * f * sinAlpha * (sigma + C * sinSigma * (cos2SigmaM + C * cosSigma * (-1 + 2 * cos2SigmaM * cos2SigmaM)));
+    }
+
+    if (iterLimit === 0) {
+      return NaN;
+    }
+
+    var uSq = cosSqAlpha * (a * a - b * b) / (b * b);
+    var A = 1 + uSq / 16384 * (4096 + uSq * (-768 + uSq * (320 - 175 * uSq)));
+    var B = uSq / 1024 * (256 + uSq * (-128 + uSq * (74 - 47 * uSq)));
+    var deltaSigma = B * sinSigma * (cos2SigmaM + B / 4 * (cosSigma * (-1 + 2 * cos2SigmaM * cos2SigmaM) - B / 6 * cos2SigmaM * (-3 + 4 * sinSigma * sinSigma) * (-3 + 4 * cos2SigmaM * cos2SigmaM)));
+    var s = b * A * (sigma - deltaSigma);
+    s = s.toFixed(3);
+    return s;
+  };
+
+  utils$1.parseCoordinates = function (text) {
+    // should understand the following formats:
+    // 55.74312, 37.61558
+    // 55°44'35" N, 37°36'56" E
+    // 4187347, 7472103
+    // 4219783, 7407468 (EPSG:3395)
+    // 4219783, 7442673 (EPSG:3857)
+    var crs = null,
+        regex = /\(EPSG:(\d+)\)/g,
+        t = regex.exec(text);
+
+    if (t) {
+      crs = t[1];
+      text = text.replace(regex, '');
+    }
+
+    if (text.match(/[йцукенгшщзхъфывапролджэячсмитьбюЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮqrtyuiopadfghjklzxcvbmQRTYUIOPADFGHJKLZXCVBM_:]/)) {
+      return null;
+    } //there should be a separator in the string (exclude strings like "11E11")
+
+
+    if (text.indexOf(' ') === -1 && text.indexOf(',') === -1) {
+      return null;
+    }
+
+    if (text.indexOf(' ') !== -1) {
+      text = text.replace(/,/g, '.');
+    }
+
+    var results = [];
+    regex = /(-?\d+(\.\d+)?)([^\d\-]*)/g;
+    t = regex.exec(text);
+
+    while (t) {
+      results.push(t[1]);
+      t = regex.exec(text);
+    }
+
+    if (results.length < 2) {
+      return null;
+    }
+
+    var ii = Math.floor(results.length / 2),
+        y = 0,
+        mul = 1,
+        i;
+
+    for (i = 0; i < ii; i++) {
+      y += parseFloat(results[i]) * mul;
+      mul /= 60;
+    }
+
+    var x = 0;
+    mul = 1;
+
+    for (i = ii; i < results.length; i++) {
+      x += parseFloat(results[i]) * mul;
+      mul /= 60;
+    }
+
+    if (Math.max(text.indexOf('N'), text.indexOf('S')) > Math.max(text.indexOf('E'), text.indexOf('W'))) {
+      t = x;
+      x = y;
+      y = t;
+    }
+
+    var pos;
+
+    if (crs === '3857') {
+      pos = L$1.Projection.SphericalMercator.unproject(new L$1.Point(y, x));
+      x = pos.lng;
+      y = pos.lat;
+    }
+
+    if (Math.abs(x) > 180 || Math.abs(y) > 180) {
+      pos = L$1.Projection.Mercator.unproject(new L$1.Point(y, x));
+      x = pos.lng;
+      y = pos.lat;
+    }
+
+    if (text.indexOf('W') !== -1) {
+      x = -x;
+    }
+
+    if (text.indexOf('S') !== -1) {
+      y = -y;
+    }
+
+    return [y, x];
+  };
+
+  utils$1.getCoordinatesString = function (latlng, num) {
+    var x = latlng.lng,
+        y = latlng.lat,
+        formats = coordFormats,
+        len = formats.length,
+        merc,
+        out = '';
+    num = num || 0;
+
+    if (x > 180) {
+      x -= 360;
+    }
+
+    if (x < -180) {
+      x += 360;
+    }
+
+    if (num % len === 0) {
+      out = utils$1.latLonFormatCoordinates2(x, y);
+    } else if (num % len === 1) {
+      out = utils$1.latLonFormatCoordinates(x, y);
+    } else if (num % len === 2) {
+      merc = L$1.Projection.Mercator.project(new L$1.LatLng(y, x));
+      out = '' + Math.round(merc.x) + ', ' + Math.round(merc.y) + formats[2];
+    } else {
+      merc = L$1.CRS.EPSG3857.project(new L$1.LatLng(y, x));
+      out = '' + Math.round(merc.x) + ', ' + Math.round(merc.y) + formats[3];
+    }
+
+    return out;
+  };
+}
+
+L$1.Control.GmxLocation.Utils = utils$1;
+L$1.Control.gmxLocation = L$1.Control.GmxLocation;
+
+L$1.control.gmxLocation = function (options) {
+  return new L$1.Control.GmxLocation(options);
+};
+
+var Location = L$1.Control.GmxLocation;
+
 var GmxDrawingContextMenu = /*#__PURE__*/function () {
   function GmxDrawingContextMenu() {
     var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
@@ -47188,6 +47833,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
     _this._monPath = monPath;
     _this._map = L$1.map(_this._container, {
       // renderer: L.canvas(),
+      attributionControl: false,
       zoomControl: false
     });
 
@@ -47228,6 +47874,14 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
     _this._content.addTo(_this._map);
 
+    _this._map.addControl(new Center());
+
+    _this._map.addControl(new Location());
+
+    _this._map.addControl(L$1.control.attribution({
+      position: 'bottomleft'
+    }));
+
     return _this;
   }
 
@@ -47236,17 +47890,23 @@ var Map = /*#__PURE__*/function (_EventTarget) {
     value: function _createCorners() {
       var corners = this._map._controlCorners;
       var parent = this._map._controlContainer;
+      var tb = 'leaflet-top leaflet-bottom';
       var lr = 'leaflet-left leaflet-right';
       var classNames = {
-        bottom: "leaflet-bottom ".concat(lr)
+        bottom: "leaflet-bottom ".concat(lr),
+        gmxbottomleft: 'leaflet-bottom leaflet-left',
+        gmxbottomcenter: "leaflet-bottom ".concat(lr),
+        gmxbottomright: 'leaflet-bottom leaflet-right',
+        center: "".concat(tb, " ").concat(lr),
+        right: "leaflet-right ".concat(tb),
+        left: "leaflet-left ".concat(tb),
+        top: "leaflet-top ".concat(lr)
       };
-
-      for (var key in classNames) {
+      Object.keys(classNames).forEach(function (key) {
         if (!corners[key]) {
           corners[key] = L$1.DomUtil.create('div', classNames[key], parent);
         }
-      }
-
+      });
       corners.document = document.body;
     }
   }, {
