@@ -2770,6 +2770,10 @@ function _isNativeReflectConstruct() {
   }
 }
 
+function _objectDestructuringEmpty(obj) {
+  if (obj == null) throw new TypeError("Cannot destructure undefined");
+}
+
 function _assertThisInitialized(self) {
   if (self === void 0) {
     throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
@@ -20543,7 +20547,7 @@ var Incidents = /*#__PURE__*/function (_BaseView) {
 
       this._container.classList.add('minHeight');
 
-      var str1 = _parseVyd(data.ForestChange);
+      var str1 = _parseVyd(data.ForestChange || []);
 
       var str2 = _parseProps(data);
 
@@ -43076,13 +43080,11 @@ var Uploaded = /*#__PURE__*/function (_BaseView) {
   function Uploaded(container, _ref) {
     var _this;
 
-    var path = _ref.path,
-        _ref$columns = _ref.columns,
+    var _ref$columns = _ref.columns,
         columns = _ref$columns === void 0 ? ['type', 'date', 'name'] : _ref$columns,
         _ref$types = _ref.types,
         types = _ref$types === void 0 ? ['shp', 'geojson'] : _ref$types,
-        _ref$pageSize = _ref.pageSize,
-        pageSize = _ref$pageSize === void 0 ? 10 : _ref$pageSize;
+        pageSize = _ref.pageSize;
 
     _classCallCheck(this, Uploaded);
 
@@ -43090,7 +43092,6 @@ var Uploaded = /*#__PURE__*/function (_BaseView) {
     _this._columns = columns;
     _this._types = types;
     _this._pageSize = pageSize;
-    _this._path = path;
     _this._page = 0;
 
     _this._container.classList.add('scanex-forestry-uploaded');
@@ -43136,6 +43137,8 @@ var Uploaded = /*#__PURE__*/function (_BaseView) {
 
     _this._container.querySelector('.add').addEventListener('click', function (e) {
       e.stopPropagation();
+
+      _this._upload();
     });
 
     _this._container.querySelector('.remove').addEventListener('click', function (e) {
@@ -43146,156 +43149,108 @@ var Uploaded = /*#__PURE__*/function (_BaseView) {
   }
 
   _createClass(Uploaded, [{
-    key: "callback",
-    value: function () {
-      var _callback = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(pageSize, page) {
-        var fd, response, data, items;
-        return regeneratorRuntime.wrap(function _callee2$(_context2) {
-          while (1) {
-            switch (_context2.prev = _context2.next) {
-              case 0:
-                fd = new FormData();
-                fd.append('query', '');
-                fd.append('orderby', 'datecreate');
-                fd.append('pagesize', pageSize.toString());
-                fd.append('page', page.toString());
-                _context2.next = 7;
-                return fetch("".concat(this._path, "/Layer/Search2.ashx?WrapStyle=None"), {
-                  method: 'POST',
-                  credentials: 'include',
-                  headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                  },
-                  body: fd
-                });
+    key: "_upload",
+    value: function _upload() {
+      var _this2 = this;
 
-              case 7:
-                response = _context2.sent;
-                _context2.next = 10;
-                return response.json();
+      if (!this._files) {
+        this._files = document.createElement('input');
 
-              case 10:
-                data = _context2.sent;
+        this._files.setAttribute('type', 'file');
 
-                if (!(data.Status === 'ok')) {
-                  _context2.next = 16;
-                  break;
-                }
+        this._files.setAttribute('multiple', 'true');
 
-                // const items = [
-                //     {type: 'shp', date: '05.11.2019', name: 'Проект лесного участка 1'},
-                //     {type: 'shp', date: '08.10.2019', name: 'Проект лесного участка 2'},
-                //     {type: 'shp', date: '20.05.2020', name: 'Лесосека'},
-                //     {type: 'tiff', date: '21.06.2020', name: 'Мой снимок 1'},
-                // ];
-                items = [];
-                return _context2.abrupt("return", {
-                  items: items,
-                  count: items.length
-                });
+        this._files.style.visibility = 'hidden';
 
-              case 16:
-                throw new Error(JSON.stringify(data));
+        this._container.appendChild(this._files);
 
-              case 17:
-              case "end":
-                return _context2.stop();
-            }
-          }
-        }, _callee2, this);
-      }));
+        this._files.addEventListener('change', function () {
+          var event = document.createEvent('Event');
+          event.initEvent('upload', false, false);
+          event.detail = _this2._files.files;
 
-      function callback(_x, _x2) {
-        return _callback.apply(this, arguments);
+          _this2.dispatchEvent(event);
+
+          _this2._container.removeChild(_this2._files);
+
+          _this2._files = null;
+        });
       }
 
-      return callback;
-    }()
+      this._files.click();
+    }
   }, {
-    key: "open",
-    value: function () {
-      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
-        var _this2 = this;
+    key: "page",
+    get: function get() {
+      return this._page;
+    }
+  }, {
+    key: "items",
+    set: function set(items) {
+      var _this3 = this;
 
-        var _yield$this$callback, items, count, boxes, _loop, i;
+      this._content.innerHTML = items.map(function (item) {
+        return "<tr>\n                <td>\n                    <i class=\"scanex-uploaded-icon box\"></i>\n                </td>\n                ".concat(_this3._columns.map(function (id) {
+          return "<td>".concat(item[id], "</td>");
+        }).join(''), "\n            </tr>");
+      }).join('');
 
-        return regeneratorRuntime.wrap(function _callee3$(_context3) {
-          while (1) {
-            switch (_context3.prev = _context3.next) {
-              case 0:
-                if (!(typeof this.callback === 'function')) {
-                  _context3.next = 16;
-                  break;
-                }
+      var boxes = this._content.querySelectorAll('i');
 
-                _get(_getPrototypeOf(Uploaded.prototype), "open", this).call(this);
+      var _loop = function _loop(i) {
+        var box = boxes[i];
+        box.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var active = !box.classList.contains('active');
 
-                _context3.prev = 2;
-                _context3.next = 5;
-                return this.callback(this._pageSize, this._page);
-
-              case 5:
-                _yield$this$callback = _context3.sent;
-                items = _yield$this$callback.items;
-                count = _yield$this$callback.count;
-
-                if (count > 0) {
-                  this._content.innerHTML = items.map(function (item) {
-                    return "<tr>\n                            <td>\n                                <i class=\"scanex-uploaded-icon box\"></i>\n                            </td>\n                            ".concat(_this2._columns.map(function (id) {
-                      return "<td>".concat(item[id], "</td>");
-                    }).join(''), "\n                        </tr>");
-                  }).join('');
-                  boxes = this._content.querySelectorAll('i');
-
-                  _loop = function _loop(i) {
-                    var box = boxes[i];
-                    box.addEventListener('click', function (e) {
-                      e.stopPropagation();
-                      var active = !box.classList.contains('active');
-
-                      if (active) {
-                        box.classList.add('active');
-                      } else {
-                        box.classList.remove('active');
-                      }
-                    });
-                  };
-
-                  for (i = 0; i < boxes.length; ++i) {
-                    _loop(i);
-                  }
-
-                  this._pager.pages = Math.ceil(count / this._pageSize);
-                }
-
-                _context3.next = 16;
-                break;
-
-              case 11:
-                _context3.prev = 11;
-                _context3.t0 = _context3["catch"](2);
-                this.close();
-                console.log(_context3.t0);
-                alert(translate$q('error.uploaded'));
-
-              case 16:
-              case "end":
-                return _context3.stop();
-            }
+          if (active) {
+            box.classList.add('active');
+          } else {
+            box.classList.remove('active');
           }
-        }, _callee3, this, [[2, 11]]);
-      }));
+        });
+      };
 
-      function open() {
-        return _open.apply(this, arguments);
+      for (var i = 0; i < boxes.length; ++i) {
+        _loop(i);
       }
 
-      return open;
-    }()
+      this._pager.pages = Math.ceil(count / this._pageSize);
+    }
   }]);
 
   return Uploaded;
 }(BaseView);
+
+var Progress = /*#__PURE__*/function () {
+  function Progress() {
+    _classCallCheck(this, Progress);
+  }
+
+  _createClass(Progress, [{
+    key: "start",
+    value: function start() {
+      this._container = document.createElement('div');
+
+      this._container.classList.add('scanex-forestry-progress');
+
+      this._container.innerText = 'wait...';
+      document.body.appendChild(this._container);
+    }
+  }, {
+    key: "stop",
+    value: function stop() {
+      document.body.removeChild(this._container);
+    }
+  }, {
+    key: "update",
+    value: function update() {
+      this._container.innerText = 'wait...';
+    }
+  }]);
+
+  return Progress;
+}();
 
 var Uploaded$1 = /*#__PURE__*/function (_EventTarget) {
   _inherits(Uploaded$1, _EventTarget);
@@ -43306,20 +43261,222 @@ var Uploaded$1 = /*#__PURE__*/function (_EventTarget) {
     var _this;
 
     var content = _ref.content,
-        path = _ref.path;
+        path = _ref.path,
+        _ref$pageSize = _ref.pageSize,
+        pageSize = _ref$pageSize === void 0 ? 4 : _ref$pageSize;
 
     _classCallCheck(this, Uploaded$1);
 
     _this = _super.call(this);
     _this._content = content;
     _this._path = path;
-
-    _this._content.add('stands', Uploaded, {
-      path: _this._path
+    _this._pageSize = pageSize;
+    _this._progress = new Progress();
+    _this._view = _this._content.add('uploaded', Uploaded, {
+      pageSize: _this._pageSize
     });
+
+    _this._view.on('open', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+      return regeneratorRuntime.wrap(function _callee$(_context) {
+        while (1) {
+          switch (_context.prev = _context.next) {
+            case 0:
+              _context.next = 2;
+              return _this._query(_this._view.page);
+
+            case 2:
+            case "end":
+              return _context.stop();
+          }
+        }
+      }, _callee);
+    }))).on('upload', /*#__PURE__*/function () {
+      var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(e) {
+        var files;
+        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                files = e.detail;
+
+                _this._progress.start();
+
+                setTimeout(function () {
+                  _this._progress.stop();
+                }, 10000);
+
+              case 3:
+              case "end":
+                return _context2.stop();
+            }
+          }
+        }, _callee2);
+      }));
+
+      return function (_x) {
+        return _ref3.apply(this, arguments);
+      };
+    }());
 
     return _this;
   }
+
+  _createClass(Uploaded$1, [{
+    key: "_createSandbox",
+    value: function () {
+      var _createSandbox2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
+        var response, _yield$response$json;
+
+        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                _context3.prev = 0;
+                _context3.next = 3;
+                return fetch('/sandbox/CreateSandbox', {
+                  method: 'post'
+                });
+
+              case 3:
+                response = _context3.sent;
+                _context3.next = 6;
+                return response.json();
+
+              case 6:
+                _yield$response$json = _context3.sent;
+
+                _objectDestructuringEmpty(_yield$response$json);
+
+                sandboxId = json.sandbox;
+                createParts();
+                startUpload();
+                _context3.next = 15;
+                break;
+
+              case 13:
+                _context3.prev = 13;
+                _context3.t0 = _context3["catch"](0);
+
+              case 15:
+              case "end":
+                return _context3.stop();
+            }
+          }
+        }, _callee3, null, [[0, 13]]);
+      }));
+
+      function _createSandbox() {
+        return _createSandbox2.apply(this, arguments);
+      }
+
+      return _createSandbox;
+    }()
+  }, {
+    key: "_upload",
+    value: function () {
+      var _upload2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(files) {
+        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+          while (1) {
+            switch (_context4.prev = _context4.next) {
+              case 0:
+              case "end":
+                return _context4.stop();
+            }
+          }
+        }, _callee4);
+      }));
+
+      function _upload(_x2) {
+        return _upload2.apply(this, arguments);
+      }
+
+      return _upload;
+    }()
+  }, {
+    key: "_query",
+    value: function () {
+      var _query2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(page) {
+        var fd, response, data, items, count;
+        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+          while (1) {
+            switch (_context5.prev = _context5.next) {
+              case 0:
+                _context5.prev = 0;
+                fd = new FormData();
+                fd.append('query', '');
+                fd.append('orderby', 'datecreate');
+                fd.append('pagesize', this._pageSize.toString());
+                fd.append('page', page.toString());
+                _context5.next = 8;
+                return fetch("".concat(this._path, "/Layer/Search2.ashx?WrapStyle=None"), {
+                  method: 'POST',
+                  credentials: 'include',
+                  headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                  },
+                  body: fd
+                });
+
+              case 8:
+                response = _context5.sent;
+                _context5.next = 11;
+                return response.json();
+
+              case 11:
+                data = _context5.sent;
+
+                if (!(data.Status === 'ok')) {
+                  _context5.next = 18;
+                  break;
+                }
+
+                // const items = [
+                //     {type: 'shp', date: '05.11.2019', name: 'Проект лесного участка 1'},
+                //     {type: 'shp', date: '08.10.2019', name: 'Проект лесного участка 2'},
+                //     {type: 'shp', date: '20.05.2020', name: 'Лесосека'},
+                //     {type: 'tiff', date: '21.06.2020', name: 'Мой снимок 1'},
+                // ];
+                items = [];
+                count = 0;
+
+                if (count > 0) {
+                  this._view.items = items;
+                }
+
+                _context5.next = 19;
+                break;
+
+              case 18:
+                throw new Error(JSON.stringify(data));
+
+              case 19:
+                _context5.next = 26;
+                break;
+
+              case 21:
+                _context5.prev = 21;
+                _context5.t0 = _context5["catch"](0);
+
+                this._view.close();
+
+                console.log(_context5.t0);
+                alert(translate('error.uploaded'));
+
+              case 26:
+              case "end":
+                return _context5.stop();
+            }
+          }
+        }, _callee5, this, [[0, 21]]);
+      }));
+
+      function _query(_x3) {
+        return _query2.apply(this, arguments);
+      }
+
+      return _query;
+    }()
+  }]);
 
   return Uploaded$1;
 }(EventTarget);
@@ -47769,24 +47926,39 @@ var Map = /*#__PURE__*/function (_EventTarget) {
           while (1) {
             switch (_context5.prev = _context5.next) {
               case 0:
-                if (this._permissions.MyData) {
-                  try {
-                    this._content.show('uploaded');
-                  } catch (e) {
-                    console.log(e);
-                    alert(translate$r('error.uploaded'));
-                    this.showMain();
-                  }
-                } else {
-                  alert(translate$r('forbidden.uploaded'));
+                if (!this._permissions.MyData) {
+                  _context5.next = 13;
+                  break;
                 }
 
-              case 1:
+                _context5.prev = 1;
+                _context5.next = 4;
+                return this._content.show('uploaded');
+
+              case 4:
+                _context5.next = 11;
+                break;
+
+              case 6:
+                _context5.prev = 6;
+                _context5.t0 = _context5["catch"](1);
+                console.log(_context5.t0);
+                alert(translate$r('error.uploaded'));
+                this.showMain();
+
+              case 11:
+                _context5.next = 14;
+                break;
+
+              case 13:
+                alert(translate$r('forbidden.uploaded'));
+
+              case 14:
               case "end":
                 return _context5.stop();
             }
           }
-        }, _callee5, this);
+        }, _callee5, this, [[1, 6]]);
       }));
 
       function showUploaded() {
@@ -48182,7 +48354,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
                 if (this._permissions.MyData) {
                   this._controllers.uploaded = new Uploaded$1({
-                    path: this._apiPath,
+                    path: this._gmxPath,
                     content: this._content
                   });
 
