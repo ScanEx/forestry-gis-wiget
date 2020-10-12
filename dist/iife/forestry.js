@@ -2770,10 +2770,6 @@ var Forestry = (function () {
 	  }
 	}
 
-	function _objectDestructuringEmpty(obj) {
-	  if (obj == null) throw new TypeError("Cannot destructure undefined");
-	}
-
 	function _assertThisInitialized(self) {
 	  if (self === void 0) {
 	    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
@@ -33347,7 +33343,7 @@ var Forestry = (function () {
 
 	    _this = _super.call(this);
 	    _this._target = container;
-	    _this._target.innerHTML = "<i class=\"scanex-component-icon close\"></i>\n        <div class=\"container\"></div>";
+	    _this._target.innerHTML = "<div class=\"container\"></div>\n        <i class=\"scanex-component-icon close\"></i>";
 	    _this._container = _this._target.querySelector('.container');
 	    var btn = container.querySelector('.scanex-component-icon');
 	    btn.addEventListener('click', function (e) {
@@ -34009,6 +34005,10 @@ var Forestry = (function () {
 
 	      if (node) {
 	        node.addEventListener('click', this._docs.bind(this));
+
+	        if (data.Status !== 'в работе') {
+	          node.classList.add('hidden');
+	        }
 	      }
 
 	      node = this._container.querySelector('.editGeo');
@@ -34056,7 +34056,6 @@ var Forestry = (function () {
 
 	      if (node) {
 	        node.addEventListener('click', this._toggleBplaView.bind(this));
-	        this._IncidentDeclineNode = node;
 	      }
 
 	      this._rastId = props.prob_raster_id;
@@ -52790,7 +52789,7 @@ var Forestry = (function () {
 	        _ref$columns = _ref.columns,
 	        columns = _ref$columns === void 0 ? ['id', 'status', 'title', 'forestry', 'totalSquare'] : _ref$columns,
 	        _ref$pageSize = _ref.pageSize,
-	        pageSize = _ref$pageSize === void 0 ? 4 : _ref$pageSize;
+	        pageSize = _ref$pageSize === void 0 ? 5 : _ref$pageSize;
 
 	    _classCallCheck(this, Requests);
 
@@ -53780,9 +53779,9 @@ var Forestry = (function () {
 	            species = _ref.species,
 	            total_stock = _ref.total_stock,
 	            total_stock_deal = _ref.total_stock_deal;
-	        return "<tr class=\"type\">\n                <td class=\"label\">".concat(species, "</td>\n                <td class=\"value\">").concat(permitted_stock.toFixed(2), " / ").concat(permitted_stock_deal.toFixed(2), "</td>                \n                <td class=\"value\">").concat(probable_stock.toFixed(2), " / ").concat(probable_stock_deal.toFixed(2), "</td>\n                <td class=\"value\">").concat(total_stock.toFixed(2), " / ").concat(total_stock_deal.toFixed(2), "</td>                \n            </tr>");
+	        return "<tr class=\"type\">\n                <td class=\"label\">".concat(species, "</td>\n                <td class=\"value\">").concat(permitted_stock.toFixed(2), "</td>\n                <td class=\"value\">").concat(permitted_stock_deal.toFixed(2), "</td>\n                <td class=\"value\">").concat(probable_stock.toFixed(2), "</td>\n                <td class=\"value\">").concat(probable_stock_deal.toFixed(2), "</td>\n                <td class=\"value\">").concat(total_stock.toFixed(2), "</td>\n                <td class=\"value\">").concat(total_stock_deal.toFixed(2), "</td>\n            </tr>");
 	      }).join('');
-	      this._container.innerHTML = rows ? "<div class=\"title\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\t\t\t\t\t\t\t\n                    <tr>\n                        <td>".concat(translate$k('species'), "</td>\n                        <td colspan=\"3\">").concat(translate$k('stock.label'), ", ").concat(translate$k('unit.m'), "<sup>3</sup></td>\n                    </tr>\n                    <tr>\n                        <td></td>\n                        <td>").concat(translate$k('stock.permitted'), "</td>                        \n                        <td>").concat(translate$k('stock.probable'), "</td>\n                        <td>").concat(translate$k('stock.total'), "</td>                        \n                    </tr>\t\t\t\t\t\t\t\n                </table>\n            </div>\n            <div class=\"content\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>").concat(rows, "</tbody>\n                </table>\n            </div>") : '';
+	      this._container.innerHTML = rows ? "<div class=\"title\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\t\t\t\t\t\t\t\n                    <tr>\n                        <td>".concat(translate$k('species'), "</td>\n                        <td colspan=\"3\">").concat(translate$k('stock.label'), ", ").concat(translate$k('unit.m'), "<sup>3</sup></td>\n                    </tr>\n                    <tr>\n                        <td></td>\n                        <td>").concat(translate$k('stock.permitted'), "</td>                        \n                        <td>").concat(translate$k('stock.probable'), "</td>\n                        <td>").concat(translate$k('stock.total'), "</td>\n                    </tr>\t\t\t\t\t\t\t\n                </table>\n            </div>\n            <div class=\"content\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>").concat(rows, "</tbody>\n                </table>\n            </div>") : '';
 	    }
 	  }]);
 
@@ -61772,20 +61771,50 @@ var Forestry = (function () {
 	  return Uploaded;
 	}(BaseView);
 
-	var Progress = /*#__PURE__*/function () {
-	  function Progress() {
-	    _classCallCheck(this, Progress);
+	var UploadProgress = /*#__PURE__*/function (_EventTarget) {
+	  _inherits(UploadProgress, _EventTarget);
+
+	  var _super = _createSuper(UploadProgress);
+
+	  function UploadProgress() {
+	    _classCallCheck(this, UploadProgress);
+
+	    return _super.call(this);
 	  }
 
-	  _createClass(Progress, [{
+	  _createClass(UploadProgress, [{
 	    key: "start",
 	    value: function start() {
+	      var _this = this;
+
 	      this._container = document.createElement('div');
 
 	      this._container.classList.add('scanex-forestry-progress');
 
-	      this._container.innerText = 'wait...';
+	      this._container.innerHTML = "<div>\n        <button class=\"pause\">Pause</button>\n        <button class=\"cancel\">Cancel</button>\n        </div>\n        <ul class=\"files\">\n        </ul>\n        <div class=\"speed\"></div>";
 	      document.body.appendChild(this._container);
+	      this._btnPause = this._container.querySelector('.pause');
+
+	      this._btnPause.addEventListener('click', function (e) {
+	        e.stopPropagation();
+	        var event = document.createEvent('Event');
+	        event.initEvent('pause', false, false);
+
+	        _this.dispatchEvent(event);
+	      });
+
+	      this._btnCancel = this._container.querySelector('.cancel');
+
+	      this._btnCancel.addEventListener('click', function (e) {
+	        e.stopPropagation();
+	        var event = document.createEvent('Event');
+	        event.initEvent('cancel', false, false);
+
+	        _this.dispatchEvent(event);
+	      });
+
+	      this._files = this._container.querySelector('.files');
+	      this._speed = this._container.querySelector('.speed');
 	    }
 	  }, {
 	    key: "stop",
@@ -61793,14 +61822,32 @@ var Forestry = (function () {
 	      document.body.removeChild(this._container);
 	    }
 	  }, {
-	    key: "update",
-	    value: function update() {
-	      this._container.innerText = 'wait...';
+	    key: "status",
+	    value: function status(index, percent, _status) {
+	      var row = this._files.querySelector("[data-id=".concat(index, "]"));
+
+	      row.querySelector('.percent').innerText = percent;
+	      row.querySelector('.status').innerText = _status;
+	    }
+	  }, {
+	    key: "files",
+	    set: function set(files) {
+	      this._files.innerHTML = files.map(function (_ref, i) {
+	        var name = _ref.name;
+	        return "<li data-id=\"".concat(i, "\">\n                <label class=\"name\">").concat(name, "</label>\n                <label class=\"percent\"></label>\n                <label class=\"status\"></label>\n            </li>");
+	      }).join('');
+	    }
+	  }, {
+	    key: "speed",
+	    set: function set(speed) {
+	      this._speed.innerText = speed;
 	    }
 	  }]);
 
-	  return Progress;
-	}();
+	  return UploadProgress;
+	}(EventTarget);
+
+	var translate$r = T.getText.bind(T);
 
 	var Uploaded$1 = /*#__PURE__*/function (_EventTarget) {
 	  _inherits(Uploaded$1, _EventTarget);
@@ -61813,7 +61860,9 @@ var Forestry = (function () {
 	    var content = _ref.content,
 	        path = _ref.path,
 	        _ref$pageSize = _ref.pageSize,
-	        pageSize = _ref$pageSize === void 0 ? 4 : _ref$pageSize;
+	        pageSize = _ref$pageSize === void 0 ? 4 : _ref$pageSize,
+	        _ref$uploadFileSize = _ref.uploadFileSize,
+	        uploadFileSize = _ref$uploadFileSize === void 0 ? 5 * 1024 * 1024 : _ref$uploadFileSize;
 
 	    _classCallCheck(this, Uploaded$1);
 
@@ -61821,7 +61870,11 @@ var Forestry = (function () {
 	    _this._content = content;
 	    _this._path = path;
 	    _this._pageSize = pageSize;
-	    _this._progress = new Progress();
+	    _this._uploadFileSize = uploadFileSize;
+	    _this._progress = new UploadProgress();
+
+	    _this._progress.on('pause', function () {}).on('cancel', function () {});
+
 	    _this._view = _this._content.add('uploaded', Uploaded, {
 	      pageSize: _this._pageSize
 	    });
@@ -61842,7 +61895,7 @@ var Forestry = (function () {
 	      }, _callee);
 	    }))).on('upload', /*#__PURE__*/function () {
 	      var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(e) {
-	        var files;
+	        var files, upfiles;
 	        return regeneratorRuntime.wrap(function _callee2$(_context2) {
 	          while (1) {
 	            switch (_context2.prev = _context2.next) {
@@ -61851,11 +61904,18 @@ var Forestry = (function () {
 
 	                _this._progress.start();
 
-	                setTimeout(function () {
-	                  _this._progress.stop();
-	                }, 10000);
+	                _context2.next = 4;
+	                return _this._createSandbox();
 
-	              case 3:
+	              case 4:
+	                _this._sandboxId = _context2.sent;
+	                upfiles = _this._createParts(files);
+
+	                _this._startUpload(upfiles);
+
+	                _this._progress.stop();
+
+	              case 8:
 	              case "end":
 	                return _context2.stop();
 	            }
@@ -61875,7 +61935,7 @@ var Forestry = (function () {
 	    key: "_createSandbox",
 	    value: function () {
 	      var _createSandbox2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
-	        var response, _yield$response$json;
+	        var response, _yield$response$json, sandbox;
 
 	        return regeneratorRuntime.wrap(function _callee3$(_context3) {
 	          while (1) {
@@ -61883,8 +61943,11 @@ var Forestry = (function () {
 	              case 0:
 	                _context3.prev = 0;
 	                _context3.next = 3;
-	                return fetch('/sandbox/CreateSandbox', {
-	                  method: 'post'
+	                return fetch("".concat(this._path, "/sandbox/CreateSandbox"), {
+	                  method: 'post',
+	                  headers: {
+	                    'Transfer-Encoding': 'chunked'
+	                  }
 	                });
 
 	              case 3:
@@ -61894,25 +61957,19 @@ var Forestry = (function () {
 
 	              case 6:
 	                _yield$response$json = _context3.sent;
+	                sandbox = _yield$response$json.sandbox;
+	                return _context3.abrupt("return", sandbox);
 
-	                _objectDestructuringEmpty(_yield$response$json);
-
-	                sandboxId = json.sandbox;
-	                createParts();
-	                startUpload();
-	                _context3.next = 15;
-	                break;
-
-	              case 13:
-	                _context3.prev = 13;
+	              case 11:
+	                _context3.prev = 11;
 	                _context3.t0 = _context3["catch"](0);
 
-	              case 15:
+	              case 13:
 	              case "end":
 	                return _context3.stop();
 	            }
 	          }
-	        }, _callee3, null, [[0, 13]]);
+	        }, _callee3, this, [[0, 11]]);
 	      }));
 
 	      function _createSandbox() {
@@ -61921,6 +61978,302 @@ var Forestry = (function () {
 
 	      return _createSandbox;
 	    }()
+	  }, {
+	    key: "_createParts",
+	    value: function _createParts(files) {
+	      var upfiles = [];
+
+	      for (var i = 0; i < files.length; i++) {
+	        var partsCount = Math.ceil(files[i].size / this._uploadFileSize);
+	        var parts = [];
+
+	        for (var _i = 0; _i < partsCount - 1; _i++) {
+	          parts.push({
+	            xhr: null,
+	            status: 'none',
+	            size: this._uploadFileSize,
+	            send: 0,
+	            needSend: this._uploadFileSize
+	          });
+	        }
+
+	        var lastSize = files[i].size - this._uploadFileSize * (partsCount - 1);
+	        parts.push({
+	          xhr: null,
+	          status: 'none',
+	          size: lastSize,
+	          send: 0,
+	          needSend: lastSize
+	        }); //статус загрузки чанка
+
+	        var p = {
+	          item: files[i],
+	          name: files[i].name,
+	          parts: parts,
+	          totalBytes: files[i].size,
+	          status: 'none' //статус загрузки файла
+
+	        };
+	        upfiles.push(p);
+	      }
+
+	      return upfiles;
+	    }
+	  }, {
+	    key: "_startUpload",
+	    value: function _startUpload(upfiles) {
+	      this._upfilesStatus = "progress";
+
+	      for (var i = 0; i < upfiles.length; i++) {
+	        //запускаем 6 потоков
+	        if (upfiles[i].status === "error") {
+	          upfiles[i].status = "none";
+	        }
+
+	        var wait = false;
+
+	        for (var i1 = 0; i1 < upfiles[i].parts.length; i1++) {
+	          if (upfiles[i].parts[i1].status === "error") {
+	            upfiles[i].parts[i1].status = "none"; //отменяем ошибку
+	          }
+
+	          if (upfiles[i].parts[i1].status === "none") {
+	            wait = true; //если есть не отосланые чанки
+	          }
+	        }
+
+	        var p = this._percent(upfiles[i]);
+
+	        this._progress.status(i, p, wait ? 'Waiting' : 'Completed');
+	      }
+
+	      for (var _i2 = 0; _i2 < 8; _i2++) {
+	        //запускаем 6 потоков
+	        this._sendNextPart(upfiles);
+	      }
+
+	      this._stopSpeedTimer();
+
+	      this._speedTimer = setInterval(this._renewSpeedTimer.bind(this), 1000);
+	    }
+	  }, {
+	    key: "_percent",
+	    value: function _percent(t) {
+	      return Math.round(t.parts.reduce(function (a, p) {
+	        return a + p.size / t.totalBytes * (p.send / p.needSend);
+	      }, 0) * 100);
+	    }
+	  }, {
+	    key: "_sendNextPart",
+	    value: function _sendNextPart(upfiles) {
+	      var _this2 = this;
+
+	      if (this._upfilesStatus === 'error') {
+	        return false;
+	      }
+
+	      var _loop = function _loop(i) {
+	        var t = upfiles[i];
+
+	        var _loop2 = function _loop2(i1) {
+	          if (t.parts[i1].status === "none") {
+	            var startByte = _this2._uploadFileSize * i1;
+	            var countBytes = _this2._uploadFileSize;
+
+	            if (startByte + countBytes > t.totalBytes) {
+	              countBytes = t.totalBytes - startByte;
+	            }
+
+	            if (t.status === "none") {
+	              t.status = "progress";
+
+	              _this2._progress.status(i1, 0, "0%");
+	            }
+
+	            t.parts[i1].status = "progress";
+	            var chunk = t.item.slice(startByte, startByte + countBytes + 1);
+	            var chunkFile = new File([chunk], t.name);
+	            var fd = new FormData();
+	            fd.append("sandbox", _this2._sandboxId);
+	            fd.append("startByte", startByte);
+	            fd.append("file", chunkFile);
+	            req = new XMLHttpRequest();
+	            req.open("post", "/sandbox/upload");
+	            t.parts[i1].xhr = req;
+
+	            req.upload.onerror = function () {
+	              t.parts[i1].status = 'error';
+	              t.parts[i1].xhr = null;
+	              t.status = "error";
+
+	              _this2._progress.status(i, 0, 'Error');
+
+	              _this2._errorUpload();
+	            };
+
+	            var lastSend = 0;
+
+	            req.upload.onprogress = function (event) {
+	              t.parts[i1].send = event.loaded;
+	              t.parts[i1].needSend = event.total;
+
+	              _this2._progress.status(i1, 0, 'Loading...');
+
+	              _this2._currentSendBytes += event.loaded - lastSend; //подсчёт скорости
+
+	              lastSend = event.loaded;
+	            };
+
+	            req.onload = function () {
+	              t.parts[i1].xhr = null;
+
+	              if (req.status !== 200) {
+	                // анализируем HTTP-статус ответа, если статус не 200, то произошла ошибка
+	                t.parts[i1].status = 'error';
+	                t.status = "error";
+
+	                this._progress.status(i1, 0, "Error");
+
+	                this._errorUpload();
+	              } else {
+	                if (upfilesStatus === "error") {
+	                  //если кто-то глюкнул останавливаем всё. Возможно это отмена
+	                  t.parts[i1].status = 'error';
+	                  t.status = "error";
+
+	                  this._progress.status(i1, 0, "Error");
+
+	                  return;
+	                } // если всё прошло гладко, выводим результат
+
+
+	                t.parts[i1].status = 'finish';
+	                var oksum = 0;
+
+	                for (var i3 = 0; i3 < t.parts.length; i3++) {
+	                  if (t.parts[i3].status === "finish") oksum++;
+	                }
+
+	                if (oksum === t.parts.length) {
+	                  t.status = "finish";
+
+	                  this._progress.status(i1, 0, "Completed");
+	                }
+
+	                this._sendNextPart(upfiles); //проверяем что все файлы отосланы
+
+
+	                var sumFilesOk = 0;
+	                upfiles.forEach(function (a) {
+	                  if (a.status === "finish") sumFilesOk++;
+	                });
+
+	                if (sumFilesOk === upfiles.length) {
+	                  finishUpload();
+	                }
+	              }
+	            };
+
+	            req.send(fd);
+	            return {
+	              v: {
+	                v: true
+	              }
+	            };
+	          }
+	        };
+
+	        for (var i1 = 0; i1 < t.parts.length; i1++) {
+	          var _ret2 = _loop2(i1);
+
+	          if (_typeof(_ret2) === "object") return _ret2.v;
+	        }
+	      };
+
+	      for (var i = 0; i < upfiles.length; i++) {
+	        var req;
+
+	        var _ret = _loop(i);
+
+	        if (_typeof(_ret) === "object") return _ret.v;
+	      }
+
+	      return false;
+	    }
+	  }, {
+	    key: "_stopSpeedTimer",
+	    value: function _stopSpeedTimer() {
+	      if (this._speedTimer != null) {
+	        clearInterval(this._speedTimer);
+	      }
+
+	      this._speedTimer = null;
+	      this._progress.speed = '';
+	      this._oldSendBytes = [];
+	      this._currentSendBytes = 0;
+	    }
+	  }, {
+	    key: "_renewSpeedTimer",
+	    value: function _renewSpeedTimer() {
+	      var ready = 0;
+	      var total = 0;
+
+	      for (var i = 0; i < upfiles.length; i++) {
+	        var t = upfiles[i];
+	        total += t.totalBytes;
+
+	        for (var i5 = 0; i5 < t.parts.length; i5++) {
+	          var tp = t.parts[i5];
+
+	          if (tp.status === "progress") {
+	            ready = ready + tp.size * (tp.send / tp.needSend);
+	          }
+
+	          if (tp.status === "finish") ready = ready + tp.size;
+	        }
+	      } //история скорости
+
+
+	      oldSendBytes.unshift(currentSendBytes);
+	      if (oldSendBytes.length > 5) oldSendBytes.length = 5;
+	      var sumSend = 0;
+	      oldSendBytes.forEach(function (a) {
+	        return sumSend += a;
+	      });
+	      var s = Math.round(sumSend / oldSendBytes.length); //байт в секунду
+
+	      var str = roundBytes(s) + "/s";
+	      document.getElementById("speed").textContent = "Speed " + str + " Progress: " + roundBytes(ready) + " of " + roundBytes(total);
+	      currentSendBytes = 0;
+	    }
+	  }, {
+	    key: "_errorUpload",
+	    value: function _errorUpload() {
+	      if (this._upfilesStatus !== 'error') {
+	        this._stopSpeedTimer();
+
+	        this._upfilesStatus = 'error'; // document.getElementById('global_status').textContent = "Error";
+	        // document.getElementById("cancel").disabled = true;
+	        // document.getElementById("resume").disabled = false;
+	        // document.getElementById("send").disabled = false;
+	        // document.getElementById("open").disabled = false;
+	      }
+	    }
+	  }, {
+	    key: "_finishUpload",
+	    value: function _finishUpload() {
+	      if (this._upfilesStatus === 'finish') return;
+
+	      if (this._upfilesStatus === 'progress') {
+	        stopSpeedTimer();
+	        upfilesStatus = 'finish';
+	        document.getElementById('global_status').textContent = "Finish";
+	        document.getElementById("cancel").disabled = true;
+	        document.getElementById("resume").disabled = true;
+	        document.getElementById("send").disabled = false;
+	        document.getElementById("open").disabled = false;
+	      }
+	    }
 	  }, {
 	    key: "_upload",
 	    value: function () {
@@ -62010,7 +62363,7 @@ var Forestry = (function () {
 	                this._view.close();
 
 	                console.log(_context5.t0);
-	                alert(translate('error.uploaded'));
+	                alert(translate$r('error.uploaded'));
 
 	              case 26:
 	              case "end":
@@ -66089,7 +66442,7 @@ var Forestry = (function () {
 	  return _getObjectCenter.apply(this, arguments);
 	}
 
-	var translate$r = T.getText.bind(T);
+	var translate$s = T.getText.bind(T);
 	T.addText('rus', {
 	  measure: {
 	    bearing: {
@@ -66382,7 +66735,7 @@ var Forestry = (function () {
 	                _context3.prev = 6;
 	                _context3.t0 = _context3["catch"](1);
 	                console.log(_context3.t0);
-	                alert(translate$r('error.analytics'));
+	                alert(translate$s('error.analytics'));
 	                this.showMain();
 
 	              case 11:
@@ -66390,7 +66743,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 13:
-	                alert(translate$r('forbidden.analytics'));
+	                alert(translate$s('forbidden.analytics'));
 
 	              case 14:
 	              case "end":
@@ -66436,7 +66789,7 @@ var Forestry = (function () {
 	                _context4.prev = 8;
 	                _context4.t0 = _context4["catch"](1);
 	                console.log(_context4.t0);
-	                alert(translate$r('error.requests'));
+	                alert(translate$s('error.requests'));
 	                this.showMain();
 
 	              case 13:
@@ -66444,7 +66797,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 15:
-	                alert(translate$r('forbidden.requests'));
+	                alert(translate$s('forbidden.requests'));
 
 	              case 16:
 	              case "end":
@@ -66485,7 +66838,7 @@ var Forestry = (function () {
 	                _context5.prev = 6;
 	                _context5.t0 = _context5["catch"](1);
 	                console.log(_context5.t0);
-	                alert(translate$r('error.uploaded'));
+	                alert(translate$s('error.uploaded'));
 	                this.showMain();
 
 	              case 11:
@@ -66493,7 +66846,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 13:
-	                alert(translate$r('forbidden.uploaded'));
+	                alert(translate$s('forbidden.uploaded'));
 
 	              case 14:
 	              case "end":
@@ -66521,7 +66874,8 @@ var Forestry = (function () {
 	            switch (_context8.prev = _context8.next) {
 	              case 0:
 	                mapId = 'default';
-	                _context8.next = 3;
+	                window.SELF = this;
+	                _context8.next = 4;
 	                return leafletSrc.gmx.loadMap(mapId, {
 	                  leafletMap: this._map,
 	                  hostName: '/',
@@ -66535,9 +66889,8 @@ var Forestry = (function () {
 	                  }
 	                });
 
-	              case 3:
+	              case 4:
 	                this._gmxMap = _context8.sent;
-	                window.SELF = this;
 	                this._zoom = new Zoom();
 
 	                this._zoom.addTo(this._map);
