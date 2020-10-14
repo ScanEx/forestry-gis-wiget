@@ -35,6 +35,10 @@
 		```js
 		async showRequests();
 		```
+	* создание проекта
+		```js
+		async createRequests();
+		```
   * События:
   	* создать заявку - ``request:create``
   	* инцидент - связанные документы - ``incident:docs``
