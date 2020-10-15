@@ -11541,7 +11541,7 @@ var Content = L$1.Control.extend({
   }
 });
 
-var translate$1 = T.getText.bind(T);
+var translate = T.getText.bind(T);
 T.addText('rus', {
   legend: {
     title: 'Обозначения'
@@ -11709,7 +11709,7 @@ var Legend = L$1.Control.extend({
   }
 });
 
-var translate$2 = T.getText.bind(T);
+var translate$1 = T.getText.bind(T);
 T.addText('rus', {
   baseLayers: {
     title: 'Подложки',
@@ -11730,7 +11730,7 @@ var baseLayers = {
       zIndex: -1000000,
       maxZoom: 22,
       maxNativeZoom: 18,
-      attribution: '<a href="http://maps.sputnik.ru">Спутник</a> © ' + translate$2('baseLayers.Rostelecom') + ' | © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      attribution: '<a href="http://maps.sputnik.ru">Спутник</a> © ' + translate$1('baseLayers.Rostelecom') + ' | © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     })]
   },
   satellite: {
@@ -11765,7 +11765,7 @@ var BaseLayers = L$1.Control.extend({
     this._icon = L$1.DomUtil.create('div', 'map-right', this._container);
     L$1.DomUtil.create('div', 'substrates', this._icon);
     this._content = L$1.DomUtil.create('div', 'table-baselayers-popup hidden', this._container);
-    this._content.innerHTML = "<table>\n            <thead>\n                <tr>                    \n                    <td colspan=\"3\">\n                        <label>".concat(translate$2('baseLayers.title'), "</label>\n                    </td>\n                </tr>\n            </thead>            \n            <tbody>\n                <tr class=\"line\">\n                    <td>\n                        <img src=\"").concat(baseLayers.sputnik.icon, "\" class=\"baseLayer\" data=\"sputnik\" />\n                    </td>\n                    <td>\n                        <img src=\"").concat(baseLayers.satellite.icon, "\" class=\"baseLayer\" data=\"satellite\" />\n                    </td>\n                   <td>\n                        <img src=\"").concat(baseLayers.OSMHybrid.icon, "\" class=\"baseLayer\" data=\"OSMHybrid\" />\n                    </td>\n                </tr>\n             </tbody>\n        </table>");
+    this._content.innerHTML = "<table>\n            <thead>\n                <tr>                    \n                    <td colspan=\"3\">\n                        <label>".concat(translate$1('baseLayers.title'), "</label>\n                    </td>\n                </tr>\n            </thead>            \n            <tbody>\n                <tr class=\"line\">\n                    <td>\n                        <img src=\"").concat(baseLayers.sputnik.icon, "\" class=\"baseLayer\" data=\"sputnik\" />\n                    </td>\n                    <td>\n                        <img src=\"").concat(baseLayers.satellite.icon, "\" class=\"baseLayer\" data=\"satellite\" />\n                    </td>\n                   <td>\n                        <img src=\"").concat(baseLayers.OSMHybrid.icon, "\" class=\"baseLayer\" data=\"OSMHybrid\" />\n                    </td>\n                </tr>\n             </tbody>\n        </table>");
     L$1.DomEvent.on(this._icon, 'click', function (e) {
       L$1.DomEvent.stopPropagation(e);
       _this._active = !_this._active;
@@ -19407,7 +19407,7 @@ links.locales['pl'] = {
 };
 links.locales['ko'] = links.locales['ko_KO'];
 
-var translate$3 = T.getText.bind(T);
+var translate$2 = T.getText.bind(T);
 T.addText('rus', {
   DateInterval: {
     title: 'Приблизьте карту для загрузки на таймлайн'
@@ -19437,7 +19437,7 @@ var DateInterval = L$1.Control.extend({
     this._timelineNode = L$1.DomUtil.create('div', 'timeline', this._container);
     this._popup = L$1.DomUtil.create('div', 'hot-popup hidden', this._container);
     this._icon = L$1.DomUtil.create('div', 'icon', this._container);
-    this._icon.innerHTML = translate$3('DateInterval.title');
+    this._icon.innerHTML = translate$2('DateInterval.title');
     this._timeline = new links.Timeline(this._timelineNode, {
       locale: 'ru',
       width: '100%',
@@ -19674,7 +19674,7 @@ var DateInterval = L$1.Control.extend({
   }
 });
 
-var translate$4 = T.getText.bind(T);
+var translate$3 = T.getText.bind(T);
 
 var Borders = /*#__PURE__*/function (_EventTarget) {
   _inherits(Borders, _EventTarget);
@@ -19697,20 +19697,20 @@ var Borders = /*#__PURE__*/function (_EventTarget) {
 
     _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
 
-    var p = _this._legend.addGroup('borders', translate$4("legend.borders"));
+    var p = _this._legend.addGroup('borders', translate$3("legend.borders"));
 
     if (_this._layers.regions) {
-      _this._legend.addComponent('regions', translate$4('legend.regions'), p); // this._layers.regions.on('click', this._click, this);
+      _this._legend.addComponent('regions', translate$3('legend.regions'), p); // this._layers.regions.on('click', this._click, this);
 
     }
 
     if (_this._layers.forestries) {
-      _this._legend.addComponent('forestries', translate$4('legend.forestries'), p); // this._layers.forestries.on('click', this._click, this);
+      _this._legend.addComponent('forestries', translate$3('legend.forestries'), p); // this._layers.forestries.on('click', this._click, this);
 
     }
 
     if (_this._layers.forestries_local) {
-      _this._legend.addComponent('forestries_local', translate$4('legend.forestries_local'), p); // this._layers.forestries_local.on('click', this._click, this);
+      _this._legend.addComponent('forestries_local', translate$3('legend.forestries_local'), p); // this._layers.forestries_local.on('click', this._click, this);
 
     }
 
@@ -19737,7 +19737,7 @@ var Borders = /*#__PURE__*/function (_EventTarget) {
   return Borders;
 }(EventTarget);
 
-var translate$5 = T.getText.bind(T);
+var translate$4 = T.getText.bind(T);
 T.addText('rus', {
   legend: {
     quadrants: 'Лесохозяйственные кварталы',
@@ -19812,7 +19812,7 @@ var Controller = /*#__PURE__*/function (_EventTarget) {
       }
     });
 
-    _this._legend.addComponent(_this._kind, translate$5("legend.".concat(_this._kind)));
+    _this._legend.addComponent(_this._kind, translate$4("legend.".concat(_this._kind)));
 
     _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
 
@@ -19944,7 +19944,7 @@ var BaseView = /*#__PURE__*/function (_EventTarget) {
   return BaseView;
 }(EventTarget);
 
-var translate$6 = T.getText.bind(T);
+var translate$5 = T.getText.bind(T);
 T.addText('rus', {
   declaration: {
     title: 'Лесная декларация №',
@@ -19996,7 +19996,7 @@ var Declaration = /*#__PURE__*/function (_BaseView) {
 
     _this._container.classList.add('scanex-forestry-declaration');
 
-    _this._container.innerHTML = "<div class=\"header\">\n            <label>".concat(translate$6('declaration.title'), "</label>            \n            <label class=\"number\"></label>\n        </div>\n        <div class=\"scrollable\">\n            <table cellspacing=\"0\" cellpadding=\"0\">\n                <tbody>\n                    <!--\n                    <tr>\n                        <td>").concat(translate$6('declaration.federalSubject'), "</td>\n                        <td class=\"federal-subject\"></td>\n                    </tr>\n                    -->\n                    <tr>\n                        <td>").concat(translate$6('declaration.executive'), "</td>\n                        <td class=\"executive\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$6('declaration.officer'), "</td>\n                        <td class=\"officer\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$6('declaration.lessee'), "</td>\n                        <td class=\"lessee\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$6('declaration.contract'), "</td>\n                        <td class=\"contract\"></td>\n                    </tr>\n                </tbody>\n            </table>\n            <div>\n                <i class=\"scanex-declaration-icon doc\"></i>\n                <button class=\"open-doc\">").concat(translate$6('declaration.doc'), "</button>\n            </div>        \n            <table cellspacing=\"0\" cellpadding=\"0\">\n                <tbody>\n                    <tr>\n                        <td>").concat(translate$6('declaration.purpose_of_forest'), "</td>\n                        <td class=\"purpose_of_forest\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$6('declaration.protective_forest_category'), "</td>\n                        <td class=\"protective_forest_category\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$6('declaration.forestry_name'), "</td>\n                        <td class=\"forestry_name\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$6('declaration.local_forestry_name'), "</td>\n                        <td class=\"local_forestry_name\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$6('declaration.tract_name'), "</td>\n                        <td class=\"tract_name\"></td>\n                    </tr>                                \n                    <tr>\n                        <td>").concat(translate$6('declaration.quadrant_number'), "</td>\n                        <td class=\"quadrant_number\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$6('declaration.forest_inventory_unit_number'), "</td>\n                        <td class=\"forest_inventory_unit_number\"></td>\n                    </tr>\n                </tbody>\n            </table>\n            <div class=\"content\"></div>\n        </div>");
+    _this._container.innerHTML = "<div class=\"header\">\n            <label>".concat(translate$5('declaration.title'), "</label>            \n            <label class=\"number\"></label>\n        </div>\n        <div class=\"scrollable\">\n            <table cellspacing=\"0\" cellpadding=\"0\">\n                <tbody>\n                    <!--\n                    <tr>\n                        <td>").concat(translate$5('declaration.federalSubject'), "</td>\n                        <td class=\"federal-subject\"></td>\n                    </tr>\n                    -->\n                    <tr>\n                        <td>").concat(translate$5('declaration.executive'), "</td>\n                        <td class=\"executive\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$5('declaration.officer'), "</td>\n                        <td class=\"officer\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$5('declaration.lessee'), "</td>\n                        <td class=\"lessee\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$5('declaration.contract'), "</td>\n                        <td class=\"contract\"></td>\n                    </tr>\n                </tbody>\n            </table>\n            <div>\n                <i class=\"scanex-declaration-icon doc\"></i>\n                <button class=\"open-doc\">").concat(translate$5('declaration.doc'), "</button>\n            </div>        \n            <table cellspacing=\"0\" cellpadding=\"0\">\n                <tbody>\n                    <tr>\n                        <td>").concat(translate$5('declaration.purpose_of_forest'), "</td>\n                        <td class=\"purpose_of_forest\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$5('declaration.protective_forest_category'), "</td>\n                        <td class=\"protective_forest_category\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$5('declaration.forestry_name'), "</td>\n                        <td class=\"forestry_name\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$5('declaration.local_forestry_name'), "</td>\n                        <td class=\"local_forestry_name\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$5('declaration.tract_name'), "</td>\n                        <td class=\"tract_name\"></td>\n                    </tr>                                \n                    <tr>\n                        <td>").concat(translate$5('declaration.quadrant_number'), "</td>\n                        <td class=\"quadrant_number\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$5('declaration.forest_inventory_unit_number'), "</td>\n                        <td class=\"forest_inventory_unit_number\"></td>\n                    </tr>\n                </tbody>\n            </table>\n            <div class=\"content\"></div>\n        </div>");
     return _this;
   }
 
@@ -20035,7 +20035,7 @@ var Declaration = /*#__PURE__*/function (_BaseView) {
       this._container.querySelector('.content').innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tbody>                \n                ".concat(Array.isArray(CuttingAreas) ? CuttingAreas.map(function (_ref3) {
         var num = _ref3.num,
             volumes = _ref3.volumes;
-        return "<tr class=\"num\">\n                        <td>".concat(translate$6('declaration.num'), "</td>\n                        <td>").concat(num || '-', "</td>\n                    </tr>\n                    ").concat(Array.isArray(volumes) ? volumes.map(function (_ref4) {
+        return "<tr class=\"num\">\n                        <td>".concat(translate$5('declaration.num'), "</td>\n                        <td>").concat(num || '-', "</td>\n                    </tr>\n                    ").concat(Array.isArray(volumes) ? volumes.map(function (_ref4) {
           var total_square = _ref4.total_square,
               felling_form = _ref4.felling_form,
               felling_type = _ref4.felling_type,
@@ -20043,7 +20043,7 @@ var Declaration = /*#__PURE__*/function (_BaseView) {
               species = _ref4.species,
               unit_of_measurement = _ref4.unit_of_measurement,
               stock = _ref4.stock;
-          return "<tr>\n                        <td>".concat(translate$6('declaration.total_square'), "</td>\n                            <td class=\"amount\">").concat(total_square || '-', "</td>\n                        </tr>\n                        <tr>\n                            <td>").concat(translate$6('declaration.felling_form'), "</td>\n                            <td class=\"amount\">").concat(felling_form || '-', "</td>\n                        </tr>\n                        <tr>\n                            <td>").concat(translate$6('declaration.felling_type'), "</td>\n                            <td class=\"amount\">").concat(felling_type || '-', "</td>\n                        </tr>\n                        <tr>\n                            <td>").concat(translate$6('declaration.farm'), "</td>\n                            <td class=\"amount\">").concat(farm || '-', "</td>\n                        </tr>\n                        <tr>\n                            <td>").concat(translate$6('declaration.species'), "</td>\n                            <td class=\"amount\">").concat(species || '-', "</td>\n                        </tr>                        \n                        <tr>\n                            <td>").concat(translate$6('declaration.stock'), "</td>\n                            <td class=\"amount\">").concat(stock || '-', "</td>\n                        </tr>");
+          return "<tr>\n                        <td>".concat(translate$5('declaration.total_square'), "</td>\n                            <td class=\"amount\">").concat(total_square || '-', "</td>\n                        </tr>\n                        <tr>\n                            <td>").concat(translate$5('declaration.felling_form'), "</td>\n                            <td class=\"amount\">").concat(felling_form || '-', "</td>\n                        </tr>\n                        <tr>\n                            <td>").concat(translate$5('declaration.felling_type'), "</td>\n                            <td class=\"amount\">").concat(felling_type || '-', "</td>\n                        </tr>\n                        <tr>\n                            <td>").concat(translate$5('declaration.farm'), "</td>\n                            <td class=\"amount\">").concat(farm || '-', "</td>\n                        </tr>\n                        <tr>\n                            <td>").concat(translate$5('declaration.species'), "</td>\n                            <td class=\"amount\">").concat(species || '-', "</td>\n                        </tr>                        \n                        <tr>\n                            <td>").concat(translate$5('declaration.stock'), "</td>\n                            <td class=\"amount\">").concat(stock || '-', "</td>\n                        </tr>");
         }).join('') : '');
       }).join('') : '', "              \n            </tbody>\n        </table>");
     }
@@ -20160,7 +20160,7 @@ var Declarations = /*#__PURE__*/function (_Controller) {
   return Declarations;
 }(Controller);
 
-var translate$7 = T.getText.bind(T);
+var translate$6 = T.getText.bind(T);
 T.addText('rus', {
   hotspot: {
     title: 'Приблизьте карту для загрузки на таймлайн',
@@ -20191,7 +20191,7 @@ var Fires = /*#__PURE__*/function (_BaseView) {
     key: "open",
     value: function open(props) {
       var dateStr = new Date(props.Timestamp * 1000).toLocaleString();
-      this._container.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <thead>\n                <tr>\n                    <th colspan=\"2\" class=\"title\">".concat(translate$7('hotspot.fire'), "</th>\n                </tr>\n            </thead>\n            <tbody>\n                <tr>\n                    <td class=\"name\">").concat(translate$7('hotspot.date'), "</td>\n                    <td class=\"value\">").concat(dateStr, "</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(translate$7('hotspot.satelite'), "</td>\n                    <td class=\"value\">").concat(props.Satellite, "</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(translate$7('hotspot.from'), "</td>\n                    <td class=\"value\">").concat(translate$7('hotspot.scanex'), "</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(translate$7('hotspot.confidence'), "</td>\n                    <td class=\"value\">").concat(props.Confidence, " %</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(translate$7('hotspot.brightness'), "</td>\n                    <td class=\"value\">").concat(props.Brightness, "</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(translate$7('hotspot.frp'), "</td>\n                    <td class=\"value\">").concat(props.Frp, "</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(translate$7('hotspot.coords'), "</td>\n                    <td class=\"value\">").concat(props.coords, "</td>\n                </tr>\n            </tbody>\n        </table>");
+      this._container.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <thead>\n                <tr>\n                    <th colspan=\"2\" class=\"title\">".concat(translate$6('hotspot.fire'), "</th>\n                </tr>\n            </thead>\n            <tbody>\n                <tr>\n                    <td class=\"name\">").concat(translate$6('hotspot.date'), "</td>\n                    <td class=\"value\">").concat(dateStr, "</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(translate$6('hotspot.satelite'), "</td>\n                    <td class=\"value\">").concat(props.Satellite, "</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(translate$6('hotspot.from'), "</td>\n                    <td class=\"value\">").concat(translate$6('hotspot.scanex'), "</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(translate$6('hotspot.confidence'), "</td>\n                    <td class=\"value\">").concat(props.Confidence, " %</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(translate$6('hotspot.brightness'), "</td>\n                    <td class=\"value\">").concat(props.Brightness, "</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(translate$6('hotspot.frp'), "</td>\n                    <td class=\"value\">").concat(props.Frp, "</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(translate$6('hotspot.coords'), "</td>\n                    <td class=\"value\">").concat(props.coords, "</td>\n                </tr>\n            </tbody>\n        </table>");
 
       _get(_getPrototypeOf(Fires.prototype), "open", this).call(this);
     }
@@ -20200,7 +20200,7 @@ var Fires = /*#__PURE__*/function (_BaseView) {
   return Fires;
 }(BaseView);
 
-var translate$8 = T.getText.bind(T);
+var translate$7 = T.getText.bind(T);
 var hotSpotLayerID = '9DC30891452449DD8D551D0AA62FFF54';
 
 var Fires$1 = /*#__PURE__*/function (_EventTarget) {
@@ -20228,7 +20228,7 @@ var Fires$1 = /*#__PURE__*/function (_EventTarget) {
     _this._dateInterval = dateInterval;
     _this._permissions = permissions;
 
-    _this._legend.addComponent('fires', translate$8('legend.fires'));
+    _this._legend.addComponent('fires', translate$7('legend.fires'));
 
     _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
 
@@ -20397,7 +20397,1169 @@ var Fires$1 = /*#__PURE__*/function (_EventTarget) {
   return Fires$1;
 }(EventTarget);
 
-var translate$9 = T.getText.bind(T);
+var pikaday = createCommonjsModule(function (module, exports) {
+  /*!
+   * Pikaday
+   *
+   * Copyright © 2014 David Bushell | BSD & MIT license | https://github.com/Pikaday/Pikaday
+   */
+  (function (root, factory) {
+
+    var moment$1;
+
+    {
+      // CommonJS module
+      // Load moment.js as an optional dependency
+      try {
+        moment$1 = moment;
+      } catch (e) {}
+
+      module.exports = factory(moment$1);
+    }
+  })(commonjsGlobal, function (moment) {
+    /**
+     * feature detection and helper functions
+     */
+
+    var hasMoment = typeof moment === 'function',
+        hasEventListeners = !!window.addEventListener,
+        document = window.document,
+        sto = window.setTimeout,
+        addEvent = function addEvent(el, e, callback, capture) {
+      if (hasEventListeners) {
+        el.addEventListener(e, callback, !!capture);
+      } else {
+        el.attachEvent('on' + e, callback);
+      }
+    },
+        removeEvent = function removeEvent(el, e, callback, capture) {
+      if (hasEventListeners) {
+        el.removeEventListener(e, callback, !!capture);
+      } else {
+        el.detachEvent('on' + e, callback);
+      }
+    },
+        trim = function trim(str) {
+      return str.trim ? str.trim() : str.replace(/^\s+|\s+$/g, '');
+    },
+        hasClass = function hasClass(el, cn) {
+      return (' ' + el.className + ' ').indexOf(' ' + cn + ' ') !== -1;
+    },
+        addClass = function addClass(el, cn) {
+      if (!hasClass(el, cn)) {
+        el.className = el.className === '' ? cn : el.className + ' ' + cn;
+      }
+    },
+        removeClass = function removeClass(el, cn) {
+      el.className = trim((' ' + el.className + ' ').replace(' ' + cn + ' ', ' '));
+    },
+        isArray = function isArray(obj) {
+      return /Array/.test(Object.prototype.toString.call(obj));
+    },
+        isDate = function isDate(obj) {
+      return /Date/.test(Object.prototype.toString.call(obj)) && !isNaN(obj.getTime());
+    },
+        isWeekend = function isWeekend(date) {
+      var day = date.getDay();
+      return day === 0 || day === 6;
+    },
+        isLeapYear = function isLeapYear(year) {
+      // solution by Matti Virkkunen: http://stackoverflow.com/a/4881951
+      return year % 4 === 0 && year % 100 !== 0 || year % 400 === 0;
+    },
+        getDaysInMonth = function getDaysInMonth(year, month) {
+      return [31, isLeapYear(year) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month];
+    },
+        setToStartOfDay = function setToStartOfDay(date) {
+      if (isDate(date)) date.setHours(0, 0, 0, 0);
+    },
+        compareDates = function compareDates(a, b) {
+      // weak date comparison (use setToStartOfDay(date) to ensure correct result)
+      return a.getTime() === b.getTime();
+    },
+        extend = function extend(to, from, overwrite) {
+      var prop, hasProp;
+
+      for (prop in from) {
+        hasProp = to[prop] !== undefined;
+
+        if (hasProp && _typeof(from[prop]) === 'object' && from[prop] !== null && from[prop].nodeName === undefined) {
+          if (isDate(from[prop])) {
+            if (overwrite) {
+              to[prop] = new Date(from[prop].getTime());
+            }
+          } else if (isArray(from[prop])) {
+            if (overwrite) {
+              to[prop] = from[prop].slice(0);
+            }
+          } else {
+            to[prop] = extend({}, from[prop], overwrite);
+          }
+        } else if (overwrite || !hasProp) {
+          to[prop] = from[prop];
+        }
+      }
+
+      return to;
+    },
+        fireEvent = function fireEvent(el, eventName, data) {
+      var ev;
+
+      if (document.createEvent) {
+        ev = document.createEvent('HTMLEvents');
+        ev.initEvent(eventName, true, false);
+        ev = extend(ev, data);
+        el.dispatchEvent(ev);
+      } else if (document.createEventObject) {
+        ev = document.createEventObject();
+        ev = extend(ev, data);
+        el.fireEvent('on' + eventName, ev);
+      }
+    },
+        adjustCalendar = function adjustCalendar(calendar) {
+      if (calendar.month < 0) {
+        calendar.year -= Math.ceil(Math.abs(calendar.month) / 12);
+        calendar.month += 12;
+      }
+
+      if (calendar.month > 11) {
+        calendar.year += Math.floor(Math.abs(calendar.month) / 12);
+        calendar.month -= 12;
+      }
+
+      return calendar;
+    },
+
+    /**
+     * defaults and localisation
+     */
+    defaults = {
+      // bind the picker to a form field
+      field: null,
+      // automatically show/hide the picker on `field` focus (default `true` if `field` is set)
+      bound: undefined,
+      // data-attribute on the input field with an aria assistance tekst (only applied when `bound` is set)
+      ariaLabel: 'Use the arrow keys to pick a date',
+      // position of the datepicker, relative to the field (default to bottom & left)
+      // ('bottom' & 'left' keywords are not used, 'top' & 'right' are modifier on the bottom/left position)
+      position: 'bottom left',
+      // automatically fit in the viewport even if it means repositioning from the position option
+      reposition: true,
+      // the default output format for `.toString()` and `field` value
+      format: 'YYYY-MM-DD',
+      // the toString function which gets passed a current date object and format
+      // and returns a string
+      toString: null,
+      // used to create date object from current input string
+      parse: null,
+      // the initial date to view when first opened
+      defaultDate: null,
+      // make the `defaultDate` the initial selected value
+      setDefaultDate: false,
+      // first day of week (0: Sunday, 1: Monday etc)
+      firstDay: 0,
+      // the default flag for moment's strict date parsing
+      formatStrict: false,
+      // the minimum/earliest date that can be selected
+      minDate: null,
+      // the maximum/latest date that can be selected
+      maxDate: null,
+      // number of years either side, or array of upper/lower range
+      yearRange: 10,
+      // show week numbers at head of row
+      showWeekNumber: false,
+      // Week picker mode
+      pickWholeWeek: false,
+      // used internally (don't config outside)
+      minYear: 0,
+      maxYear: 9999,
+      minMonth: undefined,
+      maxMonth: undefined,
+      startRange: null,
+      endRange: null,
+      isRTL: false,
+      // Additional text to append to the year in the calendar title
+      yearSuffix: '',
+      // Render the month after year in the calendar title
+      showMonthAfterYear: false,
+      // Render days of the calendar grid that fall in the next or previous month
+      showDaysInNextAndPreviousMonths: false,
+      // Allows user to select days that fall in the next or previous month
+      enableSelectionDaysInNextAndPreviousMonths: false,
+      // how many months are visible
+      numberOfMonths: 1,
+      // when numberOfMonths is used, this will help you to choose where the main calendar will be (default `left`, can be set to `right`)
+      // only used for the first display or when a selected date is not visible
+      mainCalendar: 'left',
+      // Specify a DOM element to render the calendar in
+      container: undefined,
+      // Blur field when date is selected
+      blurFieldOnSelect: true,
+      // internationalization
+      i18n: {
+        previousMonth: 'Previous Month',
+        nextMonth: 'Next Month',
+        months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+        weekdays: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+        weekdaysShort: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+      },
+      // Theme Classname
+      theme: null,
+      // events array
+      events: [],
+      // callback function
+      onSelect: null,
+      onOpen: null,
+      onClose: null,
+      onDraw: null,
+      // Enable keyboard input
+      keyboardInput: true
+    },
+
+    /**
+     * templating functions to abstract HTML rendering
+     */
+    renderDayName = function renderDayName(opts, day, abbr) {
+      day += opts.firstDay;
+
+      while (day >= 7) {
+        day -= 7;
+      }
+
+      return abbr ? opts.i18n.weekdaysShort[day] : opts.i18n.weekdays[day];
+    },
+        renderDay = function renderDay(opts) {
+      var arr = [];
+      var ariaSelected = 'false';
+
+      if (opts.isEmpty) {
+        if (opts.showDaysInNextAndPreviousMonths) {
+          arr.push('is-outside-current-month');
+
+          if (!opts.enableSelectionDaysInNextAndPreviousMonths) {
+            arr.push('is-selection-disabled');
+          }
+        } else {
+          return '<td class="is-empty"></td>';
+        }
+      }
+
+      if (opts.isDisabled) {
+        arr.push('is-disabled');
+      }
+
+      if (opts.isToday) {
+        arr.push('is-today');
+      }
+
+      if (opts.isSelected) {
+        arr.push('is-selected');
+        ariaSelected = 'true';
+      }
+
+      if (opts.hasEvent) {
+        arr.push('has-event');
+      }
+
+      if (opts.isInRange) {
+        arr.push('is-inrange');
+      }
+
+      if (opts.isStartRange) {
+        arr.push('is-startrange');
+      }
+
+      if (opts.isEndRange) {
+        arr.push('is-endrange');
+      }
+
+      return '<td data-day="' + opts.day + '" class="' + arr.join(' ') + '" aria-selected="' + ariaSelected + '">' + '<button class="pika-button pika-day" type="button" ' + 'data-pika-year="' + opts.year + '" data-pika-month="' + opts.month + '" data-pika-day="' + opts.day + '">' + opts.day + '</button>' + '</td>';
+    },
+        renderWeek = function renderWeek(d, m, y) {
+      // Lifted from http://javascript.about.com/library/blweekyear.htm, lightly modified.
+      var onejan = new Date(y, 0, 1),
+          weekNum = Math.ceil(((new Date(y, m, d) - onejan) / 86400000 + onejan.getDay() + 1) / 7);
+      return '<td class="pika-week">' + weekNum + '</td>';
+    },
+        renderRow = function renderRow(days, isRTL, pickWholeWeek, isRowSelected) {
+      return '<tr class="pika-row' + (pickWholeWeek ? ' pick-whole-week' : '') + (isRowSelected ? ' is-selected' : '') + '">' + (isRTL ? days.reverse() : days).join('') + '</tr>';
+    },
+        renderBody = function renderBody(rows) {
+      return '<tbody>' + rows.join('') + '</tbody>';
+    },
+        renderHead = function renderHead(opts) {
+      var i,
+          arr = [];
+
+      if (opts.showWeekNumber) {
+        arr.push('<th></th>');
+      }
+
+      for (i = 0; i < 7; i++) {
+        arr.push('<th scope="col"><abbr title="' + renderDayName(opts, i) + '">' + renderDayName(opts, i, true) + '</abbr></th>');
+      }
+
+      return '<thead><tr>' + (opts.isRTL ? arr.reverse() : arr).join('') + '</tr></thead>';
+    },
+        renderTitle = function renderTitle(instance, c, year, month, refYear, randId) {
+      var i,
+          j,
+          arr,
+          opts = instance._o,
+          isMinYear = year === opts.minYear,
+          isMaxYear = year === opts.maxYear,
+          html = '<div id="' + randId + '" class="pika-title" role="heading" aria-live="assertive">',
+          monthHtml,
+          yearHtml,
+          prev = true,
+          next = true;
+
+      for (arr = [], i = 0; i < 12; i++) {
+        arr.push('<option value="' + (year === refYear ? i - c : 12 + i - c) + '"' + (i === month ? ' selected="selected"' : '') + (isMinYear && i < opts.minMonth || isMaxYear && i > opts.maxMonth ? 'disabled="disabled"' : '') + '>' + opts.i18n.months[i] + '</option>');
+      }
+
+      monthHtml = '<div class="pika-label">' + opts.i18n.months[month] + '<select class="pika-select pika-select-month" tabindex="-1">' + arr.join('') + '</select></div>';
+
+      if (isArray(opts.yearRange)) {
+        i = opts.yearRange[0];
+        j = opts.yearRange[1] + 1;
+      } else {
+        i = year - opts.yearRange;
+        j = 1 + year + opts.yearRange;
+      }
+
+      for (arr = []; i < j && i <= opts.maxYear; i++) {
+        if (i >= opts.minYear) {
+          arr.push('<option value="' + i + '"' + (i === year ? ' selected="selected"' : '') + '>' + i + '</option>');
+        }
+      }
+
+      yearHtml = '<div class="pika-label">' + year + opts.yearSuffix + '<select class="pika-select pika-select-year" tabindex="-1">' + arr.join('') + '</select></div>';
+
+      if (opts.showMonthAfterYear) {
+        html += yearHtml + monthHtml;
+      } else {
+        html += monthHtml + yearHtml;
+      }
+
+      if (isMinYear && (month === 0 || opts.minMonth >= month)) {
+        prev = false;
+      }
+
+      if (isMaxYear && (month === 11 || opts.maxMonth <= month)) {
+        next = false;
+      }
+
+      if (c === 0) {
+        html += '<button class="pika-prev' + (prev ? '' : ' is-disabled') + '" type="button">' + opts.i18n.previousMonth + '</button>';
+      }
+
+      if (c === instance._o.numberOfMonths - 1) {
+        html += '<button class="pika-next' + (next ? '' : ' is-disabled') + '" type="button">' + opts.i18n.nextMonth + '</button>';
+      }
+
+      return html += '</div>';
+    },
+        renderTable = function renderTable(opts, data, randId) {
+      return '<table cellpadding="0" cellspacing="0" class="pika-table" role="grid" aria-labelledby="' + randId + '">' + renderHead(opts) + renderBody(data) + '</table>';
+    },
+
+    /**
+     * Pikaday constructor
+     */
+    Pikaday = function Pikaday(options) {
+      var self = this,
+          opts = self.config(options);
+
+      self._onMouseDown = function (e) {
+        if (!self._v) {
+          return;
+        }
+
+        e = e || window.event;
+        var target = e.target || e.srcElement;
+
+        if (!target) {
+          return;
+        }
+
+        if (!hasClass(target, 'is-disabled')) {
+          if (hasClass(target, 'pika-button') && !hasClass(target, 'is-empty') && !hasClass(target.parentNode, 'is-disabled')) {
+            self.setDate(new Date(target.getAttribute('data-pika-year'), target.getAttribute('data-pika-month'), target.getAttribute('data-pika-day')));
+
+            if (opts.bound) {
+              sto(function () {
+                self.hide();
+
+                if (opts.blurFieldOnSelect && opts.field) {
+                  opts.field.blur();
+                }
+              }, 100);
+            }
+          } else if (hasClass(target, 'pika-prev')) {
+            self.prevMonth();
+          } else if (hasClass(target, 'pika-next')) {
+            self.nextMonth();
+          }
+        }
+
+        if (!hasClass(target, 'pika-select')) {
+          // if this is touch event prevent mouse events emulation
+          if (e.preventDefault) {
+            e.preventDefault();
+          } else {
+            e.returnValue = false;
+            return false;
+          }
+        } else {
+          self._c = true;
+        }
+      };
+
+      self._onChange = function (e) {
+        e = e || window.event;
+        var target = e.target || e.srcElement;
+
+        if (!target) {
+          return;
+        }
+
+        if (hasClass(target, 'pika-select-month')) {
+          self.gotoMonth(target.value);
+        } else if (hasClass(target, 'pika-select-year')) {
+          self.gotoYear(target.value);
+        }
+      };
+
+      self._onKeyChange = function (e) {
+        e = e || window.event;
+
+        if (self.isVisible()) {
+          switch (e.keyCode) {
+            case 13:
+            case 27:
+              if (opts.field) {
+                opts.field.blur();
+              }
+
+              break;
+
+            case 37:
+              e.preventDefault();
+              self.adjustDate('subtract', 1);
+              break;
+
+            case 38:
+              self.adjustDate('subtract', 7);
+              break;
+
+            case 39:
+              self.adjustDate('add', 1);
+              break;
+
+            case 40:
+              self.adjustDate('add', 7);
+              break;
+          }
+        }
+      };
+
+      self._onInputChange = function (e) {
+        var date;
+
+        if (e.firedBy === self) {
+          return;
+        }
+
+        if (opts.parse) {
+          date = opts.parse(opts.field.value, opts.format);
+        } else if (hasMoment) {
+          date = moment(opts.field.value, opts.format, opts.formatStrict);
+          date = date && date.isValid() ? date.toDate() : null;
+        } else {
+          date = new Date(Date.parse(opts.field.value));
+        }
+
+        if (isDate(date)) {
+          self.setDate(date);
+        }
+
+        if (!self._v) {
+          self.show();
+        }
+      };
+
+      self._onInputFocus = function () {
+        self.show();
+      };
+
+      self._onInputClick = function () {
+        self.show();
+      };
+
+      self._onInputBlur = function () {
+        // IE allows pika div to gain focus; catch blur the input field
+        var pEl = document.activeElement;
+
+        do {
+          if (hasClass(pEl, 'pika-single')) {
+            return;
+          }
+        } while (pEl = pEl.parentNode);
+
+        if (!self._c) {
+          self._b = sto(function () {
+            self.hide();
+          }, 50);
+        }
+
+        self._c = false;
+      };
+
+      self._onClick = function (e) {
+        e = e || window.event;
+        var target = e.target || e.srcElement,
+            pEl = target;
+
+        if (!target) {
+          return;
+        }
+
+        if (!hasEventListeners && hasClass(target, 'pika-select')) {
+          if (!target.onchange) {
+            target.setAttribute('onchange', 'return;');
+            addEvent(target, 'change', self._onChange);
+          }
+        }
+
+        do {
+          if (hasClass(pEl, 'pika-single') || pEl === opts.trigger) {
+            return;
+          }
+        } while (pEl = pEl.parentNode);
+
+        if (self._v && target !== opts.trigger && pEl !== opts.trigger) {
+          self.hide();
+        }
+      };
+
+      self.el = document.createElement('div');
+      self.el.className = 'pika-single' + (opts.isRTL ? ' is-rtl' : '') + (opts.theme ? ' ' + opts.theme : '');
+      addEvent(self.el, 'mousedown', self._onMouseDown, true);
+      addEvent(self.el, 'touchend', self._onMouseDown, true);
+      addEvent(self.el, 'change', self._onChange);
+
+      if (opts.keyboardInput) {
+        addEvent(document, 'keydown', self._onKeyChange);
+      }
+
+      if (opts.field) {
+        if (opts.container) {
+          opts.container.appendChild(self.el);
+        } else if (opts.bound) {
+          document.body.appendChild(self.el);
+        } else {
+          opts.field.parentNode.insertBefore(self.el, opts.field.nextSibling);
+        }
+
+        addEvent(opts.field, 'change', self._onInputChange);
+
+        if (!opts.defaultDate) {
+          if (hasMoment && opts.field.value) {
+            opts.defaultDate = moment(opts.field.value, opts.format).toDate();
+          } else {
+            opts.defaultDate = new Date(Date.parse(opts.field.value));
+          }
+
+          opts.setDefaultDate = true;
+        }
+      }
+
+      var defDate = opts.defaultDate;
+
+      if (isDate(defDate)) {
+        if (opts.setDefaultDate) {
+          self.setDate(defDate, true);
+        } else {
+          self.gotoDate(defDate);
+        }
+      } else {
+        self.gotoDate(new Date());
+      }
+
+      if (opts.bound) {
+        this.hide();
+        self.el.className += ' is-bound';
+        addEvent(opts.trigger, 'click', self._onInputClick);
+        addEvent(opts.trigger, 'focus', self._onInputFocus);
+        addEvent(opts.trigger, 'blur', self._onInputBlur);
+      } else {
+        this.show();
+      }
+    };
+    /**
+     * public Pikaday API
+     */
+
+
+    Pikaday.prototype = {
+      /**
+       * configure functionality
+       */
+      config: function config(options) {
+        if (!this._o) {
+          this._o = extend({}, defaults, true);
+        }
+
+        var opts = extend(this._o, options, true);
+        opts.isRTL = !!opts.isRTL;
+        opts.field = opts.field && opts.field.nodeName ? opts.field : null;
+        opts.theme = typeof opts.theme === 'string' && opts.theme ? opts.theme : null;
+        opts.bound = !!(opts.bound !== undefined ? opts.field && opts.bound : opts.field);
+        opts.trigger = opts.trigger && opts.trigger.nodeName ? opts.trigger : opts.field;
+        opts.disableWeekends = !!opts.disableWeekends;
+        opts.disableDayFn = typeof opts.disableDayFn === 'function' ? opts.disableDayFn : null;
+        var nom = parseInt(opts.numberOfMonths, 10) || 1;
+        opts.numberOfMonths = nom > 4 ? 4 : nom;
+
+        if (!isDate(opts.minDate)) {
+          opts.minDate = false;
+        }
+
+        if (!isDate(opts.maxDate)) {
+          opts.maxDate = false;
+        }
+
+        if (opts.minDate && opts.maxDate && opts.maxDate < opts.minDate) {
+          opts.maxDate = opts.minDate = false;
+        }
+
+        if (opts.minDate) {
+          this.setMinDate(opts.minDate);
+        }
+
+        if (opts.maxDate) {
+          this.setMaxDate(opts.maxDate);
+        }
+
+        if (isArray(opts.yearRange)) {
+          var fallback = new Date().getFullYear() - 10;
+          opts.yearRange[0] = parseInt(opts.yearRange[0], 10) || fallback;
+          opts.yearRange[1] = parseInt(opts.yearRange[1], 10) || fallback;
+        } else {
+          opts.yearRange = Math.abs(parseInt(opts.yearRange, 10)) || defaults.yearRange;
+
+          if (opts.yearRange > 100) {
+            opts.yearRange = 100;
+          }
+        }
+
+        return opts;
+      },
+
+      /**
+       * return a formatted string of the current selection (using Moment.js if available)
+       */
+      toString: function toString(format) {
+        format = format || this._o.format;
+
+        if (!isDate(this._d)) {
+          return '';
+        }
+
+        if (this._o.toString) {
+          return this._o.toString(this._d, format);
+        }
+
+        if (hasMoment) {
+          return moment(this._d).format(format);
+        }
+
+        return this._d.toDateString();
+      },
+
+      /**
+       * return a Moment.js object of the current selection (if available)
+       */
+      getMoment: function getMoment() {
+        return hasMoment ? moment(this._d) : null;
+      },
+
+      /**
+       * set the current selection from a Moment.js object (if available)
+       */
+      setMoment: function setMoment(date, preventOnSelect) {
+        if (hasMoment && moment.isMoment(date)) {
+          this.setDate(date.toDate(), preventOnSelect);
+        }
+      },
+
+      /**
+       * return a Date object of the current selection
+       */
+      getDate: function getDate() {
+        return isDate(this._d) ? new Date(this._d.getTime()) : null;
+      },
+
+      /**
+       * set the current selection
+       */
+      setDate: function setDate(date, preventOnSelect) {
+        if (!date) {
+          this._d = null;
+
+          if (this._o.field) {
+            this._o.field.value = '';
+            fireEvent(this._o.field, 'change', {
+              firedBy: this
+            });
+          }
+
+          return this.draw();
+        }
+
+        if (typeof date === 'string') {
+          date = new Date(Date.parse(date));
+        }
+
+        if (!isDate(date)) {
+          return;
+        }
+
+        var min = this._o.minDate,
+            max = this._o.maxDate;
+
+        if (isDate(min) && date < min) {
+          date = min;
+        } else if (isDate(max) && date > max) {
+          date = max;
+        }
+
+        this._d = new Date(date.getTime());
+        setToStartOfDay(this._d);
+        this.gotoDate(this._d);
+
+        if (this._o.field) {
+          this._o.field.value = this.toString();
+          fireEvent(this._o.field, 'change', {
+            firedBy: this
+          });
+        }
+
+        if (!preventOnSelect && typeof this._o.onSelect === 'function') {
+          this._o.onSelect.call(this, this.getDate());
+        }
+      },
+
+      /**
+       * change view to a specific date
+       */
+      gotoDate: function gotoDate(date) {
+        var newCalendar = true;
+
+        if (!isDate(date)) {
+          return;
+        }
+
+        if (this.calendars) {
+          var firstVisibleDate = new Date(this.calendars[0].year, this.calendars[0].month, 1),
+              lastVisibleDate = new Date(this.calendars[this.calendars.length - 1].year, this.calendars[this.calendars.length - 1].month, 1),
+              visibleDate = date.getTime(); // get the end of the month
+
+          lastVisibleDate.setMonth(lastVisibleDate.getMonth() + 1);
+          lastVisibleDate.setDate(lastVisibleDate.getDate() - 1);
+          newCalendar = visibleDate < firstVisibleDate.getTime() || lastVisibleDate.getTime() < visibleDate;
+        }
+
+        if (newCalendar) {
+          this.calendars = [{
+            month: date.getMonth(),
+            year: date.getFullYear()
+          }];
+
+          if (this._o.mainCalendar === 'right') {
+            this.calendars[0].month += 1 - this._o.numberOfMonths;
+          }
+        }
+
+        this.adjustCalendars();
+      },
+      adjustDate: function adjustDate(sign, days) {
+        var day = this.getDate() || new Date();
+        var difference = parseInt(days) * 24 * 60 * 60 * 1000;
+        var newDay;
+
+        if (sign === 'add') {
+          newDay = new Date(day.valueOf() + difference);
+        } else if (sign === 'subtract') {
+          newDay = new Date(day.valueOf() - difference);
+        }
+
+        this.setDate(newDay);
+      },
+      adjustCalendars: function adjustCalendars() {
+        this.calendars[0] = adjustCalendar(this.calendars[0]);
+
+        for (var c = 1; c < this._o.numberOfMonths; c++) {
+          this.calendars[c] = adjustCalendar({
+            month: this.calendars[0].month + c,
+            year: this.calendars[0].year
+          });
+        }
+
+        this.draw();
+      },
+      gotoToday: function gotoToday() {
+        this.gotoDate(new Date());
+      },
+
+      /**
+       * change view to a specific month (zero-index, e.g. 0: January)
+       */
+      gotoMonth: function gotoMonth(month) {
+        if (!isNaN(month)) {
+          this.calendars[0].month = parseInt(month, 10);
+          this.adjustCalendars();
+        }
+      },
+      nextMonth: function nextMonth() {
+        this.calendars[0].month++;
+        this.adjustCalendars();
+      },
+      prevMonth: function prevMonth() {
+        this.calendars[0].month--;
+        this.adjustCalendars();
+      },
+
+      /**
+       * change view to a specific full year (e.g. "2012")
+       */
+      gotoYear: function gotoYear(year) {
+        if (!isNaN(year)) {
+          this.calendars[0].year = parseInt(year, 10);
+          this.adjustCalendars();
+        }
+      },
+
+      /**
+       * change the minDate
+       */
+      setMinDate: function setMinDate(value) {
+        if (value instanceof Date) {
+          setToStartOfDay(value);
+          this._o.minDate = value;
+          this._o.minYear = value.getFullYear();
+          this._o.minMonth = value.getMonth();
+        } else {
+          this._o.minDate = defaults.minDate;
+          this._o.minYear = defaults.minYear;
+          this._o.minMonth = defaults.minMonth;
+          this._o.startRange = defaults.startRange;
+        }
+
+        this.draw();
+      },
+
+      /**
+       * change the maxDate
+       */
+      setMaxDate: function setMaxDate(value) {
+        if (value instanceof Date) {
+          setToStartOfDay(value);
+          this._o.maxDate = value;
+          this._o.maxYear = value.getFullYear();
+          this._o.maxMonth = value.getMonth();
+        } else {
+          this._o.maxDate = defaults.maxDate;
+          this._o.maxYear = defaults.maxYear;
+          this._o.maxMonth = defaults.maxMonth;
+          this._o.endRange = defaults.endRange;
+        }
+
+        this.draw();
+      },
+      setStartRange: function setStartRange(value) {
+        this._o.startRange = value;
+      },
+      setEndRange: function setEndRange(value) {
+        this._o.endRange = value;
+      },
+
+      /**
+       * refresh the HTML
+       */
+      draw: function draw(force) {
+        if (!this._v && !force) {
+          return;
+        }
+
+        var opts = this._o,
+            minYear = opts.minYear,
+            maxYear = opts.maxYear,
+            minMonth = opts.minMonth,
+            maxMonth = opts.maxMonth,
+            html = '',
+            randId;
+
+        if (this._y <= minYear) {
+          this._y = minYear;
+
+          if (!isNaN(minMonth) && this._m < minMonth) {
+            this._m = minMonth;
+          }
+        }
+
+        if (this._y >= maxYear) {
+          this._y = maxYear;
+
+          if (!isNaN(maxMonth) && this._m > maxMonth) {
+            this._m = maxMonth;
+          }
+        }
+
+        randId = 'pika-title-' + Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 2);
+
+        for (var c = 0; c < opts.numberOfMonths; c++) {
+          html += '<div class="pika-lendar">' + renderTitle(this, c, this.calendars[c].year, this.calendars[c].month, this.calendars[0].year, randId) + this.render(this.calendars[c].year, this.calendars[c].month, randId) + '</div>';
+        }
+
+        this.el.innerHTML = html;
+
+        if (opts.bound) {
+          if (opts.field.type !== 'hidden') {
+            sto(function () {
+              opts.trigger.focus();
+            }, 1);
+          }
+        }
+
+        if (typeof this._o.onDraw === 'function') {
+          this._o.onDraw(this);
+        }
+
+        if (opts.bound) {
+          // let the screen reader user know to use arrow keys
+          opts.field.setAttribute('aria-label', opts.ariaLabel);
+        }
+      },
+      adjustPosition: function adjustPosition() {
+        var field, pEl, width, height, viewportWidth, viewportHeight, scrollTop, left, top, clientRect, leftAligned, bottomAligned;
+        if (this._o.container) return;
+        this.el.style.position = 'absolute';
+        field = this._o.trigger;
+        pEl = field;
+        width = this.el.offsetWidth;
+        height = this.el.offsetHeight;
+        viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+        viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+        scrollTop = window.pageYOffset || document.body.scrollTop || document.documentElement.scrollTop;
+        leftAligned = true;
+        bottomAligned = true;
+
+        if (typeof field.getBoundingClientRect === 'function') {
+          clientRect = field.getBoundingClientRect();
+          left = clientRect.left + window.pageXOffset;
+          top = clientRect.bottom + window.pageYOffset;
+        } else {
+          left = pEl.offsetLeft;
+          top = pEl.offsetTop + pEl.offsetHeight;
+
+          while (pEl = pEl.offsetParent) {
+            left += pEl.offsetLeft;
+            top += pEl.offsetTop;
+          }
+        } // default position is bottom & left
+
+
+        if (this._o.reposition && left + width > viewportWidth || this._o.position.indexOf('right') > -1 && left - width + field.offsetWidth > 0) {
+          left = left - width + field.offsetWidth;
+          leftAligned = false;
+        }
+
+        if (this._o.reposition && top + height > viewportHeight + scrollTop || this._o.position.indexOf('top') > -1 && top - height - field.offsetHeight > 0) {
+          top = top - height - field.offsetHeight;
+          bottomAligned = false;
+        }
+
+        this.el.style.left = left + 'px';
+        this.el.style.top = top + 'px';
+        addClass(this.el, leftAligned ? 'left-aligned' : 'right-aligned');
+        addClass(this.el, bottomAligned ? 'bottom-aligned' : 'top-aligned');
+        removeClass(this.el, !leftAligned ? 'left-aligned' : 'right-aligned');
+        removeClass(this.el, !bottomAligned ? 'bottom-aligned' : 'top-aligned');
+      },
+
+      /**
+       * render HTML for a particular month
+       */
+      render: function render(year, month, randId) {
+        var opts = this._o,
+            now = new Date(),
+            days = getDaysInMonth(year, month),
+            before = new Date(year, month, 1).getDay(),
+            data = [],
+            row = [];
+        setToStartOfDay(now);
+
+        if (opts.firstDay > 0) {
+          before -= opts.firstDay;
+
+          if (before < 0) {
+            before += 7;
+          }
+        }
+
+        var previousMonth = month === 0 ? 11 : month - 1,
+            nextMonth = month === 11 ? 0 : month + 1,
+            yearOfPreviousMonth = month === 0 ? year - 1 : year,
+            yearOfNextMonth = month === 11 ? year + 1 : year,
+            daysInPreviousMonth = getDaysInMonth(yearOfPreviousMonth, previousMonth);
+        var cells = days + before,
+            after = cells;
+
+        while (after > 7) {
+          after -= 7;
+        }
+
+        cells += 7 - after;
+        var isWeekSelected = false;
+
+        for (var i = 0, r = 0; i < cells; i++) {
+          var day = new Date(year, month, 1 + (i - before)),
+              isSelected = isDate(this._d) ? compareDates(day, this._d) : false,
+              isToday = compareDates(day, now),
+              hasEvent = opts.events.indexOf(day.toDateString()) !== -1 ? true : false,
+              isEmpty = i < before || i >= days + before,
+              dayNumber = 1 + (i - before),
+              monthNumber = month,
+              yearNumber = year,
+              isStartRange = opts.startRange && compareDates(opts.startRange, day),
+              isEndRange = opts.endRange && compareDates(opts.endRange, day),
+              isInRange = opts.startRange && opts.endRange && opts.startRange < day && day < opts.endRange,
+              isDisabled = opts.minDate && day < opts.minDate || opts.maxDate && day > opts.maxDate || opts.disableWeekends && isWeekend(day) || opts.disableDayFn && opts.disableDayFn(day);
+
+          if (isEmpty) {
+            if (i < before) {
+              dayNumber = daysInPreviousMonth + dayNumber;
+              monthNumber = previousMonth;
+              yearNumber = yearOfPreviousMonth;
+            } else {
+              dayNumber = dayNumber - days;
+              monthNumber = nextMonth;
+              yearNumber = yearOfNextMonth;
+            }
+          }
+
+          var dayConfig = {
+            day: dayNumber,
+            month: monthNumber,
+            year: yearNumber,
+            hasEvent: hasEvent,
+            isSelected: isSelected,
+            isToday: isToday,
+            isDisabled: isDisabled,
+            isEmpty: isEmpty,
+            isStartRange: isStartRange,
+            isEndRange: isEndRange,
+            isInRange: isInRange,
+            showDaysInNextAndPreviousMonths: opts.showDaysInNextAndPreviousMonths,
+            enableSelectionDaysInNextAndPreviousMonths: opts.enableSelectionDaysInNextAndPreviousMonths
+          };
+
+          if (opts.pickWholeWeek && isSelected) {
+            isWeekSelected = true;
+          }
+
+          row.push(renderDay(dayConfig));
+
+          if (++r === 7) {
+            if (opts.showWeekNumber) {
+              row.unshift(renderWeek(i - before, month, year));
+            }
+
+            data.push(renderRow(row, opts.isRTL, opts.pickWholeWeek, isWeekSelected));
+            row = [];
+            r = 0;
+            isWeekSelected = false;
+          }
+        }
+
+        return renderTable(opts, data, randId);
+      },
+      isVisible: function isVisible() {
+        return this._v;
+      },
+      show: function show() {
+        if (!this.isVisible()) {
+          this._v = true;
+          this.draw();
+          removeClass(this.el, 'is-hidden');
+
+          if (this._o.bound) {
+            addEvent(document, 'click', this._onClick);
+            this.adjustPosition();
+          }
+
+          if (typeof this._o.onOpen === 'function') {
+            this._o.onOpen.call(this);
+          }
+        }
+      },
+      hide: function hide() {
+        var v = this._v;
+
+        if (v !== false) {
+          if (this._o.bound) {
+            removeEvent(document, 'click', this._onClick);
+          }
+
+          this.el.style.position = 'static'; // reset
+
+          this.el.style.left = 'auto';
+          this.el.style.top = 'auto';
+          addClass(this.el, 'is-hidden');
+          this._v = false;
+
+          if (v !== undefined && typeof this._o.onClose === 'function') {
+            this._o.onClose.call(this);
+          }
+        }
+      },
+
+      /**
+       * GAME OVER
+       */
+      destroy: function destroy() {
+        var opts = this._o;
+        this.hide();
+        removeEvent(this.el, 'mousedown', this._onMouseDown, true);
+        removeEvent(this.el, 'touchend', this._onMouseDown, true);
+        removeEvent(this.el, 'change', this._onChange);
+
+        if (opts.keyboardInput) {
+          removeEvent(document, 'keydown', this._onKeyChange);
+        }
+
+        if (opts.field) {
+          removeEvent(opts.field, 'change', this._onInputChange);
+
+          if (opts.bound) {
+            removeEvent(opts.trigger, 'click', this._onInputClick);
+            removeEvent(opts.trigger, 'focus', this._onInputFocus);
+            removeEvent(opts.trigger, 'blur', this._onInputBlur);
+          }
+        }
+
+        if (this.el.parentNode) {
+          this.el.parentNode.removeChild(this.el);
+        }
+      }
+    };
+    return Pikaday;
+  });
+});
+
+var translate$8 = T.getText.bind(T);
 T.addText('rus', {
   incident: {
     title: 'Рубка',
@@ -20427,9 +21589,9 @@ T.addText('rus', {
     status: 'Статус',
     bpla: 'Снимок с БПЛА',
     // bplaTitle: 'Снимок зоны инцидента с БПЛА.tiff',
-    bplaView: 'Просмотр',
-    bplaLoad: 'Загрузить',
-    bplaDel: 'Удалить',
+    BplaView: 'Просмотр',
+    BplaDownload: 'Загрузить',
+    BplaRemove: 'Удалить',
     docs: 'Документы',
     detail: 'Детали',
     editGeo: 'Редактировать контур',
@@ -20454,14 +21616,14 @@ T.addText('rus', {
 var _parseVyd = function _parseVyd(arr) {
   return arr.map(function (data) {
     var str = data.volumes.map(function (it) {
-      return "\n\t\t\t<tr>\n\t\t\t\t<td class=\"species\">".concat(it.species, "</td>\n\t\t\t\t<td class=\"confirmed_vol\">").concat(it.confirmed_vol, " ").concat(translate$9('unit.m3'), "</td>\n\t\t\t\t<td class=\"probable_volume\"><span class=\"span-gray\">").concat(it.probable_volume, " ").concat(translate$9('unit.m3'), "</span></td>\n\t\t\t</tr>\n\t\t\t");
+      return "\n\t\t\t<tr>\n\t\t\t\t<td class=\"species\">".concat(it.species, "</td>\n\t\t\t\t<td class=\"confirmed_vol\">").concat(it.confirmed_vol, " ").concat(translate$8('unit.m'), "<sup>3</sup></td>\n\t\t\t\t<td class=\"probable_volume\"><span class=\"span-gray\">").concat(it.probable_volume, " ").concat(translate$8('unit.m'), "<sup>3</sup></span></td>\n\t\t\t</tr>\n\t\t\t");
     }).join('\n');
-    return "\n\t\t\t<div class=\"vydel\">\n\t\t\t\t<div class=\"table1_row\">".concat(translate$9('incident.arend'), " <span>").concat(data.renter, "</span></div>\n\t\t\t\t<table cellspacing=\"0\" cellpadding=\"0\">\n\t\t\t\t\t<tbody>\n\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t<th class=\"species\">").concat(translate$9('incident.titleValue'), "</th>\n\t\t\t\t\t\t\t<th class=\"confirmed_vol\">").concat(translate$9('incident.estimValue'), "</th>\n\t\t\t\t\t\t\t<th class=\"probable_volume\">").concat(translate$9('incident.checkedValue'), "</th>\n\n\t\t\t\t\t\t</tr>\n\t\t\t\t").concat(str, "\n\t\t\t\t\t</tbody>\n\t\t\t\t</table>\n\t\t\t</div>");
+    return "\n\t\t\t<div class=\"vydel\">\n\t\t\t\t<div class=\"table1_row\">".concat(translate$8('incident.arend'), " <span>").concat(data.renter, "</span></div>\n\t\t\t\t<table cellspacing=\"0\" cellpadding=\"0\">\n\t\t\t\t\t<tbody>\n\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t<th class=\"species\">").concat(translate$8('incident.titleValue'), "</th>\n\t\t\t\t\t\t\t<th class=\"confirmed_vol\">").concat(translate$8('incident.estimValue'), "</th>\n\t\t\t\t\t\t\t<th class=\"probable_volume\">").concat(translate$8('incident.checkedValue'), "</th>\n\n\t\t\t\t\t\t</tr>\n\t\t\t\t").concat(str, "\n\t\t\t\t\t</tbody>\n\t\t\t\t</table>\n\t\t\t</div>");
   }).join('\n');
 };
 
 var _parseProps = function _parseProps(props) {
-  return "\n\t\t<div class=\"table1_row\">".concat(translate$9('incident.status'), " <span>").concat(props.Status, "</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$9('incident.Expert'), " <span>").concat(props.Expert || '', "</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$9('incident.CheckingExpert'), " <span>").concat(props.CheckingExpert || '', "</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$9('incident.Probability'), " <span>").concat(Math.floor(10000 * (props.Probability || 0)) / 100, " %</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$9('incident.Intensity'), " <span>").concat(props.Intensity || 0, " ").concat(translate$9('unit.m'), "</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$9('incident.date'), " <span>").concat(props.Detected || '', "</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$9('incident.areaAll'), " <span>").concat((props.Area || 0).toFixed(2), "</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$9('incident.dateCheck'), " <span class=\"span-gray dateCheck\">").concat(props.CheckDate || '', "</span></div>\n\t");
+  return "\n\t\t<div class=\"table1_row\">".concat(translate$8('incident.status'), " <span>").concat(props.Status, "</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$8('incident.Expert'), " <span>").concat(props.Expert || '', "</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$8('incident.CheckingExpert'), " <span>").concat(props.CheckingExpert || '', "</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$8('incident.Probability'), " <span>").concat(Math.floor(10000 * (props.Probability || 0)) / 100, " %</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$8('incident.Intensity'), " <span>").concat(props.Intensity || 0, " ").concat(translate$8('unit.m'), "</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$8('incident.date'), " <span>").concat(props.Detected || '', "</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$8('incident.areaAll'), " <span>").concat((props.Area || 0).toFixed(2), "</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$8('incident.dateCheck'), " <input class=\"span-gray dateCheck\" type=\"text\" placeholder=\"\" value=").concat(props.CheckDate || '', "></div>\n\t");
 };
 
 var Incidents = /*#__PURE__*/function (_BaseView) {
@@ -20485,27 +21647,27 @@ var Incidents = /*#__PURE__*/function (_BaseView) {
     _this._buttonsStr = '';
 
     if (_this._permission.IncidentDocuments) {
-      _this._buttonsStr += "<button class=\"detailBtn button\">".concat(translate$9('incident.detail'), "</button>");
+      _this._buttonsStr += "<button class=\"detailBtn button\">".concat(translate$8('incident.detail'), "</button>");
     }
 
     if (_this._permission.IncidentEdit) {
-      _this._buttonsStr += "<button class=\"editGeo button\">".concat(translate$9('incident.editGeo'), "</button>");
+      _this._buttonsStr += "<button class=\"editGeo button\">".concat(translate$8('incident.editGeo'), "</button>");
     }
 
     if (_this._permission.IncidentSave) {
-      _this._buttonsStr += "<button class=\"saveGeo button hidden\">".concat(translate$9('incident.saveGeo'), "</button>");
+      _this._buttonsStr += "<button class=\"saveGeo button\">".concat(translate$8('incident.saveGeo'), "</button>");
     }
 
     if (_this._permission.ContiurUnload) {
-      _this._buttonsStr += "<button class=\"download button\">".concat(translate$9('incident.downloadGeo'), "</button>");
+      _this._buttonsStr += "<button class=\"download button\">".concat(translate$8('incident.downloadGeo'), "</button>");
     }
 
     if (_this._permission.ProbabilityRasterView) {
-      _this._buttonsStr += "<button class=\"verRastr button\">".concat(translate$9('incident.verRastr'), "</button>");
+      _this._buttonsStr += "<button class=\"verRastr button\">".concat(translate$8('incident.verRastr'), "</button>");
     }
 
     if (_this._permission.CloudMaskView) {
-      _this._buttonsStr += "<button class=\"maskWater button\">".concat(translate$9('incident.maskWater'), "</button>");
+      _this._buttonsStr += "<button class=\"maskWater button\">".concat(translate$8('incident.maskWater'), "</button>");
     }
 
     _this._container.classList.add('scanex-forestry-incident');
@@ -20522,26 +21684,26 @@ var Incidents = /*#__PURE__*/function (_BaseView) {
       switch (props.class_id) {
         case 1:
           // Рубка
-          title = "<div class=\"header1\">".concat(translate$9('incident.title'), "</div>");
+          title = "<div class=\"header1\">".concat(translate$8('incident.title'), "</div>");
           break;
 
         case 2:
           // ветровалы 
-          title = "<div class=\"header1\">".concat(translate$9('incident.titleFire'), "</div>");
+          title = "<div class=\"header1\">".concat(translate$8('incident.titleFire'), "</div>");
           break;
 
         case 3:
           // Патология
-          title = "<div class=\"header1\">".concat(translate$9('incident.titleDisease'), "</div>");
+          title = "<div class=\"header1\">".concat(translate$8('incident.titleDisease'), "</div>");
           break;
 
         case 4:
           // Гарь
-          title = "<div class=\"header1\">".concat(translate$9('incident.titleFire'), "</div>");
+          title = "<div class=\"header1\">".concat(translate$8('incident.titleFire'), "</div>");
           break;
 
         default:
-          title = "<div class=\"header1\">".concat(translate$9('incident.title'), "</div>");
+          title = "<div class=\"header1\">".concat(translate$8('incident.title'), "</div>");
           break;
       }
 
@@ -20551,7 +21713,7 @@ var Incidents = /*#__PURE__*/function (_BaseView) {
 
       var str2 = _parseProps(data);
 
-      this._container.innerHTML = "\n\t\t\t".concat(title, "\n\n\t\t\t<div class=\"inside\">\n\t\t\t\t<div class=\"inside_left\">\n\t\t\t\t\t<div class=\"table1\">\n\t\t\t\t\t\t").concat(str2, "\n\n\t\t\t\t\t\t<div class=\"table1_row\">").concat(translate$9('incident.comment'), "</div>\n\t\t\t\t\t\t\n\t\t\t\t\t\t<textarea class=\"usr-text-area\" ").concat(this._permission.IncidentEdit && data.Status === 'в работе' ? '' : 'disabled', ">").concat(data.Comment || '', "</textarea>\n\t\t\t\t\t\t<div class=\"table1_row \">").concat(translate$9('incident.bpla'), ":</div>\n\n\t\t\t\t\t\t<div class=\"table1_row \">\n\t\t\t\t\t\t\t<span>").concat(props.uav_date || '', "</span>\n\t\t\t\t\t\t\t<span>").concat(props.uav_description || '', "</span>\n\t\t\t\t\t\t\t<div class=\"group_buttons\">\n\t\t\t\t\t\t\t\t").concat(this._permission.BplaView && props.uav_raster_id ? "<div class=\"bplaView mini-green-but\">".concat(translate$9('incident.bplaView'), "</div>") : '', "\n\t\t\t\t\t\t\t\t<div class=\"mini-green-but hidden\">").concat(translate$9('incident.bplaLoad'), "</div>\n\t\t\t\t\t\t\t\t<div class=\"mini-green-but hidden\">").concat(translate$9('incident.bplaDel'), "</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t").concat(str1, "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"rubka\">\n\t\t\t\t\t<div class=\"right-wrapper-top \">\n\t\t\t\t\t\t").concat(this._buttonsStr, "\n\t\t\t\t\t </div>\n\t\t\t\t\t<hr />\n\t\t\t\t\t <div class=\"right-wrapper-bottom \">\n\t\t\t\t\t\t").concat(this._permission.IncidentAccept && data.Status === 'в работе' ? "<button class=\"IncidentAccept button\">".concat(translate$9('incident.IncidentAccept'), "</button>") : '', "\n\t\t\t\t\t\t").concat(this._permission.IncidentCheck && data.Status === 'неподтвержденная' ? "<button class=\"IncidentCheck button\">".concat(translate$9('incident.IncidentCheck'), "</button>") : '', "\n\t\t\t\t\t\t").concat(this._permission.IncidentDecline && (data.Status === 'неподтвержденная' || data.Status === 'в работе') ? "<button class=\"IncidentDecline button\">".concat(translate$9('incident.IncidentDecline'), "</button>") : '', "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>");
+      this._container.innerHTML = "\n\t\t\t".concat(title, "\n\n\t\t\t<div class=\"inside\">\n\t\t\t\t<div class=\"inside_left\">\n\t\t\t\t\t<div class=\"table1\">\n\t\t\t\t\t\t").concat(str2, "\n\n\t\t\t\t\t\t<div class=\"table1_row\">").concat(translate$8('incident.comment'), "</div>\n\t\t\t\t\t\t\n\t\t\t\t\t\t<textarea class=\"usr-text-area\" ").concat(this._permission.IncidentEdit && data.Status === 'в работе' ? '' : 'disabled', ">").concat(data.Comment || '', "</textarea>\n\t\t\t\t\t\t<div class=\"table1_row \">").concat(translate$8('incident.bpla'), ":</div>\n\n\t\t\t\t\t\t<div class=\"table1_row \">\n\t\t\t\t\t\t\t<span>").concat(props.uav_date || '', "</span>\n\t\t\t\t\t\t\t<span>").concat(props.uav_description || '', "</span>\n\t\t\t\t\t\t\t<div class=\"group_buttons\">\n\t\t\t\t\t\t\t\t").concat(this._permission.BplaView && props.uav_raster_id ? "<div class=\"mini-green-but BplaView\">".concat(translate$8('incident.BplaView'), "</div>") : '', "\n\t\t\t\t\t\t\t\t").concat(this._permission.BplaDownload ? "<div class=\"mini-green-but BplaDownload\">".concat(translate$8('incident.BplaDownload'), "</div>") : '', "\n\t\t\t\t\t\t\t\t").concat(this._permission.BplaRemove ? "<div class=\"mini-green-but BplaRemove\">".concat(translate$8('incident.BplaRemove'), "</div>") : '', "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t").concat(str1, "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"rubka\">\n\t\t\t\t\t<div class=\"right-wrapper-top \">\n\t\t\t\t\t\t").concat(this._buttonsStr, "\n\t\t\t\t\t </div>\n\t\t\t\t\t<hr />\n\t\t\t\t\t <div class=\"right-wrapper-bottom \">\n\t\t\t\t\t\t").concat(this._permission.IncidentAccept && data.Status === 'в работе' ? "<button class=\"IncidentAccept button\">".concat(translate$8('incident.IncidentAccept'), "</button>") : '', "\n\t\t\t\t\t\t").concat(this._permission.IncidentCheck && data.Status === 'неподтвержденная' ? "<button class=\"IncidentCheck button\">".concat(translate$8('incident.IncidentCheck'), "</button>") : '', "\n\t\t\t\t\t\t").concat(this._permission.IncidentDecline && (data.Status === 'неподтвержденная' || data.Status === 'в работе') ? "<button class=\"IncidentDecline button\">".concat(translate$8('incident.IncidentDecline'), "</button>") : '', "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>");
 
       var node = this._container.querySelector('.verRastr');
 
@@ -20585,8 +21747,7 @@ var Incidents = /*#__PURE__*/function (_BaseView) {
 
       if (node) {
         node.addEventListener('click', this._saveItem.bind(this)); // node.classList.add('hidden');
-
-        this._saveGeoNode = node;
+        // this._saveGeoNode = node;
       }
 
       node = this._container.querySelector('.IncidentAccept');
@@ -20616,21 +21777,62 @@ var Incidents = /*#__PURE__*/function (_BaseView) {
         this._commentNode = node;
       }
 
-      node = this._container.querySelector('.bplaView');
+      node = this._container.querySelector('.BplaView');
 
       if (node) {
         node.addEventListener('click', this._toggleBplaView.bind(this));
       }
 
-      if (!this._permission.IncidentEdit || data.Status !== 'в работе') {
-        node = this._container.querySelector('.dateCheck');
+      node = this._container.querySelector('.BplaDownload');
 
-        if (node) {
+      if (node) {
+        node.addEventListener('click', this._bplaDownload.bind(this));
+      }
+
+      node = this._container.querySelector('.BplaRemove');
+
+      if (node) {
+        node.addEventListener('click', this._bplaRemove.bind(this));
+      }
+
+      node = this._container.querySelector('.dateCheck');
+
+      if (node) {
+        if (!this._permission.IncidentEdit || data.Status !== 'в работе') {
           node.classList.add('white');
+          node.disabled = true;
+        }
+
+        var i18n = {
+          previousMonth: 'Предыдущий месяц',
+          nextMonth: 'Следующий месяц',
+          months: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'],
+          weekdays: ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'],
+          weekdaysShort: ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб']
+        };
+        this._dateCheck = new pikaday({
+          field: node,
+          format: 'DD.MM.YYYY',
+          yearRange: 20,
+          i18n: i18n
+        });
+
+        if (data.CheckDate) {
+          this._dateCheck.setDate(new Date(data.CheckDate));
         }
       }
 
       this._rastId = props.prob_raster_id;
+    }
+  }, {
+    key: "_bplaDownload",
+    value: function _bplaDownload(ev) {
+      console.log('_bplaDownload', ev);
+    }
+  }, {
+    key: "_bplaRemove",
+    value: function _bplaRemove(ev) {
+      console.log('_bplaRemove', ev);
     }
   }, {
     key: "_error",
@@ -20805,36 +22007,98 @@ var Incidents = /*#__PURE__*/function (_BaseView) {
     }()
   }, {
     key: "_saveItem",
-    value: function _saveItem() {
-      L.gmxUtil.sendCrossDomainPostRequest('/gis/VectorLayer/ModifyVectorObjects.ashx', {
-        LayerName: this._layer.getGmxProperties().LayerID,
-        WrapStyle: 'message',
-        geometry_cs: 'EPSG:4326',
-        objects: JSON.stringify([{
-          action: 'update',
-          id: this._gmx_id,
-          geometry: this._drawingObj[0].toGeoJSON().geometry
-        }])
-      }, function (res) {
-        if (res.Status === 'ok') {
-          L.gmx.layersVersion.now();
-        } else {
-          console.log(res);
-        }
-      }.bind(this));
+    value: function () {
+      var _saveItem2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
+        var d1, dtStr, out, response;
+        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+          while (1) {
+            switch (_context4.prev = _context4.next) {
+              case 0:
+                d1 = this._dateCheck.getDate();
+                dtStr = null;
 
-      this._removeDrawing();
-    }
+                if (d1) {
+                  dtStr = d1.toLocaleDateString().split('.').reverse().join('-');
+                }
+
+                out = {
+                  "incidentID": this._props.id,
+                  "comment": this._commentNode ? this._commentNode.value : '',
+                  "checkDate": dtStr // "checkDate": d1 ? d1.toISOString() : null,
+                  // "forestChange": [
+                  // {
+                  // "stand": 0,
+                  // "volumes": [
+                  // {
+                  // "wood_element_id": 0,
+                  // "confirmed_vol": 0
+                  // }
+                  // ]
+                  // }
+                  // ]
+
+                };
+
+                if (this._drawingObj) {
+                  out.wkbGeometry = JSON.stringify(this._drawingObj[0].toGeoJSON().geometry);
+
+                  this._removeDrawing();
+                } // console.log('_saveItem', out);
+
+
+                _context4.next = 7;
+                return fetch("".concat(this._path, "/Monitoring/SaveIncident"), {
+                  method: 'POST',
+                  credentials: 'include',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify(out)
+                });
+
+              case 7:
+                response = _context4.sent;
+                L.gmx.layersVersion.now(); // let _data = await response.json();
+                // console.log('_saveItem _data', _data);
+                // return;
+                // L.gmxUtil.sendCrossDomainPostRequest('/gis/VectorLayer/ModifyVectorObjects.ashx', {
+                // LayerName: this._layer.getGmxProperties().LayerID,
+                // WrapStyle: 'message',
+                // geometry_cs: 'EPSG:4326',
+                // objects: JSON.stringify([{action:'update', id: this._gmx_id, geometry: this._drawingObj[0].toGeoJSON().geometry}])
+                // },
+                // function(res) {
+                // if (res.Status === 'ok') {
+                // L.gmx.layersVersion.now();
+                // } else {
+                // console.log(res);
+                // }
+                // }.bind(this)
+                // );
+                // this._removeDrawing();
+
+              case 9:
+              case "end":
+                return _context4.stop();
+            }
+          }
+        }, _callee4, this);
+      }));
+
+      function _saveItem() {
+        return _saveItem2.apply(this, arguments);
+      }
+
+      return _saveItem;
+    }()
   }, {
     key: "_removeDrawing",
     value: function _removeDrawing() {
       this._layer._map.gmxDrawing.remove(this._drawingObj[0]);
 
-      this._drawingObj = null;
-
-      if (this._saveGeoNode) {
-        this._saveGeoNode.classList.add('hidden');
-      }
+      this._drawingObj = null; // if (this._saveGeoNode) {
+      // this._saveGeoNode.classList.add('hidden');
+      // }
     }
   }, {
     key: "_getItem",
@@ -20857,11 +22121,9 @@ var Incidents = /*#__PURE__*/function (_BaseView) {
             var geom = L.gmxUtil.geometryToGeoJSON(prp[prp.length - 1], true);
 
             if (geom) {
-              this._drawingObj = map.gmxDrawing.addGeoJSON(new L.GeoJSON(geom), {});
-
-              if (this._saveGeoNode) {
-                this._saveGeoNode.classList.remove('hidden');
-              }
+              this._drawingObj = map.gmxDrawing.addGeoJSON(new L.GeoJSON(geom), {}); // if (this._saveGeoNode) {
+              // this._saveGeoNode.classList.remove('hidden');
+              // }
             }
           }
         }.bind(this));
@@ -20928,34 +22190,34 @@ var Incidents = /*#__PURE__*/function (_BaseView) {
   }, {
     key: "openIncident",
     value: function () {
-      var _openIncident = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
+      var _openIncident = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5() {
         var response;
-        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+        return regeneratorRuntime.wrap(function _callee5$(_context5) {
           while (1) {
-            switch (_context4.prev = _context4.next) {
+            switch (_context5.prev = _context5.next) {
               case 0:
-                _context4.next = 2;
+                _context5.next = 2;
                 return fetch("".concat(this._path, "/Monitoring/GetIncident?IncidentID=").concat(this._props.id), {
                   method: 'GET',
                   credentials: 'include'
                 });
 
               case 2:
-                response = _context4.sent;
-                _context4.next = 5;
+                response = _context5.sent;
+                _context5.next = 5;
                 return response.json();
 
               case 5:
-                this._data = _context4.sent;
+                this._data = _context5.sent;
 
                 this._render(this._props, this._data);
 
               case 7:
               case "end":
-                return _context4.stop();
+                return _context5.stop();
             }
           }
-        }, _callee4, this);
+        }, _callee5, this);
       }));
 
       function openIncident() {
@@ -20967,11 +22229,11 @@ var Incidents = /*#__PURE__*/function (_BaseView) {
   }, {
     key: "open",
     value: function () {
-      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(_ref2) {
+      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(_ref2) {
         var gmx_id, properties;
-        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+        return regeneratorRuntime.wrap(function _callee6$(_context6) {
           while (1) {
-            switch (_context5.prev = _context5.next) {
+            switch (_context6.prev = _context6.next) {
               case 0:
                 gmx_id = _ref2.gmx_id, properties = _ref2.properties;
 
@@ -20993,10 +22255,10 @@ var Incidents = /*#__PURE__*/function (_BaseView) {
 
               case 2:
               case "end":
-                return _context5.stop();
+                return _context6.stop();
             }
           }
-        }, _callee5, this);
+        }, _callee6, this);
       }));
 
       function open(_x) {
@@ -21019,13 +22281,17 @@ var Incidents = /*#__PURE__*/function (_BaseView) {
           map.removeLayer(rastr);
         }
       }
+
+      if (this._layer.bplaRaster && this._layer.bplaRaster._map) {
+        map.removeLayer(this._layer.bplaRaster);
+      }
     }
   }]);
 
   return Incidents;
 }(BaseView);
 
-var translate$a = T.getText.bind(T);
+var translate$9 = T.getText.bind(T);
 
 var Incidents$1 = /*#__PURE__*/function (_EventTarget) {
   _inherits(Incidents$1, _EventTarget);
@@ -21081,35 +22347,35 @@ var Incidents$1 = /*#__PURE__*/function (_EventTarget) {
 
     _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
 
-    var p = _this._legend.addGroup('incidents', translate$a('legend.incidents'));
+    var p = _this._legend.addGroup('incidents', translate$9('legend.incidents'));
 
-    _this._legend.addComponent('cut-unconfirmed', translate$a('legend.cut.unconfirmed'), p);
+    _this._legend.addComponent('cut-unconfirmed', translate$9('legend.cut.unconfirmed'), p);
 
-    _this._legend.addComponent('cut-working', translate$a('legend.cut.working'), p);
+    _this._legend.addComponent('cut-working', translate$9('legend.cut.working'), p);
 
-    _this._legend.addComponent('cut-faux', translate$a('legend.cut.faux'), p);
+    _this._legend.addComponent('cut-faux', translate$9('legend.cut.faux'), p);
 
-    _this._legend.addComponent('cut-confirmed', translate$a('legend.cut.confirmed'), p); // this._legend.addComponent('windthrow-unconfirmed', translate('legend.windthrow.unconfirmed'), p);
+    _this._legend.addComponent('cut-confirmed', translate$9('legend.cut.confirmed'), p); // this._legend.addComponent('windthrow-unconfirmed', translate('legend.windthrow.unconfirmed'), p);
     // this._legend.addComponent('windthrow-working', translate('legend.windthrow.working'), p);
     // this._legend.addComponent('windthrow-faux', translate('legend.windthrow.faux'), p);
     // this._legend.addComponent('windthrow-confirmed', translate('legend.windthrow.confirmed'), p);
 
 
-    _this._legend.addComponent('disease-unconfirmed', translate$a('legend.disease.unconfirmed'), p);
+    _this._legend.addComponent('disease-unconfirmed', translate$9('legend.disease.unconfirmed'), p);
 
-    _this._legend.addComponent('disease-working', translate$a('legend.disease.working'), p);
+    _this._legend.addComponent('disease-working', translate$9('legend.disease.working'), p);
 
-    _this._legend.addComponent('disease-faux', translate$a('legend.disease.faux'), p);
+    _this._legend.addComponent('disease-faux', translate$9('legend.disease.faux'), p);
 
-    _this._legend.addComponent('disease-confirmed', translate$a('legend.disease.confirmed'), p);
+    _this._legend.addComponent('disease-confirmed', translate$9('legend.disease.confirmed'), p);
 
-    _this._legend.addComponent('burn-unconfirmed', translate$a('legend.burn.unconfirmed'), p);
+    _this._legend.addComponent('burn-unconfirmed', translate$9('legend.burn.unconfirmed'), p);
 
-    _this._legend.addComponent('burn-working', translate$a('legend.burn.working'), p);
+    _this._legend.addComponent('burn-working', translate$9('legend.burn.working'), p);
 
-    _this._legend.addComponent('burn-faux', translate$a('legend.burn.faux'), p);
+    _this._legend.addComponent('burn-faux', translate$9('legend.burn.faux'), p);
 
-    _this._legend.addComponent('burn-confirmed', translate$a('legend.burn.confirmed'), p);
+    _this._legend.addComponent('burn-confirmed', translate$9('legend.burn.confirmed'), p);
 
     _this._content.add('incidents', Incidents, {
       permissions: _this._permissions,
@@ -21364,7 +22630,7 @@ var Legend$1 = /*#__PURE__*/function (_EventTarget) {
   return Legend;
 }(EventTarget);
 
-var translate$b = T.getText.bind(T);
+var translate$a = T.getText.bind(T);
 T.addText('rus', {
   naturalPark: {
     title: 'Особо охраняемая природная территория',
@@ -21372,7 +22638,7 @@ T.addText('rus', {
     type: 'Категория ООПТ',
     year: 'Постановление',
     prov: 'Уровень защиты',
-    area: 'Площадь (кв.м.)'
+    area: 'Площадь, м'
   }
 });
 
@@ -21406,7 +22672,7 @@ var Parks = /*#__PURE__*/function (_BaseView) {
 
                 _get(_getPrototypeOf(Parks.prototype), "open", this).call(this);
 
-                this._container.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n\t\t\t<thead>\n\t\t\t\t<tr>\n\t\t\t\t\t<th colspan=\"2\" class=\"title\">".concat(translate$b('naturalPark.title'), "</th>\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"name title\">").concat(translate$b('naturalPark.name'), "</td>\n\t\t\t\t\t<td class=\"name value\">").concat(properties.NAME_R, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"type title\">").concat(translate$b('naturalPark.type'), "</td>\n\t\t\t\t\t<td class=\"type value\">").concat(properties.TYPE_NL, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"year title\">").concat(translate$b('naturalPark.year'), "</td>\n\t\t\t\t\t<td class=\"year value\">").concat(properties.YEAR_, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"prov title\">").concat(translate$b('naturalPark.prov'), "</td>\n\t\t\t\t\t<td class=\"prov value\">").concat(properties.PROV_NL, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"area title\">").concat(translate$b('naturalPark.area'), "</td>\n\t\t\t\t\t<td class=\"area value\">").concat(properties.AREA_DOC, "</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
+                this._container.innerHTML = "<div class=\"header\">".concat(translate$a('naturalPark.title'), "</div>\n\t\t\t<table cellspacing=\"0\" cellpadding=\"0\">\t\t\t\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"name title\">").concat(translate$a('naturalPark.name'), "</td>\n\t\t\t\t\t<td class=\"name value\">").concat(properties.NAME_R, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"type title\">").concat(translate$a('naturalPark.type'), "</td>\n\t\t\t\t\t<td class=\"type value\">").concat(properties.TYPE_NL, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"year title\">").concat(translate$a('naturalPark.year'), "</td>\n\t\t\t\t\t<td class=\"year value\">").concat(properties.YEAR_, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"prov title\">").concat(translate$a('naturalPark.prov'), "</td>\n\t\t\t\t\t<td class=\"prov value\">").concat(properties.PROV_NL, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"area title\">").concat(translate$a('naturalPark.area'), "<sup>2</sup></td>\n\t\t\t\t\t<td class=\"area value\">").concat(properties.AREA_DOC, "</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
 
               case 3:
               case "end":
@@ -21463,9 +22729,10 @@ var Parks$1 = /*#__PURE__*/function (_Controller) {
   return Parks$1;
 }(Controller);
 
-var translate$c = T.getText.bind(T);
+var translate$b = T.getText.bind(T);
 T.addText('rus', {
   plot: {
+    title: 'Лесной участок:',
     forestry: 'Лесничество',
     lessee: 'Арендатор',
     term: 'Срок договора аренды',
@@ -21491,7 +22758,7 @@ var Plots = /*#__PURE__*/function (_BaseView) {
 
     _this._container.classList.add('scanex-forestry-view-plot');
 
-    _this._container.innerHTML = "<div class=\"head\">\n        </div>\n        <div>            \n            <label class=\"title\"></label>\n        </div>\n        <div>\n            <label>".concat(translate$c('plot.forestry'), ":</label>\n            <label class=\"forestry\"></label>\n        </div>\n        <div class=\"content\">\n            <div class=\"stats\"></div>\n            <div class=\"chart\"></div>\n        </div>");
+    _this._container.innerHTML = "<div class=\"head\">\n        </div>\n        <div>            \n            <label class=\"title\"></label>\n        </div>\n        <div>\n            <label>".concat(translate$b('plot.forestry'), ":</label>\n            <label class=\"forestry\"></label>\n        </div>\n        <div class=\"content\">\n            <div class=\"stats\"></div>\n            <div class=\"chart\"></div>\n        </div>");
     _this._title = _this._container.querySelector('.title');
     _this._forestry = _this._container.querySelector('.forestry');
     _this._stats = _this._container.querySelector('.stats');
@@ -21553,7 +22820,7 @@ var Plots = /*#__PURE__*/function (_BaseView) {
                   end = new Date(y + (!isNaN(t) && t || 0), m, d);
                 }
 
-                this._stats.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody>\n                    <tr>\n                        <td>".concat(translate$c('plot.lessee'), "</td>\n                        <td>").concat(Renter || '-', "</td>\n                    </tr>                    \n                    <tr>\n                        <td>").concat(translate$c('plot.term'), "</td>\n                        <td>").concat(start.toLocaleDateString(), " - ").concat(end.toLocaleDateString(), "</td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$c('plot.cost'), "</td>\n                        <td>").concat(RentCost || '-', "</td>\n                    </tr>                                        \n                </tbody>\n            </table>\n            <div>").concat(translate$c('plot.volumes'), "</div>");
+                this._stats.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody>\n                    <tr>\n                        <td>".concat(translate$b('plot.lessee'), "</td>\n                        <td>").concat(Renter || '-', "</td>\n                    </tr>                    \n                    <tr>\n                        <td>").concat(translate$b('plot.term'), "</td>\n                        <td>").concat(start.toLocaleDateString(), " - ").concat(end.toLocaleDateString(), "</td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$b('plot.cost'), "</td>\n                        <td>").concat(RentCost || '-', "</td>\n                    </tr>                                        \n                </tbody>\n            </table>\n            <div>").concat(translate$b('plot.volumes'), "</div>");
                 _context.next = 32;
                 break;
 
@@ -21562,7 +22829,7 @@ var Plots = /*#__PURE__*/function (_BaseView) {
                 _context.t0 = _context["catch"](1);
                 this.close();
                 console.log(_context.t0);
-                alert(translate$c('error.plot.view'));
+                alert(translate$b('error.plot.view'));
 
               case 32:
               case "end":
@@ -21582,6 +22849,8 @@ var Plots = /*#__PURE__*/function (_BaseView) {
 
   return Plots;
 }(BaseView);
+
+var translate$c = T.getText.bind(T);
 
 var Plots$1 = /*#__PURE__*/function (_Controller) {
   _inherits(Plots$1, _Controller);
@@ -21657,7 +22926,7 @@ var Plots$1 = /*#__PURE__*/function (_Controller) {
                 break;
 
               case 15:
-                alert(translate('forbidden.plot.view'));
+                alert(translate$c('forbidden.plot.view'));
 
               case 16:
               case "end":
@@ -21676,259 +22945,6 @@ var Plots$1 = /*#__PURE__*/function (_Controller) {
   }]);
 
   return Plots$1;
-}(Controller);
-
-var translate$d = T.getText.bind(T);
-T.addText('rus', {
-  request: {
-    approve: 'Дата принятия решения о проведении аукциона',
-    status: 'Статус аукциона',
-    period: 'Период проведения аукциона и идентификатор лота аукциона',
-    cost: 'Начальная ставка',
-    available: 'Допустимые объемы изъятия (в год)'
-  }
-});
-
-var View = /*#__PURE__*/function (_BaseView) {
-  _inherits(View, _BaseView);
-
-  var _super = _createSuper(View);
-
-  function View(container, _ref) {
-    var _this;
-
-    var path = _ref.path;
-
-    _classCallCheck(this, View);
-
-    _this = _super.call(this, container);
-    _this._path = path;
-
-    _this._container.classList.add('.scanex-forestry-view-project');
-
-    _this._container.innerHTML = "<div class=\"head\">\n        </div>\n        <div>            \n            <label class=\"title\"></label>\n        </div>\n        <div>\n            <label>".concat(translate$d('project.forestry'), "</label>\n            <label class=\"forestry\"></label>\n        </div>\n        <div class=\"content\">\n            <div class=\"stats\"></div>\n            <div class=\"chart\"></div>\n        </div>");
-    _this._title = _this._container.querySelector('.title');
-    _this._forestry = _this._container.querySelector('.forestry');
-    _this._stats = _this._container.querySelector('.stats');
-    _this._chart = _this._container.querySelector('.chart');
-    return _this;
-  }
-
-  _createClass(View, [{
-    key: "open",
-    value: function () {
-      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(id) {
-        var response, _yield$response$json, Addres, ApplicationForm, ApproveDate, ApproveName, AuctionEnd, AuctionStart, AuctionURL, CadastralNum, Comments, DeclineDate, EgrFile, ForestAvailable, ForestBlocks, ForestProjectGeo, ForestProjectID, ForestStat, Forestry, OGRN, Opf, OrganizationName, OwnerID, PeriodUsage, Phone, PostAddress, RentCost, RentFile, Square, SquareStat, Status, TargetUsage, Title;
-
-        return regeneratorRuntime.wrap(function _callee$(_context) {
-          while (1) {
-            switch (_context.prev = _context.next) {
-              case 0:
-                _context.prev = 0;
-                _context.next = 3;
-                return _get(_getPrototypeOf(View.prototype), "open", this).call(this);
-
-              case 3:
-                _context.next = 5;
-                return fetch("".concat(this._path, "/Forest/GetPlotProjectApplication?ForestProjectID=").concat(id), {
-                  method: 'GET',
-                  credentials: 'include',
-                  headers: {
-                    'Content-Type': 'application/json'
-                  }
-                });
-
-              case 5:
-                response = _context.sent;
-                _context.next = 8;
-                return response.json();
-
-              case 8:
-                _yield$response$json = _context.sent;
-                Addres = _yield$response$json.Addres;
-                ApplicationForm = _yield$response$json.ApplicationForm;
-                ApproveDate = _yield$response$json.ApproveDate;
-                ApproveName = _yield$response$json.ApproveName;
-                AuctionEnd = _yield$response$json.AuctionEnd;
-                AuctionStart = _yield$response$json.AuctionStart;
-                AuctionURL = _yield$response$json.AuctionURL;
-                CadastralNum = _yield$response$json.CadastralNum;
-                Comments = _yield$response$json.Comments;
-                DeclineDate = _yield$response$json.DeclineDate;
-                EgrFile = _yield$response$json.EgrFile;
-                ForestAvailable = _yield$response$json.ForestAvailable;
-                ForestBlocks = _yield$response$json.ForestBlocks;
-                ForestProjectGeo = _yield$response$json.ForestProjectGeo;
-                ForestProjectID = _yield$response$json.ForestProjectID;
-                ForestStat = _yield$response$json.ForestStat;
-                Forestry = _yield$response$json.Forestry;
-                OGRN = _yield$response$json.OGRN;
-                Opf = _yield$response$json.Opf;
-                OrganizationName = _yield$response$json.OrganizationName;
-                OwnerID = _yield$response$json.OwnerID;
-                PeriodUsage = _yield$response$json.PeriodUsage;
-                Phone = _yield$response$json.Phone;
-                PostAddress = _yield$response$json.PostAddress;
-                RentCost = _yield$response$json.RentCost;
-                RentFile = _yield$response$json.RentFile;
-                Square = _yield$response$json.Square;
-                SquareStat = _yield$response$json.SquareStat;
-                Status = _yield$response$json.Status;
-                TargetUsage = _yield$response$json.TargetUsage;
-                Title = _yield$response$json.Title;
-                this._title.innerText = Title;
-                this._forestry.innerText = "".concat(Forestry, " ").concat(ForestBlocks);
-                this._stats.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody>\n                    <tr>\n                        <td>".concat(translate$d('request.approve'), "</td>\n                        <td>").concat(ApproveDate || '-', "</td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$d('request.status'), "</td>\n                        <td>").concat(Status || '-', "</td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$d('request.period'), "</td>\n                        <td>").concat(AuctionStart || '', " - ").concat(AuctionEnd || '', "</td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$d('request.cost'), "</td>\n                        <td>").concat(RentCost || '-', "</td>\n                    </tr>\n                </tbody>\n            </table>\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <thead>\n                    <tr>\n                        <th colspan=\"2\">").concat(translate$d('request.available'), "</th>\n                    </tr>\n                </thead>\n                <tbody>").concat(Array.isArray(ForestAvailable) ? ForestAvailable.map(function (item) {
-                  return "<tr>\n                        <td></td>\n                        <td></td>\n                    </tr>";
-                }).join('') : '', "</tbody>\n            </table>");
-                _context.next = 50;
-                break;
-
-              case 45:
-                _context.prev = 45;
-                _context.t0 = _context["catch"](0);
-                this.close();
-                console.log(_context.t0);
-                alert(translate$d('error.project.view'));
-
-              case 50:
-              case "end":
-                return _context.stop();
-            }
-          }
-        }, _callee, this, [[0, 45]]);
-      }));
-
-      function open(_x) {
-        return _open.apply(this, arguments);
-      }
-
-      return open;
-    }()
-  }]);
-
-  return View;
-}(BaseView);
-
-var Projects = /*#__PURE__*/function (_Controller) {
-  _inherits(Projects, _Controller);
-
-  var _super = _createSuper(Projects);
-
-  function Projects(_ref) {
-    var _this;
-
-    var map = _ref.map,
-        layer = _ref.layer,
-        legend = _ref.legend,
-        content = _ref.content,
-        path = _ref.path,
-        permissions = _ref.permissions,
-        requests = _ref.requests;
-
-    _classCallCheck(this, Projects);
-
-    _this = _super.call(this, {
-      kind: 'projects',
-      map: map,
-      layer: layer,
-      legend: legend
-    });
-    _this._content = content;
-    _this._path = path;
-    _this._requests = requests;
-    _this._permissions = permissions;
-
-    _this._content.add('view-project', View, {
-      layer: _this._layer,
-      path: _this._path
-    });
-
-    return _this;
-  }
-
-  _createClass(Projects, [{
-    key: "_click",
-    value: function _click(e) {
-      var _e$gmx$properties = e.gmx.properties,
-          id = _e$gmx$properties.id,
-          status_calc = _e$gmx$properties.status_calc,
-          forestry_id = _e$gmx$properties.forestry_id,
-          plot_project_status_id = _e$gmx$properties.plot_project_status_id;
-
-      if (status_calc === 1) {
-        if (plot_project_status_id === 1) {
-          var event = document.createEvent('Event');
-          event.initEvent('project:edit', false, false);
-          event.detail = {
-            id: id,
-            forestry_id: forestry_id
-          };
-          this.dispatchEvent(event);
-        } else {
-          var _event = document.createEvent('Event');
-
-          _event.initEvent('request:create', false, false);
-
-          _event.detail = id;
-          this.dispatchEvent(_event);
-        }
-      } else {
-        this._view(id);
-      }
-    }
-  }, {
-    key: "_view",
-    value: function () {
-      var _view2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(id) {
-        return regeneratorRuntime.wrap(function _callee$(_context) {
-          while (1) {
-            switch (_context.prev = _context.next) {
-              case 0:
-                if (!this._permissions.ForestProjectsView) {
-                  _context.next = 13;
-                  break;
-                }
-
-                _context.prev = 1;
-                _context.next = 4;
-                return this._content.show('view-project', id);
-
-              case 4:
-                _context.next = 11;
-                break;
-
-              case 6:
-                _context.prev = 6;
-                _context.t0 = _context["catch"](1);
-                console.log(_context.t0);
-                alert(translate('error.project.view'));
-                this.showMain();
-
-              case 11:
-                _context.next = 14;
-                break;
-
-              case 13:
-                alert(translate('forbidden.project.view'));
-
-              case 14:
-              case "end":
-                return _context.stop();
-            }
-          }
-        }, _callee, this, [[1, 6]]);
-      }));
-
-      function _view(_x) {
-        return _view2.apply(this, arguments);
-      }
-
-      return _view;
-    }()
-  }]);
-
-  return Projects;
 }(Controller);
 
 var log$3 = Math.log;
@@ -39078,12 +40094,321 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
   module.exports = Yt;
 });
 
+var translate$d = T.getText.bind(T);
+T.addText('rus', {
+  request: {
+    approve: 'Дата принятия решения о проведении аукциона',
+    status: 'Статус аукциона',
+    period: 'Период проведения аукциона и идентификатор лота аукциона',
+    cost: 'Начальная ставка',
+    available: 'Допустимые объемы изъятия (в год)'
+  }
+});
+
+var View = /*#__PURE__*/function (_BaseView) {
+  _inherits(View, _BaseView);
+
+  var _super = _createSuper(View);
+
+  function View(container, _ref) {
+    var _this;
+
+    var path = _ref.path;
+
+    _classCallCheck(this, View);
+
+    _this = _super.call(this, container);
+    _this._path = path;
+
+    _this._container.classList.add('scanex-forestry-view-project');
+
+    _this._container.innerHTML = "<div class=\"header\">\n            <label>".concat(translate$d('plot.title'), "</label>\n            <label class=\"title\"></label>\n        </div>\n        <div>\n            <label>").concat(translate$d('project.forestry'), "</label>\n            <label class=\"forestry\"></label>\n        </div>        \n        <div class=\"content\">\n            <div class=\"stats\">\n                <div class=\"costs\"></div>\n                <div>").concat(translate$d('request.available'), ", ").concat(translate$d('unit.m'), "<sup>3</sup></div>\n                <div class=\"species\"></div>\n            </div>\n            <div class=\"chart\"></div>\n        </div>");
+    _this._title = _this._container.querySelector('.title');
+    _this._forestry = _this._container.querySelector('.forestry');
+    _this._costs = _this._container.querySelector('.costs');
+    _this._species = _this._container.querySelector('.species');
+    _this._chart = new apexcharts_common(_this._container.querySelector('.chart'), {
+      chart: {
+        type: 'donut',
+        width: '400px',
+        height: '250px'
+      },
+      dataLabels: {
+        enabled: false
+      },
+      labels: [],
+      series: [],
+      legend: {
+        position: 'bottom' // width: '200px',
+        // offsetY: -10,
+
+      },
+      plotOptions: {
+        pie: {
+          donut: {
+            size: '78%',
+            labels: {
+              show: true,
+              value: {
+                formatter: function formatter(val) {
+                  return "".concat(val.toLocaleString('ru-RU', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                  }), " ").concat(translate$d('unit.m3'));
+                },
+                fontSize: '12px',
+                show: true
+              },
+              total: {
+                formatter: function formatter(_ref2) {
+                  var series = _ref2.config.series;
+                  return "".concat(series.reduce(function (p, c) {
+                    return p + c;
+                  }, 0).toLocaleString('ru-RU', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                  }), " ").concat(translate$d('unit.m3'));
+                },
+                label: translate$d('stock.all'),
+                fontSize: '12px',
+                fontWeight: 600,
+                show: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    _this._chart.render();
+
+    return _this;
+  }
+
+  _createClass(View, [{
+    key: "open",
+    value: function () {
+      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(data) {
+        var Addres, ApplicationForm, ApproveDate, ApproveName, AuctionEnd, AuctionStart, AuctionURL, CadastralNum, Comments, DeclineDate, EgrFile, ForestAvailable, ForestBlocks, ForestProjectGeo, ForestProjectID, ForestStat, Forestry, OGRN, Opf, OrganizationName, OwnerID, PeriodUsage, Phone, PostAddress, RentCost, RentFile, Square, SquareStat, Status, TargetUsage, Title, _ForestAvailable$redu, labels, series;
+
+        return regeneratorRuntime.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                _context.next = 2;
+                return _get(_getPrototypeOf(View.prototype), "open", this).call(this);
+
+              case 2:
+                Addres = data.Addres, ApplicationForm = data.ApplicationForm, ApproveDate = data.ApproveDate, ApproveName = data.ApproveName, AuctionEnd = data.AuctionEnd, AuctionStart = data.AuctionStart, AuctionURL = data.AuctionURL, CadastralNum = data.CadastralNum, Comments = data.Comments, DeclineDate = data.DeclineDate, EgrFile = data.EgrFile, ForestAvailable = data.ForestAvailable, ForestBlocks = data.ForestBlocks, ForestProjectGeo = data.ForestProjectGeo, ForestProjectID = data.ForestProjectID, ForestStat = data.ForestStat, Forestry = data.Forestry, OGRN = data.OGRN, Opf = data.Opf, OrganizationName = data.OrganizationName, OwnerID = data.OwnerID, PeriodUsage = data.PeriodUsage, Phone = data.Phone, PostAddress = data.PostAddress, RentCost = data.RentCost, RentFile = data.RentFile, Square = data.Square, SquareStat = data.SquareStat, Status = data.Status, TargetUsage = data.TargetUsage, Title = data.Title;
+                this._title.innerHTML = Title;
+                this._forestry.innerHTML = "".concat(Forestry, " ").concat(ForestBlocks);
+                this._costs.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody>\n                    <tr>\n                        <td>".concat(translate$d('request.approve'), "</td>\n                        <td>").concat(ApproveDate || '', "</td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$d('request.status'), "</td>\n                        <td>").concat(Status || '', "</td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$d('request.period'), "</td>\n                        <td>").concat(AuctionStart && AuctionEnd ? "".concat(new Date(AuctionStart).toLocaleDateString(), " - ").concat(new Date(AuctionEnd).toLocaleDateString()) : '', "</td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$d('request.cost'), "</td>\n                        <td>").concat(RentCost && RentCost.toLocaleString('ru-RU', {
+                  style: 'currency',
+                  currency: 'RUB'
+                }) || '', "</td>\n                    </tr>\n                </tbody>\n            </table>");
+
+                if (!Array.isArray(ForestAvailable)) {
+                  _context.next = 13;
+                  break;
+                }
+
+                this._species.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">                \n                    <tbody>".concat(ForestAvailable.map(function (_ref3) {
+                  var species = _ref3.species,
+                      value = _ref3.value;
+                  return "<tr>\n                            <td>".concat(species, "</td>\n                            <td>").concat(value.toLocaleString('ru-RU', {
+                    minimumFractionDigits: 3,
+                    maximumFractionDigits: 3
+                  }), "</td>\n                        </tr>");
+                }).join(''), "</tbody>\n                </table>");
+                _ForestAvailable$redu = ForestAvailable.reduce(function (a, _ref4) {
+                  var species = _ref4.species,
+                      value = _ref4.value;
+                  a.labels.push(species);
+                  a.series.push(value);
+                  return a;
+                }, {
+                  labels: [],
+                  series: []
+                }), labels = _ForestAvailable$redu.labels, series = _ForestAvailable$redu.series;
+
+                this._chart.updateOptions({
+                  labels: labels
+                });
+
+                this._chart.updateSeries(series);
+
+                _context.next = 14;
+                break;
+
+              case 13:
+                throw new Error(translate$d('quadrant.na'));
+
+              case 14:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee, this);
+      }));
+
+      function open(_x) {
+        return _open.apply(this, arguments);
+      }
+
+      return open;
+    }()
+  }]);
+
+  return View;
+}(BaseView);
+
 var translate$e = T.getText.bind(T);
+
+var Projects = /*#__PURE__*/function (_Controller) {
+  _inherits(Projects, _Controller);
+
+  var _super = _createSuper(Projects);
+
+  function Projects(_ref) {
+    var _this;
+
+    var map = _ref.map,
+        layer = _ref.layer,
+        legend = _ref.legend,
+        content = _ref.content,
+        path = _ref.path,
+        permissions = _ref.permissions,
+        requests = _ref.requests;
+
+    _classCallCheck(this, Projects);
+
+    _this = _super.call(this, {
+      kind: 'projects',
+      map: map,
+      layer: layer,
+      legend: legend
+    });
+    _this._content = content;
+    _this._path = path;
+    _this._requests = requests;
+    _this._permissions = permissions;
+
+    _this._content.add('view-project', View, {
+      layer: _this._layer,
+      path: _this._path
+    });
+
+    return _this;
+  }
+
+  _createClass(Projects, [{
+    key: "_click",
+    value: function _click(e) {
+      var _e$gmx$properties = e.gmx.properties,
+          id = _e$gmx$properties.id,
+          status_calc = _e$gmx$properties.status_calc,
+          forestry_id = _e$gmx$properties.forestry_id,
+          plot_project_status_id = _e$gmx$properties.plot_project_status_id;
+
+      if (status_calc === 1) {
+        if (plot_project_status_id === 1) {
+          var event = document.createEvent('Event');
+          event.initEvent('project:edit', false, false);
+          event.detail = {
+            id: id,
+            forestry_id: forestry_id
+          };
+          this.dispatchEvent(event);
+        } else {
+          var _event = document.createEvent('Event');
+
+          _event.initEvent('request:create', false, false);
+
+          _event.detail = id;
+          this.dispatchEvent(_event);
+        }
+      } else {
+        this.view(id);
+      }
+    }
+  }, {
+    key: "view",
+    value: function () {
+      var _view = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(id) {
+        var response, data;
+        return regeneratorRuntime.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                if (!this._permissions.ForestProjectsView) {
+                  _context.next = 19;
+                  break;
+                }
+
+                _context.prev = 1;
+                _context.next = 4;
+                return fetch("".concat(this._path, "/Forest/GetPlotProjectApplication?ForestProjectID=").concat(id), {
+                  method: 'GET',
+                  credentials: 'include',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  }
+                });
+
+              case 4:
+                response = _context.sent;
+                _context.next = 7;
+                return response.json();
+
+              case 7:
+                data = _context.sent;
+                _context.next = 10;
+                return this._content.show('view-project', data);
+
+              case 10:
+                _context.next = 17;
+                break;
+
+              case 12:
+                _context.prev = 12;
+                _context.t0 = _context["catch"](1);
+                console.log(_context.t0);
+                alert(translate$e('error.project.view'));
+                this.showMain();
+
+              case 17:
+                _context.next = 20;
+                break;
+
+              case 19:
+                alert(translate$e('forbidden.project.view'));
+
+              case 20:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee, this, [[1, 12]]);
+      }));
+
+      function view(_x) {
+        return _view.apply(this, arguments);
+      }
+
+      return view;
+    }()
+  }]);
+
+  return Projects;
+}(Controller);
+
+var translate$f = T.getText.bind(T);
 T.addText('rus', {
   quadrant: {
     Stock: 'Объем древесины',
     about: 'На основании данных лесоустройства',
     title: 'Квартал',
+    stow: 'Урочище',
     Forestry: 'Лесничество',
     LocalForestry: 'Участковое лесничество',
     invalid: 'Недопустимый состав участка',
@@ -39133,12 +40458,12 @@ var Quadrants = /*#__PURE__*/function (_BaseView) {
 
     _this._container.classList.add('scanex-forestry-quadrant');
 
-    _this._container.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n\t\t\t<thead>\n\t\t\t\t<tr>\n\t\t\t\t\t<th class=\"title\">".concat(translate$e('quadrant.title'), "</th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th class=\"forestry\"></th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th class=\"stock\">").concat(translate$e('quadrant.Stock'), "</th>\t\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th class=\"about\">").concat(translate$e('quadrant.about'), "</th>\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"chart\"></td>\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
+    _this._container.innerHTML = "<div class=\"title\">".concat(translate$f('quadrant.title'), "</div>\n\t\t<div class=\"forestry\"></div>\n\t\t<div class=\"stock\">").concat(translate$f('quadrant.Stock'), "</div>\n\t\t<div class=\"about\">").concat(translate$f('quadrant.about'), "</div>\n\t\t<div class=\"chart\"></div>");
     _this._forestry = _this._container.querySelector('.forestry');
     _this._chart = new apexcharts_common(_this._container.querySelector('.chart'), {
       chart: {
         type: 'donut',
-        width: '700px',
+        width: '500px',
         height: '160px'
       },
       dataLabels: {
@@ -39159,7 +40484,7 @@ var Quadrants = /*#__PURE__*/function (_BaseView) {
               show: true,
               value: {
                 formatter: function formatter(val) {
-                  return "".concat(val, " ").concat(translate$e('unit.m3'));
+                  return "".concat(val, " ").concat(translate$f('unit.m3'));
                 },
                 fontSize: '12px',
                 show: true
@@ -39169,12 +40494,12 @@ var Quadrants = /*#__PURE__*/function (_BaseView) {
                   var series = _ref2.config.series;
                   return "".concat(series.reduce(function (p, c) {
                     return p + c;
-                  }, 0).toLocaleString(undefined, {
+                  }, 0).toLocaleString('ru-RU', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
-                  }), " ").concat(translate$e('unit.m3'));
+                  }), " ").concat(translate$f('unit.m3'));
                 },
-                label: translate$e('stock.all'),
+                label: translate$f('stock.all'),
                 fontSize: '12px',
                 fontWeight: 600,
                 show: true
@@ -39193,10 +40518,15 @@ var Quadrants = /*#__PURE__*/function (_BaseView) {
   _createClass(Quadrants, [{
     key: "_render",
     value: function _render(data) {
-      this._forestry.innerText = "".concat(translate$e('quadrant.Forestry'), ": ").concat(data.Forestry, ", ").concat(translate$e('quadrant.LocalForestry'), ": ").concat(data.LocalForestry);
+      var Forestry = data.Forestry,
+          LocalForestry = data.LocalForestry,
+          Num = data.Num,
+          Stock = data.Stock,
+          Stow = data.Stow;
+      this._forestry.innerHTML = "".concat(translate$f('quadrant.Forestry'), ": ").concat(Forestry, ", ").concat(translate$f('quadrant.LocalForestry'), ": ").concat(LocalForestry).concat(Stow ? ", ".concat(translate$f('quadrant.stow'), ": ").concat(Stow) : '', ", ").concat(translate$f('quadrant.title'), " \u2116").concat(Num);
 
-      if (Array.isArray(data.Stock)) {
-        var _data$Stock$reduce = data.Stock.reduce(function (a, s) {
+      if (Array.isArray(Stock)) {
+        var _Stock$reduce = Stock.reduce(function (a, s) {
           a.labels.push(s.species);
           a.series.push(s.stock);
           return a;
@@ -39204,8 +40534,8 @@ var Quadrants = /*#__PURE__*/function (_BaseView) {
           labels: [],
           series: []
         }),
-            labels = _data$Stock$reduce.labels,
-            series = _data$Stock$reduce.series;
+            labels = _Stock$reduce.labels,
+            series = _Stock$reduce.series;
 
         this._chart.updateOptions({
           labels: labels
@@ -39213,7 +40543,7 @@ var Quadrants = /*#__PURE__*/function (_BaseView) {
 
         this._chart.updateSeries(series);
       } else {
-        throw new Error(translate$e('quadrant.na'));
+        throw new Error(translate$f('quadrant.na'));
       }
     }
   }, {
@@ -39322,7 +40652,7 @@ _export({ target: 'Number', stat: true }, {
   isInteger: isInteger
 });
 
-var translate$f = T.getText.bind(T);
+var translate$g = T.getText.bind(T);
 T.addText('rus', {
   pager: {
     previous: 'Предыдущая',
@@ -39342,7 +40672,7 @@ var Pager = /*#__PURE__*/function (_EventTarget) {
 
     _this = _super.call(this);
     _this._container = container;
-    _this._container.innerHTML = "<table class=\"scanex-forestry-pager\" cellpadding=\"0\" cellspacing=\"0\">\n            <tr>\n                <td>\n                    <button class=\"first\">1</button>\n                </td>                \n                <td>\n                    <button class=\"previous\">".concat(translate$f('pager.previous'), "</button>\n                </td>\n                <td>\n                    <input type=\"text\" value=\"\" />\n                </td>\n                <td>\n                    <button class=\"next\">").concat(translate$f('pager.next'), "</button>\n                </td>                \n                <td>\n                    <button class=\"last\"></button>\n                </td>\n            </tr>\n        </table>");
+    _this._container.innerHTML = "<table class=\"scanex-forestry-pager\" cellpadding=\"0\" cellspacing=\"0\">\n            <tr>\n                <td>\n                    <button class=\"first\">1</button>\n                </td>                \n                <td>\n                    <button class=\"previous\">".concat(translate$g('pager.previous'), "</button>\n                </td>\n                <td>\n                    <input type=\"text\" value=\"\" />\n                </td>\n                <td>\n                    <button class=\"next\">").concat(translate$g('pager.next'), "</button>\n                </td>                \n                <td>\n                    <button class=\"last\"></button>\n                </td>\n            </tr>\n        </table>");
 
     _this._container.querySelector('.first').addEventListener('click', function (e) {
       e.stopPropagation();
@@ -39409,7 +40739,7 @@ var Pager = /*#__PURE__*/function (_EventTarget) {
   return Pager;
 }(EventTarget);
 
-var translate$g = T.getText.bind(T);
+var translate$h = T.getText.bind(T);
 T.addText('rus', {
   request: {
     id: '#',
@@ -39461,7 +40791,7 @@ var Requests = /*#__PURE__*/function (_BaseView) {
       _this._statusIndex += 1;
     }
 
-    _this._container.innerHTML = "<div class=\"header\">           \n            <label class=\"title\">".concat(translate$g('request.header'), "</label>                   \n            <button class=\"create\">").concat(translate$g('request.create'), "</button>                              \n        </div>\n        <table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th data-id=\"id\">").concat(translate$g('request.id'), "</th>\n                    <th data-id=\"title\">").concat(translate$g('request.title'), "</th>\n                    <th data-id=\"status\">").concat(translate$g('request.status'), "</th>\n                    <th data-id=\"forestry\">").concat(translate$g('request.forestry'), "</th>\n                    <th data-id=\"local_forestry\">").concat(translate$g('request.local_forestry'), "</th>\n                    <th data-id=\"area\">").concat(translate$g('request.area'), "</th>\n                    <th data-id=\"amount\">").concat(translate$g('request.amount'), "<sup>3</sup></th>\n                    <th data-id=\"remove\"></th>\n                </tr>\n            </thead>\n        </table> \n        <div class=\"content\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody class=\"items\"></tbody>\n            </table>\n        </div>");
+    _this._container.innerHTML = "<div class=\"header\">           \n            <label class=\"title\">".concat(translate$h('request.header'), "</label>                   \n            <button class=\"create\">").concat(translate$h('request.create'), "</button>                              \n        </div>\n        <table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th data-id=\"id\">").concat(translate$h('request.id'), "</th>\n                    <th data-id=\"title\">").concat(translate$h('request.title'), "</th>\n                    <th data-id=\"status\">").concat(translate$h('request.status'), "</th>\n                    <th data-id=\"forestry\">").concat(translate$h('request.forestry'), "</th>\n                    <th data-id=\"local_forestry\">").concat(translate$h('request.local_forestry'), "</th>\n                    <th data-id=\"area\">").concat(translate$h('request.area'), "</th>\n                    <th data-id=\"amount\">").concat(translate$h('request.amount'), "<sup>3</sup></th>\n                    <th data-id=\"remove\"></th>\n                </tr>\n            </thead>\n        </table> \n        <div class=\"content\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody class=\"items\"></tbody>\n            </table>\n        </div>");
     _this._content = _this._container.querySelector('.items');
 
     _this._container.querySelector('.create').addEventListener('click', function (e) {
@@ -39524,7 +40854,7 @@ var Requests = /*#__PURE__*/function (_BaseView) {
                       forestry = _ref3.forestry,
                       localForestries = _ref3.localForestries,
                       totalSquare = _ref3.totalSquare;
-                  return "<tr class=\"request\">\n                    <td data-id=\"id\"></td>\n                    <td data-id=\"title\">".concat(title, "</td>\n                    <td data-id=\"status\">").concat(status, "</td>\n                    <td data-id=\"forestry\">").concat(forestry, "</td>\n                    <td data-id=\"local_forestry\">").concat(localForestries, "</td>\n                    <td data-id=\"area\">").concat(totalSquare.toLocaleString(undefined, {
+                  return "<tr class=\"request\">\n                    <td data-id=\"id\"></td>\n                    <td data-id=\"title\">".concat(title, "</td>\n                    <td data-id=\"status\">").concat(status, "</td>\n                    <td data-id=\"forestry\">").concat(forestry, "</td>\n                    <td data-id=\"local_forestry\">").concat(localForestries, "</td>\n                    <td data-id=\"area\">").concat(totalSquare.toLocaleString('ru-RU', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                   }), "</td>\n                    <td data-id=\"amount\"></td>\n                    <td data-id=\"remove\">").concat(statusID === 1 ? '<i class="scanex-requests-icon remove"></i>' : '', "</td>\n                </tr>");
@@ -39592,7 +40922,7 @@ var Requests = /*#__PURE__*/function (_BaseView) {
                 _context.prev = 16;
                 _context.t0 = _context["catch"](0);
                 console.log(_context.t0);
-                alert(translate$g('error.requests'));
+                alert(translate$h('error.requests'));
                 this.close();
 
               case 21:
@@ -39622,7 +40952,7 @@ var Requests = /*#__PURE__*/function (_BaseView) {
   return Requests;
 }(BaseView);
 
-var translate$h = T.getText.bind(T);
+var translate$i = T.getText.bind(T);
 T.addText('rus', {
   stand: {
     title: 'Выдел',
@@ -39694,14 +41024,14 @@ var Stands = /*#__PURE__*/function (_BaseView) {
 
     _this._container.classList.add('scanex-forestry-stand');
 
-    _this._container.innerHTML = "\n\t\t<div class=\"header1\">".concat(translate$h('stand.title'), "</div>\n\t\t<div class=\"header2\"></div>\n\t\t<div class=\"scrollable\">\n\t\t\t<div class=\"content1\">\n\t\t\t\t<div class=\"stats\"></div>\n\t\t\t\t<div class=\"chart\"></div>\n\t\t\t</div>\n\t\t\t<div class=\"content2\">\n\t\t\t\t<div class=\"levels\"></div>\n\t\t\t\t<div class=\"events\"></div>\n\t\t\t</div>\t\t\t\n\t\t</div>");
+    _this._container.innerHTML = "\n\t\t<div class=\"header1\">".concat(translate$i('stand.title'), "</div>\n\t\t<div class=\"header2\"></div>\n\t\t<div class=\"scrollable\">\n\t\t\t<div class=\"content1\">\n\t\t\t\t<div class=\"stats\"></div>\n\t\t\t\t<div class=\"levels\"></div>\t\t\t\t\n\t\t\t</div>\t\t\t\n\t\t\t<div class=\"content2\">\n\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t<div class=\"events\"></div>\n\t\t\t</div>\t\t\t\n\t\t</div>");
     _this._header = _this._container.querySelector('.header2');
     _this._stats = _this._container.querySelector('.stats');
     _this._chart = new apexcharts_common(_this._container.querySelector('.chart'), {
       chart: {
         type: 'donut',
-        width: '400px',
-        height: '160px'
+        width: '350px',
+        height: '250px'
       },
       dataLabels: {
         enabled: false
@@ -39709,8 +41039,8 @@ var Stands = /*#__PURE__*/function (_BaseView) {
       labels: [],
       series: [],
       legend: {
-        position: 'right',
-        width: '200px'
+        position: 'bottom',
+        width: '350px'
       },
       plotOptions: {
         pie: {
@@ -39720,7 +41050,7 @@ var Stands = /*#__PURE__*/function (_BaseView) {
               show: true,
               value: {
                 formatter: function formatter(val) {
-                  return "".concat(val, " ").concat(translate$h('unit.m3'));
+                  return "".concat(val, " ").concat(translate$i('unit.m3'));
                 },
                 fontSize: '12px',
                 show: true
@@ -39730,12 +41060,12 @@ var Stands = /*#__PURE__*/function (_BaseView) {
                   var series = _ref2.config.series;
                   return "".concat(series.reduce(function (p, c) {
                     return p + c;
-                  }, 0).toLocaleString(undefined, {
+                  }, 0).toLocaleString('ru-RU', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
-                  }), " ").concat(translate$h('unit.m3'));
+                  }), " ").concat(translate$i('unit.m3'));
                 },
-                label: translate$h('stock.all'),
+                label: translate$i('stock.all'),
                 fontSize: '12px',
                 fontWeight: 600,
                 show: true
@@ -39745,6 +41075,9 @@ var Stands = /*#__PURE__*/function (_BaseView) {
         }
       }
     });
+
+    _this._chart.render();
+
     _this._levels = _this._container.querySelector('.levels');
     _this._events = _this._container.querySelector('.events');
     return _this;
@@ -39776,7 +41109,7 @@ var Stands = /*#__PURE__*/function (_BaseView) {
 
       if (Array.isArray(Stock)) {
         this._header.innerText = [Forestry, LocalForestry, Stow, Quadrant, Stand].join(', ');
-        this._stats.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t\t<tbody>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>".concat(translate$h('stand.usage'), "</td>\n\t\t\t\t\t\t<td>").concat(ForestUseType, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$h('stand.year'), "</td>\n\t\t\t\t\t\t<td>").concat(UpdatingYear, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$h('stand.area'), "</td>\n\t\t\t\t\t\t<td>").concat(Square, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$h('stand.category'), "</td>\n\t\t\t\t\t\t<td>").concat(LandCategory, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$h('stand.protected'), "</td>\n\t\t\t\t\t\t<td>").concat(OZU, "</td>                    \n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$h('stand.slope'), "</td>\n\t\t\t\t\t\t<td>").concat(Exposition, " / ").concat(Steepness, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$h('stand.targetSpecies'), "</td>\n\t\t\t\t\t\t<td>").concat(TargetSpecies, "</td>                    \n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$h('stand.mainSpecies'), "</td>\n\t\t\t\t\t\t<td>").concat(PredominantSpecies, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$h('stand.age'), "</td>\n\t\t\t\t\t\t<td>").concat(AgeGroup, "</td>                    \n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$h('stand.klass'), "</td>\n\t\t\t\t\t\t<td>").concat(AgeClass, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$h('stand.bonitet'), "</td>\n\t\t\t\t\t\t<td>").concat(Bonitet, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$h('stand.type'), "</td>\n\t\t\t\t\t\t<td></td>                    \n\t\t\t\t\t</tr>\n\t\t\t\t</tbody>\n\t\t\t</table>");
+        this._stats.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t\t<tbody>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>".concat(translate$i('stand.usage'), "</td>\n\t\t\t\t\t\t<td>").concat(ForestUseType, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$i('stand.year'), "</td>\n\t\t\t\t\t\t<td>").concat(UpdatingYear, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$i('stand.area'), "</td>\n\t\t\t\t\t\t<td>").concat(Square, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$i('stand.category'), "</td>\n\t\t\t\t\t\t<td>").concat(LandCategory, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$i('stand.protected'), "</td>\n\t\t\t\t\t\t<td>").concat(OZU, "</td>                    \n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$i('stand.slope'), "</td>\n\t\t\t\t\t\t<td>").concat(Exposition, " / ").concat(Steepness, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$i('stand.targetSpecies'), "</td>\n\t\t\t\t\t\t<td>").concat(TargetSpecies, "</td>                    \n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$i('stand.mainSpecies'), "</td>\n\t\t\t\t\t\t<td>").concat(PredominantSpecies, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$i('stand.age'), "</td>\n\t\t\t\t\t\t<td>").concat(AgeGroup, "</td>                    \n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$i('stand.klass'), "</td>\n\t\t\t\t\t\t<td>").concat(AgeClass, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$i('stand.bonitet'), "</td>\n\t\t\t\t\t\t<td>").concat(Bonitet, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$i('stand.type'), "</td>\n\t\t\t\t\t\t<td></td>                    \n\t\t\t\t\t</tr>\n\t\t\t\t</tbody>\n\t\t\t</table>");
 
         var _Stock$reduce = Stock.reduce(function (a, _ref3) {
           var stock = _ref3.stock,
@@ -39791,8 +41124,6 @@ var Stands = /*#__PURE__*/function (_BaseView) {
             labels = _Stock$reduce.labels,
             series = _Stock$reduce.series;
 
-        this._chart.render();
-
         this._chart.updateOptions({
           labels: labels
         });
@@ -39803,7 +41134,7 @@ var Stands = /*#__PURE__*/function (_BaseView) {
           this._levels.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t\t\t<tbody>".concat(StoreyInfo.map(function (_ref4) {
             var storey = _ref4.storey,
                 species_info = _ref4.species_info;
-            return "<tr class=\"storey\">\n\t\t\t\t\t\t\t<td>".concat(translate$h('stand.storey.title'), "</td>\n\t\t\t\t\t\t\t<td>").concat(storey, "</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t").concat(Array.isArray(species_info) ? species_info.map(function (_ref5) {
+            return "<tr class=\"storey\">\n\t\t\t\t\t\t\t<td>".concat(translate$i('stand.storey.title'), "</td>\n\t\t\t\t\t\t\t<td>").concat(storey, "</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t").concat(Array.isArray(species_info) ? species_info.map(function (_ref5) {
               var age = _ref5.age,
                   basal_area_sum = _ref5.basal_area_sum,
                   dbh = _ref5.dbh,
@@ -39814,7 +41145,7 @@ var Stands = /*#__PURE__*/function (_BaseView) {
                   origin_id = _ref5.origin_id,
                   rate = _ref5.rate,
                   species = _ref5.species;
-              return "<tr>\n\t\t\t\t\t\t\t\t<td>".concat(translate$h('stand.storey.species'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(species, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$h('stand.storey.rate'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(rate, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$h('stand.storey.gross_volume'), "<sup>3</sup></td>\n\t\t\t\t\t\t\t\t<td>").concat(gross_volume, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$h('stand.storey.age'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(age, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$h('stand.storey.basal_area_sum'), "<sup>2</sup></td>\n\t\t\t\t\t\t\t\t<td>").concat(basal_area_sum, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$h('stand.storey.dbh'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(dbh, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$h('stand.storey.density'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(density, "</td>\n\t\t\t\t\t\t\t</tr>\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$h('stand.storey.height'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(height, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$h('stand.storey.marketability_class'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(marketability_class, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$h('stand.storey.origin_id'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(origin_id, "</td>\n\t\t\t\t\t\t\t</tr>");
+              return "<tr>\n\t\t\t\t\t\t\t\t<td>".concat(translate$i('stand.storey.species'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(species, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$i('stand.storey.rate'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(rate, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$i('stand.storey.gross_volume'), "<sup>3</sup></td>\n\t\t\t\t\t\t\t\t<td>").concat(gross_volume, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$i('stand.storey.age'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(age, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$i('stand.storey.basal_area_sum'), "<sup>2</sup></td>\n\t\t\t\t\t\t\t\t<td>").concat(basal_area_sum, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$i('stand.storey.dbh'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(dbh, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$i('stand.storey.density'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(density, "</td>\n\t\t\t\t\t\t\t</tr>\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$i('stand.storey.height'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(height, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$i('stand.storey.marketability_class'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(marketability_class, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$i('stand.storey.origin_id'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(origin_id, "</td>\n\t\t\t\t\t\t\t</tr>");
             }).join('') : '');
           }).join(''), "</tbody>\n\t\t\t\t</table>");
         }
@@ -39824,11 +41155,11 @@ var Stands = /*#__PURE__*/function (_BaseView) {
             var name = _ref6.name,
                 activity = _ref6.activity,
                 fillingpercent = _ref6.fillingpercent;
-            return "<tr>\n\t\t\t\t\t\t\t<td>".concat(name, "</td>\n\t\t\t\t\t\t\t<td>").concat(activity, "</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t<td>").concat(translate$h('stand.percentage'), "</td>\n\t\t\t\t\t\t\t<td class=\"percentage\">").concat(fillingpercent, "</td>\n\t\t\t\t\t\t</tr>");
+            return "<tr>\n\t\t\t\t\t\t\t<td>".concat(name, "</td>\n\t\t\t\t\t\t\t<td>").concat(activity, "</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t<td>").concat(translate$i('stand.percentage'), "</td>\n\t\t\t\t\t\t\t<td class=\"percentage\">").concat(fillingpercent, "</td>\n\t\t\t\t\t\t</tr>");
           }).join(''), "</tbody>\n\t\t\t\t</table>");
         }
       } else {
-        throw new Error(translate$h('stand.na'));
+        throw new Error(translate$i('stand.na'));
       }
     }
   }, {
@@ -39937,7 +41268,7 @@ var STYLE = {
   }).canvas, 'repeat')
 };
 
-var translate$i = T.getText.bind(T);
+var translate$j = T.getText.bind(T);
 var stock = {
   permitted: 'Доступный',
   probable: 'Прогноз',
@@ -39966,7 +41297,7 @@ T.addText('rus', {
   species: 'Порода',
   stock: stock,
   unit: {
-    m: 'тыс. м',
+    m: 'м',
     m3: 'куб. м',
     ha: 'га'
   },
@@ -40077,7 +41408,7 @@ var Project = /*#__PURE__*/function (_BaseView) {
 
                   this._layer.repaint();
                 } else {
-                  alert(translate$i('quadrant.invalid'));
+                  alert(translate$j('quadrant.invalid'));
                 }
 
               case 14:
@@ -40088,7 +41419,7 @@ var Project = /*#__PURE__*/function (_BaseView) {
                 _context.prev = 16;
                 _context.t0 = _context["catch"](0);
                 console.log(_context.t0);
-                alert(translate$i('error.quadrant'));
+                alert(translate$j('error.quadrant'));
 
               case 20:
               case "end":
@@ -40283,7 +41614,7 @@ var Project = /*#__PURE__*/function (_BaseView) {
   return Project;
 }(BaseView);
 
-var translate$j = T.getText.bind(T);
+var translate$k = T.getText.bind(T);
 
 var Quadrants$1 = /*#__PURE__*/function (_EventTarget) {
   _inherits(Quadrants, _EventTarget);
@@ -40346,7 +41677,7 @@ var Quadrants$1 = /*#__PURE__*/function (_EventTarget) {
       var _this2 = this;
 
       this._items = Array.isArray(items) && items || [];
-      this._container.innerHTML = this._items.length ? "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th>".concat(translate$j('project.localForestry'), " / ").concat(translate$j('project.tract'), "</th>                    \n                    <th>").concat(translate$j('quadrants'), "</th>\n                </tr>\n            </thead>\n        </table>\n        <div class=\"scrollable\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody>").concat(this._items.map(function (_ref) {
+      this._container.innerHTML = this._items.length ? "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th>".concat(translate$k('project.localForestry'), " / ").concat(translate$k('project.tract'), "</th>                    \n                    <th>").concat(translate$k('quadrants'), "</th>\n                </tr>\n            </thead>\n        </table>\n        <div class=\"scrollable\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody>").concat(this._items.map(function (_ref) {
         var local_forestry = _ref.local_forestry,
             stow = _ref.stow,
             num = _ref.num;
@@ -40396,7 +41727,7 @@ var Quadrants$1 = /*#__PURE__*/function (_EventTarget) {
   return Quadrants;
 }(EventTarget);
 
-var translate$k = T.getText.bind(T);
+var translate$l = T.getText.bind(T);
 
 var SpeciesTable = /*#__PURE__*/function (_EventTarget) {
   _inherits(SpeciesTable, _EventTarget);
@@ -40417,7 +41748,7 @@ var SpeciesTable = /*#__PURE__*/function (_EventTarget) {
     key: "update",
     value: function update(species) {
       var format = function format(n) {
-        return n.toLocaleString(undefined, {
+        return n.toLocaleString('ru-RU', {
           minimumFractionDigits: 3,
           maximumFractionDigits: 3
         });
@@ -40441,14 +41772,14 @@ var SpeciesTable = /*#__PURE__*/function (_EventTarget) {
             total_stock_deal = _ref.total_stock_deal;
         return "<tr class=\"type\">\n                <td class=\"label\">".concat(species, "</td>\n                <td class=\"value\">").concat(format(permitted_stock / 1000), "</td>\n                <td class=\"value\">").concat(format(permitted_stock_deal / 1000), "</td>\n                <td class=\"value\">").concat(format(probable_stock / 1000), "</td>\n                <td class=\"value\">").concat(format(probable_stock_deal / 1000), "</td>\n                <td class=\"value\">").concat(format(total_stock / 1000), "</td>\n                <td class=\"value\">").concat(format(total_stock_deal / 1000), "</td>\n            </tr>");
       }).join('');
-      this._container.innerHTML = rows ? "<div class=\"title\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>                 \n                        <tr>\n                            <td>".concat(translate$k('species'), "</td>\n                            <td class=\"label\" colspan=\"3\">").concat(translate$k('stock.label'), ", ").concat(translate$k('unit.m'), "<sup>3</sup></td>\n                        </tr>\n                        <tr>\n                            <td></td>\n                            <td class=\"label\">").concat(translate$k('stock.permitted'), "</td>                        \n                            <td class=\"label\">").concat(translate$k('stock.probable'), "</td>\n                            <td class=\"label\">").concat(translate$k('stock.total'), "</td>\n                        </tr>\n                    </tbody>\t\t\t\t\t\t\n                </table>\n            </div>\n            <div class=\"content\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>").concat(rows, "</tbody>\n                </table>\n            </div>") : '';
+      this._container.innerHTML = rows ? "<div class=\"title\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>                 \n                        <tr>\n                            <td>".concat(translate$l('species'), "</td>\n                            <td class=\"label\" colspan=\"3\">").concat(translate$l('stock.label'), ", ").concat(translate$l('unit.m'), "<sup>3</sup></td>\n                        </tr>\n                        <tr>\n                            <td></td>\n                            <td class=\"label\">").concat(translate$l('stock.permitted'), "</td>                        \n                            <td class=\"label\">").concat(translate$l('stock.probable'), "</td>\n                            <td class=\"label\">").concat(translate$l('stock.total'), "</td>\n                        </tr>\n                    </tbody>\t\t\t\t\t\t\n                </table>\n            </div>\n            <div class=\"content\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>").concat(rows, "</tbody>\n                </table>\n            </div>") : '';
     }
   }]);
 
   return SpeciesTable;
 }(EventTarget);
 
-var translate$l = T.getText.bind(T);
+var translate$m = T.getText.bind(T);
 
 var Species = /*#__PURE__*/function () {
   function Species(container) {
@@ -40458,7 +41789,7 @@ var Species = /*#__PURE__*/function () {
 
     this._species = [];
     this._container = container;
-    this._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<thead class=\"menu\">\n\t\t\t\t<tr>\n\t\t\t\t\t<th colspan=\"3\">\n\t\t\t\t\t\t<button class=\"stock active\">".concat(translate$l('stock.table'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"permitted\">").concat(translate$l('stock.permitted'), "</button>\n\t\t\t\t\t</th>\t\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"probable\">").concat(translate$l('stock.probable'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"total\">").concat(translate$l('stock.total'), "</button>\n\t\t\t\t\t</th>\t\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td colspan=\"3\">\n\t\t\t\t\t\t<div class=\"table\"></div>\n\t\t\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t\t</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
+    this._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<thead class=\"menu\">\n\t\t\t\t<tr>\n\t\t\t\t\t<th colspan=\"3\">\n\t\t\t\t\t\t<button class=\"stock active\">".concat(translate$m('stock.table'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"permitted\">").concat(translate$m('stock.permitted'), "</button>\n\t\t\t\t\t</th>\t\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"probable\">").concat(translate$m('stock.probable'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"total\">").concat(translate$m('stock.total'), "</button>\n\t\t\t\t\t</th>\t\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td colspan=\"3\">\n\t\t\t\t\t\t<div class=\"table\"></div>\n\t\t\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t\t</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
     this._buttons = this._container.querySelectorAll('button');
 
     var btnStock = this._container.querySelector('.stock');
@@ -40491,13 +41822,13 @@ var Species = /*#__PURE__*/function () {
 
     var _formatter = function formatter(n, s, d) {
       if (s) {
-        return d ? [n, ' - ', s.toLocaleString(undefined, {
+        return d ? [n, ' - ', s.toLocaleString('ru-RU', {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2
         }), ' / ', d.toLocaleString(undefined, {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2
-        })] : [n, ' - ', s.toLocaleString(undefined, {
+        })] : [n, ' - ', s.toLocaleString('ru-RU', {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2
         })];
@@ -40548,7 +41879,7 @@ var Species = /*#__PURE__*/function () {
               show: true,
               value: {
                 formatter: function formatter(val) {
-                  return "".concat(val, " ").concat(translate$l('unit.m3'));
+                  return "".concat(val, " ").concat(translate$m('unit.m3'));
                 },
                 fontSize: '12px',
                 show: true
@@ -40561,9 +41892,9 @@ var Species = /*#__PURE__*/function () {
                   }, 0).toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
-                  }), " ").concat(translate$l('unit.m3'));
+                  }), " ").concat(translate$m('unit.m3'));
                 },
-                label: translate$l('stock.all'),
+                label: translate$m('stock.all'),
                 fontSize: '12px',
                 fontWeight: 600,
                 show: true
@@ -40673,7 +42004,7 @@ var Species = /*#__PURE__*/function () {
   return Species;
 }();
 
-var translate$m = T.getText.bind(T);
+var translate$n = T.getText.bind(T);
 
 var Create = /*#__PURE__*/function (_Project) {
   _inherits(Create, _Project);
@@ -40692,7 +42023,7 @@ var Create = /*#__PURE__*/function (_Project) {
       layer: layer,
       path: path
     });
-    _this._container.innerHTML = "<div class=\"header\">\n            <div class=\"header-left\">\n                <button class=\"scanex-requests-icon back\"></button>                \n                <label class=\"head\">".concat(translate$m('project.title.create'), "</label>                            \n                <input class=\"description\" type=\"text\" value=\"\"></input>\n            </div>\n            <div class=\"header-right\">                                \n                <button class=\"request\">").concat(translate$m('project.request'), "</button>\n                <button class=\"save\">").concat(translate$m('project.save'), "</button>\n            </div>\n        </div>\n        <div class=\"content\">\n            <div class=\"species\"></div>\n            <div class=\"quadrants\"></div>\n        </div>");
+    _this._container.innerHTML = "<div class=\"header\">\n            <div class=\"header-left\">\n                <button class=\"scanex-requests-icon back\"></button>                \n                <label class=\"head\">".concat(translate$n('project.title.create'), "</label>                            \n                <input class=\"description\" type=\"text\" value=\"\"></input>\n            </div>\n            <div class=\"header-right\">                                \n                <button class=\"request\">").concat(translate$n('project.request'), "</button>\n                <button class=\"save\">").concat(translate$n('project.save'), "</button>\n            </div>\n        </div>\n        <div class=\"content\">\n            <div class=\"species\"></div>\n            <div class=\"quadrants\"></div>\n        </div>");
 
     _this._container.querySelector('.back').addEventListener('click', function (e) {
       e.stopPropagation();
@@ -40701,7 +42032,7 @@ var Create = /*#__PURE__*/function (_Project) {
     });
 
     _this._description = _this._container.querySelector('.description');
-    _this._description.value = "".concat(translate$m('project.default'), " - ").concat(new Date().toLocaleDateString());
+    _this._description.value = "".concat(translate$n('project.default'), " - ").concat(new Date().toLocaleDateString());
 
     var btnRequest = _this._container.querySelector('.request');
 
@@ -40852,7 +42183,7 @@ var Create = /*#__PURE__*/function (_Project) {
                 _context3.prev = 16;
                 _context3.t0 = _context3["catch"](0);
                 console.log(_context3.t0);
-                alert(translate$m('error.request.create'));
+                alert(translate$n('error.request.create'));
 
               case 20:
               case "end":
@@ -40873,7 +42204,7 @@ var Create = /*#__PURE__*/function (_Project) {
   return Create;
 }(Project);
 
-var translate$n = T.getText.bind(T);
+var translate$o = T.getText.bind(T);
 
 var Edit = /*#__PURE__*/function (_Project) {
   _inherits(Edit, _Project);
@@ -40892,7 +42223,7 @@ var Edit = /*#__PURE__*/function (_Project) {
       layer: layer,
       path: path
     });
-    _this._container.innerHTML = "<div class=\"header\">\n            <div class=\"header-left\">\n                <button class=\"scanex-requests-icon back\"></button>\n                <label class=\"head\">".concat(translate$n('project.title.edit'), "</label>\n                <input class=\"description\" type=\"text\" value=\"\"></input>\n            </div>\n            <div class=\"header-right\">                                \n                <button class=\"request\">").concat(translate$n('project.request'), "</button>\n                <button class=\"save\">").concat(translate$n('project.save'), "</button>\n            </div>\n        </div>\n        <div class=\"content\">\n            <div class=\"species\"></div>\n            <div class=\"quadrants\"></div>            \n        </div>");
+    _this._container.innerHTML = "<div class=\"header\">\n            <div class=\"header-left\">\n                <button class=\"scanex-requests-icon back\"></button>\n                <label class=\"head\">".concat(translate$o('project.title.edit'), "</label>\n                <input class=\"description\" type=\"text\" value=\"\"></input>\n            </div>\n            <div class=\"header-right\">                                \n                <button class=\"request\">").concat(translate$o('project.request'), "</button>\n                <button class=\"save\">").concat(translate$o('project.save'), "</button>\n            </div>\n        </div>\n        <div class=\"content\">\n            <div class=\"species\"></div>\n            <div class=\"quadrants\"></div>            \n        </div>");
 
     _this._container.querySelector('.back').addEventListener('click', function (e) {
       e.stopPropagation();
@@ -41043,7 +42374,7 @@ var Edit = /*#__PURE__*/function (_Project) {
                 _context3.prev = 12;
                 _context3.t0 = _context3["catch"](0);
                 console.log(_context3.t0);
-                alert(translate$n('error.request.create'));
+                alert(translate$o('error.request.create'));
 
               case 16:
               case "end":
@@ -41164,7 +42495,7 @@ var Edit = /*#__PURE__*/function (_Project) {
                 break;
 
               case 24:
-                throw translate$n('quadrant.invalid');
+                throw translate$o('quadrant.invalid');
 
               case 25:
                 _context5.next = 32;
@@ -41177,7 +42508,7 @@ var Edit = /*#__PURE__*/function (_Project) {
                 this._back();
 
                 console.log(_context5.t0);
-                alert(translate$n('error.project.edit'));
+                alert(translate$o('error.project.edit'));
 
               case 32:
               case "end":
@@ -41198,7 +42529,7 @@ var Edit = /*#__PURE__*/function (_Project) {
   return Edit;
 }(Project);
 
-var translate$o = T.getText.bind(T);
+var translate$p = T.getText.bind(T);
 
 var Quadrants$2 = /*#__PURE__*/function (_Controller) {
   _inherits(Quadrants$1, _Controller);
@@ -41251,7 +42582,7 @@ var Quadrants$2 = /*#__PURE__*/function (_Controller) {
       }, _callee);
     }))).on('existing', function (e) {
       var event = document.createEvent('Event');
-      event.initEvent('request:create', false, false);
+      event.initEvent('project:view', false, false);
       event.detail = e.detail;
 
       _this.dispatchEvent(event);
@@ -41341,21 +42672,9 @@ var Quadrants$2 = /*#__PURE__*/function (_Controller) {
           }
         }
       }, _callee5);
-    }))).on('create', function (e) {
-      _this._layer.repaint();
-
-      var event = document.createEvent('Event');
-      event.initEvent('request:create', false, false);
-      event.detail = e.detail;
-
-      _this.dispatchEvent(event);
-    });
-
-    _this._content.add('create-project', Create, {
-      layer: _this._layer,
-      path: _this._apiPath
-    }).on('save', /*#__PURE__*/function () {
+    }))).on('create', /*#__PURE__*/function () {
       var _ref7 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(e) {
+        var event;
         return regeneratorRuntime.wrap(function _callee6$(_context6) {
           while (1) {
             switch (_context6.prev = _context6.next) {
@@ -41366,6 +42685,13 @@ var Quadrants$2 = /*#__PURE__*/function (_Controller) {
                 return _this._content.show('requests');
 
               case 3:
+                event = document.createEvent('Event');
+                event.initEvent('request:create', false, false);
+                event.detail = e.detail;
+
+                _this.dispatchEvent(event);
+
+              case 7:
               case "end":
                 return _context6.stop();
             }
@@ -41376,97 +42702,146 @@ var Quadrants$2 = /*#__PURE__*/function (_Controller) {
       return function (_x3) {
         return _ref7.apply(this, arguments);
       };
-    }()).on('backward', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7() {
-      return regeneratorRuntime.wrap(function _callee7$(_context7) {
+    }());
+
+    _this._content.add('create-project', Create, {
+      layer: _this._layer,
+      path: _this._apiPath
+    }).on('save', /*#__PURE__*/function () {
+      var _ref8 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(e) {
+        return regeneratorRuntime.wrap(function _callee7$(_context7) {
+          while (1) {
+            switch (_context7.prev = _context7.next) {
+              case 0:
+                _this._layer.repaint();
+
+                _context7.next = 3;
+                return _this._content.show('requests');
+
+              case 3:
+              case "end":
+                return _context7.stop();
+            }
+          }
+        }, _callee7);
+      }));
+
+      return function (_x4) {
+        return _ref8.apply(this, arguments);
+      };
+    }()).on('backward', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8() {
+      return regeneratorRuntime.wrap(function _callee8$(_context8) {
         while (1) {
-          switch (_context7.prev = _context7.next) {
+          switch (_context8.prev = _context8.next) {
             case 0:
               _this._layer.repaint();
 
-              _context7.next = 3;
+              _context8.next = 3;
               return _this._content.show('requests');
 
             case 3:
             case "end":
-              return _context7.stop();
+              return _context8.stop();
           }
         }
-      }, _callee7);
-    }))).on('create', function (e) {
-      _this._layer.repaint();
+      }, _callee8);
+    }))).on('create', /*#__PURE__*/function () {
+      var _ref10 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9(e) {
+        var event;
+        return regeneratorRuntime.wrap(function _callee9$(_context9) {
+          while (1) {
+            switch (_context9.prev = _context9.next) {
+              case 0:
+                _this._layer.repaint();
 
-      var event = document.createEvent('Event');
-      event.initEvent('request:create', false, false);
-      event.detail = e.detail;
+                _context9.next = 3;
+                return _this._content.show('requests');
 
-      _this.dispatchEvent(event);
-    });
+              case 3:
+                event = document.createEvent('Event');
+                event.initEvent('request:create', false, false);
+                event.detail = e.detail;
+
+                _this.dispatchEvent(event);
+
+              case 7:
+              case "end":
+                return _context9.stop();
+            }
+          }
+        }, _callee9);
+      }));
+
+      return function (_x5) {
+        return _ref10.apply(this, arguments);
+      };
+    }());
     return _this;
   }
 
   _createClass(Quadrants$1, [{
     key: "_click",
     value: function () {
-      var _click2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(e) {
+      var _click2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(e) {
         var mode, _e$gmx, id, properties, v;
 
-        return regeneratorRuntime.wrap(function _callee8$(_context8) {
+        return regeneratorRuntime.wrap(function _callee10$(_context10) {
           while (1) {
-            switch (_context8.prev = _context8.next) {
+            switch (_context10.prev = _context10.next) {
               case 0:
                 L.DomEvent.stopPropagation(e);
                 mode = this._content.getCurrentId();
 
                 if (!mode) {
-                  _context8.next = 18;
+                  _context10.next = 18;
                   break;
                 }
 
                 _e$gmx = e.gmx, id = _e$gmx.id, properties = _e$gmx.properties;
-                _context8.t0 = mode;
-                _context8.next = _context8.t0 === 'requests' ? 7 : _context8.t0 === 'quadrants' ? 7 : _context8.t0 === 'create-project' ? 10 : _context8.t0 === 'edit-project' ? 10 : 14;
+                _context10.t0 = mode;
+                _context10.next = _context10.t0 === 'requests' ? 7 : _context10.t0 === 'quadrants' ? 7 : _context10.t0 === 'create-project' ? 10 : _context10.t0 === 'edit-project' ? 10 : 14;
                 break;
 
               case 7:
-                _context8.next = 9;
+                _context10.next = 9;
                 return this._content.show('quadrants', {
                   gmx_id: id,
                   properties: properties
                 });
 
               case 9:
-                return _context8.abrupt("break", 15);
+                return _context10.abrupt("break", 15);
 
               case 10:
                 v = this._content.getCurrent();
-                _context8.next = 13;
+                _context10.next = 13;
                 return v.toggle(id, properties.forestry_id);
 
               case 13:
-                return _context8.abrupt("break", 15);
+                return _context10.abrupt("break", 15);
 
               case 14:
-                return _context8.abrupt("break", 15);
+                return _context10.abrupt("break", 15);
 
               case 15:
                 this._layer.repaint();
 
-                _context8.next = 20;
+                _context10.next = 20;
                 break;
 
               case 18:
-                _context8.next = 20;
+                _context10.next = 20;
                 return _get(_getPrototypeOf(Quadrants$1.prototype), "_click", this).call(this, e);
 
               case 20:
               case "end":
-                return _context8.stop();
+                return _context10.stop();
             }
           }
-        }, _callee8, this);
+        }, _callee10, this);
       }));
 
-      function _click(_x4) {
+      function _click(_x6) {
         return _click2.apply(this, arguments);
       }
 
@@ -41475,24 +42850,24 @@ var Quadrants$2 = /*#__PURE__*/function (_Controller) {
   }, {
     key: "edit",
     value: function () {
-      var _edit = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9(id, forestryID) {
+      var _edit = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11(id, forestryID) {
         var event;
-        return regeneratorRuntime.wrap(function _callee9$(_context9) {
+        return regeneratorRuntime.wrap(function _callee11$(_context11) {
           while (1) {
-            switch (_context9.prev = _context9.next) {
+            switch (_context11.prev = _context11.next) {
               case 0:
                 if (!this._permissions.ForestProjectsEdit) {
-                  _context9.next = 21;
+                  _context11.next = 21;
                   break;
                 }
 
-                _context9.prev = 1;
+                _context11.prev = 1;
 
                 this._legend.enable('quadrants');
 
                 this._layer.repaint();
 
-                _context9.next = 6;
+                _context11.next = 6;
                 return this._content.show('edit-project', {
                   id: id,
                   forestryID: forestryID
@@ -41503,36 +42878,36 @@ var Quadrants$2 = /*#__PURE__*/function (_Controller) {
                 event.initEvent('project:edit', false, false);
                 event.detail = id;
                 this.dispatchEvent(event);
-                _context9.next = 19;
+                _context11.next = 19;
                 break;
 
               case 12:
-                _context9.prev = 12;
-                _context9.t0 = _context9["catch"](1);
-                console.log(_context9.t0);
-                alert(translate$o('error.project.edit'));
-                _context9.next = 18;
+                _context11.prev = 12;
+                _context11.t0 = _context11["catch"](1);
+                console.log(_context11.t0);
+                alert(translate$p('error.project.edit'));
+                _context11.next = 18;
                 return this._content.show('requests');
 
               case 18:
                 this._layer.repaint();
 
               case 19:
-                _context9.next = 22;
+                _context11.next = 22;
                 break;
 
               case 21:
-                alert(translate$o('forbidden.project.edit'));
+                alert(translate$p('forbidden.project.edit'));
 
               case 22:
               case "end":
-                return _context9.stop();
+                return _context11.stop();
             }
           }
-        }, _callee9, this, [[1, 12]]);
+        }, _callee11, this, [[1, 12]]);
       }));
 
-      function edit(_x5, _x6) {
+      function edit(_x7, _x8) {
         return _edit.apply(this, arguments);
       }
 
@@ -41541,53 +42916,59 @@ var Quadrants$2 = /*#__PURE__*/function (_Controller) {
   }, {
     key: "create",
     value: function () {
-      var _create = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10() {
-        return regeneratorRuntime.wrap(function _callee10$(_context10) {
+      var _create = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee12() {
+        return regeneratorRuntime.wrap(function _callee12$(_context12) {
           while (1) {
-            switch (_context10.prev = _context10.next) {
+            switch (_context12.prev = _context12.next) {
               case 0:
                 if (!this._permissions.ApplicationMake) {
-                  _context10.next = 17;
+                  _context12.next = 20;
                   break;
                 }
 
-                _context10.prev = 1;
+                _context12.prev = 1;
 
                 this._legend.enable('quadrants');
 
+                this._legend.enable('projects');
+
+                this._legend.enable('plots');
+
+                this._legend.enable('parks');
+
                 this._layer.repaint();
 
-                _context10.next = 6;
+                _context12.next = 9;
                 return this._content.show('create-project');
 
-              case 6:
-                _context10.next = 15;
+              case 9:
+                _context12.next = 18;
                 break;
 
-              case 8:
-                _context10.prev = 8;
-                _context10.t0 = _context10["catch"](1);
-                console.log(_context10.t0);
-                alert(translate$o('error.project.create'));
-                _context10.next = 14;
+              case 11:
+                _context12.prev = 11;
+                _context12.t0 = _context12["catch"](1);
+                console.log(_context12.t0);
+                alert(translate$p('error.project.create'));
+                _context12.next = 17;
                 return this._content.show('requests');
 
-              case 14:
+              case 17:
                 this._layer.repaint();
 
-              case 15:
-                _context10.next = 18;
+              case 18:
+                _context12.next = 21;
                 break;
 
-              case 17:
-                alert(translate$o('forbidden.project.create'));
+              case 20:
+                alert(translate$p('forbidden.project.create'));
 
-              case 18:
+              case 21:
               case "end":
-                return _context10.stop();
+                return _context12.stop();
             }
           }
-        }, _callee10, this, [[1, 8]]);
+        }, _callee12, this, [[1, 11]]);
       }));
 
       function create() {
@@ -41599,19 +42980,19 @@ var Quadrants$2 = /*#__PURE__*/function (_Controller) {
   }, {
     key: "_remove",
     value: function () {
-      var _remove2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11(id) {
+      var _remove2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee13(id) {
         var response;
-        return regeneratorRuntime.wrap(function _callee11$(_context11) {
+        return regeneratorRuntime.wrap(function _callee13$(_context13) {
           while (1) {
-            switch (_context11.prev = _context11.next) {
+            switch (_context13.prev = _context13.next) {
               case 0:
                 if (!this._permissions.ForestProjectsRemove) {
-                  _context11.next = 19;
+                  _context13.next = 19;
                   break;
                 }
 
-                _context11.prev = 1;
-                _context11.next = 4;
+                _context13.prev = 1;
+                _context13.next = 4;
                 return fetch("".concat(this._apiPath, "/Forest/RemoveDraftForestProject"), {
                   method: 'POST',
                   credentials: 'include',
@@ -41624,43 +43005,43 @@ var Quadrants$2 = /*#__PURE__*/function (_Controller) {
                 });
 
               case 4:
-                response = _context11.sent;
-                _context11.next = 7;
+                response = _context13.sent;
+                _context13.next = 7;
                 return response.json();
 
               case 7:
                 this._layer.repaint();
 
-                _context11.next = 17;
+                _context13.next = 17;
                 break;
 
               case 10:
-                _context11.prev = 10;
-                _context11.t0 = _context11["catch"](1);
-                console.log(_context11.t0);
-                alert(translate$o('error.project.remove'));
-                _context11.next = 16;
+                _context13.prev = 10;
+                _context13.t0 = _context13["catch"](1);
+                console.log(_context13.t0);
+                alert(translate$p('error.project.remove'));
+                _context13.next = 16;
                 return this._content.show('requests');
 
               case 16:
                 this._layer.repaint();
 
               case 17:
-                _context11.next = 20;
+                _context13.next = 20;
                 break;
 
               case 19:
-                alert(translate$o('forbidden.project.remove'));
+                alert(translate$p('forbidden.project.remove'));
 
               case 20:
               case "end":
-                return _context11.stop();
+                return _context13.stop();
             }
           }
-        }, _callee11, this, [[1, 10]]);
+        }, _callee13, this, [[1, 10]]);
       }));
 
-      function _remove(_x7) {
+      function _remove(_x9) {
         return _remove2.apply(this, arguments);
       }
 
@@ -41671,1169 +43052,7 @@ var Quadrants$2 = /*#__PURE__*/function (_Controller) {
   return Quadrants$1;
 }(Controller);
 
-var pikaday = createCommonjsModule(function (module, exports) {
-  /*!
-   * Pikaday
-   *
-   * Copyright © 2014 David Bushell | BSD & MIT license | https://github.com/Pikaday/Pikaday
-   */
-  (function (root, factory) {
-
-    var moment$1;
-
-    {
-      // CommonJS module
-      // Load moment.js as an optional dependency
-      try {
-        moment$1 = moment;
-      } catch (e) {}
-
-      module.exports = factory(moment$1);
-    }
-  })(commonjsGlobal, function (moment) {
-    /**
-     * feature detection and helper functions
-     */
-
-    var hasMoment = typeof moment === 'function',
-        hasEventListeners = !!window.addEventListener,
-        document = window.document,
-        sto = window.setTimeout,
-        addEvent = function addEvent(el, e, callback, capture) {
-      if (hasEventListeners) {
-        el.addEventListener(e, callback, !!capture);
-      } else {
-        el.attachEvent('on' + e, callback);
-      }
-    },
-        removeEvent = function removeEvent(el, e, callback, capture) {
-      if (hasEventListeners) {
-        el.removeEventListener(e, callback, !!capture);
-      } else {
-        el.detachEvent('on' + e, callback);
-      }
-    },
-        trim = function trim(str) {
-      return str.trim ? str.trim() : str.replace(/^\s+|\s+$/g, '');
-    },
-        hasClass = function hasClass(el, cn) {
-      return (' ' + el.className + ' ').indexOf(' ' + cn + ' ') !== -1;
-    },
-        addClass = function addClass(el, cn) {
-      if (!hasClass(el, cn)) {
-        el.className = el.className === '' ? cn : el.className + ' ' + cn;
-      }
-    },
-        removeClass = function removeClass(el, cn) {
-      el.className = trim((' ' + el.className + ' ').replace(' ' + cn + ' ', ' '));
-    },
-        isArray = function isArray(obj) {
-      return /Array/.test(Object.prototype.toString.call(obj));
-    },
-        isDate = function isDate(obj) {
-      return /Date/.test(Object.prototype.toString.call(obj)) && !isNaN(obj.getTime());
-    },
-        isWeekend = function isWeekend(date) {
-      var day = date.getDay();
-      return day === 0 || day === 6;
-    },
-        isLeapYear = function isLeapYear(year) {
-      // solution by Matti Virkkunen: http://stackoverflow.com/a/4881951
-      return year % 4 === 0 && year % 100 !== 0 || year % 400 === 0;
-    },
-        getDaysInMonth = function getDaysInMonth(year, month) {
-      return [31, isLeapYear(year) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month];
-    },
-        setToStartOfDay = function setToStartOfDay(date) {
-      if (isDate(date)) date.setHours(0, 0, 0, 0);
-    },
-        compareDates = function compareDates(a, b) {
-      // weak date comparison (use setToStartOfDay(date) to ensure correct result)
-      return a.getTime() === b.getTime();
-    },
-        extend = function extend(to, from, overwrite) {
-      var prop, hasProp;
-
-      for (prop in from) {
-        hasProp = to[prop] !== undefined;
-
-        if (hasProp && _typeof(from[prop]) === 'object' && from[prop] !== null && from[prop].nodeName === undefined) {
-          if (isDate(from[prop])) {
-            if (overwrite) {
-              to[prop] = new Date(from[prop].getTime());
-            }
-          } else if (isArray(from[prop])) {
-            if (overwrite) {
-              to[prop] = from[prop].slice(0);
-            }
-          } else {
-            to[prop] = extend({}, from[prop], overwrite);
-          }
-        } else if (overwrite || !hasProp) {
-          to[prop] = from[prop];
-        }
-      }
-
-      return to;
-    },
-        fireEvent = function fireEvent(el, eventName, data) {
-      var ev;
-
-      if (document.createEvent) {
-        ev = document.createEvent('HTMLEvents');
-        ev.initEvent(eventName, true, false);
-        ev = extend(ev, data);
-        el.dispatchEvent(ev);
-      } else if (document.createEventObject) {
-        ev = document.createEventObject();
-        ev = extend(ev, data);
-        el.fireEvent('on' + eventName, ev);
-      }
-    },
-        adjustCalendar = function adjustCalendar(calendar) {
-      if (calendar.month < 0) {
-        calendar.year -= Math.ceil(Math.abs(calendar.month) / 12);
-        calendar.month += 12;
-      }
-
-      if (calendar.month > 11) {
-        calendar.year += Math.floor(Math.abs(calendar.month) / 12);
-        calendar.month -= 12;
-      }
-
-      return calendar;
-    },
-
-    /**
-     * defaults and localisation
-     */
-    defaults = {
-      // bind the picker to a form field
-      field: null,
-      // automatically show/hide the picker on `field` focus (default `true` if `field` is set)
-      bound: undefined,
-      // data-attribute on the input field with an aria assistance tekst (only applied when `bound` is set)
-      ariaLabel: 'Use the arrow keys to pick a date',
-      // position of the datepicker, relative to the field (default to bottom & left)
-      // ('bottom' & 'left' keywords are not used, 'top' & 'right' are modifier on the bottom/left position)
-      position: 'bottom left',
-      // automatically fit in the viewport even if it means repositioning from the position option
-      reposition: true,
-      // the default output format for `.toString()` and `field` value
-      format: 'YYYY-MM-DD',
-      // the toString function which gets passed a current date object and format
-      // and returns a string
-      toString: null,
-      // used to create date object from current input string
-      parse: null,
-      // the initial date to view when first opened
-      defaultDate: null,
-      // make the `defaultDate` the initial selected value
-      setDefaultDate: false,
-      // first day of week (0: Sunday, 1: Monday etc)
-      firstDay: 0,
-      // the default flag for moment's strict date parsing
-      formatStrict: false,
-      // the minimum/earliest date that can be selected
-      minDate: null,
-      // the maximum/latest date that can be selected
-      maxDate: null,
-      // number of years either side, or array of upper/lower range
-      yearRange: 10,
-      // show week numbers at head of row
-      showWeekNumber: false,
-      // Week picker mode
-      pickWholeWeek: false,
-      // used internally (don't config outside)
-      minYear: 0,
-      maxYear: 9999,
-      minMonth: undefined,
-      maxMonth: undefined,
-      startRange: null,
-      endRange: null,
-      isRTL: false,
-      // Additional text to append to the year in the calendar title
-      yearSuffix: '',
-      // Render the month after year in the calendar title
-      showMonthAfterYear: false,
-      // Render days of the calendar grid that fall in the next or previous month
-      showDaysInNextAndPreviousMonths: false,
-      // Allows user to select days that fall in the next or previous month
-      enableSelectionDaysInNextAndPreviousMonths: false,
-      // how many months are visible
-      numberOfMonths: 1,
-      // when numberOfMonths is used, this will help you to choose where the main calendar will be (default `left`, can be set to `right`)
-      // only used for the first display or when a selected date is not visible
-      mainCalendar: 'left',
-      // Specify a DOM element to render the calendar in
-      container: undefined,
-      // Blur field when date is selected
-      blurFieldOnSelect: true,
-      // internationalization
-      i18n: {
-        previousMonth: 'Previous Month',
-        nextMonth: 'Next Month',
-        months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
-        weekdays: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
-        weekdaysShort: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-      },
-      // Theme Classname
-      theme: null,
-      // events array
-      events: [],
-      // callback function
-      onSelect: null,
-      onOpen: null,
-      onClose: null,
-      onDraw: null,
-      // Enable keyboard input
-      keyboardInput: true
-    },
-
-    /**
-     * templating functions to abstract HTML rendering
-     */
-    renderDayName = function renderDayName(opts, day, abbr) {
-      day += opts.firstDay;
-
-      while (day >= 7) {
-        day -= 7;
-      }
-
-      return abbr ? opts.i18n.weekdaysShort[day] : opts.i18n.weekdays[day];
-    },
-        renderDay = function renderDay(opts) {
-      var arr = [];
-      var ariaSelected = 'false';
-
-      if (opts.isEmpty) {
-        if (opts.showDaysInNextAndPreviousMonths) {
-          arr.push('is-outside-current-month');
-
-          if (!opts.enableSelectionDaysInNextAndPreviousMonths) {
-            arr.push('is-selection-disabled');
-          }
-        } else {
-          return '<td class="is-empty"></td>';
-        }
-      }
-
-      if (opts.isDisabled) {
-        arr.push('is-disabled');
-      }
-
-      if (opts.isToday) {
-        arr.push('is-today');
-      }
-
-      if (opts.isSelected) {
-        arr.push('is-selected');
-        ariaSelected = 'true';
-      }
-
-      if (opts.hasEvent) {
-        arr.push('has-event');
-      }
-
-      if (opts.isInRange) {
-        arr.push('is-inrange');
-      }
-
-      if (opts.isStartRange) {
-        arr.push('is-startrange');
-      }
-
-      if (opts.isEndRange) {
-        arr.push('is-endrange');
-      }
-
-      return '<td data-day="' + opts.day + '" class="' + arr.join(' ') + '" aria-selected="' + ariaSelected + '">' + '<button class="pika-button pika-day" type="button" ' + 'data-pika-year="' + opts.year + '" data-pika-month="' + opts.month + '" data-pika-day="' + opts.day + '">' + opts.day + '</button>' + '</td>';
-    },
-        renderWeek = function renderWeek(d, m, y) {
-      // Lifted from http://javascript.about.com/library/blweekyear.htm, lightly modified.
-      var onejan = new Date(y, 0, 1),
-          weekNum = Math.ceil(((new Date(y, m, d) - onejan) / 86400000 + onejan.getDay() + 1) / 7);
-      return '<td class="pika-week">' + weekNum + '</td>';
-    },
-        renderRow = function renderRow(days, isRTL, pickWholeWeek, isRowSelected) {
-      return '<tr class="pika-row' + (pickWholeWeek ? ' pick-whole-week' : '') + (isRowSelected ? ' is-selected' : '') + '">' + (isRTL ? days.reverse() : days).join('') + '</tr>';
-    },
-        renderBody = function renderBody(rows) {
-      return '<tbody>' + rows.join('') + '</tbody>';
-    },
-        renderHead = function renderHead(opts) {
-      var i,
-          arr = [];
-
-      if (opts.showWeekNumber) {
-        arr.push('<th></th>');
-      }
-
-      for (i = 0; i < 7; i++) {
-        arr.push('<th scope="col"><abbr title="' + renderDayName(opts, i) + '">' + renderDayName(opts, i, true) + '</abbr></th>');
-      }
-
-      return '<thead><tr>' + (opts.isRTL ? arr.reverse() : arr).join('') + '</tr></thead>';
-    },
-        renderTitle = function renderTitle(instance, c, year, month, refYear, randId) {
-      var i,
-          j,
-          arr,
-          opts = instance._o,
-          isMinYear = year === opts.minYear,
-          isMaxYear = year === opts.maxYear,
-          html = '<div id="' + randId + '" class="pika-title" role="heading" aria-live="assertive">',
-          monthHtml,
-          yearHtml,
-          prev = true,
-          next = true;
-
-      for (arr = [], i = 0; i < 12; i++) {
-        arr.push('<option value="' + (year === refYear ? i - c : 12 + i - c) + '"' + (i === month ? ' selected="selected"' : '') + (isMinYear && i < opts.minMonth || isMaxYear && i > opts.maxMonth ? 'disabled="disabled"' : '') + '>' + opts.i18n.months[i] + '</option>');
-      }
-
-      monthHtml = '<div class="pika-label">' + opts.i18n.months[month] + '<select class="pika-select pika-select-month" tabindex="-1">' + arr.join('') + '</select></div>';
-
-      if (isArray(opts.yearRange)) {
-        i = opts.yearRange[0];
-        j = opts.yearRange[1] + 1;
-      } else {
-        i = year - opts.yearRange;
-        j = 1 + year + opts.yearRange;
-      }
-
-      for (arr = []; i < j && i <= opts.maxYear; i++) {
-        if (i >= opts.minYear) {
-          arr.push('<option value="' + i + '"' + (i === year ? ' selected="selected"' : '') + '>' + i + '</option>');
-        }
-      }
-
-      yearHtml = '<div class="pika-label">' + year + opts.yearSuffix + '<select class="pika-select pika-select-year" tabindex="-1">' + arr.join('') + '</select></div>';
-
-      if (opts.showMonthAfterYear) {
-        html += yearHtml + monthHtml;
-      } else {
-        html += monthHtml + yearHtml;
-      }
-
-      if (isMinYear && (month === 0 || opts.minMonth >= month)) {
-        prev = false;
-      }
-
-      if (isMaxYear && (month === 11 || opts.maxMonth <= month)) {
-        next = false;
-      }
-
-      if (c === 0) {
-        html += '<button class="pika-prev' + (prev ? '' : ' is-disabled') + '" type="button">' + opts.i18n.previousMonth + '</button>';
-      }
-
-      if (c === instance._o.numberOfMonths - 1) {
-        html += '<button class="pika-next' + (next ? '' : ' is-disabled') + '" type="button">' + opts.i18n.nextMonth + '</button>';
-      }
-
-      return html += '</div>';
-    },
-        renderTable = function renderTable(opts, data, randId) {
-      return '<table cellpadding="0" cellspacing="0" class="pika-table" role="grid" aria-labelledby="' + randId + '">' + renderHead(opts) + renderBody(data) + '</table>';
-    },
-
-    /**
-     * Pikaday constructor
-     */
-    Pikaday = function Pikaday(options) {
-      var self = this,
-          opts = self.config(options);
-
-      self._onMouseDown = function (e) {
-        if (!self._v) {
-          return;
-        }
-
-        e = e || window.event;
-        var target = e.target || e.srcElement;
-
-        if (!target) {
-          return;
-        }
-
-        if (!hasClass(target, 'is-disabled')) {
-          if (hasClass(target, 'pika-button') && !hasClass(target, 'is-empty') && !hasClass(target.parentNode, 'is-disabled')) {
-            self.setDate(new Date(target.getAttribute('data-pika-year'), target.getAttribute('data-pika-month'), target.getAttribute('data-pika-day')));
-
-            if (opts.bound) {
-              sto(function () {
-                self.hide();
-
-                if (opts.blurFieldOnSelect && opts.field) {
-                  opts.field.blur();
-                }
-              }, 100);
-            }
-          } else if (hasClass(target, 'pika-prev')) {
-            self.prevMonth();
-          } else if (hasClass(target, 'pika-next')) {
-            self.nextMonth();
-          }
-        }
-
-        if (!hasClass(target, 'pika-select')) {
-          // if this is touch event prevent mouse events emulation
-          if (e.preventDefault) {
-            e.preventDefault();
-          } else {
-            e.returnValue = false;
-            return false;
-          }
-        } else {
-          self._c = true;
-        }
-      };
-
-      self._onChange = function (e) {
-        e = e || window.event;
-        var target = e.target || e.srcElement;
-
-        if (!target) {
-          return;
-        }
-
-        if (hasClass(target, 'pika-select-month')) {
-          self.gotoMonth(target.value);
-        } else if (hasClass(target, 'pika-select-year')) {
-          self.gotoYear(target.value);
-        }
-      };
-
-      self._onKeyChange = function (e) {
-        e = e || window.event;
-
-        if (self.isVisible()) {
-          switch (e.keyCode) {
-            case 13:
-            case 27:
-              if (opts.field) {
-                opts.field.blur();
-              }
-
-              break;
-
-            case 37:
-              e.preventDefault();
-              self.adjustDate('subtract', 1);
-              break;
-
-            case 38:
-              self.adjustDate('subtract', 7);
-              break;
-
-            case 39:
-              self.adjustDate('add', 1);
-              break;
-
-            case 40:
-              self.adjustDate('add', 7);
-              break;
-          }
-        }
-      };
-
-      self._onInputChange = function (e) {
-        var date;
-
-        if (e.firedBy === self) {
-          return;
-        }
-
-        if (opts.parse) {
-          date = opts.parse(opts.field.value, opts.format);
-        } else if (hasMoment) {
-          date = moment(opts.field.value, opts.format, opts.formatStrict);
-          date = date && date.isValid() ? date.toDate() : null;
-        } else {
-          date = new Date(Date.parse(opts.field.value));
-        }
-
-        if (isDate(date)) {
-          self.setDate(date);
-        }
-
-        if (!self._v) {
-          self.show();
-        }
-      };
-
-      self._onInputFocus = function () {
-        self.show();
-      };
-
-      self._onInputClick = function () {
-        self.show();
-      };
-
-      self._onInputBlur = function () {
-        // IE allows pika div to gain focus; catch blur the input field
-        var pEl = document.activeElement;
-
-        do {
-          if (hasClass(pEl, 'pika-single')) {
-            return;
-          }
-        } while (pEl = pEl.parentNode);
-
-        if (!self._c) {
-          self._b = sto(function () {
-            self.hide();
-          }, 50);
-        }
-
-        self._c = false;
-      };
-
-      self._onClick = function (e) {
-        e = e || window.event;
-        var target = e.target || e.srcElement,
-            pEl = target;
-
-        if (!target) {
-          return;
-        }
-
-        if (!hasEventListeners && hasClass(target, 'pika-select')) {
-          if (!target.onchange) {
-            target.setAttribute('onchange', 'return;');
-            addEvent(target, 'change', self._onChange);
-          }
-        }
-
-        do {
-          if (hasClass(pEl, 'pika-single') || pEl === opts.trigger) {
-            return;
-          }
-        } while (pEl = pEl.parentNode);
-
-        if (self._v && target !== opts.trigger && pEl !== opts.trigger) {
-          self.hide();
-        }
-      };
-
-      self.el = document.createElement('div');
-      self.el.className = 'pika-single' + (opts.isRTL ? ' is-rtl' : '') + (opts.theme ? ' ' + opts.theme : '');
-      addEvent(self.el, 'mousedown', self._onMouseDown, true);
-      addEvent(self.el, 'touchend', self._onMouseDown, true);
-      addEvent(self.el, 'change', self._onChange);
-
-      if (opts.keyboardInput) {
-        addEvent(document, 'keydown', self._onKeyChange);
-      }
-
-      if (opts.field) {
-        if (opts.container) {
-          opts.container.appendChild(self.el);
-        } else if (opts.bound) {
-          document.body.appendChild(self.el);
-        } else {
-          opts.field.parentNode.insertBefore(self.el, opts.field.nextSibling);
-        }
-
-        addEvent(opts.field, 'change', self._onInputChange);
-
-        if (!opts.defaultDate) {
-          if (hasMoment && opts.field.value) {
-            opts.defaultDate = moment(opts.field.value, opts.format).toDate();
-          } else {
-            opts.defaultDate = new Date(Date.parse(opts.field.value));
-          }
-
-          opts.setDefaultDate = true;
-        }
-      }
-
-      var defDate = opts.defaultDate;
-
-      if (isDate(defDate)) {
-        if (opts.setDefaultDate) {
-          self.setDate(defDate, true);
-        } else {
-          self.gotoDate(defDate);
-        }
-      } else {
-        self.gotoDate(new Date());
-      }
-
-      if (opts.bound) {
-        this.hide();
-        self.el.className += ' is-bound';
-        addEvent(opts.trigger, 'click', self._onInputClick);
-        addEvent(opts.trigger, 'focus', self._onInputFocus);
-        addEvent(opts.trigger, 'blur', self._onInputBlur);
-      } else {
-        this.show();
-      }
-    };
-    /**
-     * public Pikaday API
-     */
-
-
-    Pikaday.prototype = {
-      /**
-       * configure functionality
-       */
-      config: function config(options) {
-        if (!this._o) {
-          this._o = extend({}, defaults, true);
-        }
-
-        var opts = extend(this._o, options, true);
-        opts.isRTL = !!opts.isRTL;
-        opts.field = opts.field && opts.field.nodeName ? opts.field : null;
-        opts.theme = typeof opts.theme === 'string' && opts.theme ? opts.theme : null;
-        opts.bound = !!(opts.bound !== undefined ? opts.field && opts.bound : opts.field);
-        opts.trigger = opts.trigger && opts.trigger.nodeName ? opts.trigger : opts.field;
-        opts.disableWeekends = !!opts.disableWeekends;
-        opts.disableDayFn = typeof opts.disableDayFn === 'function' ? opts.disableDayFn : null;
-        var nom = parseInt(opts.numberOfMonths, 10) || 1;
-        opts.numberOfMonths = nom > 4 ? 4 : nom;
-
-        if (!isDate(opts.minDate)) {
-          opts.minDate = false;
-        }
-
-        if (!isDate(opts.maxDate)) {
-          opts.maxDate = false;
-        }
-
-        if (opts.minDate && opts.maxDate && opts.maxDate < opts.minDate) {
-          opts.maxDate = opts.minDate = false;
-        }
-
-        if (opts.minDate) {
-          this.setMinDate(opts.minDate);
-        }
-
-        if (opts.maxDate) {
-          this.setMaxDate(opts.maxDate);
-        }
-
-        if (isArray(opts.yearRange)) {
-          var fallback = new Date().getFullYear() - 10;
-          opts.yearRange[0] = parseInt(opts.yearRange[0], 10) || fallback;
-          opts.yearRange[1] = parseInt(opts.yearRange[1], 10) || fallback;
-        } else {
-          opts.yearRange = Math.abs(parseInt(opts.yearRange, 10)) || defaults.yearRange;
-
-          if (opts.yearRange > 100) {
-            opts.yearRange = 100;
-          }
-        }
-
-        return opts;
-      },
-
-      /**
-       * return a formatted string of the current selection (using Moment.js if available)
-       */
-      toString: function toString(format) {
-        format = format || this._o.format;
-
-        if (!isDate(this._d)) {
-          return '';
-        }
-
-        if (this._o.toString) {
-          return this._o.toString(this._d, format);
-        }
-
-        if (hasMoment) {
-          return moment(this._d).format(format);
-        }
-
-        return this._d.toDateString();
-      },
-
-      /**
-       * return a Moment.js object of the current selection (if available)
-       */
-      getMoment: function getMoment() {
-        return hasMoment ? moment(this._d) : null;
-      },
-
-      /**
-       * set the current selection from a Moment.js object (if available)
-       */
-      setMoment: function setMoment(date, preventOnSelect) {
-        if (hasMoment && moment.isMoment(date)) {
-          this.setDate(date.toDate(), preventOnSelect);
-        }
-      },
-
-      /**
-       * return a Date object of the current selection
-       */
-      getDate: function getDate() {
-        return isDate(this._d) ? new Date(this._d.getTime()) : null;
-      },
-
-      /**
-       * set the current selection
-       */
-      setDate: function setDate(date, preventOnSelect) {
-        if (!date) {
-          this._d = null;
-
-          if (this._o.field) {
-            this._o.field.value = '';
-            fireEvent(this._o.field, 'change', {
-              firedBy: this
-            });
-          }
-
-          return this.draw();
-        }
-
-        if (typeof date === 'string') {
-          date = new Date(Date.parse(date));
-        }
-
-        if (!isDate(date)) {
-          return;
-        }
-
-        var min = this._o.minDate,
-            max = this._o.maxDate;
-
-        if (isDate(min) && date < min) {
-          date = min;
-        } else if (isDate(max) && date > max) {
-          date = max;
-        }
-
-        this._d = new Date(date.getTime());
-        setToStartOfDay(this._d);
-        this.gotoDate(this._d);
-
-        if (this._o.field) {
-          this._o.field.value = this.toString();
-          fireEvent(this._o.field, 'change', {
-            firedBy: this
-          });
-        }
-
-        if (!preventOnSelect && typeof this._o.onSelect === 'function') {
-          this._o.onSelect.call(this, this.getDate());
-        }
-      },
-
-      /**
-       * change view to a specific date
-       */
-      gotoDate: function gotoDate(date) {
-        var newCalendar = true;
-
-        if (!isDate(date)) {
-          return;
-        }
-
-        if (this.calendars) {
-          var firstVisibleDate = new Date(this.calendars[0].year, this.calendars[0].month, 1),
-              lastVisibleDate = new Date(this.calendars[this.calendars.length - 1].year, this.calendars[this.calendars.length - 1].month, 1),
-              visibleDate = date.getTime(); // get the end of the month
-
-          lastVisibleDate.setMonth(lastVisibleDate.getMonth() + 1);
-          lastVisibleDate.setDate(lastVisibleDate.getDate() - 1);
-          newCalendar = visibleDate < firstVisibleDate.getTime() || lastVisibleDate.getTime() < visibleDate;
-        }
-
-        if (newCalendar) {
-          this.calendars = [{
-            month: date.getMonth(),
-            year: date.getFullYear()
-          }];
-
-          if (this._o.mainCalendar === 'right') {
-            this.calendars[0].month += 1 - this._o.numberOfMonths;
-          }
-        }
-
-        this.adjustCalendars();
-      },
-      adjustDate: function adjustDate(sign, days) {
-        var day = this.getDate() || new Date();
-        var difference = parseInt(days) * 24 * 60 * 60 * 1000;
-        var newDay;
-
-        if (sign === 'add') {
-          newDay = new Date(day.valueOf() + difference);
-        } else if (sign === 'subtract') {
-          newDay = new Date(day.valueOf() - difference);
-        }
-
-        this.setDate(newDay);
-      },
-      adjustCalendars: function adjustCalendars() {
-        this.calendars[0] = adjustCalendar(this.calendars[0]);
-
-        for (var c = 1; c < this._o.numberOfMonths; c++) {
-          this.calendars[c] = adjustCalendar({
-            month: this.calendars[0].month + c,
-            year: this.calendars[0].year
-          });
-        }
-
-        this.draw();
-      },
-      gotoToday: function gotoToday() {
-        this.gotoDate(new Date());
-      },
-
-      /**
-       * change view to a specific month (zero-index, e.g. 0: January)
-       */
-      gotoMonth: function gotoMonth(month) {
-        if (!isNaN(month)) {
-          this.calendars[0].month = parseInt(month, 10);
-          this.adjustCalendars();
-        }
-      },
-      nextMonth: function nextMonth() {
-        this.calendars[0].month++;
-        this.adjustCalendars();
-      },
-      prevMonth: function prevMonth() {
-        this.calendars[0].month--;
-        this.adjustCalendars();
-      },
-
-      /**
-       * change view to a specific full year (e.g. "2012")
-       */
-      gotoYear: function gotoYear(year) {
-        if (!isNaN(year)) {
-          this.calendars[0].year = parseInt(year, 10);
-          this.adjustCalendars();
-        }
-      },
-
-      /**
-       * change the minDate
-       */
-      setMinDate: function setMinDate(value) {
-        if (value instanceof Date) {
-          setToStartOfDay(value);
-          this._o.minDate = value;
-          this._o.minYear = value.getFullYear();
-          this._o.minMonth = value.getMonth();
-        } else {
-          this._o.minDate = defaults.minDate;
-          this._o.minYear = defaults.minYear;
-          this._o.minMonth = defaults.minMonth;
-          this._o.startRange = defaults.startRange;
-        }
-
-        this.draw();
-      },
-
-      /**
-       * change the maxDate
-       */
-      setMaxDate: function setMaxDate(value) {
-        if (value instanceof Date) {
-          setToStartOfDay(value);
-          this._o.maxDate = value;
-          this._o.maxYear = value.getFullYear();
-          this._o.maxMonth = value.getMonth();
-        } else {
-          this._o.maxDate = defaults.maxDate;
-          this._o.maxYear = defaults.maxYear;
-          this._o.maxMonth = defaults.maxMonth;
-          this._o.endRange = defaults.endRange;
-        }
-
-        this.draw();
-      },
-      setStartRange: function setStartRange(value) {
-        this._o.startRange = value;
-      },
-      setEndRange: function setEndRange(value) {
-        this._o.endRange = value;
-      },
-
-      /**
-       * refresh the HTML
-       */
-      draw: function draw(force) {
-        if (!this._v && !force) {
-          return;
-        }
-
-        var opts = this._o,
-            minYear = opts.minYear,
-            maxYear = opts.maxYear,
-            minMonth = opts.minMonth,
-            maxMonth = opts.maxMonth,
-            html = '',
-            randId;
-
-        if (this._y <= minYear) {
-          this._y = minYear;
-
-          if (!isNaN(minMonth) && this._m < minMonth) {
-            this._m = minMonth;
-          }
-        }
-
-        if (this._y >= maxYear) {
-          this._y = maxYear;
-
-          if (!isNaN(maxMonth) && this._m > maxMonth) {
-            this._m = maxMonth;
-          }
-        }
-
-        randId = 'pika-title-' + Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 2);
-
-        for (var c = 0; c < opts.numberOfMonths; c++) {
-          html += '<div class="pika-lendar">' + renderTitle(this, c, this.calendars[c].year, this.calendars[c].month, this.calendars[0].year, randId) + this.render(this.calendars[c].year, this.calendars[c].month, randId) + '</div>';
-        }
-
-        this.el.innerHTML = html;
-
-        if (opts.bound) {
-          if (opts.field.type !== 'hidden') {
-            sto(function () {
-              opts.trigger.focus();
-            }, 1);
-          }
-        }
-
-        if (typeof this._o.onDraw === 'function') {
-          this._o.onDraw(this);
-        }
-
-        if (opts.bound) {
-          // let the screen reader user know to use arrow keys
-          opts.field.setAttribute('aria-label', opts.ariaLabel);
-        }
-      },
-      adjustPosition: function adjustPosition() {
-        var field, pEl, width, height, viewportWidth, viewportHeight, scrollTop, left, top, clientRect, leftAligned, bottomAligned;
-        if (this._o.container) return;
-        this.el.style.position = 'absolute';
-        field = this._o.trigger;
-        pEl = field;
-        width = this.el.offsetWidth;
-        height = this.el.offsetHeight;
-        viewportWidth = window.innerWidth || document.documentElement.clientWidth;
-        viewportHeight = window.innerHeight || document.documentElement.clientHeight;
-        scrollTop = window.pageYOffset || document.body.scrollTop || document.documentElement.scrollTop;
-        leftAligned = true;
-        bottomAligned = true;
-
-        if (typeof field.getBoundingClientRect === 'function') {
-          clientRect = field.getBoundingClientRect();
-          left = clientRect.left + window.pageXOffset;
-          top = clientRect.bottom + window.pageYOffset;
-        } else {
-          left = pEl.offsetLeft;
-          top = pEl.offsetTop + pEl.offsetHeight;
-
-          while (pEl = pEl.offsetParent) {
-            left += pEl.offsetLeft;
-            top += pEl.offsetTop;
-          }
-        } // default position is bottom & left
-
-
-        if (this._o.reposition && left + width > viewportWidth || this._o.position.indexOf('right') > -1 && left - width + field.offsetWidth > 0) {
-          left = left - width + field.offsetWidth;
-          leftAligned = false;
-        }
-
-        if (this._o.reposition && top + height > viewportHeight + scrollTop || this._o.position.indexOf('top') > -1 && top - height - field.offsetHeight > 0) {
-          top = top - height - field.offsetHeight;
-          bottomAligned = false;
-        }
-
-        this.el.style.left = left + 'px';
-        this.el.style.top = top + 'px';
-        addClass(this.el, leftAligned ? 'left-aligned' : 'right-aligned');
-        addClass(this.el, bottomAligned ? 'bottom-aligned' : 'top-aligned');
-        removeClass(this.el, !leftAligned ? 'left-aligned' : 'right-aligned');
-        removeClass(this.el, !bottomAligned ? 'bottom-aligned' : 'top-aligned');
-      },
-
-      /**
-       * render HTML for a particular month
-       */
-      render: function render(year, month, randId) {
-        var opts = this._o,
-            now = new Date(),
-            days = getDaysInMonth(year, month),
-            before = new Date(year, month, 1).getDay(),
-            data = [],
-            row = [];
-        setToStartOfDay(now);
-
-        if (opts.firstDay > 0) {
-          before -= opts.firstDay;
-
-          if (before < 0) {
-            before += 7;
-          }
-        }
-
-        var previousMonth = month === 0 ? 11 : month - 1,
-            nextMonth = month === 11 ? 0 : month + 1,
-            yearOfPreviousMonth = month === 0 ? year - 1 : year,
-            yearOfNextMonth = month === 11 ? year + 1 : year,
-            daysInPreviousMonth = getDaysInMonth(yearOfPreviousMonth, previousMonth);
-        var cells = days + before,
-            after = cells;
-
-        while (after > 7) {
-          after -= 7;
-        }
-
-        cells += 7 - after;
-        var isWeekSelected = false;
-
-        for (var i = 0, r = 0; i < cells; i++) {
-          var day = new Date(year, month, 1 + (i - before)),
-              isSelected = isDate(this._d) ? compareDates(day, this._d) : false,
-              isToday = compareDates(day, now),
-              hasEvent = opts.events.indexOf(day.toDateString()) !== -1 ? true : false,
-              isEmpty = i < before || i >= days + before,
-              dayNumber = 1 + (i - before),
-              monthNumber = month,
-              yearNumber = year,
-              isStartRange = opts.startRange && compareDates(opts.startRange, day),
-              isEndRange = opts.endRange && compareDates(opts.endRange, day),
-              isInRange = opts.startRange && opts.endRange && opts.startRange < day && day < opts.endRange,
-              isDisabled = opts.minDate && day < opts.minDate || opts.maxDate && day > opts.maxDate || opts.disableWeekends && isWeekend(day) || opts.disableDayFn && opts.disableDayFn(day);
-
-          if (isEmpty) {
-            if (i < before) {
-              dayNumber = daysInPreviousMonth + dayNumber;
-              monthNumber = previousMonth;
-              yearNumber = yearOfPreviousMonth;
-            } else {
-              dayNumber = dayNumber - days;
-              monthNumber = nextMonth;
-              yearNumber = yearOfNextMonth;
-            }
-          }
-
-          var dayConfig = {
-            day: dayNumber,
-            month: monthNumber,
-            year: yearNumber,
-            hasEvent: hasEvent,
-            isSelected: isSelected,
-            isToday: isToday,
-            isDisabled: isDisabled,
-            isEmpty: isEmpty,
-            isStartRange: isStartRange,
-            isEndRange: isEndRange,
-            isInRange: isInRange,
-            showDaysInNextAndPreviousMonths: opts.showDaysInNextAndPreviousMonths,
-            enableSelectionDaysInNextAndPreviousMonths: opts.enableSelectionDaysInNextAndPreviousMonths
-          };
-
-          if (opts.pickWholeWeek && isSelected) {
-            isWeekSelected = true;
-          }
-
-          row.push(renderDay(dayConfig));
-
-          if (++r === 7) {
-            if (opts.showWeekNumber) {
-              row.unshift(renderWeek(i - before, month, year));
-            }
-
-            data.push(renderRow(row, opts.isRTL, opts.pickWholeWeek, isWeekSelected));
-            row = [];
-            r = 0;
-            isWeekSelected = false;
-          }
-        }
-
-        return renderTable(opts, data, randId);
-      },
-      isVisible: function isVisible() {
-        return this._v;
-      },
-      show: function show() {
-        if (!this.isVisible()) {
-          this._v = true;
-          this.draw();
-          removeClass(this.el, 'is-hidden');
-
-          if (this._o.bound) {
-            addEvent(document, 'click', this._onClick);
-            this.adjustPosition();
-          }
-
-          if (typeof this._o.onOpen === 'function') {
-            this._o.onOpen.call(this);
-          }
-        }
-      },
-      hide: function hide() {
-        var v = this._v;
-
-        if (v !== false) {
-          if (this._o.bound) {
-            removeEvent(document, 'click', this._onClick);
-          }
-
-          this.el.style.position = 'static'; // reset
-
-          this.el.style.left = 'auto';
-          this.el.style.top = 'auto';
-          addClass(this.el, 'is-hidden');
-          this._v = false;
-
-          if (v !== undefined && typeof this._o.onClose === 'function') {
-            this._o.onClose.call(this);
-          }
-        }
-      },
-
-      /**
-       * GAME OVER
-       */
-      destroy: function destroy() {
-        var opts = this._o;
-        this.hide();
-        removeEvent(this.el, 'mousedown', this._onMouseDown, true);
-        removeEvent(this.el, 'touchend', this._onMouseDown, true);
-        removeEvent(this.el, 'change', this._onChange);
-
-        if (opts.keyboardInput) {
-          removeEvent(document, 'keydown', this._onKeyChange);
-        }
-
-        if (opts.field) {
-          removeEvent(opts.field, 'change', this._onInputChange);
-
-          if (opts.bound) {
-            removeEvent(opts.trigger, 'click', this._onInputClick);
-            removeEvent(opts.trigger, 'focus', this._onInputFocus);
-            removeEvent(opts.trigger, 'blur', this._onInputBlur);
-          }
-        }
-
-        if (this.el.parentNode) {
-          this.el.parentNode.removeChild(this.el);
-        }
-      }
-    };
-    return Pikaday;
-  });
-});
-
-var translate$p = T.getText.bind(T);
+var translate$q = T.getText.bind(T);
 T.addText('rus', {
   analytics: {
     title: 'Сводная аналитика',
@@ -42930,7 +43149,7 @@ var Reports = /*#__PURE__*/function (_BaseView) {
 
       this.currentType = 0;
 
-      var typeOption = this._parseOptions(translate$p('analytics.typeOption'));
+      var typeOption = this._parseOptions(translate$q('analytics.typeOption'));
 
       var regionOptions = this._parseOptionsHeader(data.regions);
 
@@ -42938,7 +43157,7 @@ var Reports = /*#__PURE__*/function (_BaseView) {
 
       var speciesOptions = this._parseOptionsHeader(data.species);
 
-      this._container.innerHTML = "<div class=\"header\">".concat(translate$p('analytics.title'), "</div>\n\t\t\t<div class=\"content\">\n\t\t\t\t<div class=\"line\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$p('analytics.type'), "</div>\n\t\t\t\t\t\t<select name=\"type\" class=\"type style-4\">\n\t\t\t\t\t\t\t").concat(typeOption, "\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"right-wrap\">\n\t\t\t\t\t\t<button class=\"save\">\u0421\u0444\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u043E\u0442\u0447\u0435\u0442</button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"line\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$p('analytics.region'), "</div>\n\t\t\t\t\t\t<select name=\"region\" class=\"region\">\n\t\t\t\t\t\t\t").concat(regionOptions, "\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"right-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$p('analytics.forestry'), "</div>\n\t\t\t\t\t\t<select name=\"forestry\" class=\"forestry\">\n\t\t\t\t\t\t </select>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"line\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$p('analytics.districtForestry'), "</div>\n\t\t\t\t\t\t<select name=\"localForestry\" class=\"localForestry\">\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"right-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$p('analytics.period'), "</div>\n\t\t\t\t\t\t<div class=\"date-inputs\">\n\t\t\t\t\t\t\t<span class=\"date\">\n\t\t\t\t\t\t\t<input class=\"dateBegin\" type=\"text\" placeholder=\"\" value=\"\">\n\t\t\t\t\t\t\t<i class=\"scanex-uploaded-icon calendar\"></i>\n\t\t\t\t\t\t\t</span>\n\n\t\t\t\t\t\t\t<span class=\"date\">\n\t\t\t\t\t\t\t<input class=\"dateEnd\" type=\"text\" placeholder=\"\" value=\"\">\n\t\t\t\t\t\t\t<i class=\"scanex-uploaded-icon calendar\"></i>\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"line species hidden\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$p('analytics.vybpor'), "</div>\n\t\t\t\t\t\t<select name=\"species\" class=\"species\">\n\t\t\t\t\t\t\t").concat(speciesOptions, "\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"chartCont\">\n\t\t\t\t</div>\n\t\t\t</div>");
+      this._container.innerHTML = "<div class=\"header\">".concat(translate$q('analytics.title'), "</div>\n\t\t\t<div class=\"content\">\n\t\t\t\t<div class=\"line\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$q('analytics.type'), "</div>\n\t\t\t\t\t\t<select name=\"type\" class=\"type style-4\">\n\t\t\t\t\t\t\t").concat(typeOption, "\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"right-wrap\">\n\t\t\t\t\t\t<button class=\"save\">\u0421\u0444\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u043E\u0442\u0447\u0435\u0442</button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"line\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$q('analytics.region'), "</div>\n\t\t\t\t\t\t<select name=\"region\" class=\"region\">\n\t\t\t\t\t\t\t").concat(regionOptions, "\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"right-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$q('analytics.forestry'), "</div>\n\t\t\t\t\t\t<select name=\"forestry\" class=\"forestry\">\n\t\t\t\t\t\t </select>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"line\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$q('analytics.districtForestry'), "</div>\n\t\t\t\t\t\t<select name=\"localForestry\" class=\"localForestry\">\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"right-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$q('analytics.period'), "</div>\n\t\t\t\t\t\t<div class=\"date-inputs\">\n\t\t\t\t\t\t\t<span class=\"date\">\n\t\t\t\t\t\t\t<input class=\"dateBegin\" type=\"text\" placeholder=\"\" value=\"\">\n\t\t\t\t\t\t\t<i class=\"scanex-uploaded-icon calendar\"></i>\n\t\t\t\t\t\t\t</span>\n\n\t\t\t\t\t\t\t<span class=\"date\">\n\t\t\t\t\t\t\t<input class=\"dateEnd\" type=\"text\" placeholder=\"\" value=\"\">\n\t\t\t\t\t\t\t<i class=\"scanex-uploaded-icon calendar\"></i>\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"line species hidden\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$q('analytics.vybpor'), "</div>\n\t\t\t\t\t\t<select name=\"species\" class=\"species\">\n\t\t\t\t\t\t\t").concat(speciesOptions, "\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"chartCont\">\n\t\t\t\t</div>\n\t\t\t</div>");
       var i18n = {
         previousMonth: 'Предыдущий месяц',
         nextMonth: 'Следующий месяц',
@@ -43187,14 +43406,14 @@ var Reports = /*#__PURE__*/function (_BaseView) {
       var str = data.map(function (it) {
         return "<div class=\"chart-row__left-el\">\n\t\t\t\t<div class=\"chart-row__left-el-chart\">\n\t\t\t\t\t<div class=\"chart-row__left-el-chart__text\">".concat(it.payed, " \u043C<sup>3</sup></div>\n\t\t\t\t\t<div class=\"chart-row__left-el-chart__arrow green-bg\" style=\"height: ").concat(Math.floor(maxHeight * Math.min(it.payed, maxValue) / maxValue), "px\"></div>\n\t\t\t\t\t<div class=\"chart-row__left-el-chart__text_bot\">").concat(it.organization || it.species, "</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"chart-row__left-el-chart\">\n\t\t\t\t\t<div class=\"chart-row__left-el-chart__text\">").concat(it.cutDown, " \u043C<sup>3</sup></div>\n\t\t\t\t\t<div class=\"chart-row__left-el-chart__arrow blue-bg\" style=\"height: ").concat(Math.floor(maxHeight * Math.min(it.cutDown, maxValue) / maxValue), "px\"></div>\n\t\t\t\t\t<div class=\"chart-row__left-el-chart__text_bot\">&nbsp;</div>\n\t\t\t\t</div>\n\t\t\t</div>");
       }).join('\n');
-      this._chartCont.innerHTML = "<div class=\"line\">\n\t\t\t<div class=\"chart-header black\">".concat(translate$p('analytics.sootn'), "&nbsp;<span class=\"green\">").concat(translate$p('analytics.oplach'), "</span>&nbsp;\u0438&nbsp;<span class=\"blue\">").concat(translate$p('analytics.vyrub'), "</span>&nbsp;").concat(translate$p('analytics.dreves'), "\n\t\t\t</div>\n\t\t</div>\n\t\t<div class=\"chart-row\">\n\t\t\t<div class=\"chart-row__left\">\n\t\t\t\t").concat(str, "\n\t\t\t</div>\n\t\t\t<div class=\"chart-row__right\">\n\t\t\t\t<div class=\"chart-row__right_line\">\n\t\t\t\t\t<div class=\"rec green-bg\"></div>\n\t\t\t\t\t<div class=\"rec-text\">").concat(translate$p('analytics.opl'), "</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"chart-row__right_line\">\n\t\t\t\t\t<div class=\"rec blue-bg\"></div>\n\t\t\t\t\t<div class=\"rec-text\">").concat(translate$p('analytics.vyr'), "</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>");
+      this._chartCont.innerHTML = "<div class=\"line\">\n\t\t\t<div class=\"chart-header black\">".concat(translate$q('analytics.sootn'), "&nbsp;<span class=\"green\">").concat(translate$q('analytics.oplach'), "</span>&nbsp;\u0438&nbsp;<span class=\"blue\">").concat(translate$q('analytics.vyrub'), "</span>&nbsp;").concat(translate$q('analytics.dreves'), "\n\t\t\t</div>\n\t\t</div>\n\t\t<div class=\"chart-row\">\n\t\t\t<div class=\"chart-row__left\">\n\t\t\t\t").concat(str, "\n\t\t\t</div>\n\t\t\t<div class=\"chart-row__right\">\n\t\t\t\t<div class=\"chart-row__right_line\">\n\t\t\t\t\t<div class=\"rec green-bg\"></div>\n\t\t\t\t\t<div class=\"rec-text\">").concat(translate$q('analytics.opl'), "</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"chart-row__right_line\">\n\t\t\t\t\t<div class=\"rec blue-bg\"></div>\n\t\t\t\t\t<div class=\"rec-text\">").concat(translate$q('analytics.vyr'), "</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>");
     }
   }, {
     key: "_parseBallance",
     value: function _parseBallance(data) {
       var maxValue = data.total;
       var maxWidth = 220;
-      this._chartCont.innerHTML = "<table class=\"line\">\n            <tr>\n\t\t\t\t<td class=\"first\">".concat(translate$p('analytics.growth'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act green-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.growth.quantity, maxValue) / maxValue), "px\"></div></td>\n                <td class=\"third green\">").concat(data.growth.quantity, " \u043C<sup>3</sup></td>\n                <td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"green\">").concat(data.growth.summa, " ").concat(translate$p('analytics.milr'), "</span></td>\n            </tr>\n            <tr>\n\t\t\t\t<td class=\"first\">").concat(translate$p('analytics.burntOut'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act red-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.burntOut.quantity, maxValue) / maxValue), "px\"></div></td>\n                <td class=\"third red\">").concat(data.burntOut.quantity, " \u043C<sup>3</sup></td>\n                <td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"red\">").concat(data.burntOut.summa, " ").concat(translate$p('analytics.milr'), "</span></td>\n            </tr>\n            <tr>\n\t\t\t\t<td class=\"first\">").concat(translate$p('analytics.cutDown'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act red-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.cutDown.quantity, maxValue) / maxValue), "px\"></div></td>\n                <td class=\"third red\">").concat(data.cutDown.quantity, " \u043C<sup>3</sup></td>\n                <td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"red\">").concat(data.cutDown.summa, " ").concat(translate$p('analytics.milr'), "</span></td>\n            </tr>\n            <tr>\n\t\t\t\t<td class=\"first\">").concat(translate$p('analytics.ballanceChanges'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act red-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.ballanceChanges.quantity, maxValue) / maxValue), "px\"></div></td>\n                <td class=\"third red\">").concat(data.ballanceChanges.quantity, " \u043C<sup>3</sup></td>\n                <td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"red\">").concat(data.ballanceChanges.summa, " ").concat(translate$p('analytics.milr'), "</span></td>\n            </tr>\n            <tr>\n\t\t\t\t<td class=\"first\">").concat(translate$p('analytics.total'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act green-bg\" style=\"width: 100%\"></div></td>\n                <td class=\"third gray\">125 684 \u043C<sup>3</sup></td>\n                <td class=\"last\"></td>\n            </tr>\n\t\t</table>");
+      this._chartCont.innerHTML = "<table class=\"line\">\n            <tr>\n\t\t\t\t<td class=\"first\">".concat(translate$q('analytics.growth'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act green-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.growth.quantity, maxValue) / maxValue), "px\"></div></td>\n                <td class=\"third green\">").concat(data.growth.quantity, " \u043C<sup>3</sup></td>\n                <td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"green\">").concat(data.growth.summa, " ").concat(translate$q('analytics.milr'), "</span></td>\n            </tr>\n            <tr>\n\t\t\t\t<td class=\"first\">").concat(translate$q('analytics.burntOut'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act red-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.burntOut.quantity, maxValue) / maxValue), "px\"></div></td>\n                <td class=\"third red\">").concat(data.burntOut.quantity, " \u043C<sup>3</sup></td>\n                <td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"red\">").concat(data.burntOut.summa, " ").concat(translate$q('analytics.milr'), "</span></td>\n            </tr>\n            <tr>\n\t\t\t\t<td class=\"first\">").concat(translate$q('analytics.cutDown'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act red-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.cutDown.quantity, maxValue) / maxValue), "px\"></div></td>\n                <td class=\"third red\">").concat(data.cutDown.quantity, " \u043C<sup>3</sup></td>\n                <td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"red\">").concat(data.cutDown.summa, " ").concat(translate$q('analytics.milr'), "</span></td>\n            </tr>\n            <tr>\n\t\t\t\t<td class=\"first\">").concat(translate$q('analytics.ballanceChanges'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act red-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.ballanceChanges.quantity, maxValue) / maxValue), "px\"></div></td>\n                <td class=\"third red\">").concat(data.ballanceChanges.quantity, " \u043C<sup>3</sup></td>\n                <td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"red\">").concat(data.ballanceChanges.summa, " ").concat(translate$q('analytics.milr'), "</span></td>\n            </tr>\n            <tr>\n\t\t\t\t<td class=\"first\">").concat(translate$q('analytics.total'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act green-bg\" style=\"width: 100%\"></div></td>\n                <td class=\"third gray\">125 684 \u043C<sup>3</sup></td>\n                <td class=\"last\"></td>\n            </tr>\n\t\t</table>");
     }
   }]);
 
@@ -43264,7 +43483,7 @@ var Stands$1 = /*#__PURE__*/function (_Controller) {
   return Stands$1;
 }(Controller);
 
-var translate$q = T.getText.bind(T);
+var translate$r = T.getText.bind(T);
 T.addText('rus', {
   uploaded: {
     title: 'Мои данные',
@@ -43302,11 +43521,11 @@ var Uploaded = /*#__PURE__*/function (_BaseView) {
 
     _this._container.classList.add('scanex-forestry-uploaded');
 
-    _this._container.innerHTML = "<div class=\"title\">".concat(translate$q('uploaded.title'), "</div>\n        <div class=\"filter\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tr>\n                    <td>\n                        <div class=\"name\">\n                            <i class=\"scanex-uploaded-icon search\"></i>\n                            <input type=\"text\" placeholder=\"").concat(translate$q('uploaded.name'), "\" value=\"\" />\n                        </div>\n                    </td>\n                    <td>\n                        <select>").concat(_this._types.map(function (id) {
+    _this._container.innerHTML = "<div class=\"title\">".concat(translate$r('uploaded.title'), "</div>\n        <div class=\"filter\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tr>\n                    <td>\n                        <div class=\"name\">\n                            <i class=\"scanex-uploaded-icon search\"></i>\n                            <input type=\"text\" placeholder=\"").concat(translate$r('uploaded.name'), "\" value=\"\" />\n                        </div>\n                    </td>\n                    <td>\n                        <select>").concat(_this._types.map(function (id) {
       return "<option value=\"".concat(id, "\">").concat(id, "</option>");
-    }).join(''), "</select>\n                    </td>\n                    <td>\n                        <div class=\"date\">\n                            <input class=\"datepicker\" type=\"text\" placeholder=\"").concat(translate$q('uploaded.date'), "\" value=\"\" />\n                            <i class=\"scanex-uploaded-icon calendar\"></i>\n                        </div>\n                    </td>\n                </tr>\n            </table>\n        </div>\n        <div class=\"data\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <thead>\n                    <tr><th></th>").concat(_this._columns.map(function (id) {
-      return "<th>".concat(translate$q("uploaded.".concat(id)), "</th>");
-    }).join(''), "</tr>\n                </thead>\n                <tbody class=\"content\"></tbody>\n            </table>\n        </div>\n        <div class=\"footer\">\n            <div class=\"pages\"></div>\n            <button class=\"add\">").concat(translate$q("uploaded.add"), "</button>\n            <button class=\"remove\">").concat(translate$q("uploaded.remove"), "</button>\n        </div>");
+    }).join(''), "</select>\n                    </td>\n                    <td>\n                        <div class=\"date\">\n                            <input class=\"datepicker\" type=\"text\" placeholder=\"").concat(translate$r('uploaded.date'), "\" value=\"\" />\n                            <i class=\"scanex-uploaded-icon calendar\"></i>\n                        </div>\n                    </td>\n                </tr>\n            </table>\n        </div>\n        <div class=\"data\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <thead>\n                    <tr><th></th>").concat(_this._columns.map(function (id) {
+      return "<th>".concat(translate$r("uploaded.".concat(id)), "</th>");
+    }).join(''), "</tr>\n                </thead>\n                <tbody class=\"content\"></tbody>\n            </table>\n        </div>\n        <div class=\"footer\">\n            <div class=\"pages\"></div>\n            <button class=\"add\">").concat(translate$r("uploaded.add"), "</button>\n            <button class=\"remove\">").concat(translate$r("uploaded.remove"), "</button>\n        </div>");
     _this._date = new pikaday({
       field: _this._container.querySelector('.datepicker'),
       format: 'DD.MM.YYYY',
@@ -43504,7 +43723,7 @@ var UploadProgress = /*#__PURE__*/function (_EventTarget) {
   return UploadProgress;
 }(EventTarget);
 
-var translate$r = T.getText.bind(T);
+var translate$s = T.getText.bind(T);
 
 var Uploaded$1 = /*#__PURE__*/function (_EventTarget) {
   _inherits(Uploaded$1, _EventTarget);
@@ -44048,7 +44267,7 @@ var Uploaded$1 = /*#__PURE__*/function (_EventTarget) {
                 this._view.close();
 
                 console.log(_context5.t0);
-                alert(translate$r('error.uploaded'));
+                alert(translate$s('error.uploaded'));
 
               case 26:
               case "end":
@@ -48135,7 +48354,7 @@ function _getObjectCenter() {
   return _getObjectCenter.apply(this, arguments);
 }
 
-var translate$s = T.getText.bind(T);
+var translate$t = T.getText.bind(T);
 T.addText('rus', {
   measure: {
     bearing: {
@@ -48177,10 +48396,6 @@ T.addText('rus', {
     rectangle: 'Прямоугольник',
     edit: 'Редактировать',
     remove: 'Удалить'
-  },
-  modes: {
-    map: 'Карта',
-    list: 'Список'
   },
   error: {
     analytics: 'Ошибка при отображении аналитики',
@@ -48241,11 +48456,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
         _ref$monPath = _ref.monPath,
         monPath = _ref$monPath === void 0 ? '/monitoring' : _ref$monPath,
         _ref$apiKey = _ref.apiKey,
-        apiKey = _ref$apiKey === void 0 ? 'I9ELMZU8GD' : _ref$apiKey,
-        _ref$center = _ref.center,
-        center = _ref$center === void 0 ? [55.203953, 132.53906] : _ref$center,
-        _ref$zoom = _ref.zoom,
-        zoom = _ref$zoom === void 0 ? 5 : _ref$zoom;
+        apiKey = _ref$apiKey === void 0 ? 'I9ELMZU8GD' : _ref$apiKey;
 
     _classCallCheck(this, Map);
 
@@ -48264,6 +48475,8 @@ var Map = /*#__PURE__*/function (_EventTarget) {
     _this._gmxPath = gmxPath;
     _this._apiPath = apiPath;
     _this._monPath = monPath;
+    var center = [55.203953, 132.53906];
+    var zoom = 5;
     _this._map = L$1.map(_this._container, {
       // renderer: L.canvas(),
       attributionControl: false,
@@ -48405,7 +48618,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 _context2.prev = 6;
                 _context2.t0 = _context2["catch"](1);
                 console.log(_context2.t0);
-                alert(translate$s('error.analytics'));
+                alert(translate$t('error.analytics'));
                 this.showMain();
 
               case 11:
@@ -48413,7 +48626,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 break;
 
               case 13:
-                alert(translate$s('forbidden.analytics'));
+                alert(translate$t('forbidden.analytics'));
 
               case 14:
               case "end":
@@ -48459,7 +48672,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 _context3.prev = 8;
                 _context3.t0 = _context3["catch"](1);
                 console.log(_context3.t0);
-                alert(translate$s('error.requests'));
+                alert(translate$t('error.requests'));
                 this.showMain();
 
               case 13:
@@ -48467,7 +48680,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 break;
 
               case 15:
-                alert(translate$s('forbidden.requests'));
+                alert(translate$t('forbidden.requests'));
 
               case 16:
               case "end":
@@ -48508,7 +48721,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 _context4.prev = 6;
                 _context4.t0 = _context4["catch"](1);
                 console.log(_context4.t0);
-                alert(translate$s('error.requests'));
+                alert(translate$t('error.requests'));
                 this.showMain();
 
               case 11:
@@ -48516,7 +48729,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 break;
 
               case 13:
-                alert(translate$s('forbidden.requests'));
+                alert(translate$t('forbidden.requests'));
 
               case 14:
               case "end":
@@ -48557,7 +48770,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 _context5.prev = 6;
                 _context5.t0 = _context5["catch"](1);
                 console.log(_context5.t0);
-                alert(translate$s('error.uploaded'));
+                alert(translate$t('error.uploaded'));
                 this.showMain();
 
               case 11:
@@ -48565,7 +48778,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 break;
 
               case 13:
-                alert(translate$s('forbidden.uploaded'));
+                alert(translate$t('forbidden.uploaded'));
 
               case 14:
               case "end":
@@ -48584,17 +48797,17 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "load",
     value: function () {
-      var _load = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9() {
+      var _load = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10() {
         var _this3 = this;
 
         var mapId;
-        return regeneratorRuntime.wrap(function _callee9$(_context9) {
+        return regeneratorRuntime.wrap(function _callee10$(_context10) {
           while (1) {
-            switch (_context9.prev = _context9.next) {
+            switch (_context10.prev = _context10.next) {
               case 0:
                 mapId = 'default';
                 window.SELF = this;
-                _context9.next = 4;
+                _context10.next = 4;
                 return L$1.gmx.loadMap(mapId, {
                   leafletMap: this._map,
                   hostName: '/',
@@ -48609,7 +48822,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 });
 
               case 4:
-                this._gmxMap = _context9.sent;
+                this._gmxMap = _context10.sent;
 
                 this._map.on('zoomend', function (e) {
                   if (_this3._grid) {
@@ -48803,6 +49016,44 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                     return function (_x2) {
                       return _ref5.apply(this, arguments);
                     };
+                  }()).on('project:view', /*#__PURE__*/function () {
+                    var _ref6 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(e) {
+                      var _this3$_layers$projec3, LayerID, c, z;
+
+                      return regeneratorRuntime.wrap(function _callee8$(_context8) {
+                        while (1) {
+                          switch (_context8.prev = _context8.next) {
+                            case 0:
+                              if (!_this3._layers.projects) {
+                                _context8.next = 8;
+                                break;
+                              }
+
+                              if (_this3._controllers.projects) {
+                                _this3._controllers.projects.view(e.detail);
+                              }
+
+                              _this3$_layers$projec3 = _this3._layers.projects.getGmxProperties(), LayerID = _this3$_layers$projec3.LayerID;
+                              _context8.next = 5;
+                              return getObjectCenter(_this3._gmxPath, LayerID, e.detail);
+
+                            case 5:
+                              c = _context8.sent;
+                              z = 10;
+
+                              _this3._map.setView(c, z);
+
+                            case 8:
+                            case "end":
+                              return _context8.stop();
+                          }
+                        }
+                      }, _callee8);
+                    }));
+
+                    return function (_x3) {
+                      return _ref6.apply(this, arguments);
+                    };
                   }());
                 }
 
@@ -48897,27 +49148,27 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
                     _this3.dispatchEvent(event);
                   }).on('project:edit', /*#__PURE__*/function () {
-                    var _ref6 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(e) {
+                    var _ref7 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9(e) {
                       var _e$detail, id, forestry_id;
 
-                      return regeneratorRuntime.wrap(function _callee8$(_context8) {
+                      return regeneratorRuntime.wrap(function _callee9$(_context9) {
                         while (1) {
-                          switch (_context8.prev = _context8.next) {
+                          switch (_context9.prev = _context9.next) {
                             case 0:
                               _e$detail = e.detail, id = _e$detail.id, forestry_id = _e$detail.forestry_id;
-                              _context8.next = 3;
+                              _context9.next = 3;
                               return _this3._controllers.quadrants.edit(id, forestry_id);
 
                             case 3:
                             case "end":
-                              return _context8.stop();
+                              return _context9.stop();
                           }
                         }
-                      }, _callee8);
+                      }, _callee9);
                     }));
 
-                    return function (_x3) {
-                      return _ref6.apply(this, arguments);
+                    return function (_x4) {
+                      return _ref7.apply(this, arguments);
                     };
                   }()).on('error', function (e) {
                     console.log(e.detail);
@@ -49029,10 +49280,10 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
               case 32:
               case "end":
-                return _context9.stop();
+                return _context10.stop();
             }
           }
-        }, _callee9, this);
+        }, _callee10, this);
       }));
 
       function load() {

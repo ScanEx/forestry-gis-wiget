@@ -37,7 +37,7 @@
 		```
 	* создание проекта
 		```js
-		async createRequests();
+		async createRequest();
 		```
   * События:
   	* создать заявку - ``request:create``
