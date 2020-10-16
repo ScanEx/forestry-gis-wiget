@@ -59824,7 +59824,7 @@ var Forestry = (function () {
 	  probable: 'Прогноз',
 	  total: 'Таксация',
 	  table: 'Данные о запасах',
-	  label: 'Запас',
+	  label: 'Запас, тыс.',
 	  all: 'Весь'
 	};
 	T.addText('rus', {
@@ -60322,7 +60322,7 @@ var Forestry = (function () {
 	            total_stock_deal = _ref.total_stock_deal;
 	        return "<tr class=\"type\">\n                <td class=\"label\">".concat(species, "</td>\n                <td class=\"value\">").concat(format(permitted_stock / 1000), "</td>\n                <td class=\"value\">").concat(format(permitted_stock_deal / 1000), "</td>\n                <td class=\"value\">").concat(format(probable_stock / 1000), "</td>\n                <td class=\"value\">").concat(format(probable_stock_deal / 1000), "</td>\n                <td class=\"value\">").concat(format(total_stock / 1000), "</td>\n                <td class=\"value\">").concat(format(total_stock_deal / 1000), "</td>\n            </tr>");
 	      }).join('');
-	      this._container.innerHTML = rows ? "<div class=\"title\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>                 \n                        <tr>\n                            <td>".concat(translate$l('species'), "</td>\n                            <td class=\"label\" colspan=\"3\">").concat(translate$l('stock.label'), ", ").concat(translate$l('unit.m'), "<sup>3</sup></td>\n                        </tr>\n                        <tr>\n                            <td></td>\n                            <td class=\"label\">").concat(translate$l('stock.permitted'), "</td>                        \n                            <td class=\"label\">").concat(translate$l('stock.probable'), "</td>\n                            <td class=\"label\">").concat(translate$l('stock.total'), "</td>\n                        </tr>\n                    </tbody>\t\t\t\t\t\t\n                </table>\n            </div>\n            <div class=\"content\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>").concat(rows, "</tbody>\n                </table>\n            </div>") : '';
+	      this._container.innerHTML = rows ? "<div class=\"title\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>                 \n                        <tr>\n                            <td>".concat(translate$l('species'), "</td>\n                            <td class=\"label\" colspan=\"3\">").concat(translate$l('stock.label'), " ").concat(translate$l('unit.m'), "<sup>3</sup></td>\n                        </tr>\n                        <tr>\n                            <td></td>\n                            <td class=\"label\">").concat(translate$l('stock.permitted'), "</td>                        \n                            <td class=\"label\">").concat(translate$l('stock.probable'), "</td>\n                            <td class=\"label\">").concat(translate$l('stock.total'), "</td>\n                        </tr>\n                    </tbody>\t\t\t\t\t\t\n                </table>\n            </div>\n            <div class=\"content\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>").concat(rows, "</tbody>\n                </table>\n            </div>") : '';
 	    }
 	  }]);
 
