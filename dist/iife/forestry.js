@@ -25292,6 +25292,10 @@ var Forestry = (function () {
 
 	      if (baseLayer) {
 	        baseLayer.layers.forEach(function (it) {
+	          if (it._map && it._map !== _this3._map) {
+	            it._map.removeLayer(it);
+	          }
+
 	          _this3._map.addLayer(it);
 	        });
 	      }
@@ -25312,9 +25316,21 @@ var Forestry = (function () {
 	  }
 	});
 
+	var tzm = new Date().getTimezoneOffset() * 60000,
+	    getUTCTimeString = function getUTCTimeString(time) {
+	  var arr = time.toISOString().split('T'),
+	      tm = arr[1].split(':');
+	  return arr[0].split('-').reverse().join('.') + ' ' + tm[0] + ':' + tm[1] + ':' + tm[2].substring(0, 2);
+	},
+	    getTimeString = function getTimeString(dt) {
+	  var pad2 = L.gmxUtil.pad2;
+	  return [pad2(dt.getDate()), pad2(dt.getMonth() + 1), dt.getFullYear()].join('.') + ' ' + [pad2(dt.getHours()), pad2(dt.getMinutes() + (dt.getSeconds() > 0 ? 1 : 0))].join(':');
+	}; // divDot.title = this.start.toLocaleString();
+	// tzm = 0;
+
 	/**
 	 * @file timeline.js
-	 *
+	 * http://almende.github.io/chap-links-library/js/timeline/doc/#Example
 	 * @brief
 	 * The Timeline is an interactive visualization chart to visualize events in
 	 * time, having a start and end date.
@@ -25373,22 +25389,24 @@ var Forestry = (function () {
 	 * "links"
 	 */
 
-	if (typeof links === 'undefined') {
-	  var links = {}; // important: do not use var, as "var links = {};" will overwrite
-	  //            the existing links variable value with undefined in IE8, IE7.
-	}
+
+	var links = {}; // if (typeof links === 'undefined') {
+	// links = {};
+	// important: do not use var, as "var links = {};" will overwrite
+	//            the existing links variable value with undefined in IE8, IE7.
+	// }
+
 	/**
 	 * Ensure the variable google exists
 	 */
+	// if (typeof google === 'undefined') {
 
-
-	if (typeof google === 'undefined') {
-	  var google = undefined; // important: do not use var, as "var google = undefined;" will overwrite
-	  //            the existing google variable value with undefined in IE8, IE7.
-	} // Internet Explorer 8 and older does not support Array.indexOf,
+	window.google = undefined; // important: do not use var, as "var google = undefined;" will overwrite
+	//            the existing google variable value with undefined in IE8, IE7.
+	// }
+	// Internet Explorer 8 and older does not support Array.indexOf,
 	// so we define it here in that case
 	// http://soledadpenades.com/2007/05/17/arrayindexof-in-internet-explorer/
-
 
 	if (!Array.prototype.indexOf) {
 	  Array.prototype.indexOf = function (obj) {
@@ -25429,8 +25447,9 @@ var Forestry = (function () {
 	  if (!container) {
 	    // this call was probably only for inheritance, no constructor-code is required
 	    return;
-	  } // create variables and set default values
+	  }
 
+	  this.getUTCTimeString = getUTCTimeString; // create variables and set default values
 
 	  this.dom = {};
 	  this.conversion = {};
@@ -25548,11 +25567,7 @@ var Forestry = (function () {
 	    'MOVE_RIGHT': "Move right",
 	    'NEW': "New",
 	    'CREATE_NEW_EVENT': "Create new event"
-	  }; //
-	  // Now we can set the givenproperties
-	  //
-
-	  this.setOptions(options);
+	  };
 	  this.clientTimeOffset = 0; // difference between client time and the time
 	  // set via Timeline.setCurrentTime()
 
@@ -25575,7 +25590,9 @@ var Forestry = (function () {
 	  this.data = [];
 	  this.firstDraw = true; // date interval must be initialized
 
-	  this.setVisibleChartRange(undefined, undefined, false); // render for the first time
+	  this.setVisibleChartRange(undefined, undefined, false); // apply provided options
+
+	  this.setOptions(options); // render for the first time
 
 	  this.render(); // fire the ready event
 
@@ -26282,7 +26299,7 @@ var Forestry = (function () {
 
 	  if (!dom.frame) {
 	    dom.frame = document.createElement("DIV");
-	    dom.frame.className = "timeline-frame ui-widget ui-widget-content ui-corner-all";
+	    dom.frame.className = "timeline-frame";
 	    dom.container.appendChild(dom.frame);
 	    needsReflow = true;
 	  }
@@ -27069,7 +27086,7 @@ var Forestry = (function () {
 	  needsReflow = needsReflow || queue.show.length > 0 || queue.update.length > 0 || queue.hide.length > 0; // TODO: reflow needed on hide of items?
 
 	  while (item = queue.show.shift()) {
-	    item.showDOM(frame);
+	    item.showDOM(frame, timeline);
 	    item.getImageUrls(newImageUrls);
 	    renderedItems.push(item);
 	  }
@@ -27376,7 +27393,7 @@ var Forestry = (function () {
 	  var visible = x > -size.contentWidth && x < 2 * size.contentWidth;
 	  dom.currentTime.style.display = visible ? '' : 'none';
 	  dom.currentTime.style.left = x + "px";
-	  dom.currentTime.title = "Current time: " + nowOffset; // start a timer to adjust for the new time
+	  dom.currentTime.title = "Current time: " + getUTCTimeString(now); // start a timer to adjust for the new time
 
 	  if (this.currentTimeTimer != undefined) {
 	    clearTimeout(this.currentTimeTimer);
@@ -27436,7 +27453,8 @@ var Forestry = (function () {
 	      visible = x > -size.contentWidth && x < 2 * size.contentWidth;
 	  dom.customTime.style.display = visible ? '' : 'none';
 	  dom.customTime.style.left = x + "px";
-	  dom.customTime.title = "Time: " + this.customTime;
+	  var str = String(this.customTime);
+	  dom.customTime.title = "Time: " + str;
 	};
 	/**
 	 * Redraw the delete button, on the top right of the currently selected item
@@ -27555,7 +27573,7 @@ var Forestry = (function () {
 	      // create a navigation bar containing the navigation buttons
 	      navBar = document.createElement("DIV");
 	      navBar.style.position = "absolute";
-	      navBar.className = "timeline-navigation ui-widget ui-state-highlight ui-corner-all";
+	      navBar.className = "timeline-navigation";
 
 	      if (options.groupsOnRight) {
 	        navBar.style.left = '10px';
@@ -27832,7 +27850,7 @@ var Forestry = (function () {
 
 
 	links.Timeline.prototype.recalcConversion = function () {
-	  this.conversion.offset = this.start.valueOf();
+	  this.conversion.offset = this.start.valueOf() + tzm;
 	  this.conversion.factor = this.size.contentWidth / (this.end.valueOf() - this.start.valueOf());
 	};
 	/**
@@ -28274,6 +28292,7 @@ var Forestry = (function () {
 	links.Timeline.prototype.onMouseUp = function (event) {
 	  var params = this.eventParams,
 	      options = this.options;
+	  event = event || window.event;
 	  this.dom.frame.style.cursor = 'auto'; // remove event listeners here, important for Safari
 
 	  if (params.onMouseMove) {
@@ -28363,7 +28382,10 @@ var Forestry = (function () {
 	        if (params.itemIndex != undefined) {
 	          if (!this.isSelected(params.itemIndex)) {
 	            this.selectItem(params.itemIndex);
-	            this.trigger('select');
+	            this.trigger('select', {
+	              index: params.itemIndex,
+	              originalEvent: event
+	            });
 	          }
 	        } else if (params.clusterIndex != undefined) {
 	          this.selectCluster(params.clusterIndex);
@@ -28371,7 +28393,10 @@ var Forestry = (function () {
 	        } else {
 	          if (options.unselectable) {
 	            this.unselectItem();
-	            this.trigger('select');
+	            this.trigger('select', {
+	              date: event.target._date,
+	              originalEvent: event
+	            });
 	          }
 	        }
 	      }
@@ -28496,6 +28521,7 @@ var Forestry = (function () {
 	      var frameLeft = links.Timeline.getAbsoluteLeft(timeline.dom.content);
 	      var mouseX = links.Timeline.getPageX(event);
 	      var zoomAroundDate = mouseX != undefined && frameLeft != undefined ? timeline.screenToTime(mouseX - frameLeft) : undefined;
+	      zoomAroundDate = new Date(zoomAroundDate.getTime() + tzm);
 	      timeline.zoom(zoomFactor, zoomAroundDate); // fire a rangechange and a rangechanged event
 
 	      timeline.trigger("rangechange");
@@ -28558,8 +28584,8 @@ var Forestry = (function () {
 	  var startDiff = this.start.valueOf() - zoomAroundDate;
 	  var endDiff = this.end.valueOf() - zoomAroundDate; // calculate new dates
 
-	  var newStart = new Date(this.start.valueOf() - startDiff * zoomFactor);
-	  var newEnd = new Date(this.end.valueOf() - endDiff * zoomFactor); // only zoom in when interval is larger than minimum interval (to prevent
+	  var newStart = new Date(this.start.valueOf() - startDiff * zoomFactor - 0);
+	  var newEnd = new Date(this.end.valueOf() - endDiff * zoomFactor - 0); // only zoom in when interval is larger than minimum interval (to prevent
 	  // sliding to left/right when having reached the minimum zoom level)
 
 	  var interval = newEnd.valueOf() - newStart.valueOf();
@@ -28853,6 +28879,7 @@ var Forestry = (function () {
 	     this.start = links.Timeline.parseJSONDate(data.start);
 	     this.end = links.Timeline.parseJSONDate(data.end);
 	     */
+	    this.utm = data.utm;
 	    this.start = data.start;
 	    this.end = data.end;
 	    this.content = data.content;
@@ -28860,6 +28887,7 @@ var Forestry = (function () {
 	    this.editable = data.editable;
 	    this.group = data.group;
 	    this.type = data.type;
+	    this.count = data.items;
 	  }
 
 	  this.top = 0;
@@ -29065,9 +29093,9 @@ var Forestry = (function () {
 
 	links.Timeline.ItemBox.prototype.select = function () {
 	  var dom = this.dom;
-	  links.Timeline.addClassName(dom, 'timeline-event-selected ui-state-active');
-	  links.Timeline.addClassName(dom.line, 'timeline-event-selected ui-state-active');
-	  links.Timeline.addClassName(dom.dot, 'timeline-event-selected ui-state-active');
+	  links.Timeline.addClassName(dom, 'timeline-event-selected');
+	  links.Timeline.addClassName(dom.line, 'timeline-event-selected');
+	  links.Timeline.addClassName(dom.dot, 'timeline-event-selected');
 	};
 	/**
 	 * Unselect the item
@@ -29077,9 +29105,9 @@ var Forestry = (function () {
 
 	links.Timeline.ItemBox.prototype.unselect = function () {
 	  var dom = this.dom;
-	  links.Timeline.removeClassName(dom, 'timeline-event-selected ui-state-active');
-	  links.Timeline.removeClassName(dom.line, 'timeline-event-selected ui-state-active');
-	  links.Timeline.removeClassName(dom.dot, 'timeline-event-selected ui-state-active');
+	  links.Timeline.removeClassName(dom, 'timeline-event-selected');
+	  links.Timeline.removeClassName(dom.line, 'timeline-event-selected');
+	  links.Timeline.removeClassName(dom.dot, 'timeline-event-selected');
 	};
 	/**
 	 * Creates the DOM for the item, depending on its type
@@ -29112,6 +29140,7 @@ var Forestry = (function () {
 	  divDot.style.width = "0px";
 	  divDot.style.height = "0px";
 	  divBox.dot = divDot;
+	  divDot._date = this.start;
 	  this.dom = divBox;
 	  this.updateDOM();
 	  return divBox;
@@ -29188,14 +29217,14 @@ var Forestry = (function () {
 
 	    divBox.firstChild.innerHTML = this.content; // update class
 
-	    divBox.className = "timeline-event timeline-event-box ui-widget ui-state-default";
-	    divLine.className = "timeline-event timeline-event-line ui-widget ui-state-default";
-	    divDot.className = "timeline-event timeline-event-dot ui-widget ui-state-default";
+	    divBox.className = "timeline-event timeline-event-box";
+	    divLine.className = "timeline-event timeline-event-line";
+	    divDot.className = "timeline-event timeline-event-dot";
 
 	    if (this.isCluster) {
-	      links.Timeline.addClassName(divBox, 'timeline-event-cluster ui-widget-header');
-	      links.Timeline.addClassName(divLine, 'timeline-event-cluster ui-widget-header');
-	      links.Timeline.addClassName(divDot, 'timeline-event-cluster ui-widget-header');
+	      links.Timeline.addClassName(divBox, 'timeline-event-cluster');
+	      links.Timeline.addClassName(divLine, 'timeline-event-cluster');
+	      links.Timeline.addClassName(divDot, 'timeline-event-cluster');
 	    } // add item specific class name when provided
 
 
@@ -29356,7 +29385,7 @@ var Forestry = (function () {
 
 	links.Timeline.ItemRange.prototype.select = function () {
 	  var dom = this.dom;
-	  links.Timeline.addClassName(dom, 'timeline-event-selected ui-state-active');
+	  links.Timeline.addClassName(dom, 'timeline-event-selected');
 	};
 	/**
 	 * Unselect the item
@@ -29366,7 +29395,7 @@ var Forestry = (function () {
 
 	links.Timeline.ItemRange.prototype.unselect = function () {
 	  var dom = this.dom;
-	  links.Timeline.removeClassName(dom, 'timeline-event-selected ui-state-active');
+	  links.Timeline.removeClassName(dom, 'timeline-event-selected');
 	};
 	/**
 	 * Creates the DOM for the item, depending on its type
@@ -29445,10 +29474,10 @@ var Forestry = (function () {
 	    // update contents
 	    divBox.firstChild.innerHTML = this.content; // update class
 
-	    divBox.className = "timeline-event timeline-event-range ui-widget ui-state-default";
+	    divBox.className = "timeline-event timeline-event-range";
 
 	    if (this.isCluster) {
-	      links.Timeline.addClassName(divBox, 'timeline-event-cluster ui-widget-header');
+	      links.Timeline.addClassName(divBox, 'timeline-event-cluster');
 	    } // add item specific class name when provided
 
 
@@ -29580,7 +29609,7 @@ var Forestry = (function () {
 
 	links.Timeline.ItemFloatingRange.prototype.select = function () {
 	  var dom = this.dom;
-	  links.Timeline.addClassName(dom, 'timeline-event-selected ui-state-active');
+	  links.Timeline.addClassName(dom, 'timeline-event-selected');
 	};
 	/**
 	 * Unselect the item
@@ -29590,7 +29619,7 @@ var Forestry = (function () {
 
 	links.Timeline.ItemFloatingRange.prototype.unselect = function () {
 	  var dom = this.dom;
-	  links.Timeline.removeClassName(dom, 'timeline-event-selected ui-state-active');
+	  links.Timeline.removeClassName(dom, 'timeline-event-selected');
 	};
 	/**
 	 * Creates the DOM for the item, depending on its type
@@ -29669,10 +29698,10 @@ var Forestry = (function () {
 	    // update contents
 	    divBox.firstChild.innerHTML = this.content; // update class
 
-	    divBox.className = "timeline-event timeline-event-range ui-widget ui-state-default";
+	    divBox.className = "timeline-event timeline-event-range";
 
 	    if (this.isCluster) {
-	      links.Timeline.addClassName(divBox, 'timeline-event-cluster ui-widget-header');
+	      links.Timeline.addClassName(divBox, 'timeline-event-cluster');
 	    } // add item specific class name when provided
 
 
@@ -29843,7 +29872,7 @@ var Forestry = (function () {
 
 	links.Timeline.ItemDot.prototype.select = function () {
 	  var dom = this.dom;
-	  links.Timeline.addClassName(dom, 'timeline-event-selected ui-state-active');
+	  links.Timeline.addClassName(dom, 'timeline-event-selected');
 	};
 	/**
 	 * Unselect the item
@@ -29853,7 +29882,7 @@ var Forestry = (function () {
 
 	links.Timeline.ItemDot.prototype.unselect = function () {
 	  var dom = this.dom;
-	  links.Timeline.removeClassName(dom, 'timeline-event-selected ui-state-active');
+	  links.Timeline.removeClassName(dom, 'timeline-event-selected');
 	};
 	/**
 	 * Creates the DOM for the item, depending on its type
@@ -29871,8 +29900,8 @@ var Forestry = (function () {
 	  divContent.className = "timeline-event-content";
 	  divBox.appendChild(divContent); // dot at start
 
-	  var divDot = document.createElement("DIV");
-	  divDot.style.position = "absolute";
+	  var divDot = document.createElement("DIV"); // divDot.style.position = "absolute";
+
 	  divDot.style.width = "0px";
 	  divDot.style.height = "0px";
 	  divBox.appendChild(divDot);
@@ -29890,11 +29919,12 @@ var Forestry = (function () {
 	 */
 
 
-	links.Timeline.ItemDot.prototype.showDOM = function (container) {
+	links.Timeline.ItemDot.prototype.showDOM = function (container, timeline) {
 	  var dom = this.dom;
 
 	  if (!dom) {
 	    dom = this.createDOM();
+	    dom._gmxLeft = Math.round(timeline.timeToScreen(this.start));
 	  }
 
 	  if (dom.parentNode != container) {
@@ -29904,7 +29934,10 @@ var Forestry = (function () {
 	    } // append to container
 
 
-	    container.appendChild(dom);
+	    if (dom._gmxLeft === 0 || container.lastChild && container.lastChild._gmxLeft !== dom._gmxLeft) {
+	      container.appendChild(dom);
+	    }
+
 	    this.rendered = true;
 	  }
 	};
@@ -29940,17 +29973,18 @@ var Forestry = (function () {
 	    divBox.firstChild.innerHTML = this.content; // update classes
 
 	    divBox.className = "timeline-event-dot-container";
-	    divDot.className = "timeline-event timeline-event-dot ui-widget ui-state-default";
+	    divDot.className = "timeline-event timeline-event-dot";
+	    var title = getTimeString(this.start) + (this.count > 1 ? ' (' + this.count + ')' : '');
+	    divDot.title = title;
 
 	    if (this.isCluster) {
-	      links.Timeline.addClassName(divBox, 'timeline-event-cluster ui-widget-header');
-	      links.Timeline.addClassName(divDot, 'timeline-event-cluster ui-widget-header');
+	      links.Timeline.addClassName(divBox, 'timeline-event-cluster');
+	      links.Timeline.addClassName(divDot, 'timeline-event-cluster');
 	    } // add item specific class name when provided
 
 
 	    if (this.className) {
-	      links.Timeline.addClassName(divBox, this.className);
-	      links.Timeline.addClassName(divDot, this.className);
+	      links.Timeline.addClassName(divBox, this.className); // links.Timeline.addClassName(divDot, this.className);
 	    } // TODO: apply selected className?
 
 	  }
@@ -29967,12 +30001,11 @@ var Forestry = (function () {
 	  var dom = this.dom;
 
 	  if (dom) {
-	    var left = timeline.timeToScreen(this.start);
-	    dom.style.top = this.top + "px";
-	    dom.style.left = left - this.dotWidth / 2 + "px";
-	    dom.content.style.marginLeft = 1.5 * this.dotWidth + "px"; //dom.content.style.marginRight = (0.5 * this.dotWidth) + "px"; // TODO
+	    var left = Math.round(timeline.timeToScreen(this.start)); // dom.style.top = this.top + "px";
 
-	    dom.dot.style.top = (this.height - this.dotHeight) / 2 + "px";
+	    dom.style.left = left - this.dotWidth / 2 + "px"; // dom.content.style.marginLeft = (1.5 * this.dotWidth) + "px";
+	    //dom.content.style.marginRight = (0.5 * this.dotWidth) + "px"; // TODO
+	    // dom.dot.style.top = ((this.height - this.dotHeight) / 2) + "px";
 	  }
 	};
 	/**
@@ -30711,7 +30744,7 @@ var Forestry = (function () {
 
 	  groupFinalItems = this.initialItemsPosition(items, groupBase); // calculate new, non-overlapping positions
 
-	  for (i = 0, iMax = groupFinalItems.length; i < iMax; i++) {
+	  for (var i = 0, iMax = groupFinalItems.length; i < iMax; i++) {
 	    var finalItem = groupFinalItems[i];
 	    var collidingItem = null;
 
@@ -30895,7 +30928,7 @@ var Forestry = (function () {
 	 */
 
 
-	links.Timeline.prototype.trigger = function (event) {
+	links.Timeline.prototype.trigger = function (event, params) {
 	  // built up properties
 	  var properties = null;
 
@@ -30913,6 +30946,11 @@ var Forestry = (function () {
 	      properties = {
 	        'time': new Date(this.customTime.valueOf())
 	      };
+	      break;
+
+	    case 'select':
+	      // added for GMXtimeline
+	      properties = params;
 	      break;
 	  } // trigger the links event bus
 
@@ -31226,7 +31264,7 @@ var Forestry = (function () {
 
 	            var cluster;
 	            var title = 'Cluster containing ' + count + ' events. Zoom in to see the individual events.';
-	            var content = '<div title="' + title + '">' + count + ' events</div>';
+	            var content = '<div title="' + title + '" data-cluster-index="' + clusters.length + '" class="timeline-cluster">' + count + ' events</div>';
 	            var group = item.group ? item.group.content : undefined;
 
 	            if (containsRanges) {
@@ -32593,259 +32631,32 @@ var Forestry = (function () {
 
 
 	  return Date.parse(date);
+	}; // timeline-locales.js
+	// Russian ===================================================
+
+
+	links.locales = {
+	  'ru': {
+	    'MONTHS': ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"],
+	    'MONTHS_SHORT': ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"],
+	    'DAYS': ["Воскресенье", "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"],
+	    'DAYS_SHORT': ["Вос", "Пон", "Втo", "Срe", "Чет", "Пят", "Суб"],
+	    'ZOOM_IN': "Увeличить",
+	    'ZOOM_OUT': "Умeньшить",
+	    'MOVE_LEFT': "Сдвинуть налeво",
+	    'MOVE_RIGHT': "Сдвинуть направо",
+	    'NEW': "Новый",
+	    'CREATE_NEW_EVENT': "Создать новоe событиe"
+	  }
 	};
+	links.locales['ru_RU'] = links.locales['ru'];
+	links.version = '2.9.1';
 
-	//     links = {};
-	//     links.locales = {};
-	// } else if (typeof links.locales === 'undefined') {
-	//     links.locales = {};
-	// }
+	if (typeof L.gmx === 'undefined') {
+	  L.gmx = {};
+	}
 
-	links.locales = {}; // English ===================================================
-
-	links.locales['en'] = {
-	  'MONTHS': ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
-	  'MONTHS_SHORT': ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-	  'DAYS': ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-	  'DAYS_SHORT': ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-	  'ZOOM_IN': "Zoom in",
-	  'ZOOM_OUT': "Zoom out",
-	  'MOVE_LEFT': "Move left",
-	  'MOVE_RIGHT': "Move right",
-	  'NEW': "New",
-	  'CREATE_NEW_EVENT': "Create new event"
-	};
-	links.locales['en_US'] = links.locales['en'];
-	links.locales['en_UK'] = links.locales['en']; // French ===================================================
-
-	links.locales['fr'] = {
-	  'MONTHS': ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"],
-	  'MONTHS_SHORT': ["Jan", "Fev", "Mar", "Avr", "Mai", "Jun", "Jul", "Aou", "Sep", "Oct", "Nov", "Dec"],
-	  'DAYS': ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"],
-	  'DAYS_SHORT': ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"],
-	  'ZOOM_IN': "Zoomer",
-	  'ZOOM_OUT': "Dézoomer",
-	  'MOVE_LEFT': "Déplacer à gauche",
-	  'MOVE_RIGHT': "Déplacer à droite",
-	  'NEW': "Nouveau",
-	  'CREATE_NEW_EVENT': "Créer un nouvel évènement"
-	};
-	links.locales['fr_FR'] = links.locales['fr'];
-	links.locales['fr_BE'] = links.locales['fr'];
-	links.locales['fr_CA'] = links.locales['fr']; // Catalan ===================================================
-
-	links.locales['ca'] = {
-	  'MONTHS': ["Gener", "Febrer", "Març", "Abril", "Maig", "Juny", "Juliol", "Setembre", "Octubre", "Novembre", "Desembre"],
-	  'MONTHS_SHORT': ["Gen", "Feb", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Oct", "Nov", "Des"],
-	  'DAYS': ["Diumenge", "Dilluns", "Dimarts", "Dimecres", "Dijous", "Divendres", "Dissabte"],
-	  'DAYS_SHORT': ["Dm.", "Dl.", "Dm.", "Dc.", "Dj.", "Dv.", "Ds."],
-	  'ZOOM_IN': "Augmentar zoom",
-	  'ZOOM_OUT': "Disminuir zoom",
-	  'MOVE_LEFT': "Moure esquerra",
-	  'MOVE_RIGHT': "Moure dreta",
-	  'NEW': "Nou",
-	  'CREATE_NEW_EVENT': "Crear nou event"
-	};
-	links.locales['ca_ES'] = links.locales['ca']; // German ===================================================
-
-	links.locales['de'] = {
-	  'MONTHS': ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"],
-	  'MONTHS_SHORT': ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"],
-	  'DAYS': ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"],
-	  'DAYS_SHORT': ["Son", "Mon", "Die", "Mit", "Don", "Fre", "Sam"],
-	  'ZOOM_IN': "Vergrößern",
-	  'ZOOM_OUT': "Verkleinern",
-	  'MOVE_LEFT': "Nach links verschieben",
-	  'MOVE_RIGHT': "Nach rechts verschieben",
-	  'NEW': "Neu",
-	  'CREATE_NEW_EVENT': "Neues Ereignis erzeugen"
-	};
-	links.locales['de_DE'] = links.locales['de'];
-	links.locales['de_CH'] = links.locales['de']; // Danish ===================================================
-
-	links.locales['da'] = {
-	  'MONTHS': ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"],
-	  'MONTHS_SHORT': ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"],
-	  'DAYS': ["søndag", "mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag"],
-	  'DAYS_SHORT': ["søn", "man", "tir", "ons", "tor", "fre", "lør"],
-	  'ZOOM_IN': "Zoom in",
-	  'ZOOM_OUT': "Zoom out",
-	  'MOVE_LEFT': "Move left",
-	  'MOVE_RIGHT': "Move right",
-	  'NEW': "New",
-	  'CREATE_NEW_EVENT': "Create new event"
-	};
-	links.locales['da_DK'] = links.locales['da']; // Russian ===================================================
-
-	links.locales['ru'] = {
-	  'MONTHS': ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"],
-	  'MONTHS_SHORT': ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"],
-	  'DAYS': ["Воскресенье", "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"],
-	  'DAYS_SHORT': ["Вос", "Пон", "Втo", "Срe", "Чет", "Пят", "Суб"],
-	  'ZOOM_IN': "Увeличить",
-	  'ZOOM_OUT': "Умeньшить",
-	  'MOVE_LEFT': "Сдвинуть налeво",
-	  'MOVE_RIGHT': "Сдвинуть направо",
-	  'NEW': "Новый",
-	  'CREATE_NEW_EVENT': "Создать новоe событиe"
-	};
-	links.locales['ru_RU'] = links.locales['ru']; // Spanish ===================================================
-
-	links.locales['es'] = {
-	  'MONTHS': ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"],
-	  'MONTHS_SHORT': ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"],
-	  'DAYS': ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"],
-	  'DAYS_SHORT': ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"],
-	  'ZOOM_IN': "Aumentar zoom",
-	  'ZOOM_OUT': "Disminuir zoom",
-	  'MOVE_LEFT': "Mover izquierda",
-	  'MOVE_RIGHT': "Mover derecha",
-	  'NEW': "Nuevo",
-	  'CREATE_NEW_EVENT': "Crear nuevo evento"
-	};
-	links.locales['es_ES'] = links.locales['es']; // Dutch =====================================================
-
-	links.locales['nl'] = {
-	  'MONTHS': ["januari", "februari", "maart", "april", "mei", "juni", "juli", "augustus", "september", "oktober", "november", "december"],
-	  'MONTHS_SHORT': ["jan", "feb", "mrt", "apr", "mei", "jun", "jul", "aug", "sep", "okt", "nov", "dec"],
-	  'DAYS': ["zondag", "maandag", "dinsdag", "woensdag", "donderdag", "vrijdag", "zaterdag"],
-	  'DAYS_SHORT': ["zo", "ma", "di", "wo", "do", "vr", "za"],
-	  'ZOOM_IN': "Inzoomen",
-	  'ZOOM_OUT': "Uitzoomen",
-	  'MOVE_LEFT': "Naar links",
-	  'MOVE_RIGHT': "Naar rechts",
-	  'NEW': "Nieuw",
-	  'CREATE_NEW_EVENT': "Nieuwe gebeurtenis maken"
-	};
-	links.locales['nl_NL'] = links.locales['nl'];
-	links.locales['nl_BE'] = links.locales['nl']; // Turkish ===================================================
-
-	links.locales['tr'] = {
-	  'MONTHS': ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"],
-	  'MONTHS_SHORT': ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"],
-	  'DAYS': ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"],
-	  'DAYS_SHORT': ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"],
-	  'ZOOM_IN': "Büyült",
-	  'ZOOM_OUT': "Küçült",
-	  'MOVE_LEFT': "Sola Taşı",
-	  'MOVE_RIGHT': "Sağa Taşı",
-	  'NEW': "Yeni",
-	  'CREATE_NEW_EVENT': "Yeni etkinlik oluştur"
-	};
-	links.locales['tr_TR'] = links.locales['tr']; // Hungarian ===================================================
-
-	links.locales['hu'] = {
-	  'MONTHS': ["január", "február", "március", "április", "május", "június", "július", "augusztus", "szeptember", "október", "november", "december"],
-	  'MONTHS_SHORT': ["jan", "feb", "márc", "ápr", "máj", "jún", "júl", "aug", "szep", "okt", "nov", "dec"],
-	  'DAYS': ["vasárnap", "hétfő", "kedd", "szerda", "csütörtök", "péntek", "szombat"],
-	  'DAYS_SHORT': ["vas", "hét", "kedd", "sze", "csü", "pé", "szo"],
-	  'ZOOM_IN': "Nagyítás",
-	  'ZOOM_OUT': "Kicsinyítés",
-	  'MOVE_LEFT': "Balra",
-	  'MOVE_RIGHT': "Jobbra",
-	  'NEW': "Új",
-	  'CREATE_NEW_EVENT': "Új esemény készítése"
-	};
-	links.locales['hu_HU'] = links.locales['hu']; // Brazilian Portuguese ===================================================
-
-	links.locales['pt'] = {
-	  'MONTHS': ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"],
-	  'MONTHS_SHORT': ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"],
-	  'DAYS': ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"],
-	  'DAYS_SHORT': ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"],
-	  'ZOOM_IN': "Aproximar",
-	  'ZOOM_OUT': "Afastar",
-	  'MOVE_LEFT': "Mover para esquerda",
-	  'MOVE_RIGHT': "Mover para direita",
-	  'NEW': "Novo",
-	  'CREATE_NEW_EVENT': "Criar novo evento"
-	};
-	links.locales['pt_BR'] = links.locales['pt']; // Portuguese ===================================================
-
-	links.locales['pt'] = {
-	  'MONTHS': ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"],
-	  'MONTHS_SHORT': ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"],
-	  'DAYS': ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"],
-	  'DAYS_SHORT': ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"],
-	  'ZOOM_IN': "Mais Zoom",
-	  'ZOOM_OUT': "Menos Zoom",
-	  'MOVE_LEFT': "Esquerda",
-	  'MOVE_RIGHT': "Direita",
-	  'NEW': "Novo",
-	  'CREATE_NEW_EVENT': "Criar novo evento"
-	};
-	links.locales['pt_PT'] = links.locales['pt']; // Chinese ===================================================
-
-	links.locales['zh'] = {
-	  'MONTHS': ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"],
-	  'MONTHS_SHORT': ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"],
-	  'DAYS': ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"],
-	  'DAYS_SHORT': ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"],
-	  'ZOOM_IN': "放大",
-	  'ZOOM_OUT': "缩小",
-	  'MOVE_LEFT': "左移",
-	  'MOVE_RIGHT': "右移",
-	  'NEW': "新建",
-	  'CREATE_NEW_EVENT': "创建新的事件"
-	};
-	links.locales['zh_CN'] = links.locales['zh'];
-	links.locales['zh_TR'] = links.locales['zh']; // Arabic ===================================================
-
-	links.locales['ar'] = {
-	  'MONTHS': ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"],
-	  'MONTHS_SHORT': ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"],
-	  'DAYS': ["الأحد", "الأثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"],
-	  'DAYS_SHORT': ["الأحد", "الأثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"],
-	  'ZOOM_IN': "تكبير",
-	  'ZOOM_OUT': "تصغير",
-	  'MOVE_LEFT': "تحريك لليسار",
-	  'MOVE_RIGHT': "تحريك لليمين",
-	  'NEW': "جديد",
-	  'CREATE_NEW_EVENT': "إنشاء حدث جديد"
-	};
-	links.locales['ar_AR'] = links.locales['ar']; // Japanese ===================================================
-
-	links.locales['ja'] = {
-	  'MONTHS': ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"],
-	  'MONTHS_SHORT': ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"],
-	  'DAYS': ["日曜日", "月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日"],
-	  'DAYS_SHORT': ["日", "月", "火", "水", "木", "金", "土"],
-	  'ZOOM_IN': "拡大する",
-	  'ZOOM_OUT': "縮小する",
-	  'MOVE_LEFT': "左に移動",
-	  'MOVE_RIGHT': "右に移動",
-	  'NEW': "新しい",
-	  'CREATE_NEW_EVENT': "新しいイベントの作成"
-	};
-	links.locales['ja_JA'] = links.locales['ja']; // Korean ===================================================
-
-	links.locales['ko'] = {
-	  'MONTHS': ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"],
-	  'MONTHS_SHORT': ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"],
-	  'DAYS': ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"],
-	  'DAYS_SHORT': ["일", "월", "화", "수", "목", "금", "토"],
-	  'ZOOM_IN': "줌 인",
-	  'ZOOM_OUT': "줌 아웃",
-	  'MOVE_LEFT': "왼쪽으로 이동",
-	  'MOVE_RIGHT': "오른쪽으로 이동",
-	  'NEW': "신규",
-	  'CREATE_NEW_EVENT': "새 이벤트 생성"
-	};
-	links.locales['ko_KO'] = links.locales['ko']; // Polish ===================================================
-
-	links.locales['pl'] = {
-	  'MONTHS': ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"],
-	  'MONTHS_SHORT': ["Sty", "Lut", "Mar", "Kwi", "Maj", "Cze", "Lip", "Sie", "Wrz", "Paź", "Lis", "Gru"],
-	  'DAYS': ["Niedziela", "Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota"],
-	  'DAYS_SHORT': ["niedz", "pon", "wt", "śr", "czw", "pt", "sob"],
-	  'ZOOM_IN': "Powiększ",
-	  'ZOOM_OUT': "Zmniejsz",
-	  'MOVE_LEFT': "Przesuń w lewo",
-	  'MOVE_RIGHT': "Przesuń w prawo",
-	  'NEW': "Nowy",
-	  'CREATE_NEW_EVENT': "Utwórz nowe wydarzenie"
-	};
-	links.locales['ko'] = links.locales['ko_KO'];
+	L.gmx.timeline = links;
 
 	var translate$2 = T.getText.bind(T);
 	T.addText('rus', {
@@ -32853,6 +32664,9 @@ var Forestry = (function () {
 	    title: 'Приблизьте карту для загрузки на таймлайн'
 	  }
 	});
+
+	var _DAY = 60 * 60 * 24;
+
 	var DateInterval = leafletSrc.Control.extend({
 	  includes: leafletSrc.Evented.prototype,
 	  options: {
@@ -32875,7 +32689,6 @@ var Forestry = (function () {
 	    leafletSrc.DomEvent.disableClickPropagation(this._container);
 	    this._tabs = leafletSrc.DomUtil.create('div', 'buttons', this._container);
 	    this._timelineNode = leafletSrc.DomUtil.create('div', 'timeline', this._container);
-	    this._popup = leafletSrc.DomUtil.create('div', 'hot-popup hidden', this._container);
 	    this._icon = leafletSrc.DomUtil.create('div', 'icon', this._container);
 	    this._icon.innerHTML = translate$2('DateInterval.title');
 	    this._timeline = new links.Timeline(this._timelineNode, {
@@ -32883,9 +32696,8 @@ var Forestry = (function () {
 	      width: '100%',
 	      height: '80px',
 	      axisOnTop: true,
-	      cluster: true,
-	      selectable: false,
-	      // step: 1,
+	      selectable: true,
+	      layout: 'dot',
 	      scale: links.Timeline.StepDate.SCALE.DAY
 	    });
 
@@ -32893,6 +32705,7 @@ var Forestry = (function () {
 	      this._timeline.setVisibleChartRange(this._interval[0], this._interval[1]);
 	    }
 
+	    links.events.addListener(this._timeline, 'select', this._clickOnTimeline.bind(this));
 	    links.events.addListener(this._timeline, 'rangechanged', this._reSetDateInterval.bind(this));
 
 	    var chkZoom = function chkZoom() {
@@ -32917,6 +32730,27 @@ var Forestry = (function () {
 	    }
 
 	    this._timeline = null;
+	  },
+	  _toggleActive: function _toggleActive(node, utm) {
+	    var classList = node.classList;
+	    var layer = this._layers[this._activeTab];
+
+	    if (classList.contains('active')) {
+	      classList.remove('active');
+	      layer._showDates[utm] = false;
+	    } else {
+	      classList.add('active');
+	      layer._showDates[utm] = true;
+	    }
+
+	    layer.repaint();
+	  },
+	  _clickOnTimeline: function _clickOnTimeline(ev) {
+	    var layer = this._layers[this._activeTab];
+
+	    if (ev && ev.date && layer && layer._showDates) {
+	      this._toggleActive(ev.originalEvent.target, Math.floor(ev.date.getTime() / 1000));
+	    }
 	  },
 	  _reSetDateInterval: function _reSetDateInterval() {
 	    var layer = this._layers[this._activeTab];
@@ -32943,7 +32777,13 @@ var Forestry = (function () {
 	    var lprops = layer.getGmxProperties();
 	    var hpDm = layer.getDataManager();
 	    var tmpKeyNum = hpDm.tileAttributeIndexes[lprops.TemporalColumnName];
-	    var day = 60 * 60 * 24;
+	    layer._gmx.tmpKeyNum = tmpKeyNum;
+	    layer._showDates = null;
+	    layer.addLayerFilter(function (prp) {
+	      var utm = _DAY * Math.floor(Number(prp.properties[tmpKeyNum]) / _DAY);
+
+	      return layer._showDates && layer._showDates[utm];
+	    });
 	    var observer = hpDm.addObserver({
 	      type: 'resend',
 	      filters: ['clipFilter', 'userFilter', 'userFilter_timeline', 'styleFilter'],
@@ -32958,26 +32798,35 @@ var Forestry = (function () {
 	        var arr = it.properties;
 
 	        if (this.intersectsWithGeometry(arr[arr.length - 1])) {
-	          var utm = day * Math.floor(Number(arr[tmpKeyNum]) / day);
+	          var utm = _DAY * Math.floor(Number(arr[tmpKeyNum]) / _DAY);
+
 	          this.cache[utm] = 1 + (this.cache[utm] || 0);
 	        }
 	      },
 	      callback: function callback() {
-	        var out = this.cache || {}; // console.log('observer', hotSpotLayerID, Object.keys(out).length);
-
+	        var out = this.cache || {};
 	        this.cache = {};
+	        var maxUtm = 0;
 	        var data = Object.keys(out).map(function (tStamp) {
+	          maxUtm = Math.max(maxUtm, tStamp);
 	          return {
 	            start: new Date(tStamp * 1000),
-	            content: "Термоточек " + out[tStamp],
-	            items: out[tStamp]
+	            className: layer._showDates && layer._showDates[tStamp] ? 'active' : '',
+	            content: '',
+	            editable: true
 	          };
 	        });
+
+	        if (!layer._showDates && data.length) {
+	          layer._showDates = {};
+	          layer._showDates[maxUtm] = true;
+	        }
+
 	        tm.setData(data); // Перерисовка таймлайна
 	      }
 	    });
 	    layer._observer = observer;
-	    this._interval = [new Date(lprops.DateBeginUTC * 1000), new Date(lprops.DateEndUTC * 1000)];
+	    this._interval = [new Date('2010-01-01'), new Date()];
 	    tm.setVisibleChartRange(this._interval[0], this._interval[1]);
 	    observer.setDateInterval(this._interval[0], new Date());
 
@@ -33035,12 +32884,13 @@ var Forestry = (function () {
 	        this.setTab();
 	      }
 
-	      this._tabs.removeChild(layer._tabNode);
+	      if (layer._tabNode && layer._tabNode.parentNode) {
+	        layer._tabNode.parentNode.removeChild(layer._tabNode);
+	      }
 
-	      layer._tabNode = null; // if (this._hotspotLayer === layer) {
+	      layer._tabNode = null;
 
-	      this._map.removeLayer(layer); // }
-
+	      this._map.removeLayer(layer);
 
 	      delete this._layers[LayerID];
 	      var arr = Object.keys(this._layers);
@@ -33095,8 +32945,6 @@ var Forestry = (function () {
 	    if (layer) {
 	      this._addObserver(layer);
 
-	      this._setBounds();
-
 	      var interval = layer.getDateInterval();
 
 	      this._timeline.setVisibleChartRange(interval.beginDate, interval.endDate);
@@ -33107,6 +32955,8 @@ var Forestry = (function () {
 
 	      this._activeTab = layerID;
 
+	      this._setBounds();
+
 	      if (!layer._map) {
 	        this._map.addLayer(layer);
 	      }
@@ -33114,7 +32964,1410 @@ var Forestry = (function () {
 	  }
 	});
 
-	var translate$3 = T.getText.bind(T);
+	window.nsGmx = window.nsGmx || {};
+
+	var timeLineControl,
+	    calendar,
+	    pluginName = 'gmxTimeLine',
+	    tzs = new Date().getTimezoneOffset() * 60,
+	    // tzs = 0,
+	tzm$1 = tzs * 1000,
+	    zIndexOffset = -1000,
+	    zIndexOffsetCurrent = -500,
+	    zeroDate = new Date(1980, 0, 1),
+	    translate$3 = {
+	  warning: 'Zoom map for TimeLine',
+	  differentInterval: 'Different interval for tabs',
+	  singleInterval: 'Single interval for tabs',
+	  modeSelectedOff: 'By all',
+	  modeSelectedOn: 'By selected'
+	},
+	    currentDmID,
+	    singleIntervalFlag,
+	    getDataSource = function getDataSource(gmxLayer) {
+	  // var gmxLayer = nsGmx.gmxMap.layersByID[id];
+	  var state = null;
+
+	  if (gmxLayer && gmxLayer.getDataManager) {
+	    var dm = gmxLayer.getDataManager(),
+	        dmOpt = dm.options;
+
+	    if (dmOpt.Temporal) {
+	      var tmpKeyNum = dm.tileAttributeIndexes[dmOpt.TemporalColumnName],
+	          timeColumnName = dmOpt.MetaProperties.timeColumnName ? dmOpt.MetaProperties.timeColumnName.Value : null,
+	          timeKeyNum = timeColumnName ? dm.tileAttributeIndexes[timeColumnName] : null,
+	          cloudsKey = dmOpt.MetaProperties.clouds ? dmOpt.MetaProperties.clouds.Value : '',
+	          clouds = dm.tileAttributeIndexes[cloudsKey] || dm.tileAttributeIndexes.clouds || dm.tileAttributeIndexes.CLOUDS || null,
+	          dInterval = gmxLayer.getDateInterval(),
+	          opt = gmxLayer.getGmxProperties(),
+	          type = (opt.GeometryType || 'point').toLowerCase(),
+	          oneDay = 1000 * 60 * 60 * 24;
+	      dInterval = {
+	        beginDate: new Date(dmOpt.DateBeginUTC * 1000 - oneDay),
+	        endDate: new Date((1 + dmOpt.DateEndUTC) * 1000 + oneDay)
+	      };
+
+	      if (!dInterval.beginDate || !dInterval.endDate) {
+	        var cInterval;
+
+	        {
+	          var cDate = new Date();
+	          cInterval = {
+	            dateBegin: cDate,
+	            dateEnd: new Date(cDate.valueOf() + 1000 * 60 * 60 * 24)
+	          };
+	        }
+
+	        dInterval = {
+	          beginDate: cInterval.dateBegin,
+	          endDate: cInterval.dateEnd
+	        };
+	      }
+
+	      state = {
+	        gmxLayer: gmxLayer,
+	        layerID: dmOpt.name,
+	        title: dmOpt.title,
+	        //dmID: dmOpt.name,
+	        tmpKeyNum: tmpKeyNum,
+	        timeKeyNum: timeKeyNum,
+	        clouds: clouds,
+	        modeBbox: type === 'polygon' ? 'center' : 'thirdpart',
+	        TemporalColumnName: dmOpt.TemporalColumnName,
+	        temporalColumnType: dm.temporalColumnType,
+	        // dInterval: dInterval,
+	        oInterval: dInterval,
+	        uTimeStamp: [dInterval.beginDate.getTime() / 1000, dInterval.endDate.getTime() / 1000],
+	        observer: dm.addObserver({
+	          type: 'resend',
+	          filters: ['clipFilter', 'userFilter', 'userFilter_timeline', 'styleFilter'],
+	          active: false,
+	          layerID: dmOpt.name,
+	          srs: dmOpt.srs,
+	          itemHook: function itemHook(it) {
+	            if (!this.cache) {
+	              this.cache = {};
+	            }
+
+	            var arr = it.properties;
+	            var clSelect = timeLineControl._containers.cloudSelect;
+
+	            if (state.clouds && arr[state.clouds] > Number(clSelect.options[clSelect.selectedIndex].value)) {
+	              return false;
+	            }
+
+	            if (this.intersectsWithGeometry(arr[arr.length - 1])) {
+	              var utm = Number(arr[tmpKeyNum]);
+
+	              if (timeColumnName) {
+	                utm += arr[timeKeyNum] + tzs;
+	              }
+
+	              this.cache[utm] = 1 + (this.cache[utm] || 0);
+
+	              if (state.needResort && state.clickedUTM === utm) {
+	                state.needResort[state.needResort.length] = it.id;
+	              }
+	            }
+	          },
+	          callback: function callback(data) {
+	            var out = this.cache || {}; // console.log('observer', opt.name, Object.keys(out).length);
+
+	            this.cache = {};
+
+	            if (state.needResort) {
+	              gmxLayer.setReorderArrays(state.needResort);
+	              state.needResort = null;
+	            }
+
+	            gmxLayer.repaint();
+	            return out;
+	          }
+	        })
+	      };
+	    }
+	  }
+
+	  return state;
+	};
+
+	L.Control.GmxTimeline = L.Control.extend({
+	  includes: L.Evented ? L.Evented.prototype : L.Mixin.Events,
+	  options: {
+	    position: 'bottom',
+	    id: 'gmxTimeline',
+	    className: 'gmxTimeline',
+	    locale: 'ru',
+	    rollClicked: false,
+	    // режим кругового обхода для clickedUTM
+	    modeSelect: 'range',
+	    // selected
+	    // modeBbox: 'thirdpart',		// screen, center, thirdpart
+	    centerBuffer: 10,
+	    // буфер центра в пикселях
+	    minZoom: 8,
+	    // min zoom таймлайна
+	    groups: false,
+	    moveable: true
+	  },
+	  saveState: function saveState() {
+	    var dataSources = [];
+
+	    for (var layerID in this._state.data) {
+	      var state = this._state.data[layerID],
+	          oInterval = state.oInterval,
+	          hash = {
+	        layerID: layerID,
+	        TemporalColumnName: state.TemporalColumnName,
+	        oInterval: {
+	          beginDate: oInterval.beginDate.valueOf(),
+	          endDate: oInterval.endDate.valueOf()
+	        },
+	        layerOnMap: state.gmxLayer._map ? true : false,
+	        currentBounds: state.currentBounds,
+	        selected: state.selected,
+	        clickedUTM: state.clickedUTM,
+	        modeBbox: state.modeBbox,
+	        rollClickedFlag: state.rollClickedFlag,
+	        skipUnClicked: state.skipUnClicked,
+	        items: state.items
+	      };
+
+	      if (state.dInterval) {
+	        hash.dInterval = {
+	          beginDate: state.dInterval.beginDate.valueOf(),
+	          endDate: state.dInterval.endDate.valueOf()
+	        };
+	      }
+
+	      dataSources.push(hash);
+	    }
+
+	    return {
+	      version: '1.0.0',
+	      currentTab: currentDmID,
+	      singleIntervalFlag: singleIntervalFlag,
+	      isVisible: this._state.isVisible,
+	      dataSources: dataSources
+	    };
+	  },
+	  getLayerState: function getLayerState(id) {
+	    return this._state.data[id];
+	  },
+	  getCurrentState: function getCurrentState() {
+	    return this._state.data[currentDmID];
+	  },
+	  clearTab: function clearTab(id) {
+	    if (this._state.data[id]) {
+	      var state = this._state.data[id],
+	          gmxLayer = state.gmxLayer,
+	          observer = state.observer;
+	      observer.deactivate();
+	      gmxLayer.getDataManager().removeObserver(observer.id);
+	      delete this._state.data[id]; // При удалении tab забываем о слое
+	    }
+	  },
+	  _removeLayerTab: function _removeLayerTab(liItem) {
+	    var layersTab = this._containers.layersTab;
+	    layersTab.removeChild(liItem);
+	    this.clearTab(liItem._layerID);
+
+	    if (layersTab.children.length === 0) {
+	      currentDmID = null;
+	      L.DomUtil.addClass(this._container, 'gmx-hidden');
+
+	      if (this._map) {
+	        this._map.removeControl(this);
+	      }
+	    } else {
+	      this._setCurrentTab((liItem.nextSibling || layersTab.lastChild)._layerID);
+	    }
+
+	    this.fire('layerRemove', {
+	      layerID: liItem._layerID
+	    }, this);
+	  },
+	  _addLayerTab: function _addLayerTab(layerID, title) {
+	    var layersTab = this._containers.layersTab,
+	        liItem = L.DomUtil.create('li', 'selected', layersTab),
+	        spaneye = L.DomUtil.create('span', 'eye', liItem),
+	        span = L.DomUtil.create('span', '', liItem),
+	        closeButton = L.DomUtil.create('span', 'close-button', liItem),
+	        stop = L.DomEvent.stopPropagation,
+	        prevent = L.DomEvent.preventDefault,
+	        gmxLayer = this._state.data[layerID].gmxLayer,
+	        chkVisible = function chkVisible(flag) {
+	      liItem._eye = flag;
+	      var off = liItem._eye ? '' : '-off';
+	      spaneye.innerHTML = '<svg role="img" class="svgIcon is' + off + '"><use xlink:href="#transparency-eye' + off + '"></use></svg>';
+	    };
+
+	    liItem._eye = true;
+	    liItem._layerID = layerID;
+	    span.innerHTML = title;
+	    span.title = title;
+	    L.DomEvent // .on(closeButton, 'click', L.DomEvent.preventDefault)
+	    .on(closeButton, 'click', stop).on(closeButton, 'click', function (ev) {
+	      this.removeLayer(gmxLayer);
+	    }, this);
+	    L.DomEvent.on(spaneye, 'click', stop).on(spaneye, 'click', function (ev) {
+	      var pNode = ev.target.parentNode,
+	          cstate = this._state.data[pNode._layerID];
+
+	      if (cstate) {
+	        chkVisible(!pNode._eye);
+	        var tLayer = cstate.gmxLayer;
+
+	        if (pNode._eye) {
+	          if (!tLayer._map) {
+	            this._map.addLayer(tLayer);
+	          }
+	        } else {
+	          if (tLayer._map) {
+	            this._map.removeLayer(tLayer);
+	          }
+	        }
+	      }
+	    }, this);
+	    gmxLayer.on('zindexupdated', function () {
+	      this.chkZindexUpdated();
+	    }, this).on('add', function () {
+	      chkVisible(true);
+	    }, this).on('remove', function () {
+	      chkVisible(false);
+	    }, this);
+	    chkVisible(gmxLayer._map ? true : false);
+	    this.fire('currentTabChanged', {
+	      currentTab: layerID
+	    });
+	    this.fire('layerAdd', {
+	      layerID: layerID
+	    }, this);
+	    return liItem;
+	  },
+	  chkZindexUpdated: function chkZindexUpdated() {
+	    var state = this.getCurrentState();
+
+	    if (state && state.gmxLayer.options.zIndexOffset !== zIndexOffsetCurrent) {
+	      state.gmxLayer.setZIndexOffset(zIndexOffsetCurrent);
+	    }
+	  },
+	  setCurrentTab: function setCurrentTab(id) {
+	    this._setCurrentTab(id);
+	  },
+	  addDataSource: function addDataSource(dataSource) {
+	    var layerID = dataSource.layerID;
+
+	    if (layerID) {
+	      var pDataSource = this._state.data[layerID];
+	      this._timeline = null;
+	      this._state.data[layerID] = dataSource;
+
+	      if (pDataSource) {
+	        dataSource.oInterval = pDataSource.oInterval;
+	        dataSource.dInterval = pDataSource.dInterval;
+	        var dInterval = dataSource.dInterval || dataSource.oInterval;
+	        dataSource.uTimeStamp = [dInterval.beginDate.getTime() / 1000, dInterval.endDate.getTime() / 1000];
+	        this.fire('dateInterval', {
+	          layerID: layerID,
+	          beginDate: dInterval.beginDate,
+	          endDate: dInterval.endDate
+	        }, this);
+	      }
+
+	      if (dataSource.oInterval) {
+	        currentDmID = layerID;
+
+	        this._initTimeline();
+
+	        this._bboxUpdate();
+	      }
+
+	      dataSource.liItem = pDataSource ? pDataSource.liItem : this._addLayerTab(layerID, dataSource.title || '');
+
+	      if (dataSource.observer) {
+	        dataSource.observer.on('data', function (ev) {
+	          var state = this.getCurrentState(),
+	              tLayerID = ev.target.layerID;
+	          this._state.data[tLayerID].items = ev.data;
+
+	          if (tLayerID === state.layerID) {
+	            this._redrawTimeline();
+	          }
+	        }, this);
+	      } // L.DomUtil.removeClass(this._containers.vis, 'gmx-hidden');
+	      // L.DomUtil.removeClass(this._container, 'gmx-hidden');
+	      // if (iconLayers) {
+	      // L.DomUtil.addClass(iconLayers.getContainer(), 'iconLayersShift');
+	      // }
+
+
+	      if (this._timeline) {
+	        this._setCurrentTab(layerID);
+
+	        this._setDateScroll();
+	      } else {
+	        this._chkClouds(this._state.data[layerID]);
+	      }
+	    }
+
+	    return this;
+	  },
+	  _addKeyboard: function _addKeyboard(map) {
+	    map = map || this._map;
+
+	    if (map && map.keyboard) {
+	      map.keyboard.disable(); // this._map.dragging.disable();
+	    }
+	  },
+	  _removeKeyboard: function _removeKeyboard(map) {
+	    map = map || this._map;
+
+	    if (map && map.keyboard) {
+	      map.keyboard.enable();
+	    }
+
+	    map._container.blur();
+
+	    map._container.focus();
+	  },
+	  onRemove: function onRemove(map) {
+	    if (map.gmxControlsManager) {
+	      map.gmxControlsManager.remove(this);
+	    }
+
+	    map.off('moveend', this._moveend, this).off('zoomend', this._chkZoom, this);
+	    var stop = L.DomEvent.stopPropagation,
+	        prevent = L.DomEvent.preventDefault;
+	    L.DomEvent.off(document, 'keyup', stop).off(document, 'keyup', prevent).off(document, 'keyup', this._keydown, this);
+
+	    this._removeKeyboard(map);
+
+	    map.fire('controlremove', this);
+	  },
+	  _moveend: function _moveend() {
+	    if (this._sidebarOn) {
+	      this._bboxUpdate();
+	    }
+	  },
+	  _bboxUpdate: function _bboxUpdate() {
+	    if (currentDmID && this._map && !this._zoomOff) {
+	      this._triggerObserver(this.getCurrentState());
+	    }
+	  },
+	  _triggerObserver: function _triggerObserver(state) {
+	    var map = this._map,
+	        sw,
+	        ne,
+	        delta;
+
+	    if (state.modeBbox === 'center') {
+	      var cp = map._getCenterLayerPoint(),
+	          buffer = this.options.centerBuffer;
+
+	      delta = [buffer, buffer];
+	      sw = map.layerPointToLatLng(cp.subtract(delta)), ne = map.layerPointToLatLng(cp.add(delta));
+	    } else {
+	      var sbox = map.getPixelBounds();
+	      delta = [(sbox.max.x - sbox.min.x) / 6, (sbox.min.y - sbox.max.y) / 6];
+	      sw = map.unproject(sbox.getBottomLeft().add(delta)), ne = map.unproject(sbox.getTopRight().subtract(delta));
+	    }
+
+	    var bounds = L.gmxUtil.bounds([[sw.lng, sw.lat], [ne.lng, ne.lat]]); // state.observer.deactivate();
+
+	    state.currentBounds = bounds;
+	    state.observer.setBounds(bounds);
+	    state.observer.setDateInterval(state.oInterval.beginDate, state.oInterval.endDate);
+	    state.observer.activate();
+	  },
+	  _redrawTimeline: function _redrawTimeline() {
+	    var state = this.getCurrentState();
+
+	    if (state) {
+	      var count = 0,
+	          res = [],
+	          clickedUTM = String(state.clickedUTM || ''),
+	          dSelected = state.selected || {},
+	          maxUTM = 0;
+
+	      for (var utm in state.items) {
+	        var start = new Date(utm * 1000 + tzm$1),
+	            className = clickedUTM === utm ? 'item-clicked' : '',
+	            item = {
+	          id: count,
+	          type: 'dot',
+	          items: state.items[utm],
+	          content: '',
+	          utm: utm,
+	          start: start
+	        };
+
+	        if (utm > maxUTM) {
+	          maxUTM = utm;
+	        }
+
+	        if (dSelected[utm]) {
+	          className += ' item-selected';
+	        }
+
+	        item.className = className;
+	        res.push(item);
+	        count++;
+	      }
+
+	      if (!clickedUTM && maxUTM) {
+	        state.clickedUTM = Number(maxUTM);
+	        state.skipUnClicked = true;
+	      }
+
+	      if (!this._timeline) {
+	        this._initTimeline(res);
+	      }
+
+	      if (this._timeline) {
+	        this._timeline.clearItems();
+
+	        this._setWindow(state.oInterval);
+
+	        this._timeline.setData(res);
+
+	        this._chkSelection(state);
+
+	        var cont = this._containers,
+	            clickCalendar = cont.clickCalendar;
+
+	        if (state.clickedUTM && maxUTM) {
+	          var msec = 1000 * state.clickedUTM,
+	              clickedDate = new Date(msec),
+	              tm = this._timeline.getUTCTimeString(clickedDate),
+	              arr = tm.split(' '),
+	              arr1 = arr[1].split(':');
+
+	          cont.clickId.innerHTML = arr[0];
+	          cont.clickIdTime.innerHTML = arr1[0] + ':' + arr1[1];
+	          L.DomUtil.removeClass(clickCalendar, 'disabled');
+
+	          if (!this._zoomOff && state.liItem._eye) {
+	            state.gmxLayer.setDateInterval(clickedDate, new Date(1000 + msec));
+
+	            if (!state.gmxLayer._map) {
+	              this._map.addLayer(state.gmxLayer);
+	            }
+	          }
+	        } else {
+	          cont.clickId.innerHTML = '--.--.----';
+	          cont.clickIdTime.innerHTML = '--:--';
+	          L.DomUtil.addClass(clickCalendar, 'disabled');
+	        }
+	      }
+	    }
+	  },
+	  _setWindow: function _setWindow(dInterval) {
+	    if (this._timeline) {
+	      var setWindow = this._timeline.setWindow ? 'setWindow' : 'setVisibleChartRange';
+
+	      this._timeline[setWindow](dInterval.beginDate, dInterval.endDate, false);
+	    }
+	  },
+	  _chkSelection: function _chkSelection(state) {
+	    var dInterval = state.dInterval || state.oInterval,
+	        beginDate = new Date(dInterval.beginDate.valueOf() + tzm$1),
+	        endDate = new Date(dInterval.endDate.valueOf() + tzm$1),
+	        clickedUTM = state.clickedUTM ? String(state.clickedUTM) : null,
+	        lastDom = null;
+
+	    this._timeline.items.forEach(function (it) {
+	      if (it.dom && it.dom.parentNode) {
+	        lastDom = it.dom;
+
+	        if (!clickedUTM) {
+	          if (it.start >= beginDate && it.start < endDate) {
+	            L.DomUtil.addClass(lastDom, 'item-range');
+	          } else {
+	            L.DomUtil.removeClass(lastDom, 'item-range');
+	          }
+	        }
+	      }
+
+	      if (clickedUTM === it.utm && lastDom) {
+	        L.DomUtil.addClass(lastDom, 'item-clicked');
+	      }
+	    });
+	  },
+	  _setEvents: function _setEvents(tl) {
+	    var events = L.gmx.timeline.events;
+	    events.addListener(tl, 'rangechange', this._rangechanged.bind(this));
+	    events.addListener(tl, 'rangechanged', this._rangechanged.bind(this));
+	    events.addListener(tl, 'select', this._clickOnTimeline.bind(this));
+	  },
+	  _rangechange: function _rangechange(ev) {
+	    var state = this.getCurrentState();
+	    state.oInterval = {
+	      beginDate: ev.start,
+	      endDate: ev.end
+	    };
+
+	    this._setDateScroll();
+	  },
+	  _rangechanged: function _rangechanged(ev) {
+	    var state = this.getCurrentState();
+	    state.oInterval = {
+	      beginDate: ev.start,
+	      endDate: ev.end
+	    };
+	    state.dInterval = null;
+	    this.fire('dateInterval', {
+	      layerID: state.layerID,
+	      beginDate: state.oInterval.beginDate,
+	      endDate: state.oInterval.endDate
+	    }, this);
+
+	    this._setDateScroll();
+
+	    this._bboxUpdate();
+	  },
+	  _copyState: function _copyState(stateTo, stateFrom) {
+	    stateTo.oInterval.beginDate = stateFrom.oInterval.beginDate;
+	    stateTo.oInterval.endDate = stateFrom.oInterval.endDate;
+	    stateTo.uTimeStamp[0] = stateFrom.uTimeStamp[0];
+	    stateTo.uTimeStamp[1] = stateFrom.uTimeStamp[1];
+	  },
+	  _hideOtherLayer: function _hideOtherLayer(id) {
+	    for (var layerID in this._state.data) {
+	      var gmxLayer = this._state.data[layerID].gmxLayer;
+
+	      if (layerID !== id) {
+	        this._map.removeLayer(gmxLayer);
+	      } else {
+	        this._map.addLayer(gmxLayer);
+	      }
+	    }
+	  },
+	  _setCurrentTab: function _setCurrentTab(layerID) {
+	    var layersTab = this._containers.layersTab;
+
+	    for (var i = 0, len = layersTab.children.length; i < len; i++) {
+	      var li = layersTab.children[i];
+
+	      if (li._layerID === layerID) {
+	        L.DomUtil.addClass(li, 'selected');
+	      } else {
+	        L.DomUtil.removeClass(li, 'selected');
+	      }
+	    }
+
+	    var stateBefore = this.getCurrentState();
+	    currentDmID = layerID;
+	    var state = this.getCurrentState(); //state.oInterval = state.gmxLayer.getDateInterval();
+
+	    for (var key in this._state.data) {
+	      var it = this._state.data[key];
+	      it.gmxLayer.setZIndexOffset(state === it ? zIndexOffsetCurrent : zIndexOffset);
+	    }
+
+	    if (state.dInterval && (state.dInterval.beginDate.valueOf() < state.oInterval.beginDate.valueOf() || state.dInterval.endDate.valueOf() > state.oInterval.endDate.valueOf())) {
+	      state.dInterval.beginDate = state.oInterval.beginDate;
+	      state.dInterval.endDate = state.oInterval.endDate;
+	    }
+
+	    if (stateBefore) {
+	      if (singleIntervalFlag && stateBefore) {
+	        this._copyState(state, stateBefore);
+	      }
+	    }
+
+	    this.fire('currentTabChanged', {
+	      currentTab: layerID
+	    });
+
+	    this._bboxUpdate();
+
+	    if (this._timeline) {
+	      this._setWindow(state.oInterval);
+
+	      this._setDateScroll();
+	    } // if (Object.keys(state.selected || {}).length > 1) {
+	    // L.DomUtil.removeClass(this._containers.switchDiv, 'disabled');
+	    // }
+
+
+	    this._chkClouds(state); // if (state.rollClickedFlag) {
+
+
+	    this._chkRollClickedFlag(state); // }
+
+
+	    state.gmxLayer.repaint();
+	    L.gmx.layersVersion.now();
+	  },
+	  _chkClouds: function _chkClouds(state) {
+	    if (this._containers) {
+	      if (state.clouds) {
+	        L.DomUtil.removeClass(this._containers.cloudsContent, 'disabled');
+	      } else {
+	        L.DomUtil.addClass(this._containers.cloudsContent, 'disabled');
+	      }
+	    }
+	  },
+	  initialize: function initialize(options) {
+	    L.Control.prototype.initialize.call(this, options);
+	    this._commandKeys = ['ArrowLeft', 'ArrowRight', 'ArrowDown', 'favorite', 'clickTimeLine', 'ArrowUp', 'Down', 'Up', 'Left', 'Right', ' ', 's'];
+	    this._state = {
+	      data: {},
+	      timeLineOptions: {
+	        locale: options.locale,
+	        zoomable: this.options.moveable || false,
+	        moveable: this.options.moveable || false,
+	        timeChangeable: false,
+	        // unselectable: false,
+	        animateZoom: false,
+	        autoHeight: false,
+	        stackEvents: false,
+	        axisOnTop: true,
+	        'box.align': 'center',
+	        zoomMin: 1000 * 60 * 60 * 10,
+	        width: '100%',
+	        height: '81px'
+	      },
+	      zeroDate: zeroDate.getTime(),
+	      maxDate: new Date(2980, 0, 1).getTime()
+	    };
+	    timeLineControl = this;
+	  },
+	  _initTimeline: function _initTimeline(data) {
+	    if (currentDmID && !this._timeline && L.gmx.timeline) {
+	      var state = this.getCurrentState(),
+	          groups = this.options.groups ? [{
+	        id: state.layerID,
+	        title: state.title,
+	        content: state.title,
+	        layerID: state.layerID
+	      }] : null,
+	          options = this._state.timeLineOptions;
+
+	      if (state.oInterval) {
+	        options.start = state.oInterval.beginDate;
+	        options.end = state.oInterval.endDate;
+	      }
+
+	      this._containers.vis.innerHTML = '';
+	      this._timeline = new L.gmx.timeline.Timeline(this._containers.vis, options);
+
+	      var c = this._timeline.getCurrentTime();
+
+	      this._timeline.setCurrentTime(new Date(c.valueOf() + c.getTimezoneOffset() * 60000));
+
+	      var day = 24 * 60 * 60 * 1000,
+	          now = Date.now();
+	      state.oInterval = {
+	        beginDate: new Date(now - 31 * day),
+	        endDate: new Date(now + 3 * 60 * 60 * 1000)
+	      };
+
+	      this._timeline.draw(data);
+
+	      this._setEvents(this._timeline);
+	    }
+	  },
+	  removeLayer: function removeLayer(gmxLayer) {
+	    var opt = gmxLayer.getGmxProperties(),
+	        layerID = opt.name,
+	        data = getDataSource(gmxLayer);
+
+	    if (data) {
+	      gmxLayer.removeLayerFilter({
+	        type: 'screen',
+	        id: pluginName
+	      }); // .off('dateIntervalChanged', this._dateIntervalChanged, this);
+
+	      if (this._containers) {
+	        var layersTab = this._containers.layersTab;
+
+	        for (var i = 0, len = layersTab.children.length; i < len; i++) {
+	          var li = layersTab.children[i];
+
+	          if (li._layerID === layerID) {
+	            this._removeLayerTab(li);
+
+	            break;
+	          }
+	        }
+	      }
+	    }
+
+	    if (this.options.moveable && calendar) {
+	      calendar.bindLayer(opt.name);
+	    }
+
+	    return this;
+	  },
+	  addLayer: function addLayer(gmxLayer, options) {
+	    var opt = gmxLayer.getGmxProperties(),
+	        data = getDataSource(gmxLayer);
+
+	    if (this.options.moveable && calendar) {
+	      calendar.unbindLayer(opt.name);
+	    }
+
+	    if (data) {
+	      if (options) {
+	        if (options.oInterval) {
+	          data.oInterval = {
+	            beginDate: new Date(options.oInterval.beginDate),
+	            endDate: new Date(options.oInterval.endDate)
+	          };
+	        }
+
+	        if (options.dInterval) {
+	          data.dInterval = {
+	            beginDate: new Date(options.dInterval.beginDate),
+	            endDate: new Date(options.dInterval.endDate)
+	          };
+	          data.uTimeStamp = [data.dInterval.beginDate.getTime() / 1000, data.dInterval.endDate.getTime() / 1000];
+	        }
+
+	        data.selected = options.selected;
+
+	        if (options.clickedUTM) {
+	          data.clickedUTM = options.clickedUTM;
+	          var msec = 1000 * data.clickedUTM;
+	          gmxLayer.setDateInterval(new Date(msec), new Date(1000 + msec));
+	        }
+
+	        if (options.skipUnClicked) {
+	          data.skipUnClicked = options.skipUnClicked;
+	        }
+
+	        if (options.rollClickedFlag) {
+	          data.rollClickedFlag = options.rollClickedFlag;
+	        }
+
+	        if (options.modeBbox) {
+	          data.modeBbox = options.modeBbox;
+	        }
+	      }
+
+	      var stateBefore = this.getCurrentState();
+
+	      if (singleIntervalFlag && stateBefore) {
+	        this._copyState(data, stateBefore);
+	      }
+
+	      if (this.options.moveable) {
+	        // this._zoomOff = map.getZoom() < this.options.minZoom;
+	        // gmxLayer.setDateInterval(data.oInterval.beginDate, data.oInterval.endDate);
+	        data.uTimeStamp = [data.oInterval.beginDate.getTime() / 1000, data.oInterval.endDate.getTime() / 1000];
+	        data.skipUnClicked = true;
+	      }
+
+	      gmxLayer.addLayerFilter(function (it) {
+	        var state = this._state.data[opt.name] || {},
+	            dt = it.properties[state.tmpKeyNum];
+
+	        if (this._zoomOff) {
+	          return true;
+	        }
+
+	        var clSelect = this._containers.cloudSelect;
+
+	        if (state.clouds && it.properties[state.clouds] > Number(clSelect.options[clSelect.selectedIndex].value)) {
+	          return false;
+	        }
+
+	        if (state.skipUnClicked) {
+	          return state.clickedUTM === dt;
+	        } else if (state.selected) {
+	          return state.selected[dt];
+	        } else {
+	          var uTimeStamp = state.uTimeStamp || [0, 0];
+
+	          if (dt < uTimeStamp[0] || dt > uTimeStamp[1]) {
+	            return false;
+	          }
+	        }
+
+	        return true;
+	      }.bind(this), {
+	        target: 'screen',
+	        id: pluginName
+	      });
+	      this.addDataSource(data);
+
+	      {
+	        L.DomUtil.removeClass(this._container, 'gmx-hidden');
+	      }
+	    }
+	  },
+	  _keydown: function _keydown(ev) {
+	    if (this._map && this._map.keyboard && !this._map.keyboard.enabled()) {
+	      this.setCommand(ev.key, ev.ctrlKey);
+	    }
+	  },
+	  setCommand: function setCommand(key, ctrlKey) {
+	    // console.log('setCommand', key, ctrlKey, this._commandKeys.indexOf(key))
+	    if (this._commandKeys.indexOf(key) !== -1) {
+	      var state = this.getCurrentState(),
+	          setClickedUTMFlag = true;
+
+	      if (state) {
+	        if (!state.gmxLayer._map) {
+	          this._map.addLayer(state.gmxLayer);
+	        }
+
+	        if (key === 'clickTimeLine') {
+	          state.rollClickedFlag = state.selected && state.selected[state.clickedUTM] ? true : false;
+	          state.gmxLayer.repaint();
+
+	          this._setDateScroll();
+
+	          this._bboxUpdate();
+
+	          this._redrawTimeline();
+
+	          this._chkRollClickedFlag(state);
+
+	          return;
+	        }
+
+	        if (state.clickedUTM) {
+	          /*						if (key === ' ') {
+	          						this._addSelected(state.clickedUTM, state);
+	          						// state.skipUnClicked = !state.skipUnClicked;
+	          						setClickedUTMFlag = false;
+	          					} else 
+	          */
+	          if (key === 'ArrowUp' || key === 'Up') {
+	            if (!state.rollClickedFlag) {
+	              state.rollClickedFlag = true;
+
+	              this._chkRollClickedFlag(state);
+
+	              if (state.selected && Object.keys(state.selected).length > 0) {
+	                key = 'Right';
+	              } else {
+	                setClickedUTMFlag = false;
+	              }
+	            }
+	          } else if (key === 'ArrowDown' || key === 'Down') {
+	            if (state.rollClickedFlag) {
+	              state.rollClickedFlag = false;
+
+	              this._chkRollClickedFlag(state);
+
+	              key = 'Right';
+	            } else {
+	              setClickedUTMFlag = false;
+	            } // } else if (key === 'ArrowUp' || key === 'Up') {
+	            // this._addSelected(state.clickedUTM, state);
+	            // setClickedUTMFlag = false;
+	            // } else if (key === 'ArrowDown' || key === 'Down') {
+	            // this._removeSelected(state.clickedUTM, state);
+	            // setClickedUTMFlag = false;
+
+	          } else if (key === 'favorite' || key === ' ') {
+	            if (state.selected && state.selected[state.clickedUTM]) {
+	              this._removeSelected(state.clickedUTM, state);
+
+	              state.rollClickedFlag = false;
+	            } else {
+	              this._addSelected(state.clickedUTM, state);
+
+	              state.rollClickedFlag = true;
+	            }
+
+	            this._chkRollClickedFlag(state);
+
+	            setClickedUTMFlag = false; // } else if (key === 's') {
+	            // state.rollClickedFlag = !state.rollClickedFlag;
+	            // this._chkRollClickedFlag(state);
+	          }
+
+	          if (setClickedUTMFlag) {
+	            var clickedUTM = String(state.clickedUTM),
+	                rollClicked = this.options.rollClicked,
+	                arr = [];
+
+	            if (state.selected && state.rollClickedFlag) {
+	              arr = Object.keys(state.selected).sort().map(function (it) {
+	                return {
+	                  utm: it
+	                };
+	              });
+	            } else {
+	              this._timeline.getData().forEach(function (it) {
+	                if (!state.selected || !state.selected[it.utm]) {
+	                  arr.push({
+	                    utm: it.utm
+	                  });
+	                }
+	              });
+	            }
+
+	            for (var i = 0, len = arr.length - 1; i <= len; i++) {
+	              if (Number(arr[i].utm) > state.clickedUTM) {
+	                break;
+	              }
+	            }
+
+	            if (key === 'ArrowLeft' || key === 'Left') {
+	              i = ctrlKey ? 0 : i > 1 ? i - 2 : rollClicked ? len : 0;
+	            } else if (key === 'ArrowRight' || key === 'Right') {
+	              i = ctrlKey ? len : i < len ? i : rollClicked ? 0 : len;
+	            } else if (key === 's') {
+	              i = i === 0 ? 0 : i - 1;
+	            }
+
+	            if (arr[i]) {
+	              state.clickedUTM = Number(arr[i].utm);
+
+	              this._setClassName(state.selected && state.selected[state.clickedUTM], this._containers.favorite, 'on');
+	            }
+	          }
+	        }
+
+	        this._chkObserver(state);
+	      }
+	    }
+	  },
+	  _chkObserver: function _chkObserver(state) {
+	    var observer = state.observer;
+	    observer.activate();
+	    observer.needRefresh = true;
+	    state.gmxLayer.getDataManager().checkObserver(observer);
+	    state.gmxLayer.repaint();
+	  },
+	  _setClassName: function _setClassName(flag, el, name) {
+	    var hasClass = L.DomUtil.hasClass(el, name);
+
+	    if (flag && !hasClass) {
+	      L.DomUtil.addClass(el, name);
+	    } else if (!flag && hasClass) {
+	      L.DomUtil.removeClass(el, name);
+	    }
+	  },
+	  _chkRollClickedFlag: function _chkRollClickedFlag(state) {
+	    state = state || this.getCurrentState();
+	    var len = state.selected ? Object.keys(state.selected).length : 0;
+
+	    if (len < 1) {
+	      state.rollClickedFlag = false; // this._setClassName(true, this._containers.switchDiv, 'disabled');
+	      // } else {
+	      // this._setClassName(false, this._containers.switchDiv, 'disabled');
+	    }
+
+	    this._setClassName(len > 0 && state.selected[state.clickedUTM], this._containers.favorite, 'on'); // this._setClassName(!state.rollClickedFlag, this._containers.modeSelectedOff, 'on');
+	    // this._setClassName(state.rollClickedFlag, this._containers.modeSelectedOn, 'on');
+
+
+	    this._setClassName(!state.rollClickedFlag, this._containers.hr1, 'on');
+
+	    this._setClassName(state.rollClickedFlag, this._containers.hr2, 'on');
+	  },
+	  _removeSelected: function _removeSelected(utm, state) {
+	    state = state || this.getCurrentState();
+
+	    if (utm) {
+	      delete state.selected[utm];
+	    } else {
+	      state.selected = null;
+	    }
+
+	    this._chkRollClickedFlag(state);
+	  },
+	  _addSelected: function _addSelected(utm, state) {
+	    state = state || this.getCurrentState();
+
+	    if (!state.selected) {
+	      state.selected = {};
+	    }
+
+	    state.selected[utm] = true;
+	    delete state.dInterval;
+	    state.uTimeStamp = [state.oInterval.beginDate.getTime() / 1000, state.oInterval.endDate.getTime() / 1000];
+
+	    this._chkRollClickedFlag(state);
+	  },
+	  _clickOnTimeline: function _clickOnTimeline(ev) {
+	    var tl = this._timeline,
+	        state = this.getCurrentState();
+
+	    if (ev) {
+	      var it = tl.getItem(ev.index),
+	          ctrlKey = ev.originalEvent.ctrlKey,
+	          clickId = this._containers.clickId,
+	          utm = Number(it.utm);
+	      state.clickedUTM = utm;
+	      state.skipUnClicked = state.clickedUTM ? true : false; // this.setCommand(state.selected && state.selected[utm] ? 'Up' : 'Down');
+
+	      this.setCommand('clickTimeLine'); // state.gmxLayer.repaint();
+	      // this._setDateScroll();
+	      // this._bboxUpdate();
+	      // this._redrawTimeline();
+	      // this._chkRollClickedFlag(state);
+	    } else {
+	      var selectedPrev = state.selected || {},
+	          selected = {};
+	      tl.getSelection().forEach(function (it, i) {
+	        var pt = tl.getItem(it.row),
+	            utm = Number(pt.utm);
+
+	        if (selectedPrev[utm]) {
+	          delete selectedPrev[utm];
+	        } else {
+	          selected[utm] = true;
+	        }
+	      });
+
+	      for (var key in selectedPrev) {
+	        selected[key] = true;
+	      }
+
+	      if (Object.keys(selected).length) {
+	        state.selected = selected;
+	      } else {
+	        delete state.selected;
+	      }
+
+	      this._bboxUpdate();
+	    }
+	  },
+	  _addSvgIcon: function _addSvgIcon(id) {
+	    return '<svg role="img" class="svgIcon"><use xlink:href="#' + id + '"></use></svg>';
+	  },
+	  onAdd: function onAdd(map) {
+	    var container = this._container = L.DomUtil.create('div', this.options.className + ' gmx-hidden');
+	    L.DomEvent.on(container, 'selectstart', L.DomEvent.preventDefault);
+
+	    this._addKeyboard(map);
+
+	    container.tabindex = -1; //			<div class="clicked el-left disabled gmx-hidden"><div class="el-act on">по1 всем</div><div class="el-pass">по избранным</div></div>
+
+	    var str = '\
+<div class="showButtonContainer gmx-hidden">\
+<div class="warning"><span class="warningText">' + translate$3.warning + '</span> <span class="closeWarning">X</span></div>\
+<div class="leaflet-gmx-iconSvg showButton leaflet-control" title="">' + this._addSvgIcon('tl-main-icon') + '</div>\
+</div>\
+<div class="vis-container">\
+<div class="tabs"><ul class="layers-tab"></ul></div>\
+<div class="internal-container">\
+	<div class="w-scroll">\
+		<div class="el-left">\
+			<span class="el-act-right-1">\
+				<span class="different-interval' + (singleIntervalFlag ? '' : ' on') + '" title="' + translate$3.differentInterval + '">' + this._addSvgIcon('tl-different-interval') + '</span>\
+				<span class="line4">|</span>\
+				<span class="single-interval' + (singleIntervalFlag ? ' on' : '') + '" title="' + translate$3.singleInterval + '">' + this._addSvgIcon('tl-single-interval') + '</span>\
+			</span>\
+		</div>\
+		<div class="el-center">\
+			<span class="clicked click-left">' + this._addSvgIcon('arrow_left') + '</span>\
+			<span class="clicked click-right">' + this._addSvgIcon('arrow_right') + '</span>\
+			&nbsp;&nbsp;\
+			<div class="el-act-cent-1">\
+				<span class="favorite">' + this._addSvgIcon('tl-favorites') + '</span>\
+				<span class="line">|</span>\
+				<span class="trash">' + this._addSvgIcon('tl-trash') + '</span>\
+			</div>\
+			&nbsp;&nbsp;\
+			<div class="el-act-cent-2">\
+				<span class="calendar">' + this._addSvgIcon('tl-date') + '</span>\
+				<span class="calendar-text">01.01.2017</span>\
+				<span class="line1">|</span>\
+				<span class="clock">' + this._addSvgIcon('tl-time') + '</span>\
+				<span class="clock-text">00:00</span>\
+			</div>\
+			&nbsp;&nbsp;\
+			<div class="clouds-content disabled">\
+				<span class="cloud">' + this._addSvgIcon('tl-cloud-cover') + '</span>\
+				<span class="cloud-text">\
+					<select class="cloud-select">\
+						<option value="5">0 - 5%</option>\
+						<option value="10">0 - 10%</option>\
+						<option value="20">0 - 20%</option>\
+						<option value="50">0 - 50%</option>\
+						<option value="100" selected>0 - 100%</option>\
+					</select>\
+				</span>\
+				&nbsp;&nbsp;\
+				<span class="arrow-small"></span>\
+			</div>\
+		</div>\
+		<div class="el-right">\
+			<span class="filters"></span>\
+			<span class="el-act-right-2"><span class="ques gmx-hidden">' + this._addSvgIcon('tl-help') + '</span></span>\
+			<span class="hideButton-content"><span class="arrow hideButton">' + this._addSvgIcon('arrow-down-01') + '</span></span>\
+		</div>\
+		<div class="g-scroll"></div>\
+		<div class="c-scroll">\
+			<div class="c-borders"></div>\
+		</div>\
+	</div>\
+	<div class="hr1"></div>\
+	<div class="hr2"></div>\
+	<div class="vis"></div>\
+</div>\
+</div>';
+	    container.innerHTML = str;
+	    container._id = this.options.id;
+	    this._map = map;
+	    var clickLeft = container.getElementsByClassName('click-left')[0],
+	        clickRight = container.getElementsByClassName('click-right')[0],
+	        cloudSelect = container.getElementsByClassName('cloud-select')[0],
+	        clickCalendar = container.getElementsByClassName('el-act-cent-2')[0],
+	        clickId = container.getElementsByClassName('calendar-text')[0],
+	        clickIdTime = container.getElementsByClassName('clock-text')[0],
+	        // switchDiv = container.getElementsByClassName('el-left')[0],
+	    hr1 = container.getElementsByClassName('hr1')[0],
+	        hr2 = container.getElementsByClassName('hr2')[0],
+	        // modeSelectedOn = container.getElementsByClassName('el-pass')[0],
+	    // modeSelectedOff = container.getElementsByClassName('el-act')[0],
+	    hideButton = container.getElementsByClassName('hideButton-content')[0],
+	        showButtonContainer = container.getElementsByClassName('showButtonContainer')[0],
+	        showButton = container.getElementsByClassName('showButton')[0],
+	        closeWarning = container.getElementsByClassName('closeWarning')[0],
+	        warning = container.getElementsByClassName('warning')[0],
+	        favorite = container.getElementsByClassName('favorite')[0],
+	        trash = container.getElementsByClassName('trash')[0],
+	        useSvg = hideButton.getElementsByTagName('use')[0],
+	        visContainer = container.getElementsByClassName('vis-container')[0],
+	        internalContainer = container.getElementsByClassName('internal-container')[0],
+	        differentInterval = container.getElementsByClassName('different-interval')[0],
+	        singleInterval = container.getElementsByClassName('single-interval')[0],
+	        cloudsContent = container.getElementsByClassName('clouds-content')[0],
+	        layersTab = container.getElementsByClassName('layers-tab')[0];
+
+	    if (this.options.webGLFilters) {
+	      container.getElementsByClassName('filters')[0].appendChild(this.options.webGLFilters.getWebGLFiltersContainer(map));
+	    }
+
+	    this._containers = {
+	      vis: container.getElementsByClassName('vis')[0],
+	      cloudSelect: cloudSelect,
+	      cloudsContent: cloudsContent,
+	      internalContainer: internalContainer,
+	      layersTab: layersTab,
+	      clickCalendar: clickCalendar,
+	      clickId: clickId,
+	      clickIdTime: clickIdTime,
+	      favorite: favorite,
+	      // switchDiv: switchDiv,
+	      hr1: hr1,
+	      hr2: hr2,
+	      // modeSelectedOff: modeSelectedOff,
+	      // modeSelectedOn: modeSelectedOn,
+	      hideButton: hideButton
+	    }; // modeSelectedOff.innerHTML = translate.modeSelectedOff;
+	    // modeSelectedOn.innerHTML = translate.modeSelectedOn;
+
+	    var stop = L.DomEvent.stopPropagation,
+	        prevent = L.DomEvent.preventDefault;
+	    L.DomEvent.on(document, 'keyup', stop).on(document, 'keyup', prevent).on(document, 'keyup', this._keydown, this);
+	    L.DomEvent.on(container, 'contextmenu', stop).on(container, 'touchstart', stop) // .on(container, 'mousemove', stop)
+	    .on(container, 'mousedown', stop).on(container, 'mousewheel', stop).on(container, 'dblclick', stop).on(container, 'click', stop);
+
+	    var toglleVisContainer = function (flag) {
+	      var isVis = !L.DomUtil.hasClass(visContainer, 'gmx-hidden');
+
+	      if (flag) {
+	        this._setClassName(!this._zoomOff, warning, 'gmx-hidden');
+
+	        this._setClassName(this._zoomOff, showButton, 'off');
+
+	        if (this._state.isVisible !== false) {
+	          this._setClassName(flag, showButtonContainer, 'gmx-hidden');
+
+	          this._setClassName(!flag, visContainer, 'gmx-hidden');
+
+	          if (!isVis) {
+	            this._redrawTimeline();
+	          }
+
+	          this._addKeyboard(map);
+
+	          this.fire('statechanged', {
+	            isVisible: true
+	          });
+	        }
+	      } else {
+	        this._setClassName(flag, showButtonContainer, 'gmx-hidden');
+
+	        this._setClassName(this._zoomOff, showButton, 'off');
+
+	        this._setClassName(!this._zoomOff, warning, 'gmx-hidden');
+
+	        if (isVis) {
+	          this._setClassName(!flag, visContainer, 'gmx-hidden');
+
+	          this._removeKeyboard(map);
+
+	          this.fire('statechanged', {
+	            isVisible: false
+	          });
+	        }
+	      }
+	    }.bind(this);
+
+	    var toglleSingleInterval = function (flag) {
+	      singleIntervalFlag = flag;
+
+	      if (singleIntervalFlag) {
+	        L.DomUtil.addClass(singleInterval, 'on');
+	        L.DomUtil.removeClass(differentInterval, 'on');
+	      } else {
+	        L.DomUtil.addClass(differentInterval, 'on');
+	        L.DomUtil.removeClass(singleInterval, 'on');
+	      }
+	    }.bind(this);
+
+	    if (singleIntervalFlag) {
+	      toglleSingleInterval(true);
+	    }
+
+	    L.DomEvent.on(cloudSelect, 'change', function (ev) {
+	      ev.target.blur();
+
+	      this._bboxUpdate();
+
+	      var state = this.getCurrentState();
+	      state.gmxLayer.repaint();
+	      this.setCommand('Left');
+	      this.setCommand('Right');
+	    }, this).on(differentInterval, 'click', function () {
+	      if (singleIntervalFlag) {
+	        toglleSingleInterval(false);
+	      }
+	    }, this).on(singleInterval, 'click', function () {
+	      if (!singleIntervalFlag) {
+	        toglleSingleInterval(true);
+	        var state = this.getCurrentState();
+
+	        for (var layerID in this._state.data) {
+	          this._copyState(this._state.data[layerID], state);
+	        }
+	      }
+	    }, this).on(favorite, 'click', function () {
+	      // var state = this.getCurrentState();
+	      // this.setCommand(state.selected && state.selected[state.clickedUTM] ? 'Down' : 'Up', true);
+	      this.setCommand('favorite', true);
+	    }, this).on(trash, 'click', function (ev) {
+	      this._removeSelected();
+
+	      this._redrawTimeline();
+	    }, this).on(clickLeft, 'mousemove', stop).on(clickLeft, 'click', function (ev) {
+	      this.setCommand('Left');
+	    }, this).on(clickRight, 'mousemove', stop).on(clickRight, 'click', function (ev) {
+	      this.setCommand('Right');
+	    }, this) // .on(modeSelectedOff, 'click', function (ev) {
+	    // this.setCommand('s');
+	    // L.DomUtil.addClass(modeSelectedOff, 'on');
+	    // L.DomUtil.removeClass(modeSelectedOn, 'on');
+	    // }, this)
+	    // .on(modeSelectedOn, 'click', function (ev) {
+	    // this.setCommand('s');
+	    // L.DomUtil.addClass(modeSelectedOn, 'on');
+	    // L.DomUtil.removeClass(modeSelectedOff, 'on');
+	    // }, this)
+	    .on(showButton, 'click', function (ev) {
+	      this._state.isVisible = true;
+	      toglleVisContainer(true);
+	    }, this).on(closeWarning, 'click', function (ev) {
+	      this._setClassName(true, warning, 'gmx-hidden');
+	    }, this).on(hideButton, 'click', function (ev) {
+	      this._state.isVisible = false;
+	      toglleVisContainer(false);
+	    }, this);
+	    L.DomEvent.on(layersTab, 'click', function (ev) {
+
+	      var target = ev.target,
+	          _prevState = this.getCurrentState() || {},
+	          _layerID = target._layerID || target.parentNode._layerID;
+
+	      if (_layerID && _prevState.layerID !== _layerID) {
+	        if (singleIntervalFlag) {
+	          this._hideOtherLayer(_layerID);
+	        }
+
+	        this._setCurrentTab(_layerID);
+	      }
+	    }, this);
+
+	    var _this = this;
+
+	    this._setDateScroll = function () {
+	      var state = _this.getCurrentState();
+
+	      if (state) {
+	        this._chkSelection(state);
+	      }
+	    };
+
+	    if (map.gmxControlsManager) {
+	      map.gmxControlsManager.add(this);
+	    }
+
+	    this._sidebarOn = true;
+
+	    this._chkZoom = function () {
+	      this._zoomOff = map.getZoom() < this.options.minZoom;
+	      toglleVisContainer(!this._zoomOff);
+	    }.bind(this);
+
+	    map.on('moveend', this._moveend, this).on('zoomend', this._chkZoom, this);
+
+	    this._chkZoom();
+
+	    return container;
+	  }
+	});
+
+	L.control.gmxTimeline = function (options) {
+	  return new L.Control.GmxTimeline(options);
+	};
+	L.Map.addInitHook(function () {// var corners = this._controlCorners,
+	  // parent = this._controlContainer,
+	  // tb = 'leaflet-top leaflet-bottom',
+	  // lr = 'leaflet-left leaflet-right',
+	  // classNames = {
+	  // bottom: 'leaflet-bottom ' + lr
+	  // };
+	  // for (var key in classNames) {
+	  // if (!corners[key]) {
+	  // corners[key] = L.DomUtil.create('div', classNames[key], parent);
+	  // }
+	  // }
+	  // corners.document = document.body;
+	  // fetch('/images/svg-symbols.svg', {mode: 'cors'}).then(function(resp) {
+	  // return resp.text();
+	  // }).then(function(txt) {
+	  // var div = document.createElement('div');
+	  // div.style.display = 'none';
+	  // document.body.appendChild(div);
+	  // setTimeout(function() { div.innerHTML = txt; }, 200);
+	  // });
+	}); // if (window.gmxCore) {
+	// 	var path = gmxCore.getModulePath('gmxTimeLine'),
+	// 		timeLinePath = path + timeLinePrefix + 'timeline';
+	// 	filesToLoad = [
+	// 		timeLinePath + '.js',
+	// 		timeLinePath + '.css',
+	// 		path + 'L.Control.gmxTimeLine.css'
+	// 	];
+	// 	window.gmxCore.addModule(pluginName, publicInterface, {});
+	// } else {
+	// 	window.nsGmx[pluginName] = publicInterface;
+	// }
+
+	var options = {
+	  locale: window.language === 'eng' ? 'en' : 'ru',
+	  moveable: true,
+	  rollClicked: true,
+	  minZoom: 8
+	};
+	timeLineControl = L.control.gmxTimeline(options).on('click', function (ev) {
+	  layersByID[ev.layerID].repaint();
+	});
+	var GmxTimeLine = timeLineControl;
+
+	var translate$4 = T.getText.bind(T);
 
 	var Borders = /*#__PURE__*/function (_EventTarget) {
 	  _inherits(Borders, _EventTarget);
@@ -33137,20 +34390,20 @@ var Forestry = (function () {
 
 	    _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
 
-	    var p = _this._legend.addGroup('borders', translate$3("legend.borders"));
+	    var p = _this._legend.addGroup('borders', translate$4("legend.borders"));
 
 	    if (_this._layers.regions) {
-	      _this._legend.addComponent('regions', translate$3('legend.regions'), p); // this._layers.regions.on('click', this._click, this);
+	      _this._legend.addComponent('regions', translate$4('legend.regions'), p); // this._layers.regions.on('click', this._click, this);
 
 	    }
 
 	    if (_this._layers.forestries) {
-	      _this._legend.addComponent('forestries', translate$3('legend.forestries'), p); // this._layers.forestries.on('click', this._click, this);
+	      _this._legend.addComponent('forestries', translate$4('legend.forestries'), p); // this._layers.forestries.on('click', this._click, this);
 
 	    }
 
 	    if (_this._layers.forestries_local) {
-	      _this._legend.addComponent('forestries_local', translate$3('legend.forestries_local'), p); // this._layers.forestries_local.on('click', this._click, this);
+	      _this._legend.addComponent('forestries_local', translate$4('legend.forestries_local'), p); // this._layers.forestries_local.on('click', this._click, this);
 
 	    }
 
@@ -33177,7 +34430,7 @@ var Forestry = (function () {
 	  return Borders;
 	}(EventTarget);
 
-	var translate$4 = T.getText.bind(T);
+	var translate$5 = T.getText.bind(T);
 	T.addText('rus', {
 	  legend: {
 	    quadrants: 'Лесохозяйственные кварталы',
@@ -33229,6 +34482,7 @@ var Forestry = (function () {
 
 	    var kind = _ref.kind,
 	        map = _ref.map,
+	        content = _ref.content,
 	        layer = _ref.layer,
 	        legend = _ref.legend;
 
@@ -33237,6 +34491,7 @@ var Forestry = (function () {
 	    _this = _super.call(this);
 	    _this._kind = kind;
 	    _this._map = map;
+	    _this._content = content;
 	    _this._layer = layer;
 	    _this._legend = legend;
 
@@ -33252,7 +34507,7 @@ var Forestry = (function () {
 	      }
 	    });
 
-	    _this._legend.addComponent(_this._kind, translate$4("legend.".concat(_this._kind)));
+	    _this._legend.addComponent(_this._kind, translate$5("legend.".concat(_this._kind)));
 
 	    _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
 
@@ -33327,6 +34582,52 @@ var Forestry = (function () {
 	        }
 	      }
 	    }
+	  }, {
+	    key: "query",
+	    value: function () {
+	      var _query = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(url, options) {
+	        var response;
+	        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+	          while (1) {
+	            switch (_context2.prev = _context2.next) {
+	              case 0:
+	                _context2.next = 2;
+	                return fetch(url, {
+	                  method: 'POST',
+	                  credentials: 'include',
+	                  headers: {
+	                    'Content-Type': 'application/json'
+	                  },
+	                  body: JSON.stringify(options)
+	                });
+
+	              case 2:
+	                response = _context2.sent;
+	                _context2.t0 = response.status;
+	                _context2.next = _context2.t0 === 200 ? 6 : 9;
+	                break;
+
+	              case 6:
+	                _context2.next = 8;
+	                return response.json();
+
+	              case 8:
+	                return _context2.abrupt("return", _context2.sent);
+
+	              case 9:
+	              case "end":
+	                return _context2.stop();
+	            }
+	          }
+	        }, _callee2);
+	      }));
+
+	      function query(_x2, _x3) {
+	        return _query.apply(this, arguments);
+	      }
+
+	      return query;
+	    }()
 	  }]);
 
 	  return Controller;
@@ -33384,7 +34685,7 @@ var Forestry = (function () {
 	  return BaseView;
 	}(EventTarget);
 
-	var translate$5 = T.getText.bind(T);
+	var translate$6 = T.getText.bind(T);
 	T.addText('rus', {
 	  declaration: {
 	    title: 'Лесная декларация №',
@@ -33436,7 +34737,7 @@ var Forestry = (function () {
 
 	    _this._container.classList.add('scanex-forestry-declaration');
 
-	    _this._container.innerHTML = "<div class=\"header\">\n            <label>".concat(translate$5('declaration.title'), "</label>            \n            <label class=\"number\"></label>\n        </div>\n        <div class=\"scrollable\">\n            <table cellspacing=\"0\" cellpadding=\"0\">\n                <tbody>\n                    <!--\n                    <tr>\n                        <td>").concat(translate$5('declaration.federalSubject'), "</td>\n                        <td class=\"federal-subject\"></td>\n                    </tr>\n                    -->\n                    <tr>\n                        <td>").concat(translate$5('declaration.executive'), "</td>\n                        <td class=\"executive\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$5('declaration.officer'), "</td>\n                        <td class=\"officer\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$5('declaration.lessee'), "</td>\n                        <td class=\"lessee\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$5('declaration.contract'), "</td>\n                        <td class=\"contract\"></td>\n                    </tr>\n                </tbody>\n            </table>\n            <div>\n                <i class=\"scanex-declaration-icon doc\"></i>\n                <button class=\"open-doc\">").concat(translate$5('declaration.doc'), "</button>\n            </div>        \n            <table cellspacing=\"0\" cellpadding=\"0\">\n                <tbody>\n                    <tr>\n                        <td>").concat(translate$5('declaration.purpose_of_forest'), "</td>\n                        <td class=\"purpose_of_forest\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$5('declaration.protective_forest_category'), "</td>\n                        <td class=\"protective_forest_category\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$5('declaration.forestry_name'), "</td>\n                        <td class=\"forestry_name\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$5('declaration.local_forestry_name'), "</td>\n                        <td class=\"local_forestry_name\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$5('declaration.tract_name'), "</td>\n                        <td class=\"tract_name\"></td>\n                    </tr>                                \n                    <tr>\n                        <td>").concat(translate$5('declaration.quadrant_number'), "</td>\n                        <td class=\"quadrant_number\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$5('declaration.forest_inventory_unit_number'), "</td>\n                        <td class=\"forest_inventory_unit_number\"></td>\n                    </tr>\n                </tbody>\n            </table>\n            <div class=\"content\"></div>\n        </div>");
+	    _this._container.innerHTML = "<div class=\"header\">\n            <label>".concat(translate$6('declaration.title'), "</label>            \n            <label class=\"number\"></label>\n        </div>\n        <div class=\"scrollable\">\n            <table cellspacing=\"0\" cellpadding=\"0\">\n                <tbody>\n                    <!--\n                    <tr>\n                        <td>").concat(translate$6('declaration.federalSubject'), "</td>\n                        <td class=\"federal-subject\"></td>\n                    </tr>\n                    -->\n                    <tr>\n                        <td>").concat(translate$6('declaration.executive'), "</td>\n                        <td class=\"executive\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$6('declaration.officer'), "</td>\n                        <td class=\"officer\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$6('declaration.lessee'), "</td>\n                        <td class=\"lessee\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$6('declaration.contract'), "</td>\n                        <td class=\"contract\"></td>\n                    </tr>\n                </tbody>\n            </table>\n            <div>\n                <i class=\"scanex-declaration-icon doc\"></i>\n                <button class=\"open-doc\">").concat(translate$6('declaration.doc'), "</button>\n            </div>        \n            <table cellspacing=\"0\" cellpadding=\"0\">\n                <tbody>\n                    <tr>\n                        <td>").concat(translate$6('declaration.purpose_of_forest'), "</td>\n                        <td class=\"purpose_of_forest\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$6('declaration.protective_forest_category'), "</td>\n                        <td class=\"protective_forest_category\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$6('declaration.forestry_name'), "</td>\n                        <td class=\"forestry_name\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$6('declaration.local_forestry_name'), "</td>\n                        <td class=\"local_forestry_name\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$6('declaration.tract_name'), "</td>\n                        <td class=\"tract_name\"></td>\n                    </tr>                                \n                    <tr>\n                        <td>").concat(translate$6('declaration.quadrant_number'), "</td>\n                        <td class=\"quadrant_number\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$6('declaration.forest_inventory_unit_number'), "</td>\n                        <td class=\"forest_inventory_unit_number\"></td>\n                    </tr>\n                </tbody>\n            </table>\n            <div class=\"content\"></div>\n        </div>");
 	    return _this;
 	  }
 
@@ -33475,7 +34776,7 @@ var Forestry = (function () {
 	      this._container.querySelector('.content').innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tbody>                \n                ".concat(Array.isArray(CuttingAreas) ? CuttingAreas.map(function (_ref3) {
 	        var num = _ref3.num,
 	            volumes = _ref3.volumes;
-	        return "<tr class=\"num\">\n                        <td>".concat(translate$5('declaration.num'), "</td>\n                        <td>").concat(num || '-', "</td>\n                    </tr>\n                    ").concat(Array.isArray(volumes) ? volumes.map(function (_ref4) {
+	        return "<tr class=\"num\">\n                        <td>".concat(translate$6('declaration.num'), "</td>\n                        <td>").concat(num || '-', "</td>\n                    </tr>\n                    ").concat(Array.isArray(volumes) ? volumes.map(function (_ref4) {
 	          var total_square = _ref4.total_square,
 	              felling_form = _ref4.felling_form,
 	              felling_type = _ref4.felling_type,
@@ -33483,7 +34784,7 @@ var Forestry = (function () {
 	              species = _ref4.species,
 	              unit_of_measurement = _ref4.unit_of_measurement,
 	              stock = _ref4.stock;
-	          return "<tr>\n                        <td>".concat(translate$5('declaration.total_square'), "</td>\n                            <td class=\"amount\">").concat(total_square || '-', "</td>\n                        </tr>\n                        <tr>\n                            <td>").concat(translate$5('declaration.felling_form'), "</td>\n                            <td class=\"amount\">").concat(felling_form || '-', "</td>\n                        </tr>\n                        <tr>\n                            <td>").concat(translate$5('declaration.felling_type'), "</td>\n                            <td class=\"amount\">").concat(felling_type || '-', "</td>\n                        </tr>\n                        <tr>\n                            <td>").concat(translate$5('declaration.farm'), "</td>\n                            <td class=\"amount\">").concat(farm || '-', "</td>\n                        </tr>\n                        <tr>\n                            <td>").concat(translate$5('declaration.species'), "</td>\n                            <td class=\"amount\">").concat(species || '-', "</td>\n                        </tr>                        \n                        <tr>\n                            <td>").concat(translate$5('declaration.stock'), "</td>\n                            <td class=\"amount\">").concat(stock || '-', "</td>\n                        </tr>");
+	          return "<tr>\n                        <td>".concat(translate$6('declaration.total_square'), "</td>\n                            <td class=\"amount\">").concat(total_square || '-', "</td>\n                        </tr>\n                        <tr>\n                            <td>").concat(translate$6('declaration.felling_form'), "</td>\n                            <td class=\"amount\">").concat(felling_form || '-', "</td>\n                        </tr>\n                        <tr>\n                            <td>").concat(translate$6('declaration.felling_type'), "</td>\n                            <td class=\"amount\">").concat(felling_type || '-', "</td>\n                        </tr>\n                        <tr>\n                            <td>").concat(translate$6('declaration.farm'), "</td>\n                            <td class=\"amount\">").concat(farm || '-', "</td>\n                        </tr>\n                        <tr>\n                            <td>").concat(translate$6('declaration.species'), "</td>\n                            <td class=\"amount\">").concat(species || '-', "</td>\n                        </tr>                        \n                        <tr>\n                            <td>").concat(translate$6('declaration.stock'), "</td>\n                            <td class=\"amount\">").concat(stock || '-', "</td>\n                        </tr>");
 	        }).join('') : '');
 	      }).join('') : '', "              \n            </tbody>\n        </table>");
 	    }
@@ -33584,9 +34885,9 @@ var Forestry = (function () {
 	      kind: 'declarations',
 	      map: map,
 	      layer: layer,
-	      legend: legend
+	      legend: legend,
+	      content: content
 	    });
-	    _this._content = content;
 	    _this._path = path;
 
 	    _this._content.add('declarations', Declaration, {
@@ -33600,7 +34901,7 @@ var Forestry = (function () {
 	  return Declarations;
 	}(Controller);
 
-	var translate$6 = T.getText.bind(T);
+	var translate$7 = T.getText.bind(T);
 	T.addText('rus', {
 	  hotspot: {
 	    title: 'Приблизьте карту для загрузки на таймлайн',
@@ -33631,7 +34932,7 @@ var Forestry = (function () {
 	    key: "open",
 	    value: function open(props) {
 	      var dateStr = new Date(props.Timestamp * 1000).toLocaleString();
-	      this._container.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <thead>\n                <tr>\n                    <th colspan=\"2\" class=\"title\">".concat(translate$6('hotspot.fire'), "</th>\n                </tr>\n            </thead>\n            <tbody>\n                <tr>\n                    <td class=\"name\">").concat(translate$6('hotspot.date'), "</td>\n                    <td class=\"value\">").concat(dateStr, "</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(translate$6('hotspot.satelite'), "</td>\n                    <td class=\"value\">").concat(props.Satellite, "</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(translate$6('hotspot.from'), "</td>\n                    <td class=\"value\">").concat(translate$6('hotspot.scanex'), "</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(translate$6('hotspot.confidence'), "</td>\n                    <td class=\"value\">").concat(props.Confidence, " %</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(translate$6('hotspot.brightness'), "</td>\n                    <td class=\"value\">").concat(props.Brightness, "</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(translate$6('hotspot.frp'), "</td>\n                    <td class=\"value\">").concat(props.Frp, "</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(translate$6('hotspot.coords'), "</td>\n                    <td class=\"value\">").concat(props.coords, "</td>\n                </tr>\n            </tbody>\n        </table>");
+	      this._container.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <thead>\n                <tr>\n                    <th colspan=\"2\" class=\"title\">".concat(translate$7('hotspot.fire'), "</th>\n                </tr>\n            </thead>\n            <tbody>\n                <tr>\n                    <td class=\"name\">").concat(translate$7('hotspot.date'), "</td>\n                    <td class=\"value\">").concat(dateStr, "</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(translate$7('hotspot.satelite'), "</td>\n                    <td class=\"value\">").concat(props.Satellite, "</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(translate$7('hotspot.from'), "</td>\n                    <td class=\"value\">").concat(translate$7('hotspot.scanex'), "</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(translate$7('hotspot.confidence'), "</td>\n                    <td class=\"value\">").concat(props.Confidence, " %</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(translate$7('hotspot.brightness'), "</td>\n                    <td class=\"value\">").concat(props.Brightness, "</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(translate$7('hotspot.frp'), "</td>\n                    <td class=\"value\">").concat(props.Frp, "</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(translate$7('hotspot.coords'), "</td>\n                    <td class=\"value\">").concat(props.coords, "</td>\n                </tr>\n            </tbody>\n        </table>");
 
 	      _get(_getPrototypeOf(Fires.prototype), "open", this).call(this);
 	    }
@@ -33640,7 +34941,7 @@ var Forestry = (function () {
 	  return Fires;
 	}(BaseView);
 
-	var translate$7 = T.getText.bind(T);
+	var translate$8 = T.getText.bind(T);
 	var hotSpotLayerID = '9DC30891452449DD8D551D0AA62FFF54';
 
 	var Fires$1 = /*#__PURE__*/function (_EventTarget) {
@@ -33668,7 +34969,7 @@ var Forestry = (function () {
 	    _this._dateInterval = dateInterval;
 	    _this._permissions = permissions;
 
-	    _this._legend.addComponent('fires', translate$7('legend.fires'));
+	    _this._legend.addComponent('fires', translate$8('legend.fires'));
 
 	    _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
 
@@ -40109,7 +41410,7 @@ var Forestry = (function () {
 	  });
 	});
 
-	var translate$8 = T.getText.bind(T);
+	var translate$9 = T.getText.bind(T);
 	T.addText('rus', {
 	  incident: {
 	    title: 'Рубка',
@@ -40166,14 +41467,14 @@ var Forestry = (function () {
 	var _parseVyd = function _parseVyd(arr) {
 	  return arr.map(function (data) {
 	    var str = data.volumes.map(function (it) {
-	      return "\n\t\t\t<tr>\n\t\t\t\t<td class=\"species\">".concat(it.species, "</td>\n\t\t\t\t<td class=\"confirmed_vol\">").concat(it.confirmed_vol, " ").concat(translate$8('unit.m'), "<sup>3</sup></td>\n\t\t\t\t<td class=\"probable_volume\"><span class=\"span-gray\">").concat(it.probable_volume, " ").concat(translate$8('unit.m'), "<sup>3</sup></span></td>\n\t\t\t</tr>\n\t\t\t");
+	      return "\n\t\t\t<tr>\n\t\t\t\t<td class=\"species\">".concat(it.species, "</td>\n\t\t\t\t<td class=\"confirmed_vol\">").concat(it.confirmed_vol, " ").concat(translate$9('unit.m'), "<sup>3</sup></td>\n\t\t\t\t<td class=\"probable_volume\"><span class=\"span-gray\">").concat(it.probable_volume, " ").concat(translate$9('unit.m'), "<sup>3</sup></span></td>\n\t\t\t</tr>\n\t\t\t");
 	    }).join('\n');
-	    return "\n\t\t\t<div class=\"vydel\">\n\t\t\t\t<div class=\"table1_row\">".concat(translate$8('incident.arend'), " <span>").concat(data.renter, "</span></div>\n\t\t\t\t<table cellspacing=\"0\" cellpadding=\"0\">\n\t\t\t\t\t<tbody>\n\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t<th class=\"species\">").concat(translate$8('incident.titleValue'), "</th>\n\t\t\t\t\t\t\t<th class=\"confirmed_vol\">").concat(translate$8('incident.estimValue'), "</th>\n\t\t\t\t\t\t\t<th class=\"probable_volume\">").concat(translate$8('incident.checkedValue'), "</th>\n\n\t\t\t\t\t\t</tr>\n\t\t\t\t").concat(str, "\n\t\t\t\t\t</tbody>\n\t\t\t\t</table>\n\t\t\t</div>");
+	    return "\n\t\t\t<div class=\"vydel\">\n\t\t\t\t<div class=\"table1_row\">".concat(translate$9('incident.arend'), " <span>").concat(data.renter, "</span></div>\n\t\t\t\t<table cellspacing=\"0\" cellpadding=\"0\">\n\t\t\t\t\t<tbody>\n\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t<th class=\"species\">").concat(translate$9('incident.titleValue'), "</th>\n\t\t\t\t\t\t\t<th class=\"confirmed_vol\">").concat(translate$9('incident.estimValue'), "</th>\n\t\t\t\t\t\t\t<th class=\"probable_volume\">").concat(translate$9('incident.checkedValue'), "</th>\n\n\t\t\t\t\t\t</tr>\n\t\t\t\t").concat(str, "\n\t\t\t\t\t</tbody>\n\t\t\t\t</table>\n\t\t\t</div>");
 	  }).join('\n');
 	};
 
 	var _parseProps = function _parseProps(props) {
-	  return "\n\t\t<div class=\"table1_row\">".concat(translate$8('incident.status'), " <span>").concat(props.Status, "</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$8('incident.Expert'), " <span>").concat(props.Expert || '', "</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$8('incident.CheckingExpert'), " <span>").concat(props.CheckingExpert || '', "</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$8('incident.Probability'), " <span>").concat(Math.floor(10000 * (props.Probability || 0)) / 100, " %</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$8('incident.Intensity'), " <span>").concat(props.Intensity || 0, " ").concat(translate$8('unit.m'), "</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$8('incident.date'), " <span>").concat(props.Detected || '', "</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$8('incident.areaAll'), " <span>").concat((props.Area || 0).toFixed(2), "</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$8('incident.dateCheck'), " <input class=\"span-gray dateCheck\" type=\"text\" placeholder=\"\" value=").concat(props.CheckDate || '', "></div>\n\t");
+	  return "\n\t\t<div class=\"table1_row\">".concat(translate$9('incident.status'), " <span>").concat(props.Status, "</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$9('incident.Expert'), " <span>").concat(props.Expert || '', "</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$9('incident.CheckingExpert'), " <span>").concat(props.CheckingExpert || '', "</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$9('incident.Probability'), " <span>").concat(Math.floor(10000 * (props.Probability || 0)) / 100, " %</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$9('incident.Intensity'), " <span>").concat(props.Intensity || 0, " ").concat(translate$9('unit.m'), "</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$9('incident.date'), " <span>").concat(props.Detected || '', "</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$9('incident.areaAll'), " <span>").concat((props.Area || 0).toFixed(2), "</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$9('incident.dateCheck'), " <input class=\"span-gray dateCheck\" type=\"text\" placeholder=\"\" value=").concat(props.CheckDate || '', "></div>\n\t");
 	};
 
 	var Incidents = /*#__PURE__*/function (_BaseView) {
@@ -40197,27 +41498,27 @@ var Forestry = (function () {
 	    _this._buttonsStr = '';
 
 	    if (_this._permission.IncidentDocuments) {
-	      _this._buttonsStr += "<button class=\"detailBtn button\">".concat(translate$8('incident.detail'), "</button>");
+	      _this._buttonsStr += "<button class=\"detailBtn button\">".concat(translate$9('incident.detail'), "</button>");
 	    }
 
 	    if (_this._permission.IncidentEdit) {
-	      _this._buttonsStr += "<button class=\"editGeo button\">".concat(translate$8('incident.editGeo'), "</button>");
+	      _this._buttonsStr += "<button class=\"editGeo button\">".concat(translate$9('incident.editGeo'), "</button>");
 	    }
 
 	    if (_this._permission.IncidentSave) {
-	      _this._buttonsStr += "<button class=\"saveGeo button\">".concat(translate$8('incident.saveGeo'), "</button>");
+	      _this._buttonsStr += "<button class=\"saveGeo button\">".concat(translate$9('incident.saveGeo'), "</button>");
 	    }
 
 	    if (_this._permission.ContiurUnload) {
-	      _this._buttonsStr += "<button class=\"download button\">".concat(translate$8('incident.downloadGeo'), "</button>");
+	      _this._buttonsStr += "<button class=\"download button\">".concat(translate$9('incident.downloadGeo'), "</button>");
 	    }
 
 	    if (_this._permission.ProbabilityRasterView) {
-	      _this._buttonsStr += "<button class=\"verRastr button\">".concat(translate$8('incident.verRastr'), "</button>");
+	      _this._buttonsStr += "<button class=\"verRastr button\">".concat(translate$9('incident.verRastr'), "</button>");
 	    }
 
 	    if (_this._permission.CloudMaskView) {
-	      _this._buttonsStr += "<button class=\"maskWater button\">".concat(translate$8('incident.maskWater'), "</button>");
+	      _this._buttonsStr += "<button class=\"maskWater button\">".concat(translate$9('incident.maskWater'), "</button>");
 	    }
 
 	    _this._container.classList.add('scanex-forestry-incident');
@@ -40234,26 +41535,26 @@ var Forestry = (function () {
 	      switch (props.class_id) {
 	        case 1:
 	          // Рубка
-	          title = "<div class=\"header1\">".concat(translate$8('incident.title'), "</div>");
+	          title = "<div class=\"header1\">".concat(translate$9('incident.title'), "</div>");
 	          break;
 
 	        case 2:
 	          // ветровалы 
-	          title = "<div class=\"header1\">".concat(translate$8('incident.titleFire'), "</div>");
+	          title = "<div class=\"header1\">".concat(translate$9('incident.titleFire'), "</div>");
 	          break;
 
 	        case 3:
 	          // Патология
-	          title = "<div class=\"header1\">".concat(translate$8('incident.titleDisease'), "</div>");
+	          title = "<div class=\"header1\">".concat(translate$9('incident.titleDisease'), "</div>");
 	          break;
 
 	        case 4:
 	          // Гарь
-	          title = "<div class=\"header1\">".concat(translate$8('incident.titleFire'), "</div>");
+	          title = "<div class=\"header1\">".concat(translate$9('incident.titleFire'), "</div>");
 	          break;
 
 	        default:
-	          title = "<div class=\"header1\">".concat(translate$8('incident.title'), "</div>");
+	          title = "<div class=\"header1\">".concat(translate$9('incident.title'), "</div>");
 	          break;
 	      }
 
@@ -40263,7 +41564,7 @@ var Forestry = (function () {
 
 	      var str2 = _parseProps(data);
 
-	      this._container.innerHTML = "\n\t\t\t".concat(title, "\n\n\t\t\t<div class=\"inside\">\n\t\t\t\t<div class=\"inside_left\">\n\t\t\t\t\t<div class=\"table1\">\n\t\t\t\t\t\t").concat(str2, "\n\n\t\t\t\t\t\t<div class=\"table1_row\">").concat(translate$8('incident.comment'), "</div>\n\t\t\t\t\t\t\n\t\t\t\t\t\t<textarea class=\"usr-text-area\" ").concat(this._permission.IncidentEdit && data.Status === 'в работе' ? '' : 'disabled', ">").concat(data.Comment || '', "</textarea>\n\t\t\t\t\t\t<div class=\"table1_row \">").concat(translate$8('incident.bpla'), ":</div>\n\n\t\t\t\t\t\t<div class=\"table1_row \">\n\t\t\t\t\t\t\t<span>").concat(props.uav_date || '', "</span>\n\t\t\t\t\t\t\t<span>").concat(props.uav_description || '', "</span>\n\t\t\t\t\t\t\t<div class=\"group_buttons\">\n\t\t\t\t\t\t\t\t").concat(this._permission.BplaView && props.uav_raster_id ? "<div class=\"mini-green-but BplaView\">".concat(translate$8('incident.BplaView'), "</div>") : '', "\n\t\t\t\t\t\t\t\t").concat(this._permission.BplaDownload ? "<div class=\"mini-green-but BplaDownload\">".concat(translate$8('incident.BplaDownload'), "</div>") : '', "\n\t\t\t\t\t\t\t\t").concat(this._permission.BplaRemove ? "<div class=\"mini-green-but BplaRemove\">".concat(translate$8('incident.BplaRemove'), "</div>") : '', "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t").concat(str1, "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"rubka\">\n\t\t\t\t\t<div class=\"right-wrapper-top \">\n\t\t\t\t\t\t").concat(this._buttonsStr, "\n\t\t\t\t\t </div>\n\t\t\t\t\t<hr />\n\t\t\t\t\t <div class=\"right-wrapper-bottom \">\n\t\t\t\t\t\t").concat(this._permission.IncidentAccept && data.Status === 'в работе' ? "<button class=\"IncidentAccept button\">".concat(translate$8('incident.IncidentAccept'), "</button>") : '', "\n\t\t\t\t\t\t").concat(this._permission.IncidentCheck && data.Status === 'неподтвержденная' ? "<button class=\"IncidentCheck button\">".concat(translate$8('incident.IncidentCheck'), "</button>") : '', "\n\t\t\t\t\t\t").concat(this._permission.IncidentDecline && (data.Status === 'неподтвержденная' || data.Status === 'в работе') ? "<button class=\"IncidentDecline button\">".concat(translate$8('incident.IncidentDecline'), "</button>") : '', "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>");
+	      this._container.innerHTML = "\n\t\t\t".concat(title, "\n\n\t\t\t<div class=\"inside\">\n\t\t\t\t<div class=\"inside_left\">\n\t\t\t\t\t<div class=\"table1\">\n\t\t\t\t\t\t").concat(str2, "\n\n\t\t\t\t\t\t<div class=\"table1_row\">").concat(translate$9('incident.comment'), "</div>\n\t\t\t\t\t\t\n\t\t\t\t\t\t<textarea class=\"usr-text-area\" ").concat(this._permission.IncidentEdit && data.Status === 'в работе' ? '' : 'disabled', ">").concat(data.Comment || '', "</textarea>\n\t\t\t\t\t\t<div class=\"table1_row \">").concat(translate$9('incident.bpla'), ":</div>\n\n\t\t\t\t\t\t<div class=\"table1_row \">\n\t\t\t\t\t\t\t<span>").concat(props.uav_date || '', "</span>\n\t\t\t\t\t\t\t<span>").concat(props.uav_description || '', "</span>\n\t\t\t\t\t\t\t<div class=\"group_buttons\">\n\t\t\t\t\t\t\t\t").concat(this._permission.BplaView && props.uav_raster_id ? "<div class=\"mini-green-but BplaView\">".concat(translate$9('incident.BplaView'), "</div>") : '', "\n\t\t\t\t\t\t\t\t").concat(this._permission.BplaDownload ? "<div class=\"mini-green-but BplaDownload\">".concat(translate$9('incident.BplaDownload'), "</div>") : '', "\n\t\t\t\t\t\t\t\t").concat(this._permission.BplaRemove ? "<div class=\"mini-green-but BplaRemove\">".concat(translate$9('incident.BplaRemove'), "</div>") : '', "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t").concat(str1, "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"rubka\">\n\t\t\t\t\t<div class=\"right-wrapper-top \">\n\t\t\t\t\t\t").concat(this._buttonsStr, "\n\t\t\t\t\t </div>\n\t\t\t\t\t<hr />\n\t\t\t\t\t <div class=\"right-wrapper-bottom \">\n\t\t\t\t\t\t").concat(this._permission.IncidentAccept && data.Status === 'в работе' ? "<button class=\"IncidentAccept button\">".concat(translate$9('incident.IncidentAccept'), "</button>") : '', "\n\t\t\t\t\t\t").concat(this._permission.IncidentCheck && data.Status === 'неподтвержденная' ? "<button class=\"IncidentCheck button\">".concat(translate$9('incident.IncidentCheck'), "</button>") : '', "\n\t\t\t\t\t\t").concat(this._permission.IncidentDecline && (data.Status === 'неподтвержденная' || data.Status === 'в работе') ? "<button class=\"IncidentDecline button\">".concat(translate$9('incident.IncidentDecline'), "</button>") : '', "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>");
 
 	      var node = this._container.querySelector('.verRastr');
 
@@ -40841,7 +42142,7 @@ var Forestry = (function () {
 	  return Incidents;
 	}(BaseView);
 
-	var translate$9 = T.getText.bind(T);
+	var translate$a = T.getText.bind(T);
 
 	var Incidents$1 = /*#__PURE__*/function (_EventTarget) {
 	  _inherits(Incidents$1, _EventTarget);
@@ -40897,35 +42198,35 @@ var Forestry = (function () {
 
 	    _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
 
-	    var p = _this._legend.addGroup('incidents', translate$9('legend.incidents'));
+	    var p = _this._legend.addGroup('incidents', translate$a('legend.incidents'));
 
-	    _this._legend.addComponent('cut-unconfirmed', translate$9('legend.cut.unconfirmed'), p);
+	    _this._legend.addComponent('cut-unconfirmed', translate$a('legend.cut.unconfirmed'), p);
 
-	    _this._legend.addComponent('cut-working', translate$9('legend.cut.working'), p);
+	    _this._legend.addComponent('cut-working', translate$a('legend.cut.working'), p);
 
-	    _this._legend.addComponent('cut-faux', translate$9('legend.cut.faux'), p);
+	    _this._legend.addComponent('cut-faux', translate$a('legend.cut.faux'), p);
 
-	    _this._legend.addComponent('cut-confirmed', translate$9('legend.cut.confirmed'), p); // this._legend.addComponent('windthrow-unconfirmed', translate('legend.windthrow.unconfirmed'), p);
+	    _this._legend.addComponent('cut-confirmed', translate$a('legend.cut.confirmed'), p); // this._legend.addComponent('windthrow-unconfirmed', translate('legend.windthrow.unconfirmed'), p);
 	    // this._legend.addComponent('windthrow-working', translate('legend.windthrow.working'), p);
 	    // this._legend.addComponent('windthrow-faux', translate('legend.windthrow.faux'), p);
 	    // this._legend.addComponent('windthrow-confirmed', translate('legend.windthrow.confirmed'), p);
 
 
-	    _this._legend.addComponent('disease-unconfirmed', translate$9('legend.disease.unconfirmed'), p);
+	    _this._legend.addComponent('disease-unconfirmed', translate$a('legend.disease.unconfirmed'), p);
 
-	    _this._legend.addComponent('disease-working', translate$9('legend.disease.working'), p);
+	    _this._legend.addComponent('disease-working', translate$a('legend.disease.working'), p);
 
-	    _this._legend.addComponent('disease-faux', translate$9('legend.disease.faux'), p);
+	    _this._legend.addComponent('disease-faux', translate$a('legend.disease.faux'), p);
 
-	    _this._legend.addComponent('disease-confirmed', translate$9('legend.disease.confirmed'), p);
+	    _this._legend.addComponent('disease-confirmed', translate$a('legend.disease.confirmed'), p);
 
-	    _this._legend.addComponent('burn-unconfirmed', translate$9('legend.burn.unconfirmed'), p);
+	    _this._legend.addComponent('burn-unconfirmed', translate$a('legend.burn.unconfirmed'), p);
 
-	    _this._legend.addComponent('burn-working', translate$9('legend.burn.working'), p);
+	    _this._legend.addComponent('burn-working', translate$a('legend.burn.working'), p);
 
-	    _this._legend.addComponent('burn-faux', translate$9('legend.burn.faux'), p);
+	    _this._legend.addComponent('burn-faux', translate$a('legend.burn.faux'), p);
 
-	    _this._legend.addComponent('burn-confirmed', translate$9('legend.burn.confirmed'), p);
+	    _this._legend.addComponent('burn-confirmed', translate$a('legend.burn.confirmed'), p);
 
 	    _this._content.add('incidents', Incidents, {
 	      permissions: _this._permissions,
@@ -41180,7 +42481,7 @@ var Forestry = (function () {
 	  return Legend;
 	}(EventTarget);
 
-	var translate$a = T.getText.bind(T);
+	var translate$b = T.getText.bind(T);
 	T.addText('rus', {
 	  naturalPark: {
 	    title: 'Особо охраняемая природная территория',
@@ -41222,7 +42523,7 @@ var Forestry = (function () {
 
 	                _get(_getPrototypeOf(Parks.prototype), "open", this).call(this);
 
-	                this._container.innerHTML = "<div class=\"header\">".concat(translate$a('naturalPark.title'), "</div>\n\t\t\t<table cellspacing=\"0\" cellpadding=\"0\">\t\t\t\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"name title\">").concat(translate$a('naturalPark.name'), "</td>\n\t\t\t\t\t<td class=\"name value\">").concat(properties.NAME_R, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"type title\">").concat(translate$a('naturalPark.type'), "</td>\n\t\t\t\t\t<td class=\"type value\">").concat(properties.TYPE_NL, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"year title\">").concat(translate$a('naturalPark.year'), "</td>\n\t\t\t\t\t<td class=\"year value\">").concat(properties.YEAR_, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"prov title\">").concat(translate$a('naturalPark.prov'), "</td>\n\t\t\t\t\t<td class=\"prov value\">").concat(properties.PROV_NL, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"area title\">").concat(translate$a('naturalPark.area'), "<sup>2</sup></td>\n\t\t\t\t\t<td class=\"area value\">").concat(properties.AREA_DOC, "</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
+	                this._container.innerHTML = "<div class=\"header\">".concat(translate$b('naturalPark.title'), "</div>\n\t\t\t<table cellspacing=\"0\" cellpadding=\"0\">\t\t\t\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"name title\">").concat(translate$b('naturalPark.name'), "</td>\n\t\t\t\t\t<td class=\"name value\">").concat(properties.NAME_R, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"type title\">").concat(translate$b('naturalPark.type'), "</td>\n\t\t\t\t\t<td class=\"type value\">").concat(properties.TYPE_NL, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"year title\">").concat(translate$b('naturalPark.year'), "</td>\n\t\t\t\t\t<td class=\"year value\">").concat(properties.YEAR_, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"prov title\">").concat(translate$b('naturalPark.prov'), "</td>\n\t\t\t\t\t<td class=\"prov value\">").concat(properties.PROV_NL, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"area title\">").concat(translate$b('naturalPark.area'), "<sup>2</sup></td>\n\t\t\t\t\t<td class=\"area value\">").concat(properties.AREA_DOC, "</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
 
 	              case 3:
 	              case "end":
@@ -41279,7 +42580,7 @@ var Forestry = (function () {
 	  return Parks$1;
 	}(Controller);
 
-	var translate$b = T.getText.bind(T);
+	var translate$c = T.getText.bind(T);
 	T.addText('rus', {
 	  plot: {
 	    title: 'Лесной участок:',
@@ -41308,7 +42609,7 @@ var Forestry = (function () {
 
 	    _this._container.classList.add('scanex-forestry-view-plot');
 
-	    _this._container.innerHTML = "<div class=\"head\">\n        </div>\n        <div>            \n            <label class=\"title\"></label>\n        </div>\n        <div>\n            <label>".concat(translate$b('plot.forestry'), ":</label>\n            <label class=\"forestry\"></label>\n        </div>\n        <div class=\"content\">\n            <div class=\"stats\"></div>\n            <div class=\"chart\"></div>\n        </div>");
+	    _this._container.innerHTML = "<div class=\"head\">\n        </div>\n        <div>            \n            <label class=\"title\"></label>\n        </div>\n        <div>\n            <label>".concat(translate$c('plot.forestry'), ":</label>\n            <label class=\"forestry\"></label>\n        </div>\n        <div class=\"content\">\n            <div class=\"stats\"></div>\n            <div class=\"chart\"></div>\n        </div>");
 	    _this._title = _this._container.querySelector('.title');
 	    _this._forestry = _this._container.querySelector('.forestry');
 	    _this._stats = _this._container.querySelector('.stats');
@@ -41370,7 +42671,7 @@ var Forestry = (function () {
 	                  end = new Date(y + (!isNaN(t) && t || 0), m, d);
 	                }
 
-	                this._stats.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody>\n                    <tr>\n                        <td>".concat(translate$b('plot.lessee'), "</td>\n                        <td>").concat(Renter || '-', "</td>\n                    </tr>                    \n                    <tr>\n                        <td>").concat(translate$b('plot.term'), "</td>\n                        <td>").concat(start.toLocaleDateString(), " - ").concat(end.toLocaleDateString(), "</td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$b('plot.cost'), "</td>\n                        <td>").concat(RentCost || '-', "</td>\n                    </tr>                                        \n                </tbody>\n            </table>\n            <div>").concat(translate$b('plot.volumes'), "</div>");
+	                this._stats.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody>\n                    <tr>\n                        <td>".concat(translate$c('plot.lessee'), "</td>\n                        <td>").concat(Renter || '-', "</td>\n                    </tr>                    \n                    <tr>\n                        <td>").concat(translate$c('plot.term'), "</td>\n                        <td>").concat(start.toLocaleDateString(), " - ").concat(end.toLocaleDateString(), "</td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$c('plot.cost'), "</td>\n                        <td>").concat(RentCost || '-', "</td>\n                    </tr>                                        \n                </tbody>\n            </table>\n            <div>").concat(translate$c('plot.volumes'), "</div>");
 	                _context.next = 32;
 	                break;
 
@@ -41379,7 +42680,7 @@ var Forestry = (function () {
 	                _context.t0 = _context["catch"](1);
 	                this.close();
 	                console.log(_context.t0);
-	                alert(translate$b('error.plot.view'));
+	                alert(translate$c('error.plot.view'));
 
 	              case 32:
 	              case "end":
@@ -41400,7 +42701,7 @@ var Forestry = (function () {
 	  return Plots;
 	}(BaseView);
 
-	var translate$c = T.getText.bind(T);
+	var translate$d = T.getText.bind(T);
 
 	var Plots$1 = /*#__PURE__*/function (_Controller) {
 	  _inherits(Plots$1, _Controller);
@@ -41476,7 +42777,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 15:
-	                alert(translate$c('forbidden.plot.view'));
+	                alert(translate$d('forbidden.plot.view'));
 
 	              case 16:
 	              case "end":
@@ -58644,7 +59945,7 @@ var Forestry = (function () {
 	  module.exports = Yt;
 	});
 
-	var translate$d = T.getText.bind(T);
+	var translate$e = T.getText.bind(T);
 	T.addText('rus', {
 	  request: {
 	    approve: 'Дата принятия решения о проведении аукциона',
@@ -58672,7 +59973,7 @@ var Forestry = (function () {
 
 	    _this._container.classList.add('scanex-forestry-view-project');
 
-	    _this._container.innerHTML = "<div class=\"header\">\n            <label>".concat(translate$d('plot.title'), "</label>\n            <label class=\"title\"></label>\n        </div>\n        <div>\n            <label>").concat(translate$d('project.forestry'), "</label>\n            <label class=\"forestry\"></label>\n        </div>        \n        <div class=\"content\">\n            <div class=\"stats\">\n                <div class=\"costs\"></div>\n                <div>").concat(translate$d('request.available'), ", ").concat(translate$d('unit.m'), "<sup>3</sup></div>\n                <div class=\"species\"></div>\n            </div>\n            <div class=\"chart\"></div>\n        </div>");
+	    _this._container.innerHTML = "<div class=\"header\">\n            <label>".concat(translate$e('plot.title'), "</label>\n            <label class=\"title\"></label>\n        </div>\n        <div>\n            <label>").concat(translate$e('project.forestry'), "</label>\n            <label class=\"forestry\"></label>\n        </div>        \n        <div class=\"content\">\n            <div class=\"stats\">\n                <div class=\"costs\"></div>\n                <div>").concat(translate$e('request.available'), ", ").concat(translate$e('unit.m'), "<sup>3</sup></div>\n                <div class=\"species\"></div>\n            </div>\n            <div class=\"chart\"></div>\n        </div>");
 	    _this._title = _this._container.querySelector('.title');
 	    _this._forestry = _this._container.querySelector('.forestry');
 	    _this._costs = _this._container.querySelector('.costs');
@@ -58704,7 +60005,7 @@ var Forestry = (function () {
 	                  return "".concat(val.toLocaleString('ru-RU', {
 	                    minimumFractionDigits: 2,
 	                    maximumFractionDigits: 2
-	                  }), " ").concat(translate$d('unit.m3'));
+	                  }), " ").concat(translate$e('unit.m3'));
 	                },
 	                fontSize: '12px',
 	                show: true
@@ -58717,9 +60018,9 @@ var Forestry = (function () {
 	                  }, 0).toLocaleString('ru-RU', {
 	                    minimumFractionDigits: 2,
 	                    maximumFractionDigits: 2
-	                  }), " ").concat(translate$d('unit.m3'));
+	                  }), " ").concat(translate$e('unit.m3'));
 	                },
-	                label: translate$d('stock.all'),
+	                label: translate$e('stock.all'),
 	                fontSize: '12px',
 	                fontWeight: 600,
 	                show: true
@@ -58752,7 +60053,7 @@ var Forestry = (function () {
 	                Addres = data.Addres, ApplicationForm = data.ApplicationForm, ApproveDate = data.ApproveDate, ApproveName = data.ApproveName, AuctionEnd = data.AuctionEnd, AuctionStart = data.AuctionStart, AuctionURL = data.AuctionURL, CadastralNum = data.CadastralNum, Comments = data.Comments, DeclineDate = data.DeclineDate, EgrFile = data.EgrFile, ForestAvailable = data.ForestAvailable, ForestBlocks = data.ForestBlocks, ForestProjectGeo = data.ForestProjectGeo, ForestProjectID = data.ForestProjectID, ForestStat = data.ForestStat, Forestry = data.Forestry, OGRN = data.OGRN, Opf = data.Opf, OrganizationName = data.OrganizationName, OwnerID = data.OwnerID, PeriodUsage = data.PeriodUsage, Phone = data.Phone, PostAddress = data.PostAddress, RentCost = data.RentCost, RentFile = data.RentFile, Square = data.Square, SquareStat = data.SquareStat, Status = data.Status, TargetUsage = data.TargetUsage, Title = data.Title;
 	                this._title.innerHTML = Title;
 	                this._forestry.innerHTML = "".concat(Forestry, " ").concat(ForestBlocks);
-	                this._costs.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody>\n                    <tr>\n                        <td>".concat(translate$d('request.approve'), "</td>\n                        <td>").concat(ApproveDate || '', "</td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$d('request.status'), "</td>\n                        <td>").concat(Status || '', "</td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$d('request.period'), "</td>\n                        <td>").concat(AuctionStart && AuctionEnd ? "".concat(new Date(AuctionStart).toLocaleDateString(), " - ").concat(new Date(AuctionEnd).toLocaleDateString()) : '', "</td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$d('request.cost'), "</td>\n                        <td>").concat(RentCost && RentCost.toLocaleString('ru-RU', {
+	                this._costs.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody>\n                    <tr>\n                        <td>".concat(translate$e('request.approve'), "</td>\n                        <td>").concat(ApproveDate || '', "</td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$e('request.status'), "</td>\n                        <td>").concat(Status || '', "</td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$e('request.period'), "</td>\n                        <td>").concat(AuctionStart && AuctionEnd ? "".concat(new Date(AuctionStart).toLocaleDateString(), " - ").concat(new Date(AuctionEnd).toLocaleDateString()) : '', "</td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$e('request.cost'), "</td>\n                        <td>").concat(RentCost && RentCost.toLocaleString('ru-RU', {
 	                  style: 'currency',
 	                  currency: 'RUB'
 	                }) || '', "</td>\n                    </tr>\n                </tbody>\n            </table>");
@@ -58791,7 +60092,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 13:
-	                throw new Error(translate$d('quadrant.na'));
+	                throw new Error(translate$e('quadrant.na'));
 
 	              case 14:
 	              case "end":
@@ -58812,7 +60113,7 @@ var Forestry = (function () {
 	  return View;
 	}(BaseView);
 
-	var translate$e = T.getText.bind(T);
+	var translate$f = T.getText.bind(T);
 
 	var Projects = /*#__PURE__*/function (_Controller) {
 	  _inherits(Projects, _Controller);
@@ -58923,7 +60224,7 @@ var Forestry = (function () {
 	                _context.prev = 12;
 	                _context.t0 = _context["catch"](1);
 	                console.log(_context.t0);
-	                alert(translate$e('error.project.view'));
+	                alert(translate$f('error.project.view'));
 	                this.showMain();
 
 	              case 17:
@@ -58931,7 +60232,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 19:
-	                alert(translate$e('forbidden.project.view'));
+	                alert(translate$f('forbidden.project.view'));
 
 	              case 20:
 	              case "end":
@@ -58952,7 +60253,7 @@ var Forestry = (function () {
 	  return Projects;
 	}(Controller);
 
-	var translate$f = T.getText.bind(T);
+	var translate$g = T.getText.bind(T);
 	T.addText('rus', {
 	  quadrant: {
 	    Stock: 'Объем древесины',
@@ -59008,7 +60309,7 @@ var Forestry = (function () {
 
 	    _this._container.classList.add('scanex-forestry-quadrant');
 
-	    _this._container.innerHTML = "<div class=\"title\">".concat(translate$f('quadrant.title'), "</div>\n\t\t<div class=\"forestry\"></div>\n\t\t<div class=\"stock\">").concat(translate$f('quadrant.Stock'), "</div>\n\t\t<div class=\"about\">").concat(translate$f('quadrant.about'), "</div>\n\t\t<div class=\"chart\"></div>");
+	    _this._container.innerHTML = "<div class=\"title\">".concat(translate$g('quadrant.title'), "</div>\n\t\t<div class=\"forestry\"></div>\n\t\t<div class=\"stock\">").concat(translate$g('quadrant.Stock'), "</div>\n\t\t<div class=\"about\">").concat(translate$g('quadrant.about'), "</div>\n\t\t<div class=\"chart\"></div>");
 	    _this._forestry = _this._container.querySelector('.forestry');
 	    _this._chart = new apexcharts_common(_this._container.querySelector('.chart'), {
 	      chart: {
@@ -59034,7 +60335,7 @@ var Forestry = (function () {
 	              show: true,
 	              value: {
 	                formatter: function formatter(val) {
-	                  return "".concat(val, " ").concat(translate$f('unit.m3'));
+	                  return "".concat(val, " ").concat(translate$g('unit.m3'));
 	                },
 	                fontSize: '12px',
 	                show: true
@@ -59047,9 +60348,9 @@ var Forestry = (function () {
 	                  }, 0).toLocaleString('ru-RU', {
 	                    minimumFractionDigits: 2,
 	                    maximumFractionDigits: 2
-	                  }), " ").concat(translate$f('unit.m3'));
+	                  }), " ").concat(translate$g('unit.m3'));
 	                },
-	                label: translate$f('stock.all'),
+	                label: translate$g('stock.all'),
 	                fontSize: '12px',
 	                fontWeight: 600,
 	                show: true
@@ -59073,7 +60374,7 @@ var Forestry = (function () {
 	          Num = data.Num,
 	          Stock = data.Stock,
 	          Stow = data.Stow;
-	      this._forestry.innerHTML = "".concat(translate$f('quadrant.Forestry'), ": ").concat(Forestry, ", ").concat(translate$f('quadrant.LocalForestry'), ": ").concat(LocalForestry).concat(Stow ? ", ".concat(translate$f('quadrant.stow'), ": ").concat(Stow) : '', ", ").concat(translate$f('quadrant.title'), " \u2116").concat(Num);
+	      this._forestry.innerHTML = "".concat(translate$g('quadrant.Forestry'), ": ").concat(Forestry, ", ").concat(translate$g('quadrant.LocalForestry'), ": ").concat(LocalForestry).concat(Stow ? ", ".concat(translate$g('quadrant.stow'), ": ").concat(Stow) : '', ", ").concat(translate$g('quadrant.title'), " \u2116").concat(Num);
 
 	      if (Array.isArray(Stock)) {
 	        var _Stock$reduce = Stock.reduce(function (a, s) {
@@ -59093,7 +60394,7 @@ var Forestry = (function () {
 
 	        this._chart.updateSeries(series);
 	      } else {
-	        throw new Error(translate$f('quadrant.na'));
+	        throw new Error(translate$g('quadrant.na'));
 	      }
 	    }
 	  }, {
@@ -59202,7 +60503,7 @@ var Forestry = (function () {
 	  isInteger: isInteger
 	});
 
-	var translate$g = T.getText.bind(T);
+	var translate$h = T.getText.bind(T);
 	T.addText('rus', {
 	  pager: {
 	    previous: 'Предыдущая',
@@ -59222,7 +60523,7 @@ var Forestry = (function () {
 
 	    _this = _super.call(this);
 	    _this._container = container;
-	    _this._container.innerHTML = "<table class=\"scanex-forestry-pager\" cellpadding=\"0\" cellspacing=\"0\">\n            <tr>\n                <td>\n                    <button class=\"first\">1</button>\n                </td>                \n                <td>\n                    <button class=\"previous\">".concat(translate$g('pager.previous'), "</button>\n                </td>\n                <td>\n                    <input type=\"text\" value=\"\" />\n                </td>\n                <td>\n                    <button class=\"next\">").concat(translate$g('pager.next'), "</button>\n                </td>                \n                <td>\n                    <button class=\"last\"></button>\n                </td>\n            </tr>\n        </table>");
+	    _this._container.innerHTML = "<table class=\"scanex-forestry-pager\" cellpadding=\"0\" cellspacing=\"0\">\n            <tr>\n                <td>\n                    <button class=\"first\">1</button>\n                </td>                \n                <td>\n                    <button class=\"previous\">".concat(translate$h('pager.previous'), "</button>\n                </td>\n                <td>\n                    <input type=\"text\" value=\"\" />\n                </td>\n                <td>\n                    <button class=\"next\">").concat(translate$h('pager.next'), "</button>\n                </td>                \n                <td>\n                    <button class=\"last\"></button>\n                </td>\n            </tr>\n        </table>");
 
 	    _this._container.querySelector('.first').addEventListener('click', function (e) {
 	      e.stopPropagation();
@@ -59289,7 +60590,7 @@ var Forestry = (function () {
 	  return Pager;
 	}(EventTarget);
 
-	var translate$h = T.getText.bind(T);
+	var translate$i = T.getText.bind(T);
 	T.addText('rus', {
 	  request: {
 	    id: '#',
@@ -59341,7 +60642,7 @@ var Forestry = (function () {
 	      _this._statusIndex += 1;
 	    }
 
-	    _this._container.innerHTML = "<div class=\"header\">           \n            <label class=\"title\">".concat(translate$h('request.header'), "</label>                   \n            <button class=\"create\">").concat(translate$h('request.create'), "</button>                              \n        </div>\n        <table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th data-id=\"id\">").concat(translate$h('request.id'), "</th>\n                    <th data-id=\"title\">").concat(translate$h('request.title'), "</th>\n                    <th data-id=\"status\">").concat(translate$h('request.status'), "</th>\n                    <th data-id=\"forestry\">").concat(translate$h('request.forestry'), "</th>\n                    <th data-id=\"local_forestry\">").concat(translate$h('request.local_forestry'), "</th>\n                    <th data-id=\"area\">").concat(translate$h('request.area'), "</th>\n                    <th data-id=\"amount\">").concat(translate$h('request.amount'), "<sup>3</sup></th>\n                    <th data-id=\"remove\"></th>\n                </tr>\n            </thead>\n        </table> \n        <div class=\"content\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody class=\"items\"></tbody>\n            </table>\n        </div>");
+	    _this._container.innerHTML = "<div class=\"header\">           \n            <label class=\"title\">".concat(translate$i('request.header'), "</label>                   \n            <button class=\"create\">").concat(translate$i('request.create'), "</button>                              \n        </div>\n        <table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th data-id=\"id\">").concat(translate$i('request.id'), "</th>\n                    <th data-id=\"title\">").concat(translate$i('request.title'), "</th>\n                    <th data-id=\"status\">").concat(translate$i('request.status'), "</th>\n                    <th data-id=\"forestry\">").concat(translate$i('request.forestry'), "</th>\n                    <th data-id=\"local_forestry\">").concat(translate$i('request.local_forestry'), "</th>\n                    <th data-id=\"area\">").concat(translate$i('request.area'), "</th>\n                    <th data-id=\"amount\">").concat(translate$i('request.amount'), "<sup>3</sup></th>\n                    <th data-id=\"remove\"></th>\n                </tr>\n            </thead>\n        </table> \n        <div class=\"content\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody class=\"items\"></tbody>\n            </table>\n        </div>");
 	    _this._content = _this._container.querySelector('.items');
 
 	    _this._container.querySelector('.create').addEventListener('click', function (e) {
@@ -59472,7 +60773,7 @@ var Forestry = (function () {
 	                _context.prev = 16;
 	                _context.t0 = _context["catch"](0);
 	                console.log(_context.t0);
-	                alert(translate$h('error.requests'));
+	                alert(translate$i('error.requests'));
 	                this.close();
 
 	              case 21:
@@ -59502,7 +60803,7 @@ var Forestry = (function () {
 	  return Requests;
 	}(BaseView);
 
-	var translate$i = T.getText.bind(T);
+	var translate$j = T.getText.bind(T);
 	T.addText('rus', {
 	  stand: {
 	    title: 'Выдел',
@@ -59574,7 +60875,7 @@ var Forestry = (function () {
 
 	    _this._container.classList.add('scanex-forestry-stand');
 
-	    _this._container.innerHTML = "\n\t\t<div class=\"header1\">".concat(translate$i('stand.title'), "</div>\n\t\t<div class=\"header2\"></div>\n\t\t<div class=\"scrollable\">\n\t\t\t<div class=\"content1\">\n\t\t\t\t<div class=\"stats\"></div>\n\t\t\t\t<div class=\"levels\"></div>\t\t\t\t\n\t\t\t</div>\t\t\t\n\t\t\t<div class=\"content2\">\n\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t<div class=\"events\"></div>\n\t\t\t</div>\t\t\t\n\t\t</div>");
+	    _this._container.innerHTML = "\n\t\t<div class=\"header1\">".concat(translate$j('stand.title'), "</div>\n\t\t<div class=\"header2\"></div>\n\t\t<div class=\"scrollable\">\n\t\t\t<div class=\"content1\">\n\t\t\t\t<div class=\"stats\"></div>\n\t\t\t\t<div class=\"levels\"></div>\t\t\t\t\n\t\t\t</div>\t\t\t\n\t\t\t<div class=\"content2\">\n\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t<div class=\"events\"></div>\n\t\t\t</div>\t\t\t\n\t\t</div>");
 	    _this._header = _this._container.querySelector('.header2');
 	    _this._stats = _this._container.querySelector('.stats');
 	    _this._chart = new apexcharts_common(_this._container.querySelector('.chart'), {
@@ -59600,7 +60901,7 @@ var Forestry = (function () {
 	              show: true,
 	              value: {
 	                formatter: function formatter(val) {
-	                  return "".concat(val, " ").concat(translate$i('unit.m3'));
+	                  return "".concat(val, " ").concat(translate$j('unit.m3'));
 	                },
 	                fontSize: '12px',
 	                show: true
@@ -59613,9 +60914,9 @@ var Forestry = (function () {
 	                  }, 0).toLocaleString('ru-RU', {
 	                    minimumFractionDigits: 2,
 	                    maximumFractionDigits: 2
-	                  }), " ").concat(translate$i('unit.m3'));
+	                  }), " ").concat(translate$j('unit.m3'));
 	                },
-	                label: translate$i('stock.all'),
+	                label: translate$j('stock.all'),
 	                fontSize: '12px',
 	                fontWeight: 600,
 	                show: true
@@ -59659,7 +60960,7 @@ var Forestry = (function () {
 
 	      if (Array.isArray(Stock)) {
 	        this._header.innerText = [Forestry, LocalForestry, Stow, Quadrant, Stand].join(', ');
-	        this._stats.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t\t<tbody>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>".concat(translate$i('stand.usage'), "</td>\n\t\t\t\t\t\t<td>").concat(ForestUseType, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$i('stand.year'), "</td>\n\t\t\t\t\t\t<td>").concat(UpdatingYear, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$i('stand.area'), "</td>\n\t\t\t\t\t\t<td>").concat(Square, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$i('stand.category'), "</td>\n\t\t\t\t\t\t<td>").concat(LandCategory, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$i('stand.protected'), "</td>\n\t\t\t\t\t\t<td>").concat(OZU, "</td>                    \n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$i('stand.slope'), "</td>\n\t\t\t\t\t\t<td>").concat(Exposition, " / ").concat(Steepness, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$i('stand.targetSpecies'), "</td>\n\t\t\t\t\t\t<td>").concat(TargetSpecies, "</td>                    \n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$i('stand.mainSpecies'), "</td>\n\t\t\t\t\t\t<td>").concat(PredominantSpecies, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$i('stand.age'), "</td>\n\t\t\t\t\t\t<td>").concat(AgeGroup, "</td>                    \n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$i('stand.klass'), "</td>\n\t\t\t\t\t\t<td>").concat(AgeClass, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$i('stand.bonitet'), "</td>\n\t\t\t\t\t\t<td>").concat(Bonitet, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$i('stand.type'), "</td>\n\t\t\t\t\t\t<td></td>                    \n\t\t\t\t\t</tr>\n\t\t\t\t</tbody>\n\t\t\t</table>");
+	        this._stats.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t\t<tbody>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>".concat(translate$j('stand.usage'), "</td>\n\t\t\t\t\t\t<td>").concat(ForestUseType, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$j('stand.year'), "</td>\n\t\t\t\t\t\t<td>").concat(UpdatingYear, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$j('stand.area'), "</td>\n\t\t\t\t\t\t<td>").concat(Square, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$j('stand.category'), "</td>\n\t\t\t\t\t\t<td>").concat(LandCategory, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$j('stand.protected'), "</td>\n\t\t\t\t\t\t<td>").concat(OZU, "</td>                    \n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$j('stand.slope'), "</td>\n\t\t\t\t\t\t<td>").concat(Exposition, " / ").concat(Steepness, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$j('stand.targetSpecies'), "</td>\n\t\t\t\t\t\t<td>").concat(TargetSpecies, "</td>                    \n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$j('stand.mainSpecies'), "</td>\n\t\t\t\t\t\t<td>").concat(PredominantSpecies, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$j('stand.age'), "</td>\n\t\t\t\t\t\t<td>").concat(AgeGroup, "</td>                    \n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$j('stand.klass'), "</td>\n\t\t\t\t\t\t<td>").concat(AgeClass, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$j('stand.bonitet'), "</td>\n\t\t\t\t\t\t<td>").concat(Bonitet, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$j('stand.type'), "</td>\n\t\t\t\t\t\t<td></td>                    \n\t\t\t\t\t</tr>\n\t\t\t\t</tbody>\n\t\t\t</table>");
 
 	        var _Stock$reduce = Stock.reduce(function (a, _ref3) {
 	          var stock = _ref3.stock,
@@ -59684,7 +60985,7 @@ var Forestry = (function () {
 	          this._levels.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t\t\t<tbody>".concat(StoreyInfo.map(function (_ref4) {
 	            var storey = _ref4.storey,
 	                species_info = _ref4.species_info;
-	            return "<tr class=\"storey\">\n\t\t\t\t\t\t\t<td>".concat(translate$i('stand.storey.title'), "</td>\n\t\t\t\t\t\t\t<td>").concat(storey, "</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t").concat(Array.isArray(species_info) ? species_info.map(function (_ref5) {
+	            return "<tr class=\"storey\">\n\t\t\t\t\t\t\t<td>".concat(translate$j('stand.storey.title'), "</td>\n\t\t\t\t\t\t\t<td>").concat(storey, "</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t").concat(Array.isArray(species_info) ? species_info.map(function (_ref5) {
 	              var age = _ref5.age,
 	                  basal_area_sum = _ref5.basal_area_sum,
 	                  dbh = _ref5.dbh,
@@ -59695,7 +60996,7 @@ var Forestry = (function () {
 	                  origin_id = _ref5.origin_id,
 	                  rate = _ref5.rate,
 	                  species = _ref5.species;
-	              return "<tr>\n\t\t\t\t\t\t\t\t<td>".concat(translate$i('stand.storey.species'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(species, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$i('stand.storey.rate'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(rate, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$i('stand.storey.gross_volume'), "<sup>3</sup></td>\n\t\t\t\t\t\t\t\t<td>").concat(gross_volume, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$i('stand.storey.age'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(age, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$i('stand.storey.basal_area_sum'), "<sup>2</sup></td>\n\t\t\t\t\t\t\t\t<td>").concat(basal_area_sum, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$i('stand.storey.dbh'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(dbh, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$i('stand.storey.density'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(density, "</td>\n\t\t\t\t\t\t\t</tr>\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$i('stand.storey.height'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(height, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$i('stand.storey.marketability_class'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(marketability_class, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$i('stand.storey.origin_id'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(origin_id, "</td>\n\t\t\t\t\t\t\t</tr>");
+	              return "<tr>\n\t\t\t\t\t\t\t\t<td>".concat(translate$j('stand.storey.species'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(species, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$j('stand.storey.rate'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(rate, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$j('stand.storey.gross_volume'), "<sup>3</sup></td>\n\t\t\t\t\t\t\t\t<td>").concat(gross_volume, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$j('stand.storey.age'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(age, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$j('stand.storey.basal_area_sum'), "<sup>2</sup></td>\n\t\t\t\t\t\t\t\t<td>").concat(basal_area_sum, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$j('stand.storey.dbh'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(dbh, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$j('stand.storey.density'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(density, "</td>\n\t\t\t\t\t\t\t</tr>\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$j('stand.storey.height'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(height, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$j('stand.storey.marketability_class'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(marketability_class, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$j('stand.storey.origin_id'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(origin_id, "</td>\n\t\t\t\t\t\t\t</tr>");
 	            }).join('') : '');
 	          }).join(''), "</tbody>\n\t\t\t\t</table>");
 	        }
@@ -59705,11 +61006,11 @@ var Forestry = (function () {
 	            var name = _ref6.name,
 	                activity = _ref6.activity,
 	                fillingpercent = _ref6.fillingpercent;
-	            return "<tr>\n\t\t\t\t\t\t\t<td>".concat(name, "</td>\n\t\t\t\t\t\t\t<td>").concat(activity, "</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t<td>").concat(translate$i('stand.percentage'), "</td>\n\t\t\t\t\t\t\t<td class=\"percentage\">").concat(fillingpercent, "</td>\n\t\t\t\t\t\t</tr>");
+	            return "<tr>\n\t\t\t\t\t\t\t<td>".concat(name, "</td>\n\t\t\t\t\t\t\t<td>").concat(activity, "</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t<td>").concat(translate$j('stand.percentage'), "</td>\n\t\t\t\t\t\t\t<td class=\"percentage\">").concat(fillingpercent, "</td>\n\t\t\t\t\t\t</tr>");
 	          }).join(''), "</tbody>\n\t\t\t\t</table>");
 	        }
 	      } else {
-	        throw new Error(translate$i('stand.na'));
+	        throw new Error(translate$j('stand.na'));
 	      }
 	    }
 	  }, {
@@ -59818,7 +61119,7 @@ var Forestry = (function () {
 	  }).canvas, 'repeat')
 	};
 
-	var translate$j = T.getText.bind(T);
+	var translate$k = T.getText.bind(T);
 	var stock = {
 	  permitted: 'Доступный',
 	  probable: 'Прогноз',
@@ -59958,7 +61259,7 @@ var Forestry = (function () {
 
 	                  this._layer.repaint();
 	                } else {
-	                  alert(translate$j('quadrant.invalid'));
+	                  alert(translate$k('quadrant.invalid'));
 	                }
 
 	              case 14:
@@ -59969,7 +61270,7 @@ var Forestry = (function () {
 	                _context.prev = 16;
 	                _context.t0 = _context["catch"](0);
 	                console.log(_context.t0);
-	                alert(translate$j('error.quadrant'));
+	                alert(translate$k('error.quadrant'));
 
 	              case 20:
 	              case "end":
@@ -60164,7 +61465,7 @@ var Forestry = (function () {
 	  return Project;
 	}(BaseView);
 
-	var translate$k = T.getText.bind(T);
+	var translate$l = T.getText.bind(T);
 
 	var Quadrants$1 = /*#__PURE__*/function (_EventTarget) {
 	  _inherits(Quadrants, _EventTarget);
@@ -60227,7 +61528,7 @@ var Forestry = (function () {
 	      var _this2 = this;
 
 	      this._items = Array.isArray(items) && items || [];
-	      this._container.innerHTML = this._items.length ? "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th>".concat(translate$k('project.localForestry'), " / ").concat(translate$k('project.tract'), "</th>                    \n                    <th>").concat(translate$k('quadrants'), "</th>\n                </tr>\n            </thead>\n        </table>\n        <div class=\"scrollable\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody>").concat(this._items.map(function (_ref) {
+	      this._container.innerHTML = this._items.length ? "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th>".concat(translate$l('project.localForestry'), " / ").concat(translate$l('project.tract'), "</th>                    \n                    <th>").concat(translate$l('quadrants'), "</th>\n                </tr>\n            </thead>\n        </table>\n        <div class=\"scrollable\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody>").concat(this._items.map(function (_ref) {
 	        var local_forestry = _ref.local_forestry,
 	            stow = _ref.stow,
 	            num = _ref.num;
@@ -60277,7 +61578,7 @@ var Forestry = (function () {
 	  return Quadrants;
 	}(EventTarget);
 
-	var translate$l = T.getText.bind(T);
+	var translate$m = T.getText.bind(T);
 
 	var SpeciesTable = /*#__PURE__*/function (_EventTarget) {
 	  _inherits(SpeciesTable, _EventTarget);
@@ -60322,14 +61623,14 @@ var Forestry = (function () {
 	            total_stock_deal = _ref.total_stock_deal;
 	        return "<tr class=\"type\">\n                <td class=\"label\">".concat(species, "</td>\n                <td class=\"value\">").concat(format(permitted_stock / 1000), "</td>\n                <td class=\"value\">").concat(format(permitted_stock_deal / 1000), "</td>\n                <td class=\"value\">").concat(format(probable_stock / 1000), "</td>\n                <td class=\"value\">").concat(format(probable_stock_deal / 1000), "</td>\n                <td class=\"value\">").concat(format(total_stock / 1000), "</td>\n                <td class=\"value\">").concat(format(total_stock_deal / 1000), "</td>\n            </tr>");
 	      }).join('');
-	      this._container.innerHTML = rows ? "<div class=\"title\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>                 \n                        <tr>\n                            <td>".concat(translate$l('species'), "</td>\n                            <td class=\"label\" colspan=\"3\">").concat(translate$l('stock.label'), " ").concat(translate$l('unit.m'), "<sup>3</sup></td>\n                        </tr>\n                        <tr>\n                            <td></td>\n                            <td class=\"label\">").concat(translate$l('stock.permitted'), "</td>                        \n                            <td class=\"label\">").concat(translate$l('stock.probable'), "</td>\n                            <td class=\"label\">").concat(translate$l('stock.total'), "</td>\n                        </tr>\n                    </tbody>\t\t\t\t\t\t\n                </table>\n            </div>\n            <div class=\"content\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>").concat(rows, "</tbody>\n                </table>\n            </div>") : '';
+	      this._container.innerHTML = rows ? "<div class=\"title\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>                 \n                        <tr>\n                            <td>".concat(translate$m('species'), "</td>\n                            <td class=\"label\" colspan=\"3\">").concat(translate$m('stock.label'), " ").concat(translate$m('unit.m'), "<sup>3</sup></td>\n                        </tr>\n                        <tr>\n                            <td></td>\n                            <td class=\"label\">").concat(translate$m('stock.permitted'), "</td>                        \n                            <td class=\"label\">").concat(translate$m('stock.probable'), "</td>\n                            <td class=\"label\">").concat(translate$m('stock.total'), "</td>\n                        </tr>\n                    </tbody>\t\t\t\t\t\t\n                </table>\n            </div>\n            <div class=\"content\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>").concat(rows, "</tbody>\n                </table>\n            </div>") : '';
 	    }
 	  }]);
 
 	  return SpeciesTable;
 	}(EventTarget);
 
-	var translate$m = T.getText.bind(T);
+	var translate$n = T.getText.bind(T);
 
 	var Species = /*#__PURE__*/function () {
 	  function Species(container) {
@@ -60339,7 +61640,7 @@ var Forestry = (function () {
 
 	    this._species = [];
 	    this._container = container;
-	    this._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<thead class=\"menu\">\n\t\t\t\t<tr>\n\t\t\t\t\t<th colspan=\"3\">\n\t\t\t\t\t\t<button class=\"stock active\">".concat(translate$m('stock.table'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"permitted\">").concat(translate$m('stock.permitted'), "</button>\n\t\t\t\t\t</th>\t\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"probable\">").concat(translate$m('stock.probable'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"total\">").concat(translate$m('stock.total'), "</button>\n\t\t\t\t\t</th>\t\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td colspan=\"3\">\n\t\t\t\t\t\t<div class=\"table\"></div>\n\t\t\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t\t</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
+	    this._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<thead class=\"menu\">\n\t\t\t\t<tr>\n\t\t\t\t\t<th colspan=\"3\">\n\t\t\t\t\t\t<button class=\"stock active\">".concat(translate$n('stock.table'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"permitted\">").concat(translate$n('stock.permitted'), "</button>\n\t\t\t\t\t</th>\t\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"probable\">").concat(translate$n('stock.probable'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"total\">").concat(translate$n('stock.total'), "</button>\n\t\t\t\t\t</th>\t\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td colspan=\"3\">\n\t\t\t\t\t\t<div class=\"table\"></div>\n\t\t\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t\t</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
 	    this._buttons = this._container.querySelectorAll('button');
 
 	    var btnStock = this._container.querySelector('.stock');
@@ -60429,7 +61730,7 @@ var Forestry = (function () {
 	              show: true,
 	              value: {
 	                formatter: function formatter(val) {
-	                  return "".concat(val, " ").concat(translate$m('unit.m3'));
+	                  return "".concat(val, " ").concat(translate$n('unit.m3'));
 	                },
 	                fontSize: '12px',
 	                show: true
@@ -60442,9 +61743,9 @@ var Forestry = (function () {
 	                  }, 0).toLocaleString(undefined, {
 	                    minimumFractionDigits: 2,
 	                    maximumFractionDigits: 2
-	                  }), " ").concat(translate$m('unit.m3'));
+	                  }), " ").concat(translate$n('unit.m3'));
 	                },
-	                label: translate$m('stock.all'),
+	                label: translate$n('stock.all'),
 	                fontSize: '12px',
 	                fontWeight: 600,
 	                show: true
@@ -60554,7 +61855,7 @@ var Forestry = (function () {
 	  return Species;
 	}();
 
-	var translate$n = T.getText.bind(T);
+	var translate$o = T.getText.bind(T);
 
 	var Create = /*#__PURE__*/function (_Project) {
 	  _inherits(Create, _Project);
@@ -60573,7 +61874,7 @@ var Forestry = (function () {
 	      layer: layer,
 	      path: path
 	    });
-	    _this._container.innerHTML = "<div class=\"header\">\n            <div class=\"header-left\">\n                <button class=\"scanex-requests-icon back\"></button>                \n                <label class=\"head\">".concat(translate$n('project.title.create'), "</label>                            \n                <input class=\"description\" type=\"text\" value=\"\"></input>\n            </div>\n            <div class=\"header-right\">                                \n                <button class=\"request\">").concat(translate$n('project.request'), "</button>\n                <button class=\"save\">").concat(translate$n('project.save'), "</button>\n            </div>\n        </div>\n        <div class=\"content\">\n            <div class=\"species\"></div>\n            <div class=\"quadrants\"></div>\n        </div>");
+	    _this._container.innerHTML = "<div class=\"header\">\n            <div class=\"header-left\">\n                <button class=\"scanex-requests-icon back\"></button>                \n                <label class=\"head\">".concat(translate$o('project.title.create'), "</label>                            \n                <input class=\"description\" type=\"text\" value=\"\"></input>\n            </div>\n            <div class=\"header-right\">                                \n                <button class=\"request\">").concat(translate$o('project.request'), "</button>\n                <button class=\"save\">").concat(translate$o('project.save'), "</button>\n            </div>\n        </div>\n        <div class=\"content\">\n            <div class=\"species\"></div>\n            <div class=\"quadrants\"></div>\n        </div>");
 
 	    _this._container.querySelector('.back').addEventListener('click', function (e) {
 	      e.stopPropagation();
@@ -60582,7 +61883,7 @@ var Forestry = (function () {
 	    });
 
 	    _this._description = _this._container.querySelector('.description');
-	    _this._description.value = "".concat(translate$n('project.default'), " - ").concat(new Date().toLocaleDateString());
+	    _this._description.value = "".concat(translate$o('project.default'), " - ").concat(new Date().toLocaleDateString());
 
 	    var btnRequest = _this._container.querySelector('.request');
 
@@ -60733,7 +62034,7 @@ var Forestry = (function () {
 	                _context3.prev = 16;
 	                _context3.t0 = _context3["catch"](0);
 	                console.log(_context3.t0);
-	                alert(translate$n('error.request.create'));
+	                alert(translate$o('error.request.create'));
 
 	              case 20:
 	              case "end":
@@ -60754,7 +62055,7 @@ var Forestry = (function () {
 	  return Create;
 	}(Project);
 
-	var translate$o = T.getText.bind(T);
+	var translate$p = T.getText.bind(T);
 
 	var Edit = /*#__PURE__*/function (_Project) {
 	  _inherits(Edit, _Project);
@@ -60773,7 +62074,7 @@ var Forestry = (function () {
 	      layer: layer,
 	      path: path
 	    });
-	    _this._container.innerHTML = "<div class=\"header\">\n            <div class=\"header-left\">\n                <button class=\"scanex-requests-icon back\"></button>\n                <label class=\"head\">".concat(translate$o('project.title.edit'), "</label>\n                <input class=\"description\" type=\"text\" value=\"\"></input>\n            </div>\n            <div class=\"header-right\">                                \n                <button class=\"request\">").concat(translate$o('project.request'), "</button>\n                <button class=\"save\">").concat(translate$o('project.save'), "</button>\n            </div>\n        </div>\n        <div class=\"content\">\n            <div class=\"species\"></div>\n            <div class=\"quadrants\"></div>            \n        </div>");
+	    _this._container.innerHTML = "<div class=\"header\">\n            <div class=\"header-left\">\n                <button class=\"scanex-requests-icon back\"></button>\n                <label class=\"head\">".concat(translate$p('project.title.edit'), "</label>\n                <input class=\"description\" type=\"text\" value=\"\"></input>\n            </div>\n            <div class=\"header-right\">                                \n                <button class=\"request\">").concat(translate$p('project.request'), "</button>\n                <button class=\"save\">").concat(translate$p('project.save'), "</button>\n            </div>\n        </div>\n        <div class=\"content\">\n            <div class=\"species\"></div>\n            <div class=\"quadrants\"></div>            \n        </div>");
 
 	    _this._container.querySelector('.back').addEventListener('click', function (e) {
 	      e.stopPropagation();
@@ -60924,7 +62225,7 @@ var Forestry = (function () {
 	                _context3.prev = 12;
 	                _context3.t0 = _context3["catch"](0);
 	                console.log(_context3.t0);
-	                alert(translate$o('error.request.create'));
+	                alert(translate$p('error.request.create'));
 
 	              case 16:
 	              case "end":
@@ -61045,7 +62346,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 24:
-	                throw translate$o('quadrant.invalid');
+	                throw translate$p('quadrant.invalid');
 
 	              case 25:
 	                _context5.next = 32;
@@ -61058,7 +62359,7 @@ var Forestry = (function () {
 	                this._back();
 
 	                console.log(_context5.t0);
-	                alert(translate$o('error.project.edit'));
+	                alert(translate$p('error.project.edit'));
 
 	              case 32:
 	              case "end":
@@ -61079,7 +62380,7 @@ var Forestry = (function () {
 	  return Edit;
 	}(Project);
 
-	var translate$p = T.getText.bind(T);
+	var translate$q = T.getText.bind(T);
 
 	var Quadrants$2 = /*#__PURE__*/function (_Controller) {
 	  _inherits(Quadrants$1, _Controller);
@@ -61435,7 +62736,7 @@ var Forestry = (function () {
 	                _context11.prev = 12;
 	                _context11.t0 = _context11["catch"](1);
 	                console.log(_context11.t0);
-	                alert(translate$p('error.project.edit'));
+	                alert(translate$q('error.project.edit'));
 	                _context11.next = 18;
 	                return this._content.show('requests');
 
@@ -61447,7 +62748,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 21:
-	                alert(translate$p('forbidden.project.edit'));
+	                alert(translate$q('forbidden.project.edit'));
 
 	              case 22:
 	              case "end":
@@ -61499,7 +62800,7 @@ var Forestry = (function () {
 	                _context12.prev = 11;
 	                _context12.t0 = _context12["catch"](1);
 	                console.log(_context12.t0);
-	                alert(translate$p('error.project.create'));
+	                alert(translate$q('error.project.create'));
 	                _context12.next = 17;
 	                return this._content.show('requests');
 
@@ -61511,7 +62812,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 20:
-	                alert(translate$p('forbidden.project.create'));
+	                alert(translate$q('forbidden.project.create'));
 
 	              case 21:
 	              case "end":
@@ -61569,7 +62870,7 @@ var Forestry = (function () {
 	                _context13.prev = 10;
 	                _context13.t0 = _context13["catch"](1);
 	                console.log(_context13.t0);
-	                alert(translate$p('error.project.remove'));
+	                alert(translate$q('error.project.remove'));
 	                _context13.next = 16;
 	                return this._content.show('requests');
 
@@ -61581,7 +62882,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 19:
-	                alert(translate$p('forbidden.project.remove'));
+	                alert(translate$q('forbidden.project.remove'));
 
 	              case 20:
 	              case "end":
@@ -61602,7 +62903,7 @@ var Forestry = (function () {
 	  return Quadrants$1;
 	}(Controller);
 
-	var translate$q = T.getText.bind(T);
+	var translate$r = T.getText.bind(T);
 	T.addText('rus', {
 	  analytics: {
 	    title: 'Сводная аналитика',
@@ -61699,7 +63000,7 @@ var Forestry = (function () {
 
 	      this.currentType = 0;
 
-	      var typeOption = this._parseOptions(translate$q('analytics.typeOption'));
+	      var typeOption = this._parseOptions(translate$r('analytics.typeOption'));
 
 	      var regionOptions = this._parseOptionsHeader(data.regions);
 
@@ -61707,7 +63008,7 @@ var Forestry = (function () {
 
 	      var speciesOptions = this._parseOptionsHeader(data.species);
 
-	      this._container.innerHTML = "<div class=\"header\">".concat(translate$q('analytics.title'), "</div>\n\t\t\t<div class=\"content\">\n\t\t\t\t<div class=\"line\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$q('analytics.type'), "</div>\n\t\t\t\t\t\t<select name=\"type\" class=\"type style-4\">\n\t\t\t\t\t\t\t").concat(typeOption, "\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"right-wrap\">\n\t\t\t\t\t\t<button class=\"save\">\u0421\u0444\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u043E\u0442\u0447\u0435\u0442</button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"line\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$q('analytics.region'), "</div>\n\t\t\t\t\t\t<select name=\"region\" class=\"region\">\n\t\t\t\t\t\t\t").concat(regionOptions, "\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"right-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$q('analytics.forestry'), "</div>\n\t\t\t\t\t\t<select name=\"forestry\" class=\"forestry\">\n\t\t\t\t\t\t </select>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"line\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$q('analytics.districtForestry'), "</div>\n\t\t\t\t\t\t<select name=\"localForestry\" class=\"localForestry\">\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"right-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$q('analytics.period'), "</div>\n\t\t\t\t\t\t<div class=\"date-inputs\">\n\t\t\t\t\t\t\t<span class=\"date\">\n\t\t\t\t\t\t\t<input class=\"dateBegin\" type=\"text\" placeholder=\"\" value=\"\">\n\t\t\t\t\t\t\t<i class=\"scanex-uploaded-icon calendar\"></i>\n\t\t\t\t\t\t\t</span>\n\n\t\t\t\t\t\t\t<span class=\"date\">\n\t\t\t\t\t\t\t<input class=\"dateEnd\" type=\"text\" placeholder=\"\" value=\"\">\n\t\t\t\t\t\t\t<i class=\"scanex-uploaded-icon calendar\"></i>\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"line species hidden\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$q('analytics.vybpor'), "</div>\n\t\t\t\t\t\t<select name=\"species\" class=\"species\">\n\t\t\t\t\t\t\t").concat(speciesOptions, "\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"chartCont\">\n\t\t\t\t</div>\n\t\t\t</div>");
+	      this._container.innerHTML = "<div class=\"header\">".concat(translate$r('analytics.title'), "</div>\n\t\t\t<div class=\"content\">\n\t\t\t\t<div class=\"line\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$r('analytics.type'), "</div>\n\t\t\t\t\t\t<select name=\"type\" class=\"type style-4\">\n\t\t\t\t\t\t\t").concat(typeOption, "\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"right-wrap\">\n\t\t\t\t\t\t<button class=\"save\">\u0421\u0444\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u043E\u0442\u0447\u0435\u0442</button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"line\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$r('analytics.region'), "</div>\n\t\t\t\t\t\t<select name=\"region\" class=\"region\">\n\t\t\t\t\t\t\t").concat(regionOptions, "\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"right-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$r('analytics.forestry'), "</div>\n\t\t\t\t\t\t<select name=\"forestry\" class=\"forestry\">\n\t\t\t\t\t\t </select>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"line\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$r('analytics.districtForestry'), "</div>\n\t\t\t\t\t\t<select name=\"localForestry\" class=\"localForestry\">\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"right-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$r('analytics.period'), "</div>\n\t\t\t\t\t\t<div class=\"date-inputs\">\n\t\t\t\t\t\t\t<span class=\"date\">\n\t\t\t\t\t\t\t<input class=\"dateBegin\" type=\"text\" placeholder=\"\" value=\"\">\n\t\t\t\t\t\t\t<i class=\"scanex-uploaded-icon calendar\"></i>\n\t\t\t\t\t\t\t</span>\n\n\t\t\t\t\t\t\t<span class=\"date\">\n\t\t\t\t\t\t\t<input class=\"dateEnd\" type=\"text\" placeholder=\"\" value=\"\">\n\t\t\t\t\t\t\t<i class=\"scanex-uploaded-icon calendar\"></i>\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"line species hidden\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$r('analytics.vybpor'), "</div>\n\t\t\t\t\t\t<select name=\"species\" class=\"species\">\n\t\t\t\t\t\t\t").concat(speciesOptions, "\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"chartCont\">\n\t\t\t\t</div>\n\t\t\t</div>");
 	      var i18n = {
 	        previousMonth: 'Предыдущий месяц',
 	        nextMonth: 'Следующий месяц',
@@ -61956,14 +63257,14 @@ var Forestry = (function () {
 	      var str = data.map(function (it) {
 	        return "<div class=\"chart-row__left-el\">\n\t\t\t\t<div class=\"chart-row__left-el-chart\">\n\t\t\t\t\t<div class=\"chart-row__left-el-chart__text\">".concat(it.payed, " \u043C<sup>3</sup></div>\n\t\t\t\t\t<div class=\"chart-row__left-el-chart__arrow green-bg\" style=\"height: ").concat(Math.floor(maxHeight * Math.min(it.payed, maxValue) / maxValue), "px\"></div>\n\t\t\t\t\t<div class=\"chart-row__left-el-chart__text_bot\">").concat(it.organization || it.species, "</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"chart-row__left-el-chart\">\n\t\t\t\t\t<div class=\"chart-row__left-el-chart__text\">").concat(it.cutDown, " \u043C<sup>3</sup></div>\n\t\t\t\t\t<div class=\"chart-row__left-el-chart__arrow blue-bg\" style=\"height: ").concat(Math.floor(maxHeight * Math.min(it.cutDown, maxValue) / maxValue), "px\"></div>\n\t\t\t\t\t<div class=\"chart-row__left-el-chart__text_bot\">&nbsp;</div>\n\t\t\t\t</div>\n\t\t\t</div>");
 	      }).join('\n');
-	      this._chartCont.innerHTML = "<div class=\"line\">\n\t\t\t<div class=\"chart-header black\">".concat(translate$q('analytics.sootn'), "&nbsp;<span class=\"green\">").concat(translate$q('analytics.oplach'), "</span>&nbsp;\u0438&nbsp;<span class=\"blue\">").concat(translate$q('analytics.vyrub'), "</span>&nbsp;").concat(translate$q('analytics.dreves'), "\n\t\t\t</div>\n\t\t</div>\n\t\t<div class=\"chart-row\">\n\t\t\t<div class=\"chart-row__left\">\n\t\t\t\t").concat(str, "\n\t\t\t</div>\n\t\t\t<div class=\"chart-row__right\">\n\t\t\t\t<div class=\"chart-row__right_line\">\n\t\t\t\t\t<div class=\"rec green-bg\"></div>\n\t\t\t\t\t<div class=\"rec-text\">").concat(translate$q('analytics.opl'), "</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"chart-row__right_line\">\n\t\t\t\t\t<div class=\"rec blue-bg\"></div>\n\t\t\t\t\t<div class=\"rec-text\">").concat(translate$q('analytics.vyr'), "</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>");
+	      this._chartCont.innerHTML = "<div class=\"line\">\n\t\t\t<div class=\"chart-header black\">".concat(translate$r('analytics.sootn'), "&nbsp;<span class=\"green\">").concat(translate$r('analytics.oplach'), "</span>&nbsp;\u0438&nbsp;<span class=\"blue\">").concat(translate$r('analytics.vyrub'), "</span>&nbsp;").concat(translate$r('analytics.dreves'), "\n\t\t\t</div>\n\t\t</div>\n\t\t<div class=\"chart-row\">\n\t\t\t<div class=\"chart-row__left\">\n\t\t\t\t").concat(str, "\n\t\t\t</div>\n\t\t\t<div class=\"chart-row__right\">\n\t\t\t\t<div class=\"chart-row__right_line\">\n\t\t\t\t\t<div class=\"rec green-bg\"></div>\n\t\t\t\t\t<div class=\"rec-text\">").concat(translate$r('analytics.opl'), "</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"chart-row__right_line\">\n\t\t\t\t\t<div class=\"rec blue-bg\"></div>\n\t\t\t\t\t<div class=\"rec-text\">").concat(translate$r('analytics.vyr'), "</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>");
 	    }
 	  }, {
 	    key: "_parseBallance",
 	    value: function _parseBallance(data) {
 	      var maxValue = data.total;
 	      var maxWidth = 220;
-	      this._chartCont.innerHTML = "<table class=\"line\">\n            <tr>\n\t\t\t\t<td class=\"first\">".concat(translate$q('analytics.growth'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act green-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.growth.quantity, maxValue) / maxValue), "px\"></div></td>\n                <td class=\"third green\">").concat(data.growth.quantity, " \u043C<sup>3</sup></td>\n                <td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"green\">").concat(data.growth.summa, " ").concat(translate$q('analytics.milr'), "</span></td>\n            </tr>\n            <tr>\n\t\t\t\t<td class=\"first\">").concat(translate$q('analytics.burntOut'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act red-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.burntOut.quantity, maxValue) / maxValue), "px\"></div></td>\n                <td class=\"third red\">").concat(data.burntOut.quantity, " \u043C<sup>3</sup></td>\n                <td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"red\">").concat(data.burntOut.summa, " ").concat(translate$q('analytics.milr'), "</span></td>\n            </tr>\n            <tr>\n\t\t\t\t<td class=\"first\">").concat(translate$q('analytics.cutDown'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act red-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.cutDown.quantity, maxValue) / maxValue), "px\"></div></td>\n                <td class=\"third red\">").concat(data.cutDown.quantity, " \u043C<sup>3</sup></td>\n                <td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"red\">").concat(data.cutDown.summa, " ").concat(translate$q('analytics.milr'), "</span></td>\n            </tr>\n            <tr>\n\t\t\t\t<td class=\"first\">").concat(translate$q('analytics.ballanceChanges'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act red-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.ballanceChanges.quantity, maxValue) / maxValue), "px\"></div></td>\n                <td class=\"third red\">").concat(data.ballanceChanges.quantity, " \u043C<sup>3</sup></td>\n                <td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"red\">").concat(data.ballanceChanges.summa, " ").concat(translate$q('analytics.milr'), "</span></td>\n            </tr>\n            <tr>\n\t\t\t\t<td class=\"first\">").concat(translate$q('analytics.total'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act green-bg\" style=\"width: 100%\"></div></td>\n                <td class=\"third gray\">125 684 \u043C<sup>3</sup></td>\n                <td class=\"last\"></td>\n            </tr>\n\t\t</table>");
+	      this._chartCont.innerHTML = "<table class=\"line\">\n            <tr>\n\t\t\t\t<td class=\"first\">".concat(translate$r('analytics.growth'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act green-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.growth.quantity, maxValue) / maxValue), "px\"></div></td>\n                <td class=\"third green\">").concat(data.growth.quantity, " \u043C<sup>3</sup></td>\n                <td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"green\">").concat(data.growth.summa, " ").concat(translate$r('analytics.milr'), "</span></td>\n            </tr>\n            <tr>\n\t\t\t\t<td class=\"first\">").concat(translate$r('analytics.burntOut'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act red-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.burntOut.quantity, maxValue) / maxValue), "px\"></div></td>\n                <td class=\"third red\">").concat(data.burntOut.quantity, " \u043C<sup>3</sup></td>\n                <td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"red\">").concat(data.burntOut.summa, " ").concat(translate$r('analytics.milr'), "</span></td>\n            </tr>\n            <tr>\n\t\t\t\t<td class=\"first\">").concat(translate$r('analytics.cutDown'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act red-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.cutDown.quantity, maxValue) / maxValue), "px\"></div></td>\n                <td class=\"third red\">").concat(data.cutDown.quantity, " \u043C<sup>3</sup></td>\n                <td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"red\">").concat(data.cutDown.summa, " ").concat(translate$r('analytics.milr'), "</span></td>\n            </tr>\n            <tr>\n\t\t\t\t<td class=\"first\">").concat(translate$r('analytics.ballanceChanges'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act red-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.ballanceChanges.quantity, maxValue) / maxValue), "px\"></div></td>\n                <td class=\"third red\">").concat(data.ballanceChanges.quantity, " \u043C<sup>3</sup></td>\n                <td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"red\">").concat(data.ballanceChanges.summa, " ").concat(translate$r('analytics.milr'), "</span></td>\n            </tr>\n            <tr>\n\t\t\t\t<td class=\"first\">").concat(translate$r('analytics.total'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act green-bg\" style=\"width: 100%\"></div></td>\n                <td class=\"third gray\">125 684 \u043C<sup>3</sup></td>\n                <td class=\"last\"></td>\n            </tr>\n\t\t</table>");
 	    }
 	  }]);
 
@@ -62033,7 +63334,7 @@ var Forestry = (function () {
 	  return Stands$1;
 	}(Controller);
 
-	var translate$r = T.getText.bind(T);
+	var translate$s = T.getText.bind(T);
 	T.addText('rus', {
 	  uploaded: {
 	    title: 'Мои данные',
@@ -62071,11 +63372,11 @@ var Forestry = (function () {
 
 	    _this._container.classList.add('scanex-forestry-uploaded');
 
-	    _this._container.innerHTML = "<div class=\"title\">".concat(translate$r('uploaded.title'), "</div>\n        <div class=\"filter\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tr>\n                    <td>\n                        <div class=\"name\">\n                            <i class=\"scanex-uploaded-icon search\"></i>\n                            <input type=\"text\" placeholder=\"").concat(translate$r('uploaded.name'), "\" value=\"\" />\n                        </div>\n                    </td>\n                    <td>\n                        <select>").concat(_this._types.map(function (id) {
+	    _this._container.innerHTML = "<div class=\"title\">".concat(translate$s('uploaded.title'), "</div>\n        <div class=\"filter\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tr>\n                    <td>\n                        <div class=\"name\">\n                            <i class=\"scanex-uploaded-icon search\"></i>\n                            <input type=\"text\" placeholder=\"").concat(translate$s('uploaded.name'), "\" value=\"\" />\n                        </div>\n                    </td>\n                    <td>\n                        <select>").concat(_this._types.map(function (id) {
 	      return "<option value=\"".concat(id, "\">").concat(id, "</option>");
-	    }).join(''), "</select>\n                    </td>\n                    <td>\n                        <div class=\"date\">\n                            <input class=\"datepicker\" type=\"text\" placeholder=\"").concat(translate$r('uploaded.date'), "\" value=\"\" />\n                            <i class=\"scanex-uploaded-icon calendar\"></i>\n                        </div>\n                    </td>\n                </tr>\n            </table>\n        </div>\n        <div class=\"data\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <thead>\n                    <tr><th></th>").concat(_this._columns.map(function (id) {
-	      return "<th>".concat(translate$r("uploaded.".concat(id)), "</th>");
-	    }).join(''), "</tr>\n                </thead>\n                <tbody class=\"content\"></tbody>\n            </table>\n        </div>\n        <div class=\"footer\">\n            <div class=\"pages\"></div>\n            <button class=\"add\">").concat(translate$r("uploaded.add"), "</button>\n            <button class=\"remove\">").concat(translate$r("uploaded.remove"), "</button>\n        </div>");
+	    }).join(''), "</select>\n                    </td>\n                    <td>\n                        <div class=\"date\">\n                            <input class=\"datepicker\" type=\"text\" placeholder=\"").concat(translate$s('uploaded.date'), "\" value=\"\" />\n                            <i class=\"scanex-uploaded-icon calendar\"></i>\n                        </div>\n                    </td>\n                </tr>\n            </table>\n        </div>\n        <div class=\"data\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <thead>\n                    <tr><th></th>").concat(_this._columns.map(function (id) {
+	      return "<th>".concat(translate$s("uploaded.".concat(id)), "</th>");
+	    }).join(''), "</tr>\n                </thead>\n                <tbody class=\"content\"></tbody>\n            </table>\n        </div>\n        <div class=\"footer\">\n            <div class=\"pages\"></div>\n            <button class=\"add\">").concat(translate$s("uploaded.add"), "</button>\n            <button class=\"remove\">").concat(translate$s("uploaded.remove"), "</button>\n        </div>");
 	    _this._date = new pikaday({
 	      field: _this._container.querySelector('.datepicker'),
 	      format: 'DD.MM.YYYY',
@@ -62273,7 +63574,7 @@ var Forestry = (function () {
 	  return UploadProgress;
 	}(EventTarget);
 
-	var translate$s = T.getText.bind(T);
+	var translate$t = T.getText.bind(T);
 
 	var Uploaded$1 = /*#__PURE__*/function (_EventTarget) {
 	  _inherits(Uploaded$1, _EventTarget);
@@ -62817,7 +64118,7 @@ var Forestry = (function () {
 	                this._view.close();
 
 	                console.log(_context5.t0);
-	                alert(translate$s('error.uploaded'));
+	                alert(translate$t('error.uploaded'));
 
 	              case 26:
 	              case "end":
@@ -66896,7 +68197,7 @@ var Forestry = (function () {
 	  return _getObjectCenter.apply(this, arguments);
 	}
 
-	var translate$t = T.getText.bind(T);
+	var translate$u = T.getText.bind(T);
 	T.addText('rus', {
 	  measure: {
 	    bearing: {
@@ -67160,7 +68461,7 @@ var Forestry = (function () {
 	                _context2.prev = 6;
 	                _context2.t0 = _context2["catch"](1);
 	                console.log(_context2.t0);
-	                alert(translate$t('error.analytics'));
+	                alert(translate$u('error.analytics'));
 	                this.showMain();
 
 	              case 11:
@@ -67168,7 +68469,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 13:
-	                alert(translate$t('forbidden.analytics'));
+	                alert(translate$u('forbidden.analytics'));
 
 	              case 14:
 	              case "end":
@@ -67214,7 +68515,7 @@ var Forestry = (function () {
 	                _context3.prev = 8;
 	                _context3.t0 = _context3["catch"](1);
 	                console.log(_context3.t0);
-	                alert(translate$t('error.requests'));
+	                alert(translate$u('error.requests'));
 	                this.showMain();
 
 	              case 13:
@@ -67222,7 +68523,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 15:
-	                alert(translate$t('forbidden.requests'));
+	                alert(translate$u('forbidden.requests'));
 
 	              case 16:
 	              case "end":
@@ -67263,7 +68564,7 @@ var Forestry = (function () {
 	                _context4.prev = 6;
 	                _context4.t0 = _context4["catch"](1);
 	                console.log(_context4.t0);
-	                alert(translate$t('error.requests'));
+	                alert(translate$u('error.requests'));
 	                this.showMain();
 
 	              case 11:
@@ -67271,7 +68572,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 13:
-	                alert(translate$t('forbidden.requests'));
+	                alert(translate$u('forbidden.requests'));
 
 	              case 14:
 	              case "end":
@@ -67312,7 +68613,7 @@ var Forestry = (function () {
 	                _context5.prev = 6;
 	                _context5.t0 = _context5["catch"](1);
 	                console.log(_context5.t0);
-	                alert(translate$t('error.uploaded'));
+	                alert(translate$u('error.uploaded'));
 	                this.showMain();
 
 	              case 11:
@@ -67320,7 +68621,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 13:
-	                alert(translate$t('forbidden.uploaded'));
+	                alert(translate$u('forbidden.uploaded'));
 
 	              case 14:
 	              case "end":
@@ -67406,6 +68707,10 @@ var Forestry = (function () {
 
 	                  return kind && ALLOWED_LAYERS.indexOf(kind.Value) !== -1;
 	                }).map(function (layer) {
+	                  if (layer._map && layer._map !== _this3._map) {
+	                    layer._map.removeLayer(layer);
+	                  }
+
 	                  var _layer$getGmxProperti2 = layer.getGmxProperties(),
 	                      IsRasterCatalog = _layer$getGmxProperti2.IsRasterCatalog,
 	                      Temporal = _layer$getGmxProperti2.Temporal,
@@ -67807,11 +69112,7 @@ var Forestry = (function () {
 
 	                this._baselayers.toggle('sputnik');
 
-	                this._legend.showPanel(true); // window._test = this;
-	                // const CRLayer = this._gmxMap.layersByID['958E59D9911E4889AB3E787DE2AC028B'];	// Каталог растров
-	                // this._map.addControl(nsGmx.gmxTimeLine.afterViewer({gmxMap: this._gmxMap}, this._map));	// Контрол таймлайна CR
-	                // this._map.addLayer(CRLayer);        
-	                // attach legend controller
+	                this._legend.showPanel(true); // attach legend controller
 
 
 	                this._controllers.legend = new Legend$1({
@@ -67839,6 +69140,59 @@ var Forestry = (function () {
 	    value: function unload() {
 	      this._baselayers.unload();
 	    }
+	  }, {
+	    key: "addCRLayer",
+	    value: function () {
+	      var _addCRLayer = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11(layerID) {
+	        var arr, layer;
+	        return regeneratorRuntime.wrap(function _callee11$(_context11) {
+	          while (1) {
+	            switch (_context11.prev = _context11.next) {
+	              case 0:
+	                _context11.next = 2;
+	                return leafletSrc.gmx.loadLayers([{
+	                  hostName: '/',
+	                  // setZIndex: true,
+	                  gmxEndPoints: {
+	                    checkVersion: "".concat(this._gmxPath, "/Layer/CheckVersion.ashx"),
+	                    layerProps: "".concat(this._gmxPath, "/Layer/GetLayerJson.ashx"),
+	                    searchLayerItem: "".concat(this._gmxPath, "/VectorLayer/Search.ashx"),
+	                    tileProps: "".concat(this._gmxPath, "/TileSender.ashx"),
+	                    mapProps: "".concat(this._gmxPath, "/TileSender.ashx")
+	                  },
+	                  mapID: '3B9D614D7AFA4A1ABF2BF1E0918677EF',
+	                  layerID: layerID
+	                }], {});
+
+	              case 2:
+	                arr = _context11.sent;
+	                layer = arr[0];
+
+	                if (layer) {
+	                  // const CRLayer = this._gmxMap.layersByID['958E59D9911E4889AB3E787DE2AC028B'];	// Каталог растров
+	                  // this._map.addControl(nsGmx.gmxTimeLine.afterViewer({gmxMap: this._gmxMap}, this._map));	// Контрол таймлайна CR
+	                  if (!GmxTimeLine._map) {
+	                    this._map.addControl(GmxTimeLine); // Контрол таймлайна CR
+
+	                  }
+
+	                  this._map.addLayer(layer);
+	                }
+
+	              case 5:
+	              case "end":
+	                return _context11.stop();
+	            }
+	          }
+	        }, _callee11, this);
+	      }));
+
+	      function addCRLayer(_x5) {
+	        return _addCRLayer.apply(this, arguments);
+	      }
+
+	      return addCRLayer;
+	    }()
 	  }]);
 
 	  return Map;

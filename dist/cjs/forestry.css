@@ -1,19 +1,3 @@
-.scanex-legend-icon.borders {background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='64 64 896 896' focusable='false' class='' data-icon='plus-square' width='18px' height='18px' fill='currentColor' aria-hidden='true'%3e%3cpath d='M328 544h152v152c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8V544h152c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8H544V328c0-4.4-3.6-8-8-8h-48c-4.4 0-8 3.6-8 8v152H328c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8z'%3e%3c/path%3e%3cpath d='M880 112H144c-17.7 0-32 14.3-32 32v736c0 17.7 14.3 32 32 32h736c17.7 0 32-14.3 32-32V144c0-17.7-14.3-32-32-32zm-40 728H184V184h656v656z'%3e%3c/path%3e%3c/svg%3e");}
-.scanex-legend-icon.header-icon {background-image: url("data:image/svg+xml,%3csvg width='16' height='15' viewBox='0 0 16 15' fill='%23343434' xmlns='http://www.w3.org/2000/svg'%3e %3cpath d='M16 2H8V4H16V2Z' fill='%23343434'/%3e %3cpath d='M5 0H1C0.734784 0 0.48043 0.105357 0.292893 0.292893C0.105357 0.48043 0 0.734784 0 1L0 5C0 5.26522 0.105357 5.51957 0.292893 5.70711C0.48043 5.89464 0.734784 6 1 6H5C5.26522 6 5.51957 5.89464 5.70711 5.70711C5.89464 5.51957 6 5.26522 6 5V1C6 0.734784 5.89464 0.48043 5.70711 0.292893C5.51957 0.105357 5.26522 0 5 0ZM4 4H2V2H4V4Z' fill='%23343434'/%3e %3cpath d='M16 10H8V12H16V10Z' fill='%23343434'/%3e %3cpath d='M5.70708 8.29259C5.51955 8.10512 5.26525 7.99981 5.00008 7.99981C4.73492 7.99981 4.48061 8.10512 4.29308 8.29259L3.00008 9.58559L1.70708 8.29259C1.61483 8.19708 1.50449 8.1209 1.38249 8.06849C1.26048 8.01608 1.12926 7.9885 0.996482 7.98734C0.863703 7.98619 0.732023 8.01149 0.609127 8.06177C0.486231 8.11205 0.374579 8.18631 0.280686 8.2802C0.186794 8.37409 0.11254 8.48574 0.0622595 8.60864C0.0119786 8.73154 -0.0133231 8.86321 -0.0121693 8.99599C-0.0110155 9.12877 0.0165708 9.25999 0.0689798 9.382C0.121389 9.504 0.197571 9.61435 0.293081 9.70659L1.58608 10.9996L0.293081 12.2926C0.197571 12.3848 0.121389 12.4952 0.0689798 12.6172C0.0165708 12.7392 -0.0110155 12.8704 -0.0121693 13.0032C-0.0133231 13.136 0.0119786 13.2677 0.0622595 13.3905C0.11254 13.5134 0.186794 13.6251 0.280686 13.719C0.374579 13.8129 0.486231 13.8871 0.609127 13.9374C0.732023 13.9877 0.863703 14.013 0.996482 14.0118C1.12926 14.0107 1.26048 13.9831 1.38249 13.9307C1.50449 13.8783 1.61483 13.8021 1.70708 13.7066L3.00008 12.4136L4.29308 13.7066C4.38533 13.8021 4.49567 13.8783 4.61768 13.9307C4.73968 13.9831 4.8709 14.0107 5.00368 14.0118C5.13646 14.013 5.26814 13.9877 5.39104 13.9374C5.51393 13.8871 5.62558 13.8129 5.71948 13.719C5.81337 13.6251 5.88762 13.5134 5.9379 13.3905C5.98818 13.2677 6.01349 13.136 6.01233 13.0032C6.01118 12.8704 5.98359 12.7392 5.93118 12.6172C5.87877 12.4952 5.80259 12.3848 5.70708 12.2926L4.41408 10.9996L5.70708 9.70659C5.89455 9.51907 5.99987 9.26476 5.99987 8.99959C5.99987 8.73443 5.89455 8.48012 5.70708 8.29259Z' fill='%23343434'/%3e %3c/svg%3e");}
-.scanex-legend-icon.icon.active {background-image: url("data:image/svg+xml,%3csvg width='16' height='15' viewBox='0 0 16 15' fill='none' xmlns='http://www.w3.org/2000/svg'%3e %3cpath d='M16 2H8V4H16V2Z' fill='%23008060'/%3e %3cpath d='M5 0H1C0.734784 0 0.48043 0.105357 0.292893 0.292893C0.105357 0.48043 0 0.734784 0 1L0 5C0 5.26522 0.105357 5.51957 0.292893 5.70711C0.48043 5.89464 0.734784 6 1 6H5C5.26522 6 5.51957 5.89464 5.70711 5.70711C5.89464 5.51957 6 5.26522 6 5V1C6 0.734784 5.89464 0.48043 5.70711 0.292893C5.51957 0.105357 5.26522 0 5 0ZM4 4H2V2H4V4Z' fill='%23008060'/%3e %3cpath d='M16 10H8V12H16V10Z' fill='%23008060'/%3e %3cpath d='M5.70659 8.293C5.51906 8.10553 5.26476 8.00021 4.99959 8.00021C4.73443 8.00021 4.48012 8.10553 4.29259 8.293L2.99959 9.586L1.70659 8.293C1.61435 8.19749 1.504 8.1213 1.382 8.0689C1.25999 8.01649 1.12877 7.9889 0.995994 7.98775C0.863215 7.98659 0.731535 8.0119 0.608639 8.06218C0.485743 8.11246 0.374091 8.18671 0.280198 8.2806C0.186305 8.3745 0.112052 8.48615 0.0617712 8.60904C0.0114903 8.73194 -0.0138114 8.86362 -0.0126576 8.9964C-0.0115037 9.12918 0.0160825 9.2604 0.0684915 9.3824C0.1209 9.50441 0.197083 9.61475 0.292593 9.707L1.58559 11L0.292593 12.293C0.197083 12.3852 0.1209 12.4956 0.0684915 12.6176C0.0160825 12.7396 -0.0115037 12.8708 -0.0126576 13.0036C-0.0138114 13.1364 0.0114903 13.2681 0.0617712 13.391C0.112052 13.5138 0.186305 13.6255 0.280198 13.7194C0.374091 13.8133 0.485743 13.8875 0.608639 13.9378C0.731535 13.9881 0.863215 14.0134 0.995994 14.0122C1.12877 14.0111 1.25999 13.9835 1.382 13.9311C1.504 13.8787 1.61435 13.8025 1.70659 13.707L2.99959 12.414L4.29259 13.707C4.38484 13.8025 4.49518 13.8787 4.61719 13.9311C4.73919 13.9835 4.87041 14.0111 5.00319 14.0122C5.13597 14.0134 5.26765 13.9881 5.39055 13.9378C5.51344 13.8875 5.6251 13.8133 5.71899 13.7194C5.81288 13.6255 5.88713 13.5138 5.93741 13.391C5.9877 13.2681 6.013 13.1364 6.01184 13.0036C6.01069 12.8708 5.9831 12.7396 5.93069 12.6176C5.87828 12.4956 5.8021 12.3852 5.70659 12.293L4.41359 11L5.70659 9.707C5.89406 9.51947 5.99938 9.26516 5.99938 9C5.99938 8.73483 5.89406 8.48053 5.70659 8.293Z' fill='%23008060'/%3e %3c/svg%3e");}
-.scanex-legend-icon.icon {background-image: url("data:image/svg+xml,%3csvg width='16' height='15' viewBox='0 0 16 15' fill='none' xmlns='http://www.w3.org/2000/svg'%3e %3cpath d='M16 2H8V4H16V2Z' fill='%23453D3D'/%3e %3cpath d='M5 0H1C0.734784 0 0.48043 0.105357 0.292893 0.292893C0.105357 0.48043 0 0.734784 0 1L0 5C0 5.26522 0.105357 5.51957 0.292893 5.70711C0.48043 5.89464 0.734784 6 1 6H5C5.26522 6 5.51957 5.89464 5.70711 5.70711C5.89464 5.51957 6 5.26522 6 5V1C6 0.734784 5.89464 0.48043 5.70711 0.292893C5.51957 0.105357 5.26522 0 5 0ZM4 4H2V2H4V4Z' fill='%23453D3D'/%3e %3cpath d='M16 10H8V12H16V10Z' fill='%23453D3D'/%3e %3cpath d='M5.70659 8.293C5.51906 8.10553 5.26476 8.00021 4.99959 8.00021C4.73443 8.00021 4.48012 8.10553 4.29259 8.293L2.99959 9.586L1.70659 8.293C1.61435 8.19749 1.504 8.1213 1.382 8.0689C1.25999 8.01649 1.12877 7.9889 0.995994 7.98775C0.863215 7.98659 0.731535 8.0119 0.608639 8.06218C0.485743 8.11246 0.374091 8.18671 0.280198 8.2806C0.186305 8.3745 0.112052 8.48615 0.0617712 8.60904C0.0114903 8.73194 -0.0138114 8.86362 -0.0126576 8.9964C-0.0115037 9.12918 0.0160825 9.2604 0.0684915 9.3824C0.1209 9.50441 0.197083 9.61475 0.292593 9.707L1.58559 11L0.292593 12.293C0.197083 12.3852 0.1209 12.4956 0.0684915 12.6176C0.0160825 12.7396 -0.0115037 12.8708 -0.0126576 13.0036C-0.0138114 13.1364 0.0114903 13.2681 0.0617712 13.391C0.112052 13.5138 0.186305 13.6255 0.280198 13.7194C0.374091 13.8133 0.485743 13.8875 0.608639 13.9378C0.731535 13.9881 0.863215 14.0134 0.995994 14.0122C1.12877 14.0111 1.25999 13.9835 1.382 13.9311C1.504 13.8787 1.61435 13.8025 1.70659 13.707L2.99959 12.414L4.29259 13.707C4.38484 13.8025 4.49518 13.8787 4.61719 13.9311C4.73919 13.9835 4.87041 14.0111 5.00319 14.0122C5.13597 14.0134 5.26765 13.9881 5.39055 13.9378C5.51344 13.8875 5.6251 13.8133 5.71899 13.7194C5.81288 13.6255 5.88713 13.5138 5.93741 13.391C5.9877 13.2681 6.013 13.1364 6.01184 13.0036C6.01069 12.8708 5.9831 12.7396 5.93069 12.6176C5.87828 12.4956 5.8021 12.3852 5.70659 12.293L4.41359 11L5.70659 9.707C5.89406 9.51947 5.99938 9.26516 5.99938 9C5.99938 8.73483 5.89406 8.48053 5.70659 8.293Z' fill='%23453D3D'/%3e %3c/svg%3e");}
-.scanex-legend-icon.incidents {background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='64 64 896 896' focusable='false' class='' data-icon='plus-square' width='18px' height='18px' fill='currentColor' aria-hidden='true'%3e%3cpath d='M328 544h152v152c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8V544h152c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8H544V328c0-4.4-3.6-8-8-8h-48c-4.4 0-8 3.6-8 8v152H328c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8z'%3e%3c/path%3e%3cpath d='M880 112H144c-17.7 0-32 14.3-32 32v736c0 17.7 14.3 32 32 32h736c17.7 0 32-14.3 32-32V144c0-17.7-14.3-32-32-32zm-40 728H184V184h656v656z'%3e%3c/path%3e%3c/svg%3e");}
-.scanex-legend-icon.plus {background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='64 64 896 896' focusable='false' class='' data-icon='plus-square' width='24px' height='24px' fill='currentColor' aria-hidden='true'%3e%3cpath d='M328 544h152v152c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8V544h152c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8H544V328c0-4.4-3.6-8-8-8h-48c-4.4 0-8 3.6-8 8v152H328c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8z'%3e%3c/path%3e%3cpath d='M880 112H144c-17.7 0-32 14.3-32 32v736c0 17.7 14.3 32 32 32h736c17.7 0 32-14.3 32-32V144c0-17.7-14.3-32-32-32zm-40 728H184V184h656v656z'%3e%3c/path%3e%3c/svg%3e");}
-.scanex-uploaded-icon.box.active {background-image: url("data:image/svg+xml,%3csvg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3e %3crect width='20' height='20' rx='4' fill='%23067A57'/%3e %3cmask id='path-2-inside-1' fill='white'%3e %3cpath fill-rule='evenodd' clip-rule='evenodd' d='M8.65083 12.1709L14.8979 5.92383L16.3121 7.33804L8.66069 14.9894L4.29688 10.6862L5.70117 9.26216L8.65083 12.1709Z'/%3e %3c/mask%3e %3cpath fill-rule='evenodd' clip-rule='evenodd' d='M8.65083 12.1709L14.8979 5.92383L16.3121 7.33804L8.66069 14.9894L4.29688 10.6862L5.70117 9.26216L8.65083 12.1709Z' fill='white'/%3e %3cpath d='M14.8979 5.92383L16.3121 4.50961L14.8979 3.0954L13.4837 4.50961L14.8979 5.92383ZM8.65083 12.1709L7.24654 13.5949L8.66069 14.9894L10.065 13.5851L8.65083 12.1709ZM16.3121 7.33804L17.7263 8.75226L19.1405 7.33804L17.7263 5.92383L16.3121 7.33804ZM8.66069 14.9894L7.25639 16.4135L8.67054 17.808L10.0749 16.4037L8.66069 14.9894ZM4.29688 10.6862L2.87281 9.28194L1.46852 10.706L2.89258 12.1103L4.29688 10.6862ZM5.70117 9.26216L7.10546 7.8381L5.68139 6.43381L4.2771 7.85787L5.70117 9.26216ZM13.4837 4.50961L7.23662 10.7567L10.065 13.5851L16.3121 7.33804L13.4837 4.50961ZM17.7263 5.92383L16.3121 4.50961L13.4837 7.33804L14.8979 8.75226L17.7263 5.92383ZM4.2771 7.85787L2.87281 9.28194L5.72094 12.0905L7.12523 10.6665L4.2771 7.85787ZM10.0551 10.7468L7.10546 7.8381L4.29687 10.6862L7.24654 13.5949L10.0551 10.7468ZM10.0749 16.4037L17.7263 8.75226L14.8979 5.92383L7.24647 13.5752L10.0749 16.4037ZM2.89258 12.1103L7.25639 16.4135L10.065 13.5654L5.70117 9.26216L2.89258 12.1103Z' fill='white' mask='url(%23path-2-inside-1)'/%3e %3c/svg%3e");}
-.scanex-uploaded-icon.box {background-image: url("data:image/svg+xml,%3csvg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3e %3crect opacity='0.5' x='0.5' y='0.5' width='19' height='19' rx='3.5' stroke='black'/%3e %3c/svg%3e");}
-.scanex-uploaded-icon.calendar {background-image: url("data:image/svg+xml,%3csvg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3e %3cpath d='M18.125 3.125H1.875C1.185 3.125 0.625 3.685 0.625 4.375V18.125C0.625 18.815 1.185 19.375 1.875 19.375H18.125C18.815 19.375 19.375 18.815 19.375 18.125V4.375C19.375 3.685 18.815 3.125 18.125 3.125Z' stroke='%23067A57' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3cpath d='M0.625 6.875H19.375' stroke='%23067A57' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3cpath d='M5.625 0.625V3.125' stroke='%23067A57' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3cpath d='M14.375 0.625V3.125' stroke='%23067A57' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3cpath d='M6.875 9.375V16.875' stroke='%23067A57' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3cpath d='M13.125 9.375V16.875' stroke='%23067A57' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3cpath d='M3.125 13.125H16.875' stroke='%23067A57' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3c/svg%3e");}
-.scanex-uploaded-icon.search {background-image: url("data:image/svg+xml,%3csvg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3e %3cg clip-path='url(%23clip0)'%3e %3cpath d='M8.75 17.5C3.925 17.5 0 13.575 0 8.75C0 3.925 3.925 0 8.75 0C13.575 0 17.5 3.925 17.5 8.75C17.5 13.575 13.575 17.5 8.75 17.5ZM8.75 2.5C5.30375 2.5 2.5 5.30375 2.5 8.75C2.5 12.1962 5.30375 15 8.75 15C12.1962 15 15 12.1962 15 8.75C15 5.30375 12.1962 2.5 8.75 2.5Z' fill='%236B707B'/%3e %3cpath d='M19.6337 17.8663L16.6425 14.875C16.1288 15.5362 15.5362 16.1288 14.875 16.6425L17.8663 19.6337C18.11 19.8775 18.43 20 18.75 20C19.07 20 19.39 19.8775 19.6337 19.6337C20.1225 19.145 20.1225 18.355 19.6337 17.8663Z' fill='%236B707B'/%3e %3c/g%3e %3cdefs%3e %3cclipPath id='clip0'%3e %3crect width='20' height='20' fill='white'/%3e %3c/clipPath%3e %3c/defs%3e %3c/svg%3e");}
-.scanex-declaration-icon.doc {background-image: url("data:image/svg+xml,%3csvg width='22' height='24' viewBox='0 0 22 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3e %3cpath d='M5 19V20.5C5 21.693 3.806 21.947 3.46 21.996C2.651 21.974 2 21.313 2 20.5V2H17V17H19V1C19 0.448 18.552 0 18 0H1C0.448 0 0 0.448 0 1V20.5C0 22.43 1.57 24 3.5 24H18.5C20.43 24 22 22.43 22 20.5V19H5Z' fill='%23007F60'/%3e %3c/svg%3e");}
-.scanex-component-icon.close {background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='64 64 896 896' focusable='false' class='' data-icon='close' width='18px' height='18px' fill='currentColor' aria-hidden='true'%3e%3cpath d='M563.8 512l262.5-312.9c4.4-5.2.7-13.1-6.1-13.1h-79.8c-4.7 0-9.2 2.1-12.3 5.7L511.6 449.8 295.1 191.7c-3-3.6-7.5-5.7-12.3-5.7H203c-6.8 0-10.5 7.9-6.1 13.1L459.4 512 196.9 824.9A7.95 7.95 0 00203 838h79.8c4.7 0 9.2-2.1 12.3-5.7l216.5-258.1 216.5 258.1c3 3.6 7.5 5.7 12.3 5.7h79.8c6.8 0 10.5-7.9 6.1-13.1L563.8 512z'%3e%3c/path%3e%3c/svg%3e");}
-.scanex-requests-icon.back {background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='64 64 896 896' focusable='false' class='' data-icon='left-circle' width='24px' height='24px' fill='currentColor' aria-hidden='true'%3e%3cpath d='M603.3 327.5l-246 178a7.95 7.95 0 000 12.9l246 178c5.3 3.8 12.7 0 12.7-6.5V643c0-10.2-4.9-19.9-13.2-25.9L457.4 512l145.4-105.2c8.3-6 13.2-15.6 13.2-25.9V334c0-6.5-7.4-10.3-12.7-6.5z'%3e%3c/path%3e%3cpath d='M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z'%3e%3c/path%3e%3c/svg%3e");}
-.scanex-requests-icon.remove {background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='64 64 896 896' focusable='false' class='' data-icon='delete' width='24px' height='24px' fill='%23EB5757' aria-hidden='true'%3e%3cpath d='M360 184h-8c4.4 0 8-3.6 8-8v8h304v-8c0 4.4 3.6 8 8 8h-8v72h72v-80c0-35.3-28.7-64-64-64H352c-35.3 0-64 28.7-64 64v80h72v-72zm504 72H160c-17.7 0-32 14.3-32 32v32c0 4.4 3.6 8 8 8h60.4l24.7 523c1.6 34.1 29.8 61 63.9 61h454c34.2 0 62.3-26.8 63.9-61l24.7-523H888c4.4 0 8-3.6 8-8v-32c0-17.7-14.3-32-32-32zM731.3 840H292.7l-24.2-512h487l-24.2 512z'%3e%3c/path%3e%3c/svg%3e");}
-.scanex-zoom-icon.minus {background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='64 64 896 896' focusable='false' class='' data-icon='minus' width='1em' height='1em' fill='currentColor' aria-hidden='true'%3e%3cpath d='M872 474H152c-4.4 0-8 3.6-8 8v60c0 4.4 3.6 8 8 8h720c4.4 0 8-3.6 8-8v-60c0-4.4-3.6-8-8-8z'%3e%3c/path%3e%3c/svg%3e");}
-.scanex-zoom-icon.plus {background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='64 64 896 896' focusable='false' class='' data-icon='plus' width='1em' height='1em' fill='currentColor' aria-hidden='true'%3e%3cdefs%3e%3cstyle%3e%3c/style%3e%3c/defs%3e%3cpath d='M482 152h60q8 0 8 8v704q0 8-8 8h-60q-8 0-8-8V160q0-8 8-8z'%3e%3c/path%3e%3cpath d='M176 474h672q8 0 8 8v60q0 8-8 8H176q-8 0-8-8v-60q0-8 8-8z'%3e%3c/path%3e%3c/svg%3e");}
 .hidden {
     display: none !important;
 }
@@ -33,6 +17,22 @@
     margin-left: 20px;
 }
 
+.scanex-legend-icon.borders {background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='64 64 896 896' focusable='false' class='' data-icon='plus-square' width='18px' height='18px' fill='currentColor' aria-hidden='true'%3e%3cpath d='M328 544h152v152c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8V544h152c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8H544V328c0-4.4-3.6-8-8-8h-48c-4.4 0-8 3.6-8 8v152H328c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8z'%3e%3c/path%3e%3cpath d='M880 112H144c-17.7 0-32 14.3-32 32v736c0 17.7 14.3 32 32 32h736c17.7 0 32-14.3 32-32V144c0-17.7-14.3-32-32-32zm-40 728H184V184h656v656z'%3e%3c/path%3e%3c/svg%3e");}
+.scanex-legend-icon.header-icon {background-image: url("data:image/svg+xml,%3csvg width='16' height='15' viewBox='0 0 16 15' fill='%23343434' xmlns='http://www.w3.org/2000/svg'%3e %3cpath d='M16 2H8V4H16V2Z' fill='%23343434'/%3e %3cpath d='M5 0H1C0.734784 0 0.48043 0.105357 0.292893 0.292893C0.105357 0.48043 0 0.734784 0 1L0 5C0 5.26522 0.105357 5.51957 0.292893 5.70711C0.48043 5.89464 0.734784 6 1 6H5C5.26522 6 5.51957 5.89464 5.70711 5.70711C5.89464 5.51957 6 5.26522 6 5V1C6 0.734784 5.89464 0.48043 5.70711 0.292893C5.51957 0.105357 5.26522 0 5 0ZM4 4H2V2H4V4Z' fill='%23343434'/%3e %3cpath d='M16 10H8V12H16V10Z' fill='%23343434'/%3e %3cpath d='M5.70708 8.29259C5.51955 8.10512 5.26525 7.99981 5.00008 7.99981C4.73492 7.99981 4.48061 8.10512 4.29308 8.29259L3.00008 9.58559L1.70708 8.29259C1.61483 8.19708 1.50449 8.1209 1.38249 8.06849C1.26048 8.01608 1.12926 7.9885 0.996482 7.98734C0.863703 7.98619 0.732023 8.01149 0.609127 8.06177C0.486231 8.11205 0.374579 8.18631 0.280686 8.2802C0.186794 8.37409 0.11254 8.48574 0.0622595 8.60864C0.0119786 8.73154 -0.0133231 8.86321 -0.0121693 8.99599C-0.0110155 9.12877 0.0165708 9.25999 0.0689798 9.382C0.121389 9.504 0.197571 9.61435 0.293081 9.70659L1.58608 10.9996L0.293081 12.2926C0.197571 12.3848 0.121389 12.4952 0.0689798 12.6172C0.0165708 12.7392 -0.0110155 12.8704 -0.0121693 13.0032C-0.0133231 13.136 0.0119786 13.2677 0.0622595 13.3905C0.11254 13.5134 0.186794 13.6251 0.280686 13.719C0.374579 13.8129 0.486231 13.8871 0.609127 13.9374C0.732023 13.9877 0.863703 14.013 0.996482 14.0118C1.12926 14.0107 1.26048 13.9831 1.38249 13.9307C1.50449 13.8783 1.61483 13.8021 1.70708 13.7066L3.00008 12.4136L4.29308 13.7066C4.38533 13.8021 4.49567 13.8783 4.61768 13.9307C4.73968 13.9831 4.8709 14.0107 5.00368 14.0118C5.13646 14.013 5.26814 13.9877 5.39104 13.9374C5.51393 13.8871 5.62558 13.8129 5.71948 13.719C5.81337 13.6251 5.88762 13.5134 5.9379 13.3905C5.98818 13.2677 6.01349 13.136 6.01233 13.0032C6.01118 12.8704 5.98359 12.7392 5.93118 12.6172C5.87877 12.4952 5.80259 12.3848 5.70708 12.2926L4.41408 10.9996L5.70708 9.70659C5.89455 9.51907 5.99987 9.26476 5.99987 8.99959C5.99987 8.73443 5.89455 8.48012 5.70708 8.29259Z' fill='%23343434'/%3e %3c/svg%3e");}
+.scanex-legend-icon.icon.active {background-image: url("data:image/svg+xml,%3csvg width='16' height='15' viewBox='0 0 16 15' fill='none' xmlns='http://www.w3.org/2000/svg'%3e %3cpath d='M16 2H8V4H16V2Z' fill='%23008060'/%3e %3cpath d='M5 0H1C0.734784 0 0.48043 0.105357 0.292893 0.292893C0.105357 0.48043 0 0.734784 0 1L0 5C0 5.26522 0.105357 5.51957 0.292893 5.70711C0.48043 5.89464 0.734784 6 1 6H5C5.26522 6 5.51957 5.89464 5.70711 5.70711C5.89464 5.51957 6 5.26522 6 5V1C6 0.734784 5.89464 0.48043 5.70711 0.292893C5.51957 0.105357 5.26522 0 5 0ZM4 4H2V2H4V4Z' fill='%23008060'/%3e %3cpath d='M16 10H8V12H16V10Z' fill='%23008060'/%3e %3cpath d='M5.70659 8.293C5.51906 8.10553 5.26476 8.00021 4.99959 8.00021C4.73443 8.00021 4.48012 8.10553 4.29259 8.293L2.99959 9.586L1.70659 8.293C1.61435 8.19749 1.504 8.1213 1.382 8.0689C1.25999 8.01649 1.12877 7.9889 0.995994 7.98775C0.863215 7.98659 0.731535 8.0119 0.608639 8.06218C0.485743 8.11246 0.374091 8.18671 0.280198 8.2806C0.186305 8.3745 0.112052 8.48615 0.0617712 8.60904C0.0114903 8.73194 -0.0138114 8.86362 -0.0126576 8.9964C-0.0115037 9.12918 0.0160825 9.2604 0.0684915 9.3824C0.1209 9.50441 0.197083 9.61475 0.292593 9.707L1.58559 11L0.292593 12.293C0.197083 12.3852 0.1209 12.4956 0.0684915 12.6176C0.0160825 12.7396 -0.0115037 12.8708 -0.0126576 13.0036C-0.0138114 13.1364 0.0114903 13.2681 0.0617712 13.391C0.112052 13.5138 0.186305 13.6255 0.280198 13.7194C0.374091 13.8133 0.485743 13.8875 0.608639 13.9378C0.731535 13.9881 0.863215 14.0134 0.995994 14.0122C1.12877 14.0111 1.25999 13.9835 1.382 13.9311C1.504 13.8787 1.61435 13.8025 1.70659 13.707L2.99959 12.414L4.29259 13.707C4.38484 13.8025 4.49518 13.8787 4.61719 13.9311C4.73919 13.9835 4.87041 14.0111 5.00319 14.0122C5.13597 14.0134 5.26765 13.9881 5.39055 13.9378C5.51344 13.8875 5.6251 13.8133 5.71899 13.7194C5.81288 13.6255 5.88713 13.5138 5.93741 13.391C5.9877 13.2681 6.013 13.1364 6.01184 13.0036C6.01069 12.8708 5.9831 12.7396 5.93069 12.6176C5.87828 12.4956 5.8021 12.3852 5.70659 12.293L4.41359 11L5.70659 9.707C5.89406 9.51947 5.99938 9.26516 5.99938 9C5.99938 8.73483 5.89406 8.48053 5.70659 8.293Z' fill='%23008060'/%3e %3c/svg%3e");}
+.scanex-legend-icon.icon {background-image: url("data:image/svg+xml,%3csvg width='16' height='15' viewBox='0 0 16 15' fill='none' xmlns='http://www.w3.org/2000/svg'%3e %3cpath d='M16 2H8V4H16V2Z' fill='%23453D3D'/%3e %3cpath d='M5 0H1C0.734784 0 0.48043 0.105357 0.292893 0.292893C0.105357 0.48043 0 0.734784 0 1L0 5C0 5.26522 0.105357 5.51957 0.292893 5.70711C0.48043 5.89464 0.734784 6 1 6H5C5.26522 6 5.51957 5.89464 5.70711 5.70711C5.89464 5.51957 6 5.26522 6 5V1C6 0.734784 5.89464 0.48043 5.70711 0.292893C5.51957 0.105357 5.26522 0 5 0ZM4 4H2V2H4V4Z' fill='%23453D3D'/%3e %3cpath d='M16 10H8V12H16V10Z' fill='%23453D3D'/%3e %3cpath d='M5.70659 8.293C5.51906 8.10553 5.26476 8.00021 4.99959 8.00021C4.73443 8.00021 4.48012 8.10553 4.29259 8.293L2.99959 9.586L1.70659 8.293C1.61435 8.19749 1.504 8.1213 1.382 8.0689C1.25999 8.01649 1.12877 7.9889 0.995994 7.98775C0.863215 7.98659 0.731535 8.0119 0.608639 8.06218C0.485743 8.11246 0.374091 8.18671 0.280198 8.2806C0.186305 8.3745 0.112052 8.48615 0.0617712 8.60904C0.0114903 8.73194 -0.0138114 8.86362 -0.0126576 8.9964C-0.0115037 9.12918 0.0160825 9.2604 0.0684915 9.3824C0.1209 9.50441 0.197083 9.61475 0.292593 9.707L1.58559 11L0.292593 12.293C0.197083 12.3852 0.1209 12.4956 0.0684915 12.6176C0.0160825 12.7396 -0.0115037 12.8708 -0.0126576 13.0036C-0.0138114 13.1364 0.0114903 13.2681 0.0617712 13.391C0.112052 13.5138 0.186305 13.6255 0.280198 13.7194C0.374091 13.8133 0.485743 13.8875 0.608639 13.9378C0.731535 13.9881 0.863215 14.0134 0.995994 14.0122C1.12877 14.0111 1.25999 13.9835 1.382 13.9311C1.504 13.8787 1.61435 13.8025 1.70659 13.707L2.99959 12.414L4.29259 13.707C4.38484 13.8025 4.49518 13.8787 4.61719 13.9311C4.73919 13.9835 4.87041 14.0111 5.00319 14.0122C5.13597 14.0134 5.26765 13.9881 5.39055 13.9378C5.51344 13.8875 5.6251 13.8133 5.71899 13.7194C5.81288 13.6255 5.88713 13.5138 5.93741 13.391C5.9877 13.2681 6.013 13.1364 6.01184 13.0036C6.01069 12.8708 5.9831 12.7396 5.93069 12.6176C5.87828 12.4956 5.8021 12.3852 5.70659 12.293L4.41359 11L5.70659 9.707C5.89406 9.51947 5.99938 9.26516 5.99938 9C5.99938 8.73483 5.89406 8.48053 5.70659 8.293Z' fill='%23453D3D'/%3e %3c/svg%3e");}
+.scanex-legend-icon.incidents {background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='64 64 896 896' focusable='false' class='' data-icon='plus-square' width='18px' height='18px' fill='currentColor' aria-hidden='true'%3e%3cpath d='M328 544h152v152c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8V544h152c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8H544V328c0-4.4-3.6-8-8-8h-48c-4.4 0-8 3.6-8 8v152H328c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8z'%3e%3c/path%3e%3cpath d='M880 112H144c-17.7 0-32 14.3-32 32v736c0 17.7 14.3 32 32 32h736c17.7 0 32-14.3 32-32V144c0-17.7-14.3-32-32-32zm-40 728H184V184h656v656z'%3e%3c/path%3e%3c/svg%3e");}
+.scanex-legend-icon.plus {background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='64 64 896 896' focusable='false' class='' data-icon='plus-square' width='24px' height='24px' fill='currentColor' aria-hidden='true'%3e%3cpath d='M328 544h152v152c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8V544h152c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8H544V328c0-4.4-3.6-8-8-8h-48c-4.4 0-8 3.6-8 8v152H328c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8z'%3e%3c/path%3e%3cpath d='M880 112H144c-17.7 0-32 14.3-32 32v736c0 17.7 14.3 32 32 32h736c17.7 0 32-14.3 32-32V144c0-17.7-14.3-32-32-32zm-40 728H184V184h656v656z'%3e%3c/path%3e%3c/svg%3e");}
+.scanex-uploaded-icon.box.active {background-image: url("data:image/svg+xml,%3csvg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3e %3crect width='20' height='20' rx='4' fill='%23067A57'/%3e %3cmask id='path-2-inside-1' fill='white'%3e %3cpath fill-rule='evenodd' clip-rule='evenodd' d='M8.65083 12.1709L14.8979 5.92383L16.3121 7.33804L8.66069 14.9894L4.29688 10.6862L5.70117 9.26216L8.65083 12.1709Z'/%3e %3c/mask%3e %3cpath fill-rule='evenodd' clip-rule='evenodd' d='M8.65083 12.1709L14.8979 5.92383L16.3121 7.33804L8.66069 14.9894L4.29688 10.6862L5.70117 9.26216L8.65083 12.1709Z' fill='white'/%3e %3cpath d='M14.8979 5.92383L16.3121 4.50961L14.8979 3.0954L13.4837 4.50961L14.8979 5.92383ZM8.65083 12.1709L7.24654 13.5949L8.66069 14.9894L10.065 13.5851L8.65083 12.1709ZM16.3121 7.33804L17.7263 8.75226L19.1405 7.33804L17.7263 5.92383L16.3121 7.33804ZM8.66069 14.9894L7.25639 16.4135L8.67054 17.808L10.0749 16.4037L8.66069 14.9894ZM4.29688 10.6862L2.87281 9.28194L1.46852 10.706L2.89258 12.1103L4.29688 10.6862ZM5.70117 9.26216L7.10546 7.8381L5.68139 6.43381L4.2771 7.85787L5.70117 9.26216ZM13.4837 4.50961L7.23662 10.7567L10.065 13.5851L16.3121 7.33804L13.4837 4.50961ZM17.7263 5.92383L16.3121 4.50961L13.4837 7.33804L14.8979 8.75226L17.7263 5.92383ZM4.2771 7.85787L2.87281 9.28194L5.72094 12.0905L7.12523 10.6665L4.2771 7.85787ZM10.0551 10.7468L7.10546 7.8381L4.29687 10.6862L7.24654 13.5949L10.0551 10.7468ZM10.0749 16.4037L17.7263 8.75226L14.8979 5.92383L7.24647 13.5752L10.0749 16.4037ZM2.89258 12.1103L7.25639 16.4135L10.065 13.5654L5.70117 9.26216L2.89258 12.1103Z' fill='white' mask='url(%23path-2-inside-1)'/%3e %3c/svg%3e");}
+.scanex-uploaded-icon.box {background-image: url("data:image/svg+xml,%3csvg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3e %3crect opacity='0.5' x='0.5' y='0.5' width='19' height='19' rx='3.5' stroke='black'/%3e %3c/svg%3e");}
+.scanex-uploaded-icon.calendar {background-image: url("data:image/svg+xml,%3csvg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3e %3cpath d='M18.125 3.125H1.875C1.185 3.125 0.625 3.685 0.625 4.375V18.125C0.625 18.815 1.185 19.375 1.875 19.375H18.125C18.815 19.375 19.375 18.815 19.375 18.125V4.375C19.375 3.685 18.815 3.125 18.125 3.125Z' stroke='%23067A57' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3cpath d='M0.625 6.875H19.375' stroke='%23067A57' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3cpath d='M5.625 0.625V3.125' stroke='%23067A57' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3cpath d='M14.375 0.625V3.125' stroke='%23067A57' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3cpath d='M6.875 9.375V16.875' stroke='%23067A57' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3cpath d='M13.125 9.375V16.875' stroke='%23067A57' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3cpath d='M3.125 13.125H16.875' stroke='%23067A57' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3c/svg%3e");}
+.scanex-uploaded-icon.search {background-image: url("data:image/svg+xml,%3csvg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3e %3cg clip-path='url(%23clip0)'%3e %3cpath d='M8.75 17.5C3.925 17.5 0 13.575 0 8.75C0 3.925 3.925 0 8.75 0C13.575 0 17.5 3.925 17.5 8.75C17.5 13.575 13.575 17.5 8.75 17.5ZM8.75 2.5C5.30375 2.5 2.5 5.30375 2.5 8.75C2.5 12.1962 5.30375 15 8.75 15C12.1962 15 15 12.1962 15 8.75C15 5.30375 12.1962 2.5 8.75 2.5Z' fill='%236B707B'/%3e %3cpath d='M19.6337 17.8663L16.6425 14.875C16.1288 15.5362 15.5362 16.1288 14.875 16.6425L17.8663 19.6337C18.11 19.8775 18.43 20 18.75 20C19.07 20 19.39 19.8775 19.6337 19.6337C20.1225 19.145 20.1225 18.355 19.6337 17.8663Z' fill='%236B707B'/%3e %3c/g%3e %3cdefs%3e %3cclipPath id='clip0'%3e %3crect width='20' height='20' fill='white'/%3e %3c/clipPath%3e %3c/defs%3e %3c/svg%3e");}
+.scanex-declaration-icon.doc {background-image: url("data:image/svg+xml,%3csvg width='22' height='24' viewBox='0 0 22 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3e %3cpath d='M5 19V20.5C5 21.693 3.806 21.947 3.46 21.996C2.651 21.974 2 21.313 2 20.5V2H17V17H19V1C19 0.448 18.552 0 18 0H1C0.448 0 0 0.448 0 1V20.5C0 22.43 1.57 24 3.5 24H18.5C20.43 24 22 22.43 22 20.5V19H5Z' fill='%23007F60'/%3e %3c/svg%3e");}
+.scanex-component-icon.close {background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='64 64 896 896' focusable='false' class='' data-icon='close' width='18px' height='18px' fill='currentColor' aria-hidden='true'%3e%3cpath d='M563.8 512l262.5-312.9c4.4-5.2.7-13.1-6.1-13.1h-79.8c-4.7 0-9.2 2.1-12.3 5.7L511.6 449.8 295.1 191.7c-3-3.6-7.5-5.7-12.3-5.7H203c-6.8 0-10.5 7.9-6.1 13.1L459.4 512 196.9 824.9A7.95 7.95 0 00203 838h79.8c4.7 0 9.2-2.1 12.3-5.7l216.5-258.1 216.5 258.1c3 3.6 7.5 5.7 12.3 5.7h79.8c6.8 0 10.5-7.9 6.1-13.1L563.8 512z'%3e%3c/path%3e%3c/svg%3e");}
+.scanex-requests-icon.back {background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='64 64 896 896' focusable='false' class='' data-icon='left-circle' width='24px' height='24px' fill='currentColor' aria-hidden='true'%3e%3cpath d='M603.3 327.5l-246 178a7.95 7.95 0 000 12.9l246 178c5.3 3.8 12.7 0 12.7-6.5V643c0-10.2-4.9-19.9-13.2-25.9L457.4 512l145.4-105.2c8.3-6 13.2-15.6 13.2-25.9V334c0-6.5-7.4-10.3-12.7-6.5z'%3e%3c/path%3e%3cpath d='M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z'%3e%3c/path%3e%3c/svg%3e");}
+.scanex-requests-icon.remove {background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='64 64 896 896' focusable='false' class='' data-icon='delete' width='24px' height='24px' fill='%23EB5757' aria-hidden='true'%3e%3cpath d='M360 184h-8c4.4 0 8-3.6 8-8v8h304v-8c0 4.4 3.6 8 8 8h-8v72h72v-80c0-35.3-28.7-64-64-64H352c-35.3 0-64 28.7-64 64v80h72v-72zm504 72H160c-17.7 0-32 14.3-32 32v32c0 4.4 3.6 8 8 8h60.4l24.7 523c1.6 34.1 29.8 61 63.9 61h454c34.2 0 62.3-26.8 63.9-61l24.7-523H888c4.4 0 8-3.6 8-8v-32c0-17.7-14.3-32-32-32zM731.3 840H292.7l-24.2-512h487l-24.2 512z'%3e%3c/path%3e%3c/svg%3e");}
+.scanex-zoom-icon.minus {background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='64 64 896 896' focusable='false' class='' data-icon='minus' width='1em' height='1em' fill='currentColor' aria-hidden='true'%3e%3cpath d='M872 474H152c-4.4 0-8 3.6-8 8v60c0 4.4 3.6 8 8 8h720c4.4 0 8-3.6 8-8v-60c0-4.4-3.6-8-8-8z'%3e%3c/path%3e%3c/svg%3e");}
+.scanex-zoom-icon.plus {background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='64 64 896 896' focusable='false' class='' data-icon='plus' width='1em' height='1em' fill='currentColor' aria-hidden='true'%3e%3cdefs%3e%3cstyle%3e%3c/style%3e%3c/defs%3e%3cpath d='M482 152h60q8 0 8 8v704q0 8-8 8h-60q-8 0-8-8V160q0-8 8-8z'%3e%3c/path%3e%3cpath d='M176 474h672q8 0 8 8v60q0 8-8 8H176q-8 0-8-8v-60q0-8 8-8z'%3e%3c/path%3e%3c/svg%3e");}
 ﻿button.findFiresButton
 {
 	margin-top: 3px;
@@ -728,37 +728,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
 	border-right-color: #fff;
 	}
 
-.leaflet-control.scanex-forestry-zoom {
-    background-color: #FFFFFF;
-    border-radius: 10px;    
-    padding: 7px 0;    
-    border: 1px solid #e0e0e0;    
-    clear: none;   
-}
-.scanex-forestry-zoom .middle {
-    font-style: normal;
-    font-weight: 600;
-    font-size: 14px;
-    line-height: 19px;
-    color: #453d3d;
-    border-left: 2px solid #e3e8f1;
-    border-right: 2px solid #e3e8f1;
-    width: 40px;
-    padding: 0px 10px 0px 10px;
-    text-align: center;
-}
-.scanex-forestry-zoom > * {
-    display: inline-block;
-    vertical-align: middle;    
-}
-.scanex-forestry-zoom .scanex-zoom-icon {
-    background-repeat: no-repeat;
-    background-position: center;    
-    cursor: pointer;
-    width: 24px;
-    height: 24px;        
-    margin: 0px 5px 0px 5px;
-}
 .scanex-forestry-content.leaflet-control {
     width: 100%;
     margin-bottom: 20px;
@@ -807,6 +776,37 @@ svg.leaflet-image-layer.leaflet-interactive path {
 
 .component > .container {
     width: 100%;
+}
+.leaflet-control.scanex-forestry-zoom {
+    background-color: #FFFFFF;
+    border-radius: 10px;    
+    padding: 7px 0;    
+    border: 1px solid #e0e0e0;    
+    clear: none;   
+}
+.scanex-forestry-zoom .middle {
+    font-style: normal;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 19px;
+    color: #453d3d;
+    border-left: 2px solid #e3e8f1;
+    border-right: 2px solid #e3e8f1;
+    width: 40px;
+    padding: 0px 10px 0px 10px;
+    text-align: center;
+}
+.scanex-forestry-zoom > * {
+    display: inline-block;
+    vertical-align: middle;    
+}
+.scanex-forestry-zoom .scanex-zoom-icon {
+    background-repeat: no-repeat;
+    background-position: center;    
+    cursor: pointer;
+    width: 24px;
+    height: 24px;        
+    margin: 0px 5px 0px 5px;
 }
 .leaflet-control.scanex-forestry-legend {  
     clear: none;      
@@ -1057,6 +1057,922 @@ svg.leaflet-image-layer.leaflet-interactive path {
 .scanex-baselayers.baselayer-map-right.leaflet-control {
     margin-right: -10px;
 } */
+.gmxTimeline * {
+    font-family: tahoma;
+}
+.gmxTimeline.leaflet-control {
+    position: absolute;
+    left: 0px;
+    right: 0px;
+    bottom: 19px;
+    margin: 0px;
+    padding: 0px;
+}
+.gmxTimeline .hideButton {
+    top: 5px;
+    position: relative;
+    height: 24px;
+    padding-right: 6px;
+    padding-left: 10px;
+    padding-right: 6px;
+}
+.gmxTimeline .closeWarning {
+	cursor: pointer;
+}
+.gmxTimeline .warningText {
+	margin-right: 27px;
+}
+.gmxTimeline .warning span {
+    position: absolute;
+    bottom: 0px;
+    right: 40px;
+    display: block;
+    padding: 5px 10px 5px 10px;
+    background: rgba(69, 176, 216, 1);
+    border: 1px solid #999;
+    border-radius: 4px;
+    color: #FFF;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 19px;
+}
+
+.gmxTimeline .showButton.off {
+	opacity: 0.5;
+	cursor: auto;
+	pointer-events: none;
+}
+.gmxTimeline .tabs {
+    z-index: 1;
+    position: relative;
+    top: 11px;
+}
+
+.gmxTimeline .layer {
+    bottom: 14px;
+    position: absolute;
+}
+
+.gmxTimeline .options {
+    float: left;
+}
+.gmxTimeline .timeline-content {
+    background-color: #f0f4f6;
+    font-size: 12px;    
+}
+
+.gmxTimeline div.timeline-axis-text {
+
+	padding-left:3px;
+
+
+}
+
+.gmxTimeline .timeline-axis-text-minor {
+    font-size: 11px;
+    font-weight: 600;
+}
+.gmxTimeline .timeline-axis-text-major {
+    font-size: 13px; 
+    font-weight: 600;   
+}
+.gmxTimeline .timeline-axis-grid-minor {
+    border-color: #bfbfbf;
+}
+
+.gmxTimeline .timeline-container {
+    background-color: lightgray;
+}
+.gmxTimeline .internal-container {
+    border: 1px solid rgba(70,70,70,.3);
+    background-color: white;
+}
+
+.gmxTimeline .vis-group  .vis-point {
+    top: 10px;
+}
+
+.gmxTimeline .timeline-event-dot-container {
+    padding-top: 6px;
+    top: 73px;
+    width: 10px;
+    height: 10px;
+}
+
+.gmxTimeline .item-range .timeline-event-dot {
+    border-color: rgb(69, 175, 215);
+    border-width: 5px;
+    box-shadow: 0px 0px 0px 1px #FFF, 0px 0px 0px 2px rgb(69, 175, 215);
+}
+.gmxTimeline .item-selected{
+    margin-top: -5px;
+}
+
+.gmxTimeline .timeline-event-content {
+    z-index: 999;
+    display: none;
+    position: absolute;
+    left: -7px;
+    top: -1px;
+    z-index: 334;
+    width: 10px;
+    height: 10px;
+    background-color: rgb(69, 175, 215);
+    border-radius: 15px;
+    border-color: rgb(69, 175, 215);
+    border-width: 5px;
+    box-shadow: 0px 0px 0px 1px #FFF, 0px 0px 0px 2px rgb(69, 175, 215);
+}
+
+.gmxTimeline .timeline-event {
+}
+
+.gmxTimeline .timeline-event-dot {
+	cursor: pointer;
+    position: absolute;
+    border-color: #666;
+    background: #666;
+    z-index: 3;
+}
+
+.gmxTimeline .item-selected .timeline-event-dot {
+    position: relative;
+    border-color: #da5d40;
+    bottom: 17px;
+    top: px;
+    width: 10px!important;
+    height: 10px!important;
+    background-color: #da5d40;
+    border-radius: 15px;
+    /*z-index: 1;*/
+}
+
+.gmxTimeline .item-selected .timeline-event-content {
+    top: -13px;
+}
+
+.gmxTimeline .item-clicked .timeline-event-content {
+    display: block;
+    cursor: pointer;
+}
+
+.gmxTimeline .item-clicked {
+    border-width: 1px;
+    width: 10px;
+    height: 12px;
+    padding-right: 0.6%;
+    padding-bottom: 0.2%;
+}
+
+.gmxTimeline .gmx-focuse {
+    border: 1px solid rgba(70,70,70,.3);
+    padding: 0;
+    margin: 0;
+    left: 0px;
+    position: relative;
+    min-width: 960px;
+}
+
+.gmxTimeline .w-scroll {
+    position: relative;
+    height: 33px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.gmxTimeline .favorite.on  {
+    fill: #da5d40;
+}
+
+.gmxTimeline .w-scroll .l-scroll {
+    margin-left: -6px;
+}
+
+.gmxTimeline .w-scroll .r-scroll {
+    margin-right: 10px;
+    right: -6px;
+}
+
+.gmxTimeline .w-scroll .l-scroll-title {
+    width: 20px;
+    height: 20px;
+    background-color: red;
+    margin-top: -23px;
+}
+
+.gmxTimeline .w-scroll .g-scroll {
+    height: 2px;
+    width: 100%;
+    top: 12px;
+    left: 0px;
+    position: absolute;
+    display: none;
+}
+
+.gmxTimeline .w-scroll .c-scroll {
+    width: 100%;
+    height: 81px;
+    margin-left: 11px;
+    margin-right: 12px;
+    background-color: rgba(81, 184, 202, 0.15);
+    position: absolute;
+    left: 0px;
+    top: 24px;
+    border-left: 1px solid #9ad4df;
+    border-right: 1px solid #9ad4df;
+    display: none;
+}
+
+.gmxTimeline .w-scroll .c-scroll .c-borders {
+    width: 100%;
+    position: relative;
+    top: -12px;
+    left: -1px;
+    border-top: 1px solid #9ad4df;  
+    border-right: 1px solid #9ad4df;
+    border-left: 1px solid #9ad4df;
+}
+
+.gmxTimeline .vis {
+    padding-left: 5px;
+    padding-right: 5px;
+    padding-bottom: 5px;
+}
+
+.gmxTimeline .tabs ul, .tabs ul li {
+    list-style: none;
+}
+
+.gmxTimeline .tabs ul {
+    display: inline-flex;
+/*    height: 26px;*/
+    padding-bottom: 10px;
+    margin: 0;
+}
+
+.gmxTimeline .tabs .clicked:hover {
+    background-color: lightgray;
+}
+
+.gmxTimeline  span.clicked.click-left{
+    display: inline-block;
+    background-color: #dee7ec;
+    cursor: pointer;
+    position: relative;
+    border-radius: 4px;
+    border: 2px solid #dee7ec;
+    height: 20px;
+    bottom: 5px;
+}
+
+
+.gmxTimeline  span.clicked.click-right{
+    display: inline-block;
+    background-color: #dee7ec;
+    cursor: pointer;
+    position: relative;
+    border-radius: 4px;
+    border: 2px solid #dee7ec;
+    height: 20px;
+    bottom: 5px;
+}
+
+.gmxTimeline .clicked.el-left.disabled {
+    display: inline-block;
+    background-color: #dee7ec;
+    cursor: pointer;
+    bottom: 10px;
+    left: -5px;
+    position: relative;
+    border-radius: 4px;
+    border: 1px solid #999;
+    height: 25px;
+    pointer-events: none;
+    opacity: 0.5;
+}
+
+.gmxTimeline .clicked.el-left {
+    display: inline-block;
+    background-color: #dee7ec;
+    cursor: pointer;
+    bottom: 10px;
+    left: -5px;
+    position: relative;
+    border-radius: 4px;
+    border: 1px solid #999;
+    height: 25px;
+    opacity: 1;
+}
+
+.gmxTimeline .tabs ul li {
+    padding-left: 5px;
+    padding-right: 5px;
+    display: inline-block;
+    width: 185px;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 0px;
+    border-bottom-left-radius: 0px;
+    background-color: white;
+    cursor: pointer;
+    position: relative;
+    background: #dee7ec;
+    box-shadow: rgba(0,0,0,0.09804) 0px 1px 1px 0px;
+    border: 1px solid rgba(70,70,70,.3);
+}
+
+.gmxTimeline .tabs ul li.last {
+    margin-right: 0;
+}
+
+.gmxTimeline .tabs ul li .close-button {
+    position: absolute;
+    left: auto;
+    right: 4px;
+    top: 8px;
+    width: 15px;
+    height: 15px;
+    padding-right: 0px;
+    background: url(//maps.kosmosnimki.ru/api/img/redesign/icons2.png) -78px -5px;
+}
+
+.gmxTimeline .tabs ul li span {
+    padding-right: 5px;
+    position: relative;
+    left: 5px;
+    bottom: 4px;
+    overflow: hidden;
+    font-size: 12px;
+    color: #666;
+    font-weight: 600;
+    display: inline-block;
+    max-width: 130px;
+    white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.gmxTimeline .tabs ul li .close-button:hover span {
+    color: #69C;
+    text-decoration: underline;
+}
+
+.gmxTimeline .tabs .selected {
+    border-bottom: white;
+    padding-bottom: 0px;
+    background: #FFF;
+    box-shadow: #FFF 0px 1px 1px 0px;
+}
+
+.gmxTimeline .leaflet-gmx-iconSvg {
+    text-align: center;
+    height: 30px;
+    width: 30px;
+    border-radius: 4px;
+    background-color: rgb(255, 255, 255);
+    box-shadow: 0px 3px 4.7px 0.3px rgba(0, 0, 0, 0.24);
+    fill: #757575;
+    clear: none;
+    cursor: pointer;
+    display: block;
+    float: right;
+    margin-left: 4px;
+    position: relative;
+    top: 8px;
+    left: 6px;
+}
+.gmxTimeline .leaflet-gmx-iconSvg svg {
+    height: 23px;
+    width: 23px;
+    margin-left: 4px;
+    margin-right: 4px;
+    margin-top: 4px;
+    pointer-events: none;
+}
+
+.gmxTimeline .eye  {
+    left: 3px;
+    top: 3px;
+    color:red;
+    opacity: 1;
+}
+.gmxTimeline .w-scroll {
+    fill: #666;
+}
+.gmxTimeline svg {
+    height: 22px;
+    width: 15px;
+    pointer-events: none;
+}
+
+.gmxTimeline .switch  {
+    font-size: 0;
+    float: right;
+    color: #82909b;
+    padding: 4px;
+    z-index: 2;
+    position: absolute;
+    right: 44px;
+    width: auto;
+    top: 6px;
+}
+.gmxTimeline .switch .diamond {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    margin-top: 10px;
+    margin-left: 90px;
+    background-color: rgb(69, 176, 218);
+    transform: rotate(-45deg);
+    transform-origin: 0 100%;
+}
+.gmxTimeline .modeSelectedOff, .gmxTimeline .modeSelectedOn  {
+    background-color: white;
+    width: 90px;
+    line-height: 24px;
+    text-align: center;
+    display: inline-block;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    vertical-align: middle;
+}
+.gmxTimeline .modeSelectedOff  {
+    border-top-left-radius: 8px;
+}
+.gmxTimeline .modeSelectedOn  {
+    border-top-right-radius: 8px;
+    width: 100px;
+}
+.gmxTimeline .modeSelectedOff.on, .gmxTimeline .modeSelectedOn.on  {
+    color: white;
+    background-color: rgb(69, 176, 218);
+}
+
+.gmxTimeline div.timeline-event-dot {
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+    border-style: solid;
+    border-width: 4px;
+}
+
+.gmxTimeline .vis-container {
+    bottom: 0;
+    width: 100%;
+    left: 0px;
+}
+
+
+.gmxTimeline .timeline-frame.timeline-selectable {
+    height: 100px!important;
+}
+
+.gmxTimeline .timeline-content {
+    height: 100px!important;
+}
+
+.gmxTimeline .hr1, .gmxTimeline .hr2 {
+    position: relative;
+    height: 1px;
+    padding-left: 10px;
+    padding-right: 10px;
+    width: 100%;
+    background: rgba(70,70,70,.3);
+    z-index: 1;
+    top: 85px;
+    margin-left: 6px;
+	pointer-events: none;
+}
+
+.gmxTimeline .hr2 {
+    top: 67px;
+}
+
+.gmxTimeline .hr1.on, .gmxTimeline .hr2.on {
+	background: rgba(69, 176, 216, 1);
+	background-image: linear-gradient(100deg, transparent 80%, rgba(255,255,255,.9) 50%);
+    background-size: 3px 4px;
+}
+
+.gmxTimeline .timeline-axis {
+    background: #e6eef2!important;
+}
+
+
+.gmxTimeline span.clicked.click-right.gmx-disabled {
+    position: absolute;
+    top: 46px;
+    left: 32%;
+    border-bottom-right-radius: 4px;
+    border-top-right-radius: 4px;
+    display: none;
+}
+
+.gmxTimeline span.clicked.click-left.gmx-disabled {
+    position: absolute;
+    top: 46px;
+    left: 30%;
+    border-bottom-left-radius: 4px;
+    border-top-left-radius: 4px;
+    display:none;
+}
+
+.gmxTimeline .el-right {
+    display: inline-block;
+    right: 10px;
+    position: absolute;
+    bottom: -6px;
+}
+
+.gmxTimeline .el-left {
+    display: none;
+    text-align: left;
+}
+
+.gmxTimeline .el-left  .el-act, .gmxTimeline .el-left  .el-pass{
+    color: #666;
+    font-size: 12px;
+    font-weight: 400;
+    text-align: left;
+    background-color: #dee7ec;
+    width: auto;
+    line-height: 21px;
+    padding: 2px 10px 2px 10px;
+    text-transform: lowercase;
+    font-weight: 600;
+    display: inline-block;
+    /* margin: 1px; */
+}
+
+.gmxTimeline .el-left  .on {
+    color:  #f7f7f7;
+    background-color:  #45b0d8;
+}
+
+.gmxTimeline .el-act {border-right: 1px solid #999}
+
+.gmxTimeline .el-center {
+    display: inline-block;
+    text-align: center;
+    position: relative;
+    width: 85%;
+}
+
+.gmxTimeline .el-act-cent-1 {
+    color: #666;
+    font-size: 12px;
+    font-weight: 400;
+    position: relative;
+    bottom: 6px;
+    line-height: 7px;
+    text-align: left;
+    border-radius: 4px;
+    border: 1px solid #999;
+    width: auto;
+    margin-left: 3px;
+    padding: 0px 10px 3.5px 10px;
+    text-transform: uppercase;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.gmxTimeline .el-act-cent-2 {
+    color: #666;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 15px;
+    text-align: left;
+    border: 1px solid #999;
+    border-radius: 4px;
+    width: auto;
+    margin-left: 3px;
+    padding: 2px 15px 0px 15px;
+    text-transform: uppercase;
+    font-weight: 600;
+    display: inline-block;
+    background: #dee7ec;
+    bottom: 5px;
+    position: relative;
+}
+
+.gmxTimeline .disabled {
+    pointer-events: none;
+    cursor: auto;
+}
+
+.gmxTimeline .clouds-content {
+    color: #666;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 23px;
+    text-align: left;
+    border-radius: 4px;
+    width: auto;
+    height: 23px;
+    margin-left: 0px;
+    padding: 3px 10px 0px 10px;
+    text-transform: uppercase;
+    font-weight: 600;
+    display: inline-block;
+    margin-top: 6px;
+    position: relative;
+    bottom: 2px;
+}
+
+.gmxTimeline .el-act-right-1 {
+    color: #666;
+    font-size: 12px;
+    font-weight: 400;
+    text-align: left;
+    border-radius: 4px;
+    border: 1px solid #999;
+    width: auto;
+    margin-left: 3px;
+    text-transform: uppercase;
+    font-weight: 600;
+    display: inline-block;
+    background: #dee7ec;
+    position: relative;
+    top: -7px;
+    line-height: 10px;
+}
+
+.gmxTimeline .el-act-right-2 {
+    color: #666;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 23px;
+    text-align: left;
+    border-radius: 4px;
+    width: auto;
+    height: 23px;
+    margin-left: 12px;
+    padding: 3px 6px 1px 4px;
+    text-transform: uppercase;
+    font-weight: 600;
+    display: inline-block;
+    position: relative;
+    top: 4px;
+}
+
+.gmxTimeline .hideButton-content {
+    cursor: pointer;
+    border-left: 1px solid #bebebe;
+    border-right: 1px solid #bebebe;
+    height: 33px;
+    margin-left: 0px;
+    padding: 3px 6px 1px 4px;
+    display: inline-block;
+    background: #dee7ec;
+    right: -5px;
+    bottom: 2px;
+    position: relative;
+}
+
+.gmxTimeline .leaflet-gmx-iconSvg.hideButton.leaflet-control {
+    position: absolute;
+    right: -3px;
+    height: 38px;
+    width: 43px;
+    border-radius: 2px;
+    bottom: 200px;
+    background: #dee7ec;
+    box-shadow: none;
+    z-index: 1000;
+}
+
+.gmxTimeline .different-interval, .gmxTimeline .single-interval {
+    cursor: pointer;
+    width: 30px;
+    padding: 3px 5px 2px 5px;
+    position: relative;
+    display: inline-block;
+    bottom: 0px;
+    left: 0px;
+}
+
+.gmxTimeline .different-interval.on, .gmxTimeline .single-interval.on {
+    background-color: #45b0d8;
+    cursor: auto;
+}
+
+.gmxTimeline .favorite, .gmxTimeline .remove, .gmxTimeline .trash {
+    cursor: pointer;
+}
+
+.gmxTimeline .calendar-text {
+    color: #666;
+    text-decoration: none;
+    font-size: 14px;
+    position: relative;
+    bottom: 4px;
+    margin-left:3px; 
+    font-weight:500;
+}
+
+.gmxTimeline .clock-text {
+    color: #666;
+    text-decoration: none;
+    font-size: 14px;
+    position: relative;
+    bottom: 4px;
+    margin-left:3px;
+    font-weight: 500;
+}
+
+.gmxTimeline .line {
+    position: relative;
+    display: inline-block;
+    margin-right: 4px;
+    margin-left: 4px;
+    top: -1px;
+    width: 11px;
+    height: 11px;
+    padding-right: 0px;
+    line-height: 20px;
+    color: #999;
+    font-weight: 100;
+    font-size: 22px;
+}
+
+.gmxTimeline .line1 {
+    position: relative;
+    display: inline-block;
+    margin-right: 7px;
+    margin-left: 13px;
+    top: -3px;
+    width: 11px;
+    height: 11px;
+    padding-right: 0px;
+    line-height: 20px;
+    color: #999;
+    font-weight: 100;
+    font-size: 22px;
+}
+
+.gmxTimeline .line4 {
+    position: relative;
+    display: inline-block;
+    margin-right: 4px;
+    margin-left: 4px;
+    top: -4px;
+    width: 11px;
+    height: 11px;
+    padding-right: 0px;
+    line-height: 20px;
+    color: #999;
+    font-weight: 100;
+    font-size: 22px;
+    display:none;
+}
+
+.gmxTimeline .cloud-text {
+    color: #666;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.gmxTimeline .click-left svg {
+    height: 18px;
+    width: 18px;
+    pointer-events: none;
+
+}
+
+.gmxTimeline .click-right svg {
+    height: 18px;
+    width: 18px;
+    pointer-events: none;
+
+}
+
+.gmxTimeline .el-act-cent-1 svg {
+    height: 19px;
+    width: 19px;
+    pointer-events: none;
+}
+
+.gmxTimeline .el-act-cent-2 svg {
+    height: 20px;
+    width: 20px;
+    pointer-events: none;
+}
+
+.gmxTimeline .clouds-content svg {
+    width: 19px;
+    pointer-events: none;
+}
+
+.gmxTimeline select.cloud-select {
+    height: 26px;
+    bottom: 6px;
+    position: relative;
+    border: 1px solid transparent;
+    background: transparent;
+    color: #666;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.gmxTimeline .el-act-cent-1 svg {
+    height: 13px;
+    width: 13px;
+    pointer-events: none;
+    position: relative;
+    /*left: 5px;*/
+}
+
+.gmxTimeline .el-act-cent-2 svg {
+    height: 16px;
+    width: 16px;
+    pointer-events: none;
+    position: relative;
+}
+
+
+.gmxTimeline .el-act-right-1 svg {
+    height: 15px;
+    width: 15px;
+    pointer-events: none;
+    position: relative;
+    left: 5px;
+}
+
+.gmxTimeline .tabs  svg {
+    fill:#666;
+    bottom: 1px;
+    position: relative;
+}
+
+.gmxTimeline .gmx-hidden {
+    display: none;
+}
+
+.gmxTimeline .disabled {
+    pointer-events: none;
+    opacity: 0.5;
+}
+
+.gmxTimeline .svgIcon.is-off {
+    fill:#da5d40;
+}
+
+.leaflet-iconLayers.iconLayersShift {
+    margin-bottom: 178px;
+}
+
+
+.scanex-date-interval div.timeline-frame {
+	background-color: #d3d3d3b5;
+}
+
+.scanex-date-interval .buttons .tab {    
+    width: fit-content;
+    padding: 4px;
+    background-color: lightgray;
+    float: left;
+	cursor: pointer;
+}
+.scanex-date-interval .buttons .tab.active {    
+    background-color: lightblue;
+}
+.scanex-date-interval.leaflet-control {
+	/* background-color: #d3d3d3b5; */
+	width: 100%;
+	float: unset;
+	margin: 0;
+    margin-left: -9px;
+    padding: 2px;
+}
+.scanex-date-interval .timeline {
+	width: 100%;
+}
+.scanex-date-interval .icon {
+    position: absolute;
+    bottom: 0px;
+    right: 0px;
+    display: block;
+    padding: 5px 10px 5px 10px;
+    background: rgba(69, 176, 216, 1);
+    border: 1px solid #999;
+    border-radius: 4px;
+    color: #FFF;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 19px;
+}
+.scanex-date-interval div.timeline-event-box,
+.scanex-date-interval div.timeline-event-line
+{
+    display: none;
+}
+.scanex-date-interval div.timeline-event-dot
+{
+	cursor: pointer;
+}
+.scanex-date-interval div.timeline-event-dot.active
+{
+	border-color: red;
+}
+
 .gmxLocation-input {
     text-align: center;
 	width: 210px;
@@ -1131,51 +2047,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
     border-radius: 2px;
     padding: 2px 6px;
 	margin-left: 4px;
-}
-
-.scanex-date-interval div.timeline-frame {
-	background-color: #d3d3d3b5;
-}
-
-.scanex-date-interval .buttons .tab {    
-    width: fit-content;
-    padding: 4px;
-    background-color: lightgray;
-    float: left;
-	cursor: pointer;
-}
-.scanex-date-interval .buttons .tab.active {    
-    background-color: lightblue;
-}
-.scanex-date-interval.leaflet-control {
-	/* background-color: #d3d3d3b5; */
-	width: 100%;
-	float: unset;
-	margin: 0;
-    margin-left: -9px;
-    padding: 2px;
-}
-.scanex-date-interval .timeline {
-	width: 100%;
-}
-.scanex-date-interval .icon {
-    position: absolute;
-    bottom: 0px;
-    right: 0px;
-    display: block;
-    padding: 5px 10px 5px 10px;
-    background: rgba(69, 176, 216, 1);
-    border: 1px solid #999;
-    border-radius: 4px;
-    color: #FFF;
-    font-size: 12px;
-    font-weight: 500;
-    line-height: 19px;
-}
-.scanex-date-interval div.timeline-event-line,
-.scanex-date-interval div.timeline-event-box
-{
-    display: none;
 }
 
 .leaflet-gmx-center {
@@ -1470,251 +2341,37 @@ div.timeline-navigation-move-right {
 	cursor: default;
 }
 
-.scanex-forestry-declaration .scrollable {    
-    max-height: 240px;
-    overflow-y: auto;
-}
-.scanex-forestry-declaration table {
-    table-layout: fixed;
-}
-.scanex-forestry-declaration table,
-.scanex-forestry-declaration table > tbody > tr > td:last-child {
-    width: 100%;
-}
-.scanex-forestry-declaration .header > * {
-    font-family: 'Montserrat', sans-serif;
-    font-style: normal;
-    font-weight: bold;
-    font-size: 24px;    
-}
-.scanex-forestry-declaration td:first-child {
-    width: 350px;
-}
-.scanex-forestry-declaration td {
+.scanex-forestry-naturalpark td {
     font-family: 'Open Sans', sans-serif;
-    font-style: normal;
-    font-weight: 600;
-    font-size: 14px;
-    line-height: 19px;
-    white-space: nowrap;
-    padding: 5px 23px 5px 0px;    
-}
-.scanex-forestry-declaration th {
-    white-space: nowrap;
-    text-align: left;
-}
-.scanex-forestry-declaration .scanex-declaration-icon {
-    background-repeat: no-repeat;
-    background-position: center;    
-    cursor: pointer;
-    width: 24px;
-    height: 24px;
-    display: inline-block;
-    vertical-align: middle;    
-}
-.scanex-forestry-declaration .open-doc {
-    font-family: 'Open Sans', sans-serif;
-    font-style: normal;
-    font-weight: 600;
-    font-size: 16px;
-    line-height: 24px;
-    color: #067A57;
-    border: none;
-    background-color: transparent;
-    vertical-align: middle;    
-}
-.scanex-forestry-declaration .federal-subject,
-.scanex-forestry-declaration .executive,
-.scanex-forestry-declaration .officer,
-.scanex-forestry-declaration .lessee,
-.scanex-forestry-declaration .contract {
-    text-align: left;
-    width: 100%;
-}
-/* .scanex-forestry-declaration .content {
-    overflow-y: auto;
-    max-height: 200px;
-} */
-.scanex-forestry-declaration .num > td {
-    border-top: 1px solid grey;
-}
-.scanex-forestry-view-plot table,
-.scanex-forestry-view-plot td:first-child {
-    width: 100%;
-}
-.scanex-forestry-view-plot * ,
-.scanex-forestry-view-plot td {
     font-size: 14px;
     line-height: 28px;
     white-space: nowrap;
+    padding: 0px 10px 0px 10px;
 }
-.scanex-forestry-view-plot td {        
-    padding: 0px 5px 0px 5px;
+.scanex-forestry-naturalpark td:last-child{
+    width: auto;
 }
-.scanex-forestry-view-plot .stats {
-    width: 400px;
-}
-.scanex-forestry-incident .hidden {
-    display: none;
-}
-.scanex-forestry-incident.minHeight {
-    height: 516px;
-}
-
-.scanex-forestry-incident .header1 {
-    height: 52px;
-    display: inline-box;
-    font-family: 'Montserrat', sans-serif;
-    font-style: normal;
+.scanex-forestry-naturalpark .header {
+    font-family: 'Open Sans', sans-serif;
     font-weight: bold;
     font-size: 24px;
-    line-height: 40px;
-    color: #000000;
-    overflow: hidden;
     white-space: nowrap;
 }
-
-.scanex-forestry-incident .inside {
-    display: flex;
+.scanex-forestry-naturalpark table {
+    width: 100%;
+    table-layout: fixed;
 }
-.scanex-forestry-incident .rubka {
-    height: 220px;
-	width: 320px;
-	text-align: center;
-	overflow-y: scroll;
+.scanex-forestry-naturalpark .value {
+	text-align: right;
 }
-
-.scanex-forestry-incident .right-wrapper-bottom {
-	margin-top: 10px;
-}
-
-.scanex-forestry-incident .inside_left {    
-    overflow-y: auto;
-    height: 220px;
-    width: 70%;
-}
-
-.scanex-forestry-incident .inside_left .table1 {
-    margin-right: 6px;
-}
-
-.scanex-forestry-incident table {
-  border-collapse:separate; 
-  border-spacing: 0 1em;
-}
-.scanex-forestry-incident table,
-.scanex-forestry-incident .vydel,
-.scanex-forestry-incident .descr {
+.scanex-forestry-content [data-id=fires] .container table {
     width: 100%;
 }
-.scanex-forestry-incident .vydel th.species,
-.scanex-forestry-incident .vydel td.species {
+.scanex-forestry-content [data-id=fires] .container table .title {
     text-align: left;
-}
-.scanex-forestry-incident th,
-.scanex-forestry-incident td {
-    text-align: right;
-}
-.scanex-forestry-incident td.probable_volume {
-	padding: 3px 12px;
-    width: 240px;
-}
-.scanex-forestry-incident td.buttons {
-    vertical-align: top;
-}
-
-.scanex-forestry-incident td button {
-    width: 50%;
-    min-width: 260px;
-	margin: 8px;
-}
-.scanex-forestry-incident .button {
-    width: 260px;
-    margin-bottom: 10px;
-    border: 1px solid #067A57;
-    border-radius: 24px;    
-    font-style: normal;
-    font-weight: 600;
     font-size: 18px;
-    line-height: 24px;
-    text-align: center;
-    color: #FFF;
-    cursor: pointer;
-    background: #067A57;
-    outline: none;
+    padding-bottom: 10px;
 }
-
-.scanex-forestry-incident .table1_row {
-    display: flex;
-    justify-content: space-between;
-    min-height: 40px;
-    border-bottom: 1px solid #E6E6E6;
-    font-style: normal;
-    font-weight: 600;
-    font-size: 14px;
-    line-height: 19px;
-    color: #6B707B;
-}
-
-
-.scanex-forestry-incident .span-gray {
-    display: block;
-	border: 0px;
-	background: #C4C4C4;
-    padding: 3px 12px;
-    width: 240px;
-    text-align: right;
-}
-.scanex-forestry-incident textarea.usr-text-area {
-    width: 100%;
-    background: #C4C4C4;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    min-height: 54px;
-    margin: 23px 5px 23px 0;
-    outline: none;
-}
-.scanex-forestry-incident .span-gray.white,
-.scanex-forestry-incident textarea.usr-text-area:disabled {
-    background: white;
-}
-.scanex-forestry-incident input.span-gray {
-	font-weight: 600;
-    font-size: 14px;
-    color: #6B707B;
-}
-.scanex-forestry-incident .group_buttons {
-    display: inline-flex;
-    width: 310px;
-    min-width: 310px;
-    height: 27px;
-    justify-content: space-between;
-    align-items: center;
-}
-.scanex-forestry-incident .mini-green-but {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100px;
-    min-width: 100px;
-    height: 27px;
-    font-family:' Open Sans', sans-serif;
-    font-style: normal;
-    font-weight: bold;
-    font-size: 12px;
-    line-height: 24px;
-    background: #067A57;
-    border-radius: 24px;
-    color: #FFF;
-    cursor: pointer;
-}
-
-.scanex-forestry-incident .species {
-    margin-right: 37px;
-    height: 242px;
-    padding-right: 4px;
-    overflow: hidden;
-}
-
 .scanex-forestry-content [data-id=reports].component {
     height: 100vh;
     max-height: 360px;
@@ -2087,79 +2744,6 @@ div.timeline-navigation-move-right {
 
 .container.scanex-forestry-analytics .content { -ms-overflow-style: none; }
 
-.scanex-forestry-content [data-id=fires] .container table {
-    width: 100%;
-}
-.scanex-forestry-content [data-id=fires] .container table .title {
-    text-align: left;
-    font-size: 18px;
-    padding-bottom: 10px;
-}
-.scanex-forestry-stand div,
-.scanex-forestry-stand label,
-.scanex-forestry-stand td {
-    font-family: 'Open Sans', sans-serif;
-    font-size: 14px;
-    line-height: 28px;
-    white-space: nowrap;
-}
-.scanex-forestry-stand .header1 {    
-    font-weight: bold;
-    font-size: 24px;
-}
-.scanex-forestry-stand .header2 {        
-    font-weight: bold;
-    font-size: 18px;
-}
-.scanex-forestry-stand > .scrollable {
-    height: 200px;
-    overflow-y: auto;
-}
-.scanex-forestry-stand > .scrollable > * {    
-    display: inline-block;
-    vertical-align: top;
-}
-.scanex-forestry-stand table {
-    table-layout: fixed;    
-}
-.scanex-forestry-stand  .chart,
-.scanex-forestry-stand .events {    
-    width: 350px;
-}
-.scanex-forestry-stand .levels,
-.scanex-forestry-stand .events {
-    border-top: 1px solid;
-}
-.scanex-forestry-stand td {   
-    color: #453D3D;
-    padding: 5px 25px 5px 0px;
-}
-.scanex-forestry-stand .events .percentage {
-    text-align: right;
-}
-.scanex-forestry-naturalpark td {
-    font-family: 'Open Sans', sans-serif;
-    font-size: 14px;
-    line-height: 28px;
-    white-space: nowrap;
-    padding: 0px 10px 0px 10px;
-}
-.scanex-forestry-naturalpark td:last-child{
-    width: auto;
-}
-.scanex-forestry-naturalpark .header {
-    font-family: 'Open Sans', sans-serif;
-    font-weight: bold;
-    font-size: 24px;
-    white-space: nowrap;
-}
-.scanex-forestry-naturalpark table {
-    width: 100%;
-    table-layout: fixed;
-}
-.scanex-forestry-naturalpark .value {
-	text-align: right;
-}
 .scanex-forestry-uploaded {
     width: 100%;
 }
@@ -2347,6 +2931,293 @@ div.timeline-navigation-move-right {
     background: #008060;
     margin-left: 10px;
 }
+.scanex-forestry-view-plot table,
+.scanex-forestry-view-plot td:first-child {
+    width: 100%;
+}
+.scanex-forestry-view-plot * ,
+.scanex-forestry-view-plot td {
+    font-size: 14px;
+    line-height: 28px;
+    white-space: nowrap;
+}
+.scanex-forestry-view-plot td {        
+    padding: 0px 5px 0px 5px;
+}
+.scanex-forestry-view-plot .stats {
+    width: 400px;
+}
+.scanex-forestry-stand div,
+.scanex-forestry-stand label,
+.scanex-forestry-stand td {
+    font-family: 'Open Sans', sans-serif;
+    font-size: 14px;
+    line-height: 28px;
+    white-space: nowrap;
+}
+.scanex-forestry-stand .header1 {    
+    font-weight: bold;
+    font-size: 24px;
+}
+.scanex-forestry-stand .header2 {        
+    font-weight: bold;
+    font-size: 18px;
+}
+.scanex-forestry-stand > .scrollable {
+    height: 200px;
+    overflow-y: auto;
+}
+.scanex-forestry-stand > .scrollable > * {    
+    display: inline-block;
+    vertical-align: top;
+}
+.scanex-forestry-stand table {
+    table-layout: fixed;    
+}
+.scanex-forestry-stand  .chart,
+.scanex-forestry-stand .events {    
+    width: 350px;
+}
+.scanex-forestry-stand .levels,
+.scanex-forestry-stand .events {
+    border-top: 1px solid;
+}
+.scanex-forestry-stand td {   
+    color: #453D3D;
+    padding: 5px 25px 5px 0px;
+}
+.scanex-forestry-stand .events .percentage {
+    text-align: right;
+}
+.scanex-forestry-declaration .scrollable {    
+    max-height: 240px;
+    overflow-y: auto;
+}
+.scanex-forestry-declaration table {
+    table-layout: fixed;
+}
+.scanex-forestry-declaration table,
+.scanex-forestry-declaration table > tbody > tr > td:last-child {
+    width: 100%;
+}
+.scanex-forestry-declaration .header > * {
+    font-family: 'Montserrat', sans-serif;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 24px;    
+}
+.scanex-forestry-declaration td:first-child {
+    width: 350px;
+}
+.scanex-forestry-declaration td {
+    font-family: 'Open Sans', sans-serif;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 19px;
+    white-space: nowrap;
+    padding: 5px 23px 5px 0px;    
+}
+.scanex-forestry-declaration th {
+    white-space: nowrap;
+    text-align: left;
+}
+.scanex-forestry-declaration .scanex-declaration-icon {
+    background-repeat: no-repeat;
+    background-position: center;    
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    display: inline-block;
+    vertical-align: middle;    
+}
+.scanex-forestry-declaration .open-doc {
+    font-family: 'Open Sans', sans-serif;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 24px;
+    color: #067A57;
+    border: none;
+    background-color: transparent;
+    vertical-align: middle;    
+}
+.scanex-forestry-declaration .federal-subject,
+.scanex-forestry-declaration .executive,
+.scanex-forestry-declaration .officer,
+.scanex-forestry-declaration .lessee,
+.scanex-forestry-declaration .contract {
+    text-align: left;
+    width: 100%;
+}
+/* .scanex-forestry-declaration .content {
+    overflow-y: auto;
+    max-height: 200px;
+} */
+.scanex-forestry-declaration .num > td {
+    border-top: 1px solid grey;
+}
+.scanex-forestry-incident .hidden {
+    display: none;
+}
+.scanex-forestry-incident.minHeight {
+    height: 516px;
+}
+
+.scanex-forestry-incident .header1 {
+    height: 52px;
+    display: inline-box;
+    font-family: 'Montserrat', sans-serif;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 24px;
+    line-height: 40px;
+    color: #000000;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.scanex-forestry-incident .inside {
+    display: flex;
+}
+.scanex-forestry-incident .rubka {
+    height: 220px;
+	width: 320px;
+	text-align: center;
+	overflow-y: scroll;
+}
+
+.scanex-forestry-incident .right-wrapper-bottom {
+	margin-top: 10px;
+}
+
+.scanex-forestry-incident .inside_left {    
+    overflow-y: auto;
+    height: 220px;
+    width: 70%;
+}
+
+.scanex-forestry-incident .inside_left .table1 {
+    margin-right: 6px;
+}
+
+.scanex-forestry-incident table {
+  border-collapse:separate; 
+  border-spacing: 0 1em;
+}
+.scanex-forestry-incident table,
+.scanex-forestry-incident .vydel,
+.scanex-forestry-incident .descr {
+    width: 100%;
+}
+.scanex-forestry-incident .vydel th.species,
+.scanex-forestry-incident .vydel td.species {
+    text-align: left;
+}
+.scanex-forestry-incident th,
+.scanex-forestry-incident td {
+    text-align: right;
+}
+.scanex-forestry-incident td.probable_volume {
+	padding: 3px 12px;
+    width: 240px;
+}
+.scanex-forestry-incident td.buttons {
+    vertical-align: top;
+}
+
+.scanex-forestry-incident td button {
+    width: 50%;
+    min-width: 260px;
+	margin: 8px;
+}
+.scanex-forestry-incident .button {
+    width: 260px;
+    margin-bottom: 10px;
+    border: 1px solid #067A57;
+    border-radius: 24px;    
+    font-style: normal;
+    font-weight: 600;
+    font-size: 18px;
+    line-height: 24px;
+    text-align: center;
+    color: #FFF;
+    cursor: pointer;
+    background: #067A57;
+    outline: none;
+}
+
+.scanex-forestry-incident .table1_row {
+    display: flex;
+    justify-content: space-between;
+    min-height: 40px;
+    border-bottom: 1px solid #E6E6E6;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 19px;
+    color: #6B707B;
+}
+
+
+.scanex-forestry-incident .span-gray {
+    display: block;
+	border: 0px;
+	background: #C4C4C4;
+    padding: 3px 12px;
+    width: 240px;
+    text-align: right;
+}
+.scanex-forestry-incident textarea.usr-text-area {
+    width: 100%;
+    background: #C4C4C4;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    min-height: 54px;
+    margin: 23px 5px 23px 0;
+    outline: none;
+}
+.scanex-forestry-incident .span-gray.white,
+.scanex-forestry-incident textarea.usr-text-area:disabled {
+    background: white;
+}
+.scanex-forestry-incident input.span-gray {
+	font-weight: 600;
+    font-size: 14px;
+    color: #6B707B;
+}
+.scanex-forestry-incident .group_buttons {
+    display: inline-flex;
+    width: 310px;
+    min-width: 310px;
+    height: 27px;
+    justify-content: space-between;
+    align-items: center;
+}
+.scanex-forestry-incident .mini-green-but {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100px;
+    min-width: 100px;
+    height: 27px;
+    font-family:' Open Sans', sans-serif;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 12px;
+    line-height: 24px;
+    background: #067A57;
+    border-radius: 24px;
+    color: #FFF;
+    cursor: pointer;
+}
+
+.scanex-forestry-incident .species {
+    margin-right: 37px;
+    height: 242px;
+    padding-right: 4px;
+    overflow: hidden;
+}
+
 .scanex-forestry-view-project div,
 .scanex-forestry-view-project label,
 .scanex-forestry-view-project td {
@@ -2397,6 +3268,151 @@ div.timeline-navigation-move-right {
     width: 100px;
     text-align: right;
 }
+.scanex-forestry-requests > table > thead {
+    background-color: #F3F3F3;
+    color: #6B707B;   
+}
+.scanex-forestry-requests > table > thead th {    
+    font-size: 14px;
+    text-align: left;
+}
+.scanex-forestry-requests label,
+.scanex-forestry-requests button,
+.scanex-forestry-requests th,
+.scanex-forestry-requests td {
+    white-space: nowrap;
+}
+.scanex-forestry-requests label.title {
+    font-family: 'Montserrat', sans-serif;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 18px;
+    white-space: nowrap;        
+}
+.scanex-forestry-requests button.create {
+    float: right;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 16px;    
+    text-align: center;
+    color: #FFFFFF;    
+    background: #067A57;
+    outline: none;
+    border: none;
+    border-radius: 24px;    
+    cursor: pointer;
+    height: 37px;
+    max-height: 37px;
+    width: auto;
+    padding: 0 20px;
+}
+.scanex-forestry-requests > table {    
+    margin-top: 10px;
+}
+.scanex-forestry-requests .content {
+    height: 210px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+.scanex-forestry-requests > table,
+.scanex-forestry-requests > .content > table {
+    table-layout: fixed;
+}
+.scanex-forestry-requests > table > thead > tr > th,
+.scanex-forestry-requests > .content > table > tbody > tr > td {
+    padding: 3px 5px;
+}
+.scanex-forestry-requests > .content > table,
+.scanex-forestry-requests > table {
+    width: 100%;
+}
+.scanex-forestry-requests > table > thead > tr > th[data-id=id],
+.scanex-forestry-requests > .content > table > tbody > tr > td[data-id=id] {
+    width: 20px;
+}
+.scanex-forestry-requests > table > thead > tr > th[data-id=title],
+.scanex-forestry-requests > .content > table > tbody > tr > td[data-id=title] {
+    width: 100%;
+}
+.scanex-forestry-requests > table > thead > tr > th[data-id=status],
+.scanex-forestry-requests > .content > table > tbody > tr > td[data-id=status] {
+    width: 170px;
+}
+.scanex-forestry-requests > table > thead > tr > th[data-id=forestry],
+.scanex-forestry-requests > .content > table > tbody > tr > td[data-id=forestry] {
+    width: 130px;
+}
+.scanex-forestry-requests > table > thead > tr > th[data-id=local_forestry],
+.scanex-forestry-requests > .content > table > tbody > tr > td[data-id=local_forestry] {
+    width: 250px;
+}
+.scanex-forestry-requests > .content > table > tbody > tr > td[data-id=title],
+.scanex-forestry-requests > .content > table > tbody > tr > td[data-id=forestry],
+.scanex-forestry-requests > .content > table > tbody > tr > td[data-id=local_forestry] {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.scanex-forestry-requests > table > thead > tr > th[data-id=area],
+.scanex-forestry-requests > .content > table > tbody > tr > td[data-id=area] {
+    width: 100px;
+    text-align: right;
+}
+.scanex-forestry-requests > table > thead > tr > th[data-id=amount],
+.scanex-forestry-requests > .content > table > tbody > tr > td[data-id=amount] {
+    width: 130px;
+    text-align: right;
+}
+.scanex-forestry-requests > table > thead > tr > th[data-id=remove] {
+    width: 47px;
+}
+.scanex-forestry-requests > .content > table > tbody > tr > td[data-id=remove] {
+    width: 20px;
+}
+.scanex-forestry-requests .content .items td {
+    cursor: pointer;
+    font-family: 'Open Sans', sans-serif;
+    font-style: normal;
+    font-weight: normal;
+    font-size: 14px;
+    line-height: 19px;    
+}
+.scanex-forestry-requests .scanex-requests-icon {
+    background-repeat: no-repeat;
+    background-position: center;    
+    cursor: pointer;
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    transform: scale(0.75);
+}
+
+.apexcharts-legend.position-right {
+    width: 300px;
+}
+.scanex-forestry-quadrant .title {    
+    font-weight: bold;
+    font-size: 24px;
+}
+.scanex-forestry-quadrant > div {
+    font-size: 14px;
+    line-height: 28px;
+    white-space: nowrap;
+}
+.scanex-forestry-quadrant .stock {
+    font-weight: bold;
+}
+.scanex-forestry-quadrant .chart {    
+    height: 200px;
+}
+.scanex-forestry-quadrant .forestry {
+    margin-bottom: 5px;
+	margin-top: 10px;
+}
+.scanex-forestry-quadrant .title {
+    font-size: large;
+}
+
+
 @charset "UTF-8";
 
 /*!
@@ -2637,151 +3653,6 @@ http://nicolasgallagher.com/micro-clearfix-hack/
 }
 
 
-.scanex-forestry-requests > table > thead {
-    background-color: #F3F3F3;
-    color: #6B707B;   
-}
-.scanex-forestry-requests > table > thead th {    
-    font-size: 14px;
-    text-align: left;
-}
-.scanex-forestry-requests label,
-.scanex-forestry-requests button,
-.scanex-forestry-requests th,
-.scanex-forestry-requests td {
-    white-space: nowrap;
-}
-.scanex-forestry-requests label.title {
-    font-family: 'Montserrat', sans-serif;
-    font-style: normal;
-    font-weight: bold;
-    font-size: 18px;
-    white-space: nowrap;        
-}
-.scanex-forestry-requests button.create {
-    float: right;
-    font-style: normal;
-    font-weight: 600;
-    font-size: 16px;    
-    text-align: center;
-    color: #FFFFFF;    
-    background: #067A57;
-    outline: none;
-    border: none;
-    border-radius: 24px;    
-    cursor: pointer;
-    height: 37px;
-    max-height: 37px;
-    width: auto;
-    padding: 0 20px;
-}
-.scanex-forestry-requests > table {    
-    margin-top: 10px;
-}
-.scanex-forestry-requests .content {
-    height: 210px;
-    overflow-y: auto;
-    padding-right: 10px;
-}
-.scanex-forestry-requests > table,
-.scanex-forestry-requests > .content > table {
-    table-layout: fixed;
-}
-.scanex-forestry-requests > table > thead > tr > th,
-.scanex-forestry-requests > .content > table > tbody > tr > td {
-    padding: 3px 5px;
-}
-.scanex-forestry-requests > .content > table,
-.scanex-forestry-requests > table {
-    width: 100%;
-}
-.scanex-forestry-requests > table > thead > tr > th[data-id=id],
-.scanex-forestry-requests > .content > table > tbody > tr > td[data-id=id] {
-    width: 20px;
-}
-.scanex-forestry-requests > table > thead > tr > th[data-id=title],
-.scanex-forestry-requests > .content > table > tbody > tr > td[data-id=title] {
-    width: 100%;
-}
-.scanex-forestry-requests > table > thead > tr > th[data-id=status],
-.scanex-forestry-requests > .content > table > tbody > tr > td[data-id=status] {
-    width: 170px;
-}
-.scanex-forestry-requests > table > thead > tr > th[data-id=forestry],
-.scanex-forestry-requests > .content > table > tbody > tr > td[data-id=forestry] {
-    width: 130px;
-}
-.scanex-forestry-requests > table > thead > tr > th[data-id=local_forestry],
-.scanex-forestry-requests > .content > table > tbody > tr > td[data-id=local_forestry] {
-    width: 250px;
-}
-.scanex-forestry-requests > .content > table > tbody > tr > td[data-id=title],
-.scanex-forestry-requests > .content > table > tbody > tr > td[data-id=forestry],
-.scanex-forestry-requests > .content > table > tbody > tr > td[data-id=local_forestry] {
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.scanex-forestry-requests > table > thead > tr > th[data-id=area],
-.scanex-forestry-requests > .content > table > tbody > tr > td[data-id=area] {
-    width: 100px;
-    text-align: right;
-}
-.scanex-forestry-requests > table > thead > tr > th[data-id=amount],
-.scanex-forestry-requests > .content > table > tbody > tr > td[data-id=amount] {
-    width: 130px;
-    text-align: right;
-}
-.scanex-forestry-requests > table > thead > tr > th[data-id=remove] {
-    width: 47px;
-}
-.scanex-forestry-requests > .content > table > tbody > tr > td[data-id=remove] {
-    width: 20px;
-}
-.scanex-forestry-requests .content .items td {
-    cursor: pointer;
-    font-family: 'Open Sans', sans-serif;
-    font-style: normal;
-    font-weight: normal;
-    font-size: 14px;
-    line-height: 19px;    
-}
-.scanex-forestry-requests .scanex-requests-icon {
-    background-repeat: no-repeat;
-    background-position: center;    
-    cursor: pointer;
-    display: inline-block;
-    width: 24px;
-    height: 24px;
-    transform: scale(0.75);
-}
-
-.apexcharts-legend.position-right {
-    width: 300px;
-}
-.scanex-forestry-quadrant .title {    
-    font-weight: bold;
-    font-size: 24px;
-}
-.scanex-forestry-quadrant > div {
-    font-size: 14px;
-    line-height: 28px;
-    white-space: nowrap;
-}
-.scanex-forestry-quadrant .stock {
-    font-weight: bold;
-}
-.scanex-forestry-quadrant .chart {    
-    height: 200px;
-}
-.scanex-forestry-quadrant .forestry {
-    margin-bottom: 5px;
-	margin-top: 10px;
-}
-.scanex-forestry-quadrant .title {
-    font-size: large;
-}
-
-
 .scanex-forestry-pager input[type=text],
 .scanex-forestry-pager button {    
     font-family: 'Open Sans', sans-serif;
@@ -2818,6 +3689,38 @@ http://nicolasgallagher.com/micro-clearfix-hack/
 }
 .scanex-forestry-pager input[type=text] {
     border: 1px solid #6B707B;
+}
+.scanex-forestry-project .quadrants > .scrollable {
+    overflow-y: auto;
+    max-height: 208px;
+}
+.scanex-forestry-project .quadrants table > thead > tr > th,
+.scanex-forestry-project .quadrants table > tbody > tr > td {
+    font-size: 14px;
+    line-height: 28px;
+}
+.scanex-forestry-project .quadrants table > thead > tr > th,
+.scanex-forestry-project .quadrants table > tbody > tr > td {    
+    white-space: nowrap;
+    padding: 5px; 
+}
+.scanex-forestry-project .quadrants table > thead > tr > th:nth-child(1),
+.scanex-forestry-project .quadrants table > tbody > tr > td:nth-child(1) {    
+    width: 220px;
+}
+.scanex-forestry-project .quadrants table > thead > tr > th:nth-child(2),
+.scanex-forestry-project .quadrants table > tbody > tr > td:nth-child(2) {    
+    width: 70px;   
+}
+.scanex-forestry-project .quadrants table > thead > tr > th,
+.scanex-forestry-project .quadrants table > thead > tr > td:nth-child(1) {
+    text-align: left;
+}
+.scanex-forestry-project .quadrants table > tbody > tr > td:nth-child(2) {
+    text-align: right;
+}
+.scanex-forestry-project .quadrants table {
+    table-layout: fixed;    
 }
 .scanex-forestry-project .header-left > *,
 .scanex-forestry-project .header-right > * {
@@ -2902,38 +3805,6 @@ http://nicolasgallagher.com/micro-clearfix-hack/
 }
 .scanex-forestry-project .hidden {
     display: none;
-}
-.scanex-forestry-project .quadrants > .scrollable {
-    overflow-y: auto;
-    max-height: 208px;
-}
-.scanex-forestry-project .quadrants table > thead > tr > th,
-.scanex-forestry-project .quadrants table > tbody > tr > td {
-    font-size: 14px;
-    line-height: 28px;
-}
-.scanex-forestry-project .quadrants table > thead > tr > th,
-.scanex-forestry-project .quadrants table > tbody > tr > td {    
-    white-space: nowrap;
-    padding: 5px; 
-}
-.scanex-forestry-project .quadrants table > thead > tr > th:nth-child(1),
-.scanex-forestry-project .quadrants table > tbody > tr > td:nth-child(1) {    
-    width: 220px;
-}
-.scanex-forestry-project .quadrants table > thead > tr > th:nth-child(2),
-.scanex-forestry-project .quadrants table > tbody > tr > td:nth-child(2) {    
-    width: 70px;   
-}
-.scanex-forestry-project .quadrants table > thead > tr > th,
-.scanex-forestry-project .quadrants table > thead > tr > td:nth-child(1) {
-    text-align: left;
-}
-.scanex-forestry-project .quadrants table > tbody > tr > td:nth-child(2) {
-    text-align: right;
-}
-.scanex-forestry-project .quadrants table {
-    table-layout: fixed;    
 }
 .scanex-forestry-project .species {
     width: 715px;
