@@ -777,212 +777,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
 .component > .container {
     width: 100%;
 }
-.leaflet-control.scanex-forestry-zoom {
-    background-color: #FFFFFF;
-    border-radius: 10px;    
-    padding: 7px 0;    
-    border: 1px solid #e0e0e0;    
-    clear: none;   
-}
-.scanex-forestry-zoom .middle {
-    font-style: normal;
-    font-weight: 600;
-    font-size: 14px;
-    line-height: 19px;
-    color: #453d3d;
-    border-left: 2px solid #e3e8f1;
-    border-right: 2px solid #e3e8f1;
-    width: 40px;
-    padding: 0px 10px 0px 10px;
-    text-align: center;
-}
-.scanex-forestry-zoom > * {
-    display: inline-block;
-    vertical-align: middle;    
-}
-.scanex-forestry-zoom .scanex-zoom-icon {
-    background-repeat: no-repeat;
-    background-position: center;    
-    cursor: pointer;
-    width: 24px;
-    height: 24px;        
-    margin: 0px 5px 0px 5px;
-}
-.leaflet-control.scanex-forestry-legend {  
-    clear: none;      
-}
-.scanex-forestry-legend .toggle {
-    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg width='28' height='18' viewBox='0 0 28 18' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M19.8333 0.83334L8.16667 0.833342C3.61667 0.833343 6.32358e-07 4.45001 1.42791e-06 9.00001C2.22345e-06 13.55 3.61667 17.1667 8.16667 17.1667L19.8333 17.1667C24.3833 17.1667 28 13.55 28 9.00001C28 4.45001 24.3833 0.833339 19.8333 0.83334ZM8.16667 13.6667C5.6 13.6667 3.5 11.5667 3.5 9.00001C3.5 6.43334 5.6 4.33334 8.16667 4.33334C10.7333 4.33334 12.8333 6.43334 12.8333 9.00001C12.8333 11.5667 10.7333 13.6667 8.16667 13.6667Z' fill='%23453D3D'/%3E%3C/svg%3E");
-    width: 28px;
-    height: 18px;    
-    cursor: pointer;
-    margin-left: 10px;
-}
-.scanex-forestry-legend .toggle-active {
-    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg width='28' height='18' viewBox='0 0 28 18' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M8.16667 17.1667L19.8333 17.1667C24.3833 17.1667 28 13.5501 28 9.00005C28 4.45005 24.3833 0.833381 19.8333 0.833381L8.16667 0.83338C3.61667 0.83338 1.11173e-06 4.45005 7.13953e-07 9.00005C3.16179e-07 13.55 3.61667 17.1667 8.16667 17.1667ZM19.8333 4.33338C22.4 4.33338 24.5 6.43338 24.5 9.00005C24.5 11.5667 22.4 13.6667 19.8333 13.6667C17.2667 13.6667 15.1667 11.5667 15.1667 9.00005C15.1667 6.43338 17.2667 4.33338 19.8333 4.33338Z' fill='%23067A57'/%3E%3C/svg%3E");        
-}
-.scanex-forestry-legend .component {
-    padding: 5px 0px 5px 0px;
-}
-.scanex-forestry-legend .hidden {
-    display: none;
-}
-.scanex-forestry-legend .component > * {
-    display: inline-block;
-    vertical-align: middle;
-}
-.scanex-forestry-legend .group {
-    padding-left: 3px;
-}
-.scanex-forestry-legend .group > .children {    
-    margin-left: 32px;   
-}
-.scanex-forestry-legend .title {    
-    white-space: nowrap;
-    margin-left: 10px;
-    margin-right: 10px;    
-}
-.scanex-forestry-legend .scrollable > .component > .title {
-    width: 200px;
-}
-.scanex-forestry-legend .group .header > .title {
-    width: 203px;
-}
-.scanex-forestry-legend .group .children > .component > .title {
-    width: 165px;
-}
-.scanex-forestry-legend .component i {    
-    width: 24px;
-    height: 24px;    
-    border: 1px solid #B4C1D0;
-    box-sizing: border-box;
-    border-radius: 6px;
-}
-.scanex-forestry-legend [data-id=quadrants] > i {
-    background-color:rgba(255, 184, 1, 0.08);
-    border: 1px solid #FFB801;    
-}
-.scanex-forestry-legend [data-id=stands] > i {
-    background-color:rgba(255, 184, 1, 0.08);
-    border: 1px solid #FFB801;
-}
-.scanex-forestry-legend [data-id=parks] > i {
-    background-color: rgba(173, 61, 45, 0.4);
-    border: 1px solid #AD3D2D;
-}
-.scanex-forestry-legend [data-id=fires] > i {
-    background-color: rgba(255, 0, 0, 1);
-}
-.scanex-forestry-legend [data-id=declarations] > i {
-    background-color:rgba(101, 255, 200, 0.4);
-    border: 1px solid #65FFC8;
-}
-.scanex-forestry-legend [data-id=projects] > i {
-    background-color:rgba(143, 188, 143, 0.4);
-    border: 1px solid #65FFC8;
-}
-.scanex-forestry-legend [data-id=plots] > i {
-    background-color:rgba(246, 0, 0, 0.25);
-    border: 1px solid #F60000;
-}
-.scanex-forestry-legend [data-id=cut-unconfirmed] > i {
-    background-color: rgba(253, 185, 255, 0.5);
-}
-.scanex-forestry-legend [data-id=cut-working] > i {
-    background-color: rgba(255, 85, 177, 0.5);
-}
-.scanex-forestry-legend [data-id=cut-faux] > i {
-    background-color: rgba(126, 46, 77, 0.5);
-}
-.scanex-forestry-legend [data-id=cut-confirmed] > i {
-    background-color: rgba(215, 0, 76, 0.4);
-}
-
-.scanex-forestry-legend [data-id=windthrow-unconfirmed] > i {
-    background-color: rgba(253, 185, 255, 0.5);
-}
-.scanex-forestry-legend [data-id=windthrow-working] > i {
-    background-color: rgba(255, 85, 177, 0.5);
-}
-.scanex-forestry-legend [data-id=windthrow-faux] > i {
-    background-color: rgba(126, 46, 77, 0.5);
-}
-.scanex-forestry-legend [data-id=windthrow-confirmed] > i {
-    background-color: rgba(215, 0, 76, 0.4);
-}
-
-.scanex-forestry-legend [data-id=disease-unconfirmed] > i {
-    background-color: rgba(151, 168, 255, 0.5);
-}
-.scanex-forestry-legend [data-id=disease-working] > i {
-    background-color: rgba(61, 81, 254, 0.5);
-}
-.scanex-forestry-legend [data-id=disease-faux] > i {
-    background-color: rgba(76, 84, 125, 0.5);
-}
-.scanex-forestry-legend [data-id=disease-confirmed] > i {
-    background-color: rgba(70, 5, 255, 0.5);
-}
-
-.scanex-forestry-legend [data-id=burn-unconfirmed] > i {
-    background-color: rgba(255, 168, 67, 0.45);
-}
-.scanex-forestry-legend [data-id=burn-working] > i {
-    background-color: rgba(255, 122, 0, 0.5);
-}
-.scanex-forestry-legend [data-id=burn-faux] > i {
-    background-color: rgba(241, 207, 166, 0.45);
-}
-.scanex-forestry-legend [data-id=burn-confirmed] > i {
-    background-color: rgba(239, 78, 9, 0.5);
-}
-.scanex-forestry-legend [data-id=regions] > i {    
-    border: 2px solid rgba(178, 34, 34, 0.5);
-}
-.scanex-forestry-legend [data-id=forestries] > i {
-    border: 2px solid rgba(184, 134, 11, 0.5);
-}
-.scanex-forestry-legend [data-id=forestries_local] > i {
-    border: 2px solid rgba(189, 183, 107, 0.5);
-}
-.scanex-forestry-legend .scanex-legend-icon {
-    background-repeat: no-repeat;
-    background-position: center;    
-    cursor: pointer;
-}
-.scanex-forestry-legend > .scanex-legend-icon {
-    border-radius: 12px;
-    width: 56px;
-    height: 40px;
-    background-color: #FFFFFF;
-    float: right;
-}
-.scanex-forestry-legend .header > * {
-    display: inline-block;
-    vertical-align: middle;
-}
-.scanex-forestry-legend .header > .scanex-legend-icon {
-    width: 18px;
-    height: 18px;
-    margin: 5px 0px 5px 0px;
-}
-.scanex-forestry-legend > .panel {
-    background-color: #FFFFFF;
-    border: 1px solid #E0E0E0;
-    color: #343434;
-    border-radius: 12px;        
-    padding: 15px 0px 15px 15px;
-    position: absolute;
-    top: 50px;
-    left: -265px;
-    clear: both;
-    width: 320px;    
-}
-.scanex-forestry-legend > .panel > .scrollable {
-    overflow-y: auto;
-    max-height: 294px;
-}
-
 .leaflet-control.scanex-baselayers {
     width: 56px;
     height: 40px;
@@ -1057,6 +851,90 @@ svg.leaflet-image-layer.leaflet-interactive path {
 .scanex-baselayers.baselayer-map-right.leaflet-control {
     margin-right: -10px;
 } */
+.leaflet-control.scanex-forestry-zoom {
+    background-color: #FFFFFF;
+    border-radius: 10px;    
+    padding: 7px 0;    
+    border: 1px solid #e0e0e0;    
+    clear: none;   
+}
+.scanex-forestry-zoom .middle {
+    font-style: normal;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 19px;
+    color: #453d3d;
+    border-left: 2px solid #e3e8f1;
+    border-right: 2px solid #e3e8f1;
+    width: 40px;
+    padding: 0px 10px 0px 10px;
+    text-align: center;
+}
+.scanex-forestry-zoom > * {
+    display: inline-block;
+    vertical-align: middle;    
+}
+.scanex-forestry-zoom .scanex-zoom-icon {
+    background-repeat: no-repeat;
+    background-position: center;    
+    cursor: pointer;
+    width: 24px;
+    height: 24px;        
+    margin: 0px 5px 0px 5px;
+}
+.scanex-date-interval div.timeline-frame {
+	background-color: #d3d3d3b5;
+}
+
+.scanex-date-interval .buttons .tab {    
+    width: fit-content;
+    padding: 4px;
+    background-color: lightgray;
+    float: left;
+	cursor: pointer;
+}
+.scanex-date-interval .buttons .tab.active {    
+    background-color: lightblue;
+}
+.scanex-date-interval.leaflet-control {
+	/* background-color: #d3d3d3b5; */
+	width: 100%;
+	float: unset;
+	margin: 0;
+    margin-left: -9px;
+    padding: 2px;
+}
+.scanex-date-interval .timeline {
+	width: 100%;
+}
+.scanex-date-interval .icon {
+    position: absolute;
+    bottom: 0px;
+    right: 0px;
+    display: block;
+    padding: 5px 10px 5px 10px;
+    background: rgba(69, 176, 216, 1);
+    border: 1px solid #999;
+    border-radius: 4px;
+    color: #FFF;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 19px;
+}
+.scanex-date-interval div.timeline-event-box,
+.scanex-date-interval div.timeline-event-line
+{
+    display: none;
+}
+.scanex-date-interval div.timeline-event-dot
+{
+	cursor: pointer;
+}
+.scanex-date-interval div.timeline-event-dot.active
+{
+	border-color: red;
+}
+
 .gmxTimeline * {
     font-family: tahoma;
 }
@@ -1920,6 +1798,187 @@ svg.leaflet-image-layer.leaflet-interactive path {
 }
 
 
+.leaflet-control.scanex-forestry-legend {  
+    clear: none;      
+}
+.scanex-forestry-legend .toggle {
+    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg width='28' height='18' viewBox='0 0 28 18' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M19.8333 0.83334L8.16667 0.833342C3.61667 0.833343 6.32358e-07 4.45001 1.42791e-06 9.00001C2.22345e-06 13.55 3.61667 17.1667 8.16667 17.1667L19.8333 17.1667C24.3833 17.1667 28 13.55 28 9.00001C28 4.45001 24.3833 0.833339 19.8333 0.83334ZM8.16667 13.6667C5.6 13.6667 3.5 11.5667 3.5 9.00001C3.5 6.43334 5.6 4.33334 8.16667 4.33334C10.7333 4.33334 12.8333 6.43334 12.8333 9.00001C12.8333 11.5667 10.7333 13.6667 8.16667 13.6667Z' fill='%23453D3D'/%3E%3C/svg%3E");
+    width: 28px;
+    height: 18px;    
+    cursor: pointer;
+    margin-left: 10px;
+}
+.scanex-forestry-legend .toggle-active {
+    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg width='28' height='18' viewBox='0 0 28 18' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M8.16667 17.1667L19.8333 17.1667C24.3833 17.1667 28 13.5501 28 9.00005C28 4.45005 24.3833 0.833381 19.8333 0.833381L8.16667 0.83338C3.61667 0.83338 1.11173e-06 4.45005 7.13953e-07 9.00005C3.16179e-07 13.55 3.61667 17.1667 8.16667 17.1667ZM19.8333 4.33338C22.4 4.33338 24.5 6.43338 24.5 9.00005C24.5 11.5667 22.4 13.6667 19.8333 13.6667C17.2667 13.6667 15.1667 11.5667 15.1667 9.00005C15.1667 6.43338 17.2667 4.33338 19.8333 4.33338Z' fill='%23067A57'/%3E%3C/svg%3E");        
+}
+.scanex-forestry-legend .component {
+    padding: 5px 0px 5px 0px;
+}
+.scanex-forestry-legend .hidden {
+    display: none;
+}
+.scanex-forestry-legend .component > * {
+    display: inline-block;
+    vertical-align: middle;
+}
+.scanex-forestry-legend .group {
+    padding-left: 3px;
+}
+.scanex-forestry-legend .group > .children {    
+    margin-left: 32px;   
+}
+.scanex-forestry-legend .title {    
+    white-space: nowrap;
+    margin-left: 10px;
+    margin-right: 10px;    
+}
+.scanex-forestry-legend .scrollable > .component > .title {
+    width: 200px;
+}
+.scanex-forestry-legend .group .header > .title {
+    width: 203px;
+}
+.scanex-forestry-legend .group .children > .component > .title {
+    width: 165px;
+}
+.scanex-forestry-legend .component i {    
+    width: 24px;
+    height: 24px;    
+    border: 1px solid #B4C1D0;
+    box-sizing: border-box;
+    border-radius: 6px;
+}
+.scanex-forestry-legend [data-id=quadrants] > i {
+    background-color:rgba(255, 184, 1, 0.08);
+    border: 1px solid #FFB801;    
+}
+.scanex-forestry-legend [data-id=stands] > i {
+    background-color:rgba(255, 184, 1, 0.08);
+    border: 1px solid #FFB801;
+}
+.scanex-forestry-legend [data-id=parks] > i {
+    background-color: rgba(173, 61, 45, 0.4);
+    border: 1px solid #AD3D2D;
+}
+.scanex-forestry-legend [data-id=fires] > i {
+    background-color: rgba(255, 0, 0, 1);
+}
+.scanex-forestry-legend [data-id=declarations] > i {
+    background-color:rgba(101, 255, 200, 0.4);
+    border: 1px solid #65FFC8;
+}
+.scanex-forestry-legend [data-id=projects] > i {
+    background-color:rgba(143, 188, 143, 0.4);
+    border: 1px solid #65FFC8;
+}
+.scanex-forestry-legend [data-id=plots] > i {
+    background-color:rgba(246, 0, 0, 0.25);
+    border: 1px solid #F60000;
+}
+.scanex-forestry-legend [data-id=cut-unconfirmed] > i {
+    background-color: rgba(253, 185, 255, 0.5);
+}
+.scanex-forestry-legend [data-id=cut-working] > i {
+    background-color: rgba(255, 85, 177, 0.5);
+}
+.scanex-forestry-legend [data-id=cut-faux] > i {
+    background-color: rgba(126, 46, 77, 0.5);
+}
+.scanex-forestry-legend [data-id=cut-confirmed] > i {
+    background-color: rgba(215, 0, 76, 0.4);
+}
+
+.scanex-forestry-legend [data-id=windthrow-unconfirmed] > i {
+    background-color: rgba(253, 185, 255, 0.5);
+}
+.scanex-forestry-legend [data-id=windthrow-working] > i {
+    background-color: rgba(255, 85, 177, 0.5);
+}
+.scanex-forestry-legend [data-id=windthrow-faux] > i {
+    background-color: rgba(126, 46, 77, 0.5);
+}
+.scanex-forestry-legend [data-id=windthrow-confirmed] > i {
+    background-color: rgba(215, 0, 76, 0.4);
+}
+
+.scanex-forestry-legend [data-id=disease-unconfirmed] > i {
+    background-color: rgba(151, 168, 255, 0.5);
+}
+.scanex-forestry-legend [data-id=disease-working] > i {
+    background-color: rgba(61, 81, 254, 0.5);
+}
+.scanex-forestry-legend [data-id=disease-faux] > i {
+    background-color: rgba(76, 84, 125, 0.5);
+}
+.scanex-forestry-legend [data-id=disease-confirmed] > i {
+    background-color: rgba(70, 5, 255, 0.5);
+}
+
+.scanex-forestry-legend [data-id=burn-unconfirmed] > i {
+    background-color: rgba(255, 168, 67, 0.45);
+}
+.scanex-forestry-legend [data-id=burn-working] > i {
+    background-color: rgba(255, 122, 0, 0.5);
+}
+.scanex-forestry-legend [data-id=burn-faux] > i {
+    background-color: rgba(241, 207, 166, 0.45);
+}
+.scanex-forestry-legend [data-id=burn-confirmed] > i {
+    background-color: rgba(239, 78, 9, 0.5);
+}
+.scanex-forestry-legend [data-id=regions] > i {    
+    border: 2px solid rgba(178, 34, 34, 0.5);
+}
+.scanex-forestry-legend [data-id=forestries] > i {
+    border: 2px solid rgba(184, 134, 11, 0.5);
+}
+.scanex-forestry-legend [data-id=forestries_local] > i {
+    border: 2px solid rgba(189, 183, 107, 0.5);
+}
+.scanex-forestry-legend [data-id=roads] > i {
+    border: 2px solid  #d9e1e6;
+}
+.scanex-forestry-legend [data-id=warehouses] > i {
+    background-color: #d9e1e6;
+}
+.scanex-forestry-legend .scanex-legend-icon {
+    background-repeat: no-repeat;
+    background-position: center;    
+    cursor: pointer;
+}
+.scanex-forestry-legend > .scanex-legend-icon {
+    border-radius: 12px;
+    width: 56px;
+    height: 40px;
+    background-color: #FFFFFF;
+    float: right;
+}
+.scanex-forestry-legend .header > * {
+    display: inline-block;
+    vertical-align: middle;
+}
+.scanex-forestry-legend .header > .scanex-legend-icon {
+    width: 18px;
+    height: 18px;
+    margin: 5px 0px 5px 0px;
+}
+.scanex-forestry-legend > .panel {
+    background-color: #FFFFFF;
+    border: 1px solid #E0E0E0;
+    color: #343434;
+    border-radius: 12px;        
+    padding: 15px 0px 15px 15px;
+    position: absolute;
+    top: 50px;
+    left: -265px;
+    clear: both;
+    width: 320px;    
+}
+.scanex-forestry-legend > .panel > .scrollable {
+    overflow-y: auto;
+    max-height: 294px;
+}
+
 .leaflet-gmx-center {
     height: 100%;
     width: 100%;
@@ -1937,59 +1996,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
     bottom: 50%;
     right: 50%;
     position: absolute;
-}
-
-.scanex-date-interval div.timeline-frame {
-	background-color: #d3d3d3b5;
-}
-
-.scanex-date-interval .buttons .tab {    
-    width: fit-content;
-    padding: 4px;
-    background-color: lightgray;
-    float: left;
-	cursor: pointer;
-}
-.scanex-date-interval .buttons .tab.active {    
-    background-color: lightblue;
-}
-.scanex-date-interval.leaflet-control {
-	/* background-color: #d3d3d3b5; */
-	width: 100%;
-	float: unset;
-	margin: 0;
-    margin-left: -9px;
-    padding: 2px;
-}
-.scanex-date-interval .timeline {
-	width: 100%;
-}
-.scanex-date-interval .icon {
-    position: absolute;
-    bottom: 0px;
-    right: 0px;
-    display: block;
-    padding: 5px 10px 5px 10px;
-    background: rgba(69, 176, 216, 1);
-    border: 1px solid #999;
-    border-radius: 4px;
-    color: #FFF;
-    font-size: 12px;
-    font-weight: 500;
-    line-height: 19px;
-}
-.scanex-date-interval div.timeline-event-box,
-.scanex-date-interval div.timeline-event-line
-{
-    display: none;
-}
-.scanex-date-interval div.timeline-event-dot
-{
-	cursor: pointer;
-}
-.scanex-date-interval div.timeline-event-dot.active
-{
-	border-color: red;
 }
 
 .gmxLocation-input {
@@ -2287,67 +2293,28 @@ div.timeline-navigation-move-right {
     background-color: #FFFFFF;
     z-index: 1000;
 }
-.leaflet-popup-content textarea {
-    outline: none;
-    -moz-appearance: none;
-    border: 1px solid white;
+.scanex-forestry-naturalpark td {
+    font-family: 'Open Sans', sans-serif;
+    font-size: 14px;
+    line-height: 28px;
+    white-space: nowrap;
+    padding: 0px 10px 0px 10px;
 }
-.leaflet-popup-content textarea:hover {
-    border: 1px solid #999;
+.scanex-forestry-naturalpark td:last-child{
+    width: auto;
 }
-.gmxTooltipBG {
-    fill: white;
-    stroke: black;
-    stroke-width: 1;
-    opacity: 0.85;
+.scanex-forestry-naturalpark .header {
+    font-family: 'Open Sans', sans-serif;
+    font-weight: bold;
+    font-size: 24px;
+    white-space: nowrap;
 }
-.leaflet-drawing-lines {
-   pointer-events: none;
-}
-.leaflet-drawing-lines-fill {
-    pointer-events: visiblepainted;
-}
-.leaflet-drawing-points {
-    pointer-events: visible;
-}
-
-.leaflet-drawing-bbox.Move {
-	cursor: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACDSURBVEhL5ZFBCoAwDATzc/25GuhCDpu01A0IDuxFZYZW+x3HWAsuvsbkkSiXR5gck58E4jZkgezoVWD5unDnjCrgz6cRyHcDvjQS5W9HI+cz9vHO3EWJEcbKu1QOEGHMAlM5yD6sAsvyiiogoSWAf8ImuRaHRWRyECNyOXBxm/yLmN2K8muV4HlslQAAAABJRU5ErkJggg=='), pointer;
-}
-.leaflet-drawing-bbox.Rotate {
-	cursor: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAFRSURBVEhLtZRJTsNAEEXNeB/uwIYdgwBxCCSmPbBHCCJxBQRHYhIgTgEs4D2TklpJh9hO+0tPsdvVVWm76lctdTr87U0/ULTIMuzBPbyABUaLGNNJm/ABkTTlDEJvsPV32UwLMIBI9gAHsDK8P4dUEXcFcy5M0w244Qv2YRFC6T8PHYKxUeRfbYOBn7DqQkMZ+w3u3XAhJz/WOxh05EJLeRL3+k2WXCgtX+UjWGTXhT50DBa4q+9GZG/POkTRaU/1XSIT+0C6FrHDIkdQd12aPChRZKyln8EHHnMWmXgsudJvLGC79SJNzQK2Wjq9xeSgOSRdT3EC7jXHRIfVQQ1y7NtYxRpoL+6daBWhazBQA8udJO0wX6VOGz50AVM1D7qiGyRVtKGd5tSGNcglNLLrkEf1fYZy8yKvsA6dlH6sdIi0glvYgaLOGUV6VXZK86qqX08Va+VOfxC5AAAAAElFTkSuQmCC'), pointer;
-}
-
-/* static Tooltips */
-.leaflet-tooltip.staticTooltip  {
-	pointer-events: auto;
-}
-.leaflet-tooltip.staticTooltip  .content {
-	display: flex;
-	cursor: text;
-}
-.leaflet-tooltip.staticTooltip .closeBtn {
-    position: relative;
-    right: -6px;
-    top: -11px;
-	cursor: pointer;
-}
-
-.leaflet-contextmenu a.leaflet-contextmenu-item.over {
-    background-color: lightgray;
-	cursor: pointer;
-}
-.leaflet-contextmenu a.leaflet-contextmenu-item.over.leaflet-contextmenu-item-disabled {
-	cursor: default;
-}
-
-.scanex-forestry-content [data-id=fires] .container table {
+.scanex-forestry-naturalpark table {
     width: 100%;
+    table-layout: fixed;
 }
-.scanex-forestry-content [data-id=fires] .container table .title {
-    text-align: left;
-    font-size: 18px;
-    padding-bottom: 10px;
+.scanex-forestry-naturalpark .value {
+	text-align: right;
 }
 .scanex-forestry-declaration .scrollable {    
     max-height: 240px;
@@ -2417,71 +2384,60 @@ div.timeline-navigation-move-right {
 .scanex-forestry-declaration .num > td {
     border-top: 1px solid grey;
 }
-.scanex-forestry-naturalpark td {
-    font-family: 'Open Sans', sans-serif;
-    font-size: 14px;
-    line-height: 28px;
-    white-space: nowrap;
-    padding: 0px 10px 0px 10px;
+.leaflet-popup-content textarea {
+    outline: none;
+    -moz-appearance: none;
+    border: 1px solid white;
 }
-.scanex-forestry-naturalpark td:last-child{
-    width: auto;
+.leaflet-popup-content textarea:hover {
+    border: 1px solid #999;
 }
-.scanex-forestry-naturalpark .header {
-    font-family: 'Open Sans', sans-serif;
-    font-weight: bold;
-    font-size: 24px;
-    white-space: nowrap;
+.gmxTooltipBG {
+    fill: white;
+    stroke: black;
+    stroke-width: 1;
+    opacity: 0.85;
 }
-.scanex-forestry-naturalpark table {
-    width: 100%;
-    table-layout: fixed;
+.leaflet-drawing-lines {
+   pointer-events: none;
 }
-.scanex-forestry-naturalpark .value {
-	text-align: right;
+.leaflet-drawing-lines-fill {
+    pointer-events: visiblepainted;
 }
-.scanex-forestry-stand div,
-.scanex-forestry-stand label,
-.scanex-forestry-stand td {
-    font-family: 'Open Sans', sans-serif;
-    font-size: 14px;
-    line-height: 28px;
-    white-space: nowrap;
+.leaflet-drawing-points {
+    pointer-events: visible;
 }
-.scanex-forestry-stand .header1 {    
-    font-weight: bold;
-    font-size: 24px;
+
+.leaflet-drawing-bbox.Move {
+	cursor: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACDSURBVEhL5ZFBCoAwDATzc/25GuhCDpu01A0IDuxFZYZW+x3HWAsuvsbkkSiXR5gck58E4jZkgezoVWD5unDnjCrgz6cRyHcDvjQS5W9HI+cz9vHO3EWJEcbKu1QOEGHMAlM5yD6sAsvyiiogoSWAf8ImuRaHRWRyECNyOXBxm/yLmN2K8muV4HlslQAAAABJRU5ErkJggg=='), pointer;
 }
-.scanex-forestry-stand .header2 {        
-    font-weight: bold;
-    font-size: 18px;
+.leaflet-drawing-bbox.Rotate {
+	cursor: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAFRSURBVEhLtZRJTsNAEEXNeB/uwIYdgwBxCCSmPbBHCCJxBQRHYhIgTgEs4D2TklpJh9hO+0tPsdvVVWm76lctdTr87U0/ULTIMuzBPbyABUaLGNNJm/ABkTTlDEJvsPV32UwLMIBI9gAHsDK8P4dUEXcFcy5M0w244Qv2YRFC6T8PHYKxUeRfbYOBn7DqQkMZ+w3u3XAhJz/WOxh05EJLeRL3+k2WXCgtX+UjWGTXhT50DBa4q+9GZG/POkTRaU/1XSIT+0C6FrHDIkdQd12aPChRZKyln8EHHnMWmXgsudJvLGC79SJNzQK2Wjq9xeSgOSRdT3EC7jXHRIfVQQ1y7NtYxRpoL+6daBWhazBQA8udJO0wX6VOGz50AVM1D7qiGyRVtKGd5tSGNcglNLLrkEf1fYZy8yKvsA6dlH6sdIi0glvYgaLOGUV6VXZK86qqX08Va+VOfxC5AAAAAElFTkSuQmCC'), pointer;
 }
-.scanex-forestry-stand > .scrollable {
-    height: 200px;
-    overflow-y: auto;
+
+/* static Tooltips */
+.leaflet-tooltip.staticTooltip  {
+	pointer-events: auto;
 }
-.scanex-forestry-stand > .scrollable > * {    
-    display: inline-block;
-    vertical-align: top;
+.leaflet-tooltip.staticTooltip  .content {
+	display: flex;
+	cursor: text;
 }
-.scanex-forestry-stand table {
-    table-layout: fixed;    
+.leaflet-tooltip.staticTooltip .closeBtn {
+    position: relative;
+    right: -6px;
+    top: -11px;
+	cursor: pointer;
 }
-.scanex-forestry-stand  .chart,
-.scanex-forestry-stand .events {    
-    width: 350px;
+
+.leaflet-contextmenu a.leaflet-contextmenu-item.over {
+    background-color: lightgray;
+	cursor: pointer;
 }
-.scanex-forestry-stand .levels,
-.scanex-forestry-stand .events {
-    border-top: 1px solid;
+.leaflet-contextmenu a.leaflet-contextmenu-item.over.leaflet-contextmenu-item-disabled {
+	cursor: default;
 }
-.scanex-forestry-stand td {   
-    color: #453D3D;
-    padding: 5px 25px 5px 0px;
-}
-.scanex-forestry-stand .events .percentage {
-    text-align: right;
-}
+
 .scanex-forestry-incident .hidden {
     display: none;
 }
@@ -2658,6 +2614,56 @@ div.timeline-navigation-move-right {
 }
 .scanex-forestry-view-plot .stats {
     width: 400px;
+}
+.scanex-forestry-content [data-id=fires] .container table {
+    width: 100%;
+}
+.scanex-forestry-content [data-id=fires] .container table .title {
+    text-align: left;
+    font-size: 18px;
+    padding-bottom: 10px;
+}
+.scanex-forestry-stand div,
+.scanex-forestry-stand label,
+.scanex-forestry-stand td {
+    font-family: 'Open Sans', sans-serif;
+    font-size: 14px;
+    line-height: 28px;
+    white-space: nowrap;
+}
+.scanex-forestry-stand .header1 {    
+    font-weight: bold;
+    font-size: 24px;
+}
+.scanex-forestry-stand .header2 {        
+    font-weight: bold;
+    font-size: 18px;
+}
+.scanex-forestry-stand > .scrollable {
+    height: 200px;
+    overflow-y: auto;
+}
+.scanex-forestry-stand > .scrollable > * {    
+    display: inline-block;
+    vertical-align: top;
+}
+.scanex-forestry-stand table {
+    table-layout: fixed;    
+}
+.scanex-forestry-stand  .chart,
+.scanex-forestry-stand .events {    
+    width: 350px;
+}
+.scanex-forestry-stand .levels,
+.scanex-forestry-stand .events {
+    border-top: 1px solid;
+}
+.scanex-forestry-stand td {   
+    color: #453D3D;
+    padding: 5px 25px 5px 0px;
+}
+.scanex-forestry-stand .events .percentage {
+    text-align: right;
 }
 .scanex-forestry-uploaded {
     width: 100%;
@@ -3268,30 +3274,16 @@ div.timeline-navigation-move-right {
     width: 100px;
     text-align: right;
 }
-.scanex-forestry-quadrant .title {    
+.scanex-forestry-unauthorized {    
+    text-align: center;
+}
+.scanex-forestry-unauthorized > * {
+    vertical-align: middle;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 48px;
     font-weight: bold;
-    font-size: 24px;
+    color: red;
 }
-.scanex-forestry-quadrant > div {
-    font-size: 14px;
-    line-height: 28px;
-    white-space: nowrap;
-}
-.scanex-forestry-quadrant .stock {
-    font-weight: bold;
-}
-.scanex-forestry-quadrant .chart {    
-    height: 200px;
-}
-.scanex-forestry-quadrant .forestry {
-    margin-bottom: 5px;
-	margin-top: 10px;
-}
-.scanex-forestry-quadrant .title {
-    font-size: large;
-}
-
-
 .scanex-forestry-requests > table > thead {
     background-color: #F3F3F3;
     color: #6B707B;   
@@ -3413,6 +3405,30 @@ div.timeline-navigation-move-right {
 .apexcharts-legend.position-right {
     width: 300px;
 }
+.scanex-forestry-quadrant .title {    
+    font-weight: bold;
+    font-size: 24px;
+}
+.scanex-forestry-quadrant > div {
+    font-size: 14px;
+    line-height: 28px;
+    white-space: nowrap;
+}
+.scanex-forestry-quadrant .stock {
+    font-weight: bold;
+}
+.scanex-forestry-quadrant .chart {    
+    height: 200px;
+}
+.scanex-forestry-quadrant .forestry {
+    margin-bottom: 5px;
+	margin-top: 10px;
+}
+.scanex-forestry-quadrant .title {
+    font-size: large;
+}
+
+
 @charset "UTF-8";
 
 /*!
@@ -3774,38 +3790,6 @@ http://nicolasgallagher.com/micro-clearfix-hack/
 .scanex-forestry-project .hidden {
     display: none;
 }
-.scanex-forestry-project .quadrants > .scrollable {
-    overflow-y: auto;
-    max-height: 208px;
-}
-.scanex-forestry-project .quadrants table > thead > tr > th,
-.scanex-forestry-project .quadrants table > tbody > tr > td {
-    font-size: 14px;
-    line-height: 28px;
-}
-.scanex-forestry-project .quadrants table > thead > tr > th,
-.scanex-forestry-project .quadrants table > tbody > tr > td {    
-    white-space: nowrap;
-    padding: 5px; 
-}
-.scanex-forestry-project .quadrants table > thead > tr > th:nth-child(1),
-.scanex-forestry-project .quadrants table > tbody > tr > td:nth-child(1) {    
-    width: 220px;
-}
-.scanex-forestry-project .quadrants table > thead > tr > th:nth-child(2),
-.scanex-forestry-project .quadrants table > tbody > tr > td:nth-child(2) {    
-    width: 70px;   
-}
-.scanex-forestry-project .quadrants table > thead > tr > th,
-.scanex-forestry-project .quadrants table > thead > tr > td:nth-child(1) {
-    text-align: left;
-}
-.scanex-forestry-project .quadrants table > tbody > tr > td:nth-child(2) {
-    text-align: right;
-}
-.scanex-forestry-project .quadrants table {
-    table-layout: fixed;    
-}
 .scanex-forestry-project .species {
     width: 715px;
 }
@@ -3913,4 +3897,36 @@ http://nicolasgallagher.com/micro-clearfix-hack/
 
 .scanex-forestry-project .species .chart {
     height: 160px;
+}
+.scanex-forestry-project .quadrants > .scrollable {
+    overflow-y: auto;
+    max-height: 208px;
+}
+.scanex-forestry-project .quadrants table > thead > tr > th,
+.scanex-forestry-project .quadrants table > tbody > tr > td {
+    font-size: 14px;
+    line-height: 28px;
+}
+.scanex-forestry-project .quadrants table > thead > tr > th,
+.scanex-forestry-project .quadrants table > tbody > tr > td {    
+    white-space: nowrap;
+    padding: 5px; 
+}
+.scanex-forestry-project .quadrants table > thead > tr > th:nth-child(1),
+.scanex-forestry-project .quadrants table > tbody > tr > td:nth-child(1) {    
+    width: 220px;
+}
+.scanex-forestry-project .quadrants table > thead > tr > th:nth-child(2),
+.scanex-forestry-project .quadrants table > tbody > tr > td:nth-child(2) {    
+    width: 70px;   
+}
+.scanex-forestry-project .quadrants table > thead > tr > th,
+.scanex-forestry-project .quadrants table > thead > tr > td:nth-child(1) {
+    text-align: left;
+}
+.scanex-forestry-project .quadrants table > tbody > tr > td:nth-child(2) {
+    text-align: right;
+}
+.scanex-forestry-project .quadrants table {
+    table-layout: fixed;    
 }
