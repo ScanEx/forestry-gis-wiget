@@ -45243,36 +45243,31 @@ var Forestry = (function () {
 	  return Forbidden;
 	}(View);
 
-	var strings$4 = {
-	  rus: {
-	    alert: {
-	      loading: 'Выполняется запрос ...'
-	    }
-	  }
-	};
-
-	var Loading = /*#__PURE__*/function (_BaseView) {
-	  _inherits(Loading, _BaseView);
-
-	  var _super = _createSuper(Loading);
-
-	  function Loading(container) {
-	    var _this;
-
+	var Loading = /*#__PURE__*/function () {
+	  function Loading() {
 	    _classCallCheck(this, Loading);
-
-	    _this = _super.call(this, container, strings$4);
-
-	    _this._container.classList.add('scanex-forestry-loading');
-
-	    _this._container.innerHTML = "<div>".concat(_this.translate('alert.loading'), "</div>");
-	    return _this;
 	  }
+
+	  _createClass(Loading, [{
+	    key: "open",
+	    value: function open() {
+	      var event = document.createEvent('Event');
+	      event.initEvent('start', false, false);
+	      this.dispatchEvent(event);
+	    }
+	  }, {
+	    key: "close",
+	    value: function close() {
+	      var event = document.createEvent('Event');
+	      event.initEvent('stop', false, false);
+	      this.dispatchEvent(event);
+	    }
+	  }]);
 
 	  return Loading;
-	}(View);
+	}();
 
-	var strings$5 = {
+	var strings$4 = {
 	  rus: {
 	    alert: {
 	      notAvailable: 'Ведётся подготовка данных...'
@@ -45309,7 +45304,7 @@ var Forestry = (function () {
 
 	    _classCallCheck(this, NotAvailable);
 
-	    _this = _super.call(this, container, strings$5);
+	    _this = _super.call(this, container, strings$4);
 
 	    _this._container.classList.add('scanex-forestry-not-available');
 
@@ -45331,7 +45326,7 @@ var Forestry = (function () {
 	  return NotAvailable;
 	}(View);
 
-	var strings$6 = {
+	var strings$5 = {
 	  rus: {
 	    alert: {
 	      notFound: 'Не найдено'
@@ -45349,7 +45344,7 @@ var Forestry = (function () {
 
 	    _classCallCheck(this, NotFound);
 
-	    _this = _super.call(this, container, strings$6);
+	    _this = _super.call(this, container, strings$5);
 
 	    _this._container.classList.add('scanex-forestry-not-found');
 
@@ -45360,7 +45355,7 @@ var Forestry = (function () {
 	  return NotFound;
 	}(View);
 
-	var strings$7 = {
+	var strings$6 = {
 	  rus: {
 	    alert: {
 	      serverError: 'Ошибка сервера'
@@ -45378,7 +45373,7 @@ var Forestry = (function () {
 
 	    _classCallCheck(this, ServerError);
 
-	    _this = _super.call(this, container, strings$7);
+	    _this = _super.call(this, container, strings$6);
 
 	    _this._container.classList.add('scanex-forestry-server-error');
 
@@ -45389,7 +45384,7 @@ var Forestry = (function () {
 	  return ServerError;
 	}(View);
 
-	var strings$8 = {
+	var strings$7 = {
 	  rus: {
 	    alert: {
 	      unAuthorized: 'Вы не вошли в систему'
@@ -45407,7 +45402,7 @@ var Forestry = (function () {
 
 	    _classCallCheck(this, UnAuthorized);
 
-	    _this = _super.call(this, container, strings$8);
+	    _this = _super.call(this, container, strings$7);
 
 	    _this._container.classList.add('scanex-forestry-unauthorized');
 
@@ -45418,7 +45413,7 @@ var Forestry = (function () {
 	  return UnAuthorized;
 	}(View);
 
-	var strings$9 = {
+	var strings$8 = {
 	  rus: {
 	    park: {
 	      title: 'ООПТ',
@@ -45441,7 +45436,7 @@ var Forestry = (function () {
 
 	    _classCallCheck(this, Parks);
 
-	    _this = _super.call(this, container, strings$9);
+	    _this = _super.call(this, container, strings$8);
 
 	    _this._container.classList.add('scanex-forestry-naturalpark');
 
@@ -62679,7 +62674,7 @@ var Forestry = (function () {
 	  module.exports = Yt;
 	});
 
-	var strings$a = {
+	var strings$9 = {
 	  rus: {
 	    plot: {
 	      title: 'Лесной участок №',
@@ -62702,7 +62697,7 @@ var Forestry = (function () {
 
 	    _classCallCheck(this, Plots);
 
-	    _this = _super.call(this, container, strings$a);
+	    _this = _super.call(this, container, strings$9);
 
 	    _this._container.classList.add('scanex-forestry-view-plot');
 
@@ -62926,7 +62921,7 @@ var Forestry = (function () {
 	  return Plots$1;
 	}(LayerController);
 
-	var strings$b = {
+	var strings$a = {
 	  rus: {
 	    info: {
 	      approve: 'Дата принятия решения о проведении аукциона',
@@ -62973,7 +62968,7 @@ var Forestry = (function () {
 
 	    _classCallCheck(this, Info);
 
-	    _this = _super.call(this, container, strings$b);
+	    _this = _super.call(this, container, strings$a);
 
 	    _this._container.classList.add('scanex-forestry-view-project');
 
@@ -63527,7 +63522,7 @@ var Forestry = (function () {
 
 	    _classCallCheck(this, Project);
 
-	    _this = _super.call(this, container, strings$b);
+	    _this = _super.call(this, container, strings$a);
 	    _this._layer = layer;
 	    _this._forestryIndex = forestryIndex;
 	    _this._projectIndex = projectIndex;
@@ -64246,7 +64241,7 @@ var Forestry = (function () {
 	  return Projects;
 	}(LayerController);
 
-	var strings$c = {
+	var strings$b = {
 	  rus: {
 	    quadrant: {
 	      stock: {
@@ -64292,7 +64287,7 @@ var Forestry = (function () {
 
 	    _classCallCheck(this, Quadrants);
 
-	    _this = _super.call(this, container, strings$c);
+	    _this = _super.call(this, container, strings$b);
 
 	    _this._container.classList.add('scanex-forestry-quadrant');
 
@@ -64577,7 +64572,7 @@ var Forestry = (function () {
 	  return Quadrants;
 	}(LayerController);
 
-	var strings$d = {
+	var strings$c = {
 	  rus: {
 	    report: {
 	      title: 'Сводная аналитика',
@@ -64617,7 +64612,7 @@ var Forestry = (function () {
 
 	    _classCallCheck(this, Reports);
 
-	    _this = _super.call(this, container, strings$d);
+	    _this = _super.call(this, container, strings$c);
 
 	    _this._container.classList.add('scanex-forestry-analytics');
 
@@ -64972,7 +64967,7 @@ var Forestry = (function () {
 	  return Reports$1;
 	}(Controller);
 
-	var strings$e = {
+	var strings$d = {
 	  rus: {
 	    request: {
 	      id: '#',
@@ -64999,7 +64994,7 @@ var Forestry = (function () {
 
 	    _classCallCheck(this, Requests);
 
-	    _this = _super.call(this, container, strings$e);
+	    _this = _super.call(this, container, strings$d);
 
 	    _this._container.classList.add('scanex-forestry-requests');
 
@@ -65300,7 +65295,7 @@ var Forestry = (function () {
 	  return Roads;
 	}(LayerController);
 
-	var strings$f = {
+	var strings$e = {
 	  rus: {
 	    stand: {
 	      title: 'Выдел',
@@ -65367,7 +65362,7 @@ var Forestry = (function () {
 
 	    _classCallCheck(this, Stands);
 
-	    _this = _super.call(this, container, strings$f);
+	    _this = _super.call(this, container, strings$e);
 
 	    _this._container.classList.add('scanex-forestry-stand');
 
@@ -65744,7 +65739,7 @@ var Forestry = (function () {
 	  return Pager;
 	}(EventTarget);
 
-	var strings$g = {
+	var strings$f = {
 	  rus: {
 	    uploaded: {
 	      title: 'Мои данные',
@@ -65775,7 +65770,7 @@ var Forestry = (function () {
 
 	    _classCallCheck(this, Uploaded);
 
-	    _this = _super.call(this, container, strings$g);
+	    _this = _super.call(this, container, strings$f);
 	    _this._columns = columns;
 	    _this._types = types;
 	    _this._pageSize = pageSize;
@@ -66619,11 +66614,26 @@ var Forestry = (function () {
 	    _this._notifications = {
 	      unAuthorized: _this._content.add('unauthorized', UnAuthorized),
 	      forbidden: _this._content.add('forbidden', Forbidden),
-	      loading: _this._content.add('loading', Loading),
 	      notAvailable: _this._content.add('not-available', NotAvailable),
 	      notFound: _this._content.add('not-found', NotFound),
 	      serverError: _this._content.add('server-error', ServerError)
 	    };
+	    _this._notifications.loading = new Loading();
+
+	    _this._notifications.loading.on('start', function () {
+	      var event = document.createEvent('Event');
+	      event.initEvent('loading:start', false, false);
+
+	      _this.dispatchEvent(event);
+	    });
+
+	    _this._notifications.loading.on('stop', function () {
+	      var event = document.createEvent('Event');
+	      event.initEvent('loading:stop', false, false);
+
+	      _this.dispatchEvent(event);
+	    });
+
 	    return _this;
 	  }
 
@@ -66830,11 +66840,27 @@ var Forestry = (function () {
 	          while (1) {
 	            switch (_context5.prev = _context5.next) {
 	              case 0:
+	                if (!this._permissions.MyData) {
+	                  _context5.next = 5;
+	                  break;
+	                }
+
+	                _context5.next = 3;
+	                return this._controllers.uploaded.view();
+
+	              case 3:
+	                _context5.next = 6;
+	                break;
+
+	              case 5:
+	                this._notifications.forbidden.open();
+
+	              case 6:
 	              case "end":
 	                return _context5.stop();
 	            }
 	          }
-	        }, _callee5);
+	        }, _callee5, this);
 	      }));
 
 	      function showUploaded() {

@@ -42,7 +42,9 @@
   * События:
   	* создать заявку - ``request:create``
   	* инцидент - связанные документы - ``incident:docs``
-  	* инцидент - снимок с БПЛА - ``incident:image``  	
+  	* инцидент - снимок с БПЛА - ``incident:image``
+  	* начало длительной операции ``loading:start``
+  	* конец длительной операции ``loading:stop``
 # Пример
 ```js
 	import './forestry.css';
