@@ -2770,10 +2770,6 @@ function _isNativeReflectConstruct() {
   }
 }
 
-function _objectDestructuringEmpty(obj) {
-  if (obj == null) throw new TypeError("Cannot destructure undefined");
-}
-
 function _objectWithoutPropertiesLoose(source, excluded) {
   if (source == null) return {};
   var target = {};
@@ -9730,7 +9726,7 @@ L.gmx._loadingLayerClasses={};};L.gmx._loadLayerClass=function(type){if(!L.gmx._
 // }).
 var promise=new L.gmx.Deferred();promise.resolve();L.gmx._layerClassLoaders.forEach(function(loader){promise=promise.then(function(layerClass){if(layerClass){L.gmx._layerClasses[type]=layerClass;return layerClass;}return loader(type);},function(){//just skip loader errors
 });});promise=promise.then(function(layerClass){if(layerClass){L.gmx._layerClasses[type]=layerClass;return layerClass;}},function(){//just skip loader errors
-});L.gmx._loadingLayerClasses[type]=promise;}return L.gmx._loadingLayerClasses[type];};L.gmx.loadLayer=function(mapID,layerID,options){return new Promise(function(resolve,reject){var layerParams={mapID:mapID,layerID:layerID};options=options||{};if(!options.skipTiles){options.skipTiles='All';}for(var p in options){layerParams[p]=options[p];}var hostName=gmxAPIutils.normalizeHostname(options.hostName||DEFAULT_HOSTNAME);layerParams.hostName=hostName;L.gmx.gmxMapManager.loadMapProperties({srs:options.srs||'3857',hostName:hostName,apiKey:options.apiKey,mapName:mapID,skipTiles:options.skipTiles}).then(function(){var layerInfo=L.gmx.gmxMapManager.findLayerInfo(hostName,mapID,layerID);if(!layerInfo){reject('There is no layer '+layerID+' in map '+mapID);return;}//to know from what host the layer was loaded
+});L.gmx._loadingLayerClasses[type]=promise;}return L.gmx._loadingLayerClasses[type];};L.gmx.loadLayer=function(mapID,layerID,options){return new Promise(function(resolve,reject){var layerParams={mapID:mapID,layerID:layerID};options=options||{};if(!options.skipTiles){options.skipTiles='All';}for(var p in options){layerParams[p]=options[p];}var hostName=gmxAPIutils.normalizeHostname(options.hostName||DEFAULT_HOSTNAME);layerParams.hostName=hostName;L.gmx.gmxMapManager.loadMapProperties({srs:options.srs||'3857',hostName:hostName,gmxEndPoints:options.gmxEndPoints,apiKey:options.apiKey,mapName:mapID,skipTiles:options.skipTiles}).then(function(){var layerInfo=L.gmx.gmxMapManager.findLayerInfo(hostName,mapID,layerID);if(!layerInfo){reject('There is no layer '+layerID+' in map '+mapID);return;}//to know from what host the layer was loaded
 layerInfo.properties.hostName=hostName;var type=layerInfo.properties.ContentID||layerInfo.properties.type;var doCreateLayer=function doCreateLayer(){var layer=L.gmx.createLayer(layerInfo,layerParams);if(layer){resolve(layer);}else {reject('Unknown type of layer '+layerID);}};if(type in L.gmx._layerClasses){doCreateLayer();}else {L.gmx._loadLayerClass(type).then(doCreateLayer);}},function(response){reject('Can\'t load layer '+layerID+' from map '+mapID+': '+response.error);}).catch(console.log);}).catch(console.log);};L.gmx.loadLayers=function(layers,globalOptions){return new Promise(function(resolve){Promise.all(layers.map(function(layerInfo){var options=L.extend({},globalOptions,layerInfo);return L.gmx.loadLayer(layerInfo.mapID,layerInfo.layerID,options);})).then(function(res){resolve(res);});});};L.gmx.loadMap=function(mapID,options){if(L.gmxUtil.debug)console.warn('L.gmx.loadMap:',mapID,options);options=L.extend({},options);options.hostName=gmxAPIutils.normalizeHostname(options.hostName||DEFAULT_HOSTNAME);options.mapName=mapID;if(!options.skipTiles){options.skipTiles='All';}if(!options.srs){options.srs=3857;}if(!options.ftc){options.ftc='osm';}return new Promise(function(resolve,reject){L.gmx.gmxMapManager.loadMapProperties(options).then(function(mapInfo){var mapHash=L.gmx._maps[options.hostName][mapID];if(mapHash.loaded){resolve(mapHash.loaded);}else {var loadedMap=new L.gmx.gmxMap(mapInfo,options);mapHash.loaded=loadedMap;loadedMap.layersCreated.then(function(){if(options.leafletMap||options.setZIndex){var curZIndex=0,visibility=options.visibility,layer,rawProperties;for(var l=loadedMap.layers.length-1;l>=0;l--){layer=loadedMap.layers[l];rawProperties=layer.getGmxProperties();if(mapInfo.properties.LayerOrder==='VectorOnTop'&&layer.setZIndexOffset&&rawProperties.type!=='Raster'){layer.setZIndexOffset(DEFAULT_VECTOR_LAYER_ZINDEXOFFSET);}if(options.setZIndex&&layer.setZIndex){layer.setZIndex(++curZIndex);}if(options.leafletMap&&layer instanceof L.Layer&&(visibility?visibility[rawProperties.name]:rawProperties.visible)){layer.addTo(options.leafletMap);}}}resolve(loadedMap);});}},function(response){var errorMessage=response&&response.ErrorInfo&&response.ErrorInfo.ErrorMessage||'Server error';reject('Can\'t load map '+mapID+' from '+options.hostName+': '+errorMessage);}).catch(console.log);});};L.gmx.DummyLayer=function(props){this.onAdd=this.onRemove=this._layerAdd=function(){};this.getGmxProperties=function(){return props;};};L.gmx.createLayer=function(layerInfo,options){if(!layerInfo){layerInfo={};}if(!layerInfo.properties){layerInfo.properties={type:'Vector'};}var properties=layerInfo.properties,type=properties.ContentID||properties.type||'Vector',layer;if(!options){options=properties;}if(type in L.gmx._layerClasses){try{layer=new L.gmx._layerClasses[type](options||layerInfo.properties);layer=layer.initFromDescription(layerInfo);}catch(e){layer=new L.gmx.DummyLayer(properties);}}else {layer=new L.gmx.DummyLayer(properties);}return layer;};L.gmx=L.gmx||{};L.gmx.gmxAPIutils=gmxAPIutils;
 
 (function () {
@@ -11361,6 +11357,3459 @@ layerInfo.properties.hostName=hostName;var type=layerInfo.properties.ContentID||
   }
 })();
 
+var GmxDrawingContextMenu = /*#__PURE__*/function () {
+  function GmxDrawingContextMenu() {
+    var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
+      points: [],
+      lines: [],
+      fill: []
+    };
+
+    _classCallCheck(this, GmxDrawingContextMenu);
+
+    this.options = options;
+  }
+
+  _createClass(GmxDrawingContextMenu, [{
+    key: "insertItem",
+    value: function insertItem(obj, index, type) {
+      var optKey = type || 'points';
+
+      if (index === undefined) {
+        index = this.options[optKey].length;
+      }
+
+      this.options[optKey].splice(index, 0, obj);
+      return this;
+    }
+  }, {
+    key: "removeItem",
+    value: function removeItem(obj, type) {
+      var optKey = type || 'points';
+
+      for (var i = 0, len = this.options[optKey].length; i < len; i++) {
+        if (this.options[optKey][i].callback === obj.callback) {
+          this.options[optKey].splice(i, 1);
+          break;
+        }
+      }
+
+      return this;
+    }
+  }, {
+    key: "removeAllItems",
+    value: function removeAllItems(type) {
+      if (!type) {
+        this.options = {
+          points: [],
+          lines: []
+        };
+      } else if (type === 'lines') {
+        this.options.lines = [];
+      } else {
+        this.options.points = [];
+      }
+
+      return this;
+    }
+  }, {
+    key: "getItems",
+    value: function getItems() {
+      return this.options;
+    }
+  }]);
+
+  return GmxDrawingContextMenu;
+}();
+
+L$1.GmxDrawingContextMenu = GmxDrawingContextMenu;
+var GmxDrawingContextMenu$1 = L$1.GmxDrawingContextMenu;
+
+var rectDelta = 0.0000001;
+var stateVersion = '1.0.0';
+L$1.GmxDrawing = L$1.Class.extend({
+  options: {
+    type: ''
+  },
+  includes: L$1.Evented ? L$1.Evented.prototype : L$1.Mixin.Events,
+  initialize: function initialize(map) {
+    this._map = map;
+    this.items = [];
+    this.current = null;
+    this.contextmenu = new GmxDrawingContextMenu$1({
+      // points: [], // [{text: 'Remove point'}, {text: 'Delete feature'}],
+      points: [{
+        text: 'Move'
+      }, {
+        text: 'Rotate'
+      }, {
+        text: 'Remove point'
+      }, {
+        text: 'Delete feature'
+      }],
+      // , {text: 'Rotate around Point'}
+      bbox: [{
+        text: 'Save'
+      }, {
+        text: 'Cancel'
+      }],
+      fill: [{
+        text: 'Rotate'
+      }, {
+        text: 'Move'
+      }]
+    });
+
+    if (L$1.gmxUtil && L$1.gmxUtil.prettifyDistance) {
+      var svgNS = 'http://www.w3.org/2000/svg';
+      var tooltip = document.createElementNS(svgNS, 'g');
+      L$1.DomUtil.addClass(tooltip, 'gmxTooltip');
+      var bg = document.createElementNS(svgNS, 'rect');
+      bg.setAttributeNS(null, 'rx', 4);
+      bg.setAttributeNS(null, 'ry', 4);
+      bg.setAttributeNS(null, 'height', 16);
+      L$1.DomUtil.addClass(bg, 'gmxTooltipBG');
+      var text = document.createElementNS(svgNS, 'text');
+      var userSelectProperty = L$1.DomUtil.testProp(['userSelect', 'WebkitUserSelect', 'OUserSelect', 'MozUserSelect', 'msUserSelect']);
+      text.style[userSelectProperty] = 'none';
+      tooltip.appendChild(bg);
+      tooltip.appendChild(text);
+
+      this.hideTooltip = function () {
+        tooltip.setAttributeNS(null, 'visibility', 'hidden');
+      };
+
+      this.showTooltip = function (point, mouseovertext) {
+        var x = point.x + 11,
+            y = point.y - 14;
+        text.setAttributeNS(null, 'x', x);
+        text.setAttributeNS(null, 'y', y);
+        text.textContent = mouseovertext;
+
+        if (tooltip.getAttributeNS(null, 'visibility') !== 'visible') {
+          (this._map._pathRoot || this._map._renderer._container).appendChild(tooltip);
+
+          tooltip.setAttributeNS(null, 'visibility', 'visible');
+        }
+
+        var length = text.getComputedTextLength();
+        bg.setAttributeNS(null, 'width', length + 8);
+        bg.setAttributeNS(null, 'x', x - 4);
+        bg.setAttributeNS(null, 'y', y - 12);
+      };
+    }
+
+    this.on('drawstop drawstart', function (ev) {
+      this.drawMode = this._drawMode = ev.mode;
+
+      this._map.doubleClickZoom[this.drawMode === 'edit' ? 'disable' : 'enable']();
+    }, this);
+  },
+  bringToFront: function bringToFront() {
+    for (var i = 0, len = this.items.length; i < len; i++) {
+      var item = this.items[i];
+
+      if (item._map && 'bringToFront' in item) {
+        item.bringToFront();
+      }
+    }
+  },
+  addGeoJSON: function addGeoJSON(obj, options) {
+    var arr = [],
+        isLGeoJSON = obj instanceof L$1.GeoJSON;
+
+    if (!isLGeoJSON) {
+      obj = L$1.geoJson(obj, options);
+    }
+
+    if (obj instanceof L$1.GeoJSON) {
+      var layers = obj.getLayers();
+
+      if (layers) {
+        var parseLayer = function parseLayer(it) {
+          var _originalStyle = null;
+
+          if (it.setStyle && options && options.lineStyle) {
+            _originalStyle = {};
+
+            for (var key in options.lineStyle) {
+              _originalStyle[key] = options.lineStyle[key];
+            }
+
+            it.setStyle(options.lineStyle);
+          }
+
+          var f = this.add(it, options);
+          f._originalStyle = _originalStyle;
+          arr.push(f);
+        };
+
+        for (var i = 0, len = layers.length; i < len; i++) {
+          var layer = layers[i];
+
+          if (layer.feature.geometry.type !== 'GeometryCollection') {
+            layer = L$1.layerGroup([layer]);
+          }
+
+          layer.eachLayer(parseLayer, this);
+        }
+      }
+    }
+
+    return arr;
+  },
+  add: function add(obj, options) {
+    var item = null;
+    options = options || {};
+
+    if (obj) {
+      if (obj instanceof L$1.GmxDrawing.Feature) {
+        item = obj;
+      } else {
+        var calcOptions = {};
+
+        if (obj.feature && obj.feature.geometry) {
+          var type = obj.feature.geometry.type;
+
+          if (type === 'Point') {
+            obj = new L$1.Marker(obj._latlng);
+          } else if (type === 'MultiPolygon') {
+            calcOptions.type = type;
+          }
+        } // if (!L.MultiPolygon) { L.MultiPolygon = L.Polygon; }
+        // if (!L.MultiPolyline) { L.MultiPolyline = L.Polyline; }
+
+
+        if (!options || !('editable' in options)) {
+          calcOptions.editable = true;
+        }
+
+        if (obj.geometry) {
+          calcOptions.type = obj.geometry.type;
+        } else if (obj instanceof L$1.Rectangle) {
+          calcOptions.type = 'Rectangle';
+        } else if (obj instanceof L$1.Polygon) {
+          calcOptions.type = calcOptions.type || 'Polygon';
+        } else if (L$1.MultiPolygon && obj instanceof L$1.MultiPolygon) {
+          calcOptions.type = 'MultiPolygon';
+        } else if (obj instanceof L$1.Polyline) {
+          calcOptions.type = 'Polyline';
+        } else if (L$1.MultiPolyline && obj instanceof L$1.MultiPolyline) {
+          calcOptions.type = 'MultiPolyline';
+        } else if (obj.setIcon || obj instanceof L$1.Marker) {
+          calcOptions.type = 'Point';
+          calcOptions.editable = false;
+          obj.options.draggable = true;
+        }
+
+        options = this._chkDrawOptions(calcOptions.type, options);
+        L$1.extend(options, calcOptions);
+
+        if (obj.geometry) {
+          var iconStyle = options.markerStyle && options.markerStyle.iconStyle;
+
+          if (options.type === 'Point' && !options.pointToLayer && iconStyle) {
+            options.icon = L$1.icon(iconStyle);
+
+            options.pointToLayer = function (geojson, latlng) {
+              return new L$1.Marker(latlng, options);
+            };
+          }
+
+          return this.addGeoJSON(obj, options);
+        }
+
+        item = new L$1.GmxDrawing.Feature(this, obj, options);
+      }
+
+      if (!('map' in options)) {
+        options.map = true;
+      }
+
+      if (options.map && !item._map && this._map) {
+        this._map.addLayer(item);
+      } else {
+        this._addItem(item);
+      } //if (!item._map) this._map.addLayer(item);
+      //if (item.points) item.points._path.setAttribute('fill-rule', 'inherit');
+
+
+      if ('setEditMode' in item) {
+        item.setEditMode();
+      }
+    }
+
+    return item;
+  },
+  _disableDrag: function _disableDrag() {
+    if (this._map) {
+      this._map.dragging.disable();
+
+      L$1.DomUtil.disableTextSelection();
+      L$1.DomUtil.disableImageDrag();
+
+      this._map.doubleClickZoom.removeHooks();
+    }
+  },
+  _enableDrag: function _enableDrag() {
+    if (this._map) {
+      this._map.dragging.enable();
+
+      L$1.DomUtil.enableTextSelection();
+      L$1.DomUtil.enableImageDrag();
+
+      this._map.doubleClickZoom.addHooks();
+    }
+  },
+  clearCreate: function clearCreate() {
+    this._clearCreate();
+  },
+  _clearCreate: function _clearCreate() {
+    if (this._createKey && this._map) {
+      if (this._createKey.type === 'Rectangle' && L$1.Browser.mobile) {
+        L$1.DomEvent.off(this._map._container, 'touchstart', this._createKey.fn, this);
+      } else {
+        this._map.off(this._createKey.eventName, this._createKey.fn, this);
+
+        this._map.off('mousemove', this._onMouseMove, this);
+      }
+
+      this._enableDrag();
+    }
+
+    if (this._firstPoint) {
+      this._map.removeLayer(this._firstPoint);
+
+      this._firstPoint = null;
+    }
+
+    this._createKey = null;
+  },
+  _chkDrawOptions: function _chkDrawOptions(type, drawOptions) {
+    var defaultStyles = L$1.GmxDrawing.utils.defaultStyles,
+        resultStyles = {};
+
+    if (!drawOptions) {
+      drawOptions = L$1.extend({}, defaultStyles);
+    }
+
+    if (type === 'Point') {
+      L$1.extend(resultStyles, defaultStyles.markerStyle.options.icon, drawOptions);
+    } else {
+      L$1.extend(resultStyles, drawOptions);
+      resultStyles.lineStyle = L$1.extend({}, defaultStyles.lineStyle, drawOptions.lineStyle);
+      resultStyles.pointStyle = L$1.extend({}, defaultStyles.pointStyle, drawOptions.pointStyle);
+      resultStyles.holeStyle = L$1.extend({}, defaultStyles.holeStyle, drawOptions.holeStyle);
+    }
+
+    if (resultStyles.iconUrl) {
+      var iconStyle = {
+        iconUrl: resultStyles.iconUrl
+      };
+      delete resultStyles.iconUrl;
+
+      if (resultStyles.iconAnchor) {
+        iconStyle.iconAnchor = resultStyles.iconAnchor;
+        delete resultStyles.iconAnchor;
+      }
+
+      if (resultStyles.iconSize) {
+        iconStyle.iconSize = resultStyles.iconSize;
+        delete resultStyles.iconSize;
+      }
+
+      if (resultStyles.popupAnchor) {
+        iconStyle.popupAnchor = resultStyles.popupAnchor;
+        delete resultStyles.popupAnchor;
+      }
+
+      if (resultStyles.shadowSize) {
+        iconStyle.shadowSize = resultStyles.shadowSize;
+        delete resultStyles.shadowSize;
+      }
+
+      resultStyles.markerStyle = {
+        iconStyle: iconStyle
+      };
+    }
+
+    return resultStyles;
+  },
+  create: function create(type, options) {
+    this._clearCreate(null);
+
+    if (type && this._map) {
+      var map = this._map,
+          drawOptions = this._chkDrawOptions(type, options),
+          my = this;
+
+      if (type === 'Rectangle') {
+        //map._initPathRoot();
+        map.dragging.disable();
+      }
+
+      this._createKey = {
+        type: type,
+        eventName: type === 'Rectangle' ? L$1.Browser.mobile ? 'touchstart' : 'mousedown' : 'click',
+        fn: function fn(ev) {
+          var originalEvent = ev && ev.originalEvent,
+              ctrlKey = false,
+              shiftKey = false,
+              altKey = false;
+
+          if (originalEvent) {
+            ctrlKey = originalEvent.ctrlKey;
+            shiftKey = originalEvent.shiftKey;
+            altKey = originalEvent.altKey;
+            var clickOnTag = originalEvent.target.tagName;
+
+            if (clickOnTag === 'g' || clickOnTag === 'path') {
+              return;
+            }
+          }
+
+          my._createType = '';
+          var obj,
+              key,
+              opt = {},
+              latlng = ev.latlng;
+
+          for (key in drawOptions) {
+            if (!(key in L$1.GmxDrawing.utils.defaultStyles)) {
+              opt[key] = drawOptions[key];
+            }
+          }
+
+          if (ctrlKey && my._firstPoint && my._firstPoint._snaped) {
+            latlng = my._firstPoint._snaped;
+          }
+
+          if (type === 'Point') {
+            var markerStyle = drawOptions.markerStyle || {},
+                markerOpt = {
+              draggable: true
+            };
+
+            if (originalEvent) {
+              markerOpt.ctrlKey = ctrlKey;
+              markerOpt.shiftKey = shiftKey;
+              markerOpt.altKey = altKey;
+            }
+
+            if (markerStyle.iconStyle) {
+              markerOpt.icon = L$1.icon(markerStyle.iconStyle);
+            }
+
+            obj = my.add(new L$1.Marker(latlng, markerOpt), opt);
+          } else {
+            if (drawOptions.pointStyle) {
+              opt.pointStyle = drawOptions.pointStyle;
+            }
+
+            if (drawOptions.lineStyle) {
+              opt.lineStyle = drawOptions.lineStyle;
+            }
+
+            if (type === 'Rectangle') {
+              // if (L.Browser.mobile) {
+              // var downAttr = L.GmxDrawing.utils.getDownType.call(my, ev, my._map);
+              // latlng = downAttr.latlng;
+              // }
+              opt.mode = 'edit';
+              obj = my.add(L$1.rectangle(L$1.latLngBounds(L$1.latLng(latlng.lat + rectDelta, latlng.lng - rectDelta), latlng)), opt);
+
+              if (L$1.Browser.mobile) {
+                obj._startTouchMove(ev, true);
+              } else {
+                obj._pointDown(ev);
+              }
+
+              obj.rings[0].ring._drawstop = true;
+            } else if (type === 'Polygon') {
+              opt.mode = 'add';
+              obj = my.add(L$1.polygon([latlng]), opt);
+              obj.setAddMode();
+            } else if (type === 'Polyline') {
+              opt.mode = 'add';
+              obj = my.add(L$1.polyline([latlng]), opt).setAddMode();
+            }
+          }
+
+          my._clearCreate();
+        }
+      };
+
+      if (type === 'Rectangle' && L$1.Browser.mobile) {
+        L$1.DomEvent.on(map._container, 'touchstart', this._createKey.fn, this);
+      } else {
+        map.on(this._createKey.eventName, this._createKey.fn, this);
+        map.on('mousemove', this._onMouseMove, this);
+      }
+
+      this._createType = type;
+      L$1.DomUtil.addClass(map._mapPane, 'leaflet-clickable');
+      this.fire('drawstart', {
+        mode: type
+      });
+    }
+
+    this.options.type = type;
+  },
+  _onMouseMove: function _onMouseMove(ev) {
+    var latlngs = [ev.latlng];
+
+    if (!this._firstPoint) {
+      this._firstPoint = new L$1.GmxDrawing.PointMarkers(latlngs, {
+        interactive: false
+      });
+
+      this._map.addLayer(this._firstPoint);
+    } else {
+      this._firstPoint.setLatLngs(latlngs);
+    }
+  },
+  extendDefaultStyles: function extendDefaultStyles(drawOptions) {
+    var defaultStyles = L$1.GmxDrawing.utils.defaultStyles;
+    drawOptions = drawOptions || {};
+
+    if (drawOptions.iconUrl) {
+      var iconStyle = defaultStyles.markerStyle.options.icon;
+      iconStyle.iconUrl = drawOptions.iconUrl;
+      delete drawOptions.iconUrl;
+
+      if (drawOptions.iconAnchor) {
+        iconStyle.iconAnchor = drawOptions.iconAnchor;
+        delete drawOptions.iconAnchor;
+      }
+
+      if (drawOptions.iconSize) {
+        iconStyle.iconSize = drawOptions.iconSize;
+        delete drawOptions.iconSize;
+      }
+
+      if (drawOptions.popupAnchor) {
+        iconStyle.popupAnchor = drawOptions.popupAnchor;
+        delete drawOptions.popupAnchor;
+      }
+
+      if (drawOptions.shadowSize) {
+        iconStyle.shadowSize = drawOptions.shadowSize;
+        delete drawOptions.shadowSize;
+      }
+    }
+
+    if (drawOptions.lineStyle) {
+      L$1.extend(defaultStyles.lineStyle, drawOptions.lineStyle);
+      delete drawOptions.lineStyle;
+    }
+
+    if (drawOptions.pointStyle) {
+      L$1.extend(defaultStyles.pointStyle, drawOptions.pointStyle);
+      delete drawOptions.pointStyle;
+    }
+
+    if (drawOptions.holeStyle) {
+      L$1.extend(defaultStyles.holeStyle, drawOptions.holeStyle);
+      delete drawOptions.holeStyle;
+    }
+
+    L$1.extend(defaultStyles, drawOptions);
+    return this;
+  },
+  getFeatures: function getFeatures() {
+    var out = [];
+
+    for (var i = 0, len = this.items.length; i < len; i++) {
+      out.push(this.items[i]);
+    }
+
+    return out;
+  },
+  loadState: function loadState(data) {
+    //if (data.version !== stateVersion) return;
+    var _this = this,
+        featureCollection = data.featureCollection;
+
+    L$1.geoJson(featureCollection, {
+      onEachFeature: function onEachFeature(feature, layer) {
+        var options = feature.properties,
+            popupOpened = options.popupOpened;
+
+        if (options.type === 'Rectangle') {
+          layer = L$1.rectangle(layer.getBounds());
+        } else if (options.type === 'Point') {
+          options = options.options;
+          var icon = options.icon;
+
+          if (icon) {
+            delete options.icon;
+
+            if (icon.iconUrl) {
+              options.icon = L$1.icon(icon);
+            }
+          }
+
+          layer = L$1.marker(layer.getLatLng(), options);
+        }
+
+        if (layer.setStyle && options && options.lineStyle) {
+          layer.setStyle(options.lineStyle);
+        }
+
+        _this.add(layer, options);
+
+        if (popupOpened) {
+          layer.openPopup();
+        }
+      }
+    });
+  },
+  saveState: function saveState() {
+    var featureGroup = L$1.featureGroup();
+    var points = [];
+
+    for (var i = 0, len = this.items.length; i < len; i++) {
+      var it = this.items[i];
+
+      if (it.options.type === 'Point') {
+        var geojson = it.toGeoJSON();
+        geojson.properties = L$1.GmxDrawing.utils.getNotDefaults(it.options, L$1.GmxDrawing.utils.defaultStyles.markerStyle);
+
+        if (!it._map) {
+          geojson.properties.map = false;
+        } else if (it._map.hasLayer(it.getPopup())) {
+          geojson.properties.popupOpened = true;
+        }
+
+        var res = L$1.GmxDrawing.utils.getNotDefaults(it._obj.options, L$1.GmxDrawing.utils.defaultStyles.markerStyle.options);
+
+        if (Object.keys(res).length) {
+          geojson.properties.options = res;
+        }
+
+        res = L$1.GmxDrawing.utils.getNotDefaults(it._obj.options.icon.options, L$1.GmxDrawing.utils.defaultStyles.markerStyle.options.icon);
+
+        if (Object.keys(res).length) {
+          if (!geojson.properties.options) {
+            geojson.properties.options = {};
+          }
+
+          geojson.properties.options.icon = res;
+        }
+
+        points.push(geojson);
+      } else {
+        featureGroup.addLayer(it);
+      }
+    }
+
+    var featureCollection = featureGroup.toGeoJSON();
+    featureCollection.features = featureCollection.features.concat(points);
+    return {
+      version: stateVersion,
+      featureCollection: featureCollection
+    };
+  },
+  _addItem: function _addItem(item) {
+    var addFlag = true;
+
+    for (var i = 0, len = this.items.length; i < len; i++) {
+      var it = this.items[i];
+
+      if (it === item) {
+        addFlag = false;
+        break;
+      }
+    }
+
+    if (addFlag) {
+      this.items.push(item);
+    }
+
+    this.fire('add', {
+      mode: item.mode,
+      object: item
+    });
+  },
+  _removeItem: function _removeItem(obj, remove) {
+    for (var i = 0, len = this.items.length; i < len; i++) {
+      var item = this.items[i];
+
+      if (item === obj) {
+        if (remove) {
+          this.items.splice(i, 1);
+          var ev = {
+            type: item.options.type,
+            mode: item.mode,
+            object: item
+          };
+          this.fire('remove', ev);
+          item.fire('remove', ev);
+        }
+
+        return item;
+      }
+    }
+
+    return null;
+  },
+  clear: function clear() {
+    for (var i = 0, len = this.items.length; i < len; i++) {
+      var item = this.items[i];
+
+      if (item && item._map) {
+        item._map.removeLayer(item);
+      }
+
+      var ev = {
+        type: item.options.type,
+        mode: item.mode,
+        object: item
+      };
+      this.fire('remove', ev);
+      item.fire('remove', ev);
+    }
+
+    this.items = [];
+    return this;
+  },
+  remove: function remove(obj) {
+    var item = this._removeItem(obj, true);
+
+    if (item && item._map) {
+      item._map.removeLayer(item);
+    }
+
+    return item;
+  }
+});
+L$1.Map.addInitHook(function () {
+  this.gmxDrawing = new L$1.GmxDrawing(this);
+});
+L$1.GmxDrawing;
+
+L$1.GmxDrawing.Feature = L$1.LayerGroup.extend({
+  options: {
+    endTooltip: '',
+    smoothFactor: 0,
+    mode: '' // add, edit
+
+  },
+  includes: L$1.Evented ? L$1.Evented.prototype : L$1.Mixin.Events,
+  simplify: function simplify() {
+    var i, j, len, len1, hole;
+
+    for (i = 0, len = this.rings.length; i < len; i++) {
+      var it = this.rings[i],
+          ring = it.ring;
+      ring.setLatLngs(ring.points.getPathLatLngs());
+
+      for (j = 0, len1 = it.holes.length; j < len1; j++) {
+        hole = it.holes[j];
+        hole.setLatLngs(hole.points.getPathLatLngs());
+      }
+    }
+
+    return this;
+  },
+  bringToFront: function bringToFront() {
+    this.rings.forEach(function (it) {
+      it.ring.bringToFront();
+    });
+    return this; // return this.invoke('bringToFront');
+  },
+  bringToBack: function bringToBack() {
+    this.rings.forEach(function (it) {
+      it.ring.bringToBack();
+    });
+    return this; // return this.invoke('bringToBack');
+  },
+  onAdd: function onAdd(map) {
+    L$1.LayerGroup.prototype.onAdd.call(this, map);
+
+    this._parent._addItem(this);
+
+    if (this.options.type === 'Point') {
+      map.addLayer(this._obj);
+      requestIdleCallback(function () {
+        this._fireEvent('drawstop', this._obj.options);
+      }.bind(this), {
+        timeout: 0
+      });
+    } else {
+      var svgContainer = this._map._pathRoot || this._map._renderer && this._map._renderer._container;
+
+      if (svgContainer && svgContainer.getAttribute('pointer-events') !== 'visible') {
+        svgContainer.setAttribute('pointer-events', 'visible');
+      }
+    }
+
+    this._fireEvent('addtomap');
+  },
+  onRemove: function onRemove(map) {
+    if ('hideTooltip' in this) {
+      this.hideTooltip();
+    }
+
+    this._removeStaticTooltip();
+
+    L$1.LayerGroup.prototype.onRemove.call(this, map);
+
+    if (this.options.type === 'Point') {
+      map.removeLayer(this._obj);
+    }
+
+    this._fireEvent('removefrommap');
+  },
+  remove: function remove(ring) {
+    if (ring) {
+      var i, j, len, len1, hole;
+
+      for (i = 0, len = this.rings.length; i < len; i++) {
+        if (ring.options.hole) {
+          for (j = 0, len1 = this.rings[i].holes.length; j < len1; j++) {
+            hole = this.rings[i].holes[j];
+
+            if (ring === hole) {
+              this.rings[i].holes.splice(j, 1);
+
+              if (hole._map) {
+                hole._map.removeLayer(hole);
+              }
+
+              break;
+            }
+          }
+
+          if (!ring._map) {
+            break;
+          }
+        } else if (ring === this.rings[i].ring) {
+          for (j = 0, len1 = this.rings[i].holes.length; j < len1; j++) {
+            hole = this.rings[i].holes[j];
+
+            if (hole._map) {
+              hole._map.removeLayer(hole);
+            }
+          }
+
+          this.rings.splice(i, 1);
+
+          if (ring._map) {
+            ring._map.removeLayer(ring);
+          }
+
+          break;
+        }
+      }
+    } else {
+      this.rings = [];
+    }
+
+    if (this.rings.length < 1) {
+      if (this._originalStyle) {
+        this._obj.setStyle(this._originalStyle);
+      }
+
+      this._parent.remove(this);
+    }
+
+    return this;
+  },
+  _fireEvent: function _fireEvent(name, options) {
+    //console.log('_fireEvent', name);
+    if (name === 'removefrommap' && this.rings.length > 1) {
+      return;
+    }
+
+    var event = L$1.extend({}, {
+      mode: this.mode || '',
+      object: this
+    }, options);
+    this.fire(name, event);
+
+    this._parent.fire(name, event);
+
+    if (name === 'drawstop' && this._map) {
+      L$1.DomUtil.removeClass(this._map._mapPane, 'leaflet-clickable');
+    }
+  },
+  getStyle: function getStyle() {
+    var resultStyles = L$1.extend({}, this._drawOptions);
+    delete resultStyles.holeStyle;
+
+    if (resultStyles.type === 'Point') {
+      L$1.extend(resultStyles, resultStyles.markerStyle.iconStyle);
+      delete resultStyles.markerStyle;
+    }
+
+    return resultStyles;
+  },
+  setOptions: function setOptions(options) {
+    if (options.lineStyle) {
+      this._setStyleOptions(options.lineStyle, 'lines');
+    }
+
+    if (options.pointStyle) {
+      this._setStyleOptions(options.pointStyle, 'points');
+    }
+
+    if ('editable' in options) {
+      if (options.editable) {
+        this.enableEdit();
+      } else {
+        this.disableEdit();
+      }
+    }
+
+    L$1.setOptions(this, options);
+
+    this._fireEvent('optionschange');
+
+    return this;
+  },
+  _setStyleOptions: function _setStyleOptions(options, type) {
+    for (var i = 0, len = this.rings.length; i < len; i++) {
+      var it = this.rings[i].ring[type];
+      it.setStyle(options);
+      it.redraw();
+
+      for (var j = 0, len1 = this.rings[i].holes.length; j < len1; j++) {
+        it = this.rings[i].holes[j][type];
+        it.setStyle(options);
+        it.redraw();
+      }
+    }
+
+    this._fireEvent('stylechange');
+  },
+  _setLinesStyle: function _setLinesStyle(options) {
+    this._setStyleOptions(options, 'lines');
+  },
+  _setPointsStyle: function _setPointsStyle(options) {
+    this._setStyleOptions(options, 'points');
+  },
+  getOptions: function getOptions() {
+    var options = this.options,
+        data = L$1.extend({}, options);
+    data.lineStyle = options.lineStyle;
+    data.pointStyle = options.pointStyle;
+    var res = L$1.GmxDrawing.utils.getNotDefaults(data, L$1.GmxDrawing.utils.defaultStyles);
+
+    if (!Object.keys(res.lineStyle).length) {
+      delete res.lineStyle;
+    }
+
+    if (!Object.keys(res.pointStyle).length) {
+      delete res.pointStyle;
+    }
+
+    if (!this._map) {
+      res.map = false;
+    }
+
+    if (options.type === 'Point') {
+      var opt = L$1.GmxDrawing.utils.getNotDefaults(this._obj.options, L$1.GmxDrawing.utils.defaultStyles.markerStyle.options);
+
+      if (Object.keys(opt).length) {
+        res.options = opt;
+      }
+
+      opt = L$1.GmxDrawing.utils.getNotDefaults(this._obj.options.icon.options, L$1.GmxDrawing.utils.defaultStyles.markerStyle.options.icon);
+
+      if (Object.keys(opt).length) {
+        res.options.icon = opt;
+      }
+    }
+
+    return res;
+  },
+  _latLngsToCoords: function _latLngsToCoords(latlngs, closed) {
+    var coords = L$1.GeoJSON.latLngsToCoords(L$1.GmxDrawing.utils.isOldVersion ? latlngs : latlngs[0]);
+
+    if (closed) {
+      var lastCoord = coords[coords.length - 1];
+
+      if (lastCoord[0] !== coords[0][0] || lastCoord[1] !== coords[0][1]) {
+        coords.push(coords[0]);
+      }
+    }
+
+    return coords;
+  },
+  _latlngsAddShift: function _latlngsAddShift(latlngs, shiftPixel) {
+    var arr = [];
+
+    for (var i = 0, len = latlngs.length; i < len; i++) {
+      arr.push(L$1.GmxDrawing.utils.getShiftLatlng(latlngs[i], this._map, shiftPixel));
+    }
+
+    return arr;
+  },
+  getPixelOffset: function getPixelOffset() {
+    var p = this.shiftPixel;
+
+    if (!p && this._map) {
+      var mInPixel = 256 / L$1.gmxUtil.tileSizes[this._map._zoom];
+      p = this.shiftPixel = new L$1.Point(Math.floor(mInPixel * this._dx), -Math.floor(mInPixel * this._dy));
+    }
+
+    return p || new L$1.Point(0, 0);
+  },
+  setOffsetToGeometry: function setOffsetToGeometry(dx, dy) {
+    var i,
+        len,
+        j,
+        len1,
+        ring,
+        latlngs,
+        mInPixel = 256 / L$1.gmxUtil.tileSizes[this._map._zoom],
+        shiftPixel = new L$1.Point(mInPixel * (this._dx || dx || 0), -mInPixel * (this._dy || dy || 0));
+
+    for (i = 0, len = this.rings.length; i < len; i++) {
+      var it = this.rings[i];
+      ring = it.ring;
+      latlngs = ring.points.getLatLngs();
+      ring.setLatLngs(this._latlngsAddShift(latlngs, shiftPixel));
+
+      if (it.holes && it.holes.length) {
+        for (j = 0, len1 = it.holes.length; j < len1; j++) {
+          ring = it.holes[j].ring;
+          latlngs = ring.points.getLatLngs();
+          ring.setLatLngs(this._latlngsAddShift(latlngs, shiftPixel));
+        }
+      }
+    }
+
+    this.setPositionOffset();
+    return this;
+  },
+  setPositionOffset: function setPositionOffset(mercX, mercY) {
+    this._dx = mercX || 0;
+    this._dy = mercY || 0;
+
+    if (this._map) {
+      this.shiftPixel = null;
+      var p = this.getPixelOffset();
+
+      for (var i = 0, len = this.rings.length; i < len; i++) {
+        this.rings[i].ring.setPositionOffset(p);
+
+        for (var j = 0, len1 = this.rings[i].holes.length; j < len1; j++) {
+          this.rings[i].holes[j].setPositionOffset(p);
+        }
+      }
+    }
+  },
+  _getCoords: function _getCoords(withoutShift) {
+    var type = this.options.type,
+        closed = type === 'Polygon' || type === 'Rectangle' || type === 'MultiPolygon',
+        shiftPixel = withoutShift ? null : this.shiftPixel,
+        coords = [];
+
+    for (var i = 0, len = this.rings.length; i < len; i++) {
+      var it = this.rings[i],
+          arr = this._latLngsToCoords(it.ring.points.getLatLngs(), closed, shiftPixel);
+
+      if (closed) {
+        arr = [arr];
+      }
+
+      if (it.holes && it.holes.length) {
+        for (var j = 0, len1 = it.holes.length; j < len1; j++) {
+          arr.push(this._latLngsToCoords(it.holes[j].points.getLatLngs(), closed, shiftPixel));
+        }
+      }
+
+      coords.push(arr);
+    }
+
+    if (type === 'Polyline' || closed && type !== 'MultiPolygon') {
+      coords = coords[0];
+    }
+
+    return coords;
+  },
+  _geoJsonToLayer: function _geoJsonToLayer(geoJson) {
+    return L$1.geoJson(geoJson).getLayers()[0];
+  },
+  setGeoJSON: function setGeoJSON(geoJson) {
+    this._initialize(this._parent, geoJson);
+
+    return this;
+  },
+  toGeoJSON: function toGeoJSON() {
+    return this._toGeoJSON(true);
+  },
+  _toGeoJSON: function _toGeoJSON(withoutShift) {
+    var type = this.options.type,
+        properties = this.getOptions(),
+        coords;
+    delete properties.mode;
+
+    if (!this.options.editable || type === 'Point') {
+      var obj = this._obj;
+
+      if (obj instanceof L$1.GeoJSON) {
+        obj = L$1.GmxDrawing.utils._getLastObject(obj).getLayers()[0];
+      }
+
+      var geojson = obj.toGeoJSON();
+      geojson.properties = properties;
+      return geojson;
+    } else if (this.rings) {
+      coords = this._getCoords(withoutShift);
+
+      if (type === 'Rectangle') {
+        type = 'Polygon';
+      } else if (type === 'Polyline') {
+        type = 'LineString';
+      } else if (type === 'MultiPolyline') {
+        type = 'MultiLineString';
+      }
+    }
+
+    return L$1.GeoJSON.getFeature({
+      feature: {
+        type: 'Feature',
+        properties: properties
+      }
+    }, {
+      type: type,
+      coordinates: coords
+    });
+  },
+  getType: function getType() {
+    return this.options.type;
+  },
+  hideFill: function hideFill() {
+    if (this._fill._map) {
+      this._map.removeLayer(this._fill);
+    }
+  },
+  showFill: function showFill() {
+    var geoJSON = this.toGeoJSON(),
+        obj = L$1.GeoJSON.geometryToLayer(geoJSON, null, null, {
+      weight: 0
+    });
+
+    this._fill.clearLayers();
+
+    if (obj instanceof L$1.LayerGroup) {
+      obj.eachLayer(function (layer) {
+        this._fill.addLayer(layer);
+      }, this);
+    } else {
+      obj.setStyle({
+        smoothFactor: 0,
+        weight: 0,
+        fill: true,
+        fillColor: '#0033ff'
+      });
+
+      this._fill.addLayer(obj);
+    }
+
+    if (!this._fill._map) {
+      this._map.addLayer(this._fill);
+
+      this._fill.bringToBack();
+    }
+
+    return this;
+  },
+  getBounds: function getBounds() {
+    var bounds = new L$1.LatLngBounds();
+
+    if (this.options.type === 'Point') {
+      var latLng = this._obj.getLatLng();
+
+      bounds.extend(latLng);
+    } else {
+      bounds = this._getBounds();
+    }
+
+    return bounds;
+  },
+  _getBounds: function _getBounds(item) {
+    var layer = item || this,
+        bounds = new L$1.LatLngBounds(),
+        latLng;
+
+    if (layer instanceof L$1.LayerGroup) {
+      layer.eachLayer(function (it) {
+        latLng = this._getBounds(it);
+        bounds.extend(latLng);
+      }, this);
+      return bounds;
+    } else if (layer instanceof L$1.Marker) {
+      latLng = layer.getLatLng();
+    } else {
+      latLng = layer.getBounds();
+    }
+
+    bounds.extend(latLng);
+    return bounds;
+  },
+  initialize: function initialize(parent, obj, options) {
+    options = options || {};
+    this.contextmenu = new L$1.GmxDrawingContextMenu();
+    options.mode = '';
+    this._drawOptions = L$1.extend({}, options);
+    var type = options.type;
+
+    if (type === 'Point') {
+      delete options.pointStyle;
+      delete options.lineStyle;
+    } else {
+      delete options.iconUrl;
+      delete options.iconAnchor;
+      delete options.iconSize;
+      delete options.popupAnchor;
+      delete options.shadowSize;
+      delete options.markerStyle;
+    }
+
+    delete options.holeStyle;
+    L$1.setOptions(this, options);
+    this._layers = {};
+    this._obj = obj;
+    this._parent = parent;
+    this._dx = 0;
+    this._dy = 0;
+
+    this._initialize(parent, obj);
+  },
+  enableEdit: function enableEdit() {
+    this.options.mode = 'edit';
+    var type = this.options.type;
+
+    if (type !== 'Point') {
+      // for (var i = 0, len = this.rings.length; i < len; i++) {
+      // var it = this.rings[i];
+      // it.ring.options.editable = this.options.editable;
+      // it.ring.setEditMode();
+      // for (var j = 0, len1 = it.holes.length; j < len1; j++) {
+      // var hole = it.holes[j];
+      // hole.options.editable = this.options.editable;
+      // hole.setEditMode();
+      // }
+      // }
+      var geojson = L$1.geoJson(this.toGeoJSON()),
+          items = geojson.getLayers();
+      this.options.editable = true;
+
+      if (items.length) {
+        this._initialize(this._parent, items[0]);
+      }
+    }
+
+    return this;
+  },
+  disableEdit: function disableEdit() {
+    var type = this.options.type;
+
+    if (type !== 'Point') {
+      this._originalStyle = this.options.lineStyle;
+      var geojson = L$1.geoJson(this.toGeoJSON().geometry, this._originalStyle).getLayers()[0];
+
+      for (var i = 0, len = this.rings.length; i < len; i++) {
+        var it = this.rings[i];
+        it.ring.removeEditMode();
+        it.ring.options.editable = false;
+
+        for (var j = 0, len1 = it.holes.length; j < len1; j++) {
+          var hole = it.holes[j];
+          hole.removeEditMode();
+          hole.options.editable = false;
+        }
+      }
+
+      this._obj = geojson;
+      this.options.editable = false;
+
+      this._initialize(this._parent, this._obj);
+    }
+
+    return this;
+  },
+  getArea: function getArea() {
+    var out = 0;
+
+    if (L$1.gmxUtil.geoJSONGetArea) {
+      out = L$1.gmxUtil.geoJSONGetArea(this.toGeoJSON());
+    }
+
+    return out;
+  },
+  getLength: function getLength() {
+    var out = 0;
+
+    if (L$1.gmxUtil.geoJSONGetLength) {
+      out = L$1.gmxUtil.geoJSONGetLength(this.toGeoJSON());
+    }
+
+    return out;
+  },
+  getLatLng: function getLatLng() {
+    return this.lastAddLatLng;
+  },
+  _getTooltipAnchor: function _getTooltipAnchor() {
+    return this.lastAddLatLng;
+  },
+  getSummary: function getSummary() {
+    var str = '',
+        mapOpt = this._map ? this._map.options : {},
+        type = this.options.type;
+
+    if (type === 'Polyline' || type === 'MultiPolyline') {
+      str = L$1.gmxUtil.prettifyDistance(this.getLength(), mapOpt.distanceUnit);
+    } else if (type === 'Polygon' || type === 'MultiPolygon' || type === 'Rectangle') {
+      str = L$1.gmxUtil.prettifyArea(this.getArea(), mapOpt.squareUnit);
+    } else if (type === 'Point') {
+      var latLng = this._obj.getLatLng();
+
+      str = L$1.gmxUtil.formatCoordinates(latLng);
+    }
+
+    return str;
+  },
+  _initialize: function _initialize(parent, obj) {
+    var _this2 = this;
+
+    this.clearLayers();
+    this.rings = [];
+    this.mode = '';
+    this.lastAddLatLng = L$1.latLng(0, 0); // последняя из добавленных точек
+
+    this._fill = L$1.featureGroup();
+
+    if (this._fill.options) {
+      this._fill.options.smoothFactor = 0;
+    }
+
+    if (this.options.editable) {
+      var arr = [];
+
+      if (L$1.GmxDrawing.utils.isOldVersion) {
+        arr = obj.getLayers ? L$1.GmxDrawing.utils._getLastObject(obj).getLayers() : [obj];
+      } else {
+        arr = obj.getLayers ? L$1.GmxDrawing.utils._getLastObject(obj) : [obj];
+
+        if (obj.type && obj.coordinates) {
+          var type = obj.type;
+          obj = this._geoJsonToLayer(obj);
+
+          if (type === 'Polygon') {
+            var it1 = obj.getLatLngs();
+            arr = [{
+              _latlngs: it1.shift(),
+              _holes: it1
+            }];
+          } else if (type === 'MultiPolygon') {
+            arr = obj.getLatLngs().map(function (it) {
+              return {
+                _latlngs: it.shift(),
+                _holes: it
+              };
+            });
+          } else if (type === 'LineString') {
+            arr = [{
+              _latlngs: obj.getLatLngs()
+            }];
+          } else if (type === 'MultiLineString') {
+            arr = obj.getLatLngs().map(function (it) {
+              return {
+                _latlngs: it
+              };
+            });
+          } else if (type === 'Point') {
+            this._obj = new L$1.Marker(obj.getLatLng(), {
+              draggable: true
+            });
+
+            this._setMarker(this._obj);
+
+            return;
+          } else if (type === 'MultiPoint') {
+            obj.getLayers().forEach(function (it) {
+              this._setMarker(new L$1.Marker(it.getLatLng(), {
+                draggable: true
+              }));
+            }.bind(this));
+            return;
+          }
+        } else if (this.options.type === 'MultiPolygon') {
+          arr = (obj.getLayers ? obj.getLayers()[0] : obj).getLatLngs().map(function (it) {
+            return {
+              _latlngs: it.shift(),
+              _holes: it
+            };
+          });
+        } else if (this.options.type === 'Polygon') {
+          var _latlngs = (obj.getLayers ? obj.getLayers()[0] : obj).getLatLngs();
+
+          arr = [{
+            _latlngs: _latlngs.shift(),
+            _holes: _latlngs
+          }];
+        }
+      }
+
+      for (var i = 0, len = arr.length; i < len; i++) {
+        var it = arr[i],
+            holes = [],
+            ring = new L$1.GmxDrawing.Ring(this, it._latlngs, {
+          ring: true,
+          editable: this.options.editable
+        });
+        ring.on('click', function (e) {
+          _this2.fire('click', e);
+        });
+        this.addLayer(ring);
+
+        if (it._holes) {
+          for (var j = 0, len1 = it._holes.length; j < len1; j++) {
+            var hole = new L$1.GmxDrawing.Ring(this, it._holes[j], {
+              hole: true,
+              editable: this.options.editable
+            });
+            this.addLayer(hole);
+            holes.push(hole);
+          }
+        }
+
+        this.rings.push({
+          ring: ring,
+          holes: holes
+        });
+      }
+
+      if (this.options.endTooltip && L$1.tooltip) {
+        this._initStaticTooltip();
+      }
+
+      if (L$1.gmxUtil && L$1.gmxUtil.prettifyDistance && !this._showTooltip) {
+        var _gtxt = L$1.GmxDrawing.utils.getLocale;
+        var my = this;
+
+        this._showTooltip = function (type, ev) {
+          var ring = ev.ring,
+              originalEvent = ev.originalEvent,
+              down = type !== 'angle' && (originalEvent.buttons || originalEvent.button);
+
+          if (ring && (ring.downObject || !down)) {
+            var mapOpt = my._map ? my._map.options : {},
+                distanceUnit = mapOpt.distanceUnit,
+                squareUnit = mapOpt.squareUnit,
+                azimutUnit = mapOpt.azimutUnit || false,
+                str = '';
+
+            if (type === 'Area' && ring.mode === 'add') {
+              type = 'Length';
+            }
+
+            if (type === 'Area') {
+              if (!L$1.gmxUtil.getArea) {
+                return;
+              }
+
+              if (originalEvent && originalEvent.ctrlKey) {
+                str = _gtxt('Perimeter') + ': ' + L$1.gmxUtil.prettifyDistance(my.getLength(), distanceUnit);
+              } else {
+                str = _gtxt(type) + ': ' + L$1.gmxUtil.prettifyArea(my.getArea(), squareUnit);
+              }
+
+              my._parent.showTooltip(ev.layerPoint, str);
+            } else if (type === 'Length') {
+              var downAttr = L$1.GmxDrawing.utils.getDownType.call(my, ev, my._map, my),
+                  angleLeg = azimutUnit ? ring.getAngleLength(downAttr) : null;
+
+              if (angleLeg && angleLeg.length && (my.options.type === 'Polyline' || ring.mode === 'add')) {
+                str = _gtxt('angleLength') + ': ' + angleLeg.angle + '(' + L$1.gmxUtil.prettifyDistance(angleLeg.length, distanceUnit) + ')';
+              } else {
+                var length = ring.getLength(downAttr),
+                    titleName = (downAttr.mode === 'edit' || downAttr.num > 1 ? downAttr.type : '') + type,
+                    title = _gtxt(titleName);
+
+                str = (title === titleName ? _gtxt(type) : title) + ': ' + L$1.gmxUtil.prettifyDistance(length, distanceUnit);
+              }
+
+              my._parent.showTooltip(ev.layerPoint, str);
+            } else if (type === 'angle') {
+              str = _gtxt('Angle') + ': ' + Math.floor(180.0 * ring._angle / Math.PI) + '°';
+
+              my._parent.showTooltip(ev.layerPoint, str);
+            }
+
+            my._fireEvent('onMouseOver');
+          }
+        };
+
+        this.hideTooltip = function () {
+          this._parent.hideTooltip();
+
+          this._fireEvent('onMouseOut');
+        };
+
+        this.getTitle = _gtxt;
+      }
+    } else if (this.options.type === 'Point') {
+      this._setMarker(obj);
+    } else {
+      this.addLayer(obj);
+    }
+  },
+  _initStaticTooltip: function _initStaticTooltip() {
+    this.on('drawstop editstop', function (ev) {
+      if (this.staticTooltip) {
+        this._removeStaticTooltip();
+      }
+
+      var latlng = ev.latlng,
+          map = this._map,
+          mapOpt = map ? map.options : {},
+          distanceUnit = mapOpt.distanceUnit,
+          squareUnit = mapOpt.squareUnit,
+          tCont = L$1.DomUtil.create('div', 'content'),
+          info = L$1.DomUtil.create('div', 'infoTooltip', tCont),
+          closeBtn = L$1.DomUtil.create('div', 'closeBtn', tCont),
+          polygon = this.options.type === 'Polygon',
+          tOptions = {
+        interactive: true,
+        sticky: true,
+        permanent: true,
+        className: 'staticTooltip'
+      };
+
+      if (polygon) {
+        if (this.options.endTooltip === 'center') {
+          tOptions.direction = 'center';
+          latlng = this.getBounds().getCenter();
+        }
+
+        info.innerHTML = L$1.gmxUtil.prettifyArea(this.getArea(), squareUnit);
+      } else {
+        tOptions.offset = L$1.point(10, 0);
+        var arr = this.rings[0].ring.points.getLatLngs()[0];
+        latlng = arr[arr.length - 1];
+        info.innerHTML = L$1.gmxUtil.prettifyDistance(this.getLength(), distanceUnit);
+      }
+
+      closeBtn.innerHTML = '×';
+      L$1.DomEvent.on(closeBtn, 'click', function () {
+        this._removeStaticTooltip();
+
+        this.remove();
+      }, this);
+      this.staticTooltip = L$1.tooltip(tOptions).setLatLng(latlng).setContent(tCont).addTo(this._map);
+      requestIdleCallback(function () {
+        this.on('edit', this._removeStaticTooltip, this);
+      }.bind(this), {
+        timeout: 0
+      });
+    }, this);
+  },
+  _removeStaticTooltip: function _removeStaticTooltip() {
+    if (this.staticTooltip) {
+      this._map.removeLayer(this.staticTooltip);
+
+      this.staticTooltip = null;
+    }
+  },
+  _enableDrag: function _enableDrag() {
+    this._parent._enableDrag();
+  },
+  _disableDrag: function _disableDrag() {
+    this._parent._disableDrag();
+  },
+  _setMarker: function _setMarker(marker) {
+    var _this = this,
+        _parent = this._parent,
+        _map = _parent._map,
+        mapOpt = _map ? _map.options : {};
+
+    marker.bindPopup(null, {
+      maxWidth: 1000,
+      closeOnClick: mapOpt.maxPopupCount > 1 ? false : true
+    }).on('dblclick', function () {
+      if (_map) {
+        _map.removeLayer(this);
+      }
+
+      _this.remove(); //_parent.remove(this);
+
+    }).on('dragstart', function () {
+      _this._fireEvent('dragstart');
+    }).on('drag', function (ev) {
+      if (ev.originalEvent && ev.originalEvent.ctrlKey) {
+        marker.setLatLng(L$1.GmxDrawing.utils.snapPoint(marker.getLatLng(), marker, _map));
+      }
+
+      _this._fireEvent('drag');
+
+      _this._fireEvent('edit');
+    }).on('dragend', function () {
+      _this._fireEvent('dragend');
+    }).on('popupopen', function (ev) {
+      var popup = ev.popup;
+
+      if (!popup._input) {
+        popup._input = L$1.DomUtil.create('textarea', 'leaflet-gmx-popup-textarea', popup._contentNode); // popup._input.placeholder = _this.options.title || marker.options.title || '';
+
+        popup._input.value = _this.options.title || marker.options.title || '';
+        popup._contentNode.style.width = 'auto';
+      }
+
+      L$1.DomEvent.on(popup._input, 'keyup', function () {
+        var rows = this.value.split('\n'),
+            cols = this.cols || 0;
+        rows.forEach(function (str) {
+          if (str.length > cols) {
+            cols = str.length;
+          }
+        });
+        this.rows = rows.length;
+
+        if (cols) {
+          this.cols = cols;
+        }
+
+        popup.update();
+        _this.options.title = marker.options.title = this.value;
+        this.focus();
+      }, popup._input);
+      popup.update();
+    });
+
+    _map.addLayer(marker);
+
+    _this.openPopup = marker.openPopup = function () {
+      if (marker._popup && marker._map && !marker._map.hasLayer(marker._popup)) {
+        marker._popup.setLatLng(marker._latlng);
+
+        var gmxDrawing = marker._map.gmxDrawing;
+
+        if (gmxDrawing._drawMode) {
+          marker._map.fire(gmxDrawing._createType ? 'click' : 'mouseup', {
+            latlng: marker._latlng,
+            delta: 1
+          });
+        } else {
+          marker._popup.addTo(marker._map);
+
+          marker._popup._isOpen = true;
+        }
+      }
+
+      return marker;
+    };
+  },
+  setAddMode: function setAddMode() {
+    if (this.rings.length) {
+      this.rings[0].ring.setAddMode();
+    }
+
+    return this;
+  },
+  _pointDown: function _pointDown(ev) {
+    if (this.rings.length) {
+      this.rings[0].ring._pointDown(ev);
+    }
+  },
+  getPopup: function getPopup() {
+    if (this.options.type === 'Point') {
+      return this._obj.getPopup();
+    }
+  }
+});
+L$1.GmxDrawing.Feature;
+
+L$1.GmxDrawing.utils = {
+  snaping: 10,
+  // snap distance
+  isOldVersion: L$1.version.substr(0, 3) === '0.7',
+  defaultStyles: {
+    mode: '',
+    map: true,
+    editable: true,
+    holeStyle: {
+      opacity: 0.5,
+      color: '#003311'
+    },
+    lineStyle: {
+      opacity: 1,
+      weight: 2,
+      clickable: false,
+      className: 'leaflet-drawing-lines',
+      color: '#0033ff',
+      dashArray: null,
+      lineCap: null,
+      lineJoin: null,
+      fill: false,
+      fillColor: null,
+      fillOpacity: 0.2,
+      smoothFactor: 0,
+      noClip: true,
+      stroke: true
+    },
+    pointStyle: {
+      className: 'leaflet-drawing-points',
+      smoothFactor: 0,
+      noClip: true,
+      opacity: 1,
+      shape: 'circle',
+      fill: true,
+      fillColor: '#ffffff',
+      fillOpacity: 1,
+      size: L$1.Browser.mobile ? 40 : 8,
+      weight: 2,
+      clickable: true,
+      color: '#0033ff',
+      dashArray: null,
+      lineCap: null,
+      lineJoin: null,
+      stroke: true
+    },
+    markerStyle: {
+      mode: '',
+      editable: false,
+      title: 'Text example',
+      options: {
+        alt: '',
+        //title: '',
+        clickable: true,
+        draggable: false,
+        keyboard: true,
+        opacity: 1,
+        zIndexOffset: 0,
+        riseOffset: 250,
+        riseOnHover: false,
+        icon: {
+          className: '',
+          iconUrl: '',
+          iconAnchor: [12, 41],
+          iconSize: [25, 41],
+          popupAnchor: [1, -34],
+          shadowSize: [41, 41]
+        }
+      }
+    }
+  },
+  getClosestOnGeometry: function getClosestOnGeometry(latlng, gmxGeoJson, map) {
+    if (L$1.GeometryUtil && map) {
+      return L$1.GeometryUtil.closestLayerSnap(map, [L$1.geoJson(L$1.gmxUtil.geometryToGeoJSON(gmxGeoJson, true, true))], latlng, Number(map.options.snaping || L$1.GmxDrawing.utils.snaping), true);
+    }
+
+    return null;
+  },
+  snapPoint: function snapPoint(latlng, obj, map) {
+    var res = latlng;
+
+    if (L$1.GeometryUtil) {
+      var drawingObjects = map.gmxDrawing.getFeatures().filter(function (it) {
+        return it !== obj._parent && it._obj !== obj;
+      }).map(function (it) {
+        return it.options.type === 'Point' ? it._obj : it;
+      }),
+          snaping = Number(map.options.snaping || L$1.GmxDrawing.utils.snaping),
+          closest = L$1.GeometryUtil.closestLayerSnap(map, drawingObjects, latlng, snaping, true);
+
+      if (closest) {
+        res = closest.latlng;
+      }
+    }
+
+    return res;
+  },
+  getNotDefaults: function getNotDefaults(from, def) {
+    var res = {};
+
+    for (var key in from) {
+      if (key === 'icon' || key === 'map') {
+        continue;
+      } else if (key === 'iconAnchor' || key === 'iconSize' || key === 'popupAnchor' || key === 'shadowSize') {
+        if (!def[key]) {
+          continue;
+        }
+
+        if (def[key][0] !== from[key][0] || def[key][1] !== from[key][1]) {
+          res[key] = from[key];
+        }
+      } else if (key === 'lineStyle' || key === 'pointStyle' || key === 'markerStyle') {
+        res[key] = this.getNotDefaults(from[key], def[key]);
+      } else if (!def || def[key] !== from[key] || key === 'fill') {
+        res[key] = from[key];
+      }
+    }
+
+    return res;
+  },
+  getShiftLatlng: function getShiftLatlng(latlng, map, shiftPixel) {
+    if (shiftPixel && map) {
+      var p = map.latLngToLayerPoint(latlng)._add(shiftPixel);
+
+      latlng = map.layerPointToLatLng(p);
+    }
+
+    return latlng;
+  },
+  getDownType: function getDownType(ev, map, feature) {
+    var layerPoint = ev.layerPoint,
+        originalEvent = ev.originalEvent,
+        ctrlKey = false,
+        shiftKey = false,
+        altKey = false,
+        latlng = ev.latlng;
+
+    if (originalEvent) {
+      ctrlKey = originalEvent.ctrlKey;
+      shiftKey = originalEvent.shiftKey;
+      altKey = originalEvent.altKey;
+    }
+
+    if (ev.touches && ev.touches.length === 1) {
+      var first = ev.touches[0],
+          containerPoint = map.mouseEventToContainerPoint(first);
+      layerPoint = map.containerPointToLayerPoint(containerPoint);
+      latlng = map.layerPointToLatLng(layerPoint);
+    }
+
+    var out = {
+      type: '',
+      latlng: latlng,
+      ctrlKey: ctrlKey,
+      shiftKey: shiftKey,
+      altKey: altKey
+    },
+        ring = this.points ? this : ev.ring || ev.relatedEvent,
+        points = ring.points._originalPoints || ring.points._parts[0] || [],
+        len = points.length;
+
+    if (len === 0) {
+      return out;
+    }
+
+    var size = (ring.points.options.size || 10) / 2;
+    size += 1 + (ring.points.options.weight || 2);
+    var cursorBounds = new L$1.Bounds(L$1.point(layerPoint.x - size, layerPoint.y - size), L$1.point(layerPoint.x + size, layerPoint.y + size)),
+        prev = points[len - 1],
+        lastIndex = len - (ring.mode === 'add' ? 2 : 1);
+    out = {
+      mode: ring.mode,
+      layerPoint: ev.layerPoint,
+      ctrlKey: ctrlKey,
+      shiftKey: shiftKey,
+      altKey: altKey,
+      latlng: latlng
+    };
+
+    for (var i = 0; i < len; i++) {
+      var point = points[i];
+
+      if (feature.shiftPixel) {
+        point = points[i].add(feature.shiftPixel);
+      }
+
+      if (cursorBounds.contains(point)) {
+        out.type = 'node';
+        out.num = i;
+        out.end = i === 0 || i === lastIndex ? true : false;
+        break;
+      }
+
+      var dist = L$1.LineUtil.pointToSegmentDistance(layerPoint, prev, point);
+
+      if (dist < size) {
+        out.type = 'edge';
+        out.num = i === 0 ? len : i;
+      }
+
+      prev = point;
+    }
+
+    return out;
+  },
+  _getLastObject: function _getLastObject(obj) {
+    if (obj.getLayers) {
+      var layer = obj.getLayers().shift();
+      return layer.getLayers ? this._getLastObject(layer) : obj;
+    }
+
+    return obj;
+  },
+  getMarkerByPos: function getMarkerByPos(pos, features) {
+    for (var i = 0, len = features.length; i < len; i++) {
+      var feature = features[i],
+          fobj = feature._obj ? feature._obj : null,
+          mpos = fobj && fobj._icon ? fobj._icon._leaflet_pos : null;
+
+      if (mpos && mpos.x === pos.x && mpos.y === pos.y) {
+        return fobj._latlng;
+      }
+    }
+
+    return null;
+  },
+  getLocale: function getLocale(key) {
+    var res = L$1.gmxLocale ? L$1.gmxLocale.getText(key) : null;
+    return res || key;
+  }
+};
+var Utils = L$1.GmxDrawing.utils;
+
+L$1.GmxDrawing.Ring = L$1.LayerGroup.extend({
+  options: {
+    className: 'leaflet-drawing-ring',
+    //noClip: true,
+    maxPoints: 0,
+    smoothFactor: 0,
+    noClip: true,
+    opacity: 1,
+    shape: 'circle',
+    fill: true,
+    fillColor: '#ffffff',
+    fillOpacity: 1,
+    size: L$1.Browser.mobile ? 40 : 8,
+    weight: 2
+  },
+  includes: L$1.Evented ? L$1.Evented.prototype : L$1.Mixin.Events,
+  initialize: function initialize(parent, coords, options) {
+    options = options || {};
+    this.contextmenu = new GmxDrawingContextMenu$1();
+    options.mode = '';
+    this._activeZIndex = options.activeZIndex || 7;
+    this._notActiveZIndex = options.notActiveZIndex || 6;
+    this.options = L$1.extend({}, this.options, parent.getStyle(), options);
+    this._layers = {};
+    this._coords = coords;
+    this._legLength = [];
+    this._parent = parent;
+
+    this._initialize(parent, coords);
+  },
+  _initialize: function _initialize(parent, coords) {
+    var _this2 = this;
+
+    this.clearLayers();
+    delete this.lines;
+    delete this.fill;
+    delete this.points;
+    this.downObject = false;
+    this.mode = '';
+    this.lineType = this.options.type.indexOf('Polyline') !== -1;
+
+    if (this.options.type === 'Rectangle') {
+      this.options.disableAddPoints = true;
+    }
+
+    var pointStyle = this.options.pointStyle;
+    var lineStyle = {
+      opacity: 1,
+      weight: 2,
+      noClip: true,
+      clickable: false,
+      className: 'leaflet-drawing-lines'
+    };
+
+    if (!this.lineType) {
+      lineStyle.fill = 'fill' in this.options ? this.options.fill : true;
+    }
+
+    if (this.options.lineStyle) {
+      for (var key in this.options.lineStyle) {
+        if (key !== 'fill' || !this.lineType) {
+          lineStyle[key] = this.options.lineStyle[key];
+        }
+      }
+    }
+
+    if (this.options.hole) {
+      lineStyle = L$1.extend({}, lineStyle, Utils.defaultStyles.holeStyle);
+      pointStyle = L$1.extend({}, pointStyle, Utils.defaultStyles.holeStyle);
+    }
+
+    var latlngs = coords,
+        _this = this,
+        mode = this.options.mode || (latlngs.length ? 'edit' : 'add');
+
+    this.fill = new L$1.Polyline(latlngs, {
+      className: 'leaflet-drawing-lines-fill',
+      opacity: 0,
+      smoothFactor: 0,
+      noClip: true,
+      fill: false,
+      size: 10,
+      weight: 10
+    });
+    this.fill.on('click', function (e) {
+      _this2._parent.fire('click', e);
+    });
+    this.addLayer(this.fill);
+    this.lines = new L$1.Polyline(latlngs, lineStyle);
+    this.addLayer(this.lines);
+
+    if (!this.lineType && mode === 'edit') {
+      var latlng = latlngs[0][0] || latlngs[0];
+      this.lines.addLatLng(latlng);
+      this.fill.addLatLng(latlng);
+    }
+
+    this.mode = mode;
+    this.points = new L$1.GmxDrawing.PointMarkers(latlngs, pointStyle);
+    this.points._parent = this;
+    this.addLayer(this.points);
+    this.points.on('mouseover', function (ev) {
+      this.toggleTooltip(ev, true, _this.lineType ? 'Length' : 'Area');
+
+      if (ev.type === 'mouseover') {
+        _this._recheckContextItems('points', _this._map);
+      }
+    }, this).on('mouseout', this.toggleTooltip, this);
+    this.fill.on('mouseover mousemove', function (ev) {
+      this.toggleTooltip(ev, true);
+    }, this).on('mouseout', this.toggleTooltip, this);
+
+    if (this.points.bindContextMenu) {
+      this.points.bindContextMenu({
+        contextmenu: false,
+        contextmenuInheritItems: false,
+        contextmenuItems: []
+      });
+    }
+
+    if (this.fill.bindContextMenu) {
+      this.fill.bindContextMenu({
+        contextmenu: false,
+        contextmenuInheritItems: false,
+        contextmenuItems: []
+      });
+      this.fill.on('mouseover', function (ev) {
+        if (ev.type === 'mouseover') {
+          this._recheckContextItems('fill', this._map);
+        }
+      }, this);
+    }
+
+    this._parent.on('rotate', function (ev) {
+      this.toggleTooltip(ev, true, 'angle');
+    }, this);
+
+    L$1.DomEvent.on(document, 'keydown keyup', this._toggleBboxClass, this);
+  },
+  bringToFront: function bringToFront() {
+    if (this.lines) {
+      this.lines.bringToFront();
+    }
+
+    if (this.fill) {
+      this.fill.bringToFront();
+    }
+
+    if (this.points) {
+      this.points.bringToFront();
+    }
+
+    return this;
+  },
+  bringToBack: function bringToBack() {
+    if (this.lines) {
+      this.lines.bringToBack();
+    }
+
+    if (this.fill) {
+      this.fill.bringToBack();
+    }
+
+    if (this.points) {
+      this.points.bringToBack();
+    }
+
+    return this;
+  },
+  _toggleBboxClass: function _toggleBboxClass(ev) {
+    if (ev.type === 'keydown' && this.mode === 'add') {
+      var key = ev.key,
+          points = this._getLatLngsArr();
+
+      if (key === 'Backspace') {
+        this._legLength = [];
+        points.splice(points.length - 1, 1);
+
+        this._setPoint(points[0], 0);
+      }
+
+      if (key === 'Escape' || key === 'Backspace' && points.length < 2) {
+        this._parent.remove(this);
+
+        this._parent._parent._clearCreate();
+
+        this._fireEvent('drawstop');
+      }
+    }
+
+    if (this.bbox) {
+      var flagRotate = this._needRotate;
+
+      if (!ev.altKey) {
+        flagRotate = !flagRotate;
+      }
+
+      if (ev.type === 'keyup' && !ev.altKey) {
+        flagRotate = !this._needRotate;
+      }
+
+      L$1.DomUtil[flagRotate ? 'removeClass' : 'addClass'](this.bbox._path, 'Rotate');
+    }
+  },
+  toggleTooltip: function toggleTooltip(ev, flag, type) {
+    if ('hideTooltip' in this._parent) {
+      ev.ring = this;
+
+      if (flag) {
+        type = type || 'Length';
+
+        this._parent._showTooltip(type, ev);
+      } else if (this.mode !== 'add') {
+        this._parent.hideTooltip(ev);
+      }
+    }
+  },
+  _recheckContextItems: function _recheckContextItems(type, map) {
+    var _this = this;
+
+    this[type].options.contextmenuItems = (map.gmxDrawing.contextmenu.getItems()[type] || []).concat(this._parent.contextmenu.getItems()[type] || []).concat(this.contextmenu.getItems()[type] || []).map(function (obj) {
+      var ph = {
+        id: obj.text,
+        text: Utils.getLocale(obj.text),
+        icon: obj.icon,
+        retinaIcon: obj.retinaIcon,
+        iconCls: obj.iconCls,
+        retinaIconCls: obj.retinaIconCls,
+        callback: function callback(ev) {
+          _this._eventsCmd(obj, ev);
+        },
+        context: obj.context || _this,
+        disabled: 'disabled' in obj ? obj.disabled : false,
+        separator: obj.separator,
+        hideOnSelect: 'hideOnSelect' in obj ? obj.hideOnSelect : true
+      };
+      return ph;
+    });
+    return this[type].options.contextmenuItems;
+  },
+  _eventsCmd: function _eventsCmd(obj, ev) {
+    var ring = ev.relatedTarget && ev.relatedTarget._parent || this;
+    var downAttr = Utils.getDownType.call(this, ev, this._map, this._parent);
+
+    if (downAttr) {
+      var type = obj.text;
+
+      if (obj.callback) {
+        obj.callback(downAttr, this._parent);
+      } else if (type === 'Delete feature') {
+        this._parent.remove(this); // this._parent._parent._clearCreate();
+
+
+        this._fireEvent('drawstop');
+      } else if (type === 'Remove point') {
+        ring._removePoint(downAttr.num);
+
+        this._fireEvent('editstop', ev);
+      } else if (type === 'Save' || type === 'Move' || type === 'Rotate' || type === 'Rotate around Point') {
+        this._toggleRotate(type, downAttr);
+      } else if (type === 'Cancel' && this._editHistory.length) {
+        if (this._editHistory.length) {
+          this.setLatLngs(this._editHistory[0]);
+          this._editHistory = [];
+        }
+
+        this._toggleRotate('Save', downAttr);
+      }
+    }
+  },
+  getFeature: function getFeature() {
+    return this._parent;
+  },
+  onAdd: function onAdd(map) {
+    L$1.LayerGroup.prototype.onAdd.call(this, map);
+    this.setEditMode();
+
+    if (this.points.bindContextMenu) {
+      var contextmenuItems = this._recheckContextItems('points', map);
+
+      this.points.bindContextMenu({
+        contextmenu: true,
+        contextmenuInheritItems: false,
+        contextmenuItems: contextmenuItems
+      });
+    }
+  },
+  onRemove: function onRemove(map) {
+    if (this.points) {
+      this._pointUp();
+
+      this.removeAddMode();
+      this.removeEditMode();
+
+      if ('hideTooltip' in this._parent) {
+        this._parent.hideTooltip();
+      }
+    }
+
+    L$1.LayerGroup.prototype.onRemove.call(this, map);
+
+    if (this.options.type === 'Point') {
+      map.removeLayer(this._obj);
+    }
+
+    this._fireEvent('removefrommap');
+  },
+  getAngleLength: function getAngleLength(downAttr) {
+    if (L$1.GeometryUtil && downAttr && downAttr.num) {
+      var num = downAttr.num,
+          latlngs = this.points._latlngs[0],
+          prev = latlngs[num - 1],
+          curr = latlngs[num] || downAttr.latlng,
+          _parts = this.points._parts[0],
+          angle = L$1.GeometryUtil.computeAngle(_parts[num - 1], _parts[num] || downAttr.layerPoint);
+      angle += 90;
+      angle %= 360;
+      angle += angle < 0 ? 360 : 0;
+      return {
+        length: L$1.gmxUtil.distVincenty(prev.lng, prev.lat, curr.lng, curr.lat),
+        angle: L$1.gmxUtil.formatDegrees(angle, 0)
+      };
+    }
+
+    return null;
+  },
+  getLength: function getLength(downAttr) {
+    var length = 0,
+        latlngs = this._getLatLngsArr(),
+        len = latlngs.length;
+
+    if (len) {
+      var beg = 1,
+          prev = latlngs[0];
+
+      if (downAttr) {
+        if (downAttr.type === 'node') {
+          len = downAttr.num + 1;
+        } else {
+          beg = downAttr.num;
+
+          if (beg === len) {
+            prev = latlngs[beg - 1];
+            beg = 0;
+          } else {
+            prev = latlngs[beg - 1];
+          }
+
+          len = beg + 1;
+        }
+      }
+
+      for (var i = beg; i < len; i++) {
+        var leg = this._legLength[i] || null;
+
+        if (leg === null) {
+          leg = L$1.gmxUtil.distVincenty(prev.lng, prev.lat, latlngs[i].lng, latlngs[i].lat);
+          this._legLength[i] = leg;
+        }
+
+        prev = latlngs[i];
+        length += leg;
+      }
+    }
+
+    return length;
+  },
+  _setPoint: function _setPoint(latlng, nm, type) {
+    if (!this.points) {
+      return;
+    }
+
+    var latlngs = this._getLatLngsArr();
+
+    if (this.options.type === 'Rectangle') {
+      if (type === 'edge') {
+        nm--;
+
+        if (nm === 0) {
+          latlngs[0].lng = latlngs[1].lng = latlng.lng;
+        } else if (nm === 1) {
+          latlngs[1].lat = latlngs[2].lat = latlng.lat;
+        } else if (nm === 2) {
+          latlngs[2].lng = latlngs[3].lng = latlng.lng;
+        } else if (nm === 3) {
+          latlngs[0].lat = latlngs[3].lat = latlng.lat;
+        }
+      } else {
+        latlngs[nm] = latlng;
+
+        if (nm === 0) {
+          latlngs[3].lat = latlng.lat;
+          latlngs[1].lng = latlng.lng;
+        } else if (nm === 1) {
+          latlngs[2].lat = latlng.lat;
+          latlngs[0].lng = latlng.lng;
+        } else if (nm === 2) {
+          latlngs[1].lat = latlng.lat;
+          latlngs[3].lng = latlng.lng;
+        } else if (nm === 3) {
+          latlngs[0].lat = latlng.lat;
+          latlngs[2].lng = latlng.lng;
+        }
+      }
+
+      this._legLength = [];
+    } else {
+      latlngs[nm] = latlng;
+      this._legLength[nm] = null;
+      this._legLength[nm + 1] = null;
+    }
+
+    this.setLatLngs(latlngs);
+  },
+  addLatLng: function addLatLng(point, delta) {
+    this._legLength = [];
+
+    if (this.points) {
+      var points = this._getLatLngsArr(),
+          maxPoints = this.options.maxPoints,
+          len = points.length,
+          lastPoint = points[len - 2],
+          flag = !lastPoint || !lastPoint.equals(point);
+
+      if (maxPoints && len >= maxPoints) {
+        this.setEditMode();
+
+        this._fireEvent('drawstop', {
+          latlng: point
+        });
+
+        len--;
+      }
+
+      if (flag) {
+        if (delta) {
+          len -= delta;
+        } // reset existing point
+
+
+        this._setPoint(point, len, 'node');
+      }
+
+      this._parent.lastAddLatLng = point;
+    } else if ('addLatLng' in this._obj) {
+      this._obj.addLatLng(point);
+    }
+  },
+  setPositionOffset: function setPositionOffset(p) {
+    L$1.DomUtil.setPosition(this.points._container, p);
+    L$1.DomUtil.setPosition(this.fill._container, p);
+    L$1.DomUtil.setPosition(this.lines._container, p);
+  },
+  setLatLngs: function setLatLngs(latlngs) {
+    // TODO: latlngs не учитывает дырки полигонов
+    if (this.points) {
+      var points = this.points;
+      this.fill.setLatLngs(latlngs);
+      this.lines.setLatLngs(latlngs);
+
+      if (!this.lineType && this.mode === 'edit' && latlngs.length > 2) {
+        this.lines.addLatLng(latlngs[0]);
+        this.fill.addLatLng(latlngs[0]);
+      }
+
+      if (this.bbox) {
+        this.bbox.setBounds(this.lines._bounds);
+      }
+
+      points.setLatLngs(latlngs);
+    } else if ('setLatLngs' in this._obj) {
+      this._obj.setLatLngs(latlngs);
+    }
+
+    this._fireEvent('edit');
+  },
+  _getLatLngsArr: function _getLatLngsArr() {
+    return Utils.isOldVersion ? this.points._latlngs : this.points._latlngs[0];
+  },
+  // edit mode
+  _pointDown: function _pointDown(ev) {
+    if (!this._map) {
+      return;
+    }
+
+    if (L$1.Browser.ie || L$1.gmxUtil && L$1.gmxUtil.gtIE11) {
+      this._map.dragging._draggable._onUp(ev); // error in IE
+
+    }
+
+    if (ev.originalEvent) {
+      var originalEvent = ev.originalEvent;
+
+      if (originalEvent.altKey) {
+        // altKey, shiftKey
+        this._onDragStart(ev);
+
+        return;
+      } else if (originalEvent.which !== 1 && originalEvent.button !== 1) {
+        return;
+      }
+    }
+
+    var downAttr = Utils.getDownType.call(this, ev, this._map, this._parent),
+        type = downAttr.type,
+        opt = this.options;
+    this._lastDownTime = Date.now() + 100;
+    this.down = downAttr;
+
+    if (type === 'edge' && downAttr.ctrlKey && opt.type !== 'Rectangle') {
+      if (opt.disableAddPoints) {
+        return;
+      }
+
+      this._legLength = [];
+
+      var num = downAttr.num,
+          points = this._getLatLngsArr();
+
+      points.splice(num, 0, points[num]);
+
+      this._setPoint(ev.latlng, num, type);
+    }
+
+    this.downObject = true;
+
+    this._parent._disableDrag();
+
+    this._map.on('mousemove', this._pointMove, this).on('mouseup', this._mouseupPoint, this);
+  },
+  _mouseupPoint: function _mouseupPoint(ev) {
+    this._pointUp(ev);
+
+    if (this.__mouseupPointTimer) {
+      cancelIdleCallback(this.__mouseupPointTimer);
+    }
+
+    this.__mouseupPointTimer = requestIdleCallback(function () {
+      this._fireEvent('editstop', ev);
+    }.bind(this), {
+      timeout: 250
+    });
+  },
+  _pointMove: function _pointMove(ev) {
+    if (this.down && this._lastDownTime < Date.now()) {
+      if (!this.lineType) {
+        this._parent.showFill();
+      }
+
+      this._clearLineAddPoint();
+
+      this._moved = true;
+      var latlng = ev.originalEvent.ctrlKey ? Utils.snapPoint(ev.latlng, this, this._map) : ev.latlng;
+
+      this._setPoint(latlng, this.down.num, this.down.type);
+
+      if ('_showTooltip' in this._parent) {
+        ev.ring = this;
+
+        this._parent._showTooltip(this.lineType ? 'Length' : 'Area', ev);
+      }
+    }
+  },
+  _pointUp: function _pointUp(ev) {
+    this.downObject = false;
+
+    this._parent._enableDrag();
+
+    if (!this.points) {
+      return;
+    }
+
+    if (this._map) {
+      this._map.off('mousemove', this._pointMove, this).off('mouseup', this._mouseupPoint, this);
+
+      var target = ev && ev.originalEvent ? ev.originalEvent.target : null;
+
+      if (target && target._leaflet_pos && /leaflet-marker-icon/.test(target.className)) {
+        var latlng = Utils.getMarkerByPos(target._leaflet_pos, this._map.gmxDrawing.getFeatures());
+
+        this._setPoint(latlng, this.down.num, this.down.type);
+      }
+
+      this._map._skipClick = true; // for EventsManager
+    }
+
+    if (this._drawstop) {
+      this._fireEvent('drawstop', ev);
+    }
+
+    this._drawstop = false;
+    this.down = null;
+    var lineStyle = this.options.lineStyle || {};
+
+    if (!lineStyle.fill && !this.lineType) {
+      this._parent.hideFill();
+    }
+  },
+  _lastPointClickTime: 0,
+  // Hack for emulate dblclick on Point
+  _removePoint: function _removePoint(num) {
+    var points = this._getLatLngsArr();
+
+    if (points.length > num) {
+      this._legLength = [];
+      points.splice(num, 1);
+
+      if (this.options.type === 'Rectangle' || points.length < 2 || points.length < 3 && !this.lineType) {
+        this._parent.remove(this);
+      } else {
+        this._setPoint(points[0], 0);
+      }
+    }
+  },
+  _clearLineAddPoint: function _clearLineAddPoint() {
+    if (this._lineAddPointID) {
+      clearTimeout(this._lineAddPointID);
+    }
+
+    this._lineAddPointID = null;
+  },
+  _pointDblClick: function _pointDblClick(ev) {
+    this._clearLineAddPoint();
+
+    if (!this.options.disableAddPoints && (!this._lastAddTime || Date.now() > this._lastAddTime)) {
+      var downAttr = Utils.getDownType.call(this, ev, this._map, this._parent);
+
+      this._removePoint(downAttr.num);
+    }
+  },
+  _pointClick: function _pointClick(ev) {
+    if (ev.originalEvent && ev.originalEvent.ctrlKey) {
+      return;
+    }
+
+    var clickTime = Date.now(),
+        prevClickTime = this._lastPointClickTime;
+    this._lastPointClickTime = clickTime + 300;
+
+    if (this._moved || clickTime < prevClickTime) {
+      this._moved = false;
+      return;
+    }
+
+    var downAttr = Utils.getDownType.call(this, ev, this._map, this._parent),
+        mode = this.mode;
+
+    if (downAttr.type === 'node') {
+      var num = downAttr.num;
+
+      if (downAttr.end) {
+        // this is click on first or last Point
+        if (mode === 'add') {
+          this._pointUp();
+
+          this.setEditMode();
+
+          if (this.lineType && num === 0) {
+            this._parent.options.type = this.options.type = 'Polygon';
+            this.lineType = false;
+
+            this._removePoint(this._getLatLngsArr().length - 1);
+          }
+
+          this._fireEvent('drawstop', downAttr);
+
+          this._fireEvent('editstop', downAttr);
+
+          this._removePoint(num);
+        } else if (this.lineType) {
+          this._clearLineAddPoint();
+
+          this._lineAddPointID = setTimeout(function () {
+            if (num === 0) {
+              this._getLatLngsArr().reverse();
+            }
+
+            this.points.addLatLng(downAttr.latlng);
+            this.setAddMode();
+
+            this._fireEvent('drawstop', downAttr);
+          }.bind(this), 250);
+        }
+      } else if (mode === 'add') {
+        // this is add pont
+        this.addLatLng(ev.latlng);
+      }
+    }
+  },
+  _editHistory: [],
+  // _dragType: 'Save',
+  _needRotate: false,
+  _toggleRotate: function _toggleRotate(type, downAttr) {
+    this._needRotate = type === 'Rotate' || type === 'Rotate around Point';
+    this._editHistory = [];
+
+    if (this.bbox) {
+      this.bbox.off('contextmenu', this._onContextmenu, this).off('mousedown', this._onRotateStart, this);
+      this.removeLayer(this.bbox);
+      this.bbox = null;
+    } else {
+      L$1.DomUtil.TRANSFORM_ORIGIN = L$1.DomUtil.TRANSFORM_ORIGIN || L$1.DomUtil.testProp(['transformOrigin', 'WebkitTransformOrigin', 'OTransformOrigin', 'MozTransformOrigin', 'msTransformOrigin']);
+      this.bbox = L$1.rectangle(this.lines.getBounds(), {
+        color: this.lines.options.color,
+        //||'rgb(51, 136, 255)',
+        opacity: this.lines.options.opacity,
+        className: 'leaflet-drawing-bbox ' + type,
+        dashArray: '6, 3',
+        smoothFactor: 0,
+        noClip: true,
+        fillOpacity: 0,
+        fill: true,
+        weight: 1
+      });
+      this.addLayer(this.bbox);
+      this.bbox.on('contextmenu', this._onContextmenu, this).on('mousedown', this._onRotateStart, this);
+
+      if (this.bbox.bindContextMenu) {
+        this.bbox.bindContextMenu({
+          contextmenu: false,
+          contextmenuInheritItems: false,
+          contextmenuItems: []
+        });
+      }
+
+      this._recheckContextItems('bbox', this._map);
+
+      this._rotateCenterPoint = type === 'Rotate' ? this.bbox.getCenter() : downAttr.latlng;
+    }
+  },
+  _onContextmenu: function _onContextmenu() {
+    this.bbox.options.contextmenuItems[1].disabled = this._editHistory.length < 1;
+  },
+  _isContextMenuEvent: function _isContextMenuEvent(ev) {
+    var e = ev.originalEvent;
+    return e.which !== 1 && e.button !== 1 && !e.touches;
+  },
+  _onRotateStart: function _onRotateStart(ev) {
+    if (this._isContextMenuEvent(ev)) {
+      return;
+    }
+
+    this._editHistory.push(this._getLatLngsArr().map(function (it) {
+      return it.clone();
+    }));
+
+    var flagRotate = this._needRotate;
+
+    if (ev.originalEvent.altKey) {
+      flagRotate = !flagRotate;
+    }
+
+    if (this._map.contextmenu) {
+      this._map.contextmenu.hide();
+    }
+
+    if (flagRotate) {
+      this._rotateStartPoint = ev.latlng;
+      this._rotateCenter = this._rotateCenterPoint;
+
+      this._map.on('mouseup', this._onRotateEnd, this).on('mousemove', this._onRotate, this);
+
+      this._parent._disableDrag();
+
+      this._fireEvent('rotatestart', ev);
+    } else {
+      this._onDragStart(ev);
+    }
+  },
+  _onRotateEnd: function _onRotateEnd(ev) {
+    // TODO: не учитывает дырки полигонов
+    this._map.off('mouseup', this._onRotateEnd, this).off('mousemove', this._onRotate, this);
+
+    this.toggleTooltip(ev);
+
+    if (this._center) {
+      var center = this._center,
+          shiftPoint = this._map.getPixelOrigin().add(center),
+          cos = Math.cos(-this._angle),
+          sin = Math.sin(-this._angle),
+          map = this._map,
+          _latlngs = this.points._parts[0].map(function (p) {
+        var ps = p.subtract(center);
+        return map.unproject(L$1.point(ps.x * cos + ps.y * sin, ps.y * cos - ps.x * sin).add(shiftPoint));
+      });
+
+      this.setLatLngs(_latlngs);
+
+      this._rotateItem();
+
+      this.bbox.setBounds(this.lines._bounds); // console.log('_onRotateEnd', this.mode, this.points._latlngs, _latlngs);
+    }
+
+    this._parent._enableDrag();
+
+    this._fireEvent('rotateend', ev);
+  },
+  _onRotate: function _onRotate(ev) {
+    var pos = ev.latlng,
+        // текущая точка
+    s = this._rotateStartPoint,
+        // точка начала вращения
+    c = this._rotateCenter; // центр объекта
+
+    this._rotateItem(Math.atan2(s.lat - c.lat, s.lng - c.lng) - Math.atan2(pos.lat - c.lat, pos.lng - c.lng), this._map.project(c).subtract(this._map.getPixelOrigin()));
+
+    this._fireEvent('rotate', ev);
+  },
+  _rotateItem: function _rotateItem(angle, center) {
+    var originStr = '',
+        rotate = '';
+
+    if (center) {
+      originStr = center.x + 'px ' + center.y + 'px';
+      rotate = 'rotate(' + angle + 'rad)';
+    }
+
+    this._angle = angle;
+    this._center = center;
+    [this.bbox, this.lines, this.fill, this.points].forEach(function (it) {
+      it._path.style[L$1.DomUtil.TRANSFORM_ORIGIN] = originStr;
+      it._path.style.transform = rotate;
+    });
+  },
+  _onDragEnd: function _onDragEnd() {
+    this._map.off('mouseup', this._onDragEnd, this).off('mousemove', this._onDrag, this);
+
+    this._parent._enableDrag();
+
+    this._fireEvent('dragend');
+  },
+  _onDragStart: function _onDragStart(ev) {
+    this._dragstartPoint = ev.latlng;
+
+    this._map.on('mouseup', this._onDragEnd, this).on('mousemove', this._onDrag, this);
+
+    this._parent._disableDrag();
+
+    this._fireEvent('dragstart');
+  },
+  _onDrag: function _onDrag(ev) {
+    var lat = this._dragstartPoint.lat - ev.latlng.lat,
+        lng = this._dragstartPoint.lng - ev.latlng.lng,
+        points = this._getLatLngsArr();
+
+    points.forEach(function (item) {
+      item.lat -= lat;
+      item.lng -= lng;
+    });
+    this._dragstartPoint = ev.latlng;
+    this._legLength = [];
+    this.setLatLngs(points);
+
+    this._fireEvent('drag');
+  },
+  _fireEvent: function _fireEvent(name, options) {
+    this._parent._fireEvent(name, options);
+  },
+  _startTouchMove: function _startTouchMove(ev, drawstop) {
+    var downAttr = Utils.getDownType.call(this, ev, this._map, this._parent);
+
+    if (downAttr.type === 'node') {
+      this._parent._disableDrag();
+
+      this.down = downAttr; //var num = downAttr.num;
+
+      var my = this;
+
+      var _touchmove = function _touchmove(ev) {
+        downAttr = Utils.getDownType.call(my, ev, my._map, this._parent);
+
+        if (ev.touches.length === 1) {
+          // Only deal with one finger
+          my._pointMove(downAttr);
+        }
+      };
+
+      var _touchend = function _touchend() {
+        L$1.DomEvent.off(my._map._container, 'touchmove', _touchmove, my).off(my._map._container, 'touchend', _touchend, my);
+
+        my._parent._enableDrag();
+
+        if (drawstop) {
+          my._parent.fire('drawstop', {
+            mode: my.options.type,
+            object: my
+          });
+        }
+      };
+
+      L$1.DomEvent.on(my._map._container, 'touchmove', _touchmove, my).on(my._map._container, 'touchend', _touchend, my);
+    }
+  },
+  _editHandlers: function _editHandlers(flag) {
+    //if (!this.points) { return; }
+    var stop = L$1.DomEvent.stopPropagation,
+        prevent = L$1.DomEvent.preventDefault;
+
+    if (this.touchstart) {
+      L$1.DomEvent.off(this.points._container, 'touchstart', this.touchstart, this);
+    }
+
+    if (this.touchstartFill) {
+      L$1.DomEvent.off(this.fill._container, 'touchstart', this.touchstartFill, this);
+    }
+
+    this.touchstart = null;
+    this.touchstartFill = null;
+
+    if (flag) {
+      this.points.on('dblclick click', stop, this).on('dblclick click', prevent, this).on('dblclick', this._pointDblClick, this).on('click', this._pointClick, this);
+
+      if (L$1.Browser.mobile) {
+        if (this._EditOpacity) {
+          this._parent._setPointsStyle({
+            fillOpacity: this._EditOpacity
+          });
+        }
+
+        var my = this;
+
+        this.touchstart = function (ev) {
+          my._startTouchMove(ev);
+        };
+
+        L$1.DomEvent.on(this.points._container, 'touchstart', this.touchstart, this);
+
+        this.touchstartFill = function (ev) {
+          var downAttr = Utils.getDownType.call(my, ev, my._map, this._parent);
+
+          if (downAttr.type === 'edge' && my.options.type !== 'Rectangle') {
+            var points = my.points._latlngs;
+            points.splice(downAttr.num, 0, points[downAttr.num]);
+            my._legLength = [];
+
+            my._setPoint(downAttr.latlng, downAttr.num, downAttr.type);
+          }
+        };
+
+        L$1.DomEvent.on(this.fill._container, 'touchstart', this.touchstartFill, this);
+      } else {
+        this.points.on('mousemove', stop).on('mousedown', this._pointDown, this);
+        this.lines.on('mousedown', this._pointDown, this);
+        this.fill.on('dblclick click', stop, this).on('mousedown', this._pointDown, this);
+
+        this._fireEvent('editmode');
+      }
+    } else {
+      this._pointUp();
+
+      this.points.off('dblclick click', stop, this).off('dblclick click', prevent, this).off('dblclick', this._pointDblClick, this).off('click', this._pointClick, this);
+
+      if (!L$1.Browser.mobile) {
+        this.points.off('mousemove', stop).off('mousedown', this._pointDown, this);
+        this.lines.off('mousedown', this._pointDown, this);
+        this.fill.off('dblclick click', stop, this).off('mousedown', this._pointDown, this);
+      }
+    }
+  },
+  _createHandlers: function _createHandlers(flag) {
+    if (!this.points || !this._map) {
+      return;
+    }
+
+    var stop = L$1.DomEvent.stopPropagation;
+
+    if (flag) {
+      if (this._map.contextmenu) {
+        this._map.contextmenu.disable();
+      }
+
+      this._parent._enableDrag();
+
+      this._map.on('dblclick', stop).on('mousedown', this._mouseDown, this).on('mouseup', this._mouseUp, this).on('mousemove', this._moseMove, this);
+
+      this.points.on('click', this._pointClick, this);
+
+      this._fireEvent('addmode');
+
+      if (!this.lineType) {
+        this.lines.setStyle({
+          fill: true
+        });
+      }
+    } else {
+      if (this._map) {
+        this._map.off('dblclick', stop).off('mouseup', this._mouseUp, this).off('mousemove', this._moseMove, this);
+
+        this.points.off('click', this._pointClick, this);
+      }
+
+      var lineStyle = this.options.lineStyle || {};
+
+      if (!this.lineType && !lineStyle.fill) {
+        this.lines.setStyle({
+          fill: false
+        });
+      }
+    }
+  },
+  setEditMode: function setEditMode() {
+    if (this.options.editable) {
+      this._editHandlers(false);
+
+      this._createHandlers(false);
+
+      this._editHandlers(true);
+
+      this.mode = 'edit';
+    }
+
+    return this;
+  },
+  setAddMode: function setAddMode() {
+    if (this.options.editable) {
+      this._editHandlers(false);
+
+      this._createHandlers(false);
+
+      this._createHandlers(true);
+
+      this.mode = 'add';
+    }
+
+    return this;
+  },
+  removeAddMode: function removeAddMode() {
+    this._createHandlers(false);
+
+    this.mode = '';
+  },
+  removeEditMode: function removeEditMode() {
+    this._editHandlers(false);
+
+    this.mode = '';
+  },
+  // add mode
+  _moseMove: function _moseMove(ev) {
+    if (this.points) {
+      var points = this._getLatLngsArr(),
+          latlng = ev.latlng;
+
+      if (ev.originalEvent.ctrlKey) {
+        latlng = Utils.snapPoint(latlng, this, this._map);
+      }
+
+      if (points.length === 1) {
+        this._setPoint(latlng, 1);
+      }
+
+      this._setPoint(latlng, points.length - 1);
+
+      this.toggleTooltip(ev, true, this.lineType ? 'Length' : 'Area');
+    }
+  },
+  _mouseDown: function _mouseDown() {
+    this._lastMouseDownTime = Date.now() + 200;
+
+    if (this._map && this._map.contextmenu) {
+      this._map.contextmenu.hide();
+    }
+
+    if ('hideTooltip' in this._parent) {
+      this._parent.hideTooltip();
+    }
+  },
+  _mouseUp: function _mouseUp(ev) {
+    var timeStamp = Date.now();
+
+    if (ev.delta || timeStamp < this._lastMouseDownTime) {
+      this._lastAddTime = timeStamp + 1000;
+
+      var _latlngs = this._getLatLngsArr();
+
+      if (ev.originalEvent && ev.originalEvent.which === 3 && this.points && _latlngs && _latlngs.length) {
+        // for click right button
+        this.setEditMode();
+
+        this._removePoint(_latlngs.length - 1);
+
+        this._pointUp();
+
+        this._fireEvent('drawstop');
+
+        if (this._map && this._map.contextmenu) {
+          requestIdleCallback(this._map.contextmenu.enable.bind(this._map.contextmenu), {
+            timeout: 250
+          });
+        }
+      } else {
+        var latlng = ev._latlng || ev.latlng;
+
+        if (ev.delta) {
+          this.addLatLng(latlng, ev.delta);
+        } // for click on marker
+
+
+        this.addLatLng(latlng);
+      }
+
+      this._parent._parent._clearCreate();
+    }
+  }
+});
+L$1.GmxDrawing.Ring;
+
+L$1.GmxDrawing.PointMarkers = L$1.Polygon.extend({
+  options: {
+    className: 'leaflet-drawing-points',
+    noClip: true,
+    smoothFactor: 0,
+    opacity: 1,
+    shape: 'circle',
+    fill: true,
+    fillColor: '#ffffff',
+    fillOpacity: 1,
+    size: L$1.Browser.mobile ? 40 : 8,
+    weight: 2
+  },
+  _convertLatLngs: function _convertLatLngs(latlngs) {
+    return L$1.Polyline.prototype._convertLatLngs.call(this, latlngs);
+  },
+  getRing: function getRing() {
+    return this._parent;
+  },
+  getFeature: function getFeature() {
+    return this.getRing()._parent;
+  },
+  getPathLatLngs: function getPathLatLngs() {
+    var out = [],
+        size = this.options.size,
+        dontsmooth = this._parent.options.type === 'Rectangle',
+        points = this._parts[0],
+        prev;
+
+    for (var i = 0, len = points.length, p; i < len; i++) {
+      p = points[i];
+
+      if (i === 0 || dontsmooth || Math.abs(prev.x - p.x) > size || Math.abs(prev.y - p.y) > size) {
+        out.push(this._latlngs[i]);
+        prev = p;
+      }
+    }
+
+    return out;
+  },
+  _getPathPartStr: function _getPathPartStr(points) {
+    var round = L$1.Path.VML,
+        size = this.options.size / 2,
+        dontsmooth = this._parent && this._parent.options.type === 'Rectangle',
+        skipLastPoint = this._parent && this._parent.mode === 'add' && !L$1.Browser.mobile ? 1 : 0,
+        radius = this.options.shape === 'circle' ? true : false,
+        prev;
+
+    for (var j = 0, len2 = points.length - skipLastPoint, str = '', p; j < len2; j++) {
+      p = points[j];
+
+      if (round) {
+        p._round();
+      }
+
+      if (j === 0 || dontsmooth || Math.abs(prev.x - p.x) > this.options.size || Math.abs(prev.y - p.y) > this.options.size) {
+        if (radius) {
+          str += 'M' + p.x + ',' + (p.y - size) + ' A' + size + ',' + size + ',0,1,1,' + (p.x - 0.1) + ',' + (p.y - size) + ' ';
+        } else {
+          var px = p.x,
+              px1 = px - size,
+              px2 = px + size,
+              py = p.y,
+              py1 = py - size,
+              py2 = py + size;
+          str += 'M' + px1 + ' ' + py1 + 'L' + px2 + ' ' + py1 + 'L' + px2 + ' ' + py2 + 'L' + px1 + ' ' + py2 + 'L' + px1 + ' ' + py1;
+        }
+
+        prev = p;
+      }
+    }
+
+    return str;
+  },
+  _onMouseClick: function _onMouseClick(e) {
+    //if (this._map.dragging && this._map.dragging.moved()) { return; }
+    this._fireMouseEvent(e);
+  },
+  _updatePath: function _updatePath() {
+    if (Utils.isOldVersion) {
+      if (!this._map) {
+        return;
+      }
+
+      this._clipPoints();
+
+      this.projectLatlngs();
+      var pathStr = this.getPathString();
+
+      if (pathStr !== this._pathStr) {
+        this._pathStr = pathStr;
+
+        if (this._path.getAttribute('fill-rule') !== 'inherit') {
+          this._path.setAttribute('fill-rule', 'inherit');
+        }
+
+        this._path.setAttribute('d', this._pathStr || 'M0 0');
+      }
+    } else {
+      var str = this._parts.length ? this._getPathPartStr(this._parts[0]) : '';
+
+      this._renderer._setPath(this, str);
+    }
+  }
+});
+L$1.GmxDrawing.PointMarkers;
+
+L$1.GmxDrawing.utils = {
+  snaping: 10,
+  // snap distance
+  isOldVersion: L$1.version.substr(0, 3) === '0.7',
+  defaultStyles: {
+    mode: '',
+    map: true,
+    editable: true,
+    holeStyle: {
+      opacity: 0.5,
+      color: '#003311'
+    },
+    lineStyle: {
+      opacity: 1,
+      weight: 2,
+      clickable: false,
+      className: 'leaflet-drawing-lines',
+      color: '#0033ff',
+      dashArray: null,
+      lineCap: null,
+      lineJoin: null,
+      fill: false,
+      fillColor: null,
+      fillOpacity: 0.2,
+      smoothFactor: 0,
+      noClip: true,
+      stroke: true
+    },
+    pointStyle: {
+      className: 'leaflet-drawing-points',
+      smoothFactor: 0,
+      noClip: true,
+      opacity: 1,
+      shape: 'circle',
+      fill: true,
+      fillColor: '#ffffff',
+      fillOpacity: 1,
+      size: L$1.Browser.mobile ? 40 : 8,
+      weight: 2,
+      clickable: true,
+      color: '#0033ff',
+      dashArray: null,
+      lineCap: null,
+      lineJoin: null,
+      stroke: true
+    },
+    markerStyle: {
+      mode: '',
+      editable: false,
+      title: 'Text example',
+      options: {
+        alt: '',
+        //title: '',
+        clickable: true,
+        draggable: false,
+        keyboard: true,
+        opacity: 1,
+        zIndexOffset: 0,
+        riseOffset: 250,
+        riseOnHover: false,
+        icon: {
+          className: '',
+          iconUrl: '',
+          iconAnchor: [12, 41],
+          iconSize: [25, 41],
+          popupAnchor: [1, -34],
+          shadowSize: [41, 41]
+        }
+      }
+    }
+  },
+  getClosestOnGeometry: function getClosestOnGeometry(latlng, gmxGeoJson, map) {
+    if (L$1.GeometryUtil && map) {
+      return L$1.GeometryUtil.closestLayerSnap(map, [L$1.geoJson(L$1.gmxUtil.geometryToGeoJSON(gmxGeoJson, true, true))], latlng, Number(map.options.snaping || L$1.GmxDrawing.utils.snaping), true);
+    }
+
+    return null;
+  },
+  snapPoint: function snapPoint(latlng, obj, map) {
+    var res = latlng;
+
+    if (L$1.GeometryUtil) {
+      var drawingObjects = map.gmxDrawing.getFeatures().filter(function (it) {
+        return it !== obj._parent && it._obj !== obj;
+      }).map(function (it) {
+        return it.options.type === 'Point' ? it._obj : it;
+      }),
+          snaping = Number(map.options.snaping || L$1.GmxDrawing.utils.snaping),
+          closest = L$1.GeometryUtil.closestLayerSnap(map, drawingObjects, latlng, snaping, true);
+
+      if (closest) {
+        res = closest.latlng;
+      }
+    }
+
+    return res;
+  },
+  getNotDefaults: function getNotDefaults(from, def) {
+    var res = {};
+
+    for (var key in from) {
+      if (key === 'icon' || key === 'map') {
+        continue;
+      } else if (key === 'iconAnchor' || key === 'iconSize' || key === 'popupAnchor' || key === 'shadowSize') {
+        if (!def[key]) {
+          continue;
+        }
+
+        if (def[key][0] !== from[key][0] || def[key][1] !== from[key][1]) {
+          res[key] = from[key];
+        }
+      } else if (key === 'lineStyle' || key === 'pointStyle' || key === 'markerStyle') {
+        res[key] = this.getNotDefaults(from[key], def[key]);
+      } else if (!def || def[key] !== from[key] || key === 'fill') {
+        res[key] = from[key];
+      }
+    }
+
+    return res;
+  },
+  getShiftLatlng: function getShiftLatlng(latlng, map, shiftPixel) {
+    if (shiftPixel && map) {
+      var p = map.latLngToLayerPoint(latlng)._add(shiftPixel);
+
+      latlng = map.layerPointToLatLng(p);
+    }
+
+    return latlng;
+  },
+  getDownType: function getDownType(ev, map, feature) {
+    var layerPoint = ev.layerPoint,
+        originalEvent = ev.originalEvent,
+        ctrlKey = false,
+        shiftKey = false,
+        altKey = false,
+        latlng = ev.latlng;
+
+    if (originalEvent) {
+      ctrlKey = originalEvent.ctrlKey;
+      shiftKey = originalEvent.shiftKey;
+      altKey = originalEvent.altKey;
+    }
+
+    if (ev.touches && ev.touches.length === 1) {
+      var first = ev.touches[0],
+          containerPoint = map.mouseEventToContainerPoint(first);
+      layerPoint = map.containerPointToLayerPoint(containerPoint);
+      latlng = map.layerPointToLatLng(layerPoint);
+    }
+
+    var out = {
+      type: '',
+      latlng: latlng,
+      ctrlKey: ctrlKey,
+      shiftKey: shiftKey,
+      altKey: altKey
+    },
+        ring = this.points ? this : ev.ring || ev.relatedEvent,
+        points = ring.points._originalPoints || ring.points._parts[0] || [],
+        len = points.length;
+
+    if (len === 0) {
+      return out;
+    }
+
+    var size = (ring.points.options.size || 10) / 2;
+    size += 1 + (ring.points.options.weight || 2);
+    var cursorBounds = new L$1.Bounds(L$1.point(layerPoint.x - size, layerPoint.y - size), L$1.point(layerPoint.x + size, layerPoint.y + size)),
+        prev = points[len - 1],
+        lastIndex = len - (ring.mode === 'add' ? 2 : 1);
+    out = {
+      mode: ring.mode,
+      layerPoint: ev.layerPoint,
+      ctrlKey: ctrlKey,
+      shiftKey: shiftKey,
+      altKey: altKey,
+      latlng: latlng
+    };
+
+    for (var i = 0; i < len; i++) {
+      var point = points[i];
+
+      if (feature.shiftPixel) {
+        point = points[i].add(feature.shiftPixel);
+      }
+
+      if (cursorBounds.contains(point)) {
+        out.type = 'node';
+        out.num = i;
+        out.end = i === 0 || i === lastIndex ? true : false;
+        break;
+      }
+
+      var dist = L$1.LineUtil.pointToSegmentDistance(layerPoint, prev, point);
+
+      if (dist < size) {
+        out.type = 'edge';
+        out.num = i === 0 ? len : i;
+      }
+
+      prev = point;
+    }
+
+    return out;
+  },
+  _getLastObject: function _getLastObject(obj) {
+    if (obj.getLayers) {
+      var layer = obj.getLayers().shift();
+      return layer.getLayers ? this._getLastObject(layer) : obj;
+    }
+
+    return obj;
+  },
+  getMarkerByPos: function getMarkerByPos(pos, features) {
+    for (var i = 0, len = features.length; i < len; i++) {
+      var feature = features[i],
+          fobj = feature._obj ? feature._obj : null,
+          mpos = fobj && fobj._icon ? fobj._icon._leaflet_pos : null;
+
+      if (mpos && mpos.x === pos.x && mpos.y === pos.y) {
+        return fobj._latlng;
+      }
+    }
+
+    return null;
+  },
+  getLocale: function getLocale(key) {
+    var res = L$1.gmxLocale ? L$1.gmxLocale.getText(key) : null;
+    return res || key;
+  }
+};
+L$1.GmxDrawing.utils;
+
+// `Uint8Array` constructor
+// https://tc39.github.io/ecma262/#sec-typedarray-objects
+typedArrayConstructor('Uint8', function (init) {
+  return function Uint8Array(data, byteOffset, length) {
+    return init(this, data, byteOffset, length);
+  };
+});
+
+function getObjectCenter(_x, _x2, _x3) {
+  return _getObjectCenter.apply(this, arguments);
+}
+
+function _getObjectCenter() {
+  _getObjectCenter = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(gmxPath, layerID, id) {
+    var fd, response, _yield$response$json, Status, Result, fields, values, i, _L$gmxUtil$convertGeo, coordinates, g, b;
+
+    return regeneratorRuntime.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            fd = new FormData();
+            fd.append('query', "[id]='".concat(id, "'"));
+            fd.append('page', '0');
+            fd.append('pagesize', '1');
+            fd.append('geometry', 'true');
+            fd.append('layer', layerID);
+            _context.next = 8;
+            return fetch("".concat(gmxPath, "/VectorLayer/Search.ashx?WrapStyle=None"), {
+              method: 'POST',
+              credentials: 'include',
+              body: fd
+            });
+
+          case 8:
+            response = _context.sent;
+            _context.next = 11;
+            return response.json();
+
+          case 11:
+            _yield$response$json = _context.sent;
+            Status = _yield$response$json.Status;
+            Result = _yield$response$json.Result;
+
+            if (!(Status === 'ok')) {
+              _context.next = 23;
+              break;
+            }
+
+            fields = Result.fields, values = Result.values;
+            i = fields.indexOf('geomixergeojson');
+            _L$gmxUtil$convertGeo = L$1.gmxUtil.convertGeometry(values[0][i], true), coordinates = _L$gmxUtil$convertGeo.coordinates;
+            g = L$1.geoJSON({
+              type: 'Feature',
+              geometry: {
+                type: 'Polygon',
+                coordinates: coordinates
+              }
+            });
+            b = g.getBounds();
+            return _context.abrupt("return", b.getCenter());
+
+          case 23:
+            return _context.abrupt("return", null);
+
+          case 24:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee);
+  }));
+  return _getObjectCenter.apply(this, arguments);
+}
+
+var m = function m(v) {
+  return v && v.toLocaleString('ru-RU', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }) || '';
+};
+
+var ha = function ha(v) {
+  return v && v.toLocaleString('ru-RU', {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1
+  }) || '';
+};
+
+var rub = function rub(v) {
+  return v && v.toLocaleString('ru-RU', {
+    style: 'currency',
+    currency: 'RUB'
+  }) || '';
+};
+
+var fmt = function fmt(v) {
+  return v && v.toLocaleString('ru-RU', {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1
+  }) || '';
+};
+
+var date = function date(v) {
+  return v && v.toLocaleDateString() || '';
+};
+
 var copy = function copy(source) {
   switch (_typeof(source)) {
     case 'number':
@@ -11456,312 +14905,15 @@ window.Scanex.Translations = window.Scanex.Translations || {};
 window.Scanex.translations = window.Scanex.translations || new Translations();
 var T = window.Scanex.translations;
 
-var Zoom = L$1.Control.extend({
-  options: {
-    position: 'topright'
-  },
-  onAdd: function onAdd(map) {
-    var container = L$1.DomUtil.create('div', 'scanex-forestry-zoom');
-    L$1.DomEvent.disableScrollPropagation(container);
-    L$1.DomEvent.disableClickPropagation(container);
-    var plus = L$1.DomUtil.create('i', 'scanex-zoom-icon plus', container);
-    L$1.DomEvent.on(plus, 'click', function () {
-      return map.zoomIn(1);
-    }, map);
-    var middle = L$1.DomUtil.create('label', 'middle', container);
-    middle.innerHTML = map.getZoom();
-    var minus = L$1.DomUtil.create('i', 'scanex-zoom-icon minus', container);
-    L$1.DomEvent.on(minus, 'click', function () {
-      return map.zoomOut(1);
-    }, map);
-    map.on('zoomend', function (e) {
-      if (middle) {
-        middle.innerHTML = e.target._zoom;
-      }
-    });
-    return container;
-  },
-  onRemove: function onRemove() {}
-});
-
-var Content = L$1.Control.extend({
-  options: {
-    position: 'bottom'
-  },
-  initialize: function initialize() {
-    this._current = null;
-    this._views = {};
-  },
-  onAdd: function onAdd(map) {
-    this._container = L$1.DomUtil.create('div', 'scanex-forestry-content');
-    L$1.DomEvent.disableScrollPropagation(this._container);
-    L$1.DomEvent.disableClickPropagation(this._container);
-    return this._container;
-  },
-  onRemove: function onRemove(map) {},
-  add: function add(id, View, options) {
-    var _this = this;
-
-    if (!this._views[id]) {
-      var container = L$1.DomUtil.create('div', 'component hidden', this._container);
-      container.setAttribute('data-id', id);
-      var v = new View(container, options);
-      v.on('open', function () {
-        _this._current = id;
-      }).on('close', function () {
-        _this._current = null;
-      });
-      this._views[id] = v;
-    }
-
-    return this._views[id];
-  },
-  has: function has(id) {
-    return !!this._views[id];
-  },
-  showDefault: function showDefault() {
-    if (this._current) {
-      this._views[this._current].close();
-    }
-  },
-  close: function close() {
-    if (this._current) {
-      this._views[this._current].close();
-    }
-  },
-  isDefault: function isDefault() {
-    return !this.getCurrentId();
-  },
-  show: function () {
-    var _show = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(id, options) {
-      var v;
-      return regeneratorRuntime.wrap(function _callee$(_context) {
-        while (1) {
-          switch (_context.prev = _context.next) {
-            case 0:
-              if (this._current && this._current !== id) {
-                this._views[this._current].close();
-              }
-
-              v = this._views[id];
-
-              if (!v) {
-                _context.next = 12;
-                break;
-              }
-
-              _context.prev = 3;
-              _context.next = 6;
-              return v.open(options);
-
-            case 6:
-              _context.next = 12;
-              break;
-
-            case 8:
-              _context.prev = 8;
-              _context.t0 = _context["catch"](3);
-              console.log(_context.t0);
-              v.close();
-
-            case 12:
-            case "end":
-              return _context.stop();
-          }
-        }
-      }, _callee, this, [[3, 8]]);
-    }));
-
-    function show(_x, _x2) {
-      return _show.apply(this, arguments);
-    }
-
-    return show;
-  }(),
-  getCurrent: function getCurrent() {
-    return this._views[this._current];
-  },
-  getCurrentId: function getCurrentId() {
-    return this._current;
-  }
-});
-
 var translate = T.getText.bind(T);
-T.addText('rus', {
-  legend: {
-    title: 'Обозначения'
-  }
-});
-var Legend = L$1.Control.extend({
-  includes: L$1.Evented.prototype,
-  options: {
-    position: 'topright'
-  },
-  initialize: function initialize() {
-    this._components = {};
-  },
-  onAdd: function onAdd(map) {
-    var _this = this;
-
-    this._container = L$1.DomUtil.create('div', 'scanex-forestry-legend');
-    L$1.DomEvent.disableScrollPropagation(this._container);
-    L$1.DomEvent.disableClickPropagation(this._container);
-    this._icon = L$1.DomUtil.create('div', 'scanex-legend-icon icon', this._container);
-    this._panel = L$1.DomUtil.create('div', 'panel hidden', this._container);
-    this._content = L$1.DomUtil.create('div', 'scrollable', this._panel);
-    L$1.DomEvent.on(this._icon, 'click', function (e) {
-      L$1.DomEvent.stopPropagation(e);
-      _this._active = !_this._active;
-
-      _this.showPanel(_this._active);
-
-      _this.fire('activate', {
-        active: _this._active
-      });
-    });
-    return this._container;
-  },
-  onRemove: function onRemove(map) {},
-  showPanel: function showPanel(visible) {
-    this._active = visible;
-
-    if (this._active) {
-      L$1.DomUtil.addClass(this._icon, 'active');
-      L$1.DomUtil.removeClass(this._panel, 'hidden');
-    } else {
-      L$1.DomUtil.removeClass(this._icon, 'active');
-      L$1.DomUtil.addClass(this._panel, 'hidden');
-    }
-  },
-  enable: function enable(id) {
-    var container = this._container.querySelector("[data-id=".concat(id, "]"));
-
-    if (container) {
-      var btn = container.querySelector('.toggle');
-      L$1.DomUtil.addClass(btn, 'toggle-active');
-      this.fire('click', {
-        id: id,
-        visible: true
-      });
-    }
-  },
-  disable: function disable(id) {
-    var container = this._container.querySelector("[data-id=".concat(id, "]"));
-
-    if (container) {
-      var btn = container.querySelector('.toggle');
-      L$1.DomUtil.removeClass(btn, 'toggle-active');
-      this.fire('click', {
-        id: id,
-        visible: false
-      });
-    }
-  },
-  state: function state(id) {
-    var container = this._container.querySelector("[data-id=".concat(id, "]"));
-
-    if (container) {
-      var btn = container.querySelector('.toggle');
-      return L$1.DomUtil.hasClass(btn, 'toggle-active');
-    } else {
-      return false;
-    }
-  },
-  toggle: function toggle(id) {
-    var container = this._container.querySelector("[data-id=".concat(id, "]"));
-
-    if (container) {
-      var btn = container.querySelector('.toggle');
-      var visible = !L$1.DomUtil.hasClass(btn, 'toggle-active');
-
-      if (visible) {
-        this.enable(id);
-      } else {
-        this.disable(id);
-      }
-    }
-  },
-  addComponent: function addComponent(id, title, parent) {
-    var _this2 = this;
-
-    var container = L$1.DomUtil.create('div', 'component', parent ? parent : this._content);
-    container.setAttribute('data-id', id);
-    L$1.DomUtil.create('i', null, container);
-    L$1.DomUtil.create('label', 'title', container).innerText = title;
-    L$1.DomUtil.create('div', 'toggle', container);
-    L$1.DomEvent.on(container, 'click', function (e) {
-      _this2.toggle(id);
-    }, this);
-    this._components[id] = container;
-    return container;
-  },
-  addGroup: function addGroup(id, title) {
-    var _this3 = this;
-
-    var container = L$1.DomUtil.create('div', 'group', this._content);
-    container.setAttribute('data-id', id);
-    var header = L$1.DomUtil.create('div', 'header', container);
-    var icon = L$1.DomUtil.create('i', 'scanex-legend-icon', header);
-    L$1.DomUtil.addClass(icon, id);
-    var label = L$1.DomUtil.create('label', 'title', header);
-    label.innerText = title;
-    var btn = L$1.DomUtil.create('div', 'toggle', header);
-    var children = L$1.DomUtil.create('div', 'children hidden', container);
-
-    var toggle = function toggle(e) {
-      L$1.DomEvent.stopPropagation(e);
-
-      if (L$1.DomUtil.hasClass(children, 'hidden')) {
-        L$1.DomUtil.removeClass(children, 'hidden');
-      } else {
-        L$1.DomUtil.addClass(children, 'hidden');
-      }
-    };
-
-    L$1.DomEvent.on(icon, 'click', toggle, this);
-    L$1.DomEvent.on(label, 'click', toggle, this);
-    L$1.DomEvent.on(btn, 'click', function (e) {
-      var visible = !L$1.DomUtil.hasClass(btn, 'toggle-active');
-
-      if (visible) {
-        L$1.DomUtil.addClass(btn, 'toggle-active');
-      } else {
-        L$1.DomUtil.removeClass(btn, 'toggle-active');
-      }
-
-      var _iterator = _createForOfIteratorHelper(children.querySelectorAll('.component')),
-          _step;
-
-      try {
-        for (_iterator.s(); !(_step = _iterator.n()).done;) {
-          var item = _step.value;
-
-          var _id = item.getAttribute('data-id');
-
-          if (visible) {
-            _this3.enable(_id);
-          } else {
-            _this3.disable(_id);
-          }
-        }
-      } catch (err) {
-        _iterator.e(err);
-      } finally {
-        _iterator.f();
-      }
-    }, this);
-    return children;
-  }
-});
-
-var translate$1 = T.getText.bind(T);
 T.addText('rus', {
   baseLayers: {
     title: 'Подложки',
     Rostelecom: 'Ростелеком'
   }
 });
-var iconPrefix = '//maps.kosmosnimki.ru/api/img/baseLayers/';
+var iconPrefix = 'images'; //'//maps.kosmosnimki.ru/api/img/baseLayers/';
+
 var hybrid = L$1.tileLayer('//{s}tilecart.kosmosnimki.ru/kosmohyb/{z}/{x}/{y}.png', {
   zIndex: -999999,
   maxNativeZoom: 18
@@ -11770,30 +14922,29 @@ var baseLayers = {
   sputnik: {
     rus: 'Спутник ру',
     eng: 'Sputnik RU',
-    icon: iconPrefix + 'basemap_sputnik_ru.png',
+    icon: "".concat(iconPrefix, "/lv_map.png"),
     layers: [L$1.tileLayer('//tilessputnik.ru/{z}/{x}/{y}.png?sw=1', {
       zIndex: -1000000,
       maxZoom: 22,
       maxNativeZoom: 18,
-      attribution: '<a href="http://maps.sputnik.ru">Спутник</a> © ' + translate$1('baseLayers.Rostelecom') + ' | © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      attribution: '<a href="http://maps.sputnik.ru">Спутник</a> © ' + translate('baseLayers.Rostelecom') + ' | © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     })]
   },
-  satellite: {
-    mapID: '1D30C72D02914C5FB90D1D448159CAB6',
-    layerID: '63E083C0916F4414A2F6B78242F56CA6',
-    // satellite
-    type: 'satellite',
-    rus: 'Снимки',
-    eng: 'Satellite',
-    overlayColor: '#ffffff',
-    icon: iconPrefix + 'basemap_satellite.png',
-    layers: []
-  },
+  // satellite: {
+  // 	mapID: '1D30C72D02914C5FB90D1D448159CAB6',
+  // 	layerID: '63E083C0916F4414A2F6B78242F56CA6', // satellite
+  // 	type: 'satellite',
+  // 	rus: 'Снимки',
+  // 	eng: 'Satellite',
+  // 	overlayColor: '#ffffff',
+  // 	icon: `${iconPrefix}/basemap_satellite.png`,
+  //     layers: []
+  // },
   OSMHybrid: {
     rus: 'Гибрид',
     eng: 'Hybrid',
     overlayColor: '#ffffff',
-    icon: iconPrefix + 'basemap_osm_hybrid.png',
+    icon: "".concat(iconPrefix, "/lv_hyb.png"),
     layers: []
   }
 };
@@ -11810,7 +14961,9 @@ var BaseLayers = L$1.Control.extend({
     this._icon = L$1.DomUtil.create('div', 'map-right', this._container);
     L$1.DomUtil.create('div', 'substrates', this._icon);
     this._content = L$1.DomUtil.create('div', 'table-baselayers-popup hidden', this._container);
-    this._content.innerHTML = "<table>\n            <thead>\n                <tr>                    \n                    <td colspan=\"3\">\n                        <label>".concat(translate$1('baseLayers.title'), "</label>\n                    </td>\n                </tr>\n            </thead>            \n            <tbody>\n                <tr class=\"line\">\n                    <td>\n                        <img src=\"").concat(baseLayers.sputnik.icon, "\" class=\"baseLayer\" data=\"sputnik\" />\n                    </td>\n                    <td>\n                        <img src=\"").concat(baseLayers.satellite.icon, "\" class=\"baseLayer\" data=\"satellite\" />\n                    </td>\n                   <td>\n                        <img src=\"").concat(baseLayers.OSMHybrid.icon, "\" class=\"baseLayer\" data=\"OSMHybrid\" />\n                    </td>\n                </tr>\n             </tbody>\n        </table>");
+    this._content.innerHTML = "<table>\n            <thead>\n                <tr>                    \n                    <td colspan=\"3\">\n                        <label>".concat(translate('baseLayers.title'), "</label>\n                    </td>\n                </tr>\n            </thead>            \n            <tbody>\n                <tr class=\"line\">").concat(Object.keys(baseLayers).map(function (k) {
+      return "<td><img src=\"".concat(baseLayers[k].icon, "\" class=\"baseLayer\" data=\"").concat(k, "\" /></td>");
+    }).join(''), "</tr>\n             </tbody>\n        </table>");
     L$1.DomEvent.on(this._icon, 'click', function (e) {
       L$1.DomEvent.stopPropagation(e);
       _this._active = !_this._active;
@@ -11847,17 +15000,17 @@ var BaseLayers = L$1.Control.extend({
     L$1.gmx.loadLayers([{
       apiKey: this.options.apiKey,
       mapID: '1D30C72D02914C5FB90D1D448159CAB6',
-      layerID: '63E083C0916F4414A2F6B78242F56CA6',
+      layerID: '4EE5E84381E94E369784464FD41EED5A',
       // satellite
       type: 'satellite',
       rus: 'Снимки',
       eng: 'Satellite',
       overlayColor: '#ffffff',
-      icon: iconPrefix + 'basemap_satellite.png'
+      icon: "".concat(iconPrefix, "/lv_hyb.png")
     }], {}).then(function (arr) {
       var satellite = arr[0];
-      satellite.options.zIndex = -1000000;
-      baseLayers.satellite.layers = [satellite];
+      satellite.options.zIndex = -1000000; // baseLayers.satellite.layers = [satellite];
+
       baseLayers.OSMHybrid.layers = [satellite, hybrid];
     });
   },
@@ -11918,6 +15071,130 @@ var BaseLayers = L$1.Control.extend({
       L$1.DomUtil.removeClass(this._icon, 'active');
       L$1.DomUtil.addClass(this._content, 'hidden');
     }
+  }
+});
+
+L$1.Control.GmxCenter = L$1.Control.extend({
+  options: {
+    position: 'center',
+    id: 'center',
+    notHide: true,
+    color: '#216b9c'
+  },
+  onRemove: function onRemove(map) {
+    if (map.gmxControlsManager) {
+      map.gmxControlsManager.remove(this);
+    }
+
+    map.fire('controlremove', this);
+  },
+  onAdd: function onAdd(map) {
+    var className = 'leaflet-gmx-center',
+        svgNS = 'http://www.w3.org/2000/svg',
+        container = L$1.DomUtil.create('div', className),
+        div = L$1.DomUtil.create('div', className),
+        svg = document.createElementNS(svgNS, 'svg'),
+        g = document.createElementNS(svgNS, 'g'),
+        path = document.createElementNS(svgNS, 'path');
+    this._container = container;
+    container._id = this.options.id;
+
+    if (this.options.notHide) {
+      container._notHide = true;
+    }
+
+    path.setAttribute('stroke-width', 1);
+    path.setAttribute('stroke-opacity', 1);
+    path.setAttribute('d', 'M6 0L6 12M0 6L12 6');
+    this._path = path;
+    g.appendChild(path);
+    svg.appendChild(g);
+    svg.setAttribute('width', 12);
+    svg.setAttribute('height', 12);
+    div.appendChild(svg);
+    container.appendChild(div);
+    this.setColor(this.options.color);
+    map.fire('controladd', this);
+
+    if (map.gmxControlsManager) {
+      map.gmxControlsManager.add(this);
+    }
+
+    return container;
+  },
+  setColor: function setColor(color) {
+    this.options.color = color;
+
+    if (this._map) {
+      this._path.setAttribute('stroke', color);
+    }
+
+    return this;
+  }
+});
+L$1.Control.gmxCenter = L$1.Control.GmxCenter;
+
+L$1.control.gmxCenter = function (options) {
+  return new L$1.Control.GmxCenter(options);
+};
+
+var gmxCenter = L$1.Control.GmxCenter;
+
+var Content = L$1.Control.extend({
+  options: {
+    position: 'bottomleft'
+  },
+  initialize: function initialize() {
+    this._current = null;
+    this._views = {};
+  },
+  onAdd: function onAdd(map) {
+    this._container = L$1.DomUtil.create('div', 'scanex-forestry-content');
+    L$1.DomEvent.disableScrollPropagation(this._container);
+    L$1.DomEvent.disableClickPropagation(this._container);
+    return this._container;
+  },
+  onRemove: function onRemove(map) {},
+  add: function add(id, View, options) {
+    var _this = this;
+
+    if (!this.has(id)) {
+      var container = L$1.DomUtil.create('div', 'view hidden', this._container);
+      container.setAttribute('data-id', id);
+      this._views[id] = new View(container, options);
+
+      this._views[id].on('open', function () {
+        _this.close();
+
+        container.classList.remove('hidden');
+        _this._current = id;
+      }).on('close', function () {
+        container.classList.add('hidden');
+        _this._current = null;
+      });
+    }
+
+    return this._views[id];
+  },
+  has: function has(id) {
+    return !!this._views[id];
+  },
+  close: function close() {
+    var _this2 = this;
+
+    Object.keys(this._views).forEach(function (id) {
+      return _this2._views[id].close();
+    });
+  },
+  isDefault: function isDefault() {
+    return !this.getCurrentId();
+  },
+  getCurrent: function getCurrent() {
+    var id = this.getCurrentId();
+    return this._views[id];
+  },
+  getCurrentId: function getCurrentId() {
+    return this._current;
   }
 });
 
@@ -19263,7 +22540,7 @@ if (typeof L.gmx === 'undefined') {
 
 L.gmx.timeline = links;
 
-var translate$2 = T.getText.bind(T);
+var translate$1 = T.getText.bind(T);
 T.addText('rus', {
   DateInterval: {
     title: 'Приблизьте карту для загрузки на таймлайн'
@@ -19295,7 +22572,7 @@ var DateInterval = L$1.Control.extend({
     this._tabs = L$1.DomUtil.create('div', 'buttons', this._container);
     this._timelineNode = L$1.DomUtil.create('div', 'timeline', this._container);
     this._icon = L$1.DomUtil.create('div', 'icon', this._container);
-    this._icon.innerHTML = translate$2('DateInterval.title');
+    this._icon.innerHTML = translate$1('DateInterval.title');
     this._timeline = new links.Timeline(this._timelineNode, {
       locale: 'ru',
       width: '100%',
@@ -19311,7 +22588,12 @@ var DateInterval = L$1.Control.extend({
     }
 
     links.events.addListener(this._timeline, 'select', this._clickOnTimeline.bind(this));
-    links.events.addListener(this._timeline, 'rangechanged', this._reSetDateInterval.bind(this));
+    links.events.addListener(this._timeline, 'rangechanged', this._reSetDateInterval.bind(this)); // const stop = L.DomEvent.stopPropagation;
+    // const prevent = L.DomEvent.preventDefault;
+    // L.DomEvent
+    // .on(this._timelineNode, 'keyup', stop)
+    // .on(this._timelineNode, 'keyup', prevent)
+    // .on(this._timelineNode, 'keyup', this._keydown, this);
 
     var chkZoom = function chkZoom() {
       _this.toggle(map.getZoom() >= _this.options.minZoom);
@@ -19350,6 +22632,22 @@ var DateInterval = L$1.Control.extend({
 
     layer.repaint();
   },
+  // _keydown: function (ev) {
+  // const layer = this._layers[this._activeTab];
+  // if (layer && ev.target.classList.contains('scanex-forestry-map')) {
+  // L.DomEvent.stopPropagation(ev);
+  // const key = ev.key;
+  // const ctrlKey = ev.ctrlKey);
+  // if (key === 'ArrowLeft' || key === 'Left') {
+  // i = ctrlKey ? 0 : (i > 1 ? i - 2 : (rollClicked ? len : 0));
+  // } else if (key === 'ArrowRight' || key === 'Right') {
+  // i = ctrlKey ? len : (i < len ? i: (rollClicked ? 0 : len));
+  // } else if (key === 's') {
+  // i = i === 0 ? 0 : i - 1;
+  // }
+  // console('sss', this._timeline);
+  // }
+  // },
   _clickOnTimeline: function _clickOnTimeline(ev) {
     var layer = this._layers[this._activeTab];
 
@@ -19366,6 +22664,8 @@ var DateInterval = L$1.Control.extend({
       var range = this._timeline.getVisibleChartRange();
 
       layer.setDateInterval(range.start, range.end);
+
+      layer._observer.setDateInterval(range.start, range.end);
     }
   },
   _setBounds: function _setBounds() {
@@ -19385,13 +22685,17 @@ var DateInterval = L$1.Control.extend({
     layer._gmx.tmpKeyNum = tmpKeyNum;
     layer._showDates = null;
     layer.addLayerFilter(function (prp) {
-      var utm = _DAY * Math.floor(Number(prp.properties[tmpKeyNum]) / _DAY);
+      if (layer._showDates) {
+        var utm = _DAY * Math.floor(Number(prp.properties[tmpKeyNum]) / _DAY);
 
-      return layer._showDates && layer._showDates[utm];
+        return layer._showDates[utm];
+      } else {
+        return true;
+      }
     });
     var observer = hpDm.addObserver({
       type: 'resend',
-      filters: ['clipFilter', 'userFilter', 'userFilter_timeline', 'styleFilter'],
+      filters: ['clipFilter', 'userFilter_timeline', 'styleFilter'],
       active: false,
       needBbox: true,
       layerID: lprops.name,
@@ -19425,21 +22729,23 @@ var DateInterval = L$1.Control.extend({
         if (!layer._showDates && data.length) {
           layer._showDates = {};
           layer._showDates[maxUtm] = true;
+          data[data.length - 1].className = 'active';
+          layer.repaint();
         }
 
         tm.setData(data); // Перерисовка таймлайна
       }
     });
     layer._observer = observer;
-    this._interval = [new Date('2010-01-01'), new Date()];
+    this._interval = [new Date(1000 * (lprops.DateEndUTC - _DAY * 30)), new Date()];
     tm.setVisibleChartRange(this._interval[0], this._interval[1]);
-    observer.setDateInterval(this._interval[0], new Date());
+    observer.setDateInterval(this._interval[0], this._interval[1]);
+    layer.setDateInterval(this._interval[0], this._interval[1]);
 
     this._setBounds();
 
-    this._map.on('moveend', this._setBounds, this);
+    this._map.on('moveend', this._setBounds, this); // this._reSetDateInterval();
 
-    this._reSetDateInterval();
 
     observer.activate();
     return observer;
@@ -19484,7 +22790,12 @@ var DateInterval = L$1.Control.extend({
     var _layer$getGmxProperti = layer.getGmxProperties(),
         LayerID = _layer$getGmxProperti.LayerID;
 
-    if (this._layers[LayerID]) {
+    this.removeLayerByID(LayerID);
+  },
+  removeLayerByID: function removeLayerByID(LayerID) {
+    var layer = this._layers[LayerID];
+
+    if (layer) {
       if (this._activeTab === LayerID) {
         this.setTab();
       }
@@ -19524,9 +22835,8 @@ var DateInterval = L$1.Control.extend({
         _this2.setTab(LayerID);
       }, this);
       layer._tabNode = tab;
+      this.setTab(LayerID);
     }
-
-    this.setTab(LayerID);
 
     this._chkTabs();
   },
@@ -19569,1413 +22879,1031 @@ var DateInterval = L$1.Control.extend({
   }
 });
 
-window.nsGmx = window.nsGmx || {};
+T.addText('eng', {
+  gmxLocation: {
+    locationChange: 'Сhange the map center:',
+    locationTxt: 'Current center coordinates',
+    coordFormatChange: 'Toggle coordinates format',
+    scaleBarChange: 'Toggle scale bar format'
+  },
+  units: {
+    km: 'km',
+    m: 'm'
+  }
+});
+T.addText('rus', {
+  gmxLocation: {
+    locationChange: 'Переместить центр карты:',
+    locationTxt: 'Текущие координаты центра карты',
+    coordFormatChange: 'Сменить формат координат',
+    scaleBarChange: 'Сменить формат масштаба'
+  },
+  units: {
+    km: 'км',
+    m: 'м'
+  }
+});
+var _mzoom = ['M 1:500 000 000', //  0   156543.03392804
+'M 1:300 000 000', //  1   78271.51696402
+'M 1:150 000 000', //  2   39135.75848201
+'M 1:80 000 000', //  3   19567.879241005
+'M 1:40 000 000', //  4   9783.9396205025
+'M 1:20 000 000', //  5   4891.96981025125
+'M 1:10 000 000', //  6   2445.98490512563
+'M 1:5 000 000', //  7   1222.99245256281
+'M 1:2500 000', //  8   611.496226281406
+'M 1:1 000 000', //  9   305.748113140703
+'M 1:500 000', //  10  152.874056570352
+'M 1:300 000', //  11  76.437028285176
+'M 1:150 000', //  12  38.218514142588
+'M 1:80 000', //  13  19.109257071294
+'M 1:40 000', //  14  9.554628535647
+'M 1:20 000', //  15  4.777314267823
+'M 1:10 000', //  16  2.388657133912
+'M 1:5 000', //  17  1.194328566956
+'M 1:2 500', //  18  0.597164283478
+'M 1:1 250', //  19  0.298582141739
+'M 1:625' //  20  0.149291070869
+];
+var coordFormats = ['', '', ' (EPSG:3395)', ' (EPSG:3857)'];
+L$1.Control.GmxLocation = L$1.Control.extend({
+  includes: L$1.Evented ? L$1.Evented.prototype : L$1.Mixin.Events,
+  options: {
+    position: 'gmxbottomright',
+    id: 'location',
+    gmxPopup: 'internal',
+    notHide: true,
+    coordinatesFormat: 0,
+    scaleFormat: 'bar' // or text
 
-var timeLineControl,
-    calendar,
-    pluginName = 'gmxTimeLine',
-    tzs = new Date().getTimezoneOffset() * 60,
-    // tzs = 0,
-tzm$1 = tzs * 1000,
-    zIndexOffset = -1000,
-    zIndexOffsetCurrent = -500,
-    zeroDate = new Date(1980, 0, 1),
-    translate$3 = {
-  warning: 'Zoom map for TimeLine',
-  differentInterval: 'Different interval for tabs',
-  singleInterval: 'Single interval for tabs',
-  modeSelectedOff: 'By all',
-  modeSelectedOn: 'By selected'
-},
-    currentDmID,
-    singleIntervalFlag,
-    getDataSource = function getDataSource(gmxLayer) {
-  // var gmxLayer = nsGmx.gmxMap.layersByID[id];
-  var state = null;
+  },
+  setScaleFormat: function setScaleFormat(type) {
+    this.options.scaleFormat = type === 'bar' ? 'bar' : 'text';
+    this.scaleBar.style.visibility = type === 'bar' ? 'visible' : 'hidden';
 
-  if (gmxLayer && gmxLayer.getDataManager) {
-    var dm = gmxLayer.getDataManager(),
-        dmOpt = dm.options;
+    this._checkPositionChanged();
+  },
+  onAdd: function onAdd(map) {
+    var className = 'leaflet-gmx-location',
+        container = L$1.DomUtil.create('div', className),
+        utils = L$1.Control.GmxLocation.Utils,
+        my = this;
+    this._container = container;
+    container._id = this.options.id;
 
-    if (dmOpt.Temporal) {
-      var tmpKeyNum = dm.tileAttributeIndexes[dmOpt.TemporalColumnName],
-          timeColumnName = dmOpt.MetaProperties.timeColumnName ? dmOpt.MetaProperties.timeColumnName.Value : null,
-          timeKeyNum = timeColumnName ? dm.tileAttributeIndexes[timeColumnName] : null,
-          cloudsKey = dmOpt.MetaProperties.clouds ? dmOpt.MetaProperties.clouds.Value : '',
-          clouds = dm.tileAttributeIndexes[cloudsKey] || dm.tileAttributeIndexes.clouds || dm.tileAttributeIndexes.CLOUDS || null,
-          dInterval = gmxLayer.getDateInterval(),
-          opt = gmxLayer.getGmxProperties(),
-          type = (opt.GeometryType || 'point').toLowerCase(),
-          oneDay = 1000 * 60 * 60 * 24;
-      dInterval = {
-        beginDate: new Date(dmOpt.DateBeginUTC * 1000 - oneDay),
-        endDate: new Date((1 + dmOpt.DateEndUTC) * 1000 + oneDay)
-      };
+    if (this.options.notHide) {
+      container._notHide = true;
+    }
 
-      if (!dInterval.beginDate || !dInterval.endDate) {
-        var cInterval;
+    this.prevCoordinates = '';
+    var corner = map._controlCorners[this.options.position];
 
-        {
-          var cDate = new Date();
-          cInterval = {
-            dateBegin: cDate,
-            dateEnd: new Date(cDate.valueOf() + 1000 * 60 * 60 * 24)
-          };
+    if (corner) {
+      this._window = L$1.DomUtil.create('div', 'leaflet-gmx-location-window', container);
+      this._window.style.display = 'none';
+      var closeButton = L$1.DomUtil.create('div', 'closeButton', this._window);
+      closeButton.innerHTML = '&#215;';
+      L$1.DomEvent.disableClickPropagation(this._window);
+      L$1.DomEvent.on(this._window, 'contextmenu', L$1.DomEvent.fakeStop || L$1.DomEvent._fakeStop);
+      L$1.DomEvent.on(closeButton, 'click', function () {
+        var style = my._window.style;
+        style.display = style.display === 'none' ? 'block' : 'none';
+      }, this);
+      map.on('click', function () {
+        my._window.style.display = 'none';
+      }, this);
+      this._windowContent = L$1.DomUtil.create('div', 'windowContent', this._window);
+    }
+
+    this.locationTxt = L$1.DomUtil.create('span', 'leaflet-gmx-locationTxt', container);
+    this.locationTxt.title = T.getText('gmxLocation.locationTxt');
+    this.coordFormatChange = L$1.DomUtil.create('span', 'leaflet-gmx-coordFormatChange', container);
+    this.coordFormatChange.title = T.getText('gmxLocation.coordFormatChange');
+    this.scaleBar = L$1.DomUtil.create('span', 'leaflet-gmx-scaleBar', container);
+    this.scaleBarTxt = L$1.DomUtil.create('span', 'leaflet-gmx-scaleBarTxt', container);
+    this.scaleBarTxt.title = this.scaleBar.title = T.getText('gmxLocation.scaleBarChange');
+    this._map = map;
+    var util = {
+      coordFormat: this.options.coordinatesFormat || 0,
+      len: coordFormats.length,
+      setCoordinatesFormat: function setCoordinatesFormat(num) {
+        num = num || this.coordFormat || 0;
+
+        if (num < 0) {
+          num = util.len - 1;
+        } else if (num >= util.len) {
+          num = 0;
         }
 
-        dInterval = {
-          beginDate: cInterval.dateBegin,
-          endDate: cInterval.dateEnd
-        };
-      }
+        this.coordFormat = num;
+        var res = utils.getCoordinatesString(my._map.getCenter(), this.coordFormat);
 
-      state = {
-        gmxLayer: gmxLayer,
-        layerID: dmOpt.name,
-        title: dmOpt.title,
-        //dmID: dmOpt.name,
-        tmpKeyNum: tmpKeyNum,
-        timeKeyNum: timeKeyNum,
-        clouds: clouds,
-        modeBbox: type === 'polygon' ? 'center' : 'thirdpart',
-        TemporalColumnName: dmOpt.TemporalColumnName,
-        temporalColumnType: dm.temporalColumnType,
-        // dInterval: dInterval,
-        oInterval: dInterval,
-        uTimeStamp: [dInterval.beginDate.getTime() / 1000, dInterval.endDate.getTime() / 1000],
-        observer: dm.addObserver({
-          type: 'resend',
-          filters: ['clipFilter', 'userFilter', 'userFilter_timeline', 'styleFilter'],
-          active: false,
-          layerID: dmOpt.name,
-          srs: dmOpt.srs,
-          itemHook: function itemHook(it) {
-            if (!this.cache) {
-              this.cache = {};
-            }
+        if (res && my.prevCoordinates !== res) {
+          my.locationTxt.innerHTML = res;
+        }
 
-            var arr = it.properties;
-            var clSelect = timeLineControl._containers.cloudSelect;
+        my.prevCoordinates = res;
 
-            if (state.clouds && arr[state.clouds] > Number(clSelect.options[clSelect.selectedIndex].value)) {
-              return false;
-            }
+        if (this._redrawTimer) {
+          clearTimeout(this._redrawTimer);
+        }
 
-            if (this.intersectsWithGeometry(arr[arr.length - 1])) {
-              var utm = Number(arr[tmpKeyNum]);
-
-              if (timeColumnName) {
-                utm += arr[timeKeyNum] + tzs;
-              }
-
-              this.cache[utm] = 1 + (this.cache[utm] || 0);
-
-              if (state.needResort && state.clickedUTM === utm) {
-                state.needResort[state.needResort.length] = it.id;
-              }
-            }
-          },
-          callback: function callback(data) {
-            var out = this.cache || {}; // console.log('observer', opt.name, Object.keys(out).length);
-
-            this.cache = {};
-
-            if (state.needResort) {
-              gmxLayer.setReorderArrays(state.needResort);
-              state.needResort = null;
-            }
-
-            gmxLayer.repaint();
-            return out;
+        this._redrawTimer = setTimeout(function () {
+          if (my._map) {
+            my._map.fire('onChangeLocationSize', {
+              locationSize: container.clientWidth
+            });
           }
-        })
-      };
-    }
-  }
+        }, 100);
+        my.fire('coordinatesformatchange', {
+          coordinatesFormat: this.coordFormat
+        });
+      },
+      goTo: function goTo(value) {
+        var coord = L$1.Control.gmxLocation.Utils.parseCoordinates(value);
 
-  return state;
-};
+        my._map.panTo(coord);
+      },
+      showCoordinates: function showCoordinates(ev) {
+        //окошко с координатами
+        var oldText = utils.getCoordinatesString(my._map.getCenter(), this.coordFormat);
 
-L.Control.GmxTimeline = L.Control.extend({
-  includes: L.Evented ? L.Evented.prototype : L.Mixin.Events,
-  options: {
-    position: 'bottom',
-    id: 'gmxTimeline',
-    className: 'gmxTimeline',
-    locale: 'ru',
-    rollClicked: false,
-    // режим кругового обхода для clickedUTM
-    modeSelect: 'range',
-    // selected
-    // modeBbox: 'thirdpart',		// screen, center, thirdpart
-    centerBuffer: 10,
-    // буфер центра в пикселях
-    minZoom: 8,
-    // min zoom таймлайна
-    groups: false,
-    moveable: true
-  },
-  saveState: function saveState() {
-    var dataSources = [];
+        if (my.options.onCoordinatesClick) {
+          my.options.onCoordinatesClick(oldText, ev);
+        } else if (L$1.control.gmxPopup) {
+          var div = L$1.DomUtil.create('div', 'gmxLocation-popup'),
+              span = L$1.DomUtil.create('div', '', div),
+              input = L$1.DomUtil.create('input', 'gmxLocation-input', div),
+              button = L$1.DomUtil.create('button', '', div);
+          button.innerHTML = 'Ok';
+          L$1.DomEvent.on(button, 'click', function () {
+            util.goTo(input.value);
+          });
+          span.innerHTML = T.getText('gmxLocation.locationChange');
+          input.value = oldText;
+          L$1.DomEvent.on(input, 'keydown', function (ev) {
+            if (ev.which === 13) {
+              util.goTo(this.value);
+            }
+          });
 
-    for (var layerID in this._state.data) {
-      var state = this._state.data[layerID],
-          oInterval = state.oInterval,
-          hash = {
-        layerID: layerID,
-        TemporalColumnName: state.TemporalColumnName,
-        oInterval: {
-          beginDate: oInterval.beginDate.valueOf(),
-          endDate: oInterval.endDate.valueOf()
-        },
-        layerOnMap: state.gmxLayer._map ? true : false,
-        currentBounds: state.currentBounds,
-        selected: state.selected,
-        clickedUTM: state.clickedUTM,
-        modeBbox: state.modeBbox,
-        rollClickedFlag: state.rollClickedFlag,
-        skipUnClicked: state.skipUnClicked,
-        items: state.items
-      };
+          if (my.options.gmxPopup === 'internal' && my._window) {
+            my._windowContent.innerHTML = '';
 
-      if (state.dInterval) {
-        hash.dInterval = {
-          beginDate: state.dInterval.beginDate.valueOf(),
-          endDate: state.dInterval.endDate.valueOf()
-        };
-      }
+            my._windowContent.appendChild(div);
 
-      dataSources.push(hash);
-    }
+            var style = my._window.style;
+            style.display = style.display === 'none' ? 'block' : 'none';
+          } else {
+            var opt = {};
 
-    return {
-      version: '1.0.0',
-      currentTab: currentDmID,
-      singleIntervalFlag: singleIntervalFlag,
-      isVisible: this._state.isVisible,
-      dataSources: dataSources
-    };
-  },
-  getLayerState: function getLayerState(id) {
-    return this._state.data[id];
-  },
-  getCurrentState: function getCurrentState() {
-    return this._state.data[currentDmID];
-  },
-  clearTab: function clearTab(id) {
-    if (this._state.data[id]) {
-      var state = this._state.data[id],
-          gmxLayer = state.gmxLayer,
-          observer = state.observer;
-      observer.deactivate();
-      gmxLayer.getDataManager().removeObserver(observer.id);
-      delete this._state.data[id]; // При удалении tab забываем о слое
-    }
-  },
-  _removeLayerTab: function _removeLayerTab(liItem) {
-    var layersTab = this._containers.layersTab;
-    layersTab.removeChild(liItem);
-    this.clearTab(liItem._layerID);
+            if (my.options.gmxPopup === 'tip') {
+              var pos = my._map.mouseEventToContainerPoint(ev);
 
-    if (layersTab.children.length === 0) {
-      currentDmID = null;
-      L.DomUtil.addClass(this._container, 'gmx-hidden');
+              opt = {
+                tip: true,
+                anchor: new L$1.Point(pos.x, pos.y - 5)
+              };
+            }
 
-      if (this._map) {
-        this._map.removeControl(this);
-      }
-    } else {
-      this._setCurrentTab((liItem.nextSibling || layersTab.lastChild)._layerID);
-    }
-
-    this.fire('layerRemove', {
-      layerID: liItem._layerID
-    }, this);
-  },
-  _addLayerTab: function _addLayerTab(layerID, title) {
-    var layersTab = this._containers.layersTab,
-        liItem = L.DomUtil.create('li', 'selected', layersTab),
-        spaneye = L.DomUtil.create('span', 'eye', liItem),
-        span = L.DomUtil.create('span', '', liItem),
-        closeButton = L.DomUtil.create('span', 'close-button', liItem),
-        stop = L.DomEvent.stopPropagation,
-        prevent = L.DomEvent.preventDefault,
-        gmxLayer = this._state.data[layerID].gmxLayer,
-        chkVisible = function chkVisible(flag) {
-      liItem._eye = flag;
-      var off = liItem._eye ? '' : '-off';
-      spaneye.innerHTML = '<svg role="img" class="svgIcon is' + off + '"><use xlink:href="#transparency-eye' + off + '"></use></svg>';
-    };
-
-    liItem._eye = true;
-    liItem._layerID = layerID;
-    span.innerHTML = title;
-    span.title = title;
-    L.DomEvent // .on(closeButton, 'click', L.DomEvent.preventDefault)
-    .on(closeButton, 'click', stop).on(closeButton, 'click', function (ev) {
-      this.removeLayer(gmxLayer);
-    }, this);
-    L.DomEvent.on(spaneye, 'click', stop).on(spaneye, 'click', function (ev) {
-      var pNode = ev.target.parentNode,
-          cstate = this._state.data[pNode._layerID];
-
-      if (cstate) {
-        chkVisible(!pNode._eye);
-        var tLayer = cstate.gmxLayer;
-
-        if (pNode._eye) {
-          if (!tLayer._map) {
-            this._map.addLayer(tLayer);
+            L$1.control.gmxPopup(opt).setContent(div).openOn(my._map);
           }
         } else {
-          if (tLayer._map) {
-            this._map.removeLayer(tLayer);
+          //if (this.coordFormat > 2) { return; } // только для стандартных форматов.
+          var text = window.prompt(my.locationTxt.title + ':', oldText);
+
+          if (text && text !== oldText) {
+            var point = utils.parseCoordinates(text);
+
+            if (point) {
+              my._map.panTo(point);
+            }
           }
         }
+      },
+      nextCoordinatesFormat: function nextCoordinatesFormat() {
+        this.coordFormat += 1;
+        this.setCoordinatesFormat(this.coordFormat || 0);
       }
-    }, this);
-    gmxLayer.on('zindexupdated', function () {
-      this.chkZindexUpdated();
-    }, this).on('add', function () {
-      chkVisible(true);
-    }, this).on('remove', function () {
-      chkVisible(false);
-    }, this);
-    chkVisible(gmxLayer._map ? true : false);
-    this.fire('currentTabChanged', {
-      currentTab: layerID
-    });
-    this.fire('layerAdd', {
-      layerID: layerID
-    }, this);
-    return liItem;
-  },
-  chkZindexUpdated: function chkZindexUpdated() {
-    var state = this.getCurrentState();
+    };
 
-    if (state && state.gmxLayer.options.zIndexOffset !== zIndexOffsetCurrent) {
-      state.gmxLayer.setZIndexOffset(zIndexOffsetCurrent);
-    }
-  },
-  setCurrentTab: function setCurrentTab(id) {
-    this._setCurrentTab(id);
-  },
-  addDataSource: function addDataSource(dataSource) {
-    var layerID = dataSource.layerID;
+    this.getCoordinatesFormat = function () {
+      return util.coordFormat;
+    };
 
-    if (layerID) {
-      var pDataSource = this._state.data[layerID];
-      this._timeline = null;
-      this._state.data[layerID] = dataSource;
+    this._checkPositionChanged = function () {
+      var z = map.getZoom();
 
-      if (pDataSource) {
-        dataSource.oInterval = pDataSource.oInterval;
-        dataSource.dInterval = pDataSource.dInterval;
-        var dInterval = dataSource.dInterval || dataSource.oInterval;
-        dataSource.uTimeStamp = [dInterval.beginDate.getTime() / 1000, dInterval.endDate.getTime() / 1000];
-        this.fire('dateInterval', {
-          layerID: layerID,
-          beginDate: dInterval.beginDate,
-          endDate: dInterval.endDate
-        }, this);
+      if (z && !map._animatingZoom) {
+        var attr = {
+          txt: _mzoom[z],
+          width: 0
+        };
+
+        if (this.options.scaleFormat === 'bar') {
+          attr = utils.getScaleBarDistance(z, map.getCenter());
+        }
+
+        if (!attr || attr.txt === my._scaleBarText && attr.width === my._scaleBarWidth) {
+          return;
+        }
+
+        my._scaleBarText = attr.txt;
+        my._scaleBarWidth = attr.width;
+
+        if (my._scaleBarText) {
+          my.scaleBar.style.width = my._scaleBarWidth + 'px'; //, 4);
+
+          my.scaleBarTxt.innerHTML = my._scaleBarText;
+        }
+
+        util.setCoordinatesFormat(util.coordFormat || 0);
+      }
+    };
+
+    this._setCoordinatesFormat = function () {
+      util.setCoordinatesFormat(util.coordFormat || 0);
+    };
+
+    this.setCoordinatesFormat = function (nm) {
+      if (!map._animatingZoom) {
+        if (nm === 0) {
+          util.coordFormat = 0;
+        }
+
+        util.setCoordinatesFormat(nm);
+      }
+    };
+
+    var toggleScaleFormat = function toggleScaleFormat() {
+      this.setScaleFormat(this.options.scaleFormat === 'bar' ? 'text' : 'bar');
+    };
+
+    this._toggleHandlers = function (flag) {
+      var op = flag ? 'on' : 'off',
+          func = L$1.DomEvent[op],
+          stop = L$1.DomEvent.stopPropagation;
+      func(container, 'mousemove', stop);
+      func(this.coordFormatChange, 'click', stop);
+      func(this.coordFormatChange, 'click', util.nextCoordinatesFormat, util);
+      func(this.locationTxt, 'click', stop);
+      func(this.locationTxt, 'click', util.showCoordinates, util);
+      func(this.scaleBarTxt, 'click', stop);
+      func(this.scaleBarTxt, 'click', toggleScaleFormat, this);
+      func(this.scaleBar, 'click', stop);
+      func(this.scaleBar, 'click', toggleScaleFormat, this);
+
+      if (!L$1.Browser.mobile && !L$1.Browser.ie) {
+        func(this.coordFormatChange, 'dblclick', stop);
+        func(this.scaleBarTxt, 'dblclick', stop);
+        func(this.scaleBar, 'dblclick', stop);
       }
 
-      if (dataSource.oInterval) {
-        currentDmID = layerID;
+      map[op]('moveend', this._checkPositionChanged, this);
+      map[op]('move', this._setCoordinatesFormat, this);
+    };
 
-        this._initTimeline();
+    this._toggleHandlers(true);
 
-        this._bboxUpdate();
-      }
+    this.setScaleFormat(this.options.scaleFormat);
 
-      dataSource.liItem = pDataSource ? pDataSource.liItem : this._addLayerTab(layerID, dataSource.title || '');
+    this._checkPositionChanged();
 
-      if (dataSource.observer) {
-        dataSource.observer.on('data', function (ev) {
-          var state = this.getCurrentState(),
-              tLayerID = ev.target.layerID;
-          this._state.data[tLayerID].items = ev.data;
+    map.fire('controladd', this);
 
-          if (tLayerID === state.layerID) {
-            this._redrawTimeline();
-          }
-        }, this);
-      } // L.DomUtil.removeClass(this._containers.vis, 'gmx-hidden');
-      // L.DomUtil.removeClass(this._container, 'gmx-hidden');
-      // if (iconLayers) {
-      // L.DomUtil.addClass(iconLayers.getContainer(), 'iconLayersShift');
-      // }
-
-
-      if (this._timeline) {
-        this._setCurrentTab(layerID);
-
-        this._setDateScroll();
-      } else {
-        this._chkClouds(this._state.data[layerID]);
-      }
-    }
-
-    return this;
-  },
-  _addKeyboard: function _addKeyboard(map) {
-    map = map || this._map;
-
-    if (map && map.keyboard) {
-      map.keyboard.disable(); // this._map.dragging.disable();
-    }
-  },
-  _removeKeyboard: function _removeKeyboard(map) {
-    map = map || this._map;
-
-    if (map && map.keyboard) {
-      map.keyboard.enable();
+    if (map.gmxControlsManager) {
+      map.gmxControlsManager.add(this);
     }
 
-    map._container.blur();
-
-    map._container.focus();
+    return container;
   },
   onRemove: function onRemove(map) {
     if (map.gmxControlsManager) {
       map.gmxControlsManager.remove(this);
     }
 
-    map.off('moveend', this._moveend, this).off('zoomend', this._chkZoom, this);
-    var stop = L.DomEvent.stopPropagation,
-        prevent = L.DomEvent.preventDefault;
-    L.DomEvent.off(document, 'keyup', stop).off(document, 'keyup', prevent).off(document, 'keyup', this._keydown, this);
-
-    this._removeKeyboard(map);
-
     map.fire('controlremove', this);
-  },
-  _moveend: function _moveend() {
-    if (this._sidebarOn) {
-      this._bboxUpdate();
-    }
-  },
-  _bboxUpdate: function _bboxUpdate() {
-    if (currentDmID && this._map && !this._zoomOff) {
-      this._triggerObserver(this.getCurrentState());
-    }
-  },
-  _triggerObserver: function _triggerObserver(state) {
-    var map = this._map,
-        sw,
-        ne,
-        delta;
+    this.prevCoordinates = this._scaleBarText = null;
 
-    if (state.modeBbox === 'center') {
-      var cp = map._getCenterLayerPoint(),
-          buffer = this.options.centerBuffer;
+    this._toggleHandlers(false);
+  }
+});
+var utils$1 = {
+  getScaleBarDistance: function getScaleBarDistance(z, pos) {
+    var merc = L$1.Projection.Mercator.project(pos),
+        pos1 = L$1.Projection.Mercator.unproject(new L$1.Point(merc.x + 40, merc.y + 30)),
+        metersPerPixel = Math.pow(2, -z) * 156543.033928041 * this.distVincenty(pos.lng, pos.lat, pos1.lng, pos1.lat) / 50;
 
-      delta = [buffer, buffer];
-      sw = map.layerPointToLatLng(cp.subtract(delta)), ne = map.layerPointToLatLng(cp.add(delta));
-    } else {
-      var sbox = map.getPixelBounds();
-      delta = [(sbox.max.x - sbox.min.x) / 6, (sbox.min.y - sbox.max.y) / 6];
-      sw = map.unproject(sbox.getBottomLeft().add(delta)), ne = map.unproject(sbox.getTopRight().subtract(delta));
-    }
+    for (var i = 0; i < 30; i++) {
+      var distance = [1, 2, 5][i % 3] * Math.pow(10, Math.floor(i / 3)),
+          w = Math.floor(distance / metersPerPixel);
 
-    var bounds = L.gmxUtil.bounds([[sw.lng, sw.lat], [ne.lng, ne.lat]]); // state.observer.deactivate();
-
-    state.currentBounds = bounds;
-    state.observer.setBounds(bounds);
-    state.observer.setDateInterval(state.oInterval.beginDate, state.oInterval.endDate);
-    state.observer.activate();
-  },
-  _redrawTimeline: function _redrawTimeline() {
-    var state = this.getCurrentState();
-
-    if (state) {
-      var count = 0,
-          res = [],
-          clickedUTM = String(state.clickedUTM || ''),
-          dSelected = state.selected || {},
-          maxUTM = 0;
-
-      for (var utm in state.items) {
-        var start = new Date(utm * 1000 + tzm$1),
-            className = clickedUTM === utm ? 'item-clicked' : '',
-            item = {
-          id: count,
-          type: 'dot',
-          items: state.items[utm],
-          content: '',
-          utm: utm,
-          start: start
+      if (w > 50) {
+        return {
+          txt: this.prettifyDistance(distance),
+          width: w
         };
-
-        if (utm > maxUTM) {
-          maxUTM = utm;
-        }
-
-        if (dSelected[utm]) {
-          className += ' item-selected';
-        }
-
-        item.className = className;
-        res.push(item);
-        count++;
-      }
-
-      if (!clickedUTM && maxUTM) {
-        state.clickedUTM = Number(maxUTM);
-        state.skipUnClicked = true;
-      }
-
-      if (!this._timeline) {
-        this._initTimeline(res);
-      }
-
-      if (this._timeline) {
-        this._timeline.clearItems();
-
-        this._setWindow(state.oInterval);
-
-        this._timeline.setData(res);
-
-        this._chkSelection(state);
-
-        var cont = this._containers,
-            clickCalendar = cont.clickCalendar;
-
-        if (state.clickedUTM && maxUTM) {
-          var msec = 1000 * state.clickedUTM,
-              clickedDate = new Date(msec),
-              tm = this._timeline.getUTCTimeString(clickedDate),
-              arr = tm.split(' '),
-              arr1 = arr[1].split(':');
-
-          cont.clickId.innerHTML = arr[0];
-          cont.clickIdTime.innerHTML = arr1[0] + ':' + arr1[1];
-          L.DomUtil.removeClass(clickCalendar, 'disabled');
-
-          if (!this._zoomOff && state.liItem._eye) {
-            state.gmxLayer.setDateInterval(clickedDate, new Date(1000 + msec));
-
-            if (!state.gmxLayer._map) {
-              this._map.addLayer(state.gmxLayer);
-            }
-          }
-        } else {
-          cont.clickId.innerHTML = '--.--.----';
-          cont.clickIdTime.innerHTML = '--:--';
-          L.DomUtil.addClass(clickCalendar, 'disabled');
-        }
-      }
-    }
-  },
-  _setWindow: function _setWindow(dInterval) {
-    if (this._timeline) {
-      var setWindow = this._timeline.setWindow ? 'setWindow' : 'setVisibleChartRange';
-
-      this._timeline[setWindow](dInterval.beginDate, dInterval.endDate, false);
-    }
-  },
-  _chkSelection: function _chkSelection(state) {
-    var dInterval = state.dInterval || state.oInterval,
-        beginDate = new Date(dInterval.beginDate.valueOf() + tzm$1),
-        endDate = new Date(dInterval.endDate.valueOf() + tzm$1),
-        clickedUTM = state.clickedUTM ? String(state.clickedUTM) : null,
-        lastDom = null;
-
-    this._timeline.items.forEach(function (it) {
-      if (it.dom && it.dom.parentNode) {
-        lastDom = it.dom;
-
-        if (!clickedUTM) {
-          if (it.start >= beginDate && it.start < endDate) {
-            L.DomUtil.addClass(lastDom, 'item-range');
-          } else {
-            L.DomUtil.removeClass(lastDom, 'item-range');
-          }
-        }
-      }
-
-      if (clickedUTM === it.utm && lastDom) {
-        L.DomUtil.addClass(lastDom, 'item-clicked');
-      }
-    });
-  },
-  _setEvents: function _setEvents(tl) {
-    var events = L.gmx.timeline.events;
-    events.addListener(tl, 'rangechange', this._rangechanged.bind(this));
-    events.addListener(tl, 'rangechanged', this._rangechanged.bind(this));
-    events.addListener(tl, 'select', this._clickOnTimeline.bind(this));
-  },
-  _rangechange: function _rangechange(ev) {
-    var state = this.getCurrentState();
-    state.oInterval = {
-      beginDate: ev.start,
-      endDate: ev.end
-    };
-
-    this._setDateScroll();
-  },
-  _rangechanged: function _rangechanged(ev) {
-    var state = this.getCurrentState();
-    state.oInterval = {
-      beginDate: ev.start,
-      endDate: ev.end
-    };
-    state.dInterval = null;
-    this.fire('dateInterval', {
-      layerID: state.layerID,
-      beginDate: state.oInterval.beginDate,
-      endDate: state.oInterval.endDate
-    }, this);
-
-    this._setDateScroll();
-
-    this._bboxUpdate();
-  },
-  _copyState: function _copyState(stateTo, stateFrom) {
-    stateTo.oInterval.beginDate = stateFrom.oInterval.beginDate;
-    stateTo.oInterval.endDate = stateFrom.oInterval.endDate;
-    stateTo.uTimeStamp[0] = stateFrom.uTimeStamp[0];
-    stateTo.uTimeStamp[1] = stateFrom.uTimeStamp[1];
-  },
-  _hideOtherLayer: function _hideOtherLayer(id) {
-    for (var layerID in this._state.data) {
-      var gmxLayer = this._state.data[layerID].gmxLayer;
-
-      if (layerID !== id) {
-        this._map.removeLayer(gmxLayer);
-      } else {
-        this._map.addLayer(gmxLayer);
-      }
-    }
-  },
-  _setCurrentTab: function _setCurrentTab(layerID) {
-    var layersTab = this._containers.layersTab;
-
-    for (var i = 0, len = layersTab.children.length; i < len; i++) {
-      var li = layersTab.children[i];
-
-      if (li._layerID === layerID) {
-        L.DomUtil.addClass(li, 'selected');
-      } else {
-        L.DomUtil.removeClass(li, 'selected');
       }
     }
 
-    var stateBefore = this.getCurrentState();
-    currentDmID = layerID;
-    var state = this.getCurrentState(); //state.oInterval = state.gmxLayer.getDateInterval();
+    return null;
+  }
+};
 
-    for (var key in this._state.data) {
-      var it = this._state.data[key];
-      it.gmxLayer.setZIndexOffset(state === it ? zIndexOffsetCurrent : zIndexOffset);
+if (L$1.gmxUtil) {
+  utils$1.getCoordinatesString = L$1.gmxUtil.getCoordinatesString;
+  utils$1.prettifyDistance = L$1.gmxUtil.prettifyDistance;
+  utils$1.formatDegrees = L$1.gmxUtil.formatDegrees;
+  utils$1.pad2 = L$1.gmxUtil.pad2;
+  utils$1.trunc = L$1.gmxUtil.trunc;
+  utils$1.latLonFormatCoordinates = L$1.gmxUtil.latLonFormatCoordinates;
+  utils$1.latLonFormatCoordinates2 = L$1.gmxUtil.latLonFormatCoordinates2;
+  utils$1.degRad = L$1.gmxUtil.degRad;
+  utils$1.distVincenty = L$1.gmxUtil.distVincenty;
+  utils$1.parseCoordinates = L$1.gmxUtil.parseCoordinates;
+} else {
+  utils$1.prettifyDistance = function (length) {
+    var type = '',
+        //map.DistanceUnit
+    txt = T.getText('units.km') || 'km',
+        km = ' ' + txt;
+
+    if (length < 2000 || type === 'm') {
+      txt = T.getText('units.m') || 'm';
+      return Math.round(length) + ' ' + txt;
+    } else if (length < 200000) {
+      return Math.round(length / 10) / 100 + km;
     }
 
-    if (state.dInterval && (state.dInterval.beginDate.valueOf() < state.oInterval.beginDate.valueOf() || state.dInterval.endDate.valueOf() > state.oInterval.endDate.valueOf())) {
-      state.dInterval.beginDate = state.oInterval.beginDate;
-      state.dInterval.endDate = state.oInterval.endDate;
-    }
+    return Math.round(length / 1000) + km;
+  };
 
-    if (stateBefore) {
-      if (singleIntervalFlag && stateBefore) {
-        this._copyState(state, stateBefore);
-      }
-    }
+  utils$1.formatDegrees = function (angle) {
+    angle = Math.round(10000000 * angle) / 10000000 + 0.00000001;
+    var a1 = Math.floor(angle),
+        a2 = Math.floor(60 * (angle - a1)),
+        a3 = this.pad2(3600 * (angle - a1 - a2 / 60)).substring(0, 2);
+    return this.pad2(a1) + '°' + this.pad2(a2) + '\'' + a3 + '"';
+  };
 
-    this.fire('currentTabChanged', {
-      currentTab: layerID
-    });
+  utils$1.pad2 = function (t) {
+    return t < 10 ? '0' + t : '' + t;
+  };
 
-    this._bboxUpdate();
+  utils$1.trunc = function (x) {
+    return ('' + (Math.round(10000000 * x) / 10000000 + 0.00000001)).substring(0, 9);
+  };
 
-    if (this._timeline) {
-      this._setWindow(state.oInterval);
+  utils$1.latLonFormatCoordinates = function (x, y) {
+    return this.formatDegrees(Math.abs(y)) + (y > 0 ? ' N, ' : ' S, ') + this.formatDegrees(Math.abs(x)) + (x > 0 ? ' E' : ' W');
+  };
 
-      this._setDateScroll();
-    } // if (Object.keys(state.selected || {}).length > 1) {
-    // L.DomUtil.removeClass(this._containers.switchDiv, 'disabled');
-    // }
+  utils$1.latLonFormatCoordinates2 = function (x, y) {
+    return this.trunc(Math.abs(y)) + (y > 0 ? ' N, ' : ' S, ') + this.trunc(Math.abs(x)) + (x > 0 ? ' E' : ' W');
+  };
 
+  utils$1.degRad = function (ang) {
+    return ang * (Math.PI / 180.0);
+  };
 
-    this._chkClouds(state); // if (state.rollClickedFlag) {
+  utils$1.distVincenty = function (lon1, lat1, lon2, lat2) {
+    var p1 = {};
+    var p2 = {};
+    p1.lon = this.degRad(lon1);
+    p1.lat = this.degRad(lat1);
+    p2.lon = this.degRad(lon2);
+    p2.lat = this.degRad(lat2);
+    var a = 6378137,
+        b = 6356752.3142,
+        f = 1 / 298.257223563; // WGS-84 ellipsiod
 
+    var L = p2.lon - p1.lon;
+    var U1 = Math.atan((1 - f) * Math.tan(p1.lat));
+    var U2 = Math.atan((1 - f) * Math.tan(p2.lat));
+    var sinU1 = Math.sin(U1),
+        cosU1 = Math.cos(U1);
+    var sinU2 = Math.sin(U2),
+        cosU2 = Math.cos(U2);
+    var lambda = L,
+        lambdaP = 2 * Math.PI;
+    var iterLimit = 20;
 
-    this._chkRollClickedFlag(state); // }
+    while (Math.abs(lambda - lambdaP) > 1e-12 && --iterLimit > 0) {
+      var sinLambda = Math.sin(lambda),
+          cosLambda = Math.cos(lambda);
+      var sinSigma = Math.sqrt(cosU2 * sinLambda * (cosU2 * sinLambda) + (cosU1 * sinU2 - sinU1 * cosU2 * cosLambda) * (cosU1 * sinU2 - sinU1 * cosU2 * cosLambda));
 
-
-    state.gmxLayer.repaint();
-    L.gmx.layersVersion.now();
-  },
-  _chkClouds: function _chkClouds(state) {
-    if (this._containers) {
-      if (state.clouds) {
-        L.DomUtil.removeClass(this._containers.cloudsContent, 'disabled');
-      } else {
-        L.DomUtil.addClass(this._containers.cloudsContent, 'disabled');
-      }
-    }
-  },
-  initialize: function initialize(options) {
-    L.Control.prototype.initialize.call(this, options);
-    this._commandKeys = ['ArrowLeft', 'ArrowRight', 'ArrowDown', 'favorite', 'clickTimeLine', 'ArrowUp', 'Down', 'Up', 'Left', 'Right', ' ', 's'];
-    this._state = {
-      data: {},
-      timeLineOptions: {
-        locale: options.locale,
-        zoomable: this.options.moveable || false,
-        moveable: this.options.moveable || false,
-        timeChangeable: false,
-        // unselectable: false,
-        animateZoom: false,
-        autoHeight: false,
-        stackEvents: false,
-        axisOnTop: true,
-        'box.align': 'center',
-        zoomMin: 1000 * 60 * 60 * 10,
-        width: '100%',
-        height: '81px'
-      },
-      zeroDate: zeroDate.getTime(),
-      maxDate: new Date(2980, 0, 1).getTime()
-    };
-    timeLineControl = this;
-  },
-  _initTimeline: function _initTimeline(data) {
-    if (currentDmID && !this._timeline && L.gmx.timeline) {
-      var state = this.getCurrentState(),
-          groups = this.options.groups ? [{
-        id: state.layerID,
-        title: state.title,
-        content: state.title,
-        layerID: state.layerID
-      }] : null,
-          options = this._state.timeLineOptions;
-
-      if (state.oInterval) {
-        options.start = state.oInterval.beginDate;
-        options.end = state.oInterval.endDate;
+      if (sinSigma === 0) {
+        return 0;
       }
 
-      this._containers.vis.innerHTML = '';
-      this._timeline = new L.gmx.timeline.Timeline(this._containers.vis, options);
+      var cosSigma = sinU1 * sinU2 + cosU1 * cosU2 * cosLambda;
+      var sigma = Math.atan2(sinSigma, cosSigma);
+      var sinAlpha = cosU1 * cosU2 * sinLambda / sinSigma;
+      var cosSqAlpha = 1 - sinAlpha * sinAlpha;
+      var cos2SigmaM = cosSigma - 2 * sinU1 * sinU2 / cosSqAlpha;
 
-      var c = this._timeline.getCurrentTime();
-
-      this._timeline.setCurrentTime(new Date(c.valueOf() + c.getTimezoneOffset() * 60000));
-
-      var day = 24 * 60 * 60 * 1000,
-          now = Date.now();
-      state.oInterval = {
-        beginDate: new Date(now - 31 * day),
-        endDate: new Date(now + 3 * 60 * 60 * 1000)
-      };
-
-      this._timeline.draw(data);
-
-      this._setEvents(this._timeline);
-    }
-  },
-  removeLayer: function removeLayer(gmxLayer) {
-    var opt = gmxLayer.getGmxProperties(),
-        layerID = opt.name,
-        data = getDataSource(gmxLayer);
-
-    if (data) {
-      gmxLayer.removeLayerFilter({
-        type: 'screen',
-        id: pluginName
-      }); // .off('dateIntervalChanged', this._dateIntervalChanged, this);
-
-      if (this._containers) {
-        var layersTab = this._containers.layersTab;
-
-        for (var i = 0, len = layersTab.children.length; i < len; i++) {
-          var li = layersTab.children[i];
-
-          if (li._layerID === layerID) {
-            this._removeLayerTab(li);
-
-            break;
-          }
-        }
-      }
-    }
-
-    if (this.options.moveable && calendar) {
-      calendar.bindLayer(opt.name);
-    }
-
-    return this;
-  },
-  addLayer: function addLayer(gmxLayer, options) {
-    var opt = gmxLayer.getGmxProperties(),
-        data = getDataSource(gmxLayer);
-
-    if (this.options.moveable && calendar) {
-      calendar.unbindLayer(opt.name);
-    }
-
-    if (data) {
-      if (options) {
-        if (options.oInterval) {
-          data.oInterval = {
-            beginDate: new Date(options.oInterval.beginDate),
-            endDate: new Date(options.oInterval.endDate)
-          };
-        }
-
-        if (options.dInterval) {
-          data.dInterval = {
-            beginDate: new Date(options.dInterval.beginDate),
-            endDate: new Date(options.dInterval.endDate)
-          };
-          data.uTimeStamp = [data.dInterval.beginDate.getTime() / 1000, data.dInterval.endDate.getTime() / 1000];
-        }
-
-        data.selected = options.selected;
-
-        if (options.clickedUTM) {
-          data.clickedUTM = options.clickedUTM;
-          var msec = 1000 * data.clickedUTM;
-          gmxLayer.setDateInterval(new Date(msec), new Date(1000 + msec));
-        }
-
-        if (options.skipUnClicked) {
-          data.skipUnClicked = options.skipUnClicked;
-        }
-
-        if (options.rollClickedFlag) {
-          data.rollClickedFlag = options.rollClickedFlag;
-        }
-
-        if (options.modeBbox) {
-          data.modeBbox = options.modeBbox;
-        }
+      if (isNaN(cos2SigmaM)) {
+        cos2SigmaM = 0;
       }
 
-      var stateBefore = this.getCurrentState();
-
-      if (singleIntervalFlag && stateBefore) {
-        this._copyState(data, stateBefore);
-      }
-
-      if (this.options.moveable) {
-        // this._zoomOff = map.getZoom() < this.options.minZoom;
-        // gmxLayer.setDateInterval(data.oInterval.beginDate, data.oInterval.endDate);
-        data.uTimeStamp = [data.oInterval.beginDate.getTime() / 1000, data.oInterval.endDate.getTime() / 1000];
-        data.skipUnClicked = true;
-      }
-
-      gmxLayer.addLayerFilter(function (it) {
-        var state = this._state.data[opt.name] || {},
-            dt = it.properties[state.tmpKeyNum];
-
-        if (this._zoomOff) {
-          return true;
-        }
-
-        var clSelect = this._containers.cloudSelect;
-
-        if (state.clouds && it.properties[state.clouds] > Number(clSelect.options[clSelect.selectedIndex].value)) {
-          return false;
-        }
-
-        if (state.skipUnClicked) {
-          return state.clickedUTM === dt;
-        } else if (state.selected) {
-          return state.selected[dt];
-        } else {
-          var uTimeStamp = state.uTimeStamp || [0, 0];
-
-          if (dt < uTimeStamp[0] || dt > uTimeStamp[1]) {
-            return false;
-          }
-        }
-
-        return true;
-      }.bind(this), {
-        target: 'screen',
-        id: pluginName
-      });
-      this.addDataSource(data);
-
-      {
-        L.DomUtil.removeClass(this._container, 'gmx-hidden');
-      }
-    }
-  },
-  _keydown: function _keydown(ev) {
-    if (this._map && this._map.keyboard && !this._map.keyboard.enabled()) {
-      this.setCommand(ev.key, ev.ctrlKey);
-    }
-  },
-  setCommand: function setCommand(key, ctrlKey) {
-    // console.log('setCommand', key, ctrlKey, this._commandKeys.indexOf(key))
-    if (this._commandKeys.indexOf(key) !== -1) {
-      var state = this.getCurrentState(),
-          setClickedUTMFlag = true;
-
-      if (state) {
-        if (!state.gmxLayer._map) {
-          this._map.addLayer(state.gmxLayer);
-        }
-
-        if (key === 'clickTimeLine') {
-          state.rollClickedFlag = state.selected && state.selected[state.clickedUTM] ? true : false;
-          state.gmxLayer.repaint();
-
-          this._setDateScroll();
-
-          this._bboxUpdate();
-
-          this._redrawTimeline();
-
-          this._chkRollClickedFlag(state);
-
-          return;
-        }
-
-        if (state.clickedUTM) {
-          /*						if (key === ' ') {
-          						this._addSelected(state.clickedUTM, state);
-          						// state.skipUnClicked = !state.skipUnClicked;
-          						setClickedUTMFlag = false;
-          					} else 
-          */
-          if (key === 'ArrowUp' || key === 'Up') {
-            if (!state.rollClickedFlag) {
-              state.rollClickedFlag = true;
-
-              this._chkRollClickedFlag(state);
-
-              if (state.selected && Object.keys(state.selected).length > 0) {
-                key = 'Right';
-              } else {
-                setClickedUTMFlag = false;
-              }
-            }
-          } else if (key === 'ArrowDown' || key === 'Down') {
-            if (state.rollClickedFlag) {
-              state.rollClickedFlag = false;
-
-              this._chkRollClickedFlag(state);
-
-              key = 'Right';
-            } else {
-              setClickedUTMFlag = false;
-            } // } else if (key === 'ArrowUp' || key === 'Up') {
-            // this._addSelected(state.clickedUTM, state);
-            // setClickedUTMFlag = false;
-            // } else if (key === 'ArrowDown' || key === 'Down') {
-            // this._removeSelected(state.clickedUTM, state);
-            // setClickedUTMFlag = false;
-
-          } else if (key === 'favorite' || key === ' ') {
-            if (state.selected && state.selected[state.clickedUTM]) {
-              this._removeSelected(state.clickedUTM, state);
-
-              state.rollClickedFlag = false;
-            } else {
-              this._addSelected(state.clickedUTM, state);
-
-              state.rollClickedFlag = true;
-            }
-
-            this._chkRollClickedFlag(state);
-
-            setClickedUTMFlag = false; // } else if (key === 's') {
-            // state.rollClickedFlag = !state.rollClickedFlag;
-            // this._chkRollClickedFlag(state);
-          }
-
-          if (setClickedUTMFlag) {
-            var clickedUTM = String(state.clickedUTM),
-                rollClicked = this.options.rollClicked,
-                arr = [];
-
-            if (state.selected && state.rollClickedFlag) {
-              arr = Object.keys(state.selected).sort().map(function (it) {
-                return {
-                  utm: it
-                };
-              });
-            } else {
-              this._timeline.getData().forEach(function (it) {
-                if (!state.selected || !state.selected[it.utm]) {
-                  arr.push({
-                    utm: it.utm
-                  });
-                }
-              });
-            }
-
-            for (var i = 0, len = arr.length - 1; i <= len; i++) {
-              if (Number(arr[i].utm) > state.clickedUTM) {
-                break;
-              }
-            }
-
-            if (key === 'ArrowLeft' || key === 'Left') {
-              i = ctrlKey ? 0 : i > 1 ? i - 2 : rollClicked ? len : 0;
-            } else if (key === 'ArrowRight' || key === 'Right') {
-              i = ctrlKey ? len : i < len ? i : rollClicked ? 0 : len;
-            } else if (key === 's') {
-              i = i === 0 ? 0 : i - 1;
-            }
-
-            if (arr[i]) {
-              state.clickedUTM = Number(arr[i].utm);
-
-              this._setClassName(state.selected && state.selected[state.clickedUTM], this._containers.favorite, 'on');
-            }
-          }
-        }
-
-        this._chkObserver(state);
-      }
-    }
-  },
-  _chkObserver: function _chkObserver(state) {
-    var observer = state.observer;
-    observer.activate();
-    observer.needRefresh = true;
-    state.gmxLayer.getDataManager().checkObserver(observer);
-    state.gmxLayer.repaint();
-  },
-  _setClassName: function _setClassName(flag, el, name) {
-    var hasClass = L.DomUtil.hasClass(el, name);
-
-    if (flag && !hasClass) {
-      L.DomUtil.addClass(el, name);
-    } else if (!flag && hasClass) {
-      L.DomUtil.removeClass(el, name);
-    }
-  },
-  _chkRollClickedFlag: function _chkRollClickedFlag(state) {
-    state = state || this.getCurrentState();
-    var len = state.selected ? Object.keys(state.selected).length : 0;
-
-    if (len < 1) {
-      state.rollClickedFlag = false; // this._setClassName(true, this._containers.switchDiv, 'disabled');
-      // } else {
-      // this._setClassName(false, this._containers.switchDiv, 'disabled');
+      var C = f / 16 * cosSqAlpha * (4 + f * (4 - 3 * cosSqAlpha));
+      lambdaP = lambda;
+      lambda = L + (1 - C) * f * sinAlpha * (sigma + C * sinSigma * (cos2SigmaM + C * cosSigma * (-1 + 2 * cos2SigmaM * cos2SigmaM)));
     }
 
-    this._setClassName(len > 0 && state.selected[state.clickedUTM], this._containers.favorite, 'on'); // this._setClassName(!state.rollClickedFlag, this._containers.modeSelectedOff, 'on');
-    // this._setClassName(state.rollClickedFlag, this._containers.modeSelectedOn, 'on');
+    if (iterLimit === 0) {
+      return NaN;
+    }
+
+    var uSq = cosSqAlpha * (a * a - b * b) / (b * b);
+    var A = 1 + uSq / 16384 * (4096 + uSq * (-768 + uSq * (320 - 175 * uSq)));
+    var B = uSq / 1024 * (256 + uSq * (-128 + uSq * (74 - 47 * uSq)));
+    var deltaSigma = B * sinSigma * (cos2SigmaM + B / 4 * (cosSigma * (-1 + 2 * cos2SigmaM * cos2SigmaM) - B / 6 * cos2SigmaM * (-3 + 4 * sinSigma * sinSigma) * (-3 + 4 * cos2SigmaM * cos2SigmaM)));
+    var s = b * A * (sigma - deltaSigma);
+    s = s.toFixed(3);
+    return s;
+  };
+
+  utils$1.parseCoordinates = function (text) {
+    // should understand the following formats:
+    // 55.74312, 37.61558
+    // 55°44'35" N, 37°36'56" E
+    // 4187347, 7472103
+    // 4219783, 7407468 (EPSG:3395)
+    // 4219783, 7442673 (EPSG:3857)
+    var crs = null,
+        regex = /\(EPSG:(\d+)\)/g,
+        t = regex.exec(text);
+
+    if (t) {
+      crs = t[1];
+      text = text.replace(regex, '');
+    }
+
+    if (text.match(/[йцукенгшщзхъфывапролджэячсмитьбюЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮqrtyuiopadfghjklzxcvbmQRTYUIOPADFGHJKLZXCVBM_:]/)) {
+      return null;
+    } //there should be a separator in the string (exclude strings like "11E11")
 
 
-    this._setClassName(!state.rollClickedFlag, this._containers.hr1, 'on');
+    if (text.indexOf(' ') === -1 && text.indexOf(',') === -1) {
+      return null;
+    }
 
-    this._setClassName(state.rollClickedFlag, this._containers.hr2, 'on');
-  },
-  _removeSelected: function _removeSelected(utm, state) {
-    state = state || this.getCurrentState();
+    if (text.indexOf(' ') !== -1) {
+      text = text.replace(/,/g, '.');
+    }
 
-    if (utm) {
-      delete state.selected[utm];
+    var results = [];
+    regex = /(-?\d+(\.\d+)?)([^\d\-]*)/g;
+    t = regex.exec(text);
+
+    while (t) {
+      results.push(t[1]);
+      t = regex.exec(text);
+    }
+
+    if (results.length < 2) {
+      return null;
+    }
+
+    var ii = Math.floor(results.length / 2),
+        y = 0,
+        mul = 1,
+        i;
+
+    for (i = 0; i < ii; i++) {
+      y += parseFloat(results[i]) * mul;
+      mul /= 60;
+    }
+
+    var x = 0;
+    mul = 1;
+
+    for (i = ii; i < results.length; i++) {
+      x += parseFloat(results[i]) * mul;
+      mul /= 60;
+    }
+
+    if (Math.max(text.indexOf('N'), text.indexOf('S')) > Math.max(text.indexOf('E'), text.indexOf('W'))) {
+      t = x;
+      x = y;
+      y = t;
+    }
+
+    var pos;
+
+    if (crs === '3857') {
+      pos = L$1.Projection.SphericalMercator.unproject(new L$1.Point(y, x));
+      x = pos.lng;
+      y = pos.lat;
+    }
+
+    if (Math.abs(x) > 180 || Math.abs(y) > 180) {
+      pos = L$1.Projection.Mercator.unproject(new L$1.Point(y, x));
+      x = pos.lng;
+      y = pos.lat;
+    }
+
+    if (text.indexOf('W') !== -1) {
+      x = -x;
+    }
+
+    if (text.indexOf('S') !== -1) {
+      y = -y;
+    }
+
+    return [y, x];
+  };
+
+  utils$1.getCoordinatesString = function (latlng, num) {
+    var x = latlng.lng,
+        y = latlng.lat,
+        formats = coordFormats,
+        len = formats.length,
+        merc,
+        out = '';
+    num = num || 0;
+
+    if (x > 180) {
+      x -= 360;
+    }
+
+    if (x < -180) {
+      x += 360;
+    }
+
+    if (num % len === 0) {
+      out = utils$1.latLonFormatCoordinates2(x, y);
+    } else if (num % len === 1) {
+      out = utils$1.latLonFormatCoordinates(x, y);
+    } else if (num % len === 2) {
+      merc = L$1.Projection.Mercator.project(new L$1.LatLng(y, x));
+      out = '' + Math.round(merc.x) + ', ' + Math.round(merc.y) + formats[2];
     } else {
-      state.selected = null;
+      merc = L$1.CRS.EPSG3857.project(new L$1.LatLng(y, x));
+      out = '' + Math.round(merc.x) + ', ' + Math.round(merc.y) + formats[3];
     }
 
-    this._chkRollClickedFlag(state);
+    return out;
+  };
+}
+
+L$1.Control.GmxLocation.Utils = utils$1;
+L$1.Control.gmxLocation = L$1.Control.GmxLocation;
+
+L$1.control.gmxLocation = function (options) {
+  return new L$1.Control.GmxLocation(options);
+};
+
+var gmxLocation = L$1.Control.GmxLocation;
+
+var Legend = L$1.Control.extend({
+  includes: L$1.Evented.prototype,
+  options: {
+    position: 'topright'
   },
-  _addSelected: function _addSelected(utm, state) {
-    state = state || this.getCurrentState();
-
-    if (!state.selected) {
-      state.selected = {};
-    }
-
-    state.selected[utm] = true;
-    delete state.dInterval;
-    state.uTimeStamp = [state.oInterval.beginDate.getTime() / 1000, state.oInterval.endDate.getTime() / 1000];
-
-    this._chkRollClickedFlag(state);
-  },
-  _clickOnTimeline: function _clickOnTimeline(ev) {
-    var tl = this._timeline,
-        state = this.getCurrentState();
-
-    if (ev) {
-      var it = tl.getItem(ev.index),
-          ctrlKey = ev.originalEvent.ctrlKey,
-          clickId = this._containers.clickId,
-          utm = Number(it.utm);
-      state.clickedUTM = utm;
-      state.skipUnClicked = state.clickedUTM ? true : false; // this.setCommand(state.selected && state.selected[utm] ? 'Up' : 'Down');
-
-      this.setCommand('clickTimeLine'); // state.gmxLayer.repaint();
-      // this._setDateScroll();
-      // this._bboxUpdate();
-      // this._redrawTimeline();
-      // this._chkRollClickedFlag(state);
-    } else {
-      var selectedPrev = state.selected || {},
-          selected = {};
-      tl.getSelection().forEach(function (it, i) {
-        var pt = tl.getItem(it.row),
-            utm = Number(pt.utm);
-
-        if (selectedPrev[utm]) {
-          delete selectedPrev[utm];
-        } else {
-          selected[utm] = true;
-        }
-      });
-
-      for (var key in selectedPrev) {
-        selected[key] = true;
-      }
-
-      if (Object.keys(selected).length) {
-        state.selected = selected;
-      } else {
-        delete state.selected;
-      }
-
-      this._bboxUpdate();
-    }
-  },
-  _addSvgIcon: function _addSvgIcon(id) {
-    return '<svg role="img" class="svgIcon"><use xlink:href="#' + id + '"></use></svg>';
+  initialize: function initialize() {
+    this._components = {};
   },
   onAdd: function onAdd(map) {
-    var container = this._container = L.DomUtil.create('div', this.options.className + ' gmx-hidden');
-    L.DomEvent.on(container, 'selectstart', L.DomEvent.preventDefault);
-
-    this._addKeyboard(map);
-
-    container.tabindex = -1; //			<div class="clicked el-left disabled gmx-hidden"><div class="el-act on">по1 всем</div><div class="el-pass">по избранным</div></div>
-
-    var str = '\
-<div class="showButtonContainer gmx-hidden">\
-<div class="warning"><span class="warningText">' + translate$3.warning + '</span> <span class="closeWarning">X</span></div>\
-<div class="leaflet-gmx-iconSvg showButton leaflet-control" title="">' + this._addSvgIcon('tl-main-icon') + '</div>\
-</div>\
-<div class="vis-container">\
-<div class="tabs"><ul class="layers-tab"></ul></div>\
-<div class="internal-container">\
-	<div class="w-scroll">\
-		<div class="el-left">\
-			<span class="el-act-right-1">\
-				<span class="different-interval' + (singleIntervalFlag ? '' : ' on') + '" title="' + translate$3.differentInterval + '">' + this._addSvgIcon('tl-different-interval') + '</span>\
-				<span class="line4">|</span>\
-				<span class="single-interval' + (singleIntervalFlag ? ' on' : '') + '" title="' + translate$3.singleInterval + '">' + this._addSvgIcon('tl-single-interval') + '</span>\
-			</span>\
-		</div>\
-		<div class="el-center">\
-			<span class="clicked click-left">' + this._addSvgIcon('arrow_left') + '</span>\
-			<span class="clicked click-right">' + this._addSvgIcon('arrow_right') + '</span>\
-			&nbsp;&nbsp;\
-			<div class="el-act-cent-1">\
-				<span class="favorite">' + this._addSvgIcon('tl-favorites') + '</span>\
-				<span class="line">|</span>\
-				<span class="trash">' + this._addSvgIcon('tl-trash') + '</span>\
-			</div>\
-			&nbsp;&nbsp;\
-			<div class="el-act-cent-2">\
-				<span class="calendar">' + this._addSvgIcon('tl-date') + '</span>\
-				<span class="calendar-text">01.01.2017</span>\
-				<span class="line1">|</span>\
-				<span class="clock">' + this._addSvgIcon('tl-time') + '</span>\
-				<span class="clock-text">00:00</span>\
-			</div>\
-			&nbsp;&nbsp;\
-			<div class="clouds-content disabled">\
-				<span class="cloud">' + this._addSvgIcon('tl-cloud-cover') + '</span>\
-				<span class="cloud-text">\
-					<select class="cloud-select">\
-						<option value="5">0 - 5%</option>\
-						<option value="10">0 - 10%</option>\
-						<option value="20">0 - 20%</option>\
-						<option value="50">0 - 50%</option>\
-						<option value="100" selected>0 - 100%</option>\
-					</select>\
-				</span>\
-				&nbsp;&nbsp;\
-				<span class="arrow-small"></span>\
-			</div>\
-		</div>\
-		<div class="el-right">\
-			<span class="filters"></span>\
-			<span class="el-act-right-2"><span class="ques gmx-hidden">' + this._addSvgIcon('tl-help') + '</span></span>\
-			<span class="hideButton-content"><span class="arrow hideButton">' + this._addSvgIcon('arrow-down-01') + '</span></span>\
-		</div>\
-		<div class="g-scroll"></div>\
-		<div class="c-scroll">\
-			<div class="c-borders"></div>\
-		</div>\
-	</div>\
-	<div class="hr1"></div>\
-	<div class="hr2"></div>\
-	<div class="vis"></div>\
-</div>\
-</div>';
-    container.innerHTML = str;
-    container._id = this.options.id;
-    this._map = map;
-    var clickLeft = container.getElementsByClassName('click-left')[0],
-        clickRight = container.getElementsByClassName('click-right')[0],
-        cloudSelect = container.getElementsByClassName('cloud-select')[0],
-        clickCalendar = container.getElementsByClassName('el-act-cent-2')[0],
-        clickId = container.getElementsByClassName('calendar-text')[0],
-        clickIdTime = container.getElementsByClassName('clock-text')[0],
-        // switchDiv = container.getElementsByClassName('el-left')[0],
-    hr1 = container.getElementsByClassName('hr1')[0],
-        hr2 = container.getElementsByClassName('hr2')[0],
-        // modeSelectedOn = container.getElementsByClassName('el-pass')[0],
-    // modeSelectedOff = container.getElementsByClassName('el-act')[0],
-    hideButton = container.getElementsByClassName('hideButton-content')[0],
-        showButtonContainer = container.getElementsByClassName('showButtonContainer')[0],
-        showButton = container.getElementsByClassName('showButton')[0],
-        closeWarning = container.getElementsByClassName('closeWarning')[0],
-        warning = container.getElementsByClassName('warning')[0],
-        favorite = container.getElementsByClassName('favorite')[0],
-        trash = container.getElementsByClassName('trash')[0],
-        useSvg = hideButton.getElementsByTagName('use')[0],
-        visContainer = container.getElementsByClassName('vis-container')[0],
-        internalContainer = container.getElementsByClassName('internal-container')[0],
-        differentInterval = container.getElementsByClassName('different-interval')[0],
-        singleInterval = container.getElementsByClassName('single-interval')[0],
-        cloudsContent = container.getElementsByClassName('clouds-content')[0],
-        layersTab = container.getElementsByClassName('layers-tab')[0];
-
-    if (this.options.webGLFilters) {
-      container.getElementsByClassName('filters')[0].appendChild(this.options.webGLFilters.getWebGLFiltersContainer(map));
-    }
-
-    this._containers = {
-      vis: container.getElementsByClassName('vis')[0],
-      cloudSelect: cloudSelect,
-      cloudsContent: cloudsContent,
-      internalContainer: internalContainer,
-      layersTab: layersTab,
-      clickCalendar: clickCalendar,
-      clickId: clickId,
-      clickIdTime: clickIdTime,
-      favorite: favorite,
-      // switchDiv: switchDiv,
-      hr1: hr1,
-      hr2: hr2,
-      // modeSelectedOff: modeSelectedOff,
-      // modeSelectedOn: modeSelectedOn,
-      hideButton: hideButton
-    }; // modeSelectedOff.innerHTML = translate.modeSelectedOff;
-    // modeSelectedOn.innerHTML = translate.modeSelectedOn;
-
-    var stop = L.DomEvent.stopPropagation,
-        prevent = L.DomEvent.preventDefault;
-    L.DomEvent.on(document, 'keyup', stop).on(document, 'keyup', prevent).on(document, 'keyup', this._keydown, this);
-    L.DomEvent.on(container, 'contextmenu', stop).on(container, 'touchstart', stop) // .on(container, 'mousemove', stop)
-    .on(container, 'mousedown', stop).on(container, 'mousewheel', stop).on(container, 'dblclick', stop).on(container, 'click', stop);
-
-    var toglleVisContainer = function (flag) {
-      var isVis = !L.DomUtil.hasClass(visContainer, 'gmx-hidden');
-
-      if (flag) {
-        this._setClassName(!this._zoomOff, warning, 'gmx-hidden');
-
-        this._setClassName(this._zoomOff, showButton, 'off');
-
-        if (this._state.isVisible !== false) {
-          this._setClassName(flag, showButtonContainer, 'gmx-hidden');
-
-          this._setClassName(!flag, visContainer, 'gmx-hidden');
-
-          if (!isVis) {
-            this._redrawTimeline();
-          }
-
-          this._addKeyboard(map);
-
-          this.fire('statechanged', {
-            isVisible: true
-          });
-        }
-      } else {
-        this._setClassName(flag, showButtonContainer, 'gmx-hidden');
-
-        this._setClassName(this._zoomOff, showButton, 'off');
-
-        this._setClassName(!this._zoomOff, warning, 'gmx-hidden');
-
-        if (isVis) {
-          this._setClassName(!flag, visContainer, 'gmx-hidden');
-
-          this._removeKeyboard(map);
-
-          this.fire('statechanged', {
-            isVisible: false
-          });
-        }
-      }
-    }.bind(this);
-
-    var toglleSingleInterval = function (flag) {
-      singleIntervalFlag = flag;
-
-      if (singleIntervalFlag) {
-        L.DomUtil.addClass(singleInterval, 'on');
-        L.DomUtil.removeClass(differentInterval, 'on');
-      } else {
-        L.DomUtil.addClass(differentInterval, 'on');
-        L.DomUtil.removeClass(singleInterval, 'on');
-      }
-    }.bind(this);
-
-    if (singleIntervalFlag) {
-      toglleSingleInterval(true);
-    }
-
-    L.DomEvent.on(cloudSelect, 'change', function (ev) {
-      ev.target.blur();
-
-      this._bboxUpdate();
-
-      var state = this.getCurrentState();
-      state.gmxLayer.repaint();
-      this.setCommand('Left');
-      this.setCommand('Right');
-    }, this).on(differentInterval, 'click', function () {
-      if (singleIntervalFlag) {
-        toglleSingleInterval(false);
-      }
-    }, this).on(singleInterval, 'click', function () {
-      if (!singleIntervalFlag) {
-        toglleSingleInterval(true);
-        var state = this.getCurrentState();
-
-        for (var layerID in this._state.data) {
-          this._copyState(this._state.data[layerID], state);
-        }
-      }
-    }, this).on(favorite, 'click', function () {
-      // var state = this.getCurrentState();
-      // this.setCommand(state.selected && state.selected[state.clickedUTM] ? 'Down' : 'Up', true);
-      this.setCommand('favorite', true);
-    }, this).on(trash, 'click', function (ev) {
-      this._removeSelected();
-
-      this._redrawTimeline();
-    }, this).on(clickLeft, 'mousemove', stop).on(clickLeft, 'click', function (ev) {
-      this.setCommand('Left');
-    }, this).on(clickRight, 'mousemove', stop).on(clickRight, 'click', function (ev) {
-      this.setCommand('Right');
-    }, this) // .on(modeSelectedOff, 'click', function (ev) {
-    // this.setCommand('s');
-    // L.DomUtil.addClass(modeSelectedOff, 'on');
-    // L.DomUtil.removeClass(modeSelectedOn, 'on');
-    // }, this)
-    // .on(modeSelectedOn, 'click', function (ev) {
-    // this.setCommand('s');
-    // L.DomUtil.addClass(modeSelectedOn, 'on');
-    // L.DomUtil.removeClass(modeSelectedOff, 'on');
-    // }, this)
-    .on(showButton, 'click', function (ev) {
-      this._state.isVisible = true;
-      toglleVisContainer(true);
-    }, this).on(closeWarning, 'click', function (ev) {
-      this._setClassName(true, warning, 'gmx-hidden');
-    }, this).on(hideButton, 'click', function (ev) {
-      this._state.isVisible = false;
-      toglleVisContainer(false);
-    }, this);
-    L.DomEvent.on(layersTab, 'click', function (ev) {
-
-      var target = ev.target,
-          _prevState = this.getCurrentState() || {},
-          _layerID = target._layerID || target.parentNode._layerID;
-
-      if (_layerID && _prevState.layerID !== _layerID) {
-        if (singleIntervalFlag) {
-          this._hideOtherLayer(_layerID);
-        }
-
-        this._setCurrentTab(_layerID);
-      }
-    }, this);
-
     var _this = this;
 
-    this._setDateScroll = function () {
-      var state = _this.getCurrentState();
+    this._container = L$1.DomUtil.create('div', 'scanex-forestry-legend');
+    L$1.DomEvent.disableScrollPropagation(this._container);
+    L$1.DomEvent.disableClickPropagation(this._container);
+    this._icon = L$1.DomUtil.create('div', 'scanex-legend-icon icon', this._container);
+    this._panel = L$1.DomUtil.create('div', 'panel hidden', this._container);
+    this._content = L$1.DomUtil.create('div', 'scrollable style-4', this._panel);
+    L$1.DomEvent.on(this._icon, 'click', function (e) {
+      L$1.DomEvent.stopPropagation(e);
+      _this._active = !_this._active;
 
-      if (state) {
-        this._chkSelection(state);
+      _this.showPanel(_this._active);
+
+      _this.fire('activate', {
+        active: _this._active
+      });
+    });
+    return this._container;
+  },
+  onRemove: function onRemove(map) {},
+  showPanel: function showPanel(visible) {
+    this._active = visible;
+
+    if (this._active) {
+      L$1.DomUtil.addClass(this._icon, 'active');
+      L$1.DomUtil.removeClass(this._panel, 'hidden');
+    } else {
+      L$1.DomUtil.removeClass(this._icon, 'active');
+      L$1.DomUtil.addClass(this._panel, 'hidden');
+    }
+  },
+  enable: function enable(id) {
+    var container = this._container.querySelector("[data-id=".concat(id, "]"));
+
+    if (container) {
+      var btn = container.querySelector('.toggle');
+      L$1.DomUtil.addClass(btn, 'toggle-active');
+      this.fire('click', {
+        id: id,
+        visible: true
+      });
+    }
+  },
+  disable: function disable(id) {
+    var container = this._container.querySelector("[data-id=".concat(id, "]"));
+
+    if (container) {
+      var btn = container.querySelector('.toggle');
+      L$1.DomUtil.removeClass(btn, 'toggle-active');
+      this.fire('click', {
+        id: id,
+        visible: false
+      });
+    }
+  },
+  state: function state(id) {
+    var container = this._container.querySelector("[data-id=".concat(id, "]"));
+
+    if (container) {
+      var btn = container.querySelector('.toggle');
+      return L$1.DomUtil.hasClass(btn, 'toggle-active');
+    } else {
+      return false;
+    }
+  },
+  toggle: function toggle(id) {
+    var container = this._container.querySelector("[data-id=".concat(id, "]"));
+
+    if (container) {
+      var btn = container.querySelector('.toggle');
+      var visible = !L$1.DomUtil.hasClass(btn, 'toggle-active');
+
+      if (visible) {
+        this.enable(id);
+      } else {
+        this.disable(id);
+      }
+    }
+  },
+  addComponent: function addComponent(id, title, parent) {
+    var _this2 = this;
+
+    var container = L$1.DomUtil.create('div', 'component', parent ? parent : this._content);
+    container.setAttribute('data-id', id);
+    L$1.DomUtil.create('i', null, container);
+    L$1.DomUtil.create('label', 'title', container).innerText = title;
+    L$1.DomUtil.create('div', 'toggle', container);
+    L$1.DomEvent.on(container, 'click', function (e) {
+      _this2.toggle(id);
+    }, this);
+    this._components[id] = container;
+    return container;
+  },
+  addGroup: function addGroup(id, title) {
+    var _this3 = this;
+
+    var container = L$1.DomUtil.create('div', 'group', this._content);
+    container.setAttribute('data-id', id);
+    var header = L$1.DomUtil.create('div', 'header', container);
+    var icon = L$1.DomUtil.create('i', 'scanex-legend-icon', header);
+    L$1.DomUtil.addClass(icon, id);
+    var label = L$1.DomUtil.create('label', 'title', header);
+    label.innerText = title;
+    var btn = L$1.DomUtil.create('div', 'toggle', header);
+    var children = L$1.DomUtil.create('div', 'children hidden', container);
+
+    var toggle = function toggle(e) {
+      L$1.DomEvent.stopPropagation(e);
+
+      if (L$1.DomUtil.hasClass(children, 'hidden')) {
+        L$1.DomUtil.removeClass(children, 'hidden');
+      } else {
+        L$1.DomUtil.addClass(children, 'hidden');
       }
     };
 
-    if (map.gmxControlsManager) {
-      map.gmxControlsManager.add(this);
-    }
+    L$1.DomEvent.on(icon, 'click', toggle, this);
+    L$1.DomEvent.on(label, 'click', toggle, this);
+    L$1.DomEvent.on(btn, 'click', function (e) {
+      var visible = !L$1.DomUtil.hasClass(btn, 'toggle-active');
 
-    this._sidebarOn = true;
+      if (visible) {
+        L$1.DomUtil.addClass(btn, 'toggle-active');
+      } else {
+        L$1.DomUtil.removeClass(btn, 'toggle-active');
+      }
 
-    this._chkZoom = function () {
-      this._zoomOff = map.getZoom() < this.options.minZoom;
-      toglleVisContainer(!this._zoomOff);
-    }.bind(this);
+      var _iterator = _createForOfIteratorHelper(children.querySelectorAll('.component')),
+          _step;
 
-    map.on('moveend', this._moveend, this).on('zoomend', this._chkZoom, this);
+      try {
+        for (_iterator.s(); !(_step = _iterator.n()).done;) {
+          var item = _step.value;
 
-    this._chkZoom();
+          var _id = item.getAttribute('data-id');
 
-    return container;
+          if (visible) {
+            _this3.enable(_id);
+          } else {
+            _this3.disable(_id);
+          }
+        }
+      } catch (err) {
+        _iterator.e(err);
+      } finally {
+        _iterator.f();
+      }
+    }, this);
+    return children;
   }
 });
 
-L.control.gmxTimeline = function (options) {
-  return new L.Control.GmxTimeline(options);
-};
-L.Map.addInitHook(function () {// var corners = this._controlCorners,
-  // parent = this._controlContainer,
-  // tb = 'leaflet-top leaflet-bottom',
-  // lr = 'leaflet-left leaflet-right',
-  // classNames = {
-  // bottom: 'leaflet-bottom ' + lr
-  // };
-  // for (var key in classNames) {
-  // if (!corners[key]) {
-  // corners[key] = L.DomUtil.create('div', classNames[key], parent);
-  // }
-  // }
-  // corners.document = document.body;
-  // fetch('/images/svg-symbols.svg', {mode: 'cors'}).then(function(resp) {
-  // return resp.text();
-  // }).then(function(txt) {
-  // var div = document.createElement('div');
-  // div.style.display = 'none';
-  // document.body.appendChild(div);
-  // setTimeout(function() { div.innerHTML = txt; }, 200);
-  // });
-}); // if (window.gmxCore) {
-// 	var path = gmxCore.getModulePath('gmxTimeLine'),
-// 		timeLinePath = path + timeLinePrefix + 'timeline';
-// 	filesToLoad = [
-// 		timeLinePath + '.js',
-// 		timeLinePath + '.css',
-// 		path + 'L.Control.gmxTimeLine.css'
-// 	];
-// 	window.gmxCore.addModule(pluginName, publicInterface, {});
-// } else {
-// 	window.nsGmx[pluginName] = publicInterface;
-// }
-
-var options = {
-  locale: window.language === 'eng' ? 'en' : 'ru',
-  moveable: true,
-  rollClicked: true,
-  minZoom: 8
-};
-timeLineControl = L.control.gmxTimeline(options).on('click', function (ev) {
-  layersByID[ev.layerID].repaint();
+var Zoom = L$1.Control.extend({
+  options: {
+    position: 'topright'
+  },
+  onAdd: function onAdd(map) {
+    var container = L$1.DomUtil.create('div', 'scanex-forestry-zoom');
+    L$1.DomEvent.disableScrollPropagation(container);
+    L$1.DomEvent.disableClickPropagation(container);
+    var plus = L$1.DomUtil.create('i', 'scanex-zoom-icon plus', container);
+    L$1.DomEvent.on(plus, 'click', function () {
+      return map.zoomIn(1);
+    }, map);
+    var middle = L$1.DomUtil.create('label', 'middle', container);
+    middle.innerHTML = map.getZoom();
+    var minus = L$1.DomUtil.create('i', 'scanex-zoom-icon minus', container);
+    L$1.DomEvent.on(minus, 'click', function () {
+      return map.zoomOut(1);
+    }, map);
+    map.on('zoomend', function (e) {
+      if (middle) {
+        middle.innerHTML = e.target._zoom;
+      }
+    });
+    return container;
+  },
+  onRemove: function onRemove() {}
 });
-var GmxTimeLine = timeLineControl;
 
-var translate$4 = T.getText.bind(T);
+var translate$2 = T.getText.bind(T);
 
-var Borders = /*#__PURE__*/function (_EventTarget) {
-  _inherits(Borders, _EventTarget);
+var Controller = /*#__PURE__*/function (_EventTarget) {
+  _inherits(Controller, _EventTarget);
+
+  var _super = _createSuper(Controller);
+
+  function Controller(_ref) {
+    var _this;
+
+    var map = _ref.map,
+        content = _ref.content,
+        notifications = _ref.notifications;
+
+    _classCallCheck(this, Controller);
+
+    _this = _super.call(this);
+    _this._map = map;
+    _this._content = content;
+    _this._notifications = notifications;
+    return _this;
+  }
+
+  _createClass(Controller, [{
+    key: "_status",
+    value: function _status(response) {
+      switch (response.status) {
+        case 200:
+          return response.json();
+
+        case 401:
+          this._notifications.unAuthorized.open();
+
+          return;
+
+        case 403:
+          this._notifications.forbidden.open();
+
+          return;
+
+        case 404:
+          this._notifications.notFound.open();
+
+          return;
+
+        case 500:
+          this._notifications.serverError.open();
+
+          return;
+
+        default:
+          alert(response.status);
+          return;
+      }
+    }
+  }, {
+    key: "httpPost",
+    value: function httpPost(url, options) {
+      var _this2 = this;
+
+      return new Promise(function (resolve) {
+        _this2._notifications.loading.open();
+
+        fetch(url, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(options)
+        }).then(_this2._status.bind(_this2)).then(function (data) {
+          _this2._notifications.loading.close();
+
+          resolve(data);
+        }).catch(function (e) {
+          _this2._notifications.loading.close();
+
+          resolve();
+        });
+      });
+    }
+  }, {
+    key: "httpGet",
+    value: function httpGet(url) {
+      var _this3 = this;
+
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+      return new Promise(function (resolve) {
+        _this3._notifications.loading.open();
+
+        var args = Object.keys(options);
+        fetch("".concat(args.length > 0 ? "".concat(url, "?").concat(args.map(function (k) {
+          return "".concat(k, "=").concat(options[k]);
+        }).join('&')) : url), {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }).then(_this3._status.bind(_this3)).then(function (data) {
+          _this3._notifications.loading.close();
+
+          resolve(data);
+        }).catch(function (e) {
+          _this3._notifications.loading.close();
+
+          resolve();
+        });
+      });
+    }
+  }, {
+    key: "sendForm",
+    value: function sendForm(url, fd) {
+      var _this4 = this;
+
+      return new Promise(function (resolve) {
+        _this4._notifications.loading.open();
+
+        fetch(url, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: fd
+        }).then(_this4._status.bind(_this4)).then(function (data) {
+          _this4._notifications.loading.close();
+
+          resolve(data);
+        }).catch(function (e) {
+          _this4._notifications.loading.close();
+
+          resolve();
+        });
+      });
+    }
+  }, {
+    key: "canClick",
+    get: function get() {
+      switch (this._content.getCurrentId()) {
+        case 'edit-project':
+          return false;
+
+        default:
+          return true;
+      }
+    }
+  }]);
+
+  return Controller;
+}(EventTarget);
+
+var LayerController = /*#__PURE__*/function (_Controller) {
+  _inherits(LayerController, _Controller);
+
+  var _super2 = _createSuper(LayerController);
+
+  function LayerController(_ref2) {
+    var _this5;
+
+    var kind = _ref2.kind,
+        map = _ref2.map,
+        content = _ref2.content,
+        notifications = _ref2.notifications,
+        layer = _ref2.layer,
+        legend = _ref2.legend;
+
+    _classCallCheck(this, LayerController);
+
+    _this5 = _super2.call(this, {
+      map: map,
+      content: content,
+      notifications: notifications
+    });
+    _this5._kind = kind;
+    _this5._layer = layer;
+    _this5._legend = legend;
+
+    _this5._layer.on('click', _this5._click, _assertThisInitialized(_this5));
+
+    _this5._layer.setStyleHook(function (item) {
+      var c = _this5._content.getCurrent();
+
+      if (c) {
+        return c.getStyleHook(_this5._kind, item);
+      } else {
+        return {};
+      }
+    });
+
+    _this5._layer.setFilter(function (item) {
+      var c = _this5._content.getCurrent();
+
+      if (c) {
+        return c.getFilter(_this5._kind, item);
+      } else {
+        return true;
+      }
+    });
+
+    _this5._legend.addComponent(_this5._kind, translate$2("legend.".concat(_this5._kind)));
+
+    _this5._legend.on('click', _this5._toggle, _assertThisInitialized(_this5));
+
+    return _this5;
+  }
+
+  _createClass(LayerController, [{
+    key: "_click",
+    value: function () {
+      var _click2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e) {
+        return regeneratorRuntime.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                if (this.canClick) {
+                  L.DomEvent.stopPropagation(e);
+                }
+
+              case 1:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee, this);
+      }));
+
+      function _click(_x) {
+        return _click2.apply(this, arguments);
+      }
+
+      return _click;
+    }()
+  }, {
+    key: "_toggle",
+    value: function _toggle(e) {
+      var id = e.id,
+          visible = e.visible;
+
+      if (id === this._kind) {
+        if (visible) {
+          this._map.addLayer(this._layer);
+        } else {
+          this._map.removeLayer(this._layer);
+        }
+      }
+    }
+  }]);
+
+  return LayerController;
+}(Controller);
+
+var translate$3 = T.getText.bind(T);
+
+var Borders = /*#__PURE__*/function (_Controller) {
+  _inherits(Borders, _Controller);
 
   var _super = _createSuper(Borders);
 
@@ -20983,33 +23911,36 @@ var Borders = /*#__PURE__*/function (_EventTarget) {
     var _this;
 
     var map = _ref.map,
+        content = _ref.content,
+        notifications = _ref.notifications,
         layers = _ref.layers,
         legend = _ref.legend;
 
     _classCallCheck(this, Borders);
 
-    _this = _super.call(this);
+    _this = _super.call(this, {
+      map: map,
+      content: content,
+      notifications: notifications
+    });
     _this._map = map;
     _this._layers = layers;
     _this._legend = legend;
 
     _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
 
-    var p = _this._legend.addGroup('borders', translate$4("legend.borders"));
+    var p = _this._legend.addGroup('borders', translate$3("legend.borders"));
 
     if (_this._layers.regions) {
-      _this._legend.addComponent('regions', translate$4('legend.regions'), p); // this._layers.regions.on('click', this._click, this);
-
+      _this._legend.addComponent('regions', translate$3('legend.regions'), p);
     }
 
     if (_this._layers.forestries) {
-      _this._legend.addComponent('forestries', translate$4('legend.forestries'), p); // this._layers.forestries.on('click', this._click, this);
-
+      _this._legend.addComponent('forestries', translate$3('legend.forestries'), p);
     }
 
     if (_this._layers.forestries_local) {
-      _this._legend.addComponent('forestries_local', translate$4('legend.forestries_local'), p); // this._layers.forestries_local.on('click', this._click, this);
-
+      _this._legend.addComponent('forestries_local', translate$3('legend.forestries_local'), p);
     }
 
     return _this;
@@ -21033,17 +23964,72 @@ var Borders = /*#__PURE__*/function (_EventTarget) {
   }]);
 
   return Borders;
-}(EventTarget);
+}(Controller);
 
-var BaseView = /*#__PURE__*/function (_EventTarget) {
-  _inherits(BaseView, _EventTarget);
+var s = {
+  rus: {
+    units: {
+      pc: '%',
+      cm: 'см',
+      m: 'м',
+      ha: 'га',
+      m3: 'куб. м',
+      m2: 'кв. м'
+    },
+    legend: {
+      quadrants: 'Лесохозяйственные кварталы',
+      stands: 'Выделы',
+      parks: 'ООПТ',
+      fires: 'Пожары',
+      declarations: 'Декларации',
+      incidents: 'Космический мониторинг',
+      projects: 'Проекты участков',
+      plots: 'Арендованные участки',
+      borders: 'Административные границы',
+      regions: 'Регионы',
+      roads: 'Дороги',
+      warehouses: 'Пункты погрузки',
+      forestries: 'Лесничества',
+      forestries_local: 'Участковые лесничества',
+      burn: {
+        unconfirmed: 'Гарь неподтвержденная',
+        working: 'Гарь (проверки)',
+        faux: 'Гарь ложная',
+        confirmed: 'Гарь подтвержденная'
+      },
+      cut: {
+        unconfirmed: 'Рубка неподтвержденная',
+        working: 'Рубка (проверки)',
+        faux: 'Рубка ложная',
+        confirmed: 'Рубка подтвержденная'
+      },
+      windthrow: {
+        unconfirmed: 'Ветровал неподтвержденный',
+        working: 'Ветровал (проверки)',
+        faux: 'Ветровал ложный',
+        confirmed: 'Ветровал подтвержденный'
+      },
+      disease: {
+        unconfirmed: 'Патология неподтвержденная',
+        working: 'Патология (проверки)',
+        faux: 'Патология ложная',
+        confirmed: 'Патология подтвержденная'
+      }
+    }
+  }
+};
 
-  var _super = _createSuper(BaseView);
+var View = /*#__PURE__*/function (_EventTarget) {
+  _inherits(View, _EventTarget);
 
-  function BaseView(container) {
+  var _super = _createSuper(View);
+
+  function View(container) {
     var _this;
 
-    _classCallCheck(this, BaseView);
+    var strings = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+    _classCallCheck(this, View);
 
     _this = _super.call(this);
     _this._target = container;
@@ -21056,19 +24042,28 @@ var BaseView = /*#__PURE__*/function (_EventTarget) {
       _this.close();
     });
     L$1.DomEvent.disableScrollPropagation(_this._target);
+    Object.keys(s).forEach(function (lang) {
+      return T.addText(lang, s[lang]);
+    });
+    Object.keys(strings).forEach(function (lang) {
+      return T.addText(lang, strings[lang]);
+    });
     return _this;
   }
 
-  _createClass(BaseView, [{
+  _createClass(View, [{
     key: "getStyleHook",
     value: function getStyleHook() {
       return {};
     }
   }, {
+    key: "getFilter",
+    value: function getFilter() {
+      return true;
+    }
+  }, {
     key: "open",
     value: function open() {
-      this._target.classList.remove('hidden');
-
       var event = document.createEvent('Event');
       event.initEvent('open', false, false);
       this.dispatchEvent(event);
@@ -21076,303 +24071,85 @@ var BaseView = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "close",
     value: function close() {
-      this._target.classList.add('hidden');
-
       var event = document.createEvent('Event');
       event.initEvent('close', false, false);
       this.dispatchEvent(event);
     }
-  }]);
-
-  return BaseView;
-}(EventTarget);
-
-var translate$5 = T.getText.bind(T);
-T.addText('rus', {
-  alert: {
-    unauthorized: 'Вы не вошли в систему'
-  }
-});
-
-var UnAuthorized = /*#__PURE__*/function (_BaseView) {
-  _inherits(UnAuthorized, _BaseView);
-
-  var _super = _createSuper(UnAuthorized);
-
-  function UnAuthorized(container, _ref) {
-    var _this;
-
-    _objectDestructuringEmpty(_ref);
-
-    _classCallCheck(this, UnAuthorized);
-
-    _this = _super.call(this, container);
-
-    _this._container.classList.add('scanex-forestry-unauthorized');
-
-    _this._container.innerHTML = "<div>".concat(translate$5('alert.unauthorized'), "</div>");
-    return _this;
-  }
-
-  return UnAuthorized;
-}(BaseView);
-
-var translate$6 = T.getText.bind(T);
-T.addText('rus', {
-  legend: {
-    quadrants: 'Лесохозяйственные кварталы',
-    stands: 'Выделы',
-    parks: 'ООПТ',
-    fires: 'Пожары',
-    declarations: 'Декларации',
-    incidents: 'Космический мониторинг',
-    projects: 'Проекты участков',
-    plots: 'Арендованные участки',
-    borders: 'Административные границы',
-    regions: 'Регионы',
-    roads: 'Дороги',
-    warehouses: 'Пункты погрузки',
-    forestries: 'Лесничества',
-    forestries_local: 'Участковые лесничества',
-    burn: {
-      unconfirmed: 'Гарь неподтвержденная',
-      working: 'Гарь в работе',
-      faux: 'Гарь ложная',
-      confirmed: 'Гарь подтвержденная'
-    },
-    cut: {
-      unconfirmed: 'Рубка неподтвержденная',
-      working: 'Рубка в работе',
-      faux: 'Рубка ложная',
-      confirmed: 'Рубка подтвержденная'
-    },
-    windthrow: {
-      unconfirmed: 'Ветровал неподтвержденный',
-      working: 'Ветровал в работе',
-      faux: 'Ветровал ложный',
-      confirmed: 'Ветровал подтвержденный'
-    },
-    disease: {
-      unconfirmed: 'Патология неподтвержденная',
-      working: 'Патология в работе',
-      faux: 'Патология ложная',
-      confirmed: 'Патология подтвержденная'
-    }
-  }
-});
-
-var Controller = /*#__PURE__*/function (_EventTarget) {
-  _inherits(Controller, _EventTarget);
-
-  var _super = _createSuper(Controller);
-
-  function Controller(_ref) {
-    var _this;
-
-    var kind = _ref.kind,
-        map = _ref.map,
-        content = _ref.content,
-        layer = _ref.layer,
-        legend = _ref.legend;
-
-    _classCallCheck(this, Controller);
-
-    _this = _super.call(this);
-    _this._kind = kind;
-    _this._map = map;
-    _this._content = content;
-    _this._layer = layer;
-    _this._legend = legend;
-
-    if (_this._layer) {
-      _this._layer.on('click', _this._click, _assertThisInitialized(_this));
-
-      _this._layer.setStyleHook(function (item) {
-        var c = _this._content.getCurrent();
-
-        if (c) {
-          return c.getStyleHook(_this._kind, item);
-        } else {
-          return {};
-        }
-      });
-    }
-
-    if (_this._legend) {
-      _this._legend.addComponent(_this._kind, translate$6("legend.".concat(_this._kind)));
-
-      _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
-    }
-
-    return _this;
-  }
-
-  _createClass(Controller, [{
-    key: "_click",
-    value: function () {
-      var _click2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e) {
-        var mode, _e$gmx, id, properties, event;
-
-        return regeneratorRuntime.wrap(function _callee$(_context) {
-          while (1) {
-            switch (_context.prev = _context.next) {
-              case 0:
-                L.DomEvent.stopPropagation(e);
-                mode = this._content.getCurrentId();
-
-                if (!(!mode || mode === this._kind)) {
-                  _context.next = 16;
-                  break;
-                }
-
-                _context.prev = 3;
-                _e$gmx = e.gmx, id = _e$gmx.id, properties = _e$gmx.properties;
-                _context.next = 7;
-                return this._content.show(this._kind, {
-                  gmx_id: id,
-                  properties: properties
-                });
-
-              case 7:
-                this._layer.repaint();
-
-                _context.next = 16;
-                break;
-
-              case 10:
-                _context.prev = 10;
-                _context.t0 = _context["catch"](3);
-                event = document.createEvent('Event');
-                event.initEvent('error', false, false);
-                event.detail = _context.t0;
-                this.dispatchEvent(event);
-
-              case 16:
-              case "end":
-                return _context.stop();
-            }
-          }
-        }, _callee, this, [[3, 10]]);
-      }));
-
-      function _click(_x) {
-        return _click2.apply(this, arguments);
+  }, {
+    key: "toggle",
+    value: function toggle(gmx_id) {
+      if (this._gmx_id && this._gmx_id === gmx_id) {
+        this._gmx_id = null;
+      } else {
+        this._gmx_id = gmx_id;
       }
 
-      return _click;
-    }()
-  }, {
-    key: "_toggle",
-    value: function _toggle(e) {
-      var id = e.id,
-          visible = e.visible;
-
-      if (id === this._kind) {
-        if (visible) {
-          this._map.addLayer(this._layer);
-        } else {
-          this._map.removeLayer(this._layer);
-        }
-      }
+      return this._gmx_id;
     }
   }, {
-    key: "httpPost",
-    value: function httpPost(url, options) {
-      var _this2 = this;
-
-      return new Promise(function (resolve) {
-        fetch(url, {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(options)
-        }).then(_this2._status.bind(_this2)).then(function (data) {
-          return resolve(data);
-        }).catch(function (e) {
-          return resolve();
-        });
-      });
+    key: "translate",
+    value: function translate(key) {
+      return T.getText(key);
     }
   }, {
-    key: "_status",
-    value: function _status(response) {
-      switch (response.status) {
-        case 200:
-          return response.json();
-
-        case 401:
-          return this._unAuthorized();
-
-        default:
-          alert(response.status);
-          return;
-      }
+    key: "m",
+    value: function m$1(value) {
+      return m(value);
     }
   }, {
-    key: "httpGet",
-    value: function httpGet(url) {
-      var _this3 = this;
-
-      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-      return new Promise(function (resolve) {
-        fetch("".concat(url, "?").concat(Object.keys(options).map(function (k) {
-          return "".concat(k, "=").concat(options[k]);
-        }).join('&')), {
-          method: 'GET',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }).then(_this3._status.bind(_this3)).then(function (data) {
-          return resolve(data);
-        }).catch(function (e) {
-          return resolve();
-        });
-      });
+    key: "rub",
+    value: function rub$1(value) {
+      return rub(value);
     }
   }, {
-    key: "_unAuthorized",
-    value: function _unAuthorized() {
-      if (!this._content.has('unauthorized')) {
-        this._content.add('unauthorized', UnAuthorized, {});
-      }
-
-      return this._content.show('unauthorized', {});
+    key: "date",
+    value: function date$1(value) {
+      return date(value);
+    }
+  }, {
+    key: "fmt",
+    value: function fmt$1(value) {
+      return fmt(value);
+    }
+  }, {
+    key: "ha",
+    value: function ha$1(value) {
+      return ha(value);
     }
   }]);
 
-  return Controller;
+  return View;
 }(EventTarget);
 
-var translate$7 = T.getText.bind(T);
-T.addText('rus', {
-  declaration: {
-    title: 'Лесная декларация №',
-    federalSubject: 'Наименование субъекта Российской Федерации',
-    executive: 'Орган исполнительной власти',
-    officer: 'Ответственное лицо',
-    lessee: 'Арендатор',
-    contract: 'Договор аренды',
-    purpose_of_forest: 'Целевое назначение лесов',
-    protective_forest_category: 'Категория защитных лесов',
-    forestry_name: 'Наименование лесничества (лесопарка)',
-    local_forestry_name: 'Наименование участкового лесничества',
-    tract_name: 'Наименование урочища (при наличии)',
-    quadrant_number: 'Номер лесного квартала',
-    forest_inventory_unit_number: 'Номер лесотаксационного выдела',
-    num: 'Номер лесосеки',
-    total_square: 'Площадь лесосеки (лесотаксационного выдела)',
-    felling_form: 'Форма рубки',
-    felling_type: 'Вид рубки',
-    farm: 'Хозяйство',
-    species: 'Вырубаемая древесная порода',
-    unit_of_measurement: 'Единицы измерения',
-    stock: 'Объем заготовки',
-    doc: 'Документы к договору аренды'
+var strings = {
+  rus: {
+    declaration: {
+      title: 'Лесная декларация №',
+      federalSubject: 'Наименование субъекта Российской Федерации',
+      executive: 'Орган исполнительной власти',
+      officer: 'Ответственное лицо',
+      lessee: 'Арендатор',
+      contract: 'Договор аренды',
+      purpose_of_forest: 'Целевое назначение лесов',
+      protective_forest_category: 'Категория защитных лесов',
+      forestry_name: 'Наименование лесничества (лесопарка)',
+      local_forestry_name: 'Наименование участкового лесничества',
+      tract_name: 'Наименование урочища (при наличии)',
+      quadrant_number: 'Номер лесного квартала',
+      forest_inventory_unit_number: 'Номер лесотаксационного выдела',
+      num: 'Номер лесосеки',
+      total_square: 'Площадь лесосеки (лесотаксационного выдела)',
+      felling_form: 'Форма рубки',
+      felling_type: 'Вид рубки',
+      farm: 'Хозяйство',
+      species: 'Вырубаемая древесная порода',
+      unit_of_measurement: 'Единицы измерения',
+      stock: 'Объем заготовки',
+      doc: 'Документы к договору аренды'
+    }
   }
-});
+};
+
 var STYLES = {
   fillStyle: 'rgba(49, 243, 80, 0.25)',
   strokeStyle: '#61E9F1',
@@ -21384,82 +24161,74 @@ var Declaration = /*#__PURE__*/function (_BaseView) {
 
   var _super = _createSuper(Declaration);
 
-  function Declaration(container, _ref) {
+  function Declaration(container) {
     var _this;
-
-    var layer = _ref.layer,
-        path = _ref.path;
 
     _classCallCheck(this, Declaration);
 
-    _this = _super.call(this, container);
-    _this._layer = layer;
-    _this._path = path;
+    _this = _super.call(this, container, strings);
 
     _this._container.classList.add('scanex-forestry-declaration');
 
-    _this._container.innerHTML = "<div class=\"header\">\n            <label>".concat(translate$7('declaration.title'), "</label>            \n            <label class=\"number\"></label>\n        </div>\n        <div class=\"scrollable\">\n            <table cellspacing=\"0\" cellpadding=\"0\">\n                <tbody>\n                    <!--\n                    <tr>\n                        <td>").concat(translate$7('declaration.federalSubject'), "</td>\n                        <td class=\"federal-subject\"></td>\n                    </tr>\n                    -->\n                    <tr>\n                        <td>").concat(translate$7('declaration.executive'), "</td>\n                        <td class=\"executive\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$7('declaration.officer'), "</td>\n                        <td class=\"officer\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$7('declaration.lessee'), "</td>\n                        <td class=\"lessee\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$7('declaration.contract'), "</td>\n                        <td class=\"contract\"></td>\n                    </tr>\n                </tbody>\n            </table>\n            <div>\n                <i class=\"scanex-declaration-icon doc\"></i>\n                <button class=\"open-doc\">").concat(translate$7('declaration.doc'), "</button>\n            </div>        \n            <table cellspacing=\"0\" cellpadding=\"0\">\n                <tbody>\n                    <tr>\n                        <td>").concat(translate$7('declaration.purpose_of_forest'), "</td>\n                        <td class=\"purpose_of_forest\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$7('declaration.protective_forest_category'), "</td>\n                        <td class=\"protective_forest_category\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$7('declaration.forestry_name'), "</td>\n                        <td class=\"forestry_name\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$7('declaration.local_forestry_name'), "</td>\n                        <td class=\"local_forestry_name\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$7('declaration.tract_name'), "</td>\n                        <td class=\"tract_name\"></td>\n                    </tr>                                \n                    <tr>\n                        <td>").concat(translate$7('declaration.quadrant_number'), "</td>\n                        <td class=\"quadrant_number\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$7('declaration.forest_inventory_unit_number'), "</td>\n                        <td class=\"forest_inventory_unit_number\"></td>\n                    </tr>\n                </tbody>\n            </table>\n            <div class=\"content\"></div>\n        </div>");
+    _this._container.innerHTML = "<div class=\"header\">\n            <label>".concat(_this.translate('declaration.title'), "</label>            \n            <label class=\"number\"></label>\n        </div>\n        <div class=\"scrollable\">\n            <table cellspacing=\"0\" cellpadding=\"0\">\n                <tbody>\n                    <!--\n                    <tr>\n                        <td>").concat(_this.translate('declaration.federalSubject'), "</td>\n                        <td class=\"federal-subject\"></td>\n                    </tr>\n                    -->\n                    <tr>\n                        <td>").concat(_this.translate('declaration.executive'), "</td>\n                        <td class=\"executive\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(_this.translate('declaration.officer'), "</td>\n                        <td class=\"officer\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(_this.translate('declaration.lessee'), "</td>\n                        <td class=\"lessee\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(_this.translate('declaration.contract'), "</td>\n                        <td class=\"contract\"></td>\n                    </tr>\n                </tbody>\n            </table>\n            <div>\n                <i class=\"scanex-declaration-icon doc\"></i>\n                <button class=\"open-doc\">").concat(_this.translate('declaration.doc'), "</button>\n            </div>        \n            <table cellspacing=\"0\" cellpadding=\"0\">\n                <tbody>\n                    <tr>\n                        <td>").concat(_this.translate('declaration.purpose_of_forest'), "</td>\n                        <td class=\"purpose_of_forest\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(_this.translate('declaration.protective_forest_category'), "</td>\n                        <td class=\"protective_forest_category\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(_this.translate('declaration.forestry_name'), "</td>\n                        <td class=\"forestry_name\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(_this.translate('declaration.local_forestry_name'), "</td>\n                        <td class=\"local_forestry_name\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(_this.translate('declaration.tract_name'), "</td>\n                        <td class=\"tract_name\"></td>\n                    </tr>                                \n                    <tr>\n                        <td>").concat(_this.translate('declaration.quadrant_number'), "</td>\n                        <td class=\"quadrant_number\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(_this.translate('declaration.forest_inventory_unit_number'), "</td>\n                        <td class=\"forest_inventory_unit_number\"></td>\n                    </tr>\n                </tbody>\n            </table>\n            <div class=\"content\"></div>\n        </div>");
     return _this;
   }
 
   _createClass(Declaration, [{
     key: "open",
-    value: function () {
-      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(_ref2) {
-        var gmx_id, data, DeclarationNumber, ExecutiveAuthority, ResponsiblePerson, Owner, DogovorNumber, CuttingAreas, _ref3, purpose_of_forest, protective_forest_category, forestry_name, local_forestry_name, tract_name, quadrant_number, forest_inventory_unit_number;
+    value: function open(_ref) {
+      var _this2 = this;
 
-        return regeneratorRuntime.wrap(function _callee$(_context) {
-          while (1) {
-            switch (_context.prev = _context.next) {
-              case 0:
-                gmx_id = _ref2.gmx_id, data = _objectWithoutProperties(_ref2, ["gmx_id"]);
-                this._gmx_id = gmx_id;
-                DeclarationNumber = data.DeclarationNumber, ExecutiveAuthority = data.ExecutiveAuthority, ResponsiblePerson = data.ResponsiblePerson, Owner = data.Owner, DogovorNumber = data.DogovorNumber, CuttingAreas = data.CuttingAreas;
-                this._container.querySelector('.number').innerText = DeclarationNumber || ''; // this._container.querySelector('.federal-subject').innerText = Region || '';
+      var gmx_id = _ref.gmx_id,
+          data = _objectWithoutProperties(_ref, ["gmx_id"]);
 
-                this._container.querySelector('.executive').innerText = ExecutiveAuthority || '';
-                this._container.querySelector('.officer').innerText = ResponsiblePerson || '';
-                this._container.querySelector('.lessee').innerText = Owner || '';
-                this._container.querySelector('.contract').innerText = DogovorNumber || '';
-                _ref3 = Array.isArray(CuttingAreas) && CuttingAreas.length ? CuttingAreas[0].volumes[0] : {}, purpose_of_forest = _ref3.purpose_of_forest, protective_forest_category = _ref3.protective_forest_category, forestry_name = _ref3.forestry_name, local_forestry_name = _ref3.local_forestry_name, tract_name = _ref3.tract_name, quadrant_number = _ref3.quadrant_number, forest_inventory_unit_number = _ref3.forest_inventory_unit_number;
-                this._container.querySelector('.purpose_of_forest').innerText = purpose_of_forest || '-';
-                this._container.querySelector('.protective_forest_category').innerText = protective_forest_category || '-';
-                this._container.querySelector('.forestry_name').innerText = forestry_name || '-';
-                this._container.querySelector('.local_forestry_name').innerText = local_forestry_name || '-';
-                this._container.querySelector('.tract_name').innerText = tract_name || '-';
-                this._container.querySelector('.quadrant_number').innerText = quadrant_number || '-';
-                this._container.querySelector('.forest_inventory_unit_number').innerText = forest_inventory_unit_number || '-';
-                this._container.querySelector('.content').innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tbody>                \n                ".concat(Array.isArray(CuttingAreas) ? CuttingAreas.map(function (_ref4) {
-                  var num = _ref4.num,
-                      volumes = _ref4.volumes;
-                  return "<tr class=\"num\">\n                        <td>".concat(translate$7('declaration.num'), "</td>\n                        <td>").concat(num || '-', "</td>\n                    </tr>\n                    ").concat(Array.isArray(volumes) ? volumes.map(function (_ref5) {
-                    var total_square = _ref5.total_square,
-                        felling_form = _ref5.felling_form,
-                        felling_type = _ref5.felling_type,
-                        farm = _ref5.farm,
-                        species = _ref5.species,
-                        unit_of_measurement = _ref5.unit_of_measurement,
-                        stock = _ref5.stock;
-                    return "<tr>\n                        <td>".concat(translate$7('declaration.total_square'), "</td>\n                            <td class=\"amount\">").concat(total_square || '-', "</td>\n                        </tr>\n                        <tr>\n                            <td>").concat(translate$7('declaration.felling_form'), "</td>\n                            <td class=\"amount\">").concat(felling_form || '-', "</td>\n                        </tr>\n                        <tr>\n                            <td>").concat(translate$7('declaration.felling_type'), "</td>\n                            <td class=\"amount\">").concat(felling_type || '-', "</td>\n                        </tr>\n                        <tr>\n                            <td>").concat(translate$7('declaration.farm'), "</td>\n                            <td class=\"amount\">").concat(farm || '-', "</td>\n                        </tr>\n                        <tr>\n                            <td>").concat(translate$7('declaration.species'), "</td>\n                            <td class=\"amount\">").concat(species || '-', "</td>\n                        </tr>                        \n                        <tr>\n                            <td>").concat(translate$7('declaration.stock'), "</td>\n                            <td class=\"amount\">").concat(stock || '-', "</td>\n                        </tr>");
-                  }).join('') : '');
-                }).join('') : '', "              \n            </tbody>\n        </table>");
+      _get(_getPrototypeOf(Declaration.prototype), "open", this).call(this);
 
-                _get(_getPrototypeOf(Declaration.prototype), "open", this).call(this);
+      this._gmx_id = gmx_id;
+      var DeclarationNumber = data.DeclarationNumber,
+          ExecutiveAuthority = data.ExecutiveAuthority,
+          ResponsiblePerson = data.ResponsiblePerson,
+          Owner = data.Owner,
+          DogovorNumber = data.DogovorNumber,
+          CuttingAreas = data.CuttingAreas;
+      this._container.querySelector('.number').innerText = DeclarationNumber || ''; // this._container.querySelector('.federal-subject').innerText = Region || '';
 
-              case 18:
-              case "end":
-                return _context.stop();
-            }
-          }
-        }, _callee, this);
-      }));
+      this._container.querySelector('.executive').innerText = ExecutiveAuthority || '';
+      this._container.querySelector('.officer').innerText = ResponsiblePerson || '';
+      this._container.querySelector('.lessee').innerText = Owner || '';
+      this._container.querySelector('.contract').innerText = DogovorNumber || '';
 
-      function open(_x) {
-        return _open.apply(this, arguments);
-      }
+      var _ref2 = Array.isArray(CuttingAreas) && CuttingAreas.length ? CuttingAreas[0].volumes[0] : {},
+          purpose_of_forest = _ref2.purpose_of_forest,
+          protective_forest_category = _ref2.protective_forest_category,
+          forestry_name = _ref2.forestry_name,
+          local_forestry_name = _ref2.local_forestry_name,
+          tract_name = _ref2.tract_name,
+          quadrant_number = _ref2.quadrant_number,
+          forest_inventory_unit_number = _ref2.forest_inventory_unit_number;
 
-      return open;
-    }()
+      this._container.querySelector('.purpose_of_forest').innerText = purpose_of_forest || '';
+      this._container.querySelector('.protective_forest_category').innerText = protective_forest_category || '';
+      this._container.querySelector('.forestry_name').innerText = forestry_name || '';
+      this._container.querySelector('.local_forestry_name').innerText = local_forestry_name || '';
+      this._container.querySelector('.tract_name').innerText = tract_name || '';
+      this._container.querySelector('.quadrant_number').innerText = quadrant_number || '';
+      this._container.querySelector('.forest_inventory_unit_number').innerText = forest_inventory_unit_number || '';
+      this._container.querySelector('.content').innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tbody>                \n                ".concat(Array.isArray(CuttingAreas) ? CuttingAreas.map(function (_ref3) {
+        var num = _ref3.num,
+            volumes = _ref3.volumes;
+        return "<tr class=\"num\">\n                        <td>".concat(_this2.translate('declaration.num'), "</td>\n                        <td>").concat(num || '', "</td>\n                    </tr>\n                    ").concat(Array.isArray(volumes) ? volumes.map(function (_ref4) {
+          var total_square = _ref4.total_square,
+              felling_form = _ref4.felling_form,
+              felling_type = _ref4.felling_type,
+              farm = _ref4.farm,
+              species = _ref4.species,
+              unit_of_measurement = _ref4.unit_of_measurement,
+              stock = _ref4.stock;
+          return "<tr>\n                            <td>".concat(_this2.translate('declaration.total_square'), ", ").concat(_this2.translate('units.ha'), "</td>\n                            <td class=\"amount\">").concat(_this2.ha(total_square), "</td>\n                        </tr>\n                        <tr>\n                            <td>").concat(_this2.translate('declaration.felling_form'), "</td>\n                            <td class=\"amount\">").concat(felling_form || '', "</td>\n                        </tr>\n                        <tr>\n                            <td>").concat(_this2.translate('declaration.felling_type'), "</td>\n                            <td class=\"amount\">").concat(felling_type || '', "</td>\n                        </tr>\n                        <tr>\n                            <td>").concat(_this2.translate('declaration.farm'), "</td>\n                            <td class=\"amount\">").concat(farm || '', "</td>\n                        </tr>\n                        <tr>\n                            <td>").concat(_this2.translate('declaration.species'), "</td>\n                            <td class=\"amount\">").concat(species || '', "</td>\n                        </tr>                        \n                        <tr>\n                            <td>").concat(_this2.translate('declaration.stock'), ", ").concat(_this2.translate('units.m'), "<sup>3</sup></td>\n                            <td class=\"amount\">").concat(_this2.m(stock), "</td>\n                        </tr>");
+        }).join('') : '');
+      }).join('') : '', "              \n            </tbody>\n        </table>");
+    }
   }, {
     key: "getStyleHook",
     value: function getStyleHook(kind, item) {
@@ -21479,10 +24248,10 @@ var Declaration = /*#__PURE__*/function (_BaseView) {
   }]);
 
   return Declaration;
-}(BaseView);
+}(View);
 
-var Declarations = /*#__PURE__*/function (_Controller) {
-  _inherits(Declarations, _Controller);
+var Declarations = /*#__PURE__*/function (_LayerController) {
+  _inherits(Declarations, _LayerController);
 
   var _super = _createSuper(Declarations);
 
@@ -21490,9 +24259,10 @@ var Declarations = /*#__PURE__*/function (_Controller) {
     var _this;
 
     var map = _ref.map,
+        content = _ref.content,
+        notifications = _ref.notifications,
         layer = _ref.layer,
         legend = _ref.legend,
-        content = _ref.content,
         path = _ref.path;
 
     _classCallCheck(this, Declarations);
@@ -21500,16 +24270,15 @@ var Declarations = /*#__PURE__*/function (_Controller) {
     _this = _super.call(this, {
       kind: 'declarations',
       map: map,
+      content: content,
+      notifications: notifications,
       layer: layer,
-      legend: legend,
-      content: content
+      legend: legend
     });
     _this._path = path;
+    _this._view = _this._content.add(_this._kind, Declaration);
 
-    _this._content.add('declarations', Declaration, {
-      layer: _this._layer,
-      path: _this._path
-    }).on('close', function () {
+    _this._view.on('close', function () {
       _this._gmx_id = null;
 
       _this._layer.repaint();
@@ -21522,57 +24291,50 @@ var Declarations = /*#__PURE__*/function (_Controller) {
     key: "_click",
     value: function () {
       var _click2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e) {
-        var mode, _e$gmx, id, properties, data;
+        var _e$gmx, id, properties, gmx_id, data;
 
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
+                if (!this.canClick) {
+                  _context.next = 12;
+                  break;
+                }
+
                 L.DomEvent.stopPropagation(e);
-                mode = this._content.getCurrentId();
-
-                if (!(!mode || mode === this._kind)) {
-                  _context.next = 16;
-                  break;
-                }
-
                 _e$gmx = e.gmx, id = _e$gmx.id, properties = _e$gmx.properties;
+                gmx_id = this._view.toggle(id);
 
-                if (!(this._gmx_id && this._gmx_id === id)) {
-                  _context.next = 8;
+                if (!gmx_id) {
+                  _context.next = 11;
                   break;
                 }
 
-                this._content.close();
-
-                _context.next = 16;
-                break;
-
-              case 8:
-                _context.next = 10;
+                _context.next = 7;
                 return this.httpGet("".concat(this._path, "/Forest/GetForestDeclarationInformation"), {
                   ForestDeclarationID: properties.id,
                   debug: true
                 });
 
-              case 10:
+              case 7:
                 data = _context.sent;
 
-                if (!data) {
-                  _context.next = 16;
-                  break;
+                if (data) {
+                  this._view.open(_objectSpread2({
+                    gmx_id: gmx_id
+                  }, data));
+
+                  this._layer.repaint();
                 }
 
-                this._gmx_id = id;
-                _context.next = 15;
-                return this._content.show('declarations', _objectSpread2({
-                  gmx_id: this._gmx_id
-                }, data));
+                _context.next = 12;
+                break;
 
-              case 15:
-                this._layer.repaint();
+              case 11:
+                this._view.close();
 
-              case 16:
+              case 12:
               case "end":
                 return _context.stop();
             }
@@ -21589,23 +24351,24 @@ var Declarations = /*#__PURE__*/function (_Controller) {
   }]);
 
   return Declarations;
-}(Controller);
+}(LayerController);
 
-var translate$8 = T.getText.bind(T);
-T.addText('rus', {
-  hotspot: {
-    title: 'Приблизьте карту для загрузки на таймлайн',
-    fire: 'Пожар',
-    date: 'Дата обнаружения',
-    satelite: 'Спутник',
-    from: 'Источник',
-    scanex: 'СКАНЭКС',
-    confidence: 'Достоверность',
-    brightness: 'Температура (К)',
-    frp: 'Мощность пожара',
-    coords: 'Координаты'
+var strings$1 = {
+  rus: {
+    hotspot: {
+      title: 'Приблизьте карту для загрузки на таймлайн',
+      fire: 'Пожар',
+      date: 'Дата обнаружения',
+      satelite: 'Спутник',
+      from: 'Источник',
+      scanex: 'СКАНЭКС',
+      confidence: 'Достоверность',
+      brightness: 'Температура (К)',
+      frp: 'Мощность пожара',
+      coords: 'Координаты'
+    }
   }
-});
+};
 
 var Fires = /*#__PURE__*/function (_BaseView) {
   _inherits(Fires, _BaseView);
@@ -21615,23 +24378,22 @@ var Fires = /*#__PURE__*/function (_BaseView) {
   function Fires(container) {
     _classCallCheck(this, Fires);
 
-    return _super.call(this, container);
+    return _super.call(this, container, strings$1);
   }
 
   _createClass(Fires, [{
     key: "open",
     value: function open(props) {
-      var dateStr = new Date(props.Timestamp * 1000).toLocaleString();
-      this._container.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <thead>\n                <tr>\n                    <th colspan=\"2\" class=\"title\">".concat(translate$8('hotspot.fire'), "</th>\n                </tr>\n            </thead>\n            <tbody>\n                <tr>\n                    <td class=\"name\">").concat(translate$8('hotspot.date'), "</td>\n                    <td class=\"value\">").concat(dateStr, "</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(translate$8('hotspot.satelite'), "</td>\n                    <td class=\"value\">").concat(props.Satellite, "</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(translate$8('hotspot.from'), "</td>\n                    <td class=\"value\">").concat(translate$8('hotspot.scanex'), "</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(translate$8('hotspot.confidence'), "</td>\n                    <td class=\"value\">").concat(props.Confidence, " %</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(translate$8('hotspot.brightness'), "</td>\n                    <td class=\"value\">").concat(props.Brightness, "</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(translate$8('hotspot.frp'), "</td>\n                    <td class=\"value\">").concat(props.Frp, "</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(translate$8('hotspot.coords'), "</td>\n                    <td class=\"value\">").concat(props.coords, "</td>\n                </tr>\n            </tbody>\n        </table>");
-
       _get(_getPrototypeOf(Fires.prototype), "open", this).call(this);
+
+      this._container.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <thead>\n                <tr>\n                    <th colspan=\"2\" class=\"title\">".concat(this.translate('hotspot.fire'), "</th>\n                </tr>\n            </thead>\n            <tbody>\n                <tr>\n                    <td class=\"name\">").concat(this.translate('hotspot.date'), "</td>\n                    <td class=\"value\">").concat(this.date(props.Timestamp * 1000), "</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(this.translate('hotspot.satelite'), "</td>\n                    <td class=\"value\">").concat(props.Satellite, "</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(this.translate('hotspot.from'), "</td>\n                    <td class=\"value\">").concat(this.translate('hotspot.scanex'), "</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(this.translate('hotspot.confidence'), "</td>\n                    <td class=\"value\">").concat(props.Confidence, " %</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(this.translate('hotspot.brightness'), "</td>\n                    <td class=\"value\">").concat(props.Brightness, "</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(this.translate('hotspot.frp'), "</td>\n                    <td class=\"value\">").concat(props.Frp, "</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(this.translate('hotspot.coords'), "</td>\n                    <td class=\"value\">").concat(props.coords, "</td>\n                </tr>\n            </tbody>\n        </table>");
     }
   }]);
 
   return Fires;
-}(BaseView);
+}(View);
 
-var translate$9 = T.getText.bind(T);
+var translate$4 = T.getText.bind(T);
 var hotSpotLayerID = '9DC30891452449DD8D551D0AA62FFF54';
 
 var Fires$1 = /*#__PURE__*/function (_EventTarget) {
@@ -21644,6 +24406,7 @@ var Fires$1 = /*#__PURE__*/function (_EventTarget) {
 
     var map = _ref.map,
         content = _ref.content,
+        notifications = _ref.notifications,
         layers = _ref.layers,
         legend = _ref.legend,
         dateInterval = _ref.dateInterval,
@@ -21659,12 +24422,11 @@ var Fires$1 = /*#__PURE__*/function (_EventTarget) {
     _this._dateInterval = dateInterval;
     _this._permissions = permissions;
 
-    _this._legend.addComponent('fires', translate$9('legend.fires'));
+    _this._legend.addComponent('fires', translate$4('legend.fires'));
 
     _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
 
-    _this._content.add('fires', Fires, {});
-
+    _this._view = _this._content.add('fires', Fires);
     return _this;
   }
 
@@ -21721,38 +24483,27 @@ var Fires$1 = /*#__PURE__*/function (_EventTarget) {
     key: "_click",
     value: function () {
       var _click2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(e) {
-        var properties, latlng, coords, event;
+        var properties, latlng, coords;
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
               case 0:
-                L.DomEvent.stopPropagation(e);
-                _context2.prev = 1;
-                properties = e.gmx.properties, latlng = e.latlng;
-                coords = L.gmxUtil.formatCoordinates(latlng, 1);
-                _context2.next = 6;
-                return this._content.show('fires', _objectSpread2({
-                  coords: coords
-                }, properties));
+                if (this.canClick) {
+                  L.DomEvent.stopPropagation(e);
+                  properties = e.gmx.properties, latlng = e.latlng;
+                  coords = L.gmxUtil.formatCoordinates(latlng, 1);
 
-              case 6:
-                _context2.next = 14;
-                break;
+                  this._view.open(_objectSpread2({
+                    coords: coords
+                  }, properties));
+                }
 
-              case 8:
-                _context2.prev = 8;
-                _context2.t0 = _context2["catch"](1);
-                event = document.createEvent('Event');
-                event.initEvent('error', false, false);
-                event.detail = _context2.t0;
-                this.dispatchEvent(event);
-
-              case 14:
+              case 1:
               case "end":
                 return _context2.stop();
             }
           }
-        }, _callee2, this, [[1, 8]]);
+        }, _callee2, this);
       }));
 
       function _click(_x) {
@@ -22990,72 +25741,56 @@ var pikaday = createCommonjsModule(function (module, exports) {
   });
 });
 
-var translate$a = T.getText.bind(T);
-T.addText('rus', {
-  incident: {
-    title: 'Рубка',
-    titleFire: 'Гарь',
-    titleDisease: 'Патология',
-    areaFire: 'Пройденная пожаром площадь (Га)',
-    areaFire1: 'Пройденная пожаром площадь насаждений, из которых возможна реализация древесины (Га)',
-    areaSpec: 'Площадь культур (Га)',
-    areaSpecNew: 'Площадь молодняков естественного происхождения (Га)',
-    areaFireLast: 'Площадь горельников прошлых лет (Га)',
-    areaSpecNot: 'Площадь редин и не покрытых лесом земель (Га)',
-    arend: 'Арендатор',
-    titleValue: 'Объем изменений запасов древесины',
-    estimValue: 'по прогнозам системы',
-    checkedValue: 'по данным натурной проверки',
-    Expert: 'Ответственный эксперт',
-    CheckingExpert: 'Ответственный за проверку инцидента',
-    Probability: 'Процент вероятности инцидента',
-    Intensity: 'Интесивность',
-    date: 'Дата обнаружения',
-    dateInspect: 'Дата обследования',
-    areaAll: 'Площадь повреждения всего (Га)',
-    areaArenda: 'Площадь повреждения на арендованной территории (Га)',
-    specialCommon: 'Преобладающая природа насаждений',
-    dateCheck: 'Срок провевдения натурной проверки',
-    comment: 'Комментарий',
-    status: 'Статус',
-    bpla: 'Снимок с БПЛА',
-    // bplaTitle: 'Снимок зоны инцидента с БПЛА.tiff',
-    BplaView: 'Просмотр',
-    BplaDownload: 'Загрузить',
-    BplaRemove: 'Удалить',
-    docs: 'Документы',
-    detail: 'Детали',
-    editGeo: 'Редактировать контур',
-    saveGeo: 'Сохранить изменения',
-    downloadGeo: 'Выгрузить контур',
-    verRastr: 'Растр вероятности',
-    maskWater: 'Маски облачности и воды',
-    IncidentCheck: 'Отправить на проверку',
-    IncidentAccept: 'Подтвердить инцидент',
-    IncidentDecline: 'Отклонить инцидент'
-  },
-  unit: {
-    m: 'м',
-    m3: 'куб. м',
-    ha: 'га'
+var strings$2 = {
+  rus: {
+    incident: {
+      title: 'Рубка',
+      titleFire: 'Гарь',
+      titleDisease: 'Патология',
+      areaFire: 'Пройденная пожаром площадь (Га)',
+      areaFire1: 'Пройденная пожаром площадь насаждений, из которых возможна реализация древесины (Га)',
+      areaSpec: 'Площадь культур (Га)',
+      areaSpecNew: 'Площадь молодняков естественного происхождения (Га)',
+      areaFireLast: 'Площадь горельников прошлых лет (Га)',
+      areaSpecNot: 'Площадь редин и не покрытых лесом земель (Га)',
+      arend: 'Арендатор',
+      titleValue: 'Объем изменений запасов древесины',
+      estimValue: 'по прогнозам системы',
+      checkedValue: 'по данным натурной проверки',
+      Expert: 'Ответственный эксперт',
+      CheckingExpert: 'Ответственный за проверку инцидента',
+      Probability: 'Процент вероятности инцидента',
+      Intensity: 'Интесивность',
+      date: 'Дата обнаружения',
+      dateInspect: 'Дата обследования',
+      areaAll: 'Площадь повреждения всего (Га)',
+      areaArenda: 'Площадь повреждения на арендованной территории (Га)',
+      specialCommon: 'Преобладающая природа насаждений',
+      dateCheck: 'Срок провевдения натурной проверки',
+      comment: 'Комментарий',
+      status: 'Статус',
+      bpla: 'Снимок с БПЛА',
+      // bplaTitle: 'Снимок зоны инцидента с БПЛА.tiff',
+      BplaView: 'Просмотр',
+      BplaDownload: 'Загрузить',
+      BplaRemove: 'Удалить',
+      docs: 'Документы',
+      detail: 'Детали',
+      editGeo: 'Редактировать контур',
+      saveGeo: 'Сохранить изменения',
+      downloadGeo: 'Выгрузить контур',
+      verRastr: 'Растр вероятности',
+      maskWater: 'Маски облачности и воды',
+      IncidentCheck: 'Отправить на проверку',
+      IncidentAccept: 'Подтвердить инцидент',
+      IncidentDecline: 'Отклонить инцидент'
+    }
   }
-}); // 1	"неподтвержденная"
+};
+
 // 2	"в работе"
 // 3	"ложная"
 // 4	"подтвержденная"
-
-var _parseVyd = function _parseVyd(arr) {
-  return arr.map(function (data) {
-    var str = data.volumes.map(function (it) {
-      return "\n\t\t\t<tr>\n\t\t\t\t<td class=\"species\">".concat(it.species, "</td>\n\t\t\t\t<td class=\"confirmed_vol\">").concat(it.confirmed_vol, " ").concat(translate$a('unit.m'), "<sup>3</sup></td>\n\t\t\t\t<td class=\"probable_volume\"><span class=\"span-gray\">").concat(it.probable_volume, " ").concat(translate$a('unit.m'), "<sup>3</sup></span></td>\n\t\t\t</tr>\n\t\t\t");
-    }).join('\n');
-    return "\n\t\t\t<div class=\"vydel\">\n\t\t\t\t<div class=\"table1_row\">".concat(translate$a('incident.arend'), " <span>").concat(data.renter, "</span></div>\n\t\t\t\t<table cellspacing=\"0\" cellpadding=\"0\">\n\t\t\t\t\t<tbody>\n\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t<th class=\"species\">").concat(translate$a('incident.titleValue'), "</th>\n\t\t\t\t\t\t\t<th class=\"confirmed_vol\">").concat(translate$a('incident.estimValue'), "</th>\n\t\t\t\t\t\t\t<th class=\"probable_volume\">").concat(translate$a('incident.checkedValue'), "</th>\n\n\t\t\t\t\t\t</tr>\n\t\t\t\t").concat(str, "\n\t\t\t\t\t</tbody>\n\t\t\t\t</table>\n\t\t\t</div>");
-  }).join('\n');
-};
-
-var _parseProps = function _parseProps(props) {
-  return "\n\t\t<div class=\"table1_row\">".concat(translate$a('incident.status'), " <span>").concat(props.Status, "</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$a('incident.Expert'), " <span>").concat(props.Expert || '', "</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$a('incident.CheckingExpert'), " <span>").concat(props.CheckingExpert || '', "</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$a('incident.Probability'), " <span>").concat(Math.floor(10000 * (props.Probability || 0)) / 100, " %</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$a('incident.Intensity'), " <span>").concat(props.Intensity || 0, " ").concat(translate$a('unit.m'), "</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$a('incident.date'), " <span>").concat(props.Detected || '', "</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$a('incident.areaAll'), " <span>").concat((props.Area || 0).toFixed(2), "</span></div>\n\t\t<div class=\"table1_row\">").concat(translate$a('incident.dateCheck'), " <input class=\"span-gray dateCheck\" type=\"text\" placeholder=\"\" value=").concat(props.CheckDate || '', "></div>\n\t");
-};
 
 var Incidents = /*#__PURE__*/function (_BaseView) {
   _inherits(Incidents, _BaseView);
@@ -23071,34 +25806,34 @@ var Incidents = /*#__PURE__*/function (_BaseView) {
 
     _classCallCheck(this, Incidents);
 
-    _this = _super.call(this, container, {});
+    _this = _super.call(this, container, strings$2);
     _this._path = path;
     _this._layer = layer;
     _this._permission = permissions;
     _this._buttonsStr = '';
 
     if (_this._permission.IncidentDocuments) {
-      _this._buttonsStr += "<button class=\"detailBtn button\">".concat(translate$a('incident.detail'), "</button>");
+      _this._buttonsStr += "<button class=\"detailBtn button\">".concat(_this.translate('incident.detail'), "</button>");
     }
 
     if (_this._permission.IncidentEdit) {
-      _this._buttonsStr += "<button class=\"editGeo button\">".concat(translate$a('incident.editGeo'), "</button>");
+      _this._buttonsStr += "<button class=\"editGeo button\">".concat(_this.translate('incident.editGeo'), "</button>");
     }
 
     if (_this._permission.IncidentSave) {
-      _this._buttonsStr += "<button class=\"saveGeo button\">".concat(translate$a('incident.saveGeo'), "</button>");
+      _this._buttonsStr += "<button class=\"saveGeo button\">".concat(_this.translate('incident.saveGeo'), "</button>");
     }
 
     if (_this._permission.ContiurUnload) {
-      _this._buttonsStr += "<button class=\"download button\">".concat(translate$a('incident.downloadGeo'), "</button>");
+      _this._buttonsStr += "<button class=\"download button\">".concat(_this.translate('incident.downloadGeo'), "</button>");
     }
 
     if (_this._permission.ProbabilityRasterView) {
-      _this._buttonsStr += "<button class=\"verRastr button\">".concat(translate$a('incident.verRastr'), "</button>");
+      _this._buttonsStr += "<button class=\"verRastr button\">".concat(_this.translate('incident.verRastr'), "</button>");
     }
 
     if (_this._permission.CloudMaskView) {
-      _this._buttonsStr += "<button class=\"maskWater button\">".concat(translate$a('incident.maskWater'), "</button>");
+      _this._buttonsStr += "<button class=\"maskWater button\">".concat(_this.translate('incident.maskWater'), "</button>");
     }
 
     _this._container.classList.add('scanex-forestry-incident');
@@ -23107,61 +25842,112 @@ var Incidents = /*#__PURE__*/function (_BaseView) {
   }
 
   _createClass(Incidents, [{
-    key: "_render",
-    value: function _render(props, data) {
-      data = data || {};
+    key: "_formatDate",
+    value: function _formatDate(str) {
+      return str && this.date(new Date(str)) || '';
+    }
+  }, {
+    key: "_parseVyd",
+    value: function _parseVyd(arr) {
+      var _this2 = this;
+
+      return arr.map(function (data) {
+        if (Array.isArray(data.volumes) && data.volumes.length) {
+          var str = data.volumes.map(function (it) {
+            return "\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"species\">".concat(it.species, " (").concat(it.storey, ")</td>\n\t\t\t\t\t\t<td class=\"probable_volume\">").concat(_this2.m(it.probable_volume), " ").concat(_this2.translate('units.m'), "<sup>3</sup></td>\n\t\t\t\t\t\t<td class=\"confirmed_volume\"><span class=\"\"><input class=\"span-gray confirmed_vol\" id=\"").concat(it.wood_element_id, "\" type=\"text\" placeholder=\"\" value=\"").concat(_this2.m(it.confirmed_vol || 0), "\" />&nbsp;").concat(_this2.translate('units.m'), "<sup>3</sup></span></td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t");
+          }).join('\n');
+          return "\n\t\t\t\t<div class=\"vydel\">\n\t\t\t\t\t<div class=\"table2_row\">".concat(_this2.translate('incident.arend'), " <span>").concat(data.renter || '', "</span></div>\n\t\t\t\t\t<table cellspacing=\"0\" cellpadding=\"0\">\n\t\t\t\t\t\t<tbody>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<th class=\"species\">").concat(_this2.translate('incident.titleValue'), "</th>\n\t\t\t\t\t\t\t\t<th class=\"probable_volume\">").concat(_this2.translate('incident.estimValue'), "</th>\n\t\t\t\t\t\t\t\t<th class=\"confirmed_volume\">").concat(_this2.translate('incident.checkedValue'), "</th>\n\t\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t").concat(str, "\n\t\t\t\t\t\t</tbody>\n\t\t\t\t\t</table>\n\t\t\t\t</div>");
+        } else {
+          return '';
+        }
+      }).join('\n');
+    }
+  }, {
+    key: "_parseProps",
+    value: function _parseProps(props) {
+      return "\n\t\t\t<div class=\"table1_row\">".concat(this.translate('incident.status'), " <span>").concat(props.Status, "</span></div>\n\t\t\t<div class=\"table1_row\">").concat(this.translate('incident.Expert'), " <span>").concat(props.Expert || '', "</span></div>\n\t\t\t<div class=\"table1_row\">").concat(this.translate('incident.CheckingExpert'), " <span>").concat(props.CheckingExpert || '', "</span></div>\n\t\t\t<div class=\"table1_row\">").concat(this.translate('incident.Probability'), " <span>").concat(this.fmt(Math.floor(10000 * (props.Probability || 0)) / 100), " %</span></div>\n\t\t\t<div class=\"table1_row\">").concat(this.translate('incident.Intensity'), " <span>").concat(props.Intensity || 0, "</span></div>\n\t\t\t<div class=\"table1_row\">").concat(this.translate('incident.date'), " <span>").concat(this._formatDate(props.Detected), "</span></div>\n\t\t\t<div class=\"table1_row\">").concat(this.translate('incident.areaAll'), " <span>").concat(this.ha(props.Area || 0), "</span></div>\n\t\t\t<div class=\"table1_row\">").concat(this.translate('incident.dateCheck'), " <input class=\"span-gray dateCheck\" type=\"text\" placeholder=\"\" value=").concat(this._formatDate(props.CheckDate), "></div>\n\t\t");
+    }
+  }, {
+    key: "open",
+    value: function open(data) {
+      var _this3 = this;
+
+      _get(_getPrototypeOf(Incidents.prototype), "open", this).call(this);
+
+      var props = data.properties || {};
       var title = '';
 
       switch (props.class_id) {
         case 1:
           // Рубка
-          title = "<div class=\"header1\">".concat(translate$a('incident.title'), "</div>");
+          title = "<div class=\"header1\">".concat(this.translate('incident.title'), "</div>");
           break;
 
         case 2:
           // ветровалы 
-          title = "<div class=\"header1\">".concat(translate$a('incident.titleFire'), "</div>");
+          title = "<div class=\"header1\">".concat(this.translate('incident.titleFire'), "</div>");
           break;
 
         case 3:
           // Патология
-          title = "<div class=\"header1\">".concat(translate$a('incident.titleDisease'), "</div>");
+          title = "<div class=\"header1\">".concat(this.translate('incident.titleDisease'), "</div>");
           break;
 
         case 4:
           // Гарь
-          title = "<div class=\"header1\">".concat(translate$a('incident.titleFire'), "</div>");
+          title = "<div class=\"header1\">".concat(this.translate('incident.titleFire'), "</div>");
           break;
 
         default:
-          title = "<div class=\"header1\">".concat(translate$a('incident.title'), "</div>");
+          title = "<div class=\"header1\">".concat(this.translate('incident.title'), "</div>");
           break;
       }
 
       this._container.classList.add('minHeight');
 
-      var str1 = _parseVyd(data.ForestChange || []);
+      var str1 = this._parseVyd(data.ForestChange || []);
 
-      var str2 = _parseProps(data);
+      var str2 = this._parseProps(data);
 
-      this._container.innerHTML = "\n\t\t\t".concat(title, "\n\n\t\t\t<div class=\"inside\">\n\t\t\t\t<div class=\"inside_left\">\n\t\t\t\t\t<div class=\"table1\">\n\t\t\t\t\t\t").concat(str2, "\n\n\t\t\t\t\t\t<div class=\"table1_row\">").concat(translate$a('incident.comment'), "</div>\n\t\t\t\t\t\t\n\t\t\t\t\t\t<textarea class=\"usr-text-area\" ").concat(this._permission.IncidentEdit && data.Status === 'в работе' ? '' : 'disabled', ">").concat(data.Comment || '', "</textarea>\n\t\t\t\t\t\t<div class=\"table1_row \">").concat(translate$a('incident.bpla'), ":</div>\n\n\t\t\t\t\t\t<div class=\"table1_row \">\n\t\t\t\t\t\t\t<span>").concat(props.uav_date || '', "</span>\n\t\t\t\t\t\t\t<span>").concat(props.uav_description || '', "</span>\n\t\t\t\t\t\t\t<div class=\"group_buttons\">\n\t\t\t\t\t\t\t\t").concat(this._permission.BplaView && props.uav_raster_id ? "<div class=\"mini-green-but BplaView\">".concat(translate$a('incident.BplaView'), "</div>") : '', "\n\t\t\t\t\t\t\t\t").concat(this._permission.BplaDownload ? "<div class=\"mini-green-but BplaDownload\">".concat(translate$a('incident.BplaDownload'), "</div>") : '', "\n\t\t\t\t\t\t\t\t").concat(this._permission.BplaRemove ? "<div class=\"mini-green-but BplaRemove\">".concat(translate$a('incident.BplaRemove'), "</div>") : '', "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t").concat(str1, "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"rubka\">\n\t\t\t\t\t<div class=\"right-wrapper-top \">\n\t\t\t\t\t\t").concat(this._buttonsStr, "\n\t\t\t\t\t </div>\n\t\t\t\t\t<hr />\n\t\t\t\t\t <div class=\"right-wrapper-bottom \">\n\t\t\t\t\t\t").concat(this._permission.IncidentAccept && data.Status === 'в работе' ? "<button class=\"IncidentAccept button\">".concat(translate$a('incident.IncidentAccept'), "</button>") : '', "\n\t\t\t\t\t\t").concat(this._permission.IncidentCheck && data.Status === 'неподтвержденная' ? "<button class=\"IncidentCheck button\">".concat(translate$a('incident.IncidentCheck'), "</button>") : '', "\n\t\t\t\t\t\t").concat(this._permission.IncidentDecline && (data.Status === 'неподтвержденная' || data.Status === 'в работе') ? "<button class=\"IncidentDecline button\">".concat(translate$a('incident.IncidentDecline'), "</button>") : '', "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>");
+      this._container.innerHTML = "\n\t\t\t".concat(title, "\n\n\t\t\t<div class=\"inside\">\n\t\t\t\t<div class=\"inside_left\">\n\t\t\t\t\t<div class=\"table1\">\n\t\t\t\t\t\t").concat(str2, "\n\n\t\t\t\t\t\t<div class=\"table1_row\">").concat(this.translate('incident.comment'), "</div>\n\t\t\t\t\t\t\n\t\t\t\t\t\t<textarea class=\"usr-text-area\" ").concat(this._permission.IncidentEdit && data.Status === 'в работе' ? '' : 'disabled', ">").concat(data.Comment || '', "</textarea>\n\t\t\t\t\t\t<div class=\"table1_row \">").concat(this.translate('incident.bpla'), ":</div>\n\n\t\t\t\t\t\t<div class=\"table1_row \">\n\t\t\t\t\t\t\t<span>").concat(props.uav_date || '', "</span>\n\t\t\t\t\t\t\t<span>").concat(props.uav_description || '', "</span>\n\t\t\t\t\t\t\t<div class=\"group_buttons\">\n\t\t\t\t\t\t\t\t").concat(this._permission.BplaView && props.uav_raster_id ? "<div class=\"mini-green-but BplaView\">".concat(this.translate('incident.BplaView'), "</div>") : '', "\n\t\t\t\t\t\t\t\t").concat(this._permission.BplaDownload ? "<div class=\"mini-green-but BplaDownload\">".concat(this.translate('incident.BplaDownload'), "</div>") : '', "\n\t\t\t\t\t\t\t\t").concat(this._permission.BplaRemove && props.uav_raster_id ? "<div class=\"mini-green-but BplaRemove\">".concat(this.translate('incident.BplaRemove'), "</div>") : '', "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t").concat(str1, "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"rubka\">\n\t\t\t\t\t<div class=\"right-wrapper-top \">\n\t\t\t\t\t\t").concat(this._buttonsStr, "\n\t\t\t\t\t </div>\n\t\t\t\t\t<hr />\n\t\t\t\t\t <div class=\"right-wrapper-bottom \">\n\t\t\t\t\t\t").concat(this._permission.IncidentAccept && data.Status === 'в работе' ? "<button class=\"IncidentAccept button\">".concat(this.translate('incident.IncidentAccept'), "</button>") : '', "\n\t\t\t\t\t\t").concat(this._permission.IncidentCheck && data.Status === 'неподтвержденная' ? "<button class=\"IncidentCheck button\">".concat(this.translate('incident.IncidentCheck'), "</button>") : '', "\n\t\t\t\t\t\t").concat(this._permission.IncidentDecline && (data.Status === 'неподтвержденная' || data.Status === 'в работе') ? "<button class=\"IncidentDecline button\">".concat(this.translate('incident.IncidentDecline'), "</button>") : '', "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>");
 
       var node = this._container.querySelector('.verRastr');
 
       if (node) {
-        node.addEventListener('click', this._toggleRaster.bind(this));
+        node.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var event = document.createEvent('Event');
+          event.initEvent('incident:verifyRaster', false, false);
+          event.detail = _this3._rastId;
+
+          _this3.dispatchEvent(event);
+        });
       }
 
       node = this._container.querySelector('.download');
 
       if (node) {
-        node.addEventListener('click', this._download.bind(this));
+        node.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var event = document.createEvent('Event');
+          event.initEvent('incident:download', false, false);
+          event.detail = props.id;
+
+          _this3.dispatchEvent(event);
+        });
       }
 
       node = this._container.querySelector('.detailBtn');
 
       if (node) {
-        node.addEventListener('click', this._docs.bind(this));
+        node.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var event = document.createEvent('Event');
+          event.initEvent('incident:docs', false, false);
+          event.detail = props.id;
+
+          _this3.dispatchEvent(event);
+        });
 
         if (data.Status !== 'в работе') {
           node.classList.add('hidden');
@@ -23171,34 +25957,73 @@ var Incidents = /*#__PURE__*/function (_BaseView) {
       node = this._container.querySelector('.editGeo');
 
       if (node) {
-        node.addEventListener('click', this._getItem.bind(this));
+        node.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var event = document.createEvent('Event');
+          event.initEvent('incident:editGeo', false, false);
+
+          _this3.dispatchEvent(event);
+        });
       }
 
       node = this._container.querySelector('.saveGeo');
 
       if (node) {
-        node.addEventListener('click', this._saveItem.bind(this)); // node.classList.add('hidden');
-        // this._saveGeoNode = node;
+        node.addEventListener('click', function (e) {
+          e.stopPropagation();
+
+          _this3._saveItem(data);
+        });
       }
 
       node = this._container.querySelector('.IncidentAccept');
 
       if (node) {
-        node.addEventListener('click', this._IncidentAccept.bind(this));
+        node.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var event = document.createEvent('Event');
+          event.initEvent('incident:IncidentAccept', false, false);
+          event.detail = {
+            IncidentID: props.id,
+            comment: _this3._commentNode ? _this3._commentNode.value : ''
+          };
+
+          _this3.dispatchEvent(event);
+        });
         this._IncidentAcceptNode = node;
       }
 
       node = this._container.querySelector('.IncidentCheck');
 
       if (node) {
-        node.addEventListener('click', this._IncidentCheck.bind(this));
+        node.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var event = document.createEvent('Event');
+          event.initEvent('incident:IncidentCheck', false, false);
+          event.detail = {
+            IncidentID: props.id,
+            comment: _this3._commentNode ? _this3._commentNode.value : ''
+          };
+
+          _this3.dispatchEvent(event);
+        });
         this._IncidentCheckNode = node;
       }
 
       node = this._container.querySelector('.IncidentDecline');
 
       if (node) {
-        node.addEventListener('click', this._IncidentDecline.bind(this));
+        node.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var event = document.createEvent('Event');
+          event.initEvent('incident:IncidentDecline', false, false);
+          event.detail = {
+            IncidentID: props.id,
+            comment: _this3._commentNode ? _this3._commentNode.value : ''
+          };
+
+          _this3.dispatchEvent(event);
+        });
         this._IncidentDeclineNode = node;
       }
 
@@ -23211,19 +26036,40 @@ var Incidents = /*#__PURE__*/function (_BaseView) {
       node = this._container.querySelector('.BplaView');
 
       if (node) {
-        node.addEventListener('click', this._toggleBplaView.bind(this));
+        node.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var event = document.createEvent('Event');
+          event.initEvent('incident:bplaRaster', false, false);
+          event.detail = props.uav_raster_id;
+
+          _this3.dispatchEvent(event);
+        });
       }
 
       node = this._container.querySelector('.BplaDownload');
 
       if (node) {
-        node.addEventListener('click', this._bplaDownload.bind(this));
+        node.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var event = document.createEvent('Event');
+          event.initEvent('incident:bplaDownload', false, false);
+          event.detail = props.id;
+
+          _this3.dispatchEvent(event);
+        });
       }
 
       node = this._container.querySelector('.BplaRemove');
 
       if (node) {
-        node.addEventListener('click', this._bplaRemove.bind(this));
+        node.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var event = document.createEvent('Event');
+          event.initEvent('incident:bplaRemove', false, false);
+          event.detail = props.id;
+
+          _this3.dispatchEvent(event);
+        });
       }
 
       node = this._container.querySelector('.dateCheck');
@@ -23253,497 +26099,68 @@ var Incidents = /*#__PURE__*/function (_BaseView) {
         }
       }
 
+      if (!this._permission.IncidentEdit || data.Status !== 'в работе') {
+        var confirmedNodes = this._container.getElementsByClassName('confirmed_vol');
+
+        confirmedNodes.forEach(function (node) {
+          node.classList.add('white');
+          node.disabled = true;
+        });
+      }
+
       this._rastId = props.prob_raster_id;
     }
   }, {
-    key: "_bplaDownload",
-    value: function _bplaDownload(ev) {
-      console.log('_bplaDownload', ev);
-    }
-  }, {
-    key: "_bplaRemove",
-    value: function _bplaRemove(ev) {
-      console.log('_bplaRemove', ev);
-    }
-  }, {
-    key: "_error",
-    value: function _error(met, res, response) {
-      console.log(met, res, response);
-      this.openIncident();
-    }
-  }, {
-    key: "_replaceProps",
-    value: function _replaceProps(json) {
-      if (json) {
-        if (json.Status) {
-          this._data.Status = json.Status;
-        }
-
-        if (json.Comment) {
-          this._data.Comment = json.Comment;
-        }
-
-        this._render(this._props, this._data);
-      }
-    }
-  }, {
-    key: "_IncidentCheck",
-    value: function () {
-      var _IncidentCheck2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
-        var response, res;
-        return regeneratorRuntime.wrap(function _callee$(_context) {
-          while (1) {
-            switch (_context.prev = _context.next) {
-              case 0:
-                _context.next = 2;
-                return fetch("".concat(this._path, "/Monitoring/CheckIncident"), {
-                  method: 'POST',
-                  credentials: 'include',
-                  headers: {
-                    'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify({
-                    IncidentID: this._props.id,
-                    comment: this._commentNode ? this._commentNode.value : ''
-                  })
-                });
-
-              case 2:
-                response = _context.sent;
-                _context.next = 5;
-                return response.text();
-
-              case 5:
-                res = _context.sent;
-
-                if (response.status !== 200) {
-                  this._error('_CheckIncident', res, response);
-                } else {
-                  this._replaceProps(JSON.parse(res));
-                }
-
-              case 7:
-              case "end":
-                return _context.stop();
-            }
-          }
-        }, _callee, this);
-      }));
-
-      function _IncidentCheck() {
-        return _IncidentCheck2.apply(this, arguments);
-      }
-
-      return _IncidentCheck;
-    }()
-  }, {
-    key: "_IncidentAccept",
-    value: function () {
-      var _IncidentAccept2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
-        var response, res;
-        return regeneratorRuntime.wrap(function _callee2$(_context2) {
-          while (1) {
-            switch (_context2.prev = _context2.next) {
-              case 0:
-                _context2.next = 2;
-                return fetch("".concat(this._path, "/Monitoring/ApproveIncident"), {
-                  method: 'POST',
-                  credentials: 'include',
-                  headers: {
-                    'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify({
-                    IncidentID: this._props.id,
-                    comment: this._commentNode ? this._commentNode.value : ''
-                  })
-                });
-
-              case 2:
-                response = _context2.sent;
-                _context2.next = 5;
-                return response.text();
-
-              case 5:
-                res = _context2.sent;
-
-                if (response.status !== 200) {
-                  this._error('_IncidentAccept', res, response);
-                } else {
-                  this._replaceProps(JSON.parse(res));
-                }
-
-              case 7:
-              case "end":
-                return _context2.stop();
-            }
-          }
-        }, _callee2, this);
-      }));
-
-      function _IncidentAccept() {
-        return _IncidentAccept2.apply(this, arguments);
-      }
-
-      return _IncidentAccept;
-    }()
-  }, {
-    key: "_IncidentDecline",
-    value: function () {
-      var _IncidentDecline2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
-        var response, res;
-        return regeneratorRuntime.wrap(function _callee3$(_context3) {
-          while (1) {
-            switch (_context3.prev = _context3.next) {
-              case 0:
-                _context3.next = 2;
-                return fetch("".concat(this._path, "/Monitoring/DeclineIncident"), {
-                  method: 'POST',
-                  credentials: 'include',
-                  headers: {
-                    'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify({
-                    IncidentID: this._props.id,
-                    comment: this._commentNode ? this._commentNode.value : ''
-                  })
-                });
-
-              case 2:
-                response = _context3.sent;
-                _context3.next = 5;
-                return response.text();
-
-              case 5:
-                res = _context3.sent;
-
-                if (response.status !== 200) {
-                  this._error('_IncidentDecline', res, response);
-                } else {
-                  this._replaceProps(JSON.parse(res));
-                }
-
-              case 7:
-              case "end":
-                return _context3.stop();
-            }
-          }
-        }, _callee3, this);
-      }));
-
-      function _IncidentDecline() {
-        return _IncidentDecline2.apply(this, arguments);
-      }
-
-      return _IncidentDecline;
-    }()
-  }, {
     key: "_saveItem",
-    value: function () {
-      var _saveItem2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
-        var d1, dtStr, out, response;
-        return regeneratorRuntime.wrap(function _callee4$(_context4) {
-          while (1) {
-            switch (_context4.prev = _context4.next) {
-              case 0:
-                d1 = this._dateCheck.getDate();
-                dtStr = null;
+    value: function _saveItem(data) {
+      var props = data.properties || {};
+      var out = {
+        "incidentID": props.id,
+        "comment": this._commentNode ? this._commentNode.value : ''
+      };
 
-                if (d1) {
-                  dtStr = d1.toLocaleDateString().split('.').reverse().join('-');
-                }
+      var d1 = this._dateCheck.getDate();
 
-                out = {
-                  "incidentID": this._props.id,
-                  "comment": this._commentNode ? this._commentNode.value : '',
-                  "checkDate": dtStr // "checkDate": d1 ? d1.toISOString() : null,
-                  // "forestChange": [
-                  // {
-                  // "stand": 0,
-                  // "volumes": [
-                  // {
-                  // "wood_element_id": 0,
-                  // "confirmed_vol": 0
-                  // }
-                  // ]
-                  // }
-                  // ]
-
-                };
-
-                if (this._drawingObj) {
-                  out.wkbGeometry = JSON.stringify(this._drawingObj[0].toGeoJSON().geometry);
-
-                  this._removeDrawing();
-                } // console.log('_saveItem', out);
-
-
-                _context4.next = 7;
-                return fetch("".concat(this._path, "/Monitoring/SaveIncident"), {
-                  method: 'POST',
-                  credentials: 'include',
-                  headers: {
-                    'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify(out)
-                });
-
-              case 7:
-                response = _context4.sent;
-                L.gmx.layersVersion.now(); // let _data = await response.json();
-                // console.log('_saveItem _data', _data);
-                // return;
-                // L.gmxUtil.sendCrossDomainPostRequest('/gis/VectorLayer/ModifyVectorObjects.ashx', {
-                // LayerName: this._layer.getGmxProperties().LayerID,
-                // WrapStyle: 'message',
-                // geometry_cs: 'EPSG:4326',
-                // objects: JSON.stringify([{action:'update', id: this._gmx_id, geometry: this._drawingObj[0].toGeoJSON().geometry}])
-                // },
-                // function(res) {
-                // if (res.Status === 'ok') {
-                // L.gmx.layersVersion.now();
-                // } else {
-                // console.log(res);
-                // }
-                // }.bind(this)
-                // );
-                // this._removeDrawing();
-
-              case 9:
-              case "end":
-                return _context4.stop();
-            }
-          }
-        }, _callee4, this);
-      }));
-
-      function _saveItem() {
-        return _saveItem2.apply(this, arguments);
+      if (d1) {
+        out.checkDate = d1.toLocaleDateString().split('.').reverse().join('-');
       }
 
-      return _saveItem;
-    }()
-  }, {
-    key: "_removeDrawing",
-    value: function _removeDrawing() {
-      this._layer._map.gmxDrawing.remove(this._drawingObj[0]);
+      var confirmedNodes = this._container.getElementsByClassName('confirmed_vol');
 
-      this._drawingObj = null; // if (this._saveGeoNode) {
-      // this._saveGeoNode.classList.add('hidden');
-      // }
-    }
-  }, {
-    key: "_getItem",
-    value: function _getItem() {
-      if (this._drawingObj) {
-        this._removeDrawing();
-      } else {
-        var map = this._layer._map;
-        L.gmxUtil.sendCrossDomainPostRequest('/gis/VectorLayer/Search.ashx', {
-          layer: this._layer.getGmxProperties().LayerID,
-          WrapStyle: 'message',
-          page: 0,
-          pagesize: 1,
-          orderby: 'rec_id',
-          geometry: true,
-          query: '"rec_id"=' + this._gmx_id
-        }, function (res) {
-          if (res && res.Status === 'ok') {
-            var prp = res.Result.values[0];
-            var geom = L.gmxUtil.geometryToGeoJSON(prp[prp.length - 1], true);
-
-            if (geom) {
-              this._drawingObj = map.gmxDrawing.addGeoJSON(new L.GeoJSON(geom), {}); // if (this._saveGeoNode) {
-              // this._saveGeoNode.classList.remove('hidden');
-              // }
-            }
-          }
-        }.bind(this));
-      }
-    }
-  }, {
-    key: "_docs",
-    value: function _docs(e) {
-      e.stopPropagation();
-      var event = document.createEvent('Event');
-      event.initEvent('incident:docs', false, false);
-      event.detail = this._props.id;
-      this.dispatchEvent(event);
-    }
-  }, {
-    key: "_download",
-    value: function _download(e) {
-      e.stopPropagation();
-      L.gmxUtil.sendCrossDomainPostRequest('/gis/DownloadLayer.ashx', {
-        t: this._layer.getGmxProperties().LayerID,
-        format: 'Shape',
-        // format: 'geojson'
-        query: '"rec_id"=' + this._gmx_id
+      var confirmed_vol = {};
+      confirmedNodes.forEach(function (node) {
+        confirmed_vol[node.getAttribute('id')] = Number(node.value) || 0;
       });
-    }
-  }, {
-    key: "_toggleRaster",
-    value: function _toggleRaster(e) {
-      e.stopPropagation();
-      var rastr = this._layer.verifyRaster;
+      var arr = data.ForestChange;
 
-      if (rastr) {
-        var map = this._layer._map;
-
-        if (rastr._map) {
-          map.removeLayer(rastr);
-        } else {
-          if (this._rastId) {
-            rastr = this._layer.verifyRaster = L.tileLayer('/gis/TileSender.ashx?ModeKey=tile&ftc=osm&z={z}&x={x}&y={y}&srs=3857&LayerName=' + this._rastId, {});
-          }
-
-          map.addLayer(rastr);
-        }
-      }
-    }
-  }, {
-    key: "_toggleBplaView",
-    value: function _toggleBplaView(e) {
-      e.stopPropagation();
-      var rastr = this._layer.bplaRaster;
-
-      if (!rastr) {
-        rastr = this._layer.bplaRaster = L.tileLayer('/gis/TileSender.ashx?ModeKey=tile&ftc=osm&z={z}&x={x}&y={y}&srs=3857&LayerName=' + this._props.uav_raster_id, {});
+      if (arr && arr.length) {
+        out.forestChange = arr.map(function (it) {
+          return {
+            stand: it.stand_id,
+            volumes: it.volumes.map(function (it1) {
+              return {
+                wood_element_id: it1.wood_element_id,
+                confirmed_vol: confirmed_vol[it1.wood_element_id]
+              };
+            })
+          };
+        });
       }
 
-      var map = this._layer._map;
-
-      if (rastr._map) {
-        map.removeLayer(rastr);
-      } else {
-        map.addLayer(rastr);
-      }
-    }
-  }, {
-    key: "openIncident",
-    value: function () {
-      var _openIncident = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5() {
-        var response;
-        return regeneratorRuntime.wrap(function _callee5$(_context5) {
-          while (1) {
-            switch (_context5.prev = _context5.next) {
-              case 0:
-                _context5.next = 2;
-                return fetch("".concat(this._path, "/Monitoring/GetIncident?IncidentID=").concat(this._props.id), {
-                  method: 'GET',
-                  credentials: 'include'
-                });
-
-              case 2:
-                response = _context5.sent;
-
-                if (!(response.status === 200)) {
-                  _context5.next = 10;
-                  break;
-                }
-
-                _context5.next = 6;
-                return response.json();
-
-              case 6:
-                this._data = _context5.sent;
-
-                this._render(this._props, this._data);
-
-                _context5.next = 11;
-                break;
-
-              case 10:
-                if (response.status === 401) {
-                  console.log('Сессия протухла:', response);
-                  this.close();
-                } else {
-                  console.log('Ошибка в запросе:', response);
-                  this.close();
-                }
-
-              case 11:
-              case "end":
-                return _context5.stop();
-            }
-          }
-        }, _callee5, this);
-      }));
-
-      function openIncident() {
-        return _openIncident.apply(this, arguments);
-      }
-
-      return openIncident;
-    }()
-  }, {
-    key: "open",
-    value: function () {
-      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(_ref2) {
-        var gmx_id, properties;
-        return regeneratorRuntime.wrap(function _callee6$(_context6) {
-          while (1) {
-            switch (_context6.prev = _context6.next) {
-              case 0:
-                gmx_id = _ref2.gmx_id, properties = _ref2.properties;
-
-                if (this._gmx_id && this._gmx_id === gmx_id) {
-                  this.close();
-                } else {
-                  _get(_getPrototypeOf(Incidents.prototype), "open", this).call(this);
-
-                  this._gmx_id = gmx_id;
-                  this._props = properties; // this._render(props, testData);
-
-                  this.openIncident(); // const response = await fetch(`${this._path}/Monitoring/GetIncident?IncidentID=${props.id}`, {
-                  // method: 'GET',
-                  // credentials: 'include',
-                  // });
-                  // this._data = await response.json();
-                  // this._render(this._props, this._data);
-                }
-
-              case 2:
-              case "end":
-                return _context6.stop();
-            }
-          }
-        }, _callee6, this);
-      }));
-
-      function open(_x) {
-        return _open.apply(this, arguments);
-      }
-
-      return open;
-    }()
-  }, {
-    key: "close",
-    value: function close() {
-      _get(_getPrototypeOf(Incidents.prototype), "close", this).call(this);
-
-      this._gmx_id = null;
-      var map = this._layer._map;
-      var rastr = this._layer.verifyRaster;
-
-      if (rastr) {
-        if (rastr._map) {
-          map.removeLayer(rastr);
-        }
-      }
-
-      if (this._layer.bplaRaster && this._layer.bplaRaster._map) {
-        map.removeLayer(this._layer.bplaRaster);
-      }
+      var event = document.createEvent('Event');
+      event.initEvent('incident:saveItem', false, false);
+      event.detail = out;
+      this.dispatchEvent(event);
     }
   }]);
 
   return Incidents;
-}(BaseView);
+}(View);
 
-var translate$b = T.getText.bind(T);
+var translate$5 = T.getText.bind(T);
 
-var Incidents$1 = /*#__PURE__*/function (_EventTarget) {
-  _inherits(Incidents$1, _EventTarget);
+var Incidents$1 = /*#__PURE__*/function (_Controller) {
+  _inherits(Incidents$1, _Controller);
 
   var _super = _createSuper(Incidents$1);
 
@@ -23753,6 +26170,7 @@ var Incidents$1 = /*#__PURE__*/function (_EventTarget) {
     var map = _ref.map,
         layer = _ref.layer,
         content = _ref.content,
+        notifications = _ref.notifications,
         legend = _ref.legend,
         path = _ref.path,
         dateInterval = _ref.dateInterval,
@@ -23760,15 +26178,21 @@ var Incidents$1 = /*#__PURE__*/function (_EventTarget) {
 
     _classCallCheck(this, Incidents$1);
 
-    _this = _super.call(this);
+    _this = _super.call(this, {
+      map: map,
+      content: content,
+      notifications: notifications
+    });
     _this._cache = {};
-    _this._map = map;
+    _this._kind = 'incidents';
     _this._layer = layer;
 
     _this._layer.on('click', _this._click, _assertThisInitialized(_this));
 
-    _this._content = content;
-    _this._legend = legend; // this._map.addLayer(this._layer);
+    _this._rasterPrefix = '/gis/TileSender.ashx?ModeKey=tile&ftc=osm&z={z}&x={x}&y={y}&srs=3857&LayerName=';
+    _this._legend = legend;
+
+    _this._map.addLayer(_this._layer);
 
     _this._layer.setStyleHook(_this.getStyleHook.bind(_assertThisInitialized(_this)));
 
@@ -23792,75 +26216,148 @@ var Incidents$1 = /*#__PURE__*/function (_EventTarget) {
     _this._path = path;
     _this._dateInterval = dateInterval;
     _this._permissions = permissions;
-    _this._legend = legend;
 
     _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
 
-    var p = _this._legend.addGroup('incidents', translate$b('legend.incidents'));
+    var p = _this._legend.addGroup(_this._kind, translate$5('legend.incidents'));
 
-    _this._legend.addComponent('cut-unconfirmed', translate$b('legend.cut.unconfirmed'), p);
+    _this._legend.addComponent('cut-unconfirmed', translate$5('legend.cut.unconfirmed'), p);
 
-    _this._legend.addComponent('cut-working', translate$b('legend.cut.working'), p);
+    _this._legend.addComponent('cut-working', translate$5('legend.cut.working'), p);
 
-    _this._legend.addComponent('cut-faux', translate$b('legend.cut.faux'), p);
+    _this._legend.addComponent('cut-faux', translate$5('legend.cut.faux'), p);
 
-    _this._legend.addComponent('cut-confirmed', translate$b('legend.cut.confirmed'), p); // this._legend.addComponent('windthrow-unconfirmed', translate('legend.windthrow.unconfirmed'), p);
+    _this._legend.addComponent('cut-confirmed', translate$5('legend.cut.confirmed'), p); // this._legend.addComponent('windthrow-unconfirmed', translate('legend.windthrow.unconfirmed'), p);
     // this._legend.addComponent('windthrow-working', translate('legend.windthrow.working'), p);
     // this._legend.addComponent('windthrow-faux', translate('legend.windthrow.faux'), p);
     // this._legend.addComponent('windthrow-confirmed', translate('legend.windthrow.confirmed'), p);
 
 
-    _this._legend.addComponent('disease-unconfirmed', translate$b('legend.disease.unconfirmed'), p);
+    _this._legend.addComponent('disease-unconfirmed', translate$5('legend.disease.unconfirmed'), p);
 
-    _this._legend.addComponent('disease-working', translate$b('legend.disease.working'), p);
+    _this._legend.addComponent('disease-working', translate$5('legend.disease.working'), p);
 
-    _this._legend.addComponent('disease-faux', translate$b('legend.disease.faux'), p);
+    _this._legend.addComponent('disease-faux', translate$5('legend.disease.faux'), p);
 
-    _this._legend.addComponent('disease-confirmed', translate$b('legend.disease.confirmed'), p);
+    _this._legend.addComponent('disease-confirmed', translate$5('legend.disease.confirmed'), p);
 
-    _this._legend.addComponent('burn-unconfirmed', translate$b('legend.burn.unconfirmed'), p);
+    _this._legend.addComponent('burn-unconfirmed', translate$5('legend.burn.unconfirmed'), p);
 
-    _this._legend.addComponent('burn-working', translate$b('legend.burn.working'), p);
+    _this._legend.addComponent('burn-working', translate$5('legend.burn.working'), p);
 
-    _this._legend.addComponent('burn-faux', translate$b('legend.burn.faux'), p);
+    _this._legend.addComponent('burn-faux', translate$5('legend.burn.faux'), p);
 
-    _this._legend.addComponent('burn-confirmed', translate$b('legend.burn.confirmed'), p);
+    _this._legend.addComponent('burn-confirmed', translate$5('legend.burn.confirmed'), p);
 
-    _this._content.add('incidents', Incidents, {
-      permissions: _this._permissions,
-      layer: _this._layer,
-      path: _this._path
-    }).on('incident:docs', function (e) {
+    _this._view = _this._content.add(_this._kind, Incidents, {
+      permissions: _this._permissions
+    });
+
+    _this._view.on('incident:docs', function (e) {
       var event = document.createEvent('Event');
       event.initEvent('incident:docs', false, false);
       event.detail = e.detail;
 
       _this.dispatchEvent(event);
+    }).on('incident:verifyRaster', function (e) {
+      var rastr = _this._layer.verifyRaster;
+
+      if (!rastr) {
+        rastr = _this._layer.verifyRaster = L.tileLayer(_this._rasterPrefix + e.detail, {});
+      }
+
+      _this._toggleRasterLayer(rastr);
+    }).on('incident:bplaRaster', function (e) {
+      var rastr = _this._layer.bplaRaster;
+
+      if (!rastr) {
+        rastr = _this._layer.bplaRaster = L.tileLayer(_this._rasterPrefix + e.detail, {});
+      }
+
+      _this._toggleRasterLayer(rastr);
+    }).on('incident:bplaDownload', function (e) {
+      console.log('_bplaDownload', e.detail);
+    }).on('incident:bplaRemove', function (e) {
+      console.log('_bplaRemove', e.detail);
+    }).on('incident:download', function (e) {
+      window.location = "".concat(_this._path, "/Monitoring/DownloadIncidentContour?IncidentID=").concat(e.detail, "&Format=Shape");
+    }).on('incident:editGeo', function (e) {
+      _this._editGeo();
+    }).on('incident:saveItem', function (e) {
+      _this._saveItem(e.detail);
+    }).on('incident:IncidentCheck', function (e) {
+      var response = fetch("".concat(_this._path, "/Monitoring/CheckIncident"), {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(e.detail)
+      });
+    }).on('incident:IncidentAccept', function (e) {
+      var response = fetch("".concat(_this._path, "/Monitoring/ApproveIncident"), {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(e.detail)
+      });
+    }).on('incident:IncidentDecline', function (e) {
+      var response = fetch("".concat(_this._path, "/Monitoring/DeclineIncident"), {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(e.detail)
+      });
+    }).on('close', function (e) {
+      var map = _this._layer._map;
+      var rastr = _this._layer.verifyRaster;
+
+      if (rastr) {
+        if (rastr._map) {
+          map.removeLayer(rastr);
+        }
+      }
+
+      if (_this._layer.bplaRaster && _this._layer.bplaRaster._map) {
+        map.removeLayer(_this._layer.bplaRaster);
+      }
     });
 
     return _this;
   }
 
   _createClass(Incidents$1, [{
-    key: "_click",
+    key: "_saveItem",
     value: function () {
-      var _click2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e) {
-        var _e$gmx, id, properties;
-
+      var _saveItem2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(out) {
+        var response;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                L.DomEvent.stopPropagation(e);
-                _e$gmx = e.gmx, id = _e$gmx.id, properties = _e$gmx.properties;
-                _context.next = 4;
-                return this._content.show('incidents', {
-                  gmx_id: id,
-                  properties: properties
+                if (this._drawingObj) {
+                  out.wkbGeometry = JSON.stringify(this._drawingObj[0].toGeoJSON().geometry);
+
+                  this._removeDrawing();
+                }
+
+                _context.next = 3;
+                return fetch("".concat(this._path, "/Monitoring/SaveIncident"), {
+                  method: 'POST',
+                  credentials: 'include',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify(out)
                 });
 
-              case 4:
-                this._layer.repaint();
+              case 3:
+                response = _context.sent;
+                L.gmx.layersVersion.now();
 
               case 5:
               case "end":
@@ -23870,7 +26367,103 @@ var Incidents$1 = /*#__PURE__*/function (_EventTarget) {
         }, _callee, this);
       }));
 
-      function _click(_x) {
+      function _saveItem(_x) {
+        return _saveItem2.apply(this, arguments);
+      }
+
+      return _saveItem;
+    }()
+  }, {
+    key: "_toggleRasterLayer",
+    value: function _toggleRasterLayer(rastr) {
+      var map = this._layer._map;
+
+      if (rastr._map) {
+        map.removeLayer(rastr);
+      } else {
+        map.addLayer(rastr);
+      }
+    }
+  }, {
+    key: "_removeDrawing",
+    value: function _removeDrawing() {
+      this._layer._map.gmxDrawing.remove(this._drawingObj[0]);
+
+      this._drawingObj = null;
+    }
+  }, {
+    key: "_editGeo",
+    value: function _editGeo() {
+      var map = this._layer._map;
+
+      if (this._drawingObj) {
+        this._removeDrawing();
+      } else {
+        L.gmxUtil.sendCrossDomainPostRequest('/gis/VectorLayer/Search.ashx', {
+          layer: this._layer.getGmxProperties().LayerID,
+          WrapStyle: 'message',
+          page: 0,
+          pagesize: 1,
+          orderby: 'rec_id',
+          geometry: true,
+          query: '"rec_id"=' + this._gmx_id
+        }, function (res) {
+          if (res && res.Status === 'ok') {
+            var prp = res.Result.values[0];
+            var geom = L.gmxUtil.geometryToGeoJSON(prp[prp.length - 1], true);
+
+            if (geom) {
+              this._drawingObj = map.gmxDrawing.addGeoJSON(new L.GeoJSON(geom), {});
+            }
+          }
+        }.bind(this));
+      }
+    }
+  }, {
+    key: "_click",
+    value: function () {
+      var _click2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(e) {
+        var _e$gmx, id, properties, data;
+
+        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                if (!this.canClick) {
+                  _context2.next = 8;
+                  break;
+                }
+
+                L.DomEvent.stopPropagation(e);
+                _e$gmx = e.gmx, id = _e$gmx.id, properties = _e$gmx.properties;
+                _context2.next = 5;
+                return this.httpGet("".concat(this._path, "/Monitoring/GetIncident"), {
+                  IncidentID: properties.id
+                });
+
+              case 5:
+                data = _context2.sent;
+
+                if (data) {
+                  this._gmx_id = id;
+
+                  this._view.open(_objectSpread2({
+                    gmx_id: this._gmx_id,
+                    properties: properties
+                  }, data));
+                }
+
+                this._layer.repaint();
+
+              case 8:
+              case "end":
+                return _context2.stop();
+            }
+          }
+        }, _callee2, this);
+      }));
+
+      function _click(_x2) {
         return _click2.apply(this, arguments);
       }
 
@@ -24011,7 +26604,7 @@ var Incidents$1 = /*#__PURE__*/function (_EventTarget) {
   }]);
 
   return Incidents$1;
-}(EventTarget);
+}(Controller);
 
 var Legend$1 = /*#__PURE__*/function (_EventTarget) {
   _inherits(Legend, _EventTarget);
@@ -24079,17 +26672,222 @@ var Legend$1 = /*#__PURE__*/function (_EventTarget) {
   return Legend;
 }(EventTarget);
 
-var translate$c = T.getText.bind(T);
-T.addText('rus', {
-  naturalPark: {
-    title: 'Особо охраняемая природная территория',
-    name: 'Наименование',
-    type: 'Категория ООПТ',
-    year: 'Постановление',
-    prov: 'Уровень защиты',
-    area: 'Площадь, м'
+var strings$3 = {
+  rus: {
+    alert: {
+      forbidden: 'Нет разрешения'
+    }
   }
-});
+};
+
+var Forbidden = /*#__PURE__*/function (_BaseView) {
+  _inherits(Forbidden, _BaseView);
+
+  var _super = _createSuper(Forbidden);
+
+  function Forbidden(container) {
+    var _this;
+
+    _classCallCheck(this, Forbidden);
+
+    _this = _super.call(this, container, strings$3);
+
+    _this._container.classList.add('scanex-forestry-forbidden');
+
+    _this._container.innerHTML = "<div>".concat(_this.translate('alert.forbidden'), "</div>");
+    return _this;
+  }
+
+  return Forbidden;
+}(View);
+
+var strings$4 = {
+  rus: {
+    alert: {
+      loading: 'Выполняется запрос ...'
+    }
+  }
+};
+
+var Loading = /*#__PURE__*/function (_BaseView) {
+  _inherits(Loading, _BaseView);
+
+  var _super = _createSuper(Loading);
+
+  function Loading(container) {
+    var _this;
+
+    _classCallCheck(this, Loading);
+
+    _this = _super.call(this, container, strings$4);
+
+    _this._container.classList.add('scanex-forestry-loading');
+
+    _this._container.innerHTML = "<div>".concat(_this.translate('alert.loading'), "</div>");
+    return _this;
+  }
+
+  return Loading;
+}(View);
+
+var strings$5 = {
+  rus: {
+    alert: {
+      notAvailable: 'Ведётся подготовка данных...'
+    }
+  }
+};
+
+var STYLES$1 = {
+  fillStyle: document.createElement('canvas').getContext('2d').createPattern(L.gmxUtil.getPatternIcon(null, {
+    type: '',
+    color: parseInt('FFD700', 16),
+    opacity: 1,
+    weight: 1,
+    fillOpacity: 1,
+    fillPattern: {
+      style: 'diagonal1',
+      width: 8,
+      step: 0,
+      colors: [parseInt('FFD700', 16), 0]
+    },
+    common: true
+  }).canvas, 'repeat'),
+  strokeStyle: '#FFD700',
+  lineWidth: 2
+};
+
+var NotAvailable = /*#__PURE__*/function (_BaseView) {
+  _inherits(NotAvailable, _BaseView);
+
+  var _super = _createSuper(NotAvailable);
+
+  function NotAvailable(container) {
+    var _this;
+
+    _classCallCheck(this, NotAvailable);
+
+    _this = _super.call(this, container, strings$5);
+
+    _this._container.classList.add('scanex-forestry-not-available');
+
+    _this._container.innerHTML = "<div>".concat(_this.translate('alert.notAvailable'), "</div>");
+    return _this;
+  }
+
+  _createClass(NotAvailable, [{
+    key: "getStyleHook",
+    value: function getStyleHook(kind, item) {
+      if (kind === 'quadrants') {
+        return item.id === this._gmx_id ? STYLES$1 : {};
+      } else {
+        return {};
+      }
+    }
+  }]);
+
+  return NotAvailable;
+}(View);
+
+var strings$6 = {
+  rus: {
+    alert: {
+      notFound: 'Не найдено'
+    }
+  }
+};
+
+var NotFound = /*#__PURE__*/function (_BaseView) {
+  _inherits(NotFound, _BaseView);
+
+  var _super = _createSuper(NotFound);
+
+  function NotFound(container) {
+    var _this;
+
+    _classCallCheck(this, NotFound);
+
+    _this = _super.call(this, container, strings$6);
+
+    _this._container.classList.add('scanex-forestry-not-found');
+
+    _this._container.innerHTML = "<div>".concat(_this.translate('alert.notFound'), "</div>");
+    return _this;
+  }
+
+  return NotFound;
+}(View);
+
+var strings$7 = {
+  rus: {
+    alert: {
+      serverError: 'Ошибка сервера'
+    }
+  }
+};
+
+var ServerError = /*#__PURE__*/function (_BaseView) {
+  _inherits(ServerError, _BaseView);
+
+  var _super = _createSuper(ServerError);
+
+  function ServerError(container) {
+    var _this;
+
+    _classCallCheck(this, ServerError);
+
+    _this = _super.call(this, container, strings$7);
+
+    _this._container.classList.add('scanex-forestry-server-error');
+
+    _this._container.innerHTML = "<div>".concat(_this.translate('alert.serverError'), "</div>");
+    return _this;
+  }
+
+  return ServerError;
+}(View);
+
+var strings$8 = {
+  rus: {
+    alert: {
+      unAuthorized: 'Вы не вошли в систему'
+    }
+  }
+};
+
+var UnAuthorized = /*#__PURE__*/function (_BaseView) {
+  _inherits(UnAuthorized, _BaseView);
+
+  var _super = _createSuper(UnAuthorized);
+
+  function UnAuthorized(container) {
+    var _this;
+
+    _classCallCheck(this, UnAuthorized);
+
+    _this = _super.call(this, container, strings$8);
+
+    _this._container.classList.add('scanex-forestry-unauthorized');
+
+    _this._container.innerHTML = "<div>".concat(_this.translate('alert.unAuthorized'), "</div>");
+    return _this;
+  }
+
+  return UnAuthorized;
+}(View);
+
+var strings$9 = {
+  rus: {
+    park: {
+      title: 'ООПТ',
+      name: 'Наименование',
+      type: 'Категория ООПТ',
+      year: 'Постановление',
+      prov: 'Уровень защиты',
+      area: 'Площадь'
+    }
+  }
+};
 
 var Parks = /*#__PURE__*/function (_BaseView) {
   _inherits(Parks, _BaseView);
@@ -24101,7 +26899,7 @@ var Parks = /*#__PURE__*/function (_BaseView) {
 
     _classCallCheck(this, Parks);
 
-    _this = _super.call(this, container);
+    _this = _super.call(this, container, strings$9);
 
     _this._container.classList.add('scanex-forestry-naturalpark');
 
@@ -24110,39 +26908,25 @@ var Parks = /*#__PURE__*/function (_BaseView) {
 
   _createClass(Parks, [{
     key: "open",
-    value: function () {
-      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(_ref) {
-        var properties;
-        return regeneratorRuntime.wrap(function _callee$(_context) {
-          while (1) {
-            switch (_context.prev = _context.next) {
-              case 0:
-                properties = _ref.properties;
-                this._container.innerHTML = "<div class=\"header\">".concat(translate$c('naturalPark.title'), "</div>\n\t\t\t<table cellspacing=\"0\" cellpadding=\"0\">\t\t\t\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"name title\">").concat(translate$c('naturalPark.name'), "</td>\n\t\t\t\t\t<td class=\"name value\">").concat(properties.NAME_R, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"type title\">").concat(translate$c('naturalPark.type'), "</td>\n\t\t\t\t\t<td class=\"type value\">").concat(properties.TYPE_NL, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"year title\">").concat(translate$c('naturalPark.year'), "</td>\n\t\t\t\t\t<td class=\"year value\">").concat(properties.YEAR_, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"prov title\">").concat(translate$c('naturalPark.prov'), "</td>\n\t\t\t\t\t<td class=\"prov value\">").concat(properties.PROV_NL, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"area title\">").concat(translate$c('naturalPark.area'), "<sup>2</sup></td>\n\t\t\t\t\t<td class=\"area value\">").concat(properties.AREA_DOC, "</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
+    value: function open(_ref) {
+      var properties = _ref.properties;
 
-                _get(_getPrototypeOf(Parks.prototype), "open", this).call(this);
+      _get(_getPrototypeOf(Parks.prototype), "open", this).call(this);
 
-              case 3:
-              case "end":
-                return _context.stop();
-            }
-          }
-        }, _callee, this);
-      }));
-
-      function open(_x) {
-        return _open.apply(this, arguments);
-      }
-
-      return open;
-    }()
+      var NAME_R = properties.NAME_R,
+          TYPE_NL = properties.TYPE_NL,
+          YEAR_ = properties.YEAR_,
+          PROV_NL = properties.PROV_NL,
+          AREA_DOC = properties.AREA_DOC;
+      this._container.innerHTML = "<div class=\"header\">".concat(this.translate('park.title'), ": ").concat(NAME_R, "</div>\n\t\t\t<table cellspacing=\"0\" cellpadding=\"0\">\t\t\t\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"name title\">").concat(this.translate('park.name'), "</td>\n\t\t\t\t\t<td class=\"name value\">").concat(NAME_R, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"type title\">").concat(this.translate('park.type'), "</td>\n\t\t\t\t\t<td class=\"type value\">").concat(TYPE_NL, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"year title\">").concat(this.translate('park.year'), "</td>\n\t\t\t\t\t<td class=\"year value\">").concat(YEAR_, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"prov title\">").concat(this.translate('park.prov'), "</td>\n\t\t\t\t\t<td class=\"prov value\">").concat(PROV_NL, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"area title\">").concat(this.translate('park.area'), ", ").concat(this.translate('units.m'), "<sup>2</sup></td>\n\t\t\t\t\t<td class=\"area value\">").concat(this.m(AREA_DOC), "</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
+    }
   }]);
 
   return Parks;
-}(BaseView);
+}(View);
 
-var Parks$1 = /*#__PURE__*/function (_Controller) {
-  _inherits(Parks$1, _Controller);
+var Parks$1 = /*#__PURE__*/function (_LayerController) {
+  _inherits(Parks$1, _LayerController);
 
   var _super = _createSuper(Parks$1);
 
@@ -24150,195 +26934,44 @@ var Parks$1 = /*#__PURE__*/function (_Controller) {
     var _this;
 
     var map = _ref.map,
-        layer = _ref.layer,
-        legend = _ref.legend,
         content = _ref.content,
-        path = _ref.path;
+        notifications = _ref.notifications,
+        layer = _ref.layer,
+        legend = _ref.legend;
 
     _classCallCheck(this, Parks$1);
 
     _this = _super.call(this, {
       kind: 'parks',
       map: map,
+      content: content,
+      notifications: notifications,
       layer: layer,
       legend: legend
     });
-    _this._content = content;
-    _this._path = path;
-
-    _this._content.add('parks', Parks, {
-      layer: _this._layer,
-      path: _this._path
-    });
-
+    _this._view = _this._content.add('parks', Parks);
     return _this;
   }
 
-  return Parks$1;
-}(Controller);
-
-var translate$d = T.getText.bind(T);
-T.addText('rus', {
-  plot: {
-    title: 'Лесной участок:',
-    forestry: 'Лесничество',
-    lessee: 'Арендатор',
-    term: 'Срок договора аренды',
-    cost: 'Стоимость договора аренды',
-    volumes: 'Допустимые объемы изъятия'
-  }
-});
-
-var Plots = /*#__PURE__*/function (_BaseView) {
-  _inherits(Plots, _BaseView);
-
-  var _super = _createSuper(Plots);
-
-  function Plots(container, _ref) {
-    var _this;
-
-    var path = _ref.path;
-
-    _classCallCheck(this, Plots);
-
-    _this = _super.call(this, container);
-    _this._path = path;
-
-    _this._container.classList.add('scanex-forestry-view-plot');
-
-    _this._container.innerHTML = "<div class=\"head\">\n        </div>\n        <div>            \n            <label class=\"title\"></label>\n        </div>\n        <div>\n            <label>".concat(translate$d('plot.forestry'), ":</label>\n            <label class=\"forestry\"></label>\n        </div>\n        <div class=\"content\">\n            <div class=\"stats\"></div>\n            <div class=\"chart\"></div>\n        </div>");
-    _this._title = _this._container.querySelector('.title');
-    _this._forestry = _this._container.querySelector('.forestry');
-    _this._stats = _this._container.querySelector('.stats');
-    _this._chart = _this._container.querySelector('.chart');
-    return _this;
-  }
-
-  _createClass(Plots, [{
-    key: "open",
-    value: function () {
-      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(_ref2) {
-        var gmx_id, data, Area, Contract, Forestry, Region, Renter, SignedAt, Term, RentCost, volumes, start, end, y, m, d, t;
-        return regeneratorRuntime.wrap(function _callee$(_context) {
-          while (1) {
-            switch (_context.prev = _context.next) {
-              case 0:
-                gmx_id = _ref2.gmx_id, data = _objectWithoutProperties(_ref2, ["gmx_id"]);
-                Area = data.Area, Contract = data.Contract, Forestry = data.Forestry, Region = data.Region, Renter = data.Renter, SignedAt = data.SignedAt, Term = data.Term, RentCost = data.RentCost, volumes = data.volumes;
-                this._title.innerText = Contract;
-                this._forestry.innerText = Forestry;
-                start = SignedAt && new Date(SignedAt) || '';
-                end = '';
-
-                if (start) {
-                  y = start.getFullYear();
-                  m = start.getMonth();
-                  d = start.getDate();
-                  t = parseInt(Term, 10);
-                  end = new Date(y + (!isNaN(t) && t || 0), m, d);
-                }
-
-                this._stats.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <tbody>\n                <tr>\n                    <td>".concat(translate$d('plot.lessee'), "</td>\n                    <td>").concat(Renter || '-', "</td>\n                </tr>                    \n                <tr>\n                    <td>").concat(translate$d('plot.term'), "</td>\n                    <td>").concat(start.toLocaleDateString(), " - ").concat(end.toLocaleDateString(), "</td>\n                </tr>\n                <tr>\n                    <td>").concat(translate$d('plot.cost'), "</td>\n                    <td>").concat(RentCost || '-', "</td>\n                </tr>                                        \n            </tbody>\n        </table>\n        <div>").concat(translate$d('plot.volumes'), "</div>");
-                _context.next = 10;
-                return _get(_getPrototypeOf(Plots.prototype), "open", this).call(this);
-
-              case 10:
-              case "end":
-                return _context.stop();
-            }
-          }
-        }, _callee, this);
-      }));
-
-      function open(_x) {
-        return _open.apply(this, arguments);
-      }
-
-      return open;
-    }()
-  }]);
-
-  return Plots;
-}(BaseView);
-
-var translate$e = T.getText.bind(T);
-
-var Plots$1 = /*#__PURE__*/function (_Controller) {
-  _inherits(Plots$1, _Controller);
-
-  var _super = _createSuper(Plots$1);
-
-  function Plots$1(_ref) {
-    var _this;
-
-    var map = _ref.map,
-        layer = _ref.layer,
-        legend = _ref.legend,
-        content = _ref.content,
-        path = _ref.path,
-        permissions = _ref.permissions;
-
-    _classCallCheck(this, Plots$1);
-
-    _this = _super.call(this, {
-      kind: 'plots',
-      map: map,
-      layer: layer,
-      legend: legend
-    });
-    _this._content = content;
-    _this._path = path;
-    _this._permissions = permissions;
-
-    _this._content.add('plots', Plots, {
-      path: _this._path
-    });
-
-    return _this;
-  }
-
-  _createClass(Plots$1, [{
+  _createClass(Parks$1, [{
     key: "_click",
     value: function () {
       var _click2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e) {
-        var _e$gmx, id, properties, data;
-
+        var properties;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                if (!this._permissions.ForestProjectsView) {
-                  _context.next = 10;
-                  break;
+                if (this.canClick) {
+                  L.DomEvent.stopPropagation(e);
+                  properties = e.gmx.properties;
+
+                  this._view.open({
+                    properties: properties
+                  });
                 }
 
-                _e$gmx = e.gmx, id = _e$gmx.id, properties = _e$gmx.properties;
-                _context.next = 4;
-                return this.httpGet("".concat(this._path, "/Forest/GetPlot"), {
-                  PlotID: properties.id
-                });
-
-              case 4:
-                data = _context.sent;
-
-                if (!data) {
-                  _context.next = 8;
-                  break;
-                }
-
-                _context.next = 8;
-                return this._content.show('plots', _objectSpread2({
-                  gmx_id: id
-                }, data));
-
-              case 8:
-                _context.next = 11;
-                break;
-
-              case 10:
-                alert(translate$e('forbidden.plot.view'));
-
-              case 11:
+              case 1:
               case "end":
                 return _context.stop();
             }
@@ -24354,8 +26987,8 @@ var Plots$1 = /*#__PURE__*/function (_Controller) {
     }()
   }]);
 
-  return Plots$1;
-}(Controller);
+  return Parks$1;
+}(LayerController);
 
 var log$3 = Math.log;
 var LOG10E = Math.LOG10E;
@@ -41504,39 +44137,37 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
   module.exports = Yt;
 });
 
-var translate$f = T.getText.bind(T);
-T.addText('rus', {
-  request: {
-    approve: 'Дата принятия решения о проведении аукциона',
-    status: 'Статус аукциона',
-    period: 'Период проведения аукциона и идентификатор лота аукциона',
-    cost: 'Начальная ставка',
-    available: 'Допустимые объемы изъятия (в год)'
+var strings$a = {
+  rus: {
+    plot: {
+      title: 'Лесной участок №',
+      forestry: 'Лесничество',
+      lessee: 'Арендатор',
+      term: 'Срок договора аренды',
+      cost: 'Стоимость договора аренды',
+      volumes: 'Допустимые объемы изъятия'
+    }
   }
-});
+};
 
-var View = /*#__PURE__*/function (_BaseView) {
-  _inherits(View, _BaseView);
+var Plots = /*#__PURE__*/function (_BaseView) {
+  _inherits(Plots, _BaseView);
 
-  var _super = _createSuper(View);
+  var _super = _createSuper(Plots);
 
-  function View(container, _ref) {
+  function Plots(container) {
     var _this;
 
-    var path = _ref.path;
+    _classCallCheck(this, Plots);
 
-    _classCallCheck(this, View);
+    _this = _super.call(this, container, strings$a);
 
-    _this = _super.call(this, container);
-    _this._path = path;
+    _this._container.classList.add('scanex-forestry-view-plot');
 
-    _this._container.classList.add('scanex-forestry-view-project');
-
-    _this._container.innerHTML = "<div class=\"header\">\n            <label>".concat(translate$f('plot.title'), "</label>\n            <label class=\"title\"></label>\n        </div>\n        <div>\n            <label>").concat(translate$f('project.forestry'), "</label>\n            <label class=\"forestry\"></label>\n        </div>        \n        <div class=\"content\">\n            <div class=\"stats\">\n                <div class=\"costs\"></div>\n                <div>").concat(translate$f('request.available'), ", ").concat(translate$f('unit.m'), "<sup>3</sup></div>\n                <div class=\"species\"></div>\n            </div>\n            <div class=\"chart\"></div>\n        </div>");
+    _this._container.innerHTML = "<div class=\"head1\">                \n                <label>".concat(_this.translate('plot.title'), "</label>\n                <label class=\"title\"></label>\n            </div>\n            <div class=\"head2\">\n                <label>").concat(_this.translate('plot.forestry'), ":</label>\n                <label class=\"forestry\"></label>\n            </div>\n            <div class=\"content\">\n                <div class=\"stats\"></div>\n                <div class=\"chart\"></div>\n            </div>");
     _this._title = _this._container.querySelector('.title');
     _this._forestry = _this._container.querySelector('.forestry');
-    _this._costs = _this._container.querySelector('.costs');
-    _this._species = _this._container.querySelector('.species');
+    _this._stats = _this._container.querySelector('.stats');
     _this._chart = new apexcharts_common(_this._container.querySelector('.chart'), {
       chart: {
         type: 'donut',
@@ -41549,327 +44180,13 @@ var View = /*#__PURE__*/function (_BaseView) {
       labels: [],
       series: [],
       legend: {
-        position: 'bottom' // width: '200px',
-        // offsetY: -10,
-
-      },
-      plotOptions: {
-        pie: {
-          donut: {
-            size: '78%',
-            labels: {
-              show: true,
-              value: {
-                formatter: function formatter(val) {
-                  return "".concat(val.toLocaleString('ru-RU', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                  }), " ").concat(translate$f('unit.m3'));
-                },
-                fontSize: '12px',
-                show: true
-              },
-              total: {
-                formatter: function formatter(_ref2) {
-                  var series = _ref2.config.series;
-                  return "".concat(series.reduce(function (p, c) {
-                    return p + c;
-                  }, 0).toLocaleString('ru-RU', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                  }), " ").concat(translate$f('unit.m3'));
-                },
-                label: translate$f('stock.all'),
-                fontSize: '12px',
-                fontWeight: 600,
-                show: true
-              }
-            }
-          }
-        }
-      }
-    });
-
-    _this._chart.render();
-
-    return _this;
-  }
-
-  _createClass(View, [{
-    key: "open",
-    value: function () {
-      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(data) {
-        var Addres, ApplicationForm, ApproveDate, ApproveName, AuctionEnd, AuctionStart, AuctionURL, CadastralNum, Comments, DeclineDate, EgrFile, ForestAvailable, ForestBlocks, ForestProjectGeo, ForestProjectID, ForestStat, Forestry, OGRN, Opf, OrganizationName, OwnerID, PeriodUsage, Phone, PostAddress, RentCost, RentFile, Square, SquareStat, Status, TargetUsage, Title, _ForestAvailable$redu, labels, series;
-
-        return regeneratorRuntime.wrap(function _callee$(_context) {
-          while (1) {
-            switch (_context.prev = _context.next) {
-              case 0:
-                _context.next = 2;
-                return _get(_getPrototypeOf(View.prototype), "open", this).call(this);
-
-              case 2:
-                Addres = data.Addres, ApplicationForm = data.ApplicationForm, ApproveDate = data.ApproveDate, ApproveName = data.ApproveName, AuctionEnd = data.AuctionEnd, AuctionStart = data.AuctionStart, AuctionURL = data.AuctionURL, CadastralNum = data.CadastralNum, Comments = data.Comments, DeclineDate = data.DeclineDate, EgrFile = data.EgrFile, ForestAvailable = data.ForestAvailable, ForestBlocks = data.ForestBlocks, ForestProjectGeo = data.ForestProjectGeo, ForestProjectID = data.ForestProjectID, ForestStat = data.ForestStat, Forestry = data.Forestry, OGRN = data.OGRN, Opf = data.Opf, OrganizationName = data.OrganizationName, OwnerID = data.OwnerID, PeriodUsage = data.PeriodUsage, Phone = data.Phone, PostAddress = data.PostAddress, RentCost = data.RentCost, RentFile = data.RentFile, Square = data.Square, SquareStat = data.SquareStat, Status = data.Status, TargetUsage = data.TargetUsage, Title = data.Title;
-                this._title.innerHTML = Title;
-                this._forestry.innerHTML = "".concat(Forestry, " ").concat(ForestBlocks);
-                this._costs.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody>\n                    <tr>\n                        <td>".concat(translate$f('request.approve'), "</td>\n                        <td>").concat(ApproveDate || '', "</td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$f('request.status'), "</td>\n                        <td>").concat(Status || '', "</td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$f('request.period'), "</td>\n                        <td>").concat(AuctionStart && AuctionEnd ? "".concat(new Date(AuctionStart).toLocaleDateString(), " - ").concat(new Date(AuctionEnd).toLocaleDateString()) : '', "</td>\n                    </tr>\n                    <tr>\n                        <td>").concat(translate$f('request.cost'), "</td>\n                        <td>").concat(RentCost && RentCost.toLocaleString('ru-RU', {
-                  style: 'currency',
-                  currency: 'RUB'
-                }) || '', "</td>\n                    </tr>\n                </tbody>\n            </table>");
-
-                if (!Array.isArray(ForestAvailable)) {
-                  _context.next = 13;
-                  break;
-                }
-
-                this._species.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">                \n                    <tbody>".concat(ForestAvailable.map(function (_ref3) {
-                  var species = _ref3.species,
-                      value = _ref3.value;
-                  return "<tr>\n                            <td>".concat(species, "</td>\n                            <td>").concat(value.toLocaleString('ru-RU', {
-                    minimumFractionDigits: 3,
-                    maximumFractionDigits: 3
-                  }), "</td>\n                        </tr>");
-                }).join(''), "</tbody>\n                </table>");
-                _ForestAvailable$redu = ForestAvailable.reduce(function (a, _ref4) {
-                  var species = _ref4.species,
-                      value = _ref4.value;
-                  a.labels.push(species);
-                  a.series.push(value);
-                  return a;
-                }, {
-                  labels: [],
-                  series: []
-                }), labels = _ForestAvailable$redu.labels, series = _ForestAvailable$redu.series;
-
-                this._chart.updateOptions({
-                  labels: labels
-                });
-
-                this._chart.updateSeries(series);
-
-                _context.next = 14;
-                break;
-
-              case 13:
-                throw new Error(translate$f('quadrant.na'));
-
-              case 14:
-              case "end":
-                return _context.stop();
-            }
-          }
-        }, _callee, this);
-      }));
-
-      function open(_x) {
-        return _open.apply(this, arguments);
-      }
-
-      return open;
-    }()
-  }]);
-
-  return View;
-}(BaseView);
-
-var translate$g = T.getText.bind(T);
-
-var Projects = /*#__PURE__*/function (_Controller) {
-  _inherits(Projects, _Controller);
-
-  var _super = _createSuper(Projects);
-
-  function Projects(_ref) {
-    var _this;
-
-    var map = _ref.map,
-        layer = _ref.layer,
-        legend = _ref.legend,
-        content = _ref.content,
-        path = _ref.path,
-        permissions = _ref.permissions,
-        requests = _ref.requests;
-
-    _classCallCheck(this, Projects);
-
-    _this = _super.call(this, {
-      kind: 'projects',
-      map: map,
-      layer: layer,
-      legend: legend
-    });
-    _this._content = content;
-    _this._path = path;
-    _this._requests = requests;
-    _this._permissions = permissions;
-
-    _this._content.add('view-project', View, {
-      layer: _this._layer,
-      path: _this._path
-    });
-
-    return _this;
-  }
-
-  _createClass(Projects, [{
-    key: "_click",
-    value: function _click(e) {
-      var _e$gmx$properties = e.gmx.properties,
-          id = _e$gmx$properties.id,
-          status_calc = _e$gmx$properties.status_calc,
-          forestry_id = _e$gmx$properties.forestry_id,
-          plot_project_status_id = _e$gmx$properties.plot_project_status_id;
-
-      if (status_calc === 1) {
-        if (plot_project_status_id === 1) {
-          var event = document.createEvent('Event');
-          event.initEvent('project:edit', false, false);
-          event.detail = {
-            id: id,
-            forestry_id: forestry_id
-          };
-          this.dispatchEvent(event);
-        } else {
-          var _event = document.createEvent('Event');
-
-          _event.initEvent('request:create', false, false);
-
-          _event.detail = id;
-          this.dispatchEvent(_event);
-        }
-      } else {
-        this.view(id);
-      }
-    }
-  }, {
-    key: "view",
-    value: function () {
-      var _view = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(id) {
-        var data;
-        return regeneratorRuntime.wrap(function _callee$(_context) {
-          while (1) {
-            switch (_context.prev = _context.next) {
-              case 0:
-                if (!this._permissions.ForestProjectsView) {
-                  _context.next = 9;
-                  break;
-                }
-
-                _context.next = 3;
-                return this.httpGet("".concat(this._path, "/Forest/GetPlotProjectApplication"), {
-                  ForestProjectID: id
-                });
-
-              case 3:
-                data = _context.sent;
-
-                if (!data) {
-                  _context.next = 7;
-                  break;
-                }
-
-                _context.next = 7;
-                return this._content.show('view-project', data);
-
-              case 7:
-                _context.next = 10;
-                break;
-
-              case 9:
-                alert(translate$g('forbidden.project.view'));
-
-              case 10:
-              case "end":
-                return _context.stop();
-            }
-          }
-        }, _callee, this);
-      }));
-
-      function view(_x) {
-        return _view.apply(this, arguments);
-      }
-
-      return view;
-    }()
-  }]);
-
-  return Projects;
-}(Controller);
-
-var translate$h = T.getText.bind(T);
-T.addText('rus', {
-  quadrant: {
-    Stock: 'Объем древесины',
-    about: 'На основании данных лесоустройства',
-    title: 'Квартал',
-    stow: 'Урочище',
-    Forestry: 'Лесничество',
-    LocalForestry: 'Участковое лесничество',
-    invalid: 'Недопустимый состав участка',
-    na: 'Ведется подготовка данных'
-  },
-  unit: {
-    m: 'тыс. м',
-    m3: 'куб. м',
-    ha: 'га'
-  }
-});
-var STYLES$1 = {
-  fillStyle: document.createElement('canvas').getContext('2d').createPattern(L.gmxUtil.getPatternIcon(null, {
-    type: '',
-    color: parseInt('FFB801', 16),
-    opacity: 1,
-    weight: 1,
-    fillOpacity: 0.64,
-    fillPattern: {
-      style: 'diagonal1',
-      width: 8,
-      step: 0,
-      colors: [parseInt('FFB801', 16), parseInt('61E9F1', 16)]
-    },
-    common: true
-  }).canvas, 'repeat'),
-  strokeStyle: '#FFB801',
-  lineWidth: 2
-};
-
-var Quadrants = /*#__PURE__*/function (_BaseView) {
-  _inherits(Quadrants, _BaseView);
-
-  var _super = _createSuper(Quadrants);
-
-  function Quadrants(container, _ref) {
-    var _this;
-
-    var layer = _ref.layer,
-        path = _ref.path;
-
-    _classCallCheck(this, Quadrants);
-
-    _this = _super.call(this, container);
-    _this._layer = layer;
-    _this._path = path;
-
-    _this._container.classList.add('scanex-forestry-quadrant');
-
-    _this._container.innerHTML = "<div class=\"title\">".concat(translate$h('quadrant.title'), "</div>\n\t\t<div class=\"forestry\"></div>\n\t\t<div class=\"stock\">").concat(translate$h('quadrant.Stock'), "</div>\n\t\t<div class=\"about\">").concat(translate$h('quadrant.about'), "</div>\n\t\t<div class=\"chart\"></div>");
-    _this._forestry = _this._container.querySelector('.forestry');
-    _this._chart = new apexcharts_common(_this._container.querySelector('.chart'), {
-      chart: {
-        type: 'donut',
-        width: '500px',
-        height: '160px'
-      },
-      dataLabels: {
-        enabled: false
-      },
-      labels: [],
-      series: [],
-      legend: {
-        position: 'right',
+        position: 'bottom',
         width: '200px',
-        offsetY: -10
+        horizontalAlign: 'right',
+        formatter: function formatter(name, opts) {
+          var val = parseFloat(opts.w.globals.series[opts.seriesIndex]);
+          return "".concat(name, " - ").concat(_this.m(val));
+        }
       },
       plotOptions: {
         pie: {
@@ -41879,22 +44196,19 @@ var Quadrants = /*#__PURE__*/function (_BaseView) {
               show: true,
               value: {
                 formatter: function formatter(val) {
-                  return "".concat(val, " ").concat(translate$h('unit.m3'));
+                  return "".concat(_this.m(val), " ").concat(_this.translate('units.m3'));
                 },
                 fontSize: '12px',
                 show: true
               },
               total: {
-                formatter: function formatter(_ref2) {
-                  var series = _ref2.config.series;
-                  return "".concat(series.reduce(function (p, c) {
+                formatter: function formatter(_ref) {
+                  var series = _ref.config.series;
+                  return "".concat(_this.m(series.reduce(function (p, c) {
                     return p + c;
-                  }, 0).toLocaleString('ru-RU', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                  }), " ").concat(translate$h('unit.m3'));
+                  }, 0)), " ").concat(_this.translate('units.m3'));
                 },
-                label: translate$h('stock.all'),
+                label: _this.translate('quadrant.stock.all'),
                 fontSize: '12px',
                 fontWeight: 600,
                 show: true
@@ -41910,523 +44224,237 @@ var Quadrants = /*#__PURE__*/function (_BaseView) {
     return _this;
   }
 
-  _createClass(Quadrants, [{
-    key: "_render",
-    value: function _render(data) {
-      var Forestry = data.Forestry,
-          LocalForestry = data.LocalForestry,
-          Num = data.Num,
-          Stock = data.Stock,
-          Stow = data.Stow;
-      this._forestry.innerHTML = "".concat(translate$h('quadrant.Forestry'), ": ").concat(Forestry, ", ").concat(translate$h('quadrant.LocalForestry'), ": ").concat(LocalForestry).concat(Stow ? ", ".concat(translate$h('quadrant.stow'), ": ").concat(Stow) : '', ", ").concat(translate$h('quadrant.title'), " \u2116").concat(Num);
+  _createClass(Plots, [{
+    key: "open",
+    value: function open(_ref2) {
+      var _this2 = this;
 
-      if (Array.isArray(Stock)) {
-        var _Stock$reduce = Stock.reduce(function (a, s) {
-          a.labels.push(s.species);
-          a.series.push(s.stock);
+      var gmx_id = _ref2.gmx_id,
+          data = _objectWithoutProperties(_ref2, ["gmx_id"]);
+
+      _get(_getPrototypeOf(Plots.prototype), "open", this).call(this);
+
+      var Area = data.Area,
+          Contract = data.Contract,
+          Forestry = data.Forestry,
+          Region = data.Region,
+          Renter = data.Renter,
+          SignedAt = data.SignedAt,
+          Term = data.Term,
+          RentCost = data.RentCost,
+          Volumes = data.Volumes;
+      this._title.innerText = Contract;
+      this._forestry.innerText = Forestry;
+      var start = SignedAt && new Date(SignedAt);
+      var end;
+
+      if (start) {
+        var y = start.getFullYear();
+        var m = start.getMonth();
+        var d = start.getDate();
+        var t = parseInt(Term, 10);
+        end = new Date(y + (!isNaN(t) && t || 0), m, d);
+      }
+
+      this._stats.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <tbody>\n                <tr>\n                    <td>".concat(this.translate('plot.lessee'), "</td>\n                    <td>").concat(Renter || '', "</td>\n                </tr>                    \n                <tr>\n                    <td>").concat(this.translate('plot.term'), "</td>\n                    <td>").concat(this.date(start), " - ").concat(this.date(end), "</td>\n                </tr>\n                <tr>\n                    <td>").concat(this.translate('plot.cost'), "</td>\n                    <td>").concat(this.rub(RentCost), "</td>\n                </tr>                                        \n            </tbody>\n        </table>\n        ").concat(Array.isArray(Volumes) && Volumes.length ? "\n        <div>".concat(this.translate('plot.volumes'), "</div>\n        <table cellpadding=\"0\" cellspacing=\"0\">\n            <tbody>").concat(Volumes.map(function (_ref3) {
+        var farm = _ref3.farm,
+            rent_cost = _ref3.rent_cost,
+            value = _ref3.value;
+        return "<tr>\n                    <td>".concat(farm, "</td>\n                    <td>").concat(_this2.m(value), "</td>\n                </tr>");
+      }).join(''), "</tbody>\n        </table>") : '');
+
+      if (Array.isArray(Volumes)) {
+        var _Volumes$reduce = Volumes.reduce(function (a, _ref4) {
+          var farm = _ref4.farm,
+              value = _ref4.value;
+          a.labels.push(farm);
+          a.series.push(value || 0);
           return a;
         }, {
           labels: [],
           series: []
         }),
-            labels = _Stock$reduce.labels,
-            series = _Stock$reduce.series;
+            labels = _Volumes$reduce.labels,
+            series = _Volumes$reduce.series;
 
         this._chart.updateOptions({
           labels: labels
         });
 
         this._chart.updateSeries(series);
-      } else {
-        throw new Error(translate$h('quadrant.na'));
       }
     }
-  }, {
-    key: "getStyleHook",
-    value: function getStyleHook(kind, item) {
-      if (kind === 'quadrants') {
-        return item.id === this._gmx_id ? STYLES$1 : {};
-      } else {
-        return {};
-      }
-    }
-  }, {
-    key: "open",
+  }]);
+
+  return Plots;
+}(View);
+
+var Plots$1 = /*#__PURE__*/function (_LayerController) {
+  _inherits(Plots$1, _LayerController);
+
+  var _super = _createSuper(Plots$1);
+
+  function Plots$1(_ref) {
+    var _this;
+
+    var map = _ref.map,
+        content = _ref.content,
+        notifications = _ref.notifications,
+        layer = _ref.layer,
+        legend = _ref.legend,
+        path = _ref.path,
+        permissions = _ref.permissions;
+
+    _classCallCheck(this, Plots$1);
+
+    _this = _super.call(this, {
+      kind: 'plots',
+      map: map,
+      content: content,
+      notifications: notifications,
+      layer: layer,
+      legend: legend
+    });
+    _this._path = path;
+    _this._permissions = permissions;
+    _this._view = _this._content.add(_this._kind, Plots);
+    return _this;
+  }
+
+  _createClass(Plots$1, [{
+    key: "_click",
     value: function () {
-      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(_ref3) {
-        var gmx_id, properties, response, data;
+      var _click2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e) {
+        var _e$gmx, id, properties, data;
+
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                gmx_id = _ref3.gmx_id, properties = _ref3.properties;
-                _context.prev = 1;
-
-                if (!(this._gmx_id && this._gmx_id === gmx_id)) {
-                  _context.next = 6;
+                if (!this._permissions.ForestProjectsView) {
+                  _context.next = 10;
                   break;
                 }
 
-                this.close();
-                _context.next = 16;
-                break;
+                if (!this.canClick) {
+                  _context.next = 8;
+                  break;
+                }
+
+                L.DomEvent.stopPropagation(e);
+                _e$gmx = e.gmx, id = _e$gmx.id, properties = _e$gmx.properties;
+                _context.next = 6;
+                return this.httpGet("".concat(this._path, "/Forest/GetPlot"), {
+                  PlotID: properties.id
+                });
 
               case 6:
-                _get(_getPrototypeOf(Quadrants.prototype), "open", this).call(this); // this._layer.setStyleHook(this._styleHook.bind(this));
-                // this._layer.repaint();                        
-
-
-                this._gmx_id = gmx_id;
-                _context.next = 10;
-                return fetch("".concat(this._path, "/Forest/GetQuadrantInformation?QuadrantID=").concat(properties.id), {
-                  method: 'GET',
-                  credentials: 'include'
-                });
-
-              case 10:
-                response = _context.sent;
-                _context.next = 13;
-                return response.json();
-
-              case 13:
                 data = _context.sent;
 
-                this._render(data);
+                if (data) {
+                  this._view.open(_objectSpread2({
+                    gmx_id: id
+                  }, data));
+                } // this._layer.repaint();
 
-                this._layer.repaint();
 
-              case 16:
-                _context.next = 22;
+              case 8:
+                _context.next = 11;
                 break;
 
-              case 18:
-                _context.prev = 18;
-                _context.t0 = _context["catch"](1);
-                alert(_context.t0.toString());
-                this.close();
+              case 10:
+                this._notifications.forbidden.open();
 
-              case 22:
+              case 11:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, this, [[1, 18]]);
+        }, _callee, this);
       }));
 
-      function open(_x) {
-        return _open.apply(this, arguments);
+      function _click(_x) {
+        return _click2.apply(this, arguments);
       }
 
-      return open;
+      return _click;
     }()
-  }, {
-    key: "close",
-    value: function close() {
-      _get(_getPrototypeOf(Quadrants.prototype), "close", this).call(this);
-
-      this._gmx_id = null; // this._layer.removeStyleHook();
-
-      this._layer.repaint();
-    }
   }]);
 
-  return Quadrants;
-}(BaseView);
+  return Plots$1;
+}(LayerController);
 
-var floor$8 = Math.floor;
-
-// `Number.isInteger` method implementation
-// https://tc39.github.io/ecma262/#sec-number.isinteger
-var isInteger = function isInteger(it) {
-  return !isObject(it) && isFinite(it) && floor$8(it) === it;
+var strings$b = {
+  rus: {
+    info: {
+      approve: 'Дата принятия решения о проведении аукциона',
+      available: 'Допустимые объемы изъятия (в год)',
+      cost: 'Начальная ставка',
+      period: 'Период проведения аукциона и идентификатор лота аукциона',
+      status: 'Статус аукциона'
+    },
+    project: {
+      create: 'Создать проект',
+      default: 'Проект ЛУ',
+      description: 'Описание',
+      edit: 'Редактировать проект',
+      forestry: 'Лесничество',
+      localForestry: 'Уч. лесничество',
+      quadrants: 'Кварталы',
+      request: 'Создать заявку',
+      save: 'Сохранить проект',
+      species: 'Порода',
+      stock: {
+        permitted: 'Доступный',
+        probable: 'Прогноз',
+        total: 'Таксация',
+        table: 'Данные о запасах',
+        label: 'Запас',
+        all: 'Весь'
+      },
+      title: {
+        create: 'Создание проекта лесного участка',
+        edit: 'Редактирование проекта лесного участка'
+      },
+      tract: 'Урочище'
+    }
+  }
 };
 
-// `Number.isInteger` method
-// https://tc39.github.io/ecma262/#sec-number.isinteger
-_export({ target: 'Number', stat: true }, {
-  isInteger: isInteger
-});
+var Info = /*#__PURE__*/function (_View) {
+  _inherits(Info, _View);
 
-var translate$i = T.getText.bind(T);
-T.addText('rus', {
-  pager: {
-    previous: 'Предыдущая',
-    next: 'Следующая'
-  }
-});
+  var _super = _createSuper(Info);
 
-var Pager = /*#__PURE__*/function (_EventTarget) {
-  _inherits(Pager, _EventTarget);
-
-  var _super = _createSuper(Pager);
-
-  function Pager(container) {
+  function Info(container) {
     var _this;
 
-    _classCallCheck(this, Pager);
+    _classCallCheck(this, Info);
 
-    _this = _super.call(this);
-    _this._container = container;
-    _this._container.innerHTML = "<table class=\"scanex-forestry-pager\" cellpadding=\"0\" cellspacing=\"0\">\n            <tr>\n                <td>\n                    <button class=\"first\">1</button>\n                </td>                \n                <td>\n                    <button class=\"previous\">".concat(translate$i('pager.previous'), "</button>\n                </td>\n                <td>\n                    <input type=\"text\" value=\"\" />\n                </td>\n                <td>\n                    <button class=\"next\">").concat(translate$i('pager.next'), "</button>\n                </td>                \n                <td>\n                    <button class=\"last\"></button>\n                </td>\n            </tr>\n        </table>");
+    _this = _super.call(this, container, strings$b);
 
-    _this._container.querySelector('.first').addEventListener('click', function (e) {
-      e.stopPropagation();
-      _this.page = 1;
-    });
+    _this._container.classList.add('scanex-forestry-view-project');
 
-    _this._container.querySelector('.previous').addEventListener('click', function (e) {
-      e.stopPropagation();
-      _this.page -= 1;
-    });
+    _this._container.innerHTML = "<div class=\"header\">    \n            <button class=\"scanex-requests-icon back\"></button>\n            <label class=\"title\"></label>\n        </div>\n        <div>\n            <label>".concat(_this.translate('project.forestry'), "</label>\n            <label class=\"forestry\"></label>\n        </div>        \n        <div class=\"content\">\n            <div class=\"stats\">\n                <div class=\"costs\"></div>\n                <div>").concat(_this.translate('info.available'), ", ").concat(_this.translate('units.m'), "<sup>3</sup></div>\n                <div class=\"species\"></div>\n            </div>\n            <div class=\"chart\"></div>\n        </div>");
 
-    _this._container.querySelector('.next').addEventListener('click', function (e) {
-      e.stopPropagation();
-      _this.page += 1;
-    });
+    var btnBack = _this._container.querySelector('.back');
 
-    _this._container.querySelector('.last').addEventListener('click', function (e) {
-      e.stopPropagation();
-      _this.page = _this.pages;
-    });
-
-    _this._current = _this._container.querySelector('input');
-
-    _this._current.addEventListener('change', function (e) {
-      e.stopPropagation();
-      _this.page = parseInt(_this._current.value, 10);
-    });
-
-    _this._last = _this._container.querySelector('.last');
-    _this._pages = 1;
-    _this.page = 1;
-    return _this;
-  }
-
-  _createClass(Pager, [{
-    key: "page",
-    get: function get() {
-      return this._page;
-    },
-    set: function set(page) {
-      if (Number.isInteger(page) && 1 <= page && page <= this.pages) {
-        this._page = page;
-        this._current.value = this._page;
-        var event = document.createEvent('Event');
-        event.initEvent('change', false, false);
-        this.dispatchEvent(event);
-      } else {
-        this._current.value = this._page;
-      }
-    }
-  }, {
-    key: "pages",
-    get: function get() {
-      return this._pages;
-    },
-    set: function set(pages) {
-      if (Number.isInteger(pages) && 1 <= this.page && this.page <= pages) {
-        this._pages = pages;
-        this._last.innerText = pages;
-      }
-    }
-  }]);
-
-  return Pager;
-}(EventTarget);
-
-var translate$j = T.getText.bind(T);
-T.addText('rus', {
-  request: {
-    id: '#',
-    status: 'Статус',
-    title: 'Название',
-    area: 'Площадь, га',
-    amount: 'Общий запас, м',
-    forestry: 'Лесничество',
-    local_forestry: 'Уч. лесничество, квартал',
-    header: 'Выбор проекта лесного участка',
-    edit: 'Редактировать',
-    create: 'Создать проект'
-  }
-});
-
-var Requests = /*#__PURE__*/function (_BaseView) {
-  _inherits(Requests, _BaseView);
-
-  var _super = _createSuper(Requests);
-
-  function Requests(container, _ref) {
-    var _this;
-
-    var layer = _ref.layer,
-        path = _ref.path,
-        _ref$columns = _ref.columns,
-        columns = _ref$columns === void 0 ? ['id', 'status', 'title', 'forestry', 'totalSquare'] : _ref$columns,
-        _ref$pageSize = _ref.pageSize,
-        pageSize = _ref$pageSize === void 0 ? 5 : _ref$pageSize;
-
-    _classCallCheck(this, Requests);
-
-    _this = _super.call(this, container);
-    _this._layer = layer;
-    _this._path = path;
-
-    _this._container.classList.add('scanex-forestry-requests');
-
-    _this._columns = columns;
-    _this._page = 0;
-    _this._pageSize = pageSize;
-
-    var _this$_layer$getGmxPr = _this._layer.getGmxProperties(),
-        attributes = _this$_layer$getGmxPr.attributes;
-
-    _this._statusIndex = attributes.indexOf('status_calc');
-
-    if (_this._statusIndex >= 0) {
-      _this._statusIndex += 1;
-    }
-
-    _this._container.innerHTML = "<div class=\"header\">           \n            <label class=\"title\">".concat(translate$j('request.header'), "</label>                   \n            <button class=\"create\">").concat(translate$j('request.create'), "</button>                              \n        </div>\n        <table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th data-id=\"id\">").concat(translate$j('request.id'), "</th>\n                    <th data-id=\"title\">").concat(translate$j('request.title'), "</th>\n                    <th data-id=\"status\">").concat(translate$j('request.status'), "</th>\n                    <th data-id=\"forestry\">").concat(translate$j('request.forestry'), "</th>\n                    <th data-id=\"local_forestry\">").concat(translate$j('request.local_forestry'), "</th>\n                    <th data-id=\"area\">").concat(translate$j('request.area'), "</th>\n                    <th data-id=\"amount\">").concat(translate$j('request.amount'), "<sup>3</sup></th>\n                    <th data-id=\"remove\"></th>\n                </tr>\n            </thead>\n        </table> \n        <div class=\"content\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody class=\"items\"></tbody>\n            </table>\n        </div>");
-    _this._content = _this._container.querySelector('.items');
-
-    _this._container.querySelector('.create').addEventListener('click', function (e) {
+    btnBack.addEventListener('click', function (e) {
       e.stopPropagation();
       var event = document.createEvent('Event');
-      event.initEvent('create', false, false);
+      event.initEvent('back', false, false);
 
       _this.dispatchEvent(event);
-    }); // this._pager = new Pager(this._container.querySelector('.pager'));
-    // this._pager.addEventListener('change', async () => {
-    //     this._page = this._pager.page - 1;
-    //     await this.open();
-    // });
-
-
-    return _this;
-  }
-
-  _createClass(Requests, [{
-    key: "getStyleHook",
-    value: function getStyleHook(kind, _ref2) {
-      var properties = _ref2.properties;
-      return {};
-    }
-  }, {
-    key: "open",
-    value: function () {
-      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
-        var _this2 = this;
-
-        var response, _yield$response$json, count, plotProjectsList, rows, _loop, i;
-
-        return regeneratorRuntime.wrap(function _callee$(_context) {
-          while (1) {
-            switch (_context.prev = _context.next) {
-              case 0:
-                _context.prev = 0;
-
-                _get(_getPrototypeOf(Requests.prototype), "open", this).call(this);
-
-                _context.next = 4;
-                return fetch("".concat(this._path, "/Forest/GetPlotProjectsList"), {
-                  method: 'GET',
-                  credentials: 'include'
-                });
-
-              case 4:
-                response = _context.sent;
-                _context.next = 7;
-                return response.json();
-
-              case 7:
-                _yield$response$json = _context.sent;
-                count = _yield$response$json.count;
-                plotProjectsList = _yield$response$json.plotProjectsList;
-                this._content.innerHTML = plotProjectsList.map(function (_ref3) {
-                  var title = _ref3.title,
-                      status = _ref3.status,
-                      statusID = _ref3.statusID,
-                      forestry = _ref3.forestry,
-                      localForestries = _ref3.localForestries,
-                      totalSquare = _ref3.totalSquare;
-                  return "<tr class=\"request\">\n                    <td data-id=\"id\"></td>\n                    <td data-id=\"title\">".concat(title, "</td>\n                    <td data-id=\"status\">").concat(status, "</td>\n                    <td data-id=\"forestry\">").concat(forestry, "</td>\n                    <td data-id=\"local_forestry\">").concat(localForestries, "</td>\n                    <td data-id=\"area\">").concat(totalSquare.toLocaleString('ru-RU', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                  }), "</td>\n                    <td data-id=\"amount\"></td>\n                    <td data-id=\"remove\">").concat(statusID === 1 ? '<i class="scanex-requests-icon remove"></i>' : '', "</td>\n                </tr>");
-                }).join('');
-                rows = this._content.querySelectorAll('.request'); // this._pager.pages = Math.ceil (count / this._pageSize);
-
-                _loop = function _loop(i) {
-                  var row = rows[i];
-                  var _plotProjectsList$i = plotProjectsList[i],
-                      id = _plotProjectsList$i.id,
-                      forestryID = _plotProjectsList$i.forestryID,
-                      statusID = _plotProjectsList$i.statusID;
-                  var rm = row.querySelector('.scanex-requests-icon');
-
-                  if (rm) {
-                    rm.addEventListener('click', function (e) {
-                      e.stopPropagation();
-                      var event = document.createEvent('Event');
-                      event.initEvent('remove', false, false);
-                      event.detail = id;
-
-                      _this2.dispatchEvent(event);
-                    });
-                  }
-
-                  row.addEventListener('click', function (e) {
-                    e.stopPropagation();
-                    var event;
-
-                    switch (statusID) {
-                      case 1:
-                        event = document.createEvent('Event');
-                        event.initEvent('edit', false, false);
-                        event.detail = {
-                          id: id,
-                          forestryID: forestryID
-                        };
-
-                        _this2.dispatchEvent(event);
-
-                        break;
-
-                      default:
-                        event = document.createEvent('Event');
-                        event.initEvent('existing', false, false);
-                        event.detail = id;
-
-                        _this2.dispatchEvent(event);
-
-                        break;
-                    }
-                  });
-                };
-
-                for (i = 0; i < rows.length; ++i) {
-                  _loop(i);
-                } // this._layer.setStyleHook(this._styleHook.bind(this));
-                // this._layer.repaint();
-
-
-                _context.next = 21;
-                break;
-
-              case 16:
-                _context.prev = 16;
-                _context.t0 = _context["catch"](0);
-                console.log(_context.t0);
-                alert(translate$j('error.requests'));
-                this.close();
-
-              case 21:
-              case "end":
-                return _context.stop();
-            }
-          }
-        }, _callee, this, [[0, 16]]);
-      }));
-
-      function open() {
-        return _open.apply(this, arguments);
-      }
-
-      return open;
-    }()
-  }, {
-    key: "close",
-    value: function close() {
-      _get(_getPrototypeOf(Requests.prototype), "close", this).call(this); // this._layer.removeStyleHook();
-
-
-      this._layer.repaint();
-    }
-  }]);
-
-  return Requests;
-}(BaseView);
-
-var translate$k = T.getText.bind(T);
-T.addText('rus', {
-  stand: {
-    title: 'Выдел',
-    usage: 'Целевое назначение лесов',
-    year: 'Год актуализации',
-    area: 'Площадь выдела',
-    category: 'Категория земель',
-    protected: 'Особозащитные участки (ОЗУ)',
-    slope: 'Экспозиция / крутизна',
-    targetSpecies: 'Целевая порода',
-    mainSpecies: 'Преобладающая порода',
-    age: 'Группа возраста',
-    klass: 'Класс возраста',
-    bonitet: 'Бонитет',
-    type: 'Тип леса',
-    percentage: 'Процент выполнения',
-    na: 'Ведется подготовка данных',
-    storey: {
-      title: 'Ярус',
-      age: 'Возраст, лет',
-      basal_area_sum: 'Сумма площадей сечений, м',
-      dbh: 'Диаметр, см',
-      density: 'Полнота',
-      gross_volume: 'Запас на 1 га, м',
-      height: 'Высота, м',
-      marketability_class: 'Класс товарности',
-      origin_id: 'Происхождение',
-      rate: 'Коэфициент состава',
-      species: 'Породный состав'
-    }
-  }
-});
-var STYLES$2 = {
-  fillStyle: document.createElement('canvas').getContext('2d').createPattern(L.gmxUtil.getPatternIcon(null, {
-    type: '',
-    color: parseInt('FFB801', 16),
-    opacity: 1,
-    weight: 1,
-    fillOpacity: 0.64,
-    fillPattern: {
-      style: 'diagonal1',
-      width: 8,
-      step: 0,
-      colors: [parseInt('FFB801', 16), parseInt('61E9F1', 16)]
-    },
-    dashArray: [10, 10],
-    common: true
-  }).canvas, 'repeat'),
-  strokeStyle: '#FFB801',
-  lineWidth: 2
-};
-
-var Stands = /*#__PURE__*/function (_BaseView) {
-  _inherits(Stands, _BaseView);
-
-  var _super = _createSuper(Stands);
-
-  function Stands(container, _ref) {
-    var _this;
-
-    var layer = _ref.layer,
-        path = _ref.path;
-
-    _classCallCheck(this, Stands);
-
-    _this = _super.call(this, container);
-    _this._layer = layer;
-    _this._path = path;
-
-    _this._container.classList.add('scanex-forestry-stand');
-
-    _this._container.innerHTML = "\n\t\t<div class=\"header1\">".concat(translate$k('stand.title'), "</div>\n\t\t<div class=\"header2\"></div>\n\t\t<div class=\"scrollable\">\n\t\t\t<div class=\"content1\">\n\t\t\t\t<div class=\"stats\"></div>\n\t\t\t\t<div class=\"levels\"></div>\t\t\t\t\n\t\t\t</div>\t\t\t\n\t\t\t<div class=\"content2\">\n\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t<div class=\"events\"></div>\n\t\t\t</div>\t\t\t\n\t\t</div>");
-    _this._header = _this._container.querySelector('.header2');
-    _this._stats = _this._container.querySelector('.stats');
+    });
+    _this._title = _this._container.querySelector('.title');
+    _this._forestry = _this._container.querySelector('.forestry');
+    _this._costs = _this._container.querySelector('.costs');
+    _this._species = _this._container.querySelector('.species');
     _this._chart = new apexcharts_common(_this._container.querySelector('.chart'), {
       chart: {
         type: 'donut',
-        width: '350px',
-        height: '250px'
+        width: '400px' // height: '250px',
+
       },
       dataLabels: {
         enabled: false
@@ -42435,7 +44463,12 @@ var Stands = /*#__PURE__*/function (_BaseView) {
       series: [],
       legend: {
         position: 'bottom',
-        width: '350px'
+        // width: '200px',                
+        horizontalAlign: 'right',
+        formatter: function formatter(name, opts) {
+          var val = parseFloat(opts.w.globals.series[opts.seriesIndex]);
+          return "".concat(name, " - ").concat(_this.m(val));
+        }
       },
       plotOptions: {
         pie: {
@@ -42444,23 +44477,20 @@ var Stands = /*#__PURE__*/function (_BaseView) {
             labels: {
               show: true,
               value: {
-                formatter: function formatter(val) {
-                  return "".concat(val, " ").concat(translate$k('unit.m3'));
+                formatter: function formatter(v) {
+                  return "".concat(_this.m(v), " ").concat(_this.translate('units.m3'));
                 },
                 fontSize: '12px',
                 show: true
               },
               total: {
-                formatter: function formatter(_ref2) {
-                  var series = _ref2.config.series;
-                  return "".concat(series.reduce(function (p, c) {
+                formatter: function formatter(_ref) {
+                  var series = _ref.config.series;
+                  return "".concat(_this.m(series.reduce(function (p, c) {
                     return p + c;
-                  }, 0).toLocaleString('ru-RU', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                  }), " ").concat(translate$k('unit.m3'));
+                  }, 0)), " ").concat(_this.translate('units.m3'));
                 },
-                label: translate$k('stock.all'),
+                label: _this.translate('project.stock.all'),
                 fontSize: '12px',
                 fontWeight: 600,
                 show: true
@@ -42473,545 +44503,88 @@ var Stands = /*#__PURE__*/function (_BaseView) {
 
     _this._chart.render();
 
-    _this._levels = _this._container.querySelector('.levels');
-    _this._events = _this._container.querySelector('.events');
     return _this;
   }
 
-  _createClass(Stands, [{
-    key: "_render",
-    value: function _render(data) {
-      var Forestry = data.Forestry,
-          LocalForestry = data.LocalForestry,
-          Stow = data.Stow,
-          Quadrant = data.Quadrant,
-          Stand = data.Stand,
-          ForestUseType = data.ForestUseType,
-          UpdatingYear = data.UpdatingYear,
+  _createClass(Info, [{
+    key: "open",
+    value: function open(data) {
+      var _this2 = this;
+
+      _get(_getPrototypeOf(Info.prototype), "open", this).call(this);
+
+      var Addres = data.Addres,
+          ApplicationForm = data.ApplicationForm,
+          ApproveDate = data.ApproveDate,
+          ApproveName = data.ApproveName,
+          AuctionEnd = data.AuctionEnd,
+          AuctionStart = data.AuctionStart,
+          AuctionURL = data.AuctionURL,
+          CadastralNum = data.CadastralNum,
+          Comments = data.Comments,
+          DeclineDate = data.DeclineDate,
+          EgrFile = data.EgrFile,
+          ForestAvailable = data.ForestAvailable,
+          ForestBlocks = data.ForestBlocks,
+          ForestProjectGeo = data.ForestProjectGeo,
+          ForestProjectID = data.ForestProjectID,
+          ForestStat = data.ForestStat,
+          Forestry = data.Forestry,
+          OGRN = data.OGRN,
+          Opf = data.Opf,
+          OrganizationName = data.OrganizationName,
+          OwnerID = data.OwnerID,
+          PeriodUsage = data.PeriodUsage,
+          Phone = data.Phone,
+          PostAddress = data.PostAddress,
+          RentCost = data.RentCost,
+          RentFile = data.RentFile,
           Square = data.Square,
-          LandCategory = data.LandCategory,
-          OZU = data.OZU,
-          Exposition = data.Exposition,
-          Steepness = data.Steepness,
-          TargetSpecies = data.TargetSpecies,
-          PredominantSpecies = data.PredominantSpecies,
-          AgeGroup = data.AgeGroup,
-          AgeClass = data.AgeClass,
-          Bonitet = data.Bonitet,
-          Stock = data.Stock,
-          StoreyInfo = data.StoreyInfo,
-          Events = data.Events;
+          SquareStat = data.SquareStat,
+          Status = data.Status,
+          TargetUsage = data.TargetUsage,
+          Title = data.Title;
+      this._title.innerHTML = Title;
+      this._forestry.innerHTML = "".concat(Forestry, " ").concat(ForestBlocks);
+      var start = AuctionStart && new Date(AuctionStart);
+      var end = AuctionEnd && new Date(AuctionEnd);
+      this._costs.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <tbody>\n                <tr>\n                    <td>".concat(this.translate('info.approve'), "</td>\n                    <td>").concat(ApproveDate || '', "</td>\n                </tr>\n                <tr>\n                    <td>").concat(this.translate('info.status'), "</td>\n                    <td>").concat(Status || '', "</td>\n                </tr>\n                <tr>\n                    <td>").concat(this.translate('info.period'), "</td>\n                    <td>").concat(start && end ? "".concat(this.date(start), " - ").concat(this.date(end)) : '', "</td>\n                </tr>\n                <tr>\n                    <td>").concat(this.translate('info.cost'), "</td>\n                    <td>").concat(this.rub(RentCost), "</td>\n                </tr>\n            </tbody>\n        </table>");
 
-      if (Array.isArray(Stock)) {
-        this._header.innerText = [Forestry, LocalForestry, Stow, Quadrant, Stand].join(', ');
-        this._stats.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t\t<tbody>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>".concat(translate$k('stand.usage'), "</td>\n\t\t\t\t\t\t<td>").concat(ForestUseType, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$k('stand.year'), "</td>\n\t\t\t\t\t\t<td>").concat(UpdatingYear, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$k('stand.area'), "</td>\n\t\t\t\t\t\t<td>").concat(Square, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$k('stand.category'), "</td>\n\t\t\t\t\t\t<td>").concat(LandCategory, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$k('stand.protected'), "</td>\n\t\t\t\t\t\t<td>").concat(OZU, "</td>                    \n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$k('stand.slope'), "</td>\n\t\t\t\t\t\t<td>").concat(Exposition, " / ").concat(Steepness, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$k('stand.targetSpecies'), "</td>\n\t\t\t\t\t\t<td>").concat(TargetSpecies, "</td>                    \n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$k('stand.mainSpecies'), "</td>\n\t\t\t\t\t\t<td>").concat(PredominantSpecies, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$k('stand.age'), "</td>\n\t\t\t\t\t\t<td>").concat(AgeGroup, "</td>                    \n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$k('stand.klass'), "</td>\n\t\t\t\t\t\t<td>").concat(AgeClass, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$k('stand.bonitet'), "</td>\n\t\t\t\t\t\t<td>").concat(Bonitet, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(translate$k('stand.type'), "</td>\n\t\t\t\t\t\t<td></td>                    \n\t\t\t\t\t</tr>\n\t\t\t\t</tbody>\n\t\t\t</table>");
+      if (Array.isArray(ForestAvailable) && ForestAvailable.length) {
+        this._species.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">                \n                <tbody>".concat(ForestAvailable.map(function (_ref2) {
+          var species = _ref2.species,
+              value = _ref2.value;
+          return "<tr>\n                        <td>".concat(species, "</td>\n                        <td>").concat(_this2.m(value), "</td>\n                    </tr>");
+        }).join(''), "</tbody>\n            </table>");
 
-        var _Stock$reduce = Stock.reduce(function (a, _ref3) {
-          var stock = _ref3.stock,
-              species = _ref3.species;
+        var _ForestAvailable$redu = ForestAvailable.reduce(function (a, _ref3) {
+          var species = _ref3.species,
+              value = _ref3.value;
           a.labels.push(species);
-          a.series.push(stock);
+          a.series.push(value);
           return a;
         }, {
           labels: [],
           series: []
         }),
-            labels = _Stock$reduce.labels,
-            series = _Stock$reduce.series;
+            labels = _ForestAvailable$redu.labels,
+            series = _ForestAvailable$redu.series;
 
         this._chart.updateOptions({
           labels: labels
         });
 
         this._chart.updateSeries(series);
-
-        if (Array.isArray(StoreyInfo)) {
-          this._levels.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t\t\t<tbody>".concat(StoreyInfo.map(function (_ref4) {
-            var storey = _ref4.storey,
-                species_info = _ref4.species_info;
-            return "<tr class=\"storey\">\n\t\t\t\t\t\t\t<td>".concat(translate$k('stand.storey.title'), "</td>\n\t\t\t\t\t\t\t<td>").concat(storey, "</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t").concat(Array.isArray(species_info) ? species_info.map(function (_ref5) {
-              var age = _ref5.age,
-                  basal_area_sum = _ref5.basal_area_sum,
-                  dbh = _ref5.dbh,
-                  density = _ref5.density,
-                  gross_volume = _ref5.gross_volume,
-                  height = _ref5.height,
-                  marketability_class = _ref5.marketability_class,
-                  origin_id = _ref5.origin_id,
-                  rate = _ref5.rate,
-                  species = _ref5.species;
-              return "<tr>\n\t\t\t\t\t\t\t\t<td>".concat(translate$k('stand.storey.species'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(species, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$k('stand.storey.rate'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(rate, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$k('stand.storey.gross_volume'), "<sup>3</sup></td>\n\t\t\t\t\t\t\t\t<td>").concat(gross_volume, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$k('stand.storey.age'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(age, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$k('stand.storey.basal_area_sum'), "<sup>2</sup></td>\n\t\t\t\t\t\t\t\t<td>").concat(basal_area_sum, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$k('stand.storey.dbh'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(dbh, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$k('stand.storey.density'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(density, "</td>\n\t\t\t\t\t\t\t</tr>\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$k('stand.storey.height'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(height, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$k('stand.storey.marketability_class'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(marketability_class, "</td>\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<td>").concat(translate$k('stand.storey.origin_id'), "</td>\n\t\t\t\t\t\t\t\t<td>").concat(origin_id, "</td>\n\t\t\t\t\t\t\t</tr>");
-            }).join('') : '');
-          }).join(''), "</tbody>\n\t\t\t\t</table>");
-        }
-
-        if (Array.isArray(Events)) {
-          this._events.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t\t\t<tbody>".concat(Events.map(function (_ref6) {
-            var name = _ref6.name,
-                activity = _ref6.activity,
-                fillingpercent = _ref6.fillingpercent;
-            return "<tr>\n\t\t\t\t\t\t\t<td>".concat(name, "</td>\n\t\t\t\t\t\t\t<td>").concat(activity, "</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t<td>").concat(translate$k('stand.percentage'), "</td>\n\t\t\t\t\t\t\t<td class=\"percentage\">").concat(fillingpercent, "</td>\n\t\t\t\t\t\t</tr>");
-          }).join(''), "</tbody>\n\t\t\t\t</table>");
-        }
-      } else {
-        throw new Error(translate$k('stand.na'));
       }
-    }
-  }, {
-    key: "getStyleHook",
-    value: function getStyleHook(kind, item) {
-      if (kind === 'stands') {
-        return item.id === this._gmx_id ? STYLES$2 : {};
-      } else {
-        return {};
-      }
-    }
-  }, {
-    key: "open",
-    value: function () {
-      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(_ref7) {
-        var gmx_id, properties, response, data;
-        return regeneratorRuntime.wrap(function _callee$(_context) {
-          while (1) {
-            switch (_context.prev = _context.next) {
-              case 0:
-                gmx_id = _ref7.gmx_id, properties = _ref7.properties;
-                _context.prev = 1;
-
-                if (!(this._gmx_id && this._gmx_id === gmx_id)) {
-                  _context.next = 6;
-                  break;
-                }
-
-                this.close();
-                _context.next = 16;
-                break;
-
-              case 6:
-                this._gmx_id = gmx_id;
-                _context.next = 9;
-                return fetch("".concat(this._path, "/Forest/GetStandInformation?StandID=").concat(properties.id), {
-                  method: 'GET',
-                  credentials: 'include'
-                });
-
-              case 9:
-                response = _context.sent;
-                _context.next = 12;
-                return response.json();
-
-              case 12:
-                data = _context.sent;
-
-                this._render(data);
-
-                _context.next = 16;
-                return _get(_getPrototypeOf(Stands.prototype), "open", this).call(this);
-
-              case 16:
-                _context.next = 22;
-                break;
-
-              case 18:
-                _context.prev = 18;
-                _context.t0 = _context["catch"](1);
-                alert(_context.t0.toString());
-                this.close();
-
-              case 22:
-              case "end":
-                return _context.stop();
-            }
-          }
-        }, _callee, this, [[1, 18]]);
-      }));
-
-      function open(_x) {
-        return _open.apply(this, arguments);
-      }
-
-      return open;
-    }()
-  }, {
-    key: "close",
-    value: function close() {
-      this._gmx_id = null; // this._layer.removeStyleHook();
-
-      this._layer.repaint();
-
-      _get(_getPrototypeOf(Stands.prototype), "close", this).call(this);
     }
   }]);
 
-  return Stands;
-}(BaseView);
+  return Info;
+}(View);
 
-var STYLE = {
-  fillStyle: document.createElement('canvas').getContext('2d').createPattern(L.gmxUtil.getPatternIcon(null, {
-    type: '',
-    color: parseInt('FFB801', 16),
-    opacity: 1,
-    weight: 1,
-    fillOpacity: 0.64,
-    fillPattern: {
-      style: 'diagonal1',
-      width: 8,
-      step: 0,
-      colors: [parseInt('FFB801', 16), parseInt('61E9F1', 16)]
-    },
-    common: true
-  }).canvas, 'repeat')
-};
+var translate$6 = T.getText.bind(T);
 
-var translate$l = T.getText.bind(T);
-var stock = {
-  permitted: 'Доступный',
-  probable: 'Прогноз',
-  total: 'Таксация',
-  table: 'Данные о запасах',
-  label: 'Запас, тыс.',
-  all: 'Весь'
-};
-T.addText('rus', {
-  quadrants: 'Кварталы',
-  project: {
-    title: {
-      create: 'Создание проекта лесного участка',
-      edit: 'Редактирование проекта лесного участка'
-    },
-    forestry: 'Лесничество',
-    localForestry: 'Уч. лесничество',
-    tract: 'Урочище',
-    create: 'Создать проект',
-    edit: 'Редактировать проект',
-    request: 'Создать заявку',
-    save: 'Сохранить проект',
-    description: 'Описание',
-    default: 'Проект ЛУ'
-  },
-  species: 'Порода',
-  stock: stock,
-  unit: {
-    m: 'м',
-    m3: 'куб. м',
-    ha: 'га'
-  },
-  error: {
-    request: {
-      create: 'Ошибка при создании заявки'
-    }
-  }
-});
-
-var Project = /*#__PURE__*/function (_BaseView) {
-  _inherits(Project, _BaseView);
-
-  var _super = _createSuper(Project);
-
-  function Project(container, _ref) {
-    var _this;
-
-    var layer = _ref.layer,
-        path = _ref.path;
-
-    _classCallCheck(this, Project);
-
-    _this = _super.call(this, container);
-    _this._layer = layer;
-    _this._path = path;
-
-    _this._container.classList.add('scanex-forestry-project');
-
-    var _this$_layer$getGmxPr = _this._layer.getGmxProperties(),
-        attributes = _this$_layer$getGmxPr.attributes;
-
-    _this._statusIndex = attributes.indexOf('status_calc');
-
-    if (_this._statusIndex >= 0) {
-      _this._statusIndex += 1;
-    }
-
-    _this._forestryIndex = attributes && attributes.indexOf('forestry_id') || -1;
-
-    if (_this._forestryIndex >= 0) {
-      _this._forestryIndex += 1;
-    }
-
-    return _this;
-  }
-
-  _createClass(Project, [{
-    key: "_back",
-    value: function _back() {
-      var event = document.createEvent('Event');
-      event.initEvent('backward', false, false);
-      this.dispatchEvent(event);
-    }
-  }, {
-    key: "clear",
-    value: function clear() {
-      this._quadrants.items = [];
-      this._species.items = [];
-      this._forestryID = null;
-    }
-  }, {
-    key: "toggle",
-    value: function () {
-      var _toggle = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(gmx_id, forestry_id) {
-        var ids, valid;
-        return regeneratorRuntime.wrap(function _callee$(_context) {
-          while (1) {
-            switch (_context.prev = _context.next) {
-              case 0:
-                _context.prev = 0;
-                ids = this.quadrants.slice();
-
-                if (ids.includes(gmx_id)) {
-                  ids = ids.filter(function (id) {
-                    return id !== gmx_id;
-                  });
-                } else {
-                  ids.push(gmx_id);
-                }
-
-                if (!(ids.length === 0)) {
-                  _context.next = 10;
-                  break;
-                }
-
-                // this._back();
-                this._quadrants.items = [];
-                this._species.items = [];
-                this._forestryID = null;
-
-                this._layer.repaint();
-
-                _context.next = 14;
-                break;
-
-              case 10:
-                _context.next = 12;
-                return this._validate(ids);
-
-              case 12:
-                valid = _context.sent;
-
-                if (valid) {
-                  this._quadrants.items = valid.SquareStat;
-                  this._species.items = valid.ForestStat;
-                  this._forestryID = forestry_id;
-
-                  this._layer.repaint();
-                } else {
-                  alert(translate$l('quadrant.invalid'));
-                }
-
-              case 14:
-                _context.next = 20;
-                break;
-
-              case 16:
-                _context.prev = 16;
-                _context.t0 = _context["catch"](0);
-                console.log(_context.t0);
-                alert(translate$l('error.quadrant'));
-
-              case 20:
-              case "end":
-                return _context.stop();
-            }
-          }
-        }, _callee, this, [[0, 16]]);
-      }));
-
-      function toggle(_x, _x2) {
-        return _toggle.apply(this, arguments);
-      }
-
-      return toggle;
-    }()
-  }, {
-    key: "_save",
-    value: function () {
-      var _save2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(description) {
-        var response;
-        return regeneratorRuntime.wrap(function _callee2$(_context2) {
-          while (1) {
-            switch (_context2.prev = _context2.next) {
-              case 0:
-                _context2.next = 2;
-                return fetch("".concat(this._path, "/Forest/StoreDraftForestProjectGmxIds"), {
-                  method: 'POST',
-                  credentials: 'include',
-                  headers: {
-                    'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify({
-                    Title: description,
-                    ForestQs: this._quadrants.items.map(function (_ref2) {
-                      var gmx_id = _ref2.gmx_id;
-                      return gmx_id;
-                    })
-                  })
-                });
-
-              case 2:
-                response = _context2.sent;
-                _context2.next = 5;
-                return response.json();
-
-              case 5:
-                return _context2.abrupt("return", _context2.sent);
-
-              case 6:
-              case "end":
-                return _context2.stop();
-            }
-          }
-        }, _callee2, this);
-      }));
-
-      function _save(_x3) {
-        return _save2.apply(this, arguments);
-      }
-
-      return _save;
-    }()
-  }, {
-    key: "_validate",
-    value: function () {
-      var _validate2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(ids) {
-        var response, _yield$response$json, Status, ForestStat, SquareStat;
-
-        return regeneratorRuntime.wrap(function _callee3$(_context3) {
-          while (1) {
-            switch (_context3.prev = _context3.next) {
-              case 0:
-                _context3.next = 2;
-                return fetch("".concat(this._path, "/Forest/ValidateForestProjectGmxIds"), {
-                  method: 'POST',
-                  credentials: 'include',
-                  headers: {
-                    'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify({
-                    ForestBlocks: ids
-                  })
-                });
-
-              case 2:
-                response = _context3.sent;
-                _context3.next = 5;
-                return response.json();
-
-              case 5:
-                _yield$response$json = _context3.sent;
-                Status = _yield$response$json.Status;
-                ForestStat = _yield$response$json.ForestStat;
-                SquareStat = _yield$response$json.SquareStat;
-
-                if (!(Status === 'valid')) {
-                  _context3.next = 13;
-                  break;
-                }
-
-                return _context3.abrupt("return", {
-                  ForestStat: ForestStat,
-                  SquareStat: SquareStat
-                });
-
-              case 13:
-                return _context3.abrupt("return", false);
-
-              case 14:
-              case "end":
-                return _context3.stop();
-            }
-          }
-        }, _callee3, this);
-      }));
-
-      function _validate(_x4) {
-        return _validate2.apply(this, arguments);
-      }
-
-      return _validate;
-    }()
-  }, {
-    key: "hilite",
-    value: function hilite(id) {
-      this._quadrants.hilite(id);
-    }
-  }, {
-    key: "unhilite",
-    value: function unhilite(id) {
-      this._quadrants.unhilite(id);
-    }
-  }, {
-    key: "getStyleHook",
-    value: function getStyleHook(kind, _ref3) {
-      var id = _ref3.id,
-          properties = _ref3.properties;
-
-      if (kind === 'quadrants') {
-        if (this.quadrants.includes(id)) {
-          return STYLE;
-        } else if (this._forestryID) {
-          return this._forestryIndex >= 0 && this._forestryID === properties[this._forestryIndex] ? {} : null;
-        } else {
-          return {};
-        }
-      } else {
-        return {};
-      }
-    }
-  }, {
-    key: "open",
-    value: function () {
-      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
-        return regeneratorRuntime.wrap(function _callee4$(_context4) {
-          while (1) {
-            switch (_context4.prev = _context4.next) {
-              case 0:
-                this.clear();
-
-                _get(_getPrototypeOf(Project.prototype), "open", this).call(this);
-
-              case 2:
-              case "end":
-                return _context4.stop();
-            }
-          }
-        }, _callee4, this);
-      }));
-
-      function open() {
-        return _open.apply(this, arguments);
-      }
-
-      return open;
-    }()
-  }, {
-    key: "close",
-    value: function close() {
-      _get(_getPrototypeOf(Project.prototype), "close", this).call(this);
-    }
-  }, {
-    key: "quadrants",
-    get: function get() {
-      return this._quadrants.items.map(function (_ref4) {
-        var gmx_id = _ref4.gmx_id;
-        return gmx_id;
-      });
-    }
-  }]);
-
-  return Project;
-}(BaseView);
-
-var translate$m = T.getText.bind(T);
-
-var Quadrants$1 = /*#__PURE__*/function (_EventTarget) {
+var Quadrants = /*#__PURE__*/function (_EventTarget) {
   _inherits(Quadrants, _EventTarget);
 
   var _super = _createSuper(Quadrants);
@@ -43031,48 +44604,12 @@ var Quadrants$1 = /*#__PURE__*/function (_EventTarget) {
   }
 
   _createClass(Quadrants, [{
-    key: "hilite",
-    value: function hilite(id) {
-      var rows = this._container.querySelectorAll('tbody > tr');
-
-      for (var i = 0; i < rows.length; ++i) {
-        var item = this._items[i];
-
-        if (item.gmx_id === id) {
-          rows[i].classList.add('hilite');
-          var event = document.createEvent('Event');
-          event.initEvent('item:over', false, false);
-          event.detail = item;
-          this.dispatchEvent(event);
-          break;
-        }
-      }
-    }
-  }, {
-    key: "unhilite",
-    value: function unhilite(id) {
-      var rows = this._container.querySelectorAll('tbody > tr');
-
-      for (var i = 0; i < rows.length; ++i) {
-        var item = this._items[i];
-
-        if (item.gmx_id === id) {
-          rows[i].classList.remove('hilite');
-          var event = document.createEvent('Event');
-          event.initEvent('item:out', false, false);
-          event.detail = item;
-          this.dispatchEvent(event);
-          break;
-        }
-      }
-    }
-  }, {
     key: "items",
     set: function set(items) {
       var _this2 = this;
 
       this._items = Array.isArray(items) && items || [];
-      this._container.innerHTML = this._items.length ? "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th>".concat(translate$m('project.localForestry'), " / ").concat(translate$m('project.tract'), "</th>                    \n                    <th>").concat(translate$m('quadrants'), "</th>\n                </tr>\n            </thead>\n        </table>\n        <div class=\"scrollable\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody>").concat(this._items.map(function (_ref) {
+      this._container.innerHTML = this._items.length ? "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th>".concat(translate$6('project.localForestry'), " / ").concat(translate$6('project.tract'), "</th>                    \n                    <th>").concat(translate$6('project.quadrants'), "</th>\n                </tr>\n            </thead>\n        </table>\n        <div class=\"scrollable style-4\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody>").concat(this._items.map(function (_ref) {
         var local_forestry = _ref.local_forestry,
             stow = _ref.stow,
             num = _ref.num;
@@ -43116,13 +44653,41 @@ var Quadrants$1 = /*#__PURE__*/function (_EventTarget) {
     },
     get: function get() {
       return this._items;
-    }
+    } // hilite(id){
+    //     let rows = this._container.querySelectorAll('tbody > tr');
+    //     for (let i = 0; i < rows.length; ++i) {
+    //         const item = this._items[i];
+    //         if(item.gmx_id === id) {
+    //             rows[i].classList.add('hilite');
+    //             let event = document.createEvent('Event');            
+    //             event.initEvent('item:over', false, false);
+    //             event.detail = item;
+    //             this.dispatchEvent(event);
+    //             break;
+    //         }
+    //     }
+    // }
+    // unhilite(id){
+    //     let rows = this._container.querySelectorAll('tbody > tr');
+    //     for (let i = 0; i < rows.length; ++i) {
+    //         const item = this._items[i];
+    //         if(item.gmx_id === id) {
+    //             rows[i].classList.remove('hilite');
+    //             let event = document.createEvent('Event');            
+    //             event.initEvent('item:out', false, false);
+    //             event.detail = item;
+    //             this.dispatchEvent(event);
+    //             break;
+    //         }
+    //     }
+    // }
+
   }]);
 
   return Quadrants;
 }(EventTarget);
 
-var translate$n = T.getText.bind(T);
+var translate$7 = T.getText.bind(T);
 
 var SpeciesTable = /*#__PURE__*/function (_EventTarget) {
   _inherits(SpeciesTable, _EventTarget);
@@ -43142,13 +44707,6 @@ var SpeciesTable = /*#__PURE__*/function (_EventTarget) {
   _createClass(SpeciesTable, [{
     key: "update",
     value: function update(species) {
-      var format = function format(n) {
-        return n.toLocaleString('ru-RU', {
-          minimumFractionDigits: 3,
-          maximumFractionDigits: 3
-        });
-      };
-
       var rows = species.sort(function (a, b) {
         if (a.species > b.species) {
           return 1;
@@ -43165,16 +44723,16 @@ var SpeciesTable = /*#__PURE__*/function (_EventTarget) {
             species = _ref.species,
             total_stock = _ref.total_stock,
             total_stock_deal = _ref.total_stock_deal;
-        return "<tr class=\"type\">\n                <td class=\"label\">".concat(species, "</td>\n                <td class=\"value\">").concat(format(permitted_stock / 1000), "</td>\n                <td class=\"value\">").concat(format(permitted_stock_deal / 1000), "</td>\n                <td class=\"value\">").concat(format(probable_stock / 1000), "</td>\n                <td class=\"value\">").concat(format(probable_stock_deal / 1000), "</td>\n                <td class=\"value\">").concat(format(total_stock / 1000), "</td>\n                <td class=\"value\">").concat(format(total_stock_deal / 1000), "</td>\n            </tr>");
+        return "<tr class=\"type\">\n                <td class=\"label\">".concat(species, "</td>\n                <td class=\"value\">").concat(m(permitted_stock), "</td>\n                <td class=\"value\">").concat(m(permitted_stock_deal), "</td>\n                <td class=\"value\">").concat(m(probable_stock), "</td>\n                <td class=\"value\">").concat(m(probable_stock_deal), "</td>\n                <td class=\"value\">").concat(m(total_stock), "</td>\n                <td class=\"value\">").concat(m(total_stock_deal), "</td>\n            </tr>");
       }).join('');
-      this._container.innerHTML = rows ? "<div class=\"title\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>                 \n                        <tr>\n                            <td>".concat(translate$n('species'), "</td>\n                            <td class=\"label\" colspan=\"3\">").concat(translate$n('stock.label'), " ").concat(translate$n('unit.m'), "<sup>3</sup></td>\n                        </tr>\n                        <tr>\n                            <td></td>\n                            <td class=\"label\">").concat(translate$n('stock.permitted'), "</td>                        \n                            <td class=\"label\">").concat(translate$n('stock.probable'), "</td>\n                            <td class=\"label\">").concat(translate$n('stock.total'), "</td>\n                        </tr>\n                    </tbody>\t\t\t\t\t\t\n                </table>\n            </div>\n            <div class=\"content\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>").concat(rows, "</tbody>\n                </table>\n            </div>") : '';
+      this._container.innerHTML = rows ? "<div class=\"title\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>                 \n                        <tr>\n                            <td>".concat(translate$7('project.species'), "</td>\n                            <td class=\"label\" colspan=\"3\">").concat(translate$7('project.stock.label'), ", ").concat(translate$7('units.m'), "<sup>3</sup></td>\n                        </tr>\n                        <tr>\n                            <td></td>\n                            <td class=\"label\">").concat(translate$7('project.stock.permitted'), "</td>                        \n                            <td class=\"label\">").concat(translate$7('project.stock.probable'), "</td>\n                            <td class=\"label\">").concat(translate$7('project.stock.total'), "</td>\n                        </tr>\n                    </tbody>\t\t\t\t\t\t\n                </table>\n            </div>\n            <div class=\"content style-4\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>").concat(rows, "</tbody>\n                </table>\n            </div>") : '';
     }
   }]);
 
   return SpeciesTable;
 }(EventTarget);
 
-var translate$o = T.getText.bind(T);
+var translate$8 = T.getText.bind(T);
 
 var Species = /*#__PURE__*/function () {
   function Species(container) {
@@ -43184,7 +44742,7 @@ var Species = /*#__PURE__*/function () {
 
     this._species = [];
     this._container = container;
-    this._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<thead class=\"menu\">\n\t\t\t\t<tr>\n\t\t\t\t\t<th colspan=\"3\">\n\t\t\t\t\t\t<button class=\"stock active\">".concat(translate$o('stock.table'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"permitted\">").concat(translate$o('stock.permitted'), "</button>\n\t\t\t\t\t</th>\t\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"probable\">").concat(translate$o('stock.probable'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"total\">").concat(translate$o('stock.total'), "</button>\n\t\t\t\t\t</th>\t\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td colspan=\"3\">\n\t\t\t\t\t\t<div class=\"table\"></div>\n\t\t\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t\t</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
+    this._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<thead class=\"menu\">\n\t\t\t\t<tr>\n\t\t\t\t\t<th colspan=\"3\">\n\t\t\t\t\t\t<button class=\"stock active\">".concat(translate$8('project.stock.table'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"permitted\">").concat(translate$8('project.stock.permitted'), "</button>\n\t\t\t\t\t</th>\t\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"probable\">").concat(translate$8('project.stock.probable'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"total\">").concat(translate$8('project.stock.total'), "</button>\n\t\t\t\t\t</th>\t\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td colspan=\"3\">\n\t\t\t\t\t\t<div class=\"table\"></div>\n\t\t\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t\t</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
     this._buttons = this._container.querySelectorAll('button');
 
     var btnStock = this._container.querySelector('.stock');
@@ -43273,8 +44831,8 @@ var Species = /*#__PURE__*/function () {
             labels: {
               show: true,
               value: {
-                formatter: function formatter(val) {
-                  return "".concat(val, " ").concat(translate$o('unit.m3'));
+                formatter: function formatter(v) {
+                  return "".concat(m(v), " ").concat(translate$8('units.m3'));
                 },
                 fontSize: '12px',
                 show: true
@@ -43282,14 +44840,11 @@ var Species = /*#__PURE__*/function () {
               total: {
                 formatter: function formatter(_ref) {
                   var series = _ref.config.series;
-                  return "".concat(series.reduce(function (p, c) {
+                  return "".concat(m(series.reduce(function (p, c) {
                     return p + c;
-                  }, 0).toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                  }), " ").concat(translate$o('unit.m3'));
+                  }, 0)), ", ").concat(translate$8('units.m3'));
                 },
-                label: translate$o('stock.all'),
+                label: translate$8('project.stock.all'),
                 fontSize: '12px',
                 fontWeight: 600,
                 show: true
@@ -43399,49 +44954,283 @@ var Species = /*#__PURE__*/function () {
   return Species;
 }();
 
-var translate$p = T.getText.bind(T);
+var STYLE = {
+  fillStyle: document.createElement('canvas').getContext('2d').createPattern(L.gmxUtil.getPatternIcon(null, {
+    type: '',
+    color: parseInt('FFB801', 16),
+    opacity: 1,
+    weight: 1,
+    fillOpacity: 0.64,
+    fillPattern: {
+      style: 'diagonal1',
+      width: 8,
+      step: 0,
+      colors: [parseInt('FFB801', 16), parseInt('61E9F1', 16)]
+    },
+    common: true
+  }).canvas, 'repeat')
+};
 
-var Create = /*#__PURE__*/function (_Project) {
-  _inherits(Create, _Project);
+var Project = /*#__PURE__*/function (_BaseView) {
+  _inherits(Project, _BaseView);
 
-  var _super = _createSuper(Create);
+  var _super = _createSuper(Project);
 
-  function Create(container, _ref) {
+  function Project(container, _ref) {
     var _this;
 
     var layer = _ref.layer,
-        path = _ref.path;
+        forestryIndex = _ref.forestryIndex,
+        projectIndex = _ref.projectIndex;
 
-    _classCallCheck(this, Create);
+    _classCallCheck(this, Project);
 
-    _this = _super.call(this, container, {
-      layer: layer,
-      path: path
-    });
-    _this._container.innerHTML = "<div class=\"header\">\n            <div class=\"header-left\">\n                <button class=\"scanex-requests-icon back\"></button>                \n                <label class=\"head\">".concat(translate$p('project.title.create'), "</label>                            \n                <input class=\"description\" type=\"text\" value=\"\"></input>\n            </div>\n            <div class=\"header-right\">                                \n                <button class=\"request\">").concat(translate$p('project.request'), "</button>\n                <button class=\"save\">").concat(translate$p('project.save'), "</button>\n            </div>\n        </div>\n        <div class=\"content\">\n            <div class=\"species\"></div>\n            <div class=\"quadrants\"></div>\n        </div>");
+    _this = _super.call(this, container, strings$b);
+    _this._layer = layer;
+    _this._forestryIndex = forestryIndex;
+    _this._projectIndex = projectIndex;
 
-    _this._container.querySelector('.back').addEventListener('click', function (e) {
-      e.stopPropagation();
+    _this._container.classList.add('scanex-forestry-project');
 
-      _this._back();
-    });
-
+    _this._container.innerHTML = "<div class=\"header\">\n            <div class=\"header-left\">\n                <button class=\"scanex-requests-icon back\"></button>\n                <label class=\"head\">".concat(_this.translate('project.title.edit'), "</label>\n                <input class=\"description\" type=\"text\" value=\"\"></input>\n            </div>\n            <div class=\"header-right\">                                \n                <button class=\"request\">").concat(_this.translate('project.request'), "</button>\n                <button class=\"save\">").concat(_this.translate('project.save'), "</button>\n            </div>\n        </div>\n        <div class=\"content\">\n            <div class=\"species\"></div>\n            <div class=\"quadrants\"></div>            \n        </div>");
     _this._description = _this._container.querySelector('.description');
-    _this._description.value = "".concat(translate$p('project.default'), " - ").concat(new Date().toLocaleDateString());
+
+    var btnBack = _this._container.querySelector('.back');
+
+    btnBack.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var event = document.createEvent('Event');
+      event.initEvent('back', false, false);
+
+      _this.dispatchEvent(event);
+    });
+
+    var btnSave = _this._container.querySelector('.save');
+
+    btnSave.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var event = document.createEvent('Event');
+      event.initEvent('save', false, false);
+      event.detail = {
+        forestProjectID: _this._id,
+        forestryID: _this._forestryID,
+        title: _this._description.value,
+        forestQs: _this._quadrants.items.map(function (_ref2) {
+          var gmx_id = _ref2.gmx_id;
+          return gmx_id;
+        })
+      };
+
+      _this.dispatchEvent(event);
+    });
 
     var btnRequest = _this._container.querySelector('.request');
 
-    btnRequest.addEventListener('click', /*#__PURE__*/function () {
+    btnRequest.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var event = document.createEvent('Event');
+      event.initEvent('create', false, false);
+      event.detail = {
+        forestProjectID: _this._id,
+        forestryID: _this._forestryID,
+        title: _this._description.value,
+        forestQs: _this._quadrants.items.map(function (_ref3) {
+          var gmx_id = _ref3.gmx_id;
+          return gmx_id;
+        })
+      };
+
+      _this.dispatchEvent(event);
+    });
+    _this._quadrants = new Quadrants(_this._container.querySelector('.quadrants'));
+    _this._species = new Species(_this._container.querySelector('.species'));
+    return _this;
+  }
+
+  _createClass(Project, [{
+    key: "clear",
+    value: function clear() {
+      this._quadrants.items = [];
+      this._species.items = [];
+      this._forestryID = null;
+      this._id = null;
+    }
+  }, {
+    key: "toggle",
+    value: function toggle(gmx_id) {
+      var ids = this.quadrants.slice();
+
+      if (ids.includes(gmx_id)) {
+        ids = ids.filter(function (id) {
+          return id !== gmx_id;
+        });
+      } else {
+        ids.push(gmx_id);
+      }
+
+      return ids;
+    }
+  }, {
+    key: "getFilter",
+    value: function getFilter(kind, properties) {
+      if (kind === 'projects') {
+        return this._gmx_id !== properties.id;
+      } else {
+        return true;
+      }
+    }
+  }, {
+    key: "getStyleHook",
+    value: function getStyleHook(kind, _ref4) {
+      var id = _ref4.id,
+          properties = _ref4.properties;
+
+      if (kind === 'quadrants') {
+        if (this.quadrants.includes(id)) {
+          return STYLE;
+        } else if (this._forestryID) {
+          return this._forestryIndex >= 0 && this._forestryID === properties[this._forestryIndex] ? {} : null;
+        } else {
+          return {};
+        }
+      } else if (kind === 'projects') {
+        return this._projectIndex >= 0 && this._id === properties[this._projectIndex] ? null : {};
+      } else {
+        return {};
+      }
+    }
+  }, {
+    key: "open",
+    value: function open() {
+      var _ref5 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
+        quadrants: [],
+        species: []
+      },
+          gmx_id = _ref5.gmx_id,
+          forestProjectID = _ref5.forestProjectID,
+          title = _ref5.title,
+          forestryID = _ref5.forestryID,
+          quadrants = _ref5.quadrants,
+          species = _ref5.species;
+
+      _get(_getPrototypeOf(Project.prototype), "open", this).call(this);
+
+      if (gmx_id) {
+        this._gmx_id = gmx_id;
+      }
+
+      this._id = forestProjectID;
+      this._description.value = title || "".concat(this.translate('project.default'), " - ").concat(new Date().toLocaleDateString());
+      this._forestryID = forestryID;
+      this._quadrants.items = quadrants;
+      this._species.items = species;
+    }
+  }, {
+    key: "close",
+    value: function close() {
+      this.clear();
+
+      _get(_getPrototypeOf(Project.prototype), "close", this).call(this);
+    }
+  }, {
+    key: "quadrants",
+    get: function get() {
+      return this._quadrants.items.map(function (_ref6) {
+        var gmx_id = _ref6.gmx_id;
+        return gmx_id;
+      });
+    }
+  }]);
+
+  return Project;
+}(View);
+
+var translate$9 = T.getText.bind(T);
+
+var indexByName = function indexByName(layer, name) {
+  var _layer$getGmxProperti = layer.getGmxProperties(),
+      attributes = _layer$getGmxProperti.attributes;
+
+  var i = attributes.indexOf(name);
+
+  if (i >= 0) {
+    i += 1;
+  }
+
+  return i;
+};
+
+var Projects = /*#__PURE__*/function (_LayerController) {
+  _inherits(Projects, _LayerController);
+
+  var _super = _createSuper(Projects);
+
+  function Projects(_ref) {
+    var _this;
+
+    var map = _ref.map,
+        content = _ref.content,
+        notifications = _ref.notifications,
+        layers = _ref.layers,
+        legend = _ref.legend,
+        path = _ref.path,
+        permissions = _ref.permissions;
+
+    _classCallCheck(this, Projects);
+
+    _this = _super.call(this, {
+      kind: 'projects',
+      map: map,
+      content: content,
+      notifications: notifications,
+      layer: layers.projects,
+      legend: legend
+    });
+    _this._path = path;
+    _this._layers = layers;
+    _this._permissions = permissions;
+    _this._info = _this._content.add('view-project', Info);
+
+    _this._info.on('back', function () {
+      _this._back();
+    });
+
+    var forestryIndex = indexByName(layers.quadrants, 'forestry_id');
+    var projectIndex = indexByName(layers.projects, 'id');
+    _this._project = _this._content.add('edit-project', Project, {
+      layer: _this._layer,
+      forestryIndex: forestryIndex,
+      projectIndex: projectIndex
+    });
+
+    _this._project.on('back', function () {
+      _this._back();
+    });
+
+    _this._project.on('save', /*#__PURE__*/function () {
       var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e) {
+        var _e$detail, forestProjectID, title, forestQs, data;
+
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                e.stopPropagation();
+                _e$detail = e.detail, forestProjectID = _e$detail.forestProjectID, title = _e$detail.title, forestQs = _e$detail.forestQs;
                 _context.next = 3;
-                return _this._createRequest();
+                return _this._save({
+                  forestProjectID: forestProjectID,
+                  title: title,
+                  forestQs: forestQs
+                });
 
               case 3:
+                data = _context.sent;
+
+                if (data) {
+                  _this._back();
+                }
+
+              case 5:
               case "end":
                 return _context.stop();
             }
@@ -43454,242 +45243,35 @@ var Create = /*#__PURE__*/function (_Project) {
       };
     }());
 
-    var btnSave = _this._container.querySelector('.save');
-
-    btnSave.addEventListener('click', /*#__PURE__*/function () {
+    _this._project.on('create', /*#__PURE__*/function () {
       var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(e) {
-        var data, event, _event;
+        var _e$detail2, forestProjectID, title, forestQs, data, SquareStat, ForestStat;
 
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
               case 0:
-                e.stopPropagation();
-                _context2.prev = 1;
-                _context2.next = 4;
-                return _this._save(_this._description.value);
-
-              case 4:
-                data = _context2.sent;
-                event = document.createEvent('Event');
-                event.initEvent('save', false, false);
-                event.detail = data;
-
-                _this.dispatchEvent(event);
-
-                _context2.next = 17;
-                break;
-
-              case 11:
-                _context2.prev = 11;
-                _context2.t0 = _context2["catch"](1);
-                _event = document.createEvent('Event');
-
-                _event.initEvent('error', false, false);
-
-                _event.detail = _context2.t0;
-
-                _this.dispatchEvent(_event);
-
-              case 17:
-              case "end":
-                return _context2.stop();
-            }
-          }
-        }, _callee2, null, [[1, 11]]);
-      }));
-
-      return function (_x2) {
-        return _ref3.apply(this, arguments);
-      };
-    }());
-    _this._quadrants = new Quadrants$1(_this._container.querySelector('.quadrants'));
-
-    _this._quadrants.on('item:click', function (e) {
-      var id = e.detail;
-      var event = document.createEvent('Event');
-      event.initEvent('quadrant:click', false, false);
-      event.detail = id;
-
-      _this.dispatchEvent(event);
-    }).on('item:over', function (e) {
-      var id = e.detail;
-      var event = document.createEvent('Event');
-      event.initEvent('quadrant:over', false, false);
-      event.detail = id;
-
-      _this.dispatchEvent(event);
-    }).on('item:out', function (e) {
-      var id = e.detail;
-      var event = document.createEvent('Event');
-      event.initEvent('quadrant:out', false, false);
-      event.detail = id;
-
-      _this.dispatchEvent(event);
-    });
-
-    _this._species = new Species(_this._container.querySelector('.species'));
-    return _this;
-  }
-
-  _createClass(Create, [{
-    key: "_createRequest",
-    value: function () {
-      var _createRequest2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
-        var _yield$this$_save, ForestProjectID, response, event;
-
-        return regeneratorRuntime.wrap(function _callee3$(_context3) {
-          while (1) {
-            switch (_context3.prev = _context3.next) {
-              case 0:
-                _context3.prev = 0;
-                _context3.next = 3;
-                return this._save(this._description.value);
-
-              case 3:
-                _yield$this$_save = _context3.sent;
-                ForestProjectID = _yield$this$_save.ForestProjectID;
-                _context3.next = 7;
-                return fetch("".concat(this._path, "/Forest/CreateApplicationFromDraft"), {
-                  method: 'POST',
-                  credentials: 'include',
-                  headers: {
-                    'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify({
-                    ForestProjectID: ForestProjectID
-                  })
+                _e$detail2 = e.detail, forestProjectID = _e$detail2.forestProjectID, title = _e$detail2.title, forestQs = _e$detail2.forestQs;
+                _context2.next = 3;
+                return _this._save({
+                  forestProjectID: forestProjectID,
+                  title: title,
+                  forestQs: forestQs
                 });
 
-              case 7:
-                response = _context3.sent;
-                _context3.next = 10;
-                return response.json();
-
-              case 10:
-                event = document.createEvent('Event');
-                event.initEvent('create', false, false);
-                event.detail = ForestProjectID;
-                this.dispatchEvent(event);
-                _context3.next = 20;
-                break;
-
-              case 16:
-                _context3.prev = 16;
-                _context3.t0 = _context3["catch"](0);
-                console.log(_context3.t0);
-                alert(translate$p('error.request.create'));
-
-              case 20:
-              case "end":
-                return _context3.stop();
-            }
-          }
-        }, _callee3, this, [[0, 16]]);
-      }));
-
-      function _createRequest() {
-        return _createRequest2.apply(this, arguments);
-      }
-
-      return _createRequest;
-    }()
-  }]);
-
-  return Create;
-}(Project);
-
-var translate$q = T.getText.bind(T);
-
-var Edit = /*#__PURE__*/function (_Project) {
-  _inherits(Edit, _Project);
-
-  var _super = _createSuper(Edit);
-
-  function Edit(container, _ref) {
-    var _this;
-
-    var layer = _ref.layer,
-        path = _ref.path;
-
-    _classCallCheck(this, Edit);
-
-    _this = _super.call(this, container, {
-      layer: layer,
-      path: path
-    });
-    _this._container.innerHTML = "<div class=\"header\">\n            <div class=\"header-left\">\n                <button class=\"scanex-requests-icon back\"></button>\n                <label class=\"head\">".concat(translate$q('project.title.edit'), "</label>\n                <input class=\"description\" type=\"text\" value=\"\"></input>\n            </div>\n            <div class=\"header-right\">                                \n                <button class=\"request\">").concat(translate$q('project.request'), "</button>\n                <button class=\"save\">").concat(translate$q('project.save'), "</button>\n            </div>\n        </div>\n        <div class=\"content\">\n            <div class=\"species\"></div>\n            <div class=\"quadrants\"></div>            \n        </div>");
-
-    _this._container.querySelector('.back').addEventListener('click', function (e) {
-      e.stopPropagation();
-
-      _this._back();
-    });
-
-    var btnSave = _this._container.querySelector('.save');
-
-    btnSave.addEventListener('click', /*#__PURE__*/function () {
-      var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e) {
-        var data, event, _event;
-
-        return regeneratorRuntime.wrap(function _callee$(_context) {
-          while (1) {
-            switch (_context.prev = _context.next) {
-              case 0:
-                e.stopPropagation();
-                _context.prev = 1;
-                _context.next = 4;
-                return _this._save();
-
-              case 4:
-                data = _context.sent;
-                event = document.createEvent('Event');
-                event.initEvent('save', false, false);
-                event.detail = data;
-
-                _this.dispatchEvent(event);
-
-                _context.next = 17;
-                break;
-
-              case 11:
-                _context.prev = 11;
-                _context.t0 = _context["catch"](1);
-                _event = document.createEvent('Event');
-
-                _event.initEvent('error', false, false);
-
-                _event.detail = _context.t0;
-
-                _this.dispatchEvent(_event);
-
-              case 17:
-              case "end":
-                return _context.stop();
-            }
-          }
-        }, _callee, null, [[1, 11]]);
-      }));
-
-      return function (_x) {
-        return _ref2.apply(this, arguments);
-      };
-    }());
-    _this._description = _this._container.querySelector('.description');
-
-    var btnRequest = _this._container.querySelector('.request');
-
-    btnRequest.addEventListener('click', /*#__PURE__*/function () {
-      var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(e) {
-        return regeneratorRuntime.wrap(function _callee2$(_context2) {
-          while (1) {
-            switch (_context2.prev = _context2.next) {
-              case 0:
-                e.stopPropagation();
-                _context2.next = 3;
-                return _this._createRequest();
-
               case 3:
+                data = _context2.sent;
+
+                if (!data) {
+                  _context2.next = 8;
+                  break;
+                }
+
+                SquareStat = data.SquareStat, ForestStat = data.ForestStat;
+                _context2.next = 8;
+                return _this._createRequest(forestProjectID);
+
+              case 8:
               case "end":
                 return _context2.stop();
             }
@@ -43701,125 +45283,107 @@ var Edit = /*#__PURE__*/function (_Project) {
         return _ref3.apply(this, arguments);
       };
     }());
-    _this._quadrants = new Quadrants$1(_this._container.querySelector('.quadrants'));
 
-    _this._quadrants.on('item:click', function (e) {
-      var id = e.detail;
-      var event = document.createEvent('Event');
-      event.initEvent('quadrant:click', false, false);
-      event.detail = id;
-
-      _this.dispatchEvent(event);
-    }); // .on('item:over', e => {
-    //     const id = e.detail;
-    //     let event = document.createEvent('Event');
-    //     event.initEvent('quadrant:over', false, false);
-    //     event.detail = id;
-    //     this.dispatchEvent(event);
-    // })
-    // .on('item:out', e => {
-    //     const id = e.detail;
-    //     let event = document.createEvent('Event');
-    //     event.initEvent('quadrant:out', false, false);
-    //     event.detail = id;
-    //     this.dispatchEvent(event);
-    // });
-
-
-    _this._species = new Species(_this._container.querySelector('.species'));
     return _this;
   }
 
-  _createClass(Edit, [{
-    key: "_createRequest",
+  _createClass(Projects, [{
+    key: "_back",
+    value: function _back() {
+      this._layers.projects.repaint();
+
+      var event = document.createEvent('Event');
+      event.initEvent('back', false, false);
+      this.dispatchEvent(event);
+    }
+  }, {
+    key: "_click",
     value: function () {
-      var _createRequest2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
-        var response, event;
+      var _click2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(e) {
+        var _e$gmx, id, properties, status_calc, forestry_id, plot_project_status_id;
+
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
               case 0:
-                _context3.prev = 0;
-                _context3.next = 3;
-                return fetch("".concat(this._path, "/Forest/CreateApplicationFromDraft"), {
-                  method: 'POST',
-                  credentials: 'include',
-                  headers: {
-                    'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify({
-                    ForestProjectID: this._valid
-                  })
+                if (!this.canClick) {
+                  _context3.next = 16;
+                  break;
+                }
+
+                L.DomEvent.stopPropagation(e);
+                _e$gmx = e.gmx, id = _e$gmx.id, properties = _e$gmx.properties;
+                status_calc = properties.status_calc, forestry_id = properties.forestry_id, plot_project_status_id = properties.plot_project_status_id;
+
+                if (!(status_calc === 1)) {
+                  _context3.next = 14;
+                  break;
+                }
+
+                if (!(plot_project_status_id === 1)) {
+                  _context3.next = 10;
+                  break;
+                }
+
+                _context3.next = 8;
+                return this.edit({
+                  id: properties.id,
+                  forestryID: forestry_id
                 });
 
-              case 3:
-                response = _context3.sent;
-                _context3.next = 6;
-                return response.json();
+              case 8:
+                _context3.next = 12;
+                break;
 
-              case 6:
-                event = document.createEvent('Event');
-                event.initEvent('create', false, false);
-                event.detail = this._valid;
-                this.dispatchEvent(event);
+              case 10:
+                _context3.next = 12;
+                return this.view({
+                  id: properties.id,
+                  forestryID: forestry_id
+                });
+
+              case 12:
                 _context3.next = 16;
                 break;
 
-              case 12:
-                _context3.prev = 12;
-                _context3.t0 = _context3["catch"](0);
-                console.log(_context3.t0);
-                alert(translate$q('error.request.create'));
+              case 14:
+                _context3.next = 16;
+                return this.view({
+                  id: properties.id,
+                  forestryID: forestry_id
+                });
 
               case 16:
               case "end":
                 return _context3.stop();
             }
           }
-        }, _callee3, this, [[0, 12]]);
+        }, _callee3, this);
       }));
 
-      function _createRequest() {
-        return _createRequest2.apply(this, arguments);
+      function _click(_x3) {
+        return _click2.apply(this, arguments);
       }
 
-      return _createRequest;
+      return _click;
     }()
   }, {
-    key: "_save",
+    key: "_validate",
     value: function () {
-      var _save2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
-        var response;
+      var _validate2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(ids) {
         return regeneratorRuntime.wrap(function _callee4$(_context4) {
           while (1) {
             switch (_context4.prev = _context4.next) {
               case 0:
                 _context4.next = 2;
-                return fetch("".concat(this._path, "/Forest/StoreDraftForestProjectGmxIds"), {
-                  method: 'POST',
-                  credentials: 'include',
-                  headers: {
-                    'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify({
-                    ForestProjectID: this._valid,
-                    Title: this._description.value,
-                    ForestQs: this._quadrants.items.map(function (_ref4) {
-                      var gmx_id = _ref4.gmx_id;
-                      return gmx_id;
-                    })
-                  })
+                return this.httpPost("".concat(this._path, "/Forest/ValidateForestProjectGmxIds"), {
+                  ForestBlocks: ids
                 });
 
               case 2:
-                response = _context4.sent;
-                _context4.next = 5;
-                return response.json();
-
-              case 5:
                 return _context4.abrupt("return", _context4.sent);
 
-              case 6:
+              case 3:
               case "end":
                 return _context4.stop();
             }
@@ -43827,501 +45391,43 @@ var Edit = /*#__PURE__*/function (_Project) {
         }, _callee4, this);
       }));
 
-      function _save() {
-        return _save2.apply(this, arguments);
+      function _validate(_x4) {
+        return _validate2.apply(this, arguments);
       }
 
-      return _save;
+      return _validate;
     }()
   }, {
-    key: "open",
-    value: function () {
-      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(_ref5) {
-        var id, forestryID, response, _yield$response$json, title, gmxIds, result;
+    key: "create",
+    value: function create() {
+      this._legend.enable('quadrants');
 
+      this._legend.enable('projects');
+
+      this._legend.enable('plots');
+
+      this._legend.enable('parks');
+
+      this._project.open();
+
+      this._layer.repaint();
+    } // draft
+
+  }, {
+    key: "edit",
+    value: function () {
+      var _edit = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(_ref4) {
+        var id, forestryID, data, title, gmxIds, res, Status, SquareStat, ForestStat;
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
           while (1) {
             switch (_context5.prev = _context5.next) {
               case 0:
-                id = _ref5.id, forestryID = _ref5.forestryID;
-                _context5.prev = 1;
-                _context5.next = 4;
-                return _get(_getPrototypeOf(Edit.prototype), "open", this).call(this);
+                id = _ref4.id, forestryID = _ref4.forestryID;
 
-              case 4:
-                _context5.next = 6;
-                return fetch("".concat(this._path, "/Forest/GetPlotProjectDraft?ForestProjectID=").concat(id), {
-                  method: 'GET',
-                  credentials: 'include',
-                  headers: {
-                    'Content-Type': 'application/json'
-                  }
-                });
-
-              case 6:
-                response = _context5.sent;
-                _context5.next = 9;
-                return response.json();
-
-              case 9:
-                _yield$response$json = _context5.sent;
-                title = _yield$response$json.title;
-                gmxIds = _yield$response$json.gmxIds;
-                _context5.next = 14;
-                return this._validate(gmxIds);
-
-              case 14:
-                result = _context5.sent;
-
-                if (!result) {
-                  _context5.next = 24;
-                  break;
-                }
-
-                this._valid = id;
-                this._description.value = title;
-                this._quadrants.items = result.SquareStat;
-                this._species.items = result.ForestStat;
-                this._forestryID = forestryID;
-
-                this._layer.repaint();
-
-                _context5.next = 25;
-                break;
-
-              case 24:
-                throw translate$q('quadrant.invalid');
-
-              case 25:
-                _context5.next = 32;
-                break;
-
-              case 27:
-                _context5.prev = 27;
-                _context5.t0 = _context5["catch"](1);
-
-                this._back();
-
-                console.log(_context5.t0);
-                alert(translate$q('error.project.edit'));
-
-              case 32:
-              case "end":
-                return _context5.stop();
-            }
-          }
-        }, _callee5, this, [[1, 27]]);
-      }));
-
-      function open(_x3) {
-        return _open.apply(this, arguments);
-      }
-
-      return open;
-    }()
-  }]);
-
-  return Edit;
-}(Project);
-
-var translate$r = T.getText.bind(T);
-
-var Quadrants$2 = /*#__PURE__*/function (_Controller) {
-  _inherits(Quadrants$1, _Controller);
-
-  var _super = _createSuper(Quadrants$1);
-
-  function Quadrants$1(_ref) {
-    var _this;
-
-    var map = _ref.map,
-        layer = _ref.layer,
-        legend = _ref.legend,
-        content = _ref.content,
-        apiPath = _ref.apiPath,
-        permissions = _ref.permissions;
-
-    _classCallCheck(this, Quadrants$1);
-
-    _this = _super.call(this, {
-      kind: 'quadrants',
-      map: map,
-      layer: layer,
-      legend: legend
-    });
-    _this._content = content;
-    _this._apiPath = apiPath;
-    _this._permissions = permissions;
-
-    _this._content.add('quadrants', Quadrants, {
-      layer: _this._layer,
-      path: _this._apiPath
-    });
-
-    _this._content.add('requests', Requests, {
-      layer: _this._layer,
-      path: _this._apiPath
-    }).on('create', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
-      return regeneratorRuntime.wrap(function _callee$(_context) {
-        while (1) {
-          switch (_context.prev = _context.next) {
-            case 0:
-              _context.next = 2;
-              return _this.create();
-
-            case 2:
-            case "end":
-              return _context.stop();
-          }
-        }
-      }, _callee);
-    }))).on('existing', function (e) {
-      var event = document.createEvent('Event');
-      event.initEvent('project:view', false, false);
-      event.detail = e.detail;
-
-      _this.dispatchEvent(event);
-    }).on('edit', /*#__PURE__*/function () {
-      var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(e) {
-        var _e$detail, id, forestryID;
-
-        return regeneratorRuntime.wrap(function _callee2$(_context2) {
-          while (1) {
-            switch (_context2.prev = _context2.next) {
-              case 0:
-                _e$detail = e.detail, id = _e$detail.id, forestryID = _e$detail.forestryID;
-                _context2.next = 3;
-                return _this.edit(id, forestryID);
-
-              case 3:
-              case "end":
-                return _context2.stop();
-            }
-          }
-        }, _callee2);
-      }));
-
-      return function (_x) {
-        return _ref3.apply(this, arguments);
-      };
-    }()).on('remove', /*#__PURE__*/function () {
-      var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(e) {
-        var id;
-        return regeneratorRuntime.wrap(function _callee3$(_context3) {
-          while (1) {
-            switch (_context3.prev = _context3.next) {
-              case 0:
-                id = e.detail;
-                _context3.next = 3;
-                return _this._remove(id);
-
-              case 3:
-                _context3.next = 5;
-                return _this._content.show('requests');
-
-              case 5:
-              case "end":
-                return _context3.stop();
-            }
-          }
-        }, _callee3);
-      }));
-
-      return function (_x2) {
-        return _ref4.apply(this, arguments);
-      };
-    }());
-
-    _this._content.add('edit-project', Edit, {
-      layer: _this._layer,
-      path: _this._apiPath
-    }).on('save', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
-      return regeneratorRuntime.wrap(function _callee4$(_context4) {
-        while (1) {
-          switch (_context4.prev = _context4.next) {
-            case 0:
-              _this._layer.repaint();
-
-              _context4.next = 3;
-              return _this._content.show('requests');
-
-            case 3:
-            case "end":
-              return _context4.stop();
-          }
-        }
-      }, _callee4);
-    }))).on('backward', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5() {
-      return regeneratorRuntime.wrap(function _callee5$(_context5) {
-        while (1) {
-          switch (_context5.prev = _context5.next) {
-            case 0:
-              _this._layer.repaint();
-
-              _context5.next = 3;
-              return _this._content.show('requests');
-
-            case 3:
-            case "end":
-              return _context5.stop();
-          }
-        }
-      }, _callee5);
-    }))).on('create', /*#__PURE__*/function () {
-      var _ref7 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(e) {
-        var event;
-        return regeneratorRuntime.wrap(function _callee6$(_context6) {
-          while (1) {
-            switch (_context6.prev = _context6.next) {
-              case 0:
-                _this._layer.repaint();
-
-                _context6.next = 3;
-                return _this._content.show('requests');
-
-              case 3:
-                event = document.createEvent('Event');
-                event.initEvent('request:create', false, false);
-                event.detail = e.detail;
-
-                _this.dispatchEvent(event);
-
-              case 7:
-              case "end":
-                return _context6.stop();
-            }
-          }
-        }, _callee6);
-      }));
-
-      return function (_x3) {
-        return _ref7.apply(this, arguments);
-      };
-    }());
-
-    _this._content.add('create-project', Create, {
-      layer: _this._layer,
-      path: _this._apiPath
-    }).on('save', /*#__PURE__*/function () {
-      var _ref8 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(e) {
-        return regeneratorRuntime.wrap(function _callee7$(_context7) {
-          while (1) {
-            switch (_context7.prev = _context7.next) {
-              case 0:
-                _this._layer.repaint();
-
-                _context7.next = 3;
-                return _this._content.show('requests');
-
-              case 3:
-              case "end":
-                return _context7.stop();
-            }
-          }
-        }, _callee7);
-      }));
-
-      return function (_x4) {
-        return _ref8.apply(this, arguments);
-      };
-    }()).on('backward', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8() {
-      return regeneratorRuntime.wrap(function _callee8$(_context8) {
-        while (1) {
-          switch (_context8.prev = _context8.next) {
-            case 0:
-              _this._layer.repaint();
-
-              _context8.next = 3;
-              return _this._content.show('requests');
-
-            case 3:
-            case "end":
-              return _context8.stop();
-          }
-        }
-      }, _callee8);
-    }))).on('create', /*#__PURE__*/function () {
-      var _ref10 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9(e) {
-        var event;
-        return regeneratorRuntime.wrap(function _callee9$(_context9) {
-          while (1) {
-            switch (_context9.prev = _context9.next) {
-              case 0:
-                _this._layer.repaint();
-
-                _context9.next = 3;
-                return _this._content.show('requests');
-
-              case 3:
-                event = document.createEvent('Event');
-                event.initEvent('request:create', false, false);
-                event.detail = e.detail;
-
-                _this.dispatchEvent(event);
-
-              case 7:
-              case "end":
-                return _context9.stop();
-            }
-          }
-        }, _callee9);
-      }));
-
-      return function (_x5) {
-        return _ref10.apply(this, arguments);
-      };
-    }());
-    return _this;
-  }
-
-  _createClass(Quadrants$1, [{
-    key: "_click",
-    value: function () {
-      var _click2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(e) {
-        var mode, _e$gmx, id, properties, v;
-
-        return regeneratorRuntime.wrap(function _callee10$(_context10) {
-          while (1) {
-            switch (_context10.prev = _context10.next) {
-              case 0:
-                L.DomEvent.stopPropagation(e);
-                mode = this._content.getCurrentId();
-
-                if (!mode) {
-                  _context10.next = 18;
-                  break;
-                }
-
-                _e$gmx = e.gmx, id = _e$gmx.id, properties = _e$gmx.properties;
-                _context10.t0 = mode;
-                _context10.next = _context10.t0 === 'requests' ? 7 : _context10.t0 === 'quadrants' ? 7 : _context10.t0 === 'create-project' ? 10 : _context10.t0 === 'edit-project' ? 10 : 14;
-                break;
-
-              case 7:
-                _context10.next = 9;
-                return this._content.show('quadrants', {
-                  gmx_id: id,
-                  properties: properties
-                });
-
-              case 9:
-                return _context10.abrupt("break", 15);
-
-              case 10:
-                v = this._content.getCurrent();
-                _context10.next = 13;
-                return v.toggle(id, properties.forestry_id);
-
-              case 13:
-                return _context10.abrupt("break", 15);
-
-              case 14:
-                return _context10.abrupt("break", 15);
-
-              case 15:
-                this._layer.repaint();
-
-                _context10.next = 20;
-                break;
-
-              case 18:
-                _context10.next = 20;
-                return _get(_getPrototypeOf(Quadrants$1.prototype), "_click", this).call(this, e);
-
-              case 20:
-              case "end":
-                return _context10.stop();
-            }
-          }
-        }, _callee10, this);
-      }));
-
-      function _click(_x6) {
-        return _click2.apply(this, arguments);
-      }
-
-      return _click;
-    }()
-  }, {
-    key: "edit",
-    value: function () {
-      var _edit = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11(id, forestryID) {
-        var event;
-        return regeneratorRuntime.wrap(function _callee11$(_context11) {
-          while (1) {
-            switch (_context11.prev = _context11.next) {
-              case 0:
                 if (!this._permissions.ForestProjectsEdit) {
-                  _context11.next = 21;
+                  _context5.next = 27;
                   break;
                 }
-
-                _context11.prev = 1;
-
-                this._legend.enable('quadrants');
-
-                this._layer.repaint();
-
-                _context11.next = 6;
-                return this._content.show('edit-project', {
-                  id: id,
-                  forestryID: forestryID
-                });
-
-              case 6:
-                event = document.createEvent('Event');
-                event.initEvent('project:edit', false, false);
-                event.detail = id;
-                this.dispatchEvent(event);
-                _context11.next = 19;
-                break;
-
-              case 12:
-                _context11.prev = 12;
-                _context11.t0 = _context11["catch"](1);
-                console.log(_context11.t0);
-                alert(translate$r('error.project.edit'));
-                _context11.next = 18;
-                return this._content.show('requests');
-
-              case 18:
-                this._layer.repaint();
-
-              case 19:
-                _context11.next = 22;
-                break;
-
-              case 21:
-                alert(translate$r('forbidden.project.edit'));
-
-              case 22:
-              case "end":
-                return _context11.stop();
-            }
-          }
-        }, _callee11, this, [[1, 12]]);
-      }));
-
-      function edit(_x7, _x8) {
-        return _edit.apply(this, arguments);
-      }
-
-      return edit;
-    }()
-  }, {
-    key: "create",
-    value: function () {
-      var _create = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee12() {
-        return regeneratorRuntime.wrap(function _callee12$(_context12) {
-          while (1) {
-            switch (_context12.prev = _context12.next) {
-              case 0:
-                if (!this._permissions.ApplicationMake) {
-                  _context12.next = 20;
-                  break;
-                }
-
-                _context12.prev = 1;
 
                 this._legend.enable('quadrants');
 
@@ -44331,199 +45437,526 @@ var Quadrants$2 = /*#__PURE__*/function (_Controller) {
 
                 this._legend.enable('parks');
 
-                this._layer.repaint();
+                _context5.next = 8;
+                return this.httpGet("".concat(this._path, "/Forest/GetPlotProjectDraft"), {
+                  ForestProjectID: id
+                });
 
-                _context12.next = 9;
-                return this._content.show('create-project');
+              case 8:
+                data = _context5.sent;
 
-              case 9:
-                _context12.next = 18;
-                break;
-
-              case 11:
-                _context12.prev = 11;
-                _context12.t0 = _context12["catch"](1);
-                console.log(_context12.t0);
-                alert(translate$r('error.project.create'));
-                _context12.next = 17;
-                return this._content.show('requests');
-
-              case 17:
-                this._layer.repaint();
-
-              case 18:
-                _context12.next = 21;
-                break;
-
-              case 20:
-                alert(translate$r('forbidden.project.create'));
-
-              case 21:
-              case "end":
-                return _context12.stop();
-            }
-          }
-        }, _callee12, this, [[1, 11]]);
-      }));
-
-      function create() {
-        return _create.apply(this, arguments);
-      }
-
-      return create;
-    }()
-  }, {
-    key: "_remove",
-    value: function () {
-      var _remove2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee13(id) {
-        var response;
-        return regeneratorRuntime.wrap(function _callee13$(_context13) {
-          while (1) {
-            switch (_context13.prev = _context13.next) {
-              case 0:
-                if (!this._permissions.ForestProjectsRemove) {
-                  _context13.next = 19;
+                if (!data) {
+                  _context5.next = 25;
                   break;
                 }
 
-                _context13.prev = 1;
-                _context13.next = 4;
-                return fetch("".concat(this._apiPath, "/Forest/RemoveDraftForestProject"), {
-                  method: 'POST',
-                  credentials: 'include',
-                  headers: {
-                    'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify({
-                    forestProjectID: id
-                  })
+                title = data.title, gmxIds = data.gmxIds;
+                _context5.next = 13;
+                return this._validate(gmxIds);
+
+              case 13:
+                res = _context5.sent;
+
+                if (!res) {
+                  _context5.next = 25;
+                  break;
+                }
+
+                Status = res.Status, SquareStat = res.SquareStat, ForestStat = res.ForestStat;
+
+                if (!(Status === 'valid')) {
+                  _context5.next = 23;
+                  break;
+                }
+
+                this._valid = {
+                  forestProjectID: id,
+                  title: title,
+                  forestryID: forestryID,
+                  quadrants: SquareStat,
+                  species: ForestStat
+                };
+
+                this._project.open(this._valid);
+
+                this._layers.quadrants.repaint();
+
+                return _context5.abrupt("return", true);
+
+              case 23:
+                alert(translate$9('quadrant.invalid'));
+                return _context5.abrupt("return", false);
+
+              case 25:
+                _context5.next = 28;
+                break;
+
+              case 27:
+                this._notifications.forbidden.open();
+
+              case 28:
+              case "end":
+                return _context5.stop();
+            }
+          }
+        }, _callee5, this);
+      }));
+
+      function edit(_x5) {
+        return _edit.apply(this, arguments);
+      }
+
+      return edit;
+    }()
+  }, {
+    key: "view",
+    value: function () {
+      var _view = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(_ref5) {
+        var id, forestryID, data;
+        return regeneratorRuntime.wrap(function _callee6$(_context6) {
+          while (1) {
+            switch (_context6.prev = _context6.next) {
+              case 0:
+                id = _ref5.id, forestryID = _ref5.forestryID;
+
+                if (!this._permissions.ForestProjectsView) {
+                  _context6.next = 8;
+                  break;
+                }
+
+                _context6.next = 4;
+                return this.httpGet("".concat(this._path, "/Forest/GetPlotProjectApplication"), {
+                  ForestProjectID: id
                 });
 
               case 4:
-                response = _context13.sent;
-                _context13.next = 7;
-                return response.json();
+                data = _context6.sent;
 
-              case 7:
-                this._layer.repaint();
+                if (data) {
+                  this._info.open(data);
+                }
 
-                _context13.next = 17;
+                _context6.next = 9;
                 break;
 
-              case 10:
-                _context13.prev = 10;
-                _context13.t0 = _context13["catch"](1);
-                console.log(_context13.t0);
-                alert(translate$r('error.project.remove'));
-                _context13.next = 16;
-                return this._content.show('requests');
+              case 8:
+                this._notifications.forbidden.open();
 
-              case 16:
-                this._layer.repaint();
-
-              case 17:
-                _context13.next = 20;
-                break;
-
-              case 19:
-                alert(translate$r('forbidden.project.remove'));
-
-              case 20:
+              case 9:
               case "end":
-                return _context13.stop();
+                return _context6.stop();
             }
           }
-        }, _callee13, this, [[1, 10]]);
+        }, _callee6, this);
       }));
 
-      function _remove(_x9) {
-        return _remove2.apply(this, arguments);
+      function view(_x6) {
+        return _view.apply(this, arguments);
       }
 
-      return _remove;
+      return view;
+    }()
+  }, {
+    key: "_save",
+    value: function () {
+      var _save2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(_ref6) {
+        var forestProjectID, title, forestQs;
+        return regeneratorRuntime.wrap(function _callee7$(_context7) {
+          while (1) {
+            switch (_context7.prev = _context7.next) {
+              case 0:
+                forestProjectID = _ref6.forestProjectID, title = _ref6.title, forestQs = _ref6.forestQs;
+                _context7.next = 3;
+                return this.httpPost("".concat(this._path, "/Forest/StoreDraftForestProjectGmxIds"), {
+                  forestProjectID: forestProjectID,
+                  title: title,
+                  forestQs: forestQs
+                });
+
+              case 3:
+                return _context7.abrupt("return", _context7.sent);
+
+              case 4:
+              case "end":
+                return _context7.stop();
+            }
+          }
+        }, _callee7, this);
+      }));
+
+      function _save(_x7) {
+        return _save2.apply(this, arguments);
+      }
+
+      return _save;
+    }()
+  }, {
+    key: "_createRequest",
+    value: function () {
+      var _createRequest2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(id) {
+        var data, event;
+        return regeneratorRuntime.wrap(function _callee8$(_context8) {
+          while (1) {
+            switch (_context8.prev = _context8.next) {
+              case 0:
+                _context8.next = 2;
+                return this.httpPost("".concat(this._path, "/Forest/CreateApplicationFromDraft"), {
+                  ForestProjectID: id
+                });
+
+              case 2:
+                data = _context8.sent;
+
+                if (data) {
+                  event = document.createEvent('Event');
+                  event.initEvent('create', false, false);
+                  event.detail = id;
+                  this.dispatchEvent(event);
+
+                  this._project.close();
+                }
+
+              case 4:
+              case "end":
+                return _context8.stop();
+            }
+          }
+        }, _callee8, this);
+      }));
+
+      function _createRequest(_x8) {
+        return _createRequest2.apply(this, arguments);
+      }
+
+      return _createRequest;
+    }()
+  }, {
+    key: "toggleQuadrant",
+    value: function () {
+      var _toggleQuadrant = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9(_ref7) {
+        var gmx_id, forestryID, ids, data, Status, SquareStat, ForestStat;
+        return regeneratorRuntime.wrap(function _callee9$(_context9) {
+          while (1) {
+            switch (_context9.prev = _context9.next) {
+              case 0:
+                gmx_id = _ref7.gmx_id, forestryID = _ref7.forestryID;
+
+                if (this._executing) {
+                  _context9.next = 13;
+                  break;
+                }
+
+                this._executing = true;
+                ids = this._project.toggle(gmx_id);
+
+                if (!(ids.length === 0)) {
+                  _context9.next = 8;
+                  break;
+                }
+
+                this._project.clear();
+
+                _context9.next = 13;
+                break;
+
+              case 8:
+                _context9.next = 10;
+                return this._validate(ids);
+
+              case 10:
+                data = _context9.sent;
+                this._executing = false;
+
+                if (data) {
+                  Status = data.Status, SquareStat = data.SquareStat, ForestStat = data.ForestStat;
+
+                  if (Status === 'valid') {
+                    this._valid = {
+                      forestryID: forestryID,
+                      quadrants: SquareStat,
+                      species: ForestStat
+                    };
+                  } else {
+                    alert(translate$9('quadrant.invalid'));
+                  }
+
+                  this._project.open(this._valid);
+
+                  this._layers.quadrants.repaint();
+                }
+
+              case 13:
+              case "end":
+                return _context9.stop();
+            }
+          }
+        }, _callee9, this);
+      }));
+
+      function toggleQuadrant(_x9) {
+        return _toggleQuadrant.apply(this, arguments);
+      }
+
+      return toggleQuadrant;
     }()
   }]);
 
-  return Quadrants$1;
-}(Controller);
+  return Projects;
+}(LayerController);
 
-var translate$s = T.getText.bind(T);
-T.addText('rus', {
-  analytics: {
-    title: 'Сводная аналитика',
-    type: 'Тип отчета',
-    typeOption: ['Оплачено и вырублено', 'Баланс древесины', 'Топ-5 нарушителей'],
-    region: 'Регион',
-    forestry: 'Лесничество',
-    districtForestry: 'Участковое лесничество',
-    sootn: 'Соотношение',
-    oplach: 'оплаченной',
-    vyrub: 'вырубленной',
-    dreves: 'древесины',
-    vybpor: 'Выбор породы',
-    period: 'Период',
-    opl: 'Оплачено',
-    vyr: 'Вырублено',
-    all: 'Все',
-    growth: 'Прирост',
-    burntOut: 'Сгорело',
-    cutDown: 'Вырубили',
-    ballanceChanges: 'Изменение баланса',
-    total: 'Итого',
-    milr: 'млн. руб.',
-    m3: 'млн. руб.',
-    save: 'Сформировать отчет'
+var strings$c = {
+  rus: {
+    quadrant: {
+      stock: {
+        label: 'Объем древесины',
+        all: 'Весь'
+      },
+      about: 'На основании данных лесоустройства',
+      title: 'Квартал',
+      stow: 'Урочище',
+      forestry: 'Лесничество',
+      localForestry: 'Участковое лесничество',
+      invalid: 'Недопустимый состав участка'
+    }
   }
-});
+};
 
-var Reports = /*#__PURE__*/function (_BaseView) {
-  _inherits(Reports, _BaseView);
+var STYLES$2 = {
+  fillStyle: document.createElement('canvas').getContext('2d').createPattern(L.gmxUtil.getPatternIcon(null, {
+    type: '',
+    color: parseInt('FFB801', 16),
+    opacity: 1,
+    weight: 1,
+    fillOpacity: 0.64,
+    fillPattern: {
+      style: 'diagonal1',
+      width: 8,
+      step: 0,
+      colors: [parseInt('FFB801', 16), parseInt('61E9F1', 16)]
+    },
+    common: true
+  }).canvas, 'repeat'),
+  strokeStyle: '#FFB801',
+  lineWidth: 2
+};
 
-  var _super = _createSuper(Reports);
+var Quadrants$1 = /*#__PURE__*/function (_BaseView) {
+  _inherits(Quadrants, _BaseView);
 
-  function Reports(container, _ref) {
+  var _super = _createSuper(Quadrants);
+
+  function Quadrants(container) {
     var _this;
 
-    var path = _ref.path;
+    _classCallCheck(this, Quadrants);
 
-    _classCallCheck(this, Reports);
+    _this = _super.call(this, container, strings$c);
 
-    _this = _super.call(this, container);
+    _this._container.classList.add('scanex-forestry-quadrant');
 
-    _this._container.classList.add('scanex-forestry-analytics');
+    _this._container.innerHTML = "<div class=\"title\">".concat(_this.translate('quadrant.title'), "</div>\n\t\t<div class=\"forestry\"></div>\n\t\t<div class=\"stock\">").concat(_this.translate('quadrant.stock.label'), "</div>\n\t\t<div class=\"about\">").concat(_this.translate('quadrant.about'), "</div>\n\t\t<div class=\"chart\"></div>");
+    _this._forestry = _this._container.querySelector('.forestry');
+    _this._chart = new apexcharts_common(_this._container.querySelector('.chart'), {
+      chart: {
+        type: 'donut',
+        height: '160px',
+        width: '500px',
+        fontFamily: 'Open Sans'
+      },
+      dataLabels: {
+        enabled: false
+      },
+      labels: [],
+      series: [],
+      legend: {
+        position: 'right',
+        width: '200px',
+        offsetY: -10,
+        formatter: function formatter(name, opts) {
+          var val = parseFloat(opts.w.globals.series[opts.seriesIndex]);
+          return "".concat(name, " - ").concat(_this.m(val));
+        },
+        horizontalAlign: 'right'
+      },
+      plotOptions: {
+        pie: {
+          donut: {
+            size: '78%',
+            labels: {
+              show: true,
+              value: {
+                formatter: function formatter(val) {
+                  return "".concat(_this.m(val), " ").concat(_this.translate('units.m3'));
+                },
+                fontSize: '12px',
+                show: true
+              },
+              total: {
+                formatter: function formatter(_ref) {
+                  var series = _ref.config.series;
+                  return "".concat(_this.m(series.reduce(function (p, c) {
+                    return p + c;
+                  }, 0)), " ").concat(_this.translate('units.m3'));
+                },
+                label: _this.translate('quadrant.stock.all'),
+                fontSize: '12px',
+                fontWeight: 600,
+                show: true
+              }
+            }
+          }
+        }
+      }
+    });
 
-    _this._path = path;
+    _this._chart.render();
+
     return _this;
   }
 
-  _createClass(Reports, [{
+  _createClass(Quadrants, [{
     key: "open",
+    value: function open(data) {
+      _get(_getPrototypeOf(Quadrants.prototype), "open", this).call(this);
+
+      var gmx_id = data.gmx_id,
+          Forestry = data.Forestry,
+          LocalForestry = data.LocalForestry,
+          Num = data.Num,
+          Stock = data.Stock,
+          Stow = data.Stow;
+      this._gmx_id = gmx_id;
+      this._forestry.innerHTML = "".concat(this.translate('quadrant.forestry'), ": ").concat(Forestry, ", ").concat(this.translate('quadrant.localForestry'), ": ").concat(LocalForestry).concat(Stow ? ", ".concat(this.translate('quadrant.stow'), ": ").concat(Stow) : '', ", ").concat(this.translate('quadrant.title'), " \u2116").concat(Num);
+
+      if (Array.isArray(Stock)) {
+        var _Stock$reduce = Stock.reduce(function (a, s) {
+          a.labels.push(s.species);
+          a.series.push(s.stock);
+          return a;
+        }, {
+          labels: [],
+          series: []
+        }),
+            labels = _Stock$reduce.labels,
+            series = _Stock$reduce.series;
+
+        this._chart.updateOptions({
+          labels: labels
+        });
+
+        this._chart.updateSeries(series);
+      }
+    }
+  }, {
+    key: "getStyleHook",
+    value: function getStyleHook(kind, item) {
+      if (kind === 'quadrants') {
+        return item.id === this._gmx_id ? STYLES$2 : {};
+      } else {
+        return {};
+      }
+    }
+  }, {
+    key: "close",
+    value: function close() {
+      this._gmx_id = null;
+
+      _get(_getPrototypeOf(Quadrants.prototype), "close", this).call(this);
+    }
+  }, {
+    key: "current",
+    get: function get() {
+      return this._gmx_id;
+    }
+  }]);
+
+  return Quadrants;
+}(View);
+
+var Quadrants$2 = /*#__PURE__*/function (_LayerController) {
+  _inherits(Quadrants, _LayerController);
+
+  var _super = _createSuper(Quadrants);
+
+  function Quadrants(_ref) {
+    var _this;
+
+    var map = _ref.map,
+        content = _ref.content,
+        notifications = _ref.notifications,
+        layer = _ref.layer,
+        legend = _ref.legend,
+        path = _ref.path,
+        permissions = _ref.permissions;
+
+    _classCallCheck(this, Quadrants);
+
+    _this = _super.call(this, {
+      kind: 'quadrants',
+      map: map,
+      content: content,
+      notifications: notifications,
+      layer: layer,
+      legend: legend
+    });
+    _this._path = path;
+    _this._permissions = permissions;
+    _this._quadrants = _this._content.add('quadrants', Quadrants$1);
+
+    _this._quadrants.on('close', function () {
+      _this._layer.repaint();
+    });
+
+    return _this;
+  }
+
+  _createClass(Quadrants, [{
+    key: "_click",
     value: function () {
-      var _open = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
-        var response;
+      var _click2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e) {
+        var mode, _e$gmx, id, properties, event;
+
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                _get(_getPrototypeOf(Reports.prototype), "open", this).call(this);
+                L.DomEvent.stopPropagation(e);
+                mode = this._content.getCurrentId();
+                _e$gmx = e.gmx, id = _e$gmx.id, properties = _e$gmx.properties;
 
-                _context.next = 3;
-                return fetch("".concat(this._path, "/Forest/GetReportHeaderData"), {
-                  method: 'GET',
-                  credentials: 'include'
-                });
+                if (!(mode === 'quadrants')) {
+                  _context.next = 8;
+                  break;
+                }
 
-              case 3:
-                response = _context.sent;
                 _context.next = 6;
-                return response.json();
+                return this._toggleQuadrant(id, properties.id);
 
               case 6:
-                this._headerData = _context.sent;
-
-                this._render(this._headerData);
+                _context.next = 17;
+                break;
 
               case 8:
+                if (!(mode === 'edit-project')) {
+                  _context.next = 15;
+                  break;
+                }
+
+                event = document.createEvent('Event');
+                event.initEvent('quadrant:toggle', false, false);
+                event.detail = {
+                  gmx_id: id,
+                  forestryID: properties.forestry_id
+                };
+                this.dispatchEvent(event);
+                _context.next = 17;
+                break;
+
+              case 15:
+                _context.next = 17;
+                return this._toggleQuadrant(id, properties.id);
+
+              case 17:
               case "end":
                 return _context.stop();
             }
@@ -44531,20 +45964,135 @@ var Reports = /*#__PURE__*/function (_BaseView) {
         }, _callee, this);
       }));
 
-      function open() {
-        return _open.apply(this, arguments);
+      function _click(_x) {
+        return _click2.apply(this, arguments);
       }
 
-      return open;
+      return _click;
     }()
   }, {
-    key: "_render",
-    value: function _render(data) {
+    key: "_toggleQuadrant",
+    value: function () {
+      var _toggleQuadrant2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(gmx_id, id) {
+        var data;
+        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                if (!(this._gmx_id && this._gmx_id === gmx_id)) {
+                  _context2.next = 5;
+                  break;
+                }
+
+                this._gmx_id = null;
+
+                this._content.close();
+
+                _context2.next = 10;
+                break;
+
+              case 5:
+                this._gmx_id = gmx_id;
+                _context2.next = 8;
+                return this.httpGet("".concat(this._path, "/Forest/GetQuadrantInformation"), {
+                  QuadrantID: id
+                });
+
+              case 8:
+                data = _context2.sent;
+
+                if (data) {
+                  if (Array.isArray(data.Stock) && data.Stock.length > 0) {
+                    this._quadrants.open(_objectSpread2({
+                      gmx_id: gmx_id
+                    }, data));
+                  } else {
+                    this._notifications.notAvailable.open({
+                      gmx_id: gmx_id
+                    });
+                  }
+                }
+
+              case 10:
+                this._layer.repaint();
+
+              case 11:
+              case "end":
+                return _context2.stop();
+            }
+          }
+        }, _callee2, this);
+      }));
+
+      function _toggleQuadrant(_x2, _x3) {
+        return _toggleQuadrant2.apply(this, arguments);
+      }
+
+      return _toggleQuadrant;
+    }()
+  }]);
+
+  return Quadrants;
+}(LayerController);
+
+var strings$d = {
+  rus: {
+    report: {
+      title: 'Сводная аналитика',
+      type: 'Тип отчета',
+      typeOption: ['Оплачено и вырублено', 'Баланс древесины', 'Топ-5 нарушителей'],
+      region: 'Регион',
+      forestry: 'Лесничество',
+      districtForestry: 'Участковое лесничество',
+      sootn: 'Соотношение',
+      oplach: 'оплаченной',
+      vyrub: 'вырубленной',
+      dreves: 'древесины',
+      vybpor: 'Выбор породы',
+      period: 'Период',
+      opl: 'Оплачено',
+      vyr: 'Вырублено',
+      all: 'Все',
+      growth: 'Прирост',
+      burntOut: 'Сгорело',
+      cutDown: 'Вырубили',
+      ballanceChanges: 'Изменение баланса',
+      total: 'Итого',
+      milr: 'млн. руб.',
+      m3: 'млн. руб.',
+      save: 'Сформировать отчет'
+    }
+  }
+};
+
+var Reports = /*#__PURE__*/function (_BaseView) {
+  _inherits(Reports, _BaseView);
+
+  var _super = _createSuper(Reports);
+
+  function Reports(container) {
+    var _this;
+
+    _classCallCheck(this, Reports);
+
+    _this = _super.call(this, container, strings$d);
+
+    _this._container.classList.add('scanex-forestry-analytics');
+
+    return _this;
+  }
+
+  _createClass(Reports, [{
+    key: "open",
+    value: function open(data) {
       var _this2 = this;
 
+      _get(_getPrototypeOf(Reports.prototype), "open", this).call(this);
+
+      this._headerData = data;
       this.currentType = 0;
 
-      var typeOption = this._parseOptions(translate$s('analytics.typeOption'));
+      var typeOption = this._parseOptions(this.translate('report.typeOption'));
 
       var regionOptions = this._parseOptionsHeader(data.regions);
 
@@ -44552,7 +46100,7 @@ var Reports = /*#__PURE__*/function (_BaseView) {
 
       var speciesOptions = this._parseOptionsHeader(data.species);
 
-      this._container.innerHTML = "<div class=\"header\">".concat(translate$s('analytics.title'), "</div>\n\t\t\t<div class=\"content\">\n\t\t\t\t<div class=\"line\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$s('analytics.type'), "</div>\n\t\t\t\t\t\t<select name=\"type\" class=\"type style-4\">\n\t\t\t\t\t\t\t").concat(typeOption, "\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"right-wrap\">\n\t\t\t\t\t\t<button class=\"save\">\u0421\u0444\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u043E\u0442\u0447\u0435\u0442</button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"line\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$s('analytics.region'), "</div>\n\t\t\t\t\t\t<select name=\"region\" class=\"region\">\n\t\t\t\t\t\t\t").concat(regionOptions, "\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"right-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$s('analytics.forestry'), "</div>\n\t\t\t\t\t\t<select name=\"forestry\" class=\"forestry\">\n\t\t\t\t\t\t </select>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"line\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$s('analytics.districtForestry'), "</div>\n\t\t\t\t\t\t<select name=\"localForestry\" class=\"localForestry\">\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"right-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$s('analytics.period'), "</div>\n\t\t\t\t\t\t<div class=\"date-inputs\">\n\t\t\t\t\t\t\t<span class=\"date\">\n\t\t\t\t\t\t\t<input class=\"dateBegin\" type=\"text\" placeholder=\"\" value=\"\">\n\t\t\t\t\t\t\t<i class=\"scanex-uploaded-icon calendar\"></i>\n\t\t\t\t\t\t\t</span>\n\n\t\t\t\t\t\t\t<span class=\"date\">\n\t\t\t\t\t\t\t<input class=\"dateEnd\" type=\"text\" placeholder=\"\" value=\"\">\n\t\t\t\t\t\t\t<i class=\"scanex-uploaded-icon calendar\"></i>\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"line species hidden\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(translate$s('analytics.vybpor'), "</div>\n\t\t\t\t\t\t<select name=\"species\" class=\"species\">\n\t\t\t\t\t\t\t").concat(speciesOptions, "\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"chartCont\">\n\t\t\t\t</div>\n\t\t\t</div>");
+      this._container.innerHTML = "<div class=\"header\">".concat(this.translate('report.title'), "</div>\n\t\t\t<div class=\"content\">\n\t\t\t\t<div class=\"line\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(this.translate('report.type'), "</div>\n\t\t\t\t\t\t<select name=\"type\" class=\"type style-4\">\n\t\t\t\t\t\t\t").concat(typeOption, "\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"right-wrap\">\n\t\t\t\t\t\t<button class=\"save\">\u0421\u0444\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u043E\u0442\u0447\u0435\u0442</button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"line\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(this.translate('report.region'), "</div>\n\t\t\t\t\t\t<select name=\"region\" class=\"region\">\n\t\t\t\t\t\t\t").concat(regionOptions, "\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"right-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(this.translate('report.forestry'), "</div>\n\t\t\t\t\t\t<select name=\"forestry\" class=\"forestry\">\n\t\t\t\t\t\t </select>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"line\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(this.translate('report.districtForestry'), "</div>\n\t\t\t\t\t\t<select name=\"localForestry\" class=\"localForestry\">\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"right-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(this.translate('report.period'), "</div>\n\t\t\t\t\t\t<div class=\"date-inputs\">\n\t\t\t\t\t\t\t<span class=\"date\">\n\t\t\t\t\t\t\t<input class=\"dateBegin\" type=\"text\" placeholder=\"\" value=\"\">\n\t\t\t\t\t\t\t<i class=\"scanex-uploaded-icon calendar\"></i>\n\t\t\t\t\t\t\t</span>\n\n\t\t\t\t\t\t\t<span class=\"date\">\n\t\t\t\t\t\t\t<input class=\"dateEnd\" type=\"text\" placeholder=\"\" value=\"\">\n\t\t\t\t\t\t\t<i class=\"scanex-uploaded-icon calendar\"></i>\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"line species hidden\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(this.translate('report.vybpor'), "</div>\n\t\t\t\t\t\t<select name=\"species\" class=\"species\">\n\t\t\t\t\t\t\t").concat(speciesOptions, "\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"chartCont\">\n\t\t\t\t</div>\n\t\t\t</div>");
       var i18n = {
         previousMonth: 'Предыдущий месяц',
         nextMonth: 'Следующий месяц',
@@ -44610,11 +46158,11 @@ var Reports = /*#__PURE__*/function (_BaseView) {
       });
 
       this._container.querySelector('.save').addEventListener('click', /*#__PURE__*/function () {
-        var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(e) {
+        var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e) {
           var d1, d2, pdata, url;
-          return regeneratorRuntime.wrap(function _callee2$(_context2) {
+          return regeneratorRuntime.wrap(function _callee$(_context) {
             while (1) {
-              switch (_context2.prev = _context2.next) {
+              switch (_context.prev = _context.next) {
                 case 0:
                   e.stopPropagation();
                   d1 = _this2._lo.getDate();
@@ -44648,14 +46196,14 @@ var Reports = /*#__PURE__*/function (_BaseView) {
 
                 case 8:
                 case "end":
-                  return _context2.stop();
+                  return _context.stop();
               }
             }
-          }, _callee2);
+          }, _callee);
         }));
 
         return function (_x) {
-          return _ref2.apply(this, arguments);
+          return _ref.apply(this, arguments);
         };
       }());
 
@@ -44670,25 +46218,25 @@ var Reports = /*#__PURE__*/function (_BaseView) {
   }, {
     key: "_save",
     value: function () {
-      var _save2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(url) {
+      var _save2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(url) {
         var response;
-        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+        return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
-            switch (_context3.prev = _context3.next) {
+            switch (_context2.prev = _context2.next) {
               case 0:
-                _context3.next = 2;
+                _context2.next = 2;
                 return fetch(url, {
                   method: 'GET',
                   credentials: 'include'
                 });
 
               case 2:
-                response = _context3.sent;
-                _context3.next = 5;
+                response = _context2.sent;
+                _context2.next = 5;
                 return response.json();
 
               case 5:
-                this._res = _context3.sent;
+                this._res = _context2.sent;
 
                 if (this.currentType === 0) {
                   this._parseTop5(this._res);
@@ -44700,10 +46248,10 @@ var Reports = /*#__PURE__*/function (_BaseView) {
 
               case 7:
               case "end":
-                return _context3.stop();
+                return _context2.stop();
             }
           }
-        }, _callee3, this);
+        }, _callee2, this);
       }));
 
       function _save(_x2) {
@@ -44801,19 +46349,19 @@ var Reports = /*#__PURE__*/function (_BaseView) {
       var str = data.map(function (it) {
         return "<div class=\"chart-row__left-el\">\n\t\t\t\t<div class=\"chart-row__left-el-chart\">\n\t\t\t\t\t<div class=\"chart-row__left-el-chart__text\">".concat(it.payed, " \u043C<sup>3</sup></div>\n\t\t\t\t\t<div class=\"chart-row__left-el-chart__arrow green-bg\" style=\"height: ").concat(Math.floor(maxHeight * Math.min(it.payed, maxValue) / maxValue), "px\"></div>\n\t\t\t\t\t<div class=\"chart-row__left-el-chart__text_bot\">").concat(it.organization || it.species, "</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"chart-row__left-el-chart\">\n\t\t\t\t\t<div class=\"chart-row__left-el-chart__text\">").concat(it.cutDown, " \u043C<sup>3</sup></div>\n\t\t\t\t\t<div class=\"chart-row__left-el-chart__arrow blue-bg\" style=\"height: ").concat(Math.floor(maxHeight * Math.min(it.cutDown, maxValue) / maxValue), "px\"></div>\n\t\t\t\t\t<div class=\"chart-row__left-el-chart__text_bot\">&nbsp;</div>\n\t\t\t\t</div>\n\t\t\t</div>");
       }).join('\n');
-      this._chartCont.innerHTML = "<div class=\"line\">\n\t\t\t<div class=\"chart-header black\">".concat(translate$s('analytics.sootn'), "&nbsp;<span class=\"green\">").concat(translate$s('analytics.oplach'), "</span>&nbsp;\u0438&nbsp;<span class=\"blue\">").concat(translate$s('analytics.vyrub'), "</span>&nbsp;").concat(translate$s('analytics.dreves'), "\n\t\t\t</div>\n\t\t</div>\n\t\t<div class=\"chart-row\">\n\t\t\t<div class=\"chart-row__left\">\n\t\t\t\t").concat(str, "\n\t\t\t</div>\n\t\t\t<div class=\"chart-row__right\">\n\t\t\t\t<div class=\"chart-row__right_line\">\n\t\t\t\t\t<div class=\"rec green-bg\"></div>\n\t\t\t\t\t<div class=\"rec-text\">").concat(translate$s('analytics.opl'), "</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"chart-row__right_line\">\n\t\t\t\t\t<div class=\"rec blue-bg\"></div>\n\t\t\t\t\t<div class=\"rec-text\">").concat(translate$s('analytics.vyr'), "</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>");
+      this._chartCont.innerHTML = "<div class=\"line\">\n\t\t\t<div class=\"chart-header black\">".concat(this.translate('report.sootn'), "&nbsp;<span class=\"green\">").concat(this.translate('report.oplach'), "</span>&nbsp;\u0438&nbsp;<span class=\"blue\">").concat(this.translate('report.vyrub'), "</span>&nbsp;").concat(this.translate('report.dreves'), "\n\t\t\t</div>\n\t\t</div>\n\t\t<div class=\"chart-row\">\n\t\t\t<div class=\"chart-row__left\">\n\t\t\t\t").concat(str, "\n\t\t\t</div>\n\t\t\t<div class=\"chart-row__right\">\n\t\t\t\t<div class=\"chart-row__right_line\">\n\t\t\t\t\t<div class=\"rec green-bg\"></div>\n\t\t\t\t\t<div class=\"rec-text\">").concat(this.translate('report.opl'), "</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"chart-row__right_line\">\n\t\t\t\t\t<div class=\"rec blue-bg\"></div>\n\t\t\t\t\t<div class=\"rec-text\">").concat(this.translate('report.vyr'), "</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>");
     }
   }, {
     key: "_parseBallance",
     value: function _parseBallance(data) {
       var maxValue = data.total;
       var maxWidth = 220;
-      this._chartCont.innerHTML = "<table class=\"line\">\n            <tr>\n\t\t\t\t<td class=\"first\">".concat(translate$s('analytics.growth'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act green-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.growth.quantity, maxValue) / maxValue), "px\"></div></td>\n                <td class=\"third green\">").concat(data.growth.quantity, " \u043C<sup>3</sup></td>\n                <td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"green\">").concat(data.growth.summa, " ").concat(translate$s('analytics.milr'), "</span></td>\n            </tr>\n            <tr>\n\t\t\t\t<td class=\"first\">").concat(translate$s('analytics.burntOut'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act red-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.burntOut.quantity, maxValue) / maxValue), "px\"></div></td>\n                <td class=\"third red\">").concat(data.burntOut.quantity, " \u043C<sup>3</sup></td>\n                <td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"red\">").concat(data.burntOut.summa, " ").concat(translate$s('analytics.milr'), "</span></td>\n            </tr>\n            <tr>\n\t\t\t\t<td class=\"first\">").concat(translate$s('analytics.cutDown'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act red-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.cutDown.quantity, maxValue) / maxValue), "px\"></div></td>\n                <td class=\"third red\">").concat(data.cutDown.quantity, " \u043C<sup>3</sup></td>\n                <td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"red\">").concat(data.cutDown.summa, " ").concat(translate$s('analytics.milr'), "</span></td>\n            </tr>\n            <tr>\n\t\t\t\t<td class=\"first\">").concat(translate$s('analytics.ballanceChanges'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act red-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.ballanceChanges.quantity, maxValue) / maxValue), "px\"></div></td>\n                <td class=\"third red\">").concat(data.ballanceChanges.quantity, " \u043C<sup>3</sup></td>\n                <td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"red\">").concat(data.ballanceChanges.summa, " ").concat(translate$s('analytics.milr'), "</span></td>\n            </tr>\n            <tr>\n\t\t\t\t<td class=\"first\">").concat(translate$s('analytics.total'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act green-bg\" style=\"width: 100%\"></div></td>\n                <td class=\"third gray\">125 684 \u043C<sup>3</sup></td>\n                <td class=\"last\"></td>\n            </tr>\n\t\t</table>");
+      this._chartCont.innerHTML = "<table class=\"line\">\n            <tr>\n\t\t\t\t<td class=\"first\">".concat(this.translate('report.growth'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act green-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.growth.quantity, maxValue) / maxValue), "px\"></div></td>\n                <td class=\"third green\">").concat(data.growth.quantity, " \u043C<sup>3</sup></td>\n                <td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"green\">").concat(data.growth.summa, " ").concat(this.translate('report.milr'), "</span></td>\n            </tr>\n            <tr>\n\t\t\t\t<td class=\"first\">").concat(this.translate('report.burntOut'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act red-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.burntOut.quantity, maxValue) / maxValue), "px\"></div></td>\n                <td class=\"third red\">").concat(data.burntOut.quantity, " \u043C<sup>3</sup></td>\n                <td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"red\">").concat(data.burntOut.summa, " ").concat(this.translate('report.milr'), "</span></td>\n            </tr>\n            <tr>\n\t\t\t\t<td class=\"first\">").concat(this.translate('report.cutDown'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act red-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.cutDown.quantity, maxValue) / maxValue), "px\"></div></td>\n                <td class=\"third red\">").concat(data.cutDown.quantity, " \u043C<sup>3</sup></td>\n                <td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"red\">").concat(data.cutDown.summa, " ").concat(this.translate('report.milr'), "</span></td>\n            </tr>\n            <tr>\n\t\t\t\t<td class=\"first\">").concat(this.translate('report.ballanceChanges'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act red-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.ballanceChanges.quantity, maxValue) / maxValue), "px\"></div></td>\n                <td class=\"third red\">").concat(data.ballanceChanges.quantity, " \u043C<sup>3</sup></td>\n                <td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"red\">").concat(data.ballanceChanges.summa, " ").concat(this.translate('report.milr'), "</span></td>\n            </tr>\n            <tr>\n\t\t\t\t<td class=\"first\">").concat(this.translate('report.total'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act green-bg\" style=\"width: 100%\"></div></td>\n                <td class=\"third gray\">125 684 \u043C<sup>3</sup></td>\n                <td class=\"last\"></td>\n            </tr>\n\t\t</table>");
     }
   }]);
 
   return Reports;
-}(BaseView);
+}(View);
 
 var Reports$1 = /*#__PURE__*/function (_Controller) {
   _inherits(Reports$1, _Controller);
@@ -44823,53 +46371,626 @@ var Reports$1 = /*#__PURE__*/function (_Controller) {
   function Reports$1(_ref) {
     var _this;
 
-    var content = _ref.content,
+    var map = _ref.map,
+        content = _ref.content,
+        notifications = _ref.notifications,
         path = _ref.path;
 
     _classCallCheck(this, Reports$1);
 
     _this = _super.call(this, {
+      map: map,
       content: content,
-      path: path
+      notifications: notifications
     });
+    _this._path = path;
+    _this._view = _this._content.add('reports', Reports);
+    return _this;
+  }
 
-    _this._content.add('reports', Reports, {
-      path: _this._path
+  _createClass(Reports$1, [{
+    key: "view",
+    value: function () {
+      var _view = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+        var data;
+        return regeneratorRuntime.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                _context.next = 2;
+                return this.httpGet("".concat(this._path, "/Forest/GetReportHeaderData"));
+
+              case 2:
+                data = _context.sent;
+
+                if (!data) {
+                  _context.next = 6;
+                  break;
+                }
+
+                _context.next = 6;
+                return this._view.open(data);
+
+              case 6:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee, this);
+      }));
+
+      function view() {
+        return _view.apply(this, arguments);
+      }
+
+      return view;
+    }()
+  }]);
+
+  return Reports$1;
+}(Controller);
+
+var strings$e = {
+  rus: {
+    request: {
+      id: '#',
+      status: 'Статус',
+      title: 'Название',
+      area: 'Площадь, га',
+      amount: 'Общий запас, м',
+      forestry: 'Лесничество',
+      local_forestry: 'Уч. лесничество, квартал',
+      header: 'Выбор проекта лесного участка',
+      edit: 'Редактировать',
+      create: 'Создать проект'
+    }
+  }
+};
+
+var Requests = /*#__PURE__*/function (_BaseView) {
+  _inherits(Requests, _BaseView);
+
+  var _super = _createSuper(Requests);
+
+  function Requests(container) {
+    var _this;
+
+    _classCallCheck(this, Requests);
+
+    _this = _super.call(this, container, strings$e);
+
+    _this._container.classList.add('scanex-forestry-requests');
+
+    _this._container.innerHTML = "<div class=\"header\">           \n            <label class=\"title\">".concat(_this.translate('request.header'), "</label>                   \n            <button class=\"create\">").concat(_this.translate('request.create'), "</button>                              \n        </div>\n        <table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr height=\"42\">\n                    <th data-id=\"id\">").concat(_this.translate('request.id'), "</th>\n                    <th data-id=\"title\">").concat(_this.translate('request.title'), "</th>\n                    <th data-id=\"status\">").concat(_this.translate('request.status'), "</th>\n                    <th data-id=\"forestry\">").concat(_this.translate('request.forestry'), "</th>\n                    <th data-id=\"local_forestry\">").concat(_this.translate('request.local_forestry'), "</th>\n                    <th data-id=\"area\">").concat(_this.translate('request.area'), "</th>\n                    <th data-id=\"amount\">").concat(_this.translate('request.amount'), "<sup>3</sup></th>\n                    <th data-id=\"remove\"></th>\n                </tr>\n            </thead>\n        </table> \n        <div class=\"content style-4\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody class=\"items\"></tbody>\n            </table>\n        </div>");
+    _this._content = _this._container.querySelector('.items');
+
+    _this._container.querySelector('.create').addEventListener('click', function (e) {
+      e.stopPropagation();
+      var event = document.createEvent('Event');
+      event.initEvent('create', false, false);
+
+      _this.dispatchEvent(event);
     });
 
     return _this;
   }
 
-  return Reports$1;
+  _createClass(Requests, [{
+    key: "getStyleHook",
+    value: function getStyleHook() {
+      return {};
+    }
+  }, {
+    key: "open",
+    value: function open(_ref) {
+      var _this2 = this;
+
+      var plotProjectsList = _ref.plotProjectsList;
+
+      _get(_getPrototypeOf(Requests.prototype), "open", this).call(this);
+
+      this._content.innerHTML = plotProjectsList.map(function (_ref2) {
+        var number = _ref2.number,
+            title = _ref2.title,
+            status = _ref2.status,
+            statusID = _ref2.statusID,
+            forestry = _ref2.forestry,
+            localForestries = _ref2.localForestries,
+            totalSquare = _ref2.totalSquare;
+        return "<tr height=\"42\" class=\"request\">\n                <td data-id=\"id\">".concat(number, "</td>\n                <td data-id=\"title\">").concat(title, "</td>\n                <td data-id=\"status\">").concat(status, "</td>\n                <td data-id=\"forestry\">").concat(forestry, "</td>\n                <td data-id=\"local_forestry\">").concat(localForestries, "</td>\n                <td data-id=\"area\">").concat(totalSquare.toLocaleString('ru-RU', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }), "</td>\n                <td data-id=\"amount\"></td>\n                <td data-id=\"remove\">").concat(statusID === 1 ? '<i class="scanex-requests-icon remove"></i>' : '', "</td>\n            </tr>");
+      }).join('');
+
+      var rows = this._content.querySelectorAll('.request');
+
+      var _loop = function _loop(i) {
+        var row = rows[i];
+        var _plotProjectsList$i = plotProjectsList[i],
+            id = _plotProjectsList$i.id,
+            forestryID = _plotProjectsList$i.forestryID,
+            statusID = _plotProjectsList$i.statusID;
+        var rm = row.querySelector('.scanex-requests-icon');
+
+        if (rm) {
+          rm.addEventListener('click', function (e) {
+            e.stopPropagation();
+            var event = document.createEvent('Event');
+            event.initEvent('remove', false, false);
+            event.detail = id;
+
+            _this2.dispatchEvent(event);
+          });
+        }
+
+        row.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var event;
+
+          switch (statusID) {
+            case 1:
+              event = document.createEvent('Event');
+              event.initEvent('edit', false, false);
+              event.detail = {
+                id: id,
+                forestryID: forestryID
+              };
+
+              _this2.dispatchEvent(event);
+
+              break;
+
+            default:
+              event = document.createEvent('Event');
+              event.initEvent('view', false, false);
+              event.detail = {
+                id: id,
+                forestryID: forestryID
+              };
+
+              _this2.dispatchEvent(event);
+
+              break;
+          }
+        });
+      };
+
+      for (var i = 0; i < rows.length; ++i) {
+        _loop(i);
+      }
+    }
+  }]);
+
+  return Requests;
+}(View);
+
+var Requests$1 = /*#__PURE__*/function (_Controller) {
+  _inherits(Requests$1, _Controller);
+
+  var _super = _createSuper(Requests$1);
+
+  function Requests$1(_ref) {
+    var _this;
+
+    var map = _ref.map,
+        content = _ref.content,
+        notifications = _ref.notifications,
+        legend = _ref.legend,
+        layers = _ref.layers,
+        permissions = _ref.permissions,
+        path = _ref.path;
+
+    _classCallCheck(this, Requests$1);
+
+    _this = _super.call(this, {
+      map: map,
+      content: content,
+      notifications: notifications
+    });
+    _this._legend = legend;
+    _this._layers = layers;
+    _this._permissions = permissions;
+    _this._path = path;
+    _this._view = _this._content.add('requests', Requests);
+
+    _this._view.on('create', function () {
+      var event = document.createEvent('Event');
+      event.initEvent('create', false, false);
+
+      _this.dispatchEvent(event);
+    });
+
+    _this._view.on('view', function (e) {
+      var event = document.createEvent('Event');
+      event.initEvent('view', false, false);
+      event.detail = e.detail;
+
+      _this.dispatchEvent(event);
+    });
+
+    _this._view.on('edit', function (e) {
+      var event = document.createEvent('Event');
+      event.initEvent('edit', false, false);
+      event.detail = e.detail;
+
+      _this.dispatchEvent(event);
+    });
+
+    _this._view.on('remove', /*#__PURE__*/function () {
+      var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e) {
+        var id;
+        return regeneratorRuntime.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                id = e.detail;
+                _context.next = 3;
+                return _this._remove(id);
+
+              case 3:
+                _context.next = 5;
+                return _this.view();
+
+              case 5:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee);
+      }));
+
+      return function (_x) {
+        return _ref2.apply(this, arguments);
+      };
+    }());
+
+    return _this;
+  }
+
+  _createClass(Requests$1, [{
+    key: "view",
+    value: function () {
+      var _view = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
+        var data;
+        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                _context2.next = 2;
+                return this.httpGet("".concat(this._path, "/Forest/GetPlotProjectsList"));
+
+              case 2:
+                data = _context2.sent;
+
+                if (data) {
+                  this._legend.enable('projects');
+
+                  this._legend.enable('plots');
+
+                  this._view.open(data);
+
+                  this._layers.projects.repaint();
+                }
+
+              case 4:
+              case "end":
+                return _context2.stop();
+            }
+          }
+        }, _callee2, this);
+      }));
+
+      function view() {
+        return _view.apply(this, arguments);
+      }
+
+      return view;
+    }()
+  }, {
+    key: "_remove",
+    value: function () {
+      var _remove2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(id) {
+        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                if (!this._permissions.ForestProjectsRemove) {
+                  _context3.next = 5;
+                  break;
+                }
+
+                _context3.next = 3;
+                return this.httpPost("".concat(this._path, "/Forest/RemoveDraftForestProject"), {
+                  forestProjectID: id
+                });
+
+              case 3:
+                _context3.next = 6;
+                break;
+
+              case 5:
+                this._notifications.forbidden.open();
+
+              case 6:
+              case "end":
+                return _context3.stop();
+            }
+          }
+        }, _callee3, this);
+      }));
+
+      function _remove(_x2) {
+        return _remove2.apply(this, arguments);
+      }
+
+      return _remove;
+    }()
+  }]);
+
+  return Requests$1;
 }(Controller);
 
-var Roads = /*#__PURE__*/function (_Controller) {
-  _inherits(Roads, _Controller);
+var Roads = /*#__PURE__*/function (_LayerController) {
+  _inherits(Roads, _LayerController);
 
   var _super = _createSuper(Roads);
 
   function Roads(_ref) {
     var map = _ref.map,
+        content = _ref.content,
+        notifications = _ref.notifications,
         layer = _ref.layer,
-        legend = _ref.legend,
-        content = _ref.content;
+        legend = _ref.legend;
 
     _classCallCheck(this, Roads);
 
     return _super.call(this, {
       kind: 'roads',
       map: map,
+      content: content,
+      notifications: notifications,
       layer: layer,
-      legend: legend,
-      content: content
+      legend: legend
     });
   }
 
   return Roads;
-}(Controller);
+}(LayerController);
 
-var Stands$1 = /*#__PURE__*/function (_Controller) {
-  _inherits(Stands$1, _Controller);
+var strings$f = {
+  rus: {
+    stand: {
+      title: 'Выдел',
+      usage: 'Целевое назначение лесов',
+      year: 'Год актуализации',
+      area: 'Площадь выдела',
+      category: 'Категория земель',
+      protected: 'Особозащитные участки (ОЗУ)',
+      slope: 'Экспозиция / крутизна',
+      targetSpecies: 'Целевая порода',
+      mainSpecies: 'Преобладающая порода',
+      age: 'Группа возраста',
+      klass: 'Класс возраста',
+      bonitet: 'Бонитет',
+      type: 'Тип леса',
+      percentage: 'Процент выполнения',
+      storey: {
+        title: 'Ярус',
+        age: 'Возраст, лет',
+        basal_area_sum: 'Сумма площадей сечений',
+        dbh: 'Диаметр',
+        density: 'Полнота',
+        gross_volume: 'Запас на 1 га',
+        height: 'Высота',
+        marketability_class: 'Класс товарности',
+        origin_id: 'Происхождение',
+        rate: 'Коэфициент состава',
+        species: 'Породный состав'
+      },
+      stock: {
+        all: 'Весь'
+      }
+    }
+  }
+};
+
+var STYLES$3 = {
+  fillStyle: document.createElement('canvas').getContext('2d').createPattern(L.gmxUtil.getPatternIcon(null, {
+    type: '',
+    color: parseInt('FFB801', 16),
+    opacity: 1,
+    weight: 1,
+    fillOpacity: 0.64,
+    fillPattern: {
+      style: 'diagonal1',
+      width: 8,
+      step: 0,
+      colors: [parseInt('FFB801', 16), parseInt('61E9F1', 16)]
+    },
+    dashArray: [10, 10],
+    common: true
+  }).canvas, 'repeat'),
+  strokeStyle: '#FFB801',
+  lineWidth: 2
+};
+
+var Stands = /*#__PURE__*/function (_BaseView) {
+  _inherits(Stands, _BaseView);
+
+  var _super = _createSuper(Stands);
+
+  function Stands(container) {
+    var _this;
+
+    _classCallCheck(this, Stands);
+
+    _this = _super.call(this, container, strings$f);
+
+    _this._container.classList.add('scanex-forestry-stand');
+
+    _this._container.innerHTML = "\n\t\t<div class=\"header1\">".concat(_this.translate('stand.title'), "</div>\n\t\t<div class=\"header2\"></div>\n\t\t<div class=\"content\">\n\t\t\t<div class=\"stats\"></div>\t\t\t\n\t\t\t<div>\n\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t<div class=\"events\"></div>\n\t\t\t</div>\n\t\t\t<div class=\"levels\"></div>\t\t\n\t\t</div>");
+    _this._header = _this._container.querySelector('.header2');
+    _this._stats = _this._container.querySelector('.stats');
+    _this._chart = new apexcharts_common(_this._container.querySelector('.chart'), {
+      chart: {
+        type: 'donut',
+        height: '180px',
+        width: '500px',
+        fontFamily: 'Open Sans'
+      },
+      dataLabels: {
+        enabled: false
+      },
+      labels: [],
+      series: [],
+      legend: {
+        position: 'right',
+        // width: '150px',
+        formatter: function formatter(name, opts) {
+          var val = parseFloat(opts.w.globals.series[opts.seriesIndex]);
+          return "".concat(name, " - ").concat(_this.m(val));
+        },
+        horizontalAlign: 'right'
+      },
+      plotOptions: {
+        pie: {
+          donut: {
+            size: '78%',
+            labels: {
+              show: true,
+              value: {
+                formatter: function formatter(val) {
+                  return "".concat(_this.m(val), " ").concat(_this.translate('units.m3'));
+                },
+                fontSize: '12px',
+                show: true
+              },
+              total: {
+                formatter: function formatter(_ref) {
+                  var series = _ref.config.series;
+                  return "".concat(_this.m(series.reduce(function (p, c) {
+                    return p + c;
+                  }, 0)), " ").concat(_this.translate('units.m3'));
+                },
+                label: _this.translate('stand.stock.all'),
+                fontSize: '12px',
+                fontWeight: 600,
+                show: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    _this._chart.render();
+
+    _this._levels = _this._container.querySelector('.levels');
+    _this._events = _this._container.querySelector('.events');
+    return _this;
+  }
+
+  _createClass(Stands, [{
+    key: "open",
+    value: function open(data) {
+      var _this2 = this;
+
+      _get(_getPrototypeOf(Stands.prototype), "open", this).call(this);
+
+      var gmx_id = data.gmx_id,
+          Forestry = data.Forestry,
+          LocalForestry = data.LocalForestry,
+          Stow = data.Stow,
+          Quadrant = data.Quadrant,
+          Stand = data.Stand,
+          ForestUseType = data.ForestUseType,
+          UpdatingYear = data.UpdatingYear,
+          Square = data.Square,
+          LandCategory = data.LandCategory,
+          OZU = data.OZU,
+          Exposition = data.Exposition,
+          Steepness = data.Steepness,
+          TargetSpecies = data.TargetSpecies,
+          PredominantSpecies = data.PredominantSpecies,
+          AgeGroup = data.AgeGroup,
+          AgeClass = data.AgeClass,
+          Bonitet = data.Bonitet,
+          Stock = data.Stock,
+          StoreyInfo = data.StoreyInfo,
+          StoreyAggInfo = data.StoreyAggInfo,
+          Events = data.Events;
+      this._gmx_id = gmx_id;
+      this._header.innerText = [Forestry, LocalForestry, Stow, Quadrant, Stand].join(', ');
+      this._stats.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td>".concat(this.translate('stand.usage'), "</td>\n\t\t\t\t\t<td>").concat(ForestUseType, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td>").concat(this.translate('stand.year'), "</td>\n\t\t\t\t\t<td>").concat(UpdatingYear, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td>").concat(this.translate('stand.area'), "</td>\n\t\t\t\t\t<td>").concat(this.ha(Square), "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td>").concat(this.translate('stand.category'), "</td>\n\t\t\t\t\t<td>").concat(LandCategory, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td>").concat(this.translate('stand.protected'), "</td>\n\t\t\t\t\t<td>").concat(OZU, "</td>                    \n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td>").concat(this.translate('stand.slope'), "</td>\n\t\t\t\t\t<td>").concat(Exposition, " / ").concat(Steepness, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<!--tr>\n\t\t\t\t\t<td>").concat(this.translate('stand.targetSpecies'), "</td>\n\t\t\t\t\t<td>").concat(TargetSpecies, "</td>                    \n\t\t\t\t</tr-->\n\t\t\t\t<tr>\n\t\t\t\t\t<td>").concat(this.translate('stand.mainSpecies'), "</td>\n\t\t\t\t\t<td>").concat(PredominantSpecies, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td>").concat(this.translate('stand.age'), "</td>\n\t\t\t\t\t<td>").concat(AgeGroup, "</td>                    \n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td>").concat(this.translate('stand.klass'), "</td>\n\t\t\t\t\t<td>").concat(AgeClass, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td>").concat(this.translate('stand.bonitet'), "</td>\n\t\t\t\t\t<td>").concat(Bonitet, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td>").concat(this.translate('stand.type'), "</td>\n\t\t\t\t\t<td></td>                    \n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
+
+      var _Stock$reduce = Stock.reduce(function (a, _ref2) {
+        var stock = _ref2.stock,
+            species = _ref2.species;
+        a.labels.push(species);
+        a.series.push(stock);
+        return a;
+      }, {
+        labels: [],
+        series: []
+      }),
+          labels = _Stock$reduce.labels,
+          series = _Stock$reduce.series;
+
+      this._chart.updateOptions({
+        labels: labels
+      });
+
+      this._chart.updateSeries(series);
+
+      if (Array.isArray(StoreyAggInfo)) {
+        this._levels.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t\t<tbody>".concat(StoreyAggInfo.map(function (_ref3) {
+          var storey = _ref3.storey,
+              abbr = _ref3.abbr,
+              age = _ref3.age,
+              basal_area_sum = _ref3.basal_area_sum,
+              dbh = _ref3.dbh,
+              density = _ref3.density,
+              gross_volume = _ref3.gross_volume,
+              height = _ref3.height,
+              marketability_class = _ref3.marketability_class,
+              rate = _ref3.rate;
+          return "<tr class=\"storey\">\n\t\t\t\t\t\t<td>".concat(_this2.translate('stand.storey.title'), "</td>\n\t\t\t\t\t\t<td>").concat(storey, "</td>\t\t\t\t\t\t\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(_this2.translate('stand.storey.species'), "</td>\n\t\t\t\t\t\t<td>").concat(abbr, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(_this2.translate('stand.storey.rate'), "</td>\n\t\t\t\t\t\t<td>").concat(_this2.fmt(rate), "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(_this2.translate('stand.storey.gross_volume'), ", ").concat(_this2.translate('units.m'), "<sup>3</sup></td>\n\t\t\t\t\t\t<td>").concat(_this2.m(gross_volume), "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(_this2.translate('stand.storey.age'), "</td>\n\t\t\t\t\t\t<td>").concat(age, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(_this2.translate('stand.storey.basal_area_sum'), ", ").concat(_this2.translate('units.m'), "<sup>2</sup></td>\n\t\t\t\t\t\t<td>").concat(_this2.m(basal_area_sum), "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(_this2.translate('stand.storey.dbh'), ", ").concat(_this2.translate('units.cm'), "</td>\n\t\t\t\t\t\t<td>").concat(_this2.fmt(dbh), "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(_this2.translate('stand.storey.density'), "</td>\n\t\t\t\t\t\t<td>").concat(_this2.fmt(density), "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(_this2.translate('stand.storey.height'), ", ").concat(_this2.translate('units.m'), "</td>\n\t\t\t\t\t\t<td>").concat(_this2.fmt(height), "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(_this2.translate('stand.storey.marketability_class'), "</td>\n\t\t\t\t\t\t<td>").concat(marketability_class, "</td>\n\t\t\t\t\t</tr>");
+        }).join(''), "</tbody>\n\t\t\t</table>");
+      }
+
+      if (Array.isArray(Events)) {
+        this._events.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t\t<tbody>".concat(Events.map(function (_ref4) {
+          var name = _ref4.name,
+              activity = _ref4.activity,
+              fillingpercent = _ref4.fillingpercent;
+          return "<tr>\n\t\t\t\t\t\t<td>".concat(name, "</td>\n\t\t\t\t\t\t<td>").concat(activity, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(_this2.translate('stand.percentage'), "</td>\n\t\t\t\t\t\t<td class=\"percentage\">").concat(_this2.fmt(fillingpercent)).concat(_this2.translate('units.pc'), "</td>\n\t\t\t\t\t</tr>");
+        }).join(''), "</tbody>\n\t\t\t</table>");
+      }
+    }
+  }, {
+    key: "getStyleHook",
+    value: function getStyleHook(kind, item) {
+      if (kind === 'stands') {
+        return item.id === this._gmx_id ? STYLES$3 : {};
+      } else {
+        return {};
+      }
+    }
+  }, {
+    key: "close",
+    value: function close() {
+      this._gmx_id = null;
+
+      _get(_getPrototypeOf(Stands.prototype), "close", this).call(this);
+    }
+  }]);
+
+  return Stands;
+}(View);
+
+var Stands$1 = /*#__PURE__*/function (_LayerController) {
+  _inherits(Stands$1, _LayerController);
 
   var _super = _createSuper(Stands$1);
 
@@ -44877,9 +46998,10 @@ var Stands$1 = /*#__PURE__*/function (_Controller) {
     var _this;
 
     var map = _ref.map,
+        content = _ref.content,
+        notifications = _ref.notifications,
         layer = _ref.layer,
         legend = _ref.legend,
-        content = _ref.content,
         path = _ref.path;
 
     _classCallCheck(this, Stands$1);
@@ -44887,36 +47009,213 @@ var Stands$1 = /*#__PURE__*/function (_Controller) {
     _this = _super.call(this, {
       kind: 'stands',
       map: map,
+      content: content,
+      notifications: notifications,
       layer: layer,
       legend: legend
     });
-    _this._content = content;
     _this._path = path;
-
-    _this._content.add('stands', Stands, {
-      layer: _this._layer,
-      path: _this._path
-    });
-
+    _this._view = _this._content.add(_this._kind, Stands);
     return _this;
   }
 
-  return Stands$1;
-}(Controller);
+  _createClass(Stands$1, [{
+    key: "_click",
+    value: function () {
+      var _click2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e) {
+        var _e$gmx, id, properties, data;
 
-var translate$t = T.getText.bind(T);
+        return regeneratorRuntime.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                if (!this.canClick) {
+                  _context.next = 19;
+                  break;
+                }
+
+                L.DomEvent.stopPropagation(e);
+                _e$gmx = e.gmx, id = _e$gmx.id, properties = _e$gmx.properties;
+
+                if (!(this._gmx_id && this._gmx_id === id)) {
+                  _context.next = 7;
+                  break;
+                }
+
+                this._view.close();
+
+                _context.next = 19;
+                break;
+
+              case 7:
+                _context.next = 9;
+                return this.httpGet("".concat(this._path, "/Forest/GetStandInformation?StandID=").concat(properties.id));
+
+              case 9:
+                data = _context.sent;
+
+                if (!data) {
+                  _context.next = 19;
+                  break;
+                }
+
+                this._gmx_id = id;
+
+                if (!Array.isArray(data.Stock)) {
+                  _context.next = 18;
+                  break;
+                }
+
+                _context.next = 15;
+                return this._view.open(_objectSpread2({
+                  gmx_id: this._gmx_id
+                }, data));
+
+              case 15:
+                this._layer.repaint();
+
+                _context.next = 19;
+                break;
+
+              case 18:
+                this._notifications.notAvailable.open({
+                  gmx_id: this._gmx_id
+                });
+
+              case 19:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee, this);
+      }));
+
+      function _click(_x) {
+        return _click2.apply(this, arguments);
+      }
+
+      return _click;
+    }()
+  }]);
+
+  return Stands$1;
+}(LayerController);
+
+var floor$8 = Math.floor;
+
+// `Number.isInteger` method implementation
+// https://tc39.github.io/ecma262/#sec-number.isinteger
+var isInteger = function isInteger(it) {
+  return !isObject(it) && isFinite(it) && floor$8(it) === it;
+};
+
+// `Number.isInteger` method
+// https://tc39.github.io/ecma262/#sec-number.isinteger
+_export({ target: 'Number', stat: true }, {
+  isInteger: isInteger
+});
+
+var translate$a = T.getText.bind(T);
 T.addText('rus', {
-  uploaded: {
-    title: 'Мои данные',
-    type: 'Тип данных',
-    date: 'Дата добавления',
-    name: 'Наименование',
+  pager: {
     previous: 'Предыдущая',
-    next: 'Следующая',
-    add: 'Добавить',
-    remove: 'Удалить'
+    next: 'Следующая'
   }
 });
+
+var Pager = /*#__PURE__*/function (_EventTarget) {
+  _inherits(Pager, _EventTarget);
+
+  var _super = _createSuper(Pager);
+
+  function Pager(container) {
+    var _this;
+
+    _classCallCheck(this, Pager);
+
+    _this = _super.call(this);
+    _this._container = container;
+    _this._container.innerHTML = "<table class=\"scanex-forestry-pager\" cellpadding=\"0\" cellspacing=\"0\">\n            <tr>\n                <td>\n                    <button class=\"first\">1</button>\n                </td>                \n                <td>\n                    <button class=\"previous\">".concat(translate$a('pager.previous'), "</button>\n                </td>\n                <td>\n                    <input type=\"text\" value=\"\" />\n                </td>\n                <td>\n                    <button class=\"next\">").concat(translate$a('pager.next'), "</button>\n                </td>                \n                <td>\n                    <button class=\"last\"></button>\n                </td>\n            </tr>\n        </table>");
+
+    _this._container.querySelector('.first').addEventListener('click', function (e) {
+      e.stopPropagation();
+      _this.page = 1;
+    });
+
+    _this._container.querySelector('.previous').addEventListener('click', function (e) {
+      e.stopPropagation();
+      _this.page -= 1;
+    });
+
+    _this._container.querySelector('.next').addEventListener('click', function (e) {
+      e.stopPropagation();
+      _this.page += 1;
+    });
+
+    _this._container.querySelector('.last').addEventListener('click', function (e) {
+      e.stopPropagation();
+      _this.page = _this.pages;
+    });
+
+    _this._current = _this._container.querySelector('input');
+
+    _this._current.addEventListener('change', function (e) {
+      e.stopPropagation();
+      _this.page = parseInt(_this._current.value, 10);
+    });
+
+    _this._last = _this._container.querySelector('.last');
+    _this._pages = 1;
+    _this.page = 1;
+    return _this;
+  }
+
+  _createClass(Pager, [{
+    key: "page",
+    get: function get() {
+      return this._page;
+    },
+    set: function set(page) {
+      if (Number.isInteger(page) && 1 <= page && page <= this.pages) {
+        this._page = page;
+        this._current.value = this._page;
+        var event = document.createEvent('Event');
+        event.initEvent('change', false, false);
+        this.dispatchEvent(event);
+      } else {
+        this._current.value = this._page;
+      }
+    }
+  }, {
+    key: "pages",
+    get: function get() {
+      return this._pages;
+    },
+    set: function set(pages) {
+      if (Number.isInteger(pages) && 1 <= this.page && this.page <= pages) {
+        this._pages = pages;
+        this._last.innerText = pages;
+      }
+    }
+  }]);
+
+  return Pager;
+}(EventTarget);
+
+var strings$g = {
+  rus: {
+    uploaded: {
+      title: 'Мои данные',
+      type: 'Тип данных',
+      date: 'Дата добавления',
+      name: 'Наименование',
+      previous: 'Предыдущая',
+      next: 'Следующая',
+      add: 'Добавить',
+      remove: 'Удалить'
+    }
+  }
+};
 
 var Uploaded = /*#__PURE__*/function (_BaseView) {
   _inherits(Uploaded, _BaseView);
@@ -44934,7 +47233,7 @@ var Uploaded = /*#__PURE__*/function (_BaseView) {
 
     _classCallCheck(this, Uploaded);
 
-    _this = _super.call(this, container, {});
+    _this = _super.call(this, container, strings$g);
     _this._columns = columns;
     _this._types = types;
     _this._pageSize = pageSize;
@@ -44942,11 +47241,11 @@ var Uploaded = /*#__PURE__*/function (_BaseView) {
 
     _this._container.classList.add('scanex-forestry-uploaded');
 
-    _this._container.innerHTML = "<div class=\"title\">".concat(translate$t('uploaded.title'), "</div>\n        <div class=\"filter\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tr>\n                    <td>\n                        <div class=\"name\">\n                            <i class=\"scanex-uploaded-icon search\"></i>\n                            <input type=\"text\" placeholder=\"").concat(translate$t('uploaded.name'), "\" value=\"\" />\n                        </div>\n                    </td>\n                    <td>\n                        <select>").concat(_this._types.map(function (id) {
+    _this._container.innerHTML = "<div class=\"title\">".concat(_this.translate('uploaded.title'), "</div>\n        <div class=\"filter\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tr>\n                    <td>\n                        <div class=\"name\">\n                            <i class=\"scanex-uploaded-icon search\"></i>\n                            <input type=\"text\" placeholder=\"").concat(_this.translate('uploaded.name'), "\" value=\"\" />\n                        </div>\n                    </td>\n                    <td>\n                        <select>").concat(_this._types.map(function (id) {
       return "<option value=\"".concat(id, "\">").concat(id, "</option>");
-    }).join(''), "</select>\n                    </td>\n                    <td>\n                        <div class=\"date\">\n                            <input class=\"datepicker\" type=\"text\" placeholder=\"").concat(translate$t('uploaded.date'), "\" value=\"\" />\n                            <i class=\"scanex-uploaded-icon calendar\"></i>\n                        </div>\n                    </td>\n                </tr>\n            </table>\n        </div>\n        <div class=\"data\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <thead>\n                    <tr><th></th>").concat(_this._columns.map(function (id) {
-      return "<th>".concat(translate$t("uploaded.".concat(id)), "</th>");
-    }).join(''), "</tr>\n                </thead>\n                <tbody class=\"content\"></tbody>\n            </table>\n        </div>\n        <div class=\"footer\">\n            <div class=\"pages\"></div>\n            <button class=\"add\">").concat(translate$t("uploaded.add"), "</button>\n            <button class=\"remove\">").concat(translate$t("uploaded.remove"), "</button>\n        </div>");
+    }).join(''), "</select>\n                    </td>\n                    <td>\n                        <div class=\"date\">\n                            <input class=\"datepicker\" type=\"text\" placeholder=\"").concat(_this.translate('uploaded.date'), "\" value=\"\" />\n                            <i class=\"scanex-uploaded-icon calendar\"></i>\n                        </div>\n                    </td>\n                </tr>\n            </table>\n        </div>\n        <div class=\"data\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <thead>\n                    <tr><th></th>").concat(_this._columns.map(function (id) {
+      return "<th>".concat(_this.translate("uploaded.".concat(id)), "</th>");
+    }).join(''), "</tr>\n                </thead>\n                <tbody class=\"content\"></tbody>\n            </table>\n        </div>\n        <div class=\"footer\">\n            <div class=\"pages\"></div>\n            <button class=\"add\">").concat(_this.translate("uploaded.add"), "</button>\n            <button class=\"remove\">").concat(_this.translate("uploaded.remove"), "</button>\n        </div>");
     _this._date = new pikaday({
       field: _this._container.querySelector('.datepicker'),
       format: 'DD.MM.YYYY',
@@ -45026,16 +47325,16 @@ var Uploaded = /*#__PURE__*/function (_BaseView) {
       this._files.click();
     }
   }, {
-    key: "page",
-    get: function get() {
-      return this._page;
-    }
-  }, {
-    key: "items",
-    set: function set(items) {
+    key: "open",
+    value: function open(_ref3) {
       var _this3 = this;
 
-      this._content.innerHTML = items.map(function (item) {
+      var count = _ref3.count,
+          layers = _ref3.layers;
+
+      _get(_getPrototypeOf(Uploaded.prototype), "open", this).call(this);
+
+      this._content.innerHTML = layers.map(function (item) {
         return "<tr>\n                <td>\n                    <i class=\"scanex-uploaded-icon box\"></i>\n                </td>\n                ".concat(_this3._columns.map(function (id) {
           return "<td>".concat(item[id], "</td>");
         }).join(''), "\n            </tr>");
@@ -45063,10 +47362,15 @@ var Uploaded = /*#__PURE__*/function (_BaseView) {
 
       this._pager.pages = Math.ceil(count / this._pageSize);
     }
+  }, {
+    key: "page",
+    get: function get() {
+      return this._page;
+    }
   }]);
 
   return Uploaded;
-}(BaseView);
+}(View);
 
 var UploadProgress = /*#__PURE__*/function (_EventTarget) {
   _inherits(UploadProgress, _EventTarget);
@@ -45089,7 +47393,7 @@ var UploadProgress = /*#__PURE__*/function (_EventTarget) {
 
       this._container.classList.add('scanex-forestry-progress');
 
-      this._container.innerHTML = "<div>\n        <button class=\"pause\">Pause</button>\n        <button class=\"cancel\">Cancel</button>\n        </div>\n        <ul class=\"files\">\n        </ul>\n        <div class=\"speed\"></div>";
+      this._container.innerHTML = "<div>\n            <button class=\"pause\">Pause</button>\n            <button class=\"cancel\">Cancel</button>\n        </div>\n        <ul class=\"files\">\n        </ul>\n        <div class=\"speed\"></div>";
       this._btnPause = this._container.querySelector('.pause');
 
       this._btnPause.addEventListener('click', function (e) {
@@ -45144,17 +47448,19 @@ var UploadProgress = /*#__PURE__*/function (_EventTarget) {
   return UploadProgress;
 }(EventTarget);
 
-var translate$u = T.getText.bind(T);
+var translate$b = T.getText.bind(T);
 
-var Uploaded$1 = /*#__PURE__*/function (_EventTarget) {
-  _inherits(Uploaded$1, _EventTarget);
+var Uploaded$1 = /*#__PURE__*/function (_Controller) {
+  _inherits(Uploaded$1, _Controller);
 
   var _super = _createSuper(Uploaded$1);
 
   function Uploaded$1(_ref) {
     var _this;
 
-    var content = _ref.content,
+    var map = _ref.map,
+        content = _ref.content,
+        notifications = _ref.notifications,
         path = _ref.path,
         _ref$pageSize = _ref.pageSize,
         pageSize = _ref$pageSize === void 0 ? 4 : _ref$pageSize,
@@ -45163,76 +47469,57 @@ var Uploaded$1 = /*#__PURE__*/function (_EventTarget) {
 
     _classCallCheck(this, Uploaded$1);
 
-    _this = _super.call(this);
-    _this._content = content;
+    _this = _super.call(this, {
+      map: map,
+      content: content,
+      notifications: notifications
+    });
     _this._path = path;
     _this._pageSize = pageSize;
     _this._uploadFileSize = uploadFileSize;
     _this._progress = new UploadProgress();
 
-    _this._progress.on('pause', function () {}).on('cancel', function () {});
+    _this._progress.on('pause', function () {
+      console.log('pause');
+    }).on('cancel', function () {
+      console.log('cancel');
+    });
 
     _this._view = _this._content.add('uploaded', Uploaded, {
       pageSize: _this._pageSize
     });
 
-    _this._view.on('open', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
-      return regeneratorRuntime.wrap(function _callee$(_context) {
-        while (1) {
-          switch (_context.prev = _context.next) {
-            case 0:
-              _context.next = 2;
-              return _this._query(_this._view.page);
-
-            case 2:
-            case "end":
-              return _context.stop();
-          }
-        }
-      }, _callee);
-    }))).on('upload', /*#__PURE__*/function () {
-      var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(e) {
+    _this._view.on('upload', /*#__PURE__*/function () {
+      var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e) {
         var files;
-        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+        return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
-            switch (_context2.prev = _context2.next) {
+            switch (_context.prev = _context.next) {
               case 0:
                 files = e.detail;
 
                 _this._progress.start();
 
-                _context2.prev = 2;
-                _context2.next = 5;
+                _context.next = 4;
                 return _this._createSandbox();
 
-              case 5:
-                _this._sandboxId = _context2.sent;
+              case 4:
+                _this._sandboxId = _context.sent;
                 _this._upfiles = _this._createParts(files);
                 _this._progress.files = _this._upfiles;
 
-                _this._startUpload(); // this._progress.stop();
+                _this._startUpload();
 
-
-                _context2.next = 15;
-                break;
-
-              case 11:
-                _context2.prev = 11;
-                _context2.t0 = _context2["catch"](2);
-                console.log(_context2.t0);
-
-                _this._progress.stop();
-
-              case 15:
+              case 8:
               case "end":
-                return _context2.stop();
+                return _context.stop();
             }
           }
-        }, _callee2, null, [[2, 11]]);
+        }, _callee);
       }));
 
       return function (_x) {
-        return _ref3.apply(this, arguments);
+        return _ref2.apply(this, arguments);
       };
     }());
 
@@ -45240,44 +47527,70 @@ var Uploaded$1 = /*#__PURE__*/function (_EventTarget) {
   }
 
   _createClass(Uploaded$1, [{
+    key: "view",
+    value: function () {
+      var _view = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
+        var data;
+        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                _context2.next = 2;
+                return this._query(this._view.page);
+
+              case 2:
+                data = _context2.sent;
+
+                if (data) {
+                  this._view.open(data);
+                }
+
+              case 4:
+              case "end":
+                return _context2.stop();
+            }
+          }
+        }, _callee2, this);
+      }));
+
+      function view() {
+        return _view.apply(this, arguments);
+      }
+
+      return view;
+    }()
+  }, {
     key: "_createSandbox",
     value: function () {
       var _createSandbox2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
-        var response, _yield$response$json, sandbox;
-
+        var data, sandbox;
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
               case 0:
-                _context3.prev = 0;
-                _context3.next = 3;
-                return fetch("".concat(this._path, "/sandbox/CreateSandbox"), {
-                  method: 'GET',
-                  headers: {
-                    'Content-Type': 'text/plain'
-                  }
-                });
+                _context3.next = 2;
+                return this.httpGet("".concat(this._path, "/sandbox/CreateSandbox"));
 
-              case 3:
-                response = _context3.sent;
-                _context3.next = 6;
-                return response.json();
+              case 2:
+                data = _context3.sent;
 
-              case 6:
-                _yield$response$json = _context3.sent;
-                sandbox = _yield$response$json.sandbox;
+                if (!data) {
+                  _context3.next = 6;
+                  break;
+                }
+
+                sandbox = data.sandbox;
                 return _context3.abrupt("return", sandbox);
 
-              case 11:
-                _context3.prev = 11;
-                _context3.t0 = _context3["catch"](0);
+              case 6:
+                return _context3.abrupt("return");
 
-              case 13:
+              case 7:
               case "end":
                 return _context3.stop();
             }
           }
-        }, _callee3, this, [[0, 11]]);
+        }, _callee3, this);
       }));
 
       function _createSandbox() {
@@ -45425,7 +47738,9 @@ var Uploaded$1 = /*#__PURE__*/function (_EventTarget) {
               t.parts[i1].send = event.loaded;
               t.parts[i1].needSend = event.total;
 
-              _this2._progress.status(i, 0, 'Loading...');
+              var p = _this2._percent(t);
+
+              _this2._progress.status(i, p, 'Loading...');
 
               _this2._currentSendBytes += event.loaded - lastSend; //подсчёт скорости
 
@@ -45440,7 +47755,9 @@ var Uploaded$1 = /*#__PURE__*/function (_EventTarget) {
                 t.parts[i1].status = 'error';
                 t.status = "error";
 
-                _this2._progress.status(i, 0, "Error");
+                var p = _this2._percent(t);
+
+                _this2._progress.status(i, p, "Error");
 
                 _this2._errorUpload();
               } else {
@@ -45449,7 +47766,9 @@ var Uploaded$1 = /*#__PURE__*/function (_EventTarget) {
                   t.parts[i1].status = 'error';
                   t.status = "error";
 
-                  _this2._progress.status(i1, 0, "Error");
+                  var _p = _this2._percent(t);
+
+                  _this2._progress.status(i1, _p, "Error");
 
                   return;
                 } // если всё прошло гладко, выводим результат
@@ -45465,7 +47784,9 @@ var Uploaded$1 = /*#__PURE__*/function (_EventTarget) {
                 if (oksum === t.parts.length) {
                   t.status = "finish";
 
-                  _this2._progress.status(i, 0, "Completed");
+                  var _p2 = _this2._percent(t);
+
+                  _this2._progress.status(i, _p2, "Completed");
                 }
 
                 _this2._sendNextPart(); //проверяем что все файлы отосланы
@@ -45581,6 +47902,8 @@ var Uploaded$1 = /*#__PURE__*/function (_EventTarget) {
         // document.getElementById("open").disabled = false;
 
         this._progress.stop();
+
+        this.view();
       }
     }
   }, {
@@ -45589,7 +47912,8 @@ var Uploaded$1 = /*#__PURE__*/function (_EventTarget) {
       if (this._upfilesStatus === 'finish') return;
 
       if (this._upfilesStatus === 'progress') {
-        stopSpeedTimer();
+        this._stopSpeedTimer();
+
         this._upfilesStatus = 'finish'; // document.getElementById('global_status').textContent = "Finish";
         // document.getElementById("cancel").disabled = true;
         // document.getElementById("resume").disabled = true;
@@ -45597,108 +47921,52 @@ var Uploaded$1 = /*#__PURE__*/function (_EventTarget) {
         // document.getElementById("open").disabled = false;
 
         this._progress.stop();
+
+        this.view();
       }
     }
   }, {
-    key: "_upload",
+    key: "_query",
     value: function () {
-      var _upload2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(files) {
+      var _query2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(page) {
+        var fd, _yield$this$sendForm, Status, Result;
+
         return regeneratorRuntime.wrap(function _callee4$(_context4) {
           while (1) {
             switch (_context4.prev = _context4.next) {
               case 0:
-              case "end":
-                return _context4.stop();
-            }
-          }
-        }, _callee4);
-      }));
-
-      function _upload(_x2) {
-        return _upload2.apply(this, arguments);
-      }
-
-      return _upload;
-    }()
-  }, {
-    key: "_query",
-    value: function () {
-      var _query2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(page) {
-        var fd, response, data, items, count;
-        return regeneratorRuntime.wrap(function _callee5$(_context5) {
-          while (1) {
-            switch (_context5.prev = _context5.next) {
-              case 0:
-                _context5.prev = 0;
                 fd = new FormData();
                 fd.append('query', '');
                 fd.append('orderby', 'datecreate');
                 fd.append('pagesize', this._pageSize.toString());
                 fd.append('page', page.toString());
-                _context5.next = 8;
-                return fetch("".concat(this._path, "/Layer/Search2.ashx?WrapStyle=None"), {
-                  method: 'POST',
-                  credentials: 'include',
-                  headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                  },
-                  body: fd
-                });
+                _context4.next = 7;
+                return this.sendForm("".concat(this._path, "/Layer/Search2.ashx?WrapStyle=None"), fd);
 
-              case 8:
-                response = _context5.sent;
-                _context5.next = 11;
-                return response.json();
+              case 7:
+                _yield$this$sendForm = _context4.sent;
+                Status = _yield$this$sendForm.Status;
+                Result = _yield$this$sendForm.Result;
 
-              case 11:
-                data = _context5.sent;
-
-                if (!(data.Status === 'ok')) {
-                  _context5.next = 18;
+                if (!(Status === 'ok')) {
+                  _context4.next = 14;
                   break;
                 }
 
-                // const items = [
-                //     {type: 'shp', date: '05.11.2019', name: 'Проект лесного участка 1'},
-                //     {type: 'shp', date: '08.10.2019', name: 'Проект лесного участка 2'},
-                //     {type: 'shp', date: '20.05.2020', name: 'Лесосека'},
-                //     {type: 'tiff', date: '21.06.2020', name: 'Мой снимок 1'},
-                // ];
-                items = [];
-                count = 0;
+                return _context4.abrupt("return", Result);
 
-                if (count > 0) {
-                  this._view.items = items;
-                }
+              case 14:
+                return _context4.abrupt("return", false);
 
-                _context5.next = 19;
-                break;
-
-              case 18:
-                throw new Error(JSON.stringify(data));
-
-              case 19:
-                _context5.next = 26;
-                break;
-
-              case 21:
-                _context5.prev = 21;
-                _context5.t0 = _context5["catch"](0);
-
-                this._view.close();
-
-                console.log(_context5.t0);
-                alert(translate$u('error.uploaded'));
-
-              case 26:
+              case 15:
               case "end":
-                return _context5.stop();
+                return _context4.stop();
             }
           }
-        }, _callee5, this, [[0, 21]]);
+        }, _callee4, this);
       }));
 
-      function _query(_x3) {
+      function _query(_x2) {
         return _query2.apply(this, arguments);
       }
 
@@ -45707,4181 +47975,36 @@ var Uploaded$1 = /*#__PURE__*/function (_EventTarget) {
   }]);
 
   return Uploaded$1;
-}(EventTarget);
+}(Controller);
 
-var Warehouses = /*#__PURE__*/function (_Controller) {
-  _inherits(Warehouses, _Controller);
+var Warehouses = /*#__PURE__*/function (_LayerController) {
+  _inherits(Warehouses, _LayerController);
 
   var _super = _createSuper(Warehouses);
 
   function Warehouses(_ref) {
     var map = _ref.map,
+        content = _ref.content,
+        notifications = _ref.notifications,
         layer = _ref.layer,
-        legend = _ref.legend,
-        content = _ref.content;
+        legend = _ref.legend;
 
     _classCallCheck(this, Warehouses);
 
     return _super.call(this, {
       kind: 'warehouses',
       map: map,
+      content: content,
+      notifications: notifications,
       layer: layer,
-      legend: legend,
-      content: content
+      legend: legend
     });
   }
 
   return Warehouses;
-}(Controller);
+}(LayerController);
 
-L$1.Control.GmxCenter = L$1.Control.extend({
-  options: {
-    position: 'center',
-    id: 'center',
-    notHide: true,
-    color: '#216b9c'
-  },
-  onRemove: function onRemove(map) {
-    if (map.gmxControlsManager) {
-      map.gmxControlsManager.remove(this);
-    }
-
-    map.fire('controlremove', this);
-  },
-  onAdd: function onAdd(map) {
-    var className = 'leaflet-gmx-center',
-        svgNS = 'http://www.w3.org/2000/svg',
-        container = L$1.DomUtil.create('div', className),
-        div = L$1.DomUtil.create('div', className),
-        svg = document.createElementNS(svgNS, 'svg'),
-        g = document.createElementNS(svgNS, 'g'),
-        path = document.createElementNS(svgNS, 'path');
-    this._container = container;
-    container._id = this.options.id;
-
-    if (this.options.notHide) {
-      container._notHide = true;
-    }
-
-    path.setAttribute('stroke-width', 1);
-    path.setAttribute('stroke-opacity', 1);
-    path.setAttribute('d', 'M6 0L6 12M0 6L12 6');
-    this._path = path;
-    g.appendChild(path);
-    svg.appendChild(g);
-    svg.setAttribute('width', 12);
-    svg.setAttribute('height', 12);
-    div.appendChild(svg);
-    container.appendChild(div);
-    this.setColor(this.options.color);
-    map.fire('controladd', this);
-
-    if (map.gmxControlsManager) {
-      map.gmxControlsManager.add(this);
-    }
-
-    return container;
-  },
-  setColor: function setColor(color) {
-    this.options.color = color;
-
-    if (this._map) {
-      this._path.setAttribute('stroke', color);
-    }
-
-    return this;
-  }
-});
-L$1.Control.gmxCenter = L$1.Control.GmxCenter;
-
-L$1.control.gmxCenter = function (options) {
-  return new L$1.Control.GmxCenter(options);
-};
-
-var Center = L$1.Control.GmxCenter;
-
-T.addText('eng', {
-  gmxLocation: {
-    locationChange: 'Сhange the map center:',
-    locationTxt: 'Current center coordinates',
-    coordFormatChange: 'Toggle coordinates format',
-    scaleBarChange: 'Toggle scale bar format'
-  },
-  units: {
-    km: 'km',
-    m: 'm'
-  }
-});
-T.addText('rus', {
-  gmxLocation: {
-    locationChange: 'Переместить центр карты:',
-    locationTxt: 'Текущие координаты центра карты',
-    coordFormatChange: 'Сменить формат координат',
-    scaleBarChange: 'Сменить формат масштаба'
-  },
-  units: {
-    km: 'км',
-    m: 'м'
-  }
-});
-var _mzoom = ['M 1:500 000 000', //  0   156543.03392804
-'M 1:300 000 000', //  1   78271.51696402
-'M 1:150 000 000', //  2   39135.75848201
-'M 1:80 000 000', //  3   19567.879241005
-'M 1:40 000 000', //  4   9783.9396205025
-'M 1:20 000 000', //  5   4891.96981025125
-'M 1:10 000 000', //  6   2445.98490512563
-'M 1:5 000 000', //  7   1222.99245256281
-'M 1:2500 000', //  8   611.496226281406
-'M 1:1 000 000', //  9   305.748113140703
-'M 1:500 000', //  10  152.874056570352
-'M 1:300 000', //  11  76.437028285176
-'M 1:150 000', //  12  38.218514142588
-'M 1:80 000', //  13  19.109257071294
-'M 1:40 000', //  14  9.554628535647
-'M 1:20 000', //  15  4.777314267823
-'M 1:10 000', //  16  2.388657133912
-'M 1:5 000', //  17  1.194328566956
-'M 1:2 500', //  18  0.597164283478
-'M 1:1 250', //  19  0.298582141739
-'M 1:625' //  20  0.149291070869
-];
-var coordFormats = ['', '', ' (EPSG:3395)', ' (EPSG:3857)'];
-L$1.Control.GmxLocation = L$1.Control.extend({
-  includes: L$1.Evented ? L$1.Evented.prototype : L$1.Mixin.Events,
-  options: {
-    position: 'gmxbottomright',
-    id: 'location',
-    gmxPopup: 'internal',
-    notHide: true,
-    coordinatesFormat: 0,
-    scaleFormat: 'bar' // or text
-
-  },
-  setScaleFormat: function setScaleFormat(type) {
-    this.options.scaleFormat = type === 'bar' ? 'bar' : 'text';
-    this.scaleBar.style.visibility = type === 'bar' ? 'visible' : 'hidden';
-
-    this._checkPositionChanged();
-  },
-  onAdd: function onAdd(map) {
-    var className = 'leaflet-gmx-location',
-        container = L$1.DomUtil.create('div', className),
-        utils = L$1.Control.GmxLocation.Utils,
-        my = this;
-    this._container = container;
-    container._id = this.options.id;
-
-    if (this.options.notHide) {
-      container._notHide = true;
-    }
-
-    this.prevCoordinates = '';
-    var corner = map._controlCorners[this.options.position];
-
-    if (corner) {
-      this._window = L$1.DomUtil.create('div', 'leaflet-gmx-location-window', container);
-      this._window.style.display = 'none';
-      var closeButton = L$1.DomUtil.create('div', 'closeButton', this._window);
-      closeButton.innerHTML = '&#215;';
-      L$1.DomEvent.disableClickPropagation(this._window);
-      L$1.DomEvent.on(this._window, 'contextmenu', L$1.DomEvent.fakeStop || L$1.DomEvent._fakeStop);
-      L$1.DomEvent.on(closeButton, 'click', function () {
-        var style = my._window.style;
-        style.display = style.display === 'none' ? 'block' : 'none';
-      }, this);
-      map.on('click', function () {
-        my._window.style.display = 'none';
-      }, this);
-      this._windowContent = L$1.DomUtil.create('div', 'windowContent', this._window);
-    }
-
-    this.locationTxt = L$1.DomUtil.create('span', 'leaflet-gmx-locationTxt', container);
-    this.locationTxt.title = T.getText('gmxLocation.locationTxt');
-    this.coordFormatChange = L$1.DomUtil.create('span', 'leaflet-gmx-coordFormatChange', container);
-    this.coordFormatChange.title = T.getText('gmxLocation.coordFormatChange');
-    this.scaleBar = L$1.DomUtil.create('span', 'leaflet-gmx-scaleBar', container);
-    this.scaleBarTxt = L$1.DomUtil.create('span', 'leaflet-gmx-scaleBarTxt', container);
-    this.scaleBarTxt.title = this.scaleBar.title = T.getText('gmxLocation.scaleBarChange');
-    this._map = map;
-    var util = {
-      coordFormat: this.options.coordinatesFormat || 0,
-      len: coordFormats.length,
-      setCoordinatesFormat: function setCoordinatesFormat(num) {
-        num = num || this.coordFormat || 0;
-
-        if (num < 0) {
-          num = util.len - 1;
-        } else if (num >= util.len) {
-          num = 0;
-        }
-
-        this.coordFormat = num;
-        var res = utils.getCoordinatesString(my._map.getCenter(), this.coordFormat);
-
-        if (res && my.prevCoordinates !== res) {
-          my.locationTxt.innerHTML = res;
-        }
-
-        my.prevCoordinates = res;
-
-        if (this._redrawTimer) {
-          clearTimeout(this._redrawTimer);
-        }
-
-        this._redrawTimer = setTimeout(function () {
-          if (my._map) {
-            my._map.fire('onChangeLocationSize', {
-              locationSize: container.clientWidth
-            });
-          }
-        }, 100);
-        my.fire('coordinatesformatchange', {
-          coordinatesFormat: this.coordFormat
-        });
-      },
-      goTo: function goTo(value) {
-        var coord = L$1.Control.gmxLocation.Utils.parseCoordinates(value);
-
-        my._map.panTo(coord);
-      },
-      showCoordinates: function showCoordinates(ev) {
-        //окошко с координатами
-        var oldText = utils.getCoordinatesString(my._map.getCenter(), this.coordFormat);
-
-        if (my.options.onCoordinatesClick) {
-          my.options.onCoordinatesClick(oldText, ev);
-        } else if (L$1.control.gmxPopup) {
-          var div = L$1.DomUtil.create('div', 'gmxLocation-popup'),
-              span = L$1.DomUtil.create('div', '', div),
-              input = L$1.DomUtil.create('input', 'gmxLocation-input', div),
-              button = L$1.DomUtil.create('button', '', div);
-          button.innerHTML = 'Ok';
-          L$1.DomEvent.on(button, 'click', function () {
-            util.goTo(input.value);
-          });
-          span.innerHTML = T.getText('gmxLocation.locationChange');
-          input.value = oldText;
-          L$1.DomEvent.on(input, 'keydown', function (ev) {
-            if (ev.which === 13) {
-              util.goTo(this.value);
-            }
-          });
-
-          if (my.options.gmxPopup === 'internal' && my._window) {
-            my._windowContent.innerHTML = '';
-
-            my._windowContent.appendChild(div);
-
-            var style = my._window.style;
-            style.display = style.display === 'none' ? 'block' : 'none';
-          } else {
-            var opt = {};
-
-            if (my.options.gmxPopup === 'tip') {
-              var pos = my._map.mouseEventToContainerPoint(ev);
-
-              opt = {
-                tip: true,
-                anchor: new L$1.Point(pos.x, pos.y - 5)
-              };
-            }
-
-            L$1.control.gmxPopup(opt).setContent(div).openOn(my._map);
-          }
-        } else {
-          //if (this.coordFormat > 2) { return; } // только для стандартных форматов.
-          var text = window.prompt(my.locationTxt.title + ':', oldText);
-
-          if (text && text !== oldText) {
-            var point = utils.parseCoordinates(text);
-
-            if (point) {
-              my._map.panTo(point);
-            }
-          }
-        }
-      },
-      nextCoordinatesFormat: function nextCoordinatesFormat() {
-        this.coordFormat += 1;
-        this.setCoordinatesFormat(this.coordFormat || 0);
-      }
-    };
-
-    this.getCoordinatesFormat = function () {
-      return util.coordFormat;
-    };
-
-    this._checkPositionChanged = function () {
-      var z = map.getZoom();
-
-      if (z && !map._animatingZoom) {
-        var attr = {
-          txt: _mzoom[z],
-          width: 0
-        };
-
-        if (this.options.scaleFormat === 'bar') {
-          attr = utils.getScaleBarDistance(z, map.getCenter());
-        }
-
-        if (!attr || attr.txt === my._scaleBarText && attr.width === my._scaleBarWidth) {
-          return;
-        }
-
-        my._scaleBarText = attr.txt;
-        my._scaleBarWidth = attr.width;
-
-        if (my._scaleBarText) {
-          my.scaleBar.style.width = my._scaleBarWidth + 'px'; //, 4);
-
-          my.scaleBarTxt.innerHTML = my._scaleBarText;
-        }
-
-        util.setCoordinatesFormat(util.coordFormat || 0);
-      }
-    };
-
-    this._setCoordinatesFormat = function () {
-      util.setCoordinatesFormat(util.coordFormat || 0);
-    };
-
-    this.setCoordinatesFormat = function (nm) {
-      if (!map._animatingZoom) {
-        if (nm === 0) {
-          util.coordFormat = 0;
-        }
-
-        util.setCoordinatesFormat(nm);
-      }
-    };
-
-    var toggleScaleFormat = function toggleScaleFormat() {
-      this.setScaleFormat(this.options.scaleFormat === 'bar' ? 'text' : 'bar');
-    };
-
-    this._toggleHandlers = function (flag) {
-      var op = flag ? 'on' : 'off',
-          func = L$1.DomEvent[op],
-          stop = L$1.DomEvent.stopPropagation;
-      func(container, 'mousemove', stop);
-      func(this.coordFormatChange, 'click', stop);
-      func(this.coordFormatChange, 'click', util.nextCoordinatesFormat, util);
-      func(this.locationTxt, 'click', stop);
-      func(this.locationTxt, 'click', util.showCoordinates, util);
-      func(this.scaleBarTxt, 'click', stop);
-      func(this.scaleBarTxt, 'click', toggleScaleFormat, this);
-      func(this.scaleBar, 'click', stop);
-      func(this.scaleBar, 'click', toggleScaleFormat, this);
-
-      if (!L$1.Browser.mobile && !L$1.Browser.ie) {
-        func(this.coordFormatChange, 'dblclick', stop);
-        func(this.scaleBarTxt, 'dblclick', stop);
-        func(this.scaleBar, 'dblclick', stop);
-      }
-
-      map[op]('moveend', this._checkPositionChanged, this);
-      map[op]('move', this._setCoordinatesFormat, this);
-    };
-
-    this._toggleHandlers(true);
-
-    this.setScaleFormat(this.options.scaleFormat);
-
-    this._checkPositionChanged();
-
-    map.fire('controladd', this);
-
-    if (map.gmxControlsManager) {
-      map.gmxControlsManager.add(this);
-    }
-
-    return container;
-  },
-  onRemove: function onRemove(map) {
-    if (map.gmxControlsManager) {
-      map.gmxControlsManager.remove(this);
-    }
-
-    map.fire('controlremove', this);
-    this.prevCoordinates = this._scaleBarText = null;
-
-    this._toggleHandlers(false);
-  }
-});
-var utils$1 = {
-  getScaleBarDistance: function getScaleBarDistance(z, pos) {
-    var merc = L$1.Projection.Mercator.project(pos),
-        pos1 = L$1.Projection.Mercator.unproject(new L$1.Point(merc.x + 40, merc.y + 30)),
-        metersPerPixel = Math.pow(2, -z) * 156543.033928041 * this.distVincenty(pos.lng, pos.lat, pos1.lng, pos1.lat) / 50;
-
-    for (var i = 0; i < 30; i++) {
-      var distance = [1, 2, 5][i % 3] * Math.pow(10, Math.floor(i / 3)),
-          w = Math.floor(distance / metersPerPixel);
-
-      if (w > 50) {
-        return {
-          txt: this.prettifyDistance(distance),
-          width: w
-        };
-      }
-    }
-
-    return null;
-  }
-};
-
-if (L$1.gmxUtil) {
-  utils$1.getCoordinatesString = L$1.gmxUtil.getCoordinatesString;
-  utils$1.prettifyDistance = L$1.gmxUtil.prettifyDistance;
-  utils$1.formatDegrees = L$1.gmxUtil.formatDegrees;
-  utils$1.pad2 = L$1.gmxUtil.pad2;
-  utils$1.trunc = L$1.gmxUtil.trunc;
-  utils$1.latLonFormatCoordinates = L$1.gmxUtil.latLonFormatCoordinates;
-  utils$1.latLonFormatCoordinates2 = L$1.gmxUtil.latLonFormatCoordinates2;
-  utils$1.degRad = L$1.gmxUtil.degRad;
-  utils$1.distVincenty = L$1.gmxUtil.distVincenty;
-  utils$1.parseCoordinates = L$1.gmxUtil.parseCoordinates;
-} else {
-  utils$1.prettifyDistance = function (length) {
-    var type = '',
-        //map.DistanceUnit
-    txt = T.getText('units.km') || 'km',
-        km = ' ' + txt;
-
-    if (length < 2000 || type === 'm') {
-      txt = T.getText('units.m') || 'm';
-      return Math.round(length) + ' ' + txt;
-    } else if (length < 200000) {
-      return Math.round(length / 10) / 100 + km;
-    }
-
-    return Math.round(length / 1000) + km;
-  };
-
-  utils$1.formatDegrees = function (angle) {
-    angle = Math.round(10000000 * angle) / 10000000 + 0.00000001;
-    var a1 = Math.floor(angle),
-        a2 = Math.floor(60 * (angle - a1)),
-        a3 = this.pad2(3600 * (angle - a1 - a2 / 60)).substring(0, 2);
-    return this.pad2(a1) + '°' + this.pad2(a2) + '\'' + a3 + '"';
-  };
-
-  utils$1.pad2 = function (t) {
-    return t < 10 ? '0' + t : '' + t;
-  };
-
-  utils$1.trunc = function (x) {
-    return ('' + (Math.round(10000000 * x) / 10000000 + 0.00000001)).substring(0, 9);
-  };
-
-  utils$1.latLonFormatCoordinates = function (x, y) {
-    return this.formatDegrees(Math.abs(y)) + (y > 0 ? ' N, ' : ' S, ') + this.formatDegrees(Math.abs(x)) + (x > 0 ? ' E' : ' W');
-  };
-
-  utils$1.latLonFormatCoordinates2 = function (x, y) {
-    return this.trunc(Math.abs(y)) + (y > 0 ? ' N, ' : ' S, ') + this.trunc(Math.abs(x)) + (x > 0 ? ' E' : ' W');
-  };
-
-  utils$1.degRad = function (ang) {
-    return ang * (Math.PI / 180.0);
-  };
-
-  utils$1.distVincenty = function (lon1, lat1, lon2, lat2) {
-    var p1 = {};
-    var p2 = {};
-    p1.lon = this.degRad(lon1);
-    p1.lat = this.degRad(lat1);
-    p2.lon = this.degRad(lon2);
-    p2.lat = this.degRad(lat2);
-    var a = 6378137,
-        b = 6356752.3142,
-        f = 1 / 298.257223563; // WGS-84 ellipsiod
-
-    var L = p2.lon - p1.lon;
-    var U1 = Math.atan((1 - f) * Math.tan(p1.lat));
-    var U2 = Math.atan((1 - f) * Math.tan(p2.lat));
-    var sinU1 = Math.sin(U1),
-        cosU1 = Math.cos(U1);
-    var sinU2 = Math.sin(U2),
-        cosU2 = Math.cos(U2);
-    var lambda = L,
-        lambdaP = 2 * Math.PI;
-    var iterLimit = 20;
-
-    while (Math.abs(lambda - lambdaP) > 1e-12 && --iterLimit > 0) {
-      var sinLambda = Math.sin(lambda),
-          cosLambda = Math.cos(lambda);
-      var sinSigma = Math.sqrt(cosU2 * sinLambda * (cosU2 * sinLambda) + (cosU1 * sinU2 - sinU1 * cosU2 * cosLambda) * (cosU1 * sinU2 - sinU1 * cosU2 * cosLambda));
-
-      if (sinSigma === 0) {
-        return 0;
-      }
-
-      var cosSigma = sinU1 * sinU2 + cosU1 * cosU2 * cosLambda;
-      var sigma = Math.atan2(sinSigma, cosSigma);
-      var sinAlpha = cosU1 * cosU2 * sinLambda / sinSigma;
-      var cosSqAlpha = 1 - sinAlpha * sinAlpha;
-      var cos2SigmaM = cosSigma - 2 * sinU1 * sinU2 / cosSqAlpha;
-
-      if (isNaN(cos2SigmaM)) {
-        cos2SigmaM = 0;
-      }
-
-      var C = f / 16 * cosSqAlpha * (4 + f * (4 - 3 * cosSqAlpha));
-      lambdaP = lambda;
-      lambda = L + (1 - C) * f * sinAlpha * (sigma + C * sinSigma * (cos2SigmaM + C * cosSigma * (-1 + 2 * cos2SigmaM * cos2SigmaM)));
-    }
-
-    if (iterLimit === 0) {
-      return NaN;
-    }
-
-    var uSq = cosSqAlpha * (a * a - b * b) / (b * b);
-    var A = 1 + uSq / 16384 * (4096 + uSq * (-768 + uSq * (320 - 175 * uSq)));
-    var B = uSq / 1024 * (256 + uSq * (-128 + uSq * (74 - 47 * uSq)));
-    var deltaSigma = B * sinSigma * (cos2SigmaM + B / 4 * (cosSigma * (-1 + 2 * cos2SigmaM * cos2SigmaM) - B / 6 * cos2SigmaM * (-3 + 4 * sinSigma * sinSigma) * (-3 + 4 * cos2SigmaM * cos2SigmaM)));
-    var s = b * A * (sigma - deltaSigma);
-    s = s.toFixed(3);
-    return s;
-  };
-
-  utils$1.parseCoordinates = function (text) {
-    // should understand the following formats:
-    // 55.74312, 37.61558
-    // 55°44'35" N, 37°36'56" E
-    // 4187347, 7472103
-    // 4219783, 7407468 (EPSG:3395)
-    // 4219783, 7442673 (EPSG:3857)
-    var crs = null,
-        regex = /\(EPSG:(\d+)\)/g,
-        t = regex.exec(text);
-
-    if (t) {
-      crs = t[1];
-      text = text.replace(regex, '');
-    }
-
-    if (text.match(/[йцукенгшщзхъфывапролджэячсмитьбюЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮqrtyuiopadfghjklzxcvbmQRTYUIOPADFGHJKLZXCVBM_:]/)) {
-      return null;
-    } //there should be a separator in the string (exclude strings like "11E11")
-
-
-    if (text.indexOf(' ') === -1 && text.indexOf(',') === -1) {
-      return null;
-    }
-
-    if (text.indexOf(' ') !== -1) {
-      text = text.replace(/,/g, '.');
-    }
-
-    var results = [];
-    regex = /(-?\d+(\.\d+)?)([^\d\-]*)/g;
-    t = regex.exec(text);
-
-    while (t) {
-      results.push(t[1]);
-      t = regex.exec(text);
-    }
-
-    if (results.length < 2) {
-      return null;
-    }
-
-    var ii = Math.floor(results.length / 2),
-        y = 0,
-        mul = 1,
-        i;
-
-    for (i = 0; i < ii; i++) {
-      y += parseFloat(results[i]) * mul;
-      mul /= 60;
-    }
-
-    var x = 0;
-    mul = 1;
-
-    for (i = ii; i < results.length; i++) {
-      x += parseFloat(results[i]) * mul;
-      mul /= 60;
-    }
-
-    if (Math.max(text.indexOf('N'), text.indexOf('S')) > Math.max(text.indexOf('E'), text.indexOf('W'))) {
-      t = x;
-      x = y;
-      y = t;
-    }
-
-    var pos;
-
-    if (crs === '3857') {
-      pos = L$1.Projection.SphericalMercator.unproject(new L$1.Point(y, x));
-      x = pos.lng;
-      y = pos.lat;
-    }
-
-    if (Math.abs(x) > 180 || Math.abs(y) > 180) {
-      pos = L$1.Projection.Mercator.unproject(new L$1.Point(y, x));
-      x = pos.lng;
-      y = pos.lat;
-    }
-
-    if (text.indexOf('W') !== -1) {
-      x = -x;
-    }
-
-    if (text.indexOf('S') !== -1) {
-      y = -y;
-    }
-
-    return [y, x];
-  };
-
-  utils$1.getCoordinatesString = function (latlng, num) {
-    var x = latlng.lng,
-        y = latlng.lat,
-        formats = coordFormats,
-        len = formats.length,
-        merc,
-        out = '';
-    num = num || 0;
-
-    if (x > 180) {
-      x -= 360;
-    }
-
-    if (x < -180) {
-      x += 360;
-    }
-
-    if (num % len === 0) {
-      out = utils$1.latLonFormatCoordinates2(x, y);
-    } else if (num % len === 1) {
-      out = utils$1.latLonFormatCoordinates(x, y);
-    } else if (num % len === 2) {
-      merc = L$1.Projection.Mercator.project(new L$1.LatLng(y, x));
-      out = '' + Math.round(merc.x) + ', ' + Math.round(merc.y) + formats[2];
-    } else {
-      merc = L$1.CRS.EPSG3857.project(new L$1.LatLng(y, x));
-      out = '' + Math.round(merc.x) + ', ' + Math.round(merc.y) + formats[3];
-    }
-
-    return out;
-  };
-}
-
-L$1.Control.GmxLocation.Utils = utils$1;
-L$1.Control.gmxLocation = L$1.Control.GmxLocation;
-
-L$1.control.gmxLocation = function (options) {
-  return new L$1.Control.GmxLocation(options);
-};
-
-var Location = L$1.Control.GmxLocation;
-
-var GmxDrawingContextMenu = /*#__PURE__*/function () {
-  function GmxDrawingContextMenu() {
-    var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
-      points: [],
-      lines: [],
-      fill: []
-    };
-
-    _classCallCheck(this, GmxDrawingContextMenu);
-
-    this.options = options;
-  }
-
-  _createClass(GmxDrawingContextMenu, [{
-    key: "insertItem",
-    value: function insertItem(obj, index, type) {
-      var optKey = type || 'points';
-
-      if (index === undefined) {
-        index = this.options[optKey].length;
-      }
-
-      this.options[optKey].splice(index, 0, obj);
-      return this;
-    }
-  }, {
-    key: "removeItem",
-    value: function removeItem(obj, type) {
-      var optKey = type || 'points';
-
-      for (var i = 0, len = this.options[optKey].length; i < len; i++) {
-        if (this.options[optKey][i].callback === obj.callback) {
-          this.options[optKey].splice(i, 1);
-          break;
-        }
-      }
-
-      return this;
-    }
-  }, {
-    key: "removeAllItems",
-    value: function removeAllItems(type) {
-      if (!type) {
-        this.options = {
-          points: [],
-          lines: []
-        };
-      } else if (type === 'lines') {
-        this.options.lines = [];
-      } else {
-        this.options.points = [];
-      }
-
-      return this;
-    }
-  }, {
-    key: "getItems",
-    value: function getItems() {
-      return this.options;
-    }
-  }]);
-
-  return GmxDrawingContextMenu;
-}();
-
-L$1.GmxDrawingContextMenu = GmxDrawingContextMenu;
-var GmxDrawingContextMenu$1 = L$1.GmxDrawingContextMenu;
-
-var rectDelta = 0.0000001;
-var stateVersion = '1.0.0';
-L$1.GmxDrawing = L$1.Class.extend({
-  options: {
-    type: ''
-  },
-  includes: L$1.Evented ? L$1.Evented.prototype : L$1.Mixin.Events,
-  initialize: function initialize(map) {
-    this._map = map;
-    this.items = [];
-    this.current = null;
-    this.contextmenu = new GmxDrawingContextMenu$1({
-      // points: [], // [{text: 'Remove point'}, {text: 'Delete feature'}],
-      points: [{
-        text: 'Move'
-      }, {
-        text: 'Rotate'
-      }, {
-        text: 'Remove point'
-      }, {
-        text: 'Delete feature'
-      }],
-      // , {text: 'Rotate around Point'}
-      bbox: [{
-        text: 'Save'
-      }, {
-        text: 'Cancel'
-      }],
-      fill: [{
-        text: 'Rotate'
-      }, {
-        text: 'Move'
-      }]
-    });
-
-    if (L$1.gmxUtil && L$1.gmxUtil.prettifyDistance) {
-      var svgNS = 'http://www.w3.org/2000/svg';
-      var tooltip = document.createElementNS(svgNS, 'g');
-      L$1.DomUtil.addClass(tooltip, 'gmxTooltip');
-      var bg = document.createElementNS(svgNS, 'rect');
-      bg.setAttributeNS(null, 'rx', 4);
-      bg.setAttributeNS(null, 'ry', 4);
-      bg.setAttributeNS(null, 'height', 16);
-      L$1.DomUtil.addClass(bg, 'gmxTooltipBG');
-      var text = document.createElementNS(svgNS, 'text');
-      var userSelectProperty = L$1.DomUtil.testProp(['userSelect', 'WebkitUserSelect', 'OUserSelect', 'MozUserSelect', 'msUserSelect']);
-      text.style[userSelectProperty] = 'none';
-      tooltip.appendChild(bg);
-      tooltip.appendChild(text);
-
-      this.hideTooltip = function () {
-        tooltip.setAttributeNS(null, 'visibility', 'hidden');
-      };
-
-      this.showTooltip = function (point, mouseovertext) {
-        var x = point.x + 11,
-            y = point.y - 14;
-        text.setAttributeNS(null, 'x', x);
-        text.setAttributeNS(null, 'y', y);
-        text.textContent = mouseovertext;
-
-        if (tooltip.getAttributeNS(null, 'visibility') !== 'visible') {
-          (this._map._pathRoot || this._map._renderer._container).appendChild(tooltip);
-
-          tooltip.setAttributeNS(null, 'visibility', 'visible');
-        }
-
-        var length = text.getComputedTextLength();
-        bg.setAttributeNS(null, 'width', length + 8);
-        bg.setAttributeNS(null, 'x', x - 4);
-        bg.setAttributeNS(null, 'y', y - 12);
-      };
-    }
-
-    this.on('drawstop drawstart', function (ev) {
-      this.drawMode = this._drawMode = ev.mode;
-
-      this._map.doubleClickZoom[this.drawMode === 'edit' ? 'disable' : 'enable']();
-    }, this);
-  },
-  bringToFront: function bringToFront() {
-    for (var i = 0, len = this.items.length; i < len; i++) {
-      var item = this.items[i];
-
-      if (item._map && 'bringToFront' in item) {
-        item.bringToFront();
-      }
-    }
-  },
-  addGeoJSON: function addGeoJSON(obj, options) {
-    var arr = [],
-        isLGeoJSON = obj instanceof L$1.GeoJSON;
-
-    if (!isLGeoJSON) {
-      obj = L$1.geoJson(obj, options);
-    }
-
-    if (obj instanceof L$1.GeoJSON) {
-      var layers = obj.getLayers();
-
-      if (layers) {
-        var parseLayer = function parseLayer(it) {
-          var _originalStyle = null;
-
-          if (it.setStyle && options && options.lineStyle) {
-            _originalStyle = {};
-
-            for (var key in options.lineStyle) {
-              _originalStyle[key] = options.lineStyle[key];
-            }
-
-            it.setStyle(options.lineStyle);
-          }
-
-          var f = this.add(it, options);
-          f._originalStyle = _originalStyle;
-          arr.push(f);
-        };
-
-        for (var i = 0, len = layers.length; i < len; i++) {
-          var layer = layers[i];
-
-          if (layer.feature.geometry.type !== 'GeometryCollection') {
-            layer = L$1.layerGroup([layer]);
-          }
-
-          layer.eachLayer(parseLayer, this);
-        }
-      }
-    }
-
-    return arr;
-  },
-  add: function add(obj, options) {
-    var item = null;
-    options = options || {};
-
-    if (obj) {
-      if (obj instanceof L$1.GmxDrawing.Feature) {
-        item = obj;
-      } else {
-        var calcOptions = {};
-
-        if (obj.feature && obj.feature.geometry) {
-          var type = obj.feature.geometry.type;
-
-          if (type === 'Point') {
-            obj = new L$1.Marker(obj._latlng);
-          } else if (type === 'MultiPolygon') {
-            calcOptions.type = type;
-          }
-        } // if (!L.MultiPolygon) { L.MultiPolygon = L.Polygon; }
-        // if (!L.MultiPolyline) { L.MultiPolyline = L.Polyline; }
-
-
-        if (!options || !('editable' in options)) {
-          calcOptions.editable = true;
-        }
-
-        if (obj.geometry) {
-          calcOptions.type = obj.geometry.type;
-        } else if (obj instanceof L$1.Rectangle) {
-          calcOptions.type = 'Rectangle';
-        } else if (obj instanceof L$1.Polygon) {
-          calcOptions.type = calcOptions.type || 'Polygon';
-        } else if (L$1.MultiPolygon && obj instanceof L$1.MultiPolygon) {
-          calcOptions.type = 'MultiPolygon';
-        } else if (obj instanceof L$1.Polyline) {
-          calcOptions.type = 'Polyline';
-        } else if (L$1.MultiPolyline && obj instanceof L$1.MultiPolyline) {
-          calcOptions.type = 'MultiPolyline';
-        } else if (obj.setIcon || obj instanceof L$1.Marker) {
-          calcOptions.type = 'Point';
-          calcOptions.editable = false;
-          obj.options.draggable = true;
-        }
-
-        options = this._chkDrawOptions(calcOptions.type, options);
-        L$1.extend(options, calcOptions);
-
-        if (obj.geometry) {
-          var iconStyle = options.markerStyle && options.markerStyle.iconStyle;
-
-          if (options.type === 'Point' && !options.pointToLayer && iconStyle) {
-            options.icon = L$1.icon(iconStyle);
-
-            options.pointToLayer = function (geojson, latlng) {
-              return new L$1.Marker(latlng, options);
-            };
-          }
-
-          return this.addGeoJSON(obj, options);
-        }
-
-        item = new L$1.GmxDrawing.Feature(this, obj, options);
-      }
-
-      if (!('map' in options)) {
-        options.map = true;
-      }
-
-      if (options.map && !item._map && this._map) {
-        this._map.addLayer(item);
-      } else {
-        this._addItem(item);
-      } //if (!item._map) this._map.addLayer(item);
-      //if (item.points) item.points._path.setAttribute('fill-rule', 'inherit');
-
-
-      if ('setEditMode' in item) {
-        item.setEditMode();
-      }
-    }
-
-    return item;
-  },
-  _disableDrag: function _disableDrag() {
-    if (this._map) {
-      this._map.dragging.disable();
-
-      L$1.DomUtil.disableTextSelection();
-      L$1.DomUtil.disableImageDrag();
-
-      this._map.doubleClickZoom.removeHooks();
-    }
-  },
-  _enableDrag: function _enableDrag() {
-    if (this._map) {
-      this._map.dragging.enable();
-
-      L$1.DomUtil.enableTextSelection();
-      L$1.DomUtil.enableImageDrag();
-
-      this._map.doubleClickZoom.addHooks();
-    }
-  },
-  clearCreate: function clearCreate() {
-    this._clearCreate();
-  },
-  _clearCreate: function _clearCreate() {
-    if (this._createKey && this._map) {
-      if (this._createKey.type === 'Rectangle' && L$1.Browser.mobile) {
-        L$1.DomEvent.off(this._map._container, 'touchstart', this._createKey.fn, this);
-      } else {
-        this._map.off(this._createKey.eventName, this._createKey.fn, this);
-
-        this._map.off('mousemove', this._onMouseMove, this);
-      }
-
-      this._enableDrag();
-    }
-
-    if (this._firstPoint) {
-      this._map.removeLayer(this._firstPoint);
-
-      this._firstPoint = null;
-    }
-
-    this._createKey = null;
-  },
-  _chkDrawOptions: function _chkDrawOptions(type, drawOptions) {
-    var defaultStyles = L$1.GmxDrawing.utils.defaultStyles,
-        resultStyles = {};
-
-    if (!drawOptions) {
-      drawOptions = L$1.extend({}, defaultStyles);
-    }
-
-    if (type === 'Point') {
-      L$1.extend(resultStyles, defaultStyles.markerStyle.options.icon, drawOptions);
-    } else {
-      L$1.extend(resultStyles, drawOptions);
-      resultStyles.lineStyle = L$1.extend({}, defaultStyles.lineStyle, drawOptions.lineStyle);
-      resultStyles.pointStyle = L$1.extend({}, defaultStyles.pointStyle, drawOptions.pointStyle);
-      resultStyles.holeStyle = L$1.extend({}, defaultStyles.holeStyle, drawOptions.holeStyle);
-    }
-
-    if (resultStyles.iconUrl) {
-      var iconStyle = {
-        iconUrl: resultStyles.iconUrl
-      };
-      delete resultStyles.iconUrl;
-
-      if (resultStyles.iconAnchor) {
-        iconStyle.iconAnchor = resultStyles.iconAnchor;
-        delete resultStyles.iconAnchor;
-      }
-
-      if (resultStyles.iconSize) {
-        iconStyle.iconSize = resultStyles.iconSize;
-        delete resultStyles.iconSize;
-      }
-
-      if (resultStyles.popupAnchor) {
-        iconStyle.popupAnchor = resultStyles.popupAnchor;
-        delete resultStyles.popupAnchor;
-      }
-
-      if (resultStyles.shadowSize) {
-        iconStyle.shadowSize = resultStyles.shadowSize;
-        delete resultStyles.shadowSize;
-      }
-
-      resultStyles.markerStyle = {
-        iconStyle: iconStyle
-      };
-    }
-
-    return resultStyles;
-  },
-  create: function create(type, options) {
-    this._clearCreate(null);
-
-    if (type && this._map) {
-      var map = this._map,
-          drawOptions = this._chkDrawOptions(type, options),
-          my = this;
-
-      if (type === 'Rectangle') {
-        //map._initPathRoot();
-        map.dragging.disable();
-      }
-
-      this._createKey = {
-        type: type,
-        eventName: type === 'Rectangle' ? L$1.Browser.mobile ? 'touchstart' : 'mousedown' : 'click',
-        fn: function fn(ev) {
-          var originalEvent = ev && ev.originalEvent,
-              ctrlKey = false,
-              shiftKey = false,
-              altKey = false;
-
-          if (originalEvent) {
-            ctrlKey = originalEvent.ctrlKey;
-            shiftKey = originalEvent.shiftKey;
-            altKey = originalEvent.altKey;
-            var clickOnTag = originalEvent.target.tagName;
-
-            if (clickOnTag === 'g' || clickOnTag === 'path') {
-              return;
-            }
-          }
-
-          my._createType = '';
-          var obj,
-              key,
-              opt = {},
-              latlng = ev.latlng;
-
-          for (key in drawOptions) {
-            if (!(key in L$1.GmxDrawing.utils.defaultStyles)) {
-              opt[key] = drawOptions[key];
-            }
-          }
-
-          if (ctrlKey && my._firstPoint && my._firstPoint._snaped) {
-            latlng = my._firstPoint._snaped;
-          }
-
-          if (type === 'Point') {
-            var markerStyle = drawOptions.markerStyle || {},
-                markerOpt = {
-              draggable: true
-            };
-
-            if (originalEvent) {
-              markerOpt.ctrlKey = ctrlKey;
-              markerOpt.shiftKey = shiftKey;
-              markerOpt.altKey = altKey;
-            }
-
-            if (markerStyle.iconStyle) {
-              markerOpt.icon = L$1.icon(markerStyle.iconStyle);
-            }
-
-            obj = my.add(new L$1.Marker(latlng, markerOpt), opt);
-          } else {
-            if (drawOptions.pointStyle) {
-              opt.pointStyle = drawOptions.pointStyle;
-            }
-
-            if (drawOptions.lineStyle) {
-              opt.lineStyle = drawOptions.lineStyle;
-            }
-
-            if (type === 'Rectangle') {
-              // if (L.Browser.mobile) {
-              // var downAttr = L.GmxDrawing.utils.getDownType.call(my, ev, my._map);
-              // latlng = downAttr.latlng;
-              // }
-              opt.mode = 'edit';
-              obj = my.add(L$1.rectangle(L$1.latLngBounds(L$1.latLng(latlng.lat + rectDelta, latlng.lng - rectDelta), latlng)), opt);
-
-              if (L$1.Browser.mobile) {
-                obj._startTouchMove(ev, true);
-              } else {
-                obj._pointDown(ev);
-              }
-
-              obj.rings[0].ring._drawstop = true;
-            } else if (type === 'Polygon') {
-              opt.mode = 'add';
-              obj = my.add(L$1.polygon([latlng]), opt);
-              obj.setAddMode();
-            } else if (type === 'Polyline') {
-              opt.mode = 'add';
-              obj = my.add(L$1.polyline([latlng]), opt).setAddMode();
-            }
-          }
-
-          my._clearCreate();
-        }
-      };
-
-      if (type === 'Rectangle' && L$1.Browser.mobile) {
-        L$1.DomEvent.on(map._container, 'touchstart', this._createKey.fn, this);
-      } else {
-        map.on(this._createKey.eventName, this._createKey.fn, this);
-        map.on('mousemove', this._onMouseMove, this);
-      }
-
-      this._createType = type;
-      L$1.DomUtil.addClass(map._mapPane, 'leaflet-clickable');
-      this.fire('drawstart', {
-        mode: type
-      });
-    }
-
-    this.options.type = type;
-  },
-  _onMouseMove: function _onMouseMove(ev) {
-    var latlngs = [ev.latlng];
-
-    if (!this._firstPoint) {
-      this._firstPoint = new L$1.GmxDrawing.PointMarkers(latlngs, {
-        interactive: false
-      });
-
-      this._map.addLayer(this._firstPoint);
-    } else {
-      this._firstPoint.setLatLngs(latlngs);
-    }
-  },
-  extendDefaultStyles: function extendDefaultStyles(drawOptions) {
-    var defaultStyles = L$1.GmxDrawing.utils.defaultStyles;
-    drawOptions = drawOptions || {};
-
-    if (drawOptions.iconUrl) {
-      var iconStyle = defaultStyles.markerStyle.options.icon;
-      iconStyle.iconUrl = drawOptions.iconUrl;
-      delete drawOptions.iconUrl;
-
-      if (drawOptions.iconAnchor) {
-        iconStyle.iconAnchor = drawOptions.iconAnchor;
-        delete drawOptions.iconAnchor;
-      }
-
-      if (drawOptions.iconSize) {
-        iconStyle.iconSize = drawOptions.iconSize;
-        delete drawOptions.iconSize;
-      }
-
-      if (drawOptions.popupAnchor) {
-        iconStyle.popupAnchor = drawOptions.popupAnchor;
-        delete drawOptions.popupAnchor;
-      }
-
-      if (drawOptions.shadowSize) {
-        iconStyle.shadowSize = drawOptions.shadowSize;
-        delete drawOptions.shadowSize;
-      }
-    }
-
-    if (drawOptions.lineStyle) {
-      L$1.extend(defaultStyles.lineStyle, drawOptions.lineStyle);
-      delete drawOptions.lineStyle;
-    }
-
-    if (drawOptions.pointStyle) {
-      L$1.extend(defaultStyles.pointStyle, drawOptions.pointStyle);
-      delete drawOptions.pointStyle;
-    }
-
-    if (drawOptions.holeStyle) {
-      L$1.extend(defaultStyles.holeStyle, drawOptions.holeStyle);
-      delete drawOptions.holeStyle;
-    }
-
-    L$1.extend(defaultStyles, drawOptions);
-    return this;
-  },
-  getFeatures: function getFeatures() {
-    var out = [];
-
-    for (var i = 0, len = this.items.length; i < len; i++) {
-      out.push(this.items[i]);
-    }
-
-    return out;
-  },
-  loadState: function loadState(data) {
-    //if (data.version !== stateVersion) return;
-    var _this = this,
-        featureCollection = data.featureCollection;
-
-    L$1.geoJson(featureCollection, {
-      onEachFeature: function onEachFeature(feature, layer) {
-        var options = feature.properties,
-            popupOpened = options.popupOpened;
-
-        if (options.type === 'Rectangle') {
-          layer = L$1.rectangle(layer.getBounds());
-        } else if (options.type === 'Point') {
-          options = options.options;
-          var icon = options.icon;
-
-          if (icon) {
-            delete options.icon;
-
-            if (icon.iconUrl) {
-              options.icon = L$1.icon(icon);
-            }
-          }
-
-          layer = L$1.marker(layer.getLatLng(), options);
-        }
-
-        if (layer.setStyle && options && options.lineStyle) {
-          layer.setStyle(options.lineStyle);
-        }
-
-        _this.add(layer, options);
-
-        if (popupOpened) {
-          layer.openPopup();
-        }
-      }
-    });
-  },
-  saveState: function saveState() {
-    var featureGroup = L$1.featureGroup();
-    var points = [];
-
-    for (var i = 0, len = this.items.length; i < len; i++) {
-      var it = this.items[i];
-
-      if (it.options.type === 'Point') {
-        var geojson = it.toGeoJSON();
-        geojson.properties = L$1.GmxDrawing.utils.getNotDefaults(it.options, L$1.GmxDrawing.utils.defaultStyles.markerStyle);
-
-        if (!it._map) {
-          geojson.properties.map = false;
-        } else if (it._map.hasLayer(it.getPopup())) {
-          geojson.properties.popupOpened = true;
-        }
-
-        var res = L$1.GmxDrawing.utils.getNotDefaults(it._obj.options, L$1.GmxDrawing.utils.defaultStyles.markerStyle.options);
-
-        if (Object.keys(res).length) {
-          geojson.properties.options = res;
-        }
-
-        res = L$1.GmxDrawing.utils.getNotDefaults(it._obj.options.icon.options, L$1.GmxDrawing.utils.defaultStyles.markerStyle.options.icon);
-
-        if (Object.keys(res).length) {
-          if (!geojson.properties.options) {
-            geojson.properties.options = {};
-          }
-
-          geojson.properties.options.icon = res;
-        }
-
-        points.push(geojson);
-      } else {
-        featureGroup.addLayer(it);
-      }
-    }
-
-    var featureCollection = featureGroup.toGeoJSON();
-    featureCollection.features = featureCollection.features.concat(points);
-    return {
-      version: stateVersion,
-      featureCollection: featureCollection
-    };
-  },
-  _addItem: function _addItem(item) {
-    var addFlag = true;
-
-    for (var i = 0, len = this.items.length; i < len; i++) {
-      var it = this.items[i];
-
-      if (it === item) {
-        addFlag = false;
-        break;
-      }
-    }
-
-    if (addFlag) {
-      this.items.push(item);
-    }
-
-    this.fire('add', {
-      mode: item.mode,
-      object: item
-    });
-  },
-  _removeItem: function _removeItem(obj, remove) {
-    for (var i = 0, len = this.items.length; i < len; i++) {
-      var item = this.items[i];
-
-      if (item === obj) {
-        if (remove) {
-          this.items.splice(i, 1);
-          var ev = {
-            type: item.options.type,
-            mode: item.mode,
-            object: item
-          };
-          this.fire('remove', ev);
-          item.fire('remove', ev);
-        }
-
-        return item;
-      }
-    }
-
-    return null;
-  },
-  clear: function clear() {
-    for (var i = 0, len = this.items.length; i < len; i++) {
-      var item = this.items[i];
-
-      if (item && item._map) {
-        item._map.removeLayer(item);
-      }
-
-      var ev = {
-        type: item.options.type,
-        mode: item.mode,
-        object: item
-      };
-      this.fire('remove', ev);
-      item.fire('remove', ev);
-    }
-
-    this.items = [];
-    return this;
-  },
-  remove: function remove(obj) {
-    var item = this._removeItem(obj, true);
-
-    if (item && item._map) {
-      item._map.removeLayer(item);
-    }
-
-    return item;
-  }
-});
-L$1.Map.addInitHook(function () {
-  this.gmxDrawing = new L$1.GmxDrawing(this);
-});
-L$1.GmxDrawing;
-
-L$1.GmxDrawing.Feature = L$1.LayerGroup.extend({
-  options: {
-    endTooltip: '',
-    smoothFactor: 0,
-    mode: '' // add, edit
-
-  },
-  includes: L$1.Evented ? L$1.Evented.prototype : L$1.Mixin.Events,
-  simplify: function simplify() {
-    var i, j, len, len1, hole;
-
-    for (i = 0, len = this.rings.length; i < len; i++) {
-      var it = this.rings[i],
-          ring = it.ring;
-      ring.setLatLngs(ring.points.getPathLatLngs());
-
-      for (j = 0, len1 = it.holes.length; j < len1; j++) {
-        hole = it.holes[j];
-        hole.setLatLngs(hole.points.getPathLatLngs());
-      }
-    }
-
-    return this;
-  },
-  bringToFront: function bringToFront() {
-    this.rings.forEach(function (it) {
-      it.ring.bringToFront();
-    });
-    return this; // return this.invoke('bringToFront');
-  },
-  bringToBack: function bringToBack() {
-    this.rings.forEach(function (it) {
-      it.ring.bringToBack();
-    });
-    return this; // return this.invoke('bringToBack');
-  },
-  onAdd: function onAdd(map) {
-    L$1.LayerGroup.prototype.onAdd.call(this, map);
-
-    this._parent._addItem(this);
-
-    if (this.options.type === 'Point') {
-      map.addLayer(this._obj);
-      requestIdleCallback(function () {
-        this._fireEvent('drawstop', this._obj.options);
-      }.bind(this), {
-        timeout: 0
-      });
-    } else {
-      var svgContainer = this._map._pathRoot || this._map._renderer && this._map._renderer._container;
-
-      if (svgContainer && svgContainer.getAttribute('pointer-events') !== 'visible') {
-        svgContainer.setAttribute('pointer-events', 'visible');
-      }
-    }
-
-    this._fireEvent('addtomap');
-  },
-  onRemove: function onRemove(map) {
-    if ('hideTooltip' in this) {
-      this.hideTooltip();
-    }
-
-    this._removeStaticTooltip();
-
-    L$1.LayerGroup.prototype.onRemove.call(this, map);
-
-    if (this.options.type === 'Point') {
-      map.removeLayer(this._obj);
-    }
-
-    this._fireEvent('removefrommap');
-  },
-  remove: function remove(ring) {
-    if (ring) {
-      var i, j, len, len1, hole;
-
-      for (i = 0, len = this.rings.length; i < len; i++) {
-        if (ring.options.hole) {
-          for (j = 0, len1 = this.rings[i].holes.length; j < len1; j++) {
-            hole = this.rings[i].holes[j];
-
-            if (ring === hole) {
-              this.rings[i].holes.splice(j, 1);
-
-              if (hole._map) {
-                hole._map.removeLayer(hole);
-              }
-
-              break;
-            }
-          }
-
-          if (!ring._map) {
-            break;
-          }
-        } else if (ring === this.rings[i].ring) {
-          for (j = 0, len1 = this.rings[i].holes.length; j < len1; j++) {
-            hole = this.rings[i].holes[j];
-
-            if (hole._map) {
-              hole._map.removeLayer(hole);
-            }
-          }
-
-          this.rings.splice(i, 1);
-
-          if (ring._map) {
-            ring._map.removeLayer(ring);
-          }
-
-          break;
-        }
-      }
-    } else {
-      this.rings = [];
-    }
-
-    if (this.rings.length < 1) {
-      if (this._originalStyle) {
-        this._obj.setStyle(this._originalStyle);
-      }
-
-      this._parent.remove(this);
-    }
-
-    return this;
-  },
-  _fireEvent: function _fireEvent(name, options) {
-    //console.log('_fireEvent', name);
-    if (name === 'removefrommap' && this.rings.length > 1) {
-      return;
-    }
-
-    var event = L$1.extend({}, {
-      mode: this.mode || '',
-      object: this
-    }, options);
-    this.fire(name, event);
-
-    this._parent.fire(name, event);
-
-    if (name === 'drawstop' && this._map) {
-      L$1.DomUtil.removeClass(this._map._mapPane, 'leaflet-clickable');
-    }
-  },
-  getStyle: function getStyle() {
-    var resultStyles = L$1.extend({}, this._drawOptions);
-    delete resultStyles.holeStyle;
-
-    if (resultStyles.type === 'Point') {
-      L$1.extend(resultStyles, resultStyles.markerStyle.iconStyle);
-      delete resultStyles.markerStyle;
-    }
-
-    return resultStyles;
-  },
-  setOptions: function setOptions(options) {
-    if (options.lineStyle) {
-      this._setStyleOptions(options.lineStyle, 'lines');
-    }
-
-    if (options.pointStyle) {
-      this._setStyleOptions(options.pointStyle, 'points');
-    }
-
-    if ('editable' in options) {
-      if (options.editable) {
-        this.enableEdit();
-      } else {
-        this.disableEdit();
-      }
-    }
-
-    L$1.setOptions(this, options);
-
-    this._fireEvent('optionschange');
-
-    return this;
-  },
-  _setStyleOptions: function _setStyleOptions(options, type) {
-    for (var i = 0, len = this.rings.length; i < len; i++) {
-      var it = this.rings[i].ring[type];
-      it.setStyle(options);
-      it.redraw();
-
-      for (var j = 0, len1 = this.rings[i].holes.length; j < len1; j++) {
-        it = this.rings[i].holes[j][type];
-        it.setStyle(options);
-        it.redraw();
-      }
-    }
-
-    this._fireEvent('stylechange');
-  },
-  _setLinesStyle: function _setLinesStyle(options) {
-    this._setStyleOptions(options, 'lines');
-  },
-  _setPointsStyle: function _setPointsStyle(options) {
-    this._setStyleOptions(options, 'points');
-  },
-  getOptions: function getOptions() {
-    var options = this.options,
-        data = L$1.extend({}, options);
-    data.lineStyle = options.lineStyle;
-    data.pointStyle = options.pointStyle;
-    var res = L$1.GmxDrawing.utils.getNotDefaults(data, L$1.GmxDrawing.utils.defaultStyles);
-
-    if (!Object.keys(res.lineStyle).length) {
-      delete res.lineStyle;
-    }
-
-    if (!Object.keys(res.pointStyle).length) {
-      delete res.pointStyle;
-    }
-
-    if (!this._map) {
-      res.map = false;
-    }
-
-    if (options.type === 'Point') {
-      var opt = L$1.GmxDrawing.utils.getNotDefaults(this._obj.options, L$1.GmxDrawing.utils.defaultStyles.markerStyle.options);
-
-      if (Object.keys(opt).length) {
-        res.options = opt;
-      }
-
-      opt = L$1.GmxDrawing.utils.getNotDefaults(this._obj.options.icon.options, L$1.GmxDrawing.utils.defaultStyles.markerStyle.options.icon);
-
-      if (Object.keys(opt).length) {
-        res.options.icon = opt;
-      }
-    }
-
-    return res;
-  },
-  _latLngsToCoords: function _latLngsToCoords(latlngs, closed) {
-    var coords = L$1.GeoJSON.latLngsToCoords(L$1.GmxDrawing.utils.isOldVersion ? latlngs : latlngs[0]);
-
-    if (closed) {
-      var lastCoord = coords[coords.length - 1];
-
-      if (lastCoord[0] !== coords[0][0] || lastCoord[1] !== coords[0][1]) {
-        coords.push(coords[0]);
-      }
-    }
-
-    return coords;
-  },
-  _latlngsAddShift: function _latlngsAddShift(latlngs, shiftPixel) {
-    var arr = [];
-
-    for (var i = 0, len = latlngs.length; i < len; i++) {
-      arr.push(L$1.GmxDrawing.utils.getShiftLatlng(latlngs[i], this._map, shiftPixel));
-    }
-
-    return arr;
-  },
-  getPixelOffset: function getPixelOffset() {
-    var p = this.shiftPixel;
-
-    if (!p && this._map) {
-      var mInPixel = 256 / L$1.gmxUtil.tileSizes[this._map._zoom];
-      p = this.shiftPixel = new L$1.Point(Math.floor(mInPixel * this._dx), -Math.floor(mInPixel * this._dy));
-    }
-
-    return p || new L$1.Point(0, 0);
-  },
-  setOffsetToGeometry: function setOffsetToGeometry(dx, dy) {
-    var i,
-        len,
-        j,
-        len1,
-        ring,
-        latlngs,
-        mInPixel = 256 / L$1.gmxUtil.tileSizes[this._map._zoom],
-        shiftPixel = new L$1.Point(mInPixel * (this._dx || dx || 0), -mInPixel * (this._dy || dy || 0));
-
-    for (i = 0, len = this.rings.length; i < len; i++) {
-      var it = this.rings[i];
-      ring = it.ring;
-      latlngs = ring.points.getLatLngs();
-      ring.setLatLngs(this._latlngsAddShift(latlngs, shiftPixel));
-
-      if (it.holes && it.holes.length) {
-        for (j = 0, len1 = it.holes.length; j < len1; j++) {
-          ring = it.holes[j].ring;
-          latlngs = ring.points.getLatLngs();
-          ring.setLatLngs(this._latlngsAddShift(latlngs, shiftPixel));
-        }
-      }
-    }
-
-    this.setPositionOffset();
-    return this;
-  },
-  setPositionOffset: function setPositionOffset(mercX, mercY) {
-    this._dx = mercX || 0;
-    this._dy = mercY || 0;
-
-    if (this._map) {
-      this.shiftPixel = null;
-      var p = this.getPixelOffset();
-
-      for (var i = 0, len = this.rings.length; i < len; i++) {
-        this.rings[i].ring.setPositionOffset(p);
-
-        for (var j = 0, len1 = this.rings[i].holes.length; j < len1; j++) {
-          this.rings[i].holes[j].setPositionOffset(p);
-        }
-      }
-    }
-  },
-  _getCoords: function _getCoords(withoutShift) {
-    var type = this.options.type,
-        closed = type === 'Polygon' || type === 'Rectangle' || type === 'MultiPolygon',
-        shiftPixel = withoutShift ? null : this.shiftPixel,
-        coords = [];
-
-    for (var i = 0, len = this.rings.length; i < len; i++) {
-      var it = this.rings[i],
-          arr = this._latLngsToCoords(it.ring.points.getLatLngs(), closed, shiftPixel);
-
-      if (closed) {
-        arr = [arr];
-      }
-
-      if (it.holes && it.holes.length) {
-        for (var j = 0, len1 = it.holes.length; j < len1; j++) {
-          arr.push(this._latLngsToCoords(it.holes[j].points.getLatLngs(), closed, shiftPixel));
-        }
-      }
-
-      coords.push(arr);
-    }
-
-    if (type === 'Polyline' || closed && type !== 'MultiPolygon') {
-      coords = coords[0];
-    }
-
-    return coords;
-  },
-  _geoJsonToLayer: function _geoJsonToLayer(geoJson) {
-    return L$1.geoJson(geoJson).getLayers()[0];
-  },
-  setGeoJSON: function setGeoJSON(geoJson) {
-    this._initialize(this._parent, geoJson);
-
-    return this;
-  },
-  toGeoJSON: function toGeoJSON() {
-    return this._toGeoJSON(true);
-  },
-  _toGeoJSON: function _toGeoJSON(withoutShift) {
-    var type = this.options.type,
-        properties = this.getOptions(),
-        coords;
-    delete properties.mode;
-
-    if (!this.options.editable || type === 'Point') {
-      var obj = this._obj;
-
-      if (obj instanceof L$1.GeoJSON) {
-        obj = L$1.GmxDrawing.utils._getLastObject(obj).getLayers()[0];
-      }
-
-      var geojson = obj.toGeoJSON();
-      geojson.properties = properties;
-      return geojson;
-    } else if (this.rings) {
-      coords = this._getCoords(withoutShift);
-
-      if (type === 'Rectangle') {
-        type = 'Polygon';
-      } else if (type === 'Polyline') {
-        type = 'LineString';
-      } else if (type === 'MultiPolyline') {
-        type = 'MultiLineString';
-      }
-    }
-
-    return L$1.GeoJSON.getFeature({
-      feature: {
-        type: 'Feature',
-        properties: properties
-      }
-    }, {
-      type: type,
-      coordinates: coords
-    });
-  },
-  getType: function getType() {
-    return this.options.type;
-  },
-  hideFill: function hideFill() {
-    if (this._fill._map) {
-      this._map.removeLayer(this._fill);
-    }
-  },
-  showFill: function showFill() {
-    var geoJSON = this.toGeoJSON(),
-        obj = L$1.GeoJSON.geometryToLayer(geoJSON, null, null, {
-      weight: 0
-    });
-
-    this._fill.clearLayers();
-
-    if (obj instanceof L$1.LayerGroup) {
-      obj.eachLayer(function (layer) {
-        this._fill.addLayer(layer);
-      }, this);
-    } else {
-      obj.setStyle({
-        smoothFactor: 0,
-        weight: 0,
-        fill: true,
-        fillColor: '#0033ff'
-      });
-
-      this._fill.addLayer(obj);
-    }
-
-    if (!this._fill._map) {
-      this._map.addLayer(this._fill);
-
-      this._fill.bringToBack();
-    }
-
-    return this;
-  },
-  getBounds: function getBounds() {
-    var bounds = new L$1.LatLngBounds();
-
-    if (this.options.type === 'Point') {
-      var latLng = this._obj.getLatLng();
-
-      bounds.extend(latLng);
-    } else {
-      bounds = this._getBounds();
-    }
-
-    return bounds;
-  },
-  _getBounds: function _getBounds(item) {
-    var layer = item || this,
-        bounds = new L$1.LatLngBounds(),
-        latLng;
-
-    if (layer instanceof L$1.LayerGroup) {
-      layer.eachLayer(function (it) {
-        latLng = this._getBounds(it);
-        bounds.extend(latLng);
-      }, this);
-      return bounds;
-    } else if (layer instanceof L$1.Marker) {
-      latLng = layer.getLatLng();
-    } else {
-      latLng = layer.getBounds();
-    }
-
-    bounds.extend(latLng);
-    return bounds;
-  },
-  initialize: function initialize(parent, obj, options) {
-    options = options || {};
-    this.contextmenu = new L$1.GmxDrawingContextMenu();
-    options.mode = '';
-    this._drawOptions = L$1.extend({}, options);
-    var type = options.type;
-
-    if (type === 'Point') {
-      delete options.pointStyle;
-      delete options.lineStyle;
-    } else {
-      delete options.iconUrl;
-      delete options.iconAnchor;
-      delete options.iconSize;
-      delete options.popupAnchor;
-      delete options.shadowSize;
-      delete options.markerStyle;
-    }
-
-    delete options.holeStyle;
-    L$1.setOptions(this, options);
-    this._layers = {};
-    this._obj = obj;
-    this._parent = parent;
-    this._dx = 0;
-    this._dy = 0;
-
-    this._initialize(parent, obj);
-  },
-  enableEdit: function enableEdit() {
-    this.options.mode = 'edit';
-    var type = this.options.type;
-
-    if (type !== 'Point') {
-      // for (var i = 0, len = this.rings.length; i < len; i++) {
-      // var it = this.rings[i];
-      // it.ring.options.editable = this.options.editable;
-      // it.ring.setEditMode();
-      // for (var j = 0, len1 = it.holes.length; j < len1; j++) {
-      // var hole = it.holes[j];
-      // hole.options.editable = this.options.editable;
-      // hole.setEditMode();
-      // }
-      // }
-      var geojson = L$1.geoJson(this.toGeoJSON()),
-          items = geojson.getLayers();
-      this.options.editable = true;
-
-      if (items.length) {
-        this._initialize(this._parent, items[0]);
-      }
-    }
-
-    return this;
-  },
-  disableEdit: function disableEdit() {
-    var type = this.options.type;
-
-    if (type !== 'Point') {
-      this._originalStyle = this.options.lineStyle;
-      var geojson = L$1.geoJson(this.toGeoJSON().geometry, this._originalStyle).getLayers()[0];
-
-      for (var i = 0, len = this.rings.length; i < len; i++) {
-        var it = this.rings[i];
-        it.ring.removeEditMode();
-        it.ring.options.editable = false;
-
-        for (var j = 0, len1 = it.holes.length; j < len1; j++) {
-          var hole = it.holes[j];
-          hole.removeEditMode();
-          hole.options.editable = false;
-        }
-      }
-
-      this._obj = geojson;
-      this.options.editable = false;
-
-      this._initialize(this._parent, this._obj);
-    }
-
-    return this;
-  },
-  getArea: function getArea() {
-    var out = 0;
-
-    if (L$1.gmxUtil.geoJSONGetArea) {
-      out = L$1.gmxUtil.geoJSONGetArea(this.toGeoJSON());
-    }
-
-    return out;
-  },
-  getLength: function getLength() {
-    var out = 0;
-
-    if (L$1.gmxUtil.geoJSONGetLength) {
-      out = L$1.gmxUtil.geoJSONGetLength(this.toGeoJSON());
-    }
-
-    return out;
-  },
-  getLatLng: function getLatLng() {
-    return this.lastAddLatLng;
-  },
-  _getTooltipAnchor: function _getTooltipAnchor() {
-    return this.lastAddLatLng;
-  },
-  getSummary: function getSummary() {
-    var str = '',
-        mapOpt = this._map ? this._map.options : {},
-        type = this.options.type;
-
-    if (type === 'Polyline' || type === 'MultiPolyline') {
-      str = L$1.gmxUtil.prettifyDistance(this.getLength(), mapOpt.distanceUnit);
-    } else if (type === 'Polygon' || type === 'MultiPolygon' || type === 'Rectangle') {
-      str = L$1.gmxUtil.prettifyArea(this.getArea(), mapOpt.squareUnit);
-    } else if (type === 'Point') {
-      var latLng = this._obj.getLatLng();
-
-      str = L$1.gmxUtil.formatCoordinates(latLng);
-    }
-
-    return str;
-  },
-  _initialize: function _initialize(parent, obj) {
-    var _this2 = this;
-
-    this.clearLayers();
-    this.rings = [];
-    this.mode = '';
-    this.lastAddLatLng = L$1.latLng(0, 0); // последняя из добавленных точек
-
-    this._fill = L$1.featureGroup();
-
-    if (this._fill.options) {
-      this._fill.options.smoothFactor = 0;
-    }
-
-    if (this.options.editable) {
-      var arr = [];
-
-      if (L$1.GmxDrawing.utils.isOldVersion) {
-        arr = obj.getLayers ? L$1.GmxDrawing.utils._getLastObject(obj).getLayers() : [obj];
-      } else {
-        arr = obj.getLayers ? L$1.GmxDrawing.utils._getLastObject(obj) : [obj];
-
-        if (obj.type && obj.coordinates) {
-          var type = obj.type;
-          obj = this._geoJsonToLayer(obj);
-
-          if (type === 'Polygon') {
-            var it1 = obj.getLatLngs();
-            arr = [{
-              _latlngs: it1.shift(),
-              _holes: it1
-            }];
-          } else if (type === 'MultiPolygon') {
-            arr = obj.getLatLngs().map(function (it) {
-              return {
-                _latlngs: it.shift(),
-                _holes: it
-              };
-            });
-          } else if (type === 'LineString') {
-            arr = [{
-              _latlngs: obj.getLatLngs()
-            }];
-          } else if (type === 'MultiLineString') {
-            arr = obj.getLatLngs().map(function (it) {
-              return {
-                _latlngs: it
-              };
-            });
-          } else if (type === 'Point') {
-            this._obj = new L$1.Marker(obj.getLatLng(), {
-              draggable: true
-            });
-
-            this._setMarker(this._obj);
-
-            return;
-          } else if (type === 'MultiPoint') {
-            obj.getLayers().forEach(function (it) {
-              this._setMarker(new L$1.Marker(it.getLatLng(), {
-                draggable: true
-              }));
-            }.bind(this));
-            return;
-          }
-        } else if (this.options.type === 'MultiPolygon') {
-          arr = (obj.getLayers ? obj.getLayers()[0] : obj).getLatLngs().map(function (it) {
-            return {
-              _latlngs: it.shift(),
-              _holes: it
-            };
-          });
-        } else if (this.options.type === 'Polygon') {
-          var _latlngs = (obj.getLayers ? obj.getLayers()[0] : obj).getLatLngs();
-
-          arr = [{
-            _latlngs: _latlngs.shift(),
-            _holes: _latlngs
-          }];
-        }
-      }
-
-      for (var i = 0, len = arr.length; i < len; i++) {
-        var it = arr[i],
-            holes = [],
-            ring = new L$1.GmxDrawing.Ring(this, it._latlngs, {
-          ring: true,
-          editable: this.options.editable
-        });
-        ring.on('click', function (e) {
-          _this2.fire('click', e);
-        });
-        this.addLayer(ring);
-
-        if (it._holes) {
-          for (var j = 0, len1 = it._holes.length; j < len1; j++) {
-            var hole = new L$1.GmxDrawing.Ring(this, it._holes[j], {
-              hole: true,
-              editable: this.options.editable
-            });
-            this.addLayer(hole);
-            holes.push(hole);
-          }
-        }
-
-        this.rings.push({
-          ring: ring,
-          holes: holes
-        });
-      }
-
-      if (this.options.endTooltip && L$1.tooltip) {
-        this._initStaticTooltip();
-      }
-
-      if (L$1.gmxUtil && L$1.gmxUtil.prettifyDistance && !this._showTooltip) {
-        var _gtxt = L$1.GmxDrawing.utils.getLocale;
-        var my = this;
-
-        this._showTooltip = function (type, ev) {
-          var ring = ev.ring,
-              originalEvent = ev.originalEvent,
-              down = type !== 'angle' && (originalEvent.buttons || originalEvent.button);
-
-          if (ring && (ring.downObject || !down)) {
-            var mapOpt = my._map ? my._map.options : {},
-                distanceUnit = mapOpt.distanceUnit,
-                squareUnit = mapOpt.squareUnit,
-                azimutUnit = mapOpt.azimutUnit || false,
-                str = '';
-
-            if (type === 'Area' && ring.mode === 'add') {
-              type = 'Length';
-            }
-
-            if (type === 'Area') {
-              if (!L$1.gmxUtil.getArea) {
-                return;
-              }
-
-              if (originalEvent && originalEvent.ctrlKey) {
-                str = _gtxt('Perimeter') + ': ' + L$1.gmxUtil.prettifyDistance(my.getLength(), distanceUnit);
-              } else {
-                str = _gtxt(type) + ': ' + L$1.gmxUtil.prettifyArea(my.getArea(), squareUnit);
-              }
-
-              my._parent.showTooltip(ev.layerPoint, str);
-            } else if (type === 'Length') {
-              var downAttr = L$1.GmxDrawing.utils.getDownType.call(my, ev, my._map, my),
-                  angleLeg = azimutUnit ? ring.getAngleLength(downAttr) : null;
-
-              if (angleLeg && angleLeg.length && (my.options.type === 'Polyline' || ring.mode === 'add')) {
-                str = _gtxt('angleLength') + ': ' + angleLeg.angle + '(' + L$1.gmxUtil.prettifyDistance(angleLeg.length, distanceUnit) + ')';
-              } else {
-                var length = ring.getLength(downAttr),
-                    titleName = (downAttr.mode === 'edit' || downAttr.num > 1 ? downAttr.type : '') + type,
-                    title = _gtxt(titleName);
-
-                str = (title === titleName ? _gtxt(type) : title) + ': ' + L$1.gmxUtil.prettifyDistance(length, distanceUnit);
-              }
-
-              my._parent.showTooltip(ev.layerPoint, str);
-            } else if (type === 'angle') {
-              str = _gtxt('Angle') + ': ' + Math.floor(180.0 * ring._angle / Math.PI) + '°';
-
-              my._parent.showTooltip(ev.layerPoint, str);
-            }
-
-            my._fireEvent('onMouseOver');
-          }
-        };
-
-        this.hideTooltip = function () {
-          this._parent.hideTooltip();
-
-          this._fireEvent('onMouseOut');
-        };
-
-        this.getTitle = _gtxt;
-      }
-    } else if (this.options.type === 'Point') {
-      this._setMarker(obj);
-    } else {
-      this.addLayer(obj);
-    }
-  },
-  _initStaticTooltip: function _initStaticTooltip() {
-    this.on('drawstop editstop', function (ev) {
-      if (this.staticTooltip) {
-        this._removeStaticTooltip();
-      }
-
-      var latlng = ev.latlng,
-          map = this._map,
-          mapOpt = map ? map.options : {},
-          distanceUnit = mapOpt.distanceUnit,
-          squareUnit = mapOpt.squareUnit,
-          tCont = L$1.DomUtil.create('div', 'content'),
-          info = L$1.DomUtil.create('div', 'infoTooltip', tCont),
-          closeBtn = L$1.DomUtil.create('div', 'closeBtn', tCont),
-          polygon = this.options.type === 'Polygon',
-          tOptions = {
-        interactive: true,
-        sticky: true,
-        permanent: true,
-        className: 'staticTooltip'
-      };
-
-      if (polygon) {
-        if (this.options.endTooltip === 'center') {
-          tOptions.direction = 'center';
-          latlng = this.getBounds().getCenter();
-        }
-
-        info.innerHTML = L$1.gmxUtil.prettifyArea(this.getArea(), squareUnit);
-      } else {
-        tOptions.offset = L$1.point(10, 0);
-        var arr = this.rings[0].ring.points.getLatLngs()[0];
-        latlng = arr[arr.length - 1];
-        info.innerHTML = L$1.gmxUtil.prettifyDistance(this.getLength(), distanceUnit);
-      }
-
-      closeBtn.innerHTML = '×';
-      L$1.DomEvent.on(closeBtn, 'click', function () {
-        this._removeStaticTooltip();
-
-        this.remove();
-      }, this);
-      this.staticTooltip = L$1.tooltip(tOptions).setLatLng(latlng).setContent(tCont).addTo(this._map);
-      requestIdleCallback(function () {
-        this.on('edit', this._removeStaticTooltip, this);
-      }.bind(this), {
-        timeout: 0
-      });
-    }, this);
-  },
-  _removeStaticTooltip: function _removeStaticTooltip() {
-    if (this.staticTooltip) {
-      this._map.removeLayer(this.staticTooltip);
-
-      this.staticTooltip = null;
-    }
-  },
-  _enableDrag: function _enableDrag() {
-    this._parent._enableDrag();
-  },
-  _disableDrag: function _disableDrag() {
-    this._parent._disableDrag();
-  },
-  _setMarker: function _setMarker(marker) {
-    var _this = this,
-        _parent = this._parent,
-        _map = _parent._map,
-        mapOpt = _map ? _map.options : {};
-
-    marker.bindPopup(null, {
-      maxWidth: 1000,
-      closeOnClick: mapOpt.maxPopupCount > 1 ? false : true
-    }).on('dblclick', function () {
-      if (_map) {
-        _map.removeLayer(this);
-      }
-
-      _this.remove(); //_parent.remove(this);
-
-    }).on('dragstart', function () {
-      _this._fireEvent('dragstart');
-    }).on('drag', function (ev) {
-      if (ev.originalEvent && ev.originalEvent.ctrlKey) {
-        marker.setLatLng(L$1.GmxDrawing.utils.snapPoint(marker.getLatLng(), marker, _map));
-      }
-
-      _this._fireEvent('drag');
-
-      _this._fireEvent('edit');
-    }).on('dragend', function () {
-      _this._fireEvent('dragend');
-    }).on('popupopen', function (ev) {
-      var popup = ev.popup;
-
-      if (!popup._input) {
-        popup._input = L$1.DomUtil.create('textarea', 'leaflet-gmx-popup-textarea', popup._contentNode); // popup._input.placeholder = _this.options.title || marker.options.title || '';
-
-        popup._input.value = _this.options.title || marker.options.title || '';
-        popup._contentNode.style.width = 'auto';
-      }
-
-      L$1.DomEvent.on(popup._input, 'keyup', function () {
-        var rows = this.value.split('\n'),
-            cols = this.cols || 0;
-        rows.forEach(function (str) {
-          if (str.length > cols) {
-            cols = str.length;
-          }
-        });
-        this.rows = rows.length;
-
-        if (cols) {
-          this.cols = cols;
-        }
-
-        popup.update();
-        _this.options.title = marker.options.title = this.value;
-        this.focus();
-      }, popup._input);
-      popup.update();
-    });
-
-    _map.addLayer(marker);
-
-    _this.openPopup = marker.openPopup = function () {
-      if (marker._popup && marker._map && !marker._map.hasLayer(marker._popup)) {
-        marker._popup.setLatLng(marker._latlng);
-
-        var gmxDrawing = marker._map.gmxDrawing;
-
-        if (gmxDrawing._drawMode) {
-          marker._map.fire(gmxDrawing._createType ? 'click' : 'mouseup', {
-            latlng: marker._latlng,
-            delta: 1
-          });
-        } else {
-          marker._popup.addTo(marker._map);
-
-          marker._popup._isOpen = true;
-        }
-      }
-
-      return marker;
-    };
-  },
-  setAddMode: function setAddMode() {
-    if (this.rings.length) {
-      this.rings[0].ring.setAddMode();
-    }
-
-    return this;
-  },
-  _pointDown: function _pointDown(ev) {
-    if (this.rings.length) {
-      this.rings[0].ring._pointDown(ev);
-    }
-  },
-  getPopup: function getPopup() {
-    if (this.options.type === 'Point') {
-      return this._obj.getPopup();
-    }
-  }
-});
-L$1.GmxDrawing.Feature;
-
-L$1.GmxDrawing.utils = {
-  snaping: 10,
-  // snap distance
-  isOldVersion: L$1.version.substr(0, 3) === '0.7',
-  defaultStyles: {
-    mode: '',
-    map: true,
-    editable: true,
-    holeStyle: {
-      opacity: 0.5,
-      color: '#003311'
-    },
-    lineStyle: {
-      opacity: 1,
-      weight: 2,
-      clickable: false,
-      className: 'leaflet-drawing-lines',
-      color: '#0033ff',
-      dashArray: null,
-      lineCap: null,
-      lineJoin: null,
-      fill: false,
-      fillColor: null,
-      fillOpacity: 0.2,
-      smoothFactor: 0,
-      noClip: true,
-      stroke: true
-    },
-    pointStyle: {
-      className: 'leaflet-drawing-points',
-      smoothFactor: 0,
-      noClip: true,
-      opacity: 1,
-      shape: 'circle',
-      fill: true,
-      fillColor: '#ffffff',
-      fillOpacity: 1,
-      size: L$1.Browser.mobile ? 40 : 8,
-      weight: 2,
-      clickable: true,
-      color: '#0033ff',
-      dashArray: null,
-      lineCap: null,
-      lineJoin: null,
-      stroke: true
-    },
-    markerStyle: {
-      mode: '',
-      editable: false,
-      title: 'Text example',
-      options: {
-        alt: '',
-        //title: '',
-        clickable: true,
-        draggable: false,
-        keyboard: true,
-        opacity: 1,
-        zIndexOffset: 0,
-        riseOffset: 250,
-        riseOnHover: false,
-        icon: {
-          className: '',
-          iconUrl: '',
-          iconAnchor: [12, 41],
-          iconSize: [25, 41],
-          popupAnchor: [1, -34],
-          shadowSize: [41, 41]
-        }
-      }
-    }
-  },
-  getClosestOnGeometry: function getClosestOnGeometry(latlng, gmxGeoJson, map) {
-    if (L$1.GeometryUtil && map) {
-      return L$1.GeometryUtil.closestLayerSnap(map, [L$1.geoJson(L$1.gmxUtil.geometryToGeoJSON(gmxGeoJson, true, true))], latlng, Number(map.options.snaping || L$1.GmxDrawing.utils.snaping), true);
-    }
-
-    return null;
-  },
-  snapPoint: function snapPoint(latlng, obj, map) {
-    var res = latlng;
-
-    if (L$1.GeometryUtil) {
-      var drawingObjects = map.gmxDrawing.getFeatures().filter(function (it) {
-        return it !== obj._parent && it._obj !== obj;
-      }).map(function (it) {
-        return it.options.type === 'Point' ? it._obj : it;
-      }),
-          snaping = Number(map.options.snaping || L$1.GmxDrawing.utils.snaping),
-          closest = L$1.GeometryUtil.closestLayerSnap(map, drawingObjects, latlng, snaping, true);
-
-      if (closest) {
-        res = closest.latlng;
-      }
-    }
-
-    return res;
-  },
-  getNotDefaults: function getNotDefaults(from, def) {
-    var res = {};
-
-    for (var key in from) {
-      if (key === 'icon' || key === 'map') {
-        continue;
-      } else if (key === 'iconAnchor' || key === 'iconSize' || key === 'popupAnchor' || key === 'shadowSize') {
-        if (!def[key]) {
-          continue;
-        }
-
-        if (def[key][0] !== from[key][0] || def[key][1] !== from[key][1]) {
-          res[key] = from[key];
-        }
-      } else if (key === 'lineStyle' || key === 'pointStyle' || key === 'markerStyle') {
-        res[key] = this.getNotDefaults(from[key], def[key]);
-      } else if (!def || def[key] !== from[key] || key === 'fill') {
-        res[key] = from[key];
-      }
-    }
-
-    return res;
-  },
-  getShiftLatlng: function getShiftLatlng(latlng, map, shiftPixel) {
-    if (shiftPixel && map) {
-      var p = map.latLngToLayerPoint(latlng)._add(shiftPixel);
-
-      latlng = map.layerPointToLatLng(p);
-    }
-
-    return latlng;
-  },
-  getDownType: function getDownType(ev, map, feature) {
-    var layerPoint = ev.layerPoint,
-        originalEvent = ev.originalEvent,
-        ctrlKey = false,
-        shiftKey = false,
-        altKey = false,
-        latlng = ev.latlng;
-
-    if (originalEvent) {
-      ctrlKey = originalEvent.ctrlKey;
-      shiftKey = originalEvent.shiftKey;
-      altKey = originalEvent.altKey;
-    }
-
-    if (ev.touches && ev.touches.length === 1) {
-      var first = ev.touches[0],
-          containerPoint = map.mouseEventToContainerPoint(first);
-      layerPoint = map.containerPointToLayerPoint(containerPoint);
-      latlng = map.layerPointToLatLng(layerPoint);
-    }
-
-    var out = {
-      type: '',
-      latlng: latlng,
-      ctrlKey: ctrlKey,
-      shiftKey: shiftKey,
-      altKey: altKey
-    },
-        ring = this.points ? this : ev.ring || ev.relatedEvent,
-        points = ring.points._originalPoints || ring.points._parts[0] || [],
-        len = points.length;
-
-    if (len === 0) {
-      return out;
-    }
-
-    var size = (ring.points.options.size || 10) / 2;
-    size += 1 + (ring.points.options.weight || 2);
-    var cursorBounds = new L$1.Bounds(L$1.point(layerPoint.x - size, layerPoint.y - size), L$1.point(layerPoint.x + size, layerPoint.y + size)),
-        prev = points[len - 1],
-        lastIndex = len - (ring.mode === 'add' ? 2 : 1);
-    out = {
-      mode: ring.mode,
-      layerPoint: ev.layerPoint,
-      ctrlKey: ctrlKey,
-      shiftKey: shiftKey,
-      altKey: altKey,
-      latlng: latlng
-    };
-
-    for (var i = 0; i < len; i++) {
-      var point = points[i];
-
-      if (feature.shiftPixel) {
-        point = points[i].add(feature.shiftPixel);
-      }
-
-      if (cursorBounds.contains(point)) {
-        out.type = 'node';
-        out.num = i;
-        out.end = i === 0 || i === lastIndex ? true : false;
-        break;
-      }
-
-      var dist = L$1.LineUtil.pointToSegmentDistance(layerPoint, prev, point);
-
-      if (dist < size) {
-        out.type = 'edge';
-        out.num = i === 0 ? len : i;
-      }
-
-      prev = point;
-    }
-
-    return out;
-  },
-  _getLastObject: function _getLastObject(obj) {
-    if (obj.getLayers) {
-      var layer = obj.getLayers().shift();
-      return layer.getLayers ? this._getLastObject(layer) : obj;
-    }
-
-    return obj;
-  },
-  getMarkerByPos: function getMarkerByPos(pos, features) {
-    for (var i = 0, len = features.length; i < len; i++) {
-      var feature = features[i],
-          fobj = feature._obj ? feature._obj : null,
-          mpos = fobj && fobj._icon ? fobj._icon._leaflet_pos : null;
-
-      if (mpos && mpos.x === pos.x && mpos.y === pos.y) {
-        return fobj._latlng;
-      }
-    }
-
-    return null;
-  },
-  getLocale: function getLocale(key) {
-    var res = L$1.gmxLocale ? L$1.gmxLocale.getText(key) : null;
-    return res || key;
-  }
-};
-var Utils = L$1.GmxDrawing.utils;
-
-L$1.GmxDrawing.Ring = L$1.LayerGroup.extend({
-  options: {
-    className: 'leaflet-drawing-ring',
-    //noClip: true,
-    maxPoints: 0,
-    smoothFactor: 0,
-    noClip: true,
-    opacity: 1,
-    shape: 'circle',
-    fill: true,
-    fillColor: '#ffffff',
-    fillOpacity: 1,
-    size: L$1.Browser.mobile ? 40 : 8,
-    weight: 2
-  },
-  includes: L$1.Evented ? L$1.Evented.prototype : L$1.Mixin.Events,
-  initialize: function initialize(parent, coords, options) {
-    options = options || {};
-    this.contextmenu = new GmxDrawingContextMenu$1();
-    options.mode = '';
-    this._activeZIndex = options.activeZIndex || 7;
-    this._notActiveZIndex = options.notActiveZIndex || 6;
-    this.options = L$1.extend({}, this.options, parent.getStyle(), options);
-    this._layers = {};
-    this._coords = coords;
-    this._legLength = [];
-    this._parent = parent;
-
-    this._initialize(parent, coords);
-  },
-  _initialize: function _initialize(parent, coords) {
-    var _this2 = this;
-
-    this.clearLayers();
-    delete this.lines;
-    delete this.fill;
-    delete this.points;
-    this.downObject = false;
-    this.mode = '';
-    this.lineType = this.options.type.indexOf('Polyline') !== -1;
-
-    if (this.options.type === 'Rectangle') {
-      this.options.disableAddPoints = true;
-    }
-
-    var pointStyle = this.options.pointStyle;
-    var lineStyle = {
-      opacity: 1,
-      weight: 2,
-      noClip: true,
-      clickable: false,
-      className: 'leaflet-drawing-lines'
-    };
-
-    if (!this.lineType) {
-      lineStyle.fill = 'fill' in this.options ? this.options.fill : true;
-    }
-
-    if (this.options.lineStyle) {
-      for (var key in this.options.lineStyle) {
-        if (key !== 'fill' || !this.lineType) {
-          lineStyle[key] = this.options.lineStyle[key];
-        }
-      }
-    }
-
-    if (this.options.hole) {
-      lineStyle = L$1.extend({}, lineStyle, Utils.defaultStyles.holeStyle);
-      pointStyle = L$1.extend({}, pointStyle, Utils.defaultStyles.holeStyle);
-    }
-
-    var latlngs = coords,
-        _this = this,
-        mode = this.options.mode || (latlngs.length ? 'edit' : 'add');
-
-    this.fill = new L$1.Polyline(latlngs, {
-      className: 'leaflet-drawing-lines-fill',
-      opacity: 0,
-      smoothFactor: 0,
-      noClip: true,
-      fill: false,
-      size: 10,
-      weight: 10
-    });
-    this.fill.on('click', function (e) {
-      _this2._parent.fire('click', e);
-    });
-    this.addLayer(this.fill);
-    this.lines = new L$1.Polyline(latlngs, lineStyle);
-    this.addLayer(this.lines);
-
-    if (!this.lineType && mode === 'edit') {
-      var latlng = latlngs[0][0] || latlngs[0];
-      this.lines.addLatLng(latlng);
-      this.fill.addLatLng(latlng);
-    }
-
-    this.mode = mode;
-    this.points = new L$1.GmxDrawing.PointMarkers(latlngs, pointStyle);
-    this.points._parent = this;
-    this.addLayer(this.points);
-    this.points.on('mouseover', function (ev) {
-      this.toggleTooltip(ev, true, _this.lineType ? 'Length' : 'Area');
-
-      if (ev.type === 'mouseover') {
-        _this._recheckContextItems('points', _this._map);
-      }
-    }, this).on('mouseout', this.toggleTooltip, this);
-    this.fill.on('mouseover mousemove', function (ev) {
-      this.toggleTooltip(ev, true);
-    }, this).on('mouseout', this.toggleTooltip, this);
-
-    if (this.points.bindContextMenu) {
-      this.points.bindContextMenu({
-        contextmenu: false,
-        contextmenuInheritItems: false,
-        contextmenuItems: []
-      });
-    }
-
-    if (this.fill.bindContextMenu) {
-      this.fill.bindContextMenu({
-        contextmenu: false,
-        contextmenuInheritItems: false,
-        contextmenuItems: []
-      });
-      this.fill.on('mouseover', function (ev) {
-        if (ev.type === 'mouseover') {
-          this._recheckContextItems('fill', this._map);
-        }
-      }, this);
-    }
-
-    this._parent.on('rotate', function (ev) {
-      this.toggleTooltip(ev, true, 'angle');
-    }, this);
-
-    L$1.DomEvent.on(document, 'keydown keyup', this._toggleBboxClass, this);
-  },
-  bringToFront: function bringToFront() {
-    if (this.lines) {
-      this.lines.bringToFront();
-    }
-
-    if (this.fill) {
-      this.fill.bringToFront();
-    }
-
-    if (this.points) {
-      this.points.bringToFront();
-    }
-
-    return this;
-  },
-  bringToBack: function bringToBack() {
-    if (this.lines) {
-      this.lines.bringToBack();
-    }
-
-    if (this.fill) {
-      this.fill.bringToBack();
-    }
-
-    if (this.points) {
-      this.points.bringToBack();
-    }
-
-    return this;
-  },
-  _toggleBboxClass: function _toggleBboxClass(ev) {
-    if (ev.type === 'keydown' && this.mode === 'add') {
-      var key = ev.key,
-          points = this._getLatLngsArr();
-
-      if (key === 'Backspace') {
-        this._legLength = [];
-        points.splice(points.length - 1, 1);
-
-        this._setPoint(points[0], 0);
-      }
-
-      if (key === 'Escape' || key === 'Backspace' && points.length < 2) {
-        this._parent.remove(this);
-
-        this._parent._parent._clearCreate();
-
-        this._fireEvent('drawstop');
-      }
-    }
-
-    if (this.bbox) {
-      var flagRotate = this._needRotate;
-
-      if (!ev.altKey) {
-        flagRotate = !flagRotate;
-      }
-
-      if (ev.type === 'keyup' && !ev.altKey) {
-        flagRotate = !this._needRotate;
-      }
-
-      L$1.DomUtil[flagRotate ? 'removeClass' : 'addClass'](this.bbox._path, 'Rotate');
-    }
-  },
-  toggleTooltip: function toggleTooltip(ev, flag, type) {
-    if ('hideTooltip' in this._parent) {
-      ev.ring = this;
-
-      if (flag) {
-        type = type || 'Length';
-
-        this._parent._showTooltip(type, ev);
-      } else if (this.mode !== 'add') {
-        this._parent.hideTooltip(ev);
-      }
-    }
-  },
-  _recheckContextItems: function _recheckContextItems(type, map) {
-    var _this = this;
-
-    this[type].options.contextmenuItems = (map.gmxDrawing.contextmenu.getItems()[type] || []).concat(this._parent.contextmenu.getItems()[type] || []).concat(this.contextmenu.getItems()[type] || []).map(function (obj) {
-      var ph = {
-        id: obj.text,
-        text: Utils.getLocale(obj.text),
-        icon: obj.icon,
-        retinaIcon: obj.retinaIcon,
-        iconCls: obj.iconCls,
-        retinaIconCls: obj.retinaIconCls,
-        callback: function callback(ev) {
-          _this._eventsCmd(obj, ev);
-        },
-        context: obj.context || _this,
-        disabled: 'disabled' in obj ? obj.disabled : false,
-        separator: obj.separator,
-        hideOnSelect: 'hideOnSelect' in obj ? obj.hideOnSelect : true
-      };
-      return ph;
-    });
-    return this[type].options.contextmenuItems;
-  },
-  _eventsCmd: function _eventsCmd(obj, ev) {
-    var ring = ev.relatedTarget && ev.relatedTarget._parent || this;
-    var downAttr = Utils.getDownType.call(this, ev, this._map, this._parent);
-
-    if (downAttr) {
-      var type = obj.text;
-
-      if (obj.callback) {
-        obj.callback(downAttr, this._parent);
-      } else if (type === 'Delete feature') {
-        this._parent.remove(this); // this._parent._parent._clearCreate();
-
-
-        this._fireEvent('drawstop');
-      } else if (type === 'Remove point') {
-        ring._removePoint(downAttr.num);
-
-        this._fireEvent('editstop', ev);
-      } else if (type === 'Save' || type === 'Move' || type === 'Rotate' || type === 'Rotate around Point') {
-        this._toggleRotate(type, downAttr);
-      } else if (type === 'Cancel' && this._editHistory.length) {
-        if (this._editHistory.length) {
-          this.setLatLngs(this._editHistory[0]);
-          this._editHistory = [];
-        }
-
-        this._toggleRotate('Save', downAttr);
-      }
-    }
-  },
-  getFeature: function getFeature() {
-    return this._parent;
-  },
-  onAdd: function onAdd(map) {
-    L$1.LayerGroup.prototype.onAdd.call(this, map);
-    this.setEditMode();
-
-    if (this.points.bindContextMenu) {
-      var contextmenuItems = this._recheckContextItems('points', map);
-
-      this.points.bindContextMenu({
-        contextmenu: true,
-        contextmenuInheritItems: false,
-        contextmenuItems: contextmenuItems
-      });
-    }
-  },
-  onRemove: function onRemove(map) {
-    if (this.points) {
-      this._pointUp();
-
-      this.removeAddMode();
-      this.removeEditMode();
-
-      if ('hideTooltip' in this._parent) {
-        this._parent.hideTooltip();
-      }
-    }
-
-    L$1.LayerGroup.prototype.onRemove.call(this, map);
-
-    if (this.options.type === 'Point') {
-      map.removeLayer(this._obj);
-    }
-
-    this._fireEvent('removefrommap');
-  },
-  getAngleLength: function getAngleLength(downAttr) {
-    if (L$1.GeometryUtil && downAttr && downAttr.num) {
-      var num = downAttr.num,
-          latlngs = this.points._latlngs[0],
-          prev = latlngs[num - 1],
-          curr = latlngs[num] || downAttr.latlng,
-          _parts = this.points._parts[0],
-          angle = L$1.GeometryUtil.computeAngle(_parts[num - 1], _parts[num] || downAttr.layerPoint);
-      angle += 90;
-      angle %= 360;
-      angle += angle < 0 ? 360 : 0;
-      return {
-        length: L$1.gmxUtil.distVincenty(prev.lng, prev.lat, curr.lng, curr.lat),
-        angle: L$1.gmxUtil.formatDegrees(angle, 0)
-      };
-    }
-
-    return null;
-  },
-  getLength: function getLength(downAttr) {
-    var length = 0,
-        latlngs = this._getLatLngsArr(),
-        len = latlngs.length;
-
-    if (len) {
-      var beg = 1,
-          prev = latlngs[0];
-
-      if (downAttr) {
-        if (downAttr.type === 'node') {
-          len = downAttr.num + 1;
-        } else {
-          beg = downAttr.num;
-
-          if (beg === len) {
-            prev = latlngs[beg - 1];
-            beg = 0;
-          } else {
-            prev = latlngs[beg - 1];
-          }
-
-          len = beg + 1;
-        }
-      }
-
-      for (var i = beg; i < len; i++) {
-        var leg = this._legLength[i] || null;
-
-        if (leg === null) {
-          leg = L$1.gmxUtil.distVincenty(prev.lng, prev.lat, latlngs[i].lng, latlngs[i].lat);
-          this._legLength[i] = leg;
-        }
-
-        prev = latlngs[i];
-        length += leg;
-      }
-    }
-
-    return length;
-  },
-  _setPoint: function _setPoint(latlng, nm, type) {
-    if (!this.points) {
-      return;
-    }
-
-    var latlngs = this._getLatLngsArr();
-
-    if (this.options.type === 'Rectangle') {
-      if (type === 'edge') {
-        nm--;
-
-        if (nm === 0) {
-          latlngs[0].lng = latlngs[1].lng = latlng.lng;
-        } else if (nm === 1) {
-          latlngs[1].lat = latlngs[2].lat = latlng.lat;
-        } else if (nm === 2) {
-          latlngs[2].lng = latlngs[3].lng = latlng.lng;
-        } else if (nm === 3) {
-          latlngs[0].lat = latlngs[3].lat = latlng.lat;
-        }
-      } else {
-        latlngs[nm] = latlng;
-
-        if (nm === 0) {
-          latlngs[3].lat = latlng.lat;
-          latlngs[1].lng = latlng.lng;
-        } else if (nm === 1) {
-          latlngs[2].lat = latlng.lat;
-          latlngs[0].lng = latlng.lng;
-        } else if (nm === 2) {
-          latlngs[1].lat = latlng.lat;
-          latlngs[3].lng = latlng.lng;
-        } else if (nm === 3) {
-          latlngs[0].lat = latlng.lat;
-          latlngs[2].lng = latlng.lng;
-        }
-      }
-
-      this._legLength = [];
-    } else {
-      latlngs[nm] = latlng;
-      this._legLength[nm] = null;
-      this._legLength[nm + 1] = null;
-    }
-
-    this.setLatLngs(latlngs);
-  },
-  addLatLng: function addLatLng(point, delta) {
-    this._legLength = [];
-
-    if (this.points) {
-      var points = this._getLatLngsArr(),
-          maxPoints = this.options.maxPoints,
-          len = points.length,
-          lastPoint = points[len - 2],
-          flag = !lastPoint || !lastPoint.equals(point);
-
-      if (maxPoints && len >= maxPoints) {
-        this.setEditMode();
-
-        this._fireEvent('drawstop', {
-          latlng: point
-        });
-
-        len--;
-      }
-
-      if (flag) {
-        if (delta) {
-          len -= delta;
-        } // reset existing point
-
-
-        this._setPoint(point, len, 'node');
-      }
-
-      this._parent.lastAddLatLng = point;
-    } else if ('addLatLng' in this._obj) {
-      this._obj.addLatLng(point);
-    }
-  },
-  setPositionOffset: function setPositionOffset(p) {
-    L$1.DomUtil.setPosition(this.points._container, p);
-    L$1.DomUtil.setPosition(this.fill._container, p);
-    L$1.DomUtil.setPosition(this.lines._container, p);
-  },
-  setLatLngs: function setLatLngs(latlngs) {
-    // TODO: latlngs не учитывает дырки полигонов
-    if (this.points) {
-      var points = this.points;
-      this.fill.setLatLngs(latlngs);
-      this.lines.setLatLngs(latlngs);
-
-      if (!this.lineType && this.mode === 'edit' && latlngs.length > 2) {
-        this.lines.addLatLng(latlngs[0]);
-        this.fill.addLatLng(latlngs[0]);
-      }
-
-      if (this.bbox) {
-        this.bbox.setBounds(this.lines._bounds);
-      }
-
-      points.setLatLngs(latlngs);
-    } else if ('setLatLngs' in this._obj) {
-      this._obj.setLatLngs(latlngs);
-    }
-
-    this._fireEvent('edit');
-  },
-  _getLatLngsArr: function _getLatLngsArr() {
-    return Utils.isOldVersion ? this.points._latlngs : this.points._latlngs[0];
-  },
-  // edit mode
-  _pointDown: function _pointDown(ev) {
-    if (!this._map) {
-      return;
-    }
-
-    if (L$1.Browser.ie || L$1.gmxUtil && L$1.gmxUtil.gtIE11) {
-      this._map.dragging._draggable._onUp(ev); // error in IE
-
-    }
-
-    if (ev.originalEvent) {
-      var originalEvent = ev.originalEvent;
-
-      if (originalEvent.altKey) {
-        // altKey, shiftKey
-        this._onDragStart(ev);
-
-        return;
-      } else if (originalEvent.which !== 1 && originalEvent.button !== 1) {
-        return;
-      }
-    }
-
-    var downAttr = Utils.getDownType.call(this, ev, this._map, this._parent),
-        type = downAttr.type,
-        opt = this.options;
-    this._lastDownTime = Date.now() + 100;
-    this.down = downAttr;
-
-    if (type === 'edge' && downAttr.ctrlKey && opt.type !== 'Rectangle') {
-      if (opt.disableAddPoints) {
-        return;
-      }
-
-      this._legLength = [];
-
-      var num = downAttr.num,
-          points = this._getLatLngsArr();
-
-      points.splice(num, 0, points[num]);
-
-      this._setPoint(ev.latlng, num, type);
-    }
-
-    this.downObject = true;
-
-    this._parent._disableDrag();
-
-    this._map.on('mousemove', this._pointMove, this).on('mouseup', this._mouseupPoint, this);
-  },
-  _mouseupPoint: function _mouseupPoint(ev) {
-    this._pointUp(ev);
-
-    if (this.__mouseupPointTimer) {
-      cancelIdleCallback(this.__mouseupPointTimer);
-    }
-
-    this.__mouseupPointTimer = requestIdleCallback(function () {
-      this._fireEvent('editstop', ev);
-    }.bind(this), {
-      timeout: 250
-    });
-  },
-  _pointMove: function _pointMove(ev) {
-    if (this.down && this._lastDownTime < Date.now()) {
-      if (!this.lineType) {
-        this._parent.showFill();
-      }
-
-      this._clearLineAddPoint();
-
-      this._moved = true;
-      var latlng = ev.originalEvent.ctrlKey ? Utils.snapPoint(ev.latlng, this, this._map) : ev.latlng;
-
-      this._setPoint(latlng, this.down.num, this.down.type);
-
-      if ('_showTooltip' in this._parent) {
-        ev.ring = this;
-
-        this._parent._showTooltip(this.lineType ? 'Length' : 'Area', ev);
-      }
-    }
-  },
-  _pointUp: function _pointUp(ev) {
-    this.downObject = false;
-
-    this._parent._enableDrag();
-
-    if (!this.points) {
-      return;
-    }
-
-    if (this._map) {
-      this._map.off('mousemove', this._pointMove, this).off('mouseup', this._mouseupPoint, this);
-
-      var target = ev && ev.originalEvent ? ev.originalEvent.target : null;
-
-      if (target && target._leaflet_pos && /leaflet-marker-icon/.test(target.className)) {
-        var latlng = Utils.getMarkerByPos(target._leaflet_pos, this._map.gmxDrawing.getFeatures());
-
-        this._setPoint(latlng, this.down.num, this.down.type);
-      }
-
-      this._map._skipClick = true; // for EventsManager
-    }
-
-    if (this._drawstop) {
-      this._fireEvent('drawstop', ev);
-    }
-
-    this._drawstop = false;
-    this.down = null;
-    var lineStyle = this.options.lineStyle || {};
-
-    if (!lineStyle.fill && !this.lineType) {
-      this._parent.hideFill();
-    }
-  },
-  _lastPointClickTime: 0,
-  // Hack for emulate dblclick on Point
-  _removePoint: function _removePoint(num) {
-    var points = this._getLatLngsArr();
-
-    if (points.length > num) {
-      this._legLength = [];
-      points.splice(num, 1);
-
-      if (this.options.type === 'Rectangle' || points.length < 2 || points.length < 3 && !this.lineType) {
-        this._parent.remove(this);
-      } else {
-        this._setPoint(points[0], 0);
-      }
-    }
-  },
-  _clearLineAddPoint: function _clearLineAddPoint() {
-    if (this._lineAddPointID) {
-      clearTimeout(this._lineAddPointID);
-    }
-
-    this._lineAddPointID = null;
-  },
-  _pointDblClick: function _pointDblClick(ev) {
-    this._clearLineAddPoint();
-
-    if (!this.options.disableAddPoints && (!this._lastAddTime || Date.now() > this._lastAddTime)) {
-      var downAttr = Utils.getDownType.call(this, ev, this._map, this._parent);
-
-      this._removePoint(downAttr.num);
-    }
-  },
-  _pointClick: function _pointClick(ev) {
-    if (ev.originalEvent && ev.originalEvent.ctrlKey) {
-      return;
-    }
-
-    var clickTime = Date.now(),
-        prevClickTime = this._lastPointClickTime;
-    this._lastPointClickTime = clickTime + 300;
-
-    if (this._moved || clickTime < prevClickTime) {
-      this._moved = false;
-      return;
-    }
-
-    var downAttr = Utils.getDownType.call(this, ev, this._map, this._parent),
-        mode = this.mode;
-
-    if (downAttr.type === 'node') {
-      var num = downAttr.num;
-
-      if (downAttr.end) {
-        // this is click on first or last Point
-        if (mode === 'add') {
-          this._pointUp();
-
-          this.setEditMode();
-
-          if (this.lineType && num === 0) {
-            this._parent.options.type = this.options.type = 'Polygon';
-            this.lineType = false;
-
-            this._removePoint(this._getLatLngsArr().length - 1);
-          }
-
-          this._fireEvent('drawstop', downAttr);
-
-          this._fireEvent('editstop', downAttr);
-
-          this._removePoint(num);
-        } else if (this.lineType) {
-          this._clearLineAddPoint();
-
-          this._lineAddPointID = setTimeout(function () {
-            if (num === 0) {
-              this._getLatLngsArr().reverse();
-            }
-
-            this.points.addLatLng(downAttr.latlng);
-            this.setAddMode();
-
-            this._fireEvent('drawstop', downAttr);
-          }.bind(this), 250);
-        }
-      } else if (mode === 'add') {
-        // this is add pont
-        this.addLatLng(ev.latlng);
-      }
-    }
-  },
-  _editHistory: [],
-  // _dragType: 'Save',
-  _needRotate: false,
-  _toggleRotate: function _toggleRotate(type, downAttr) {
-    this._needRotate = type === 'Rotate' || type === 'Rotate around Point';
-    this._editHistory = [];
-
-    if (this.bbox) {
-      this.bbox.off('contextmenu', this._onContextmenu, this).off('mousedown', this._onRotateStart, this);
-      this.removeLayer(this.bbox);
-      this.bbox = null;
-    } else {
-      L$1.DomUtil.TRANSFORM_ORIGIN = L$1.DomUtil.TRANSFORM_ORIGIN || L$1.DomUtil.testProp(['transformOrigin', 'WebkitTransformOrigin', 'OTransformOrigin', 'MozTransformOrigin', 'msTransformOrigin']);
-      this.bbox = L$1.rectangle(this.lines.getBounds(), {
-        color: this.lines.options.color,
-        //||'rgb(51, 136, 255)',
-        opacity: this.lines.options.opacity,
-        className: 'leaflet-drawing-bbox ' + type,
-        dashArray: '6, 3',
-        smoothFactor: 0,
-        noClip: true,
-        fillOpacity: 0,
-        fill: true,
-        weight: 1
-      });
-      this.addLayer(this.bbox);
-      this.bbox.on('contextmenu', this._onContextmenu, this).on('mousedown', this._onRotateStart, this);
-
-      if (this.bbox.bindContextMenu) {
-        this.bbox.bindContextMenu({
-          contextmenu: false,
-          contextmenuInheritItems: false,
-          contextmenuItems: []
-        });
-      }
-
-      this._recheckContextItems('bbox', this._map);
-
-      this._rotateCenterPoint = type === 'Rotate' ? this.bbox.getCenter() : downAttr.latlng;
-    }
-  },
-  _onContextmenu: function _onContextmenu() {
-    this.bbox.options.contextmenuItems[1].disabled = this._editHistory.length < 1;
-  },
-  _isContextMenuEvent: function _isContextMenuEvent(ev) {
-    var e = ev.originalEvent;
-    return e.which !== 1 && e.button !== 1 && !e.touches;
-  },
-  _onRotateStart: function _onRotateStart(ev) {
-    if (this._isContextMenuEvent(ev)) {
-      return;
-    }
-
-    this._editHistory.push(this._getLatLngsArr().map(function (it) {
-      return it.clone();
-    }));
-
-    var flagRotate = this._needRotate;
-
-    if (ev.originalEvent.altKey) {
-      flagRotate = !flagRotate;
-    }
-
-    if (this._map.contextmenu) {
-      this._map.contextmenu.hide();
-    }
-
-    if (flagRotate) {
-      this._rotateStartPoint = ev.latlng;
-      this._rotateCenter = this._rotateCenterPoint;
-
-      this._map.on('mouseup', this._onRotateEnd, this).on('mousemove', this._onRotate, this);
-
-      this._parent._disableDrag();
-
-      this._fireEvent('rotatestart', ev);
-    } else {
-      this._onDragStart(ev);
-    }
-  },
-  _onRotateEnd: function _onRotateEnd(ev) {
-    // TODO: не учитывает дырки полигонов
-    this._map.off('mouseup', this._onRotateEnd, this).off('mousemove', this._onRotate, this);
-
-    this.toggleTooltip(ev);
-
-    if (this._center) {
-      var center = this._center,
-          shiftPoint = this._map.getPixelOrigin().add(center),
-          cos = Math.cos(-this._angle),
-          sin = Math.sin(-this._angle),
-          map = this._map,
-          _latlngs = this.points._parts[0].map(function (p) {
-        var ps = p.subtract(center);
-        return map.unproject(L$1.point(ps.x * cos + ps.y * sin, ps.y * cos - ps.x * sin).add(shiftPoint));
-      });
-
-      this.setLatLngs(_latlngs);
-
-      this._rotateItem();
-
-      this.bbox.setBounds(this.lines._bounds); // console.log('_onRotateEnd', this.mode, this.points._latlngs, _latlngs);
-    }
-
-    this._parent._enableDrag();
-
-    this._fireEvent('rotateend', ev);
-  },
-  _onRotate: function _onRotate(ev) {
-    var pos = ev.latlng,
-        // текущая точка
-    s = this._rotateStartPoint,
-        // точка начала вращения
-    c = this._rotateCenter; // центр объекта
-
-    this._rotateItem(Math.atan2(s.lat - c.lat, s.lng - c.lng) - Math.atan2(pos.lat - c.lat, pos.lng - c.lng), this._map.project(c).subtract(this._map.getPixelOrigin()));
-
-    this._fireEvent('rotate', ev);
-  },
-  _rotateItem: function _rotateItem(angle, center) {
-    var originStr = '',
-        rotate = '';
-
-    if (center) {
-      originStr = center.x + 'px ' + center.y + 'px';
-      rotate = 'rotate(' + angle + 'rad)';
-    }
-
-    this._angle = angle;
-    this._center = center;
-    [this.bbox, this.lines, this.fill, this.points].forEach(function (it) {
-      it._path.style[L$1.DomUtil.TRANSFORM_ORIGIN] = originStr;
-      it._path.style.transform = rotate;
-    });
-  },
-  _onDragEnd: function _onDragEnd() {
-    this._map.off('mouseup', this._onDragEnd, this).off('mousemove', this._onDrag, this);
-
-    this._parent._enableDrag();
-
-    this._fireEvent('dragend');
-  },
-  _onDragStart: function _onDragStart(ev) {
-    this._dragstartPoint = ev.latlng;
-
-    this._map.on('mouseup', this._onDragEnd, this).on('mousemove', this._onDrag, this);
-
-    this._parent._disableDrag();
-
-    this._fireEvent('dragstart');
-  },
-  _onDrag: function _onDrag(ev) {
-    var lat = this._dragstartPoint.lat - ev.latlng.lat,
-        lng = this._dragstartPoint.lng - ev.latlng.lng,
-        points = this._getLatLngsArr();
-
-    points.forEach(function (item) {
-      item.lat -= lat;
-      item.lng -= lng;
-    });
-    this._dragstartPoint = ev.latlng;
-    this._legLength = [];
-    this.setLatLngs(points);
-
-    this._fireEvent('drag');
-  },
-  _fireEvent: function _fireEvent(name, options) {
-    this._parent._fireEvent(name, options);
-  },
-  _startTouchMove: function _startTouchMove(ev, drawstop) {
-    var downAttr = Utils.getDownType.call(this, ev, this._map, this._parent);
-
-    if (downAttr.type === 'node') {
-      this._parent._disableDrag();
-
-      this.down = downAttr; //var num = downAttr.num;
-
-      var my = this;
-
-      var _touchmove = function _touchmove(ev) {
-        downAttr = Utils.getDownType.call(my, ev, my._map, this._parent);
-
-        if (ev.touches.length === 1) {
-          // Only deal with one finger
-          my._pointMove(downAttr);
-        }
-      };
-
-      var _touchend = function _touchend() {
-        L$1.DomEvent.off(my._map._container, 'touchmove', _touchmove, my).off(my._map._container, 'touchend', _touchend, my);
-
-        my._parent._enableDrag();
-
-        if (drawstop) {
-          my._parent.fire('drawstop', {
-            mode: my.options.type,
-            object: my
-          });
-        }
-      };
-
-      L$1.DomEvent.on(my._map._container, 'touchmove', _touchmove, my).on(my._map._container, 'touchend', _touchend, my);
-    }
-  },
-  _editHandlers: function _editHandlers(flag) {
-    //if (!this.points) { return; }
-    var stop = L$1.DomEvent.stopPropagation,
-        prevent = L$1.DomEvent.preventDefault;
-
-    if (this.touchstart) {
-      L$1.DomEvent.off(this.points._container, 'touchstart', this.touchstart, this);
-    }
-
-    if (this.touchstartFill) {
-      L$1.DomEvent.off(this.fill._container, 'touchstart', this.touchstartFill, this);
-    }
-
-    this.touchstart = null;
-    this.touchstartFill = null;
-
-    if (flag) {
-      this.points.on('dblclick click', stop, this).on('dblclick click', prevent, this).on('dblclick', this._pointDblClick, this).on('click', this._pointClick, this);
-
-      if (L$1.Browser.mobile) {
-        if (this._EditOpacity) {
-          this._parent._setPointsStyle({
-            fillOpacity: this._EditOpacity
-          });
-        }
-
-        var my = this;
-
-        this.touchstart = function (ev) {
-          my._startTouchMove(ev);
-        };
-
-        L$1.DomEvent.on(this.points._container, 'touchstart', this.touchstart, this);
-
-        this.touchstartFill = function (ev) {
-          var downAttr = Utils.getDownType.call(my, ev, my._map, this._parent);
-
-          if (downAttr.type === 'edge' && my.options.type !== 'Rectangle') {
-            var points = my.points._latlngs;
-            points.splice(downAttr.num, 0, points[downAttr.num]);
-            my._legLength = [];
-
-            my._setPoint(downAttr.latlng, downAttr.num, downAttr.type);
-          }
-        };
-
-        L$1.DomEvent.on(this.fill._container, 'touchstart', this.touchstartFill, this);
-      } else {
-        this.points.on('mousemove', stop).on('mousedown', this._pointDown, this);
-        this.lines.on('mousedown', this._pointDown, this);
-        this.fill.on('dblclick click', stop, this).on('mousedown', this._pointDown, this);
-
-        this._fireEvent('editmode');
-      }
-    } else {
-      this._pointUp();
-
-      this.points.off('dblclick click', stop, this).off('dblclick click', prevent, this).off('dblclick', this._pointDblClick, this).off('click', this._pointClick, this);
-
-      if (!L$1.Browser.mobile) {
-        this.points.off('mousemove', stop).off('mousedown', this._pointDown, this);
-        this.lines.off('mousedown', this._pointDown, this);
-        this.fill.off('dblclick click', stop, this).off('mousedown', this._pointDown, this);
-      }
-    }
-  },
-  _createHandlers: function _createHandlers(flag) {
-    if (!this.points || !this._map) {
-      return;
-    }
-
-    var stop = L$1.DomEvent.stopPropagation;
-
-    if (flag) {
-      if (this._map.contextmenu) {
-        this._map.contextmenu.disable();
-      }
-
-      this._parent._enableDrag();
-
-      this._map.on('dblclick', stop).on('mousedown', this._mouseDown, this).on('mouseup', this._mouseUp, this).on('mousemove', this._moseMove, this);
-
-      this.points.on('click', this._pointClick, this);
-
-      this._fireEvent('addmode');
-
-      if (!this.lineType) {
-        this.lines.setStyle({
-          fill: true
-        });
-      }
-    } else {
-      if (this._map) {
-        this._map.off('dblclick', stop).off('mouseup', this._mouseUp, this).off('mousemove', this._moseMove, this);
-
-        this.points.off('click', this._pointClick, this);
-      }
-
-      var lineStyle = this.options.lineStyle || {};
-
-      if (!this.lineType && !lineStyle.fill) {
-        this.lines.setStyle({
-          fill: false
-        });
-      }
-    }
-  },
-  setEditMode: function setEditMode() {
-    if (this.options.editable) {
-      this._editHandlers(false);
-
-      this._createHandlers(false);
-
-      this._editHandlers(true);
-
-      this.mode = 'edit';
-    }
-
-    return this;
-  },
-  setAddMode: function setAddMode() {
-    if (this.options.editable) {
-      this._editHandlers(false);
-
-      this._createHandlers(false);
-
-      this._createHandlers(true);
-
-      this.mode = 'add';
-    }
-
-    return this;
-  },
-  removeAddMode: function removeAddMode() {
-    this._createHandlers(false);
-
-    this.mode = '';
-  },
-  removeEditMode: function removeEditMode() {
-    this._editHandlers(false);
-
-    this.mode = '';
-  },
-  // add mode
-  _moseMove: function _moseMove(ev) {
-    if (this.points) {
-      var points = this._getLatLngsArr(),
-          latlng = ev.latlng;
-
-      if (ev.originalEvent.ctrlKey) {
-        latlng = Utils.snapPoint(latlng, this, this._map);
-      }
-
-      if (points.length === 1) {
-        this._setPoint(latlng, 1);
-      }
-
-      this._setPoint(latlng, points.length - 1);
-
-      this.toggleTooltip(ev, true, this.lineType ? 'Length' : 'Area');
-    }
-  },
-  _mouseDown: function _mouseDown() {
-    this._lastMouseDownTime = Date.now() + 200;
-
-    if (this._map && this._map.contextmenu) {
-      this._map.contextmenu.hide();
-    }
-
-    if ('hideTooltip' in this._parent) {
-      this._parent.hideTooltip();
-    }
-  },
-  _mouseUp: function _mouseUp(ev) {
-    var timeStamp = Date.now();
-
-    if (ev.delta || timeStamp < this._lastMouseDownTime) {
-      this._lastAddTime = timeStamp + 1000;
-
-      var _latlngs = this._getLatLngsArr();
-
-      if (ev.originalEvent && ev.originalEvent.which === 3 && this.points && _latlngs && _latlngs.length) {
-        // for click right button
-        this.setEditMode();
-
-        this._removePoint(_latlngs.length - 1);
-
-        this._pointUp();
-
-        this._fireEvent('drawstop');
-
-        if (this._map && this._map.contextmenu) {
-          requestIdleCallback(this._map.contextmenu.enable.bind(this._map.contextmenu), {
-            timeout: 250
-          });
-        }
-      } else {
-        var latlng = ev._latlng || ev.latlng;
-
-        if (ev.delta) {
-          this.addLatLng(latlng, ev.delta);
-        } // for click on marker
-
-
-        this.addLatLng(latlng);
-      }
-
-      this._parent._parent._clearCreate();
-    }
-  }
-});
-L$1.GmxDrawing.Ring;
-
-L$1.GmxDrawing.PointMarkers = L$1.Polygon.extend({
-  options: {
-    className: 'leaflet-drawing-points',
-    noClip: true,
-    smoothFactor: 0,
-    opacity: 1,
-    shape: 'circle',
-    fill: true,
-    fillColor: '#ffffff',
-    fillOpacity: 1,
-    size: L$1.Browser.mobile ? 40 : 8,
-    weight: 2
-  },
-  _convertLatLngs: function _convertLatLngs(latlngs) {
-    return L$1.Polyline.prototype._convertLatLngs.call(this, latlngs);
-  },
-  getRing: function getRing() {
-    return this._parent;
-  },
-  getFeature: function getFeature() {
-    return this.getRing()._parent;
-  },
-  getPathLatLngs: function getPathLatLngs() {
-    var out = [],
-        size = this.options.size,
-        dontsmooth = this._parent.options.type === 'Rectangle',
-        points = this._parts[0],
-        prev;
-
-    for (var i = 0, len = points.length, p; i < len; i++) {
-      p = points[i];
-
-      if (i === 0 || dontsmooth || Math.abs(prev.x - p.x) > size || Math.abs(prev.y - p.y) > size) {
-        out.push(this._latlngs[i]);
-        prev = p;
-      }
-    }
-
-    return out;
-  },
-  _getPathPartStr: function _getPathPartStr(points) {
-    var round = L$1.Path.VML,
-        size = this.options.size / 2,
-        dontsmooth = this._parent && this._parent.options.type === 'Rectangle',
-        skipLastPoint = this._parent && this._parent.mode === 'add' && !L$1.Browser.mobile ? 1 : 0,
-        radius = this.options.shape === 'circle' ? true : false,
-        prev;
-
-    for (var j = 0, len2 = points.length - skipLastPoint, str = '', p; j < len2; j++) {
-      p = points[j];
-
-      if (round) {
-        p._round();
-      }
-
-      if (j === 0 || dontsmooth || Math.abs(prev.x - p.x) > this.options.size || Math.abs(prev.y - p.y) > this.options.size) {
-        if (radius) {
-          str += 'M' + p.x + ',' + (p.y - size) + ' A' + size + ',' + size + ',0,1,1,' + (p.x - 0.1) + ',' + (p.y - size) + ' ';
-        } else {
-          var px = p.x,
-              px1 = px - size,
-              px2 = px + size,
-              py = p.y,
-              py1 = py - size,
-              py2 = py + size;
-          str += 'M' + px1 + ' ' + py1 + 'L' + px2 + ' ' + py1 + 'L' + px2 + ' ' + py2 + 'L' + px1 + ' ' + py2 + 'L' + px1 + ' ' + py1;
-        }
-
-        prev = p;
-      }
-    }
-
-    return str;
-  },
-  _onMouseClick: function _onMouseClick(e) {
-    //if (this._map.dragging && this._map.dragging.moved()) { return; }
-    this._fireMouseEvent(e);
-  },
-  _updatePath: function _updatePath() {
-    if (Utils.isOldVersion) {
-      if (!this._map) {
-        return;
-      }
-
-      this._clipPoints();
-
-      this.projectLatlngs();
-      var pathStr = this.getPathString();
-
-      if (pathStr !== this._pathStr) {
-        this._pathStr = pathStr;
-
-        if (this._path.getAttribute('fill-rule') !== 'inherit') {
-          this._path.setAttribute('fill-rule', 'inherit');
-        }
-
-        this._path.setAttribute('d', this._pathStr || 'M0 0');
-      }
-    } else {
-      var str = this._parts.length ? this._getPathPartStr(this._parts[0]) : '';
-
-      this._renderer._setPath(this, str);
-    }
-  }
-});
-L$1.GmxDrawing.PointMarkers;
-
-L$1.GmxDrawing.utils = {
-  snaping: 10,
-  // snap distance
-  isOldVersion: L$1.version.substr(0, 3) === '0.7',
-  defaultStyles: {
-    mode: '',
-    map: true,
-    editable: true,
-    holeStyle: {
-      opacity: 0.5,
-      color: '#003311'
-    },
-    lineStyle: {
-      opacity: 1,
-      weight: 2,
-      clickable: false,
-      className: 'leaflet-drawing-lines',
-      color: '#0033ff',
-      dashArray: null,
-      lineCap: null,
-      lineJoin: null,
-      fill: false,
-      fillColor: null,
-      fillOpacity: 0.2,
-      smoothFactor: 0,
-      noClip: true,
-      stroke: true
-    },
-    pointStyle: {
-      className: 'leaflet-drawing-points',
-      smoothFactor: 0,
-      noClip: true,
-      opacity: 1,
-      shape: 'circle',
-      fill: true,
-      fillColor: '#ffffff',
-      fillOpacity: 1,
-      size: L$1.Browser.mobile ? 40 : 8,
-      weight: 2,
-      clickable: true,
-      color: '#0033ff',
-      dashArray: null,
-      lineCap: null,
-      lineJoin: null,
-      stroke: true
-    },
-    markerStyle: {
-      mode: '',
-      editable: false,
-      title: 'Text example',
-      options: {
-        alt: '',
-        //title: '',
-        clickable: true,
-        draggable: false,
-        keyboard: true,
-        opacity: 1,
-        zIndexOffset: 0,
-        riseOffset: 250,
-        riseOnHover: false,
-        icon: {
-          className: '',
-          iconUrl: '',
-          iconAnchor: [12, 41],
-          iconSize: [25, 41],
-          popupAnchor: [1, -34],
-          shadowSize: [41, 41]
-        }
-      }
-    }
-  },
-  getClosestOnGeometry: function getClosestOnGeometry(latlng, gmxGeoJson, map) {
-    if (L$1.GeometryUtil && map) {
-      return L$1.GeometryUtil.closestLayerSnap(map, [L$1.geoJson(L$1.gmxUtil.geometryToGeoJSON(gmxGeoJson, true, true))], latlng, Number(map.options.snaping || L$1.GmxDrawing.utils.snaping), true);
-    }
-
-    return null;
-  },
-  snapPoint: function snapPoint(latlng, obj, map) {
-    var res = latlng;
-
-    if (L$1.GeometryUtil) {
-      var drawingObjects = map.gmxDrawing.getFeatures().filter(function (it) {
-        return it !== obj._parent && it._obj !== obj;
-      }).map(function (it) {
-        return it.options.type === 'Point' ? it._obj : it;
-      }),
-          snaping = Number(map.options.snaping || L$1.GmxDrawing.utils.snaping),
-          closest = L$1.GeometryUtil.closestLayerSnap(map, drawingObjects, latlng, snaping, true);
-
-      if (closest) {
-        res = closest.latlng;
-      }
-    }
-
-    return res;
-  },
-  getNotDefaults: function getNotDefaults(from, def) {
-    var res = {};
-
-    for (var key in from) {
-      if (key === 'icon' || key === 'map') {
-        continue;
-      } else if (key === 'iconAnchor' || key === 'iconSize' || key === 'popupAnchor' || key === 'shadowSize') {
-        if (!def[key]) {
-          continue;
-        }
-
-        if (def[key][0] !== from[key][0] || def[key][1] !== from[key][1]) {
-          res[key] = from[key];
-        }
-      } else if (key === 'lineStyle' || key === 'pointStyle' || key === 'markerStyle') {
-        res[key] = this.getNotDefaults(from[key], def[key]);
-      } else if (!def || def[key] !== from[key] || key === 'fill') {
-        res[key] = from[key];
-      }
-    }
-
-    return res;
-  },
-  getShiftLatlng: function getShiftLatlng(latlng, map, shiftPixel) {
-    if (shiftPixel && map) {
-      var p = map.latLngToLayerPoint(latlng)._add(shiftPixel);
-
-      latlng = map.layerPointToLatLng(p);
-    }
-
-    return latlng;
-  },
-  getDownType: function getDownType(ev, map, feature) {
-    var layerPoint = ev.layerPoint,
-        originalEvent = ev.originalEvent,
-        ctrlKey = false,
-        shiftKey = false,
-        altKey = false,
-        latlng = ev.latlng;
-
-    if (originalEvent) {
-      ctrlKey = originalEvent.ctrlKey;
-      shiftKey = originalEvent.shiftKey;
-      altKey = originalEvent.altKey;
-    }
-
-    if (ev.touches && ev.touches.length === 1) {
-      var first = ev.touches[0],
-          containerPoint = map.mouseEventToContainerPoint(first);
-      layerPoint = map.containerPointToLayerPoint(containerPoint);
-      latlng = map.layerPointToLatLng(layerPoint);
-    }
-
-    var out = {
-      type: '',
-      latlng: latlng,
-      ctrlKey: ctrlKey,
-      shiftKey: shiftKey,
-      altKey: altKey
-    },
-        ring = this.points ? this : ev.ring || ev.relatedEvent,
-        points = ring.points._originalPoints || ring.points._parts[0] || [],
-        len = points.length;
-
-    if (len === 0) {
-      return out;
-    }
-
-    var size = (ring.points.options.size || 10) / 2;
-    size += 1 + (ring.points.options.weight || 2);
-    var cursorBounds = new L$1.Bounds(L$1.point(layerPoint.x - size, layerPoint.y - size), L$1.point(layerPoint.x + size, layerPoint.y + size)),
-        prev = points[len - 1],
-        lastIndex = len - (ring.mode === 'add' ? 2 : 1);
-    out = {
-      mode: ring.mode,
-      layerPoint: ev.layerPoint,
-      ctrlKey: ctrlKey,
-      shiftKey: shiftKey,
-      altKey: altKey,
-      latlng: latlng
-    };
-
-    for (var i = 0; i < len; i++) {
-      var point = points[i];
-
-      if (feature.shiftPixel) {
-        point = points[i].add(feature.shiftPixel);
-      }
-
-      if (cursorBounds.contains(point)) {
-        out.type = 'node';
-        out.num = i;
-        out.end = i === 0 || i === lastIndex ? true : false;
-        break;
-      }
-
-      var dist = L$1.LineUtil.pointToSegmentDistance(layerPoint, prev, point);
-
-      if (dist < size) {
-        out.type = 'edge';
-        out.num = i === 0 ? len : i;
-      }
-
-      prev = point;
-    }
-
-    return out;
-  },
-  _getLastObject: function _getLastObject(obj) {
-    if (obj.getLayers) {
-      var layer = obj.getLayers().shift();
-      return layer.getLayers ? this._getLastObject(layer) : obj;
-    }
-
-    return obj;
-  },
-  getMarkerByPos: function getMarkerByPos(pos, features) {
-    for (var i = 0, len = features.length; i < len; i++) {
-      var feature = features[i],
-          fobj = feature._obj ? feature._obj : null,
-          mpos = fobj && fobj._icon ? fobj._icon._leaflet_pos : null;
-
-      if (mpos && mpos.x === pos.x && mpos.y === pos.y) {
-        return fobj._latlng;
-      }
-    }
-
-    return null;
-  },
-  getLocale: function getLocale(key) {
-    var res = L$1.gmxLocale ? L$1.gmxLocale.getText(key) : null;
-    return res || key;
-  }
-};
-L$1.GmxDrawing.utils;
-
-// `Uint8Array` constructor
-// https://tc39.github.io/ecma262/#sec-typedarray-objects
-typedArrayConstructor('Uint8', function (init) {
-  return function Uint8Array(data, byteOffset, length) {
-    return init(this, data, byteOffset, length);
-  };
-});
-
-function getObjectCenter(_x, _x2, _x3) {
-  return _getObjectCenter.apply(this, arguments);
-}
-
-function _getObjectCenter() {
-  _getObjectCenter = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(gmxPath, layerID, id) {
-    var fd, response, _yield$response$json, Status, Result, fields, values, i, _L$gmxUtil$convertGeo, coordinates, g, b;
-
-    return regeneratorRuntime.wrap(function _callee$(_context) {
-      while (1) {
-        switch (_context.prev = _context.next) {
-          case 0:
-            fd = new FormData();
-            fd.append('query', "[id]='".concat(id, "'"));
-            fd.append('page', '0');
-            fd.append('pagesize', '1');
-            fd.append('geometry', 'true');
-            fd.append('layer', layerID);
-            _context.next = 8;
-            return fetch("".concat(gmxPath, "/VectorLayer/Search.ashx?WrapStyle=None"), {
-              method: 'POST',
-              credentials: 'include',
-              body: fd
-            });
-
-          case 8:
-            response = _context.sent;
-            _context.next = 11;
-            return response.json();
-
-          case 11:
-            _yield$response$json = _context.sent;
-            Status = _yield$response$json.Status;
-            Result = _yield$response$json.Result;
-
-            if (!(Status === 'ok')) {
-              _context.next = 23;
-              break;
-            }
-
-            fields = Result.fields, values = Result.values;
-            i = fields.indexOf('geomixergeojson');
-            _L$gmxUtil$convertGeo = L$1.gmxUtil.convertGeometry(values[0][i], true), coordinates = _L$gmxUtil$convertGeo.coordinates;
-            g = L$1.geoJSON({
-              type: 'Feature',
-              geometry: {
-                type: 'Polygon',
-                coordinates: coordinates
-              }
-            });
-            b = g.getBounds();
-            return _context.abrupt("return", b.getCenter());
-
-          case 23:
-            return _context.abrupt("return", null);
-
-          case 24:
-          case "end":
-            return _context.stop();
-        }
-      }
-    }, _callee);
-  }));
-  return _getObjectCenter.apply(this, arguments);
-}
-
-var translate$v = T.getText.bind(T);
-T.addText('rus', {
-  measure: {
-    bearing: {
-      in: 'Входящий',
-      out: 'Выходящий'
-    },
-    clear: 'Убрать измерения',
-    on: 'Включить измерение расстояний',
-    off: 'Выключить измерение расстояний',
-    tooltip: {
-      finish: 'Щелкните мышью, чтобы <b>завершить линию</b><br>',
-      'delete': 'Удерживая SHIFT, нажмите левую кнопку мыши, чтобы <b>удалить точку</b>',
-      move: 'Удерживая левую кнопку мыши, двигайте, чтобы <b>сдвинуть точку</b><br>',
-      resume: '<br>Удерживая CTRL, нажмите левую кнопку мыши,чтобы <b>возобновить рисование линии</b>',
-      add: 'Удерживая CTRL, нажмите левую кнопку мыши, чтобы <b>добавить точку</b>'
-    },
-    units: {
-      title: {
-        text: 'Единицы измерения',
-        m: 'метры',
-        km: 'километры',
-        ft: 'футы',
-        mi: 'мили',
-        nm: 'морские мили'
-      },
-      label: {
-        m: 'м',
-        km: 'км',
-        ft: 'фт',
-        mi: 'ми',
-        nm: 'м.м'
-      }
-    }
-  },
-  shape: {
-    point: 'Точка',
-    polyline: 'Линия',
-    polygon: 'Многоугольник',
-    rectangle: 'Прямоугольник',
-    edit: 'Редактировать',
-    remove: 'Удалить'
-  },
-  error: {
-    analytics: 'Ошибка при отображении аналитики',
-    declaration: 'Ошибка при отображении декларации',
-    requests: 'Ошибка при отображении списка заявок',
-    plot: {
-      view: 'Ошибка при просмотре участка'
-    },
-    project: {
-      create: 'Ошибка при создании заявки',
-      edit: 'Ошибка при редактировании заявки',
-      remove: 'Ошибка при удаление заявки',
-      view: 'Ошибка при просмотре заявки'
-    },
-    incident: 'Ошибка при отображении инцидента',
-    park: 'Ошибка при отображении ООПТ',
-    quadrant: 'Ошибка при отображении квартала',
-    stand: 'Ошибка при отображении выдела',
-    uploaded: 'Ошибка при отображении данных'
-  },
-  forbidden: {
-    analytics: 'Нет разрешения для отображения аналитики',
-    declaration: 'Нет разрешения для отображения декларации',
-    requests: 'Нет разрешения для отображения списка заявок',
-    plot: {
-      view: 'Нет разрешения для отображения участка'
-    },
-    projects: {
-      create: 'Нет разрешения для создания заявки',
-      edit: 'Нет разрешения для редактирования заявки',
-      remove: 'Нет разрешения для удаления заявки'
-    },
-    incident: 'Нет разрешения для отображения инцидента',
-    park: 'Нет разрешения для отображения ООПТ',
-    quadrant: 'Нет разрешения для отображения квартала',
-    stand: 'Нет разрешения для отображения выдела',
-    uploaded: 'Нет разрешения для отображения данных'
-  }
-});
-var ALLOWED_LAYERS = ['regions', 'forestries', 'forestries_local', 'quadrants', 'stands', 'projects', 'plots', 'declarations', 'fires', 'parks', 'incidents', 'roads', 'warehouses'];
+var ALLOWED_LAYERS = ['warehouses', 'roads', 'declarations', 'incidents', 'quadrants', 'stands', 'projects', 'plots', 'fires', 'parks', 'forestries_local', 'forestries', 'regions'].reverse();
 
 var Map = /*#__PURE__*/function (_EventTarget) {
   _inherits(Map, _EventTarget);
@@ -49939,18 +48062,26 @@ var Map = /*#__PURE__*/function (_EventTarget) {
     // }, this);
 
 
-    _this._content = new Content();
-
-    _this._content.addTo(_this._map);
-
-    _this._map.addControl(new Center());
-
-    _this._map.addControl(new Location());
-
     _this._map.addControl(L$1.control.attribution({
       position: 'bottomleft'
     }));
 
+    _this._map.addControl(new gmxCenter());
+
+    _this._map.addControl(new gmxLocation());
+
+    _this._content = new Content();
+
+    _this._content.addTo(_this._map);
+
+    _this._notifications = {
+      unAuthorized: _this._content.add('unauthorized', UnAuthorized),
+      forbidden: _this._content.add('forbidden', Forbidden),
+      loading: _this._content.add('loading', Loading),
+      notAvailable: _this._content.add('not-available', NotAvailable),
+      notFound: _this._content.add('not-found', NotFound),
+      serverError: _this._content.add('server-error', ServerError)
+    };
     return _this;
   }
 
@@ -50022,10 +48153,9 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
                 this._baselayers.showPanel(false);
 
-                _context.next = 4;
-                return this._content.showDefault();
+                this._content.close();
 
-              case 4:
+              case 3:
               case "end":
                 return _context.stop();
             }
@@ -50048,38 +48178,26 @@ var Map = /*#__PURE__*/function (_EventTarget) {
             switch (_context2.prev = _context2.next) {
               case 0:
                 if (!this._permissions.AnaliticData) {
-                  _context2.next = 13;
+                  _context2.next = 5;
                   break;
                 }
 
-                _context2.prev = 1;
-                _context2.next = 4;
-                return this._content.show('reports');
+                _context2.next = 3;
+                return this._controllers.reports.view();
 
-              case 4:
-                _context2.next = 11;
+              case 3:
+                _context2.next = 6;
                 break;
+
+              case 5:
+                this._notifications.forbidden.open();
 
               case 6:
-                _context2.prev = 6;
-                _context2.t0 = _context2["catch"](1);
-                console.log(_context2.t0);
-                alert(translate$v('error.analytics'));
-                this.showMain();
-
-              case 11:
-                _context2.next = 14;
-                break;
-
-              case 13:
-                alert(translate$v('forbidden.analytics'));
-
-              case 14:
               case "end":
                 return _context2.stop();
             }
           }
-        }, _callee2, this, [[1, 6]]);
+        }, _callee2, this);
       }));
 
       function showAnalytics() {
@@ -50097,43 +48215,26 @@ var Map = /*#__PURE__*/function (_EventTarget) {
             switch (_context3.prev = _context3.next) {
               case 0:
                 if (!this._permissions.ForestProjectsView) {
-                  _context3.next = 15;
+                  _context3.next = 5;
                   break;
                 }
 
-                _context3.prev = 1;
+                _context3.next = 3;
+                return this._controllers.requests.view();
 
-                this._legend.enable('projects');
-
-                this._legend.enable('plots');
-
+              case 3:
                 _context3.next = 6;
-                return this._content.show('requests');
+                break;
+
+              case 5:
+                this._notifications.forbidden.open();
 
               case 6:
-                _context3.next = 13;
-                break;
-
-              case 8:
-                _context3.prev = 8;
-                _context3.t0 = _context3["catch"](1);
-                console.log(_context3.t0);
-                alert(translate$v('error.requests'));
-                this.showMain();
-
-              case 13:
-                _context3.next = 16;
-                break;
-
-              case 15:
-                alert(translate$v('forbidden.requests'));
-
-              case 16:
               case "end":
                 return _context3.stop();
             }
           }
-        }, _callee3, this, [[1, 8]]);
+        }, _callee3, this);
       }));
 
       function showRequests() {
@@ -50150,39 +48251,27 @@ var Map = /*#__PURE__*/function (_EventTarget) {
           while (1) {
             switch (_context4.prev = _context4.next) {
               case 0:
-                if (!(this._controllers.quadrants && this._permissions.ForestProjectsView)) {
-                  _context4.next = 13;
+                if (!this._permissions.ApplicationMake) {
+                  _context4.next = 5;
                   break;
                 }
 
-                _context4.prev = 1;
-                _context4.next = 4;
-                return this._controllers.quadrants.create();
+                _context4.next = 3;
+                return this._controllers.projects.create();
 
-              case 4:
-                _context4.next = 11;
+              case 3:
+                _context4.next = 6;
                 break;
+
+              case 5:
+                this._notifications.forbidden.open();
 
               case 6:
-                _context4.prev = 6;
-                _context4.t0 = _context4["catch"](1);
-                console.log(_context4.t0);
-                alert(translate$v('error.requests'));
-                this.showMain();
-
-              case 11:
-                _context4.next = 14;
-                break;
-
-              case 13:
-                alert(translate$v('forbidden.requests'));
-
-              case 14:
               case "end":
                 return _context4.stop();
             }
           }
-        }, _callee4, this, [[1, 6]]);
+        }, _callee4, this);
       }));
 
       function createRequest() {
@@ -50199,39 +48288,11 @@ var Map = /*#__PURE__*/function (_EventTarget) {
           while (1) {
             switch (_context5.prev = _context5.next) {
               case 0:
-                if (!this._permissions.MyData) {
-                  _context5.next = 13;
-                  break;
-                }
-
-                _context5.prev = 1;
-                _context5.next = 4;
-                return this._content.show('uploaded');
-
-              case 4:
-                _context5.next = 11;
-                break;
-
-              case 6:
-                _context5.prev = 6;
-                _context5.t0 = _context5["catch"](1);
-                console.log(_context5.t0);
-                alert(translate$v('error.uploaded'));
-                this.showMain();
-
-              case 11:
-                _context5.next = 14;
-                break;
-
-              case 13:
-                alert(translate$v('forbidden.uploaded'));
-
-              case 14:
               case "end":
                 return _context5.stop();
             }
           }
-        }, _callee5, this, [[1, 6]]);
+        }, _callee5);
       }));
 
       function showUploaded() {
@@ -50243,17 +48304,17 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "load",
     value: function () {
-      var _load = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10() {
+      var _load = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11() {
         var _this3 = this;
 
         var mapId;
-        return regeneratorRuntime.wrap(function _callee10$(_context10) {
+        return regeneratorRuntime.wrap(function _callee11$(_context11) {
           while (1) {
-            switch (_context10.prev = _context10.next) {
+            switch (_context11.prev = _context11.next) {
               case 0:
-                mapId = 'default';
                 window.SELF = this;
-                _context10.next = 4;
+                mapId = 'default';
+                _context11.next = 4;
                 return L$1.gmx.loadMap(mapId, {
                   leafletMap: this._map,
                   hostName: '/',
@@ -50268,7 +48329,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 });
 
               case 4:
-                this._gmxMap = _context10.sent;
+                this._gmxMap = _context11.sent;
 
                 this._map.on('zoomend', function (e) {
                   if (_this3._grid) {
@@ -50326,11 +48387,6 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                     temporal: Temporal,
                     index: ALLOWED_LAYERS.indexOf(kind.Value)
                   };
-                }) // sort layers according to indices
-                .sort(function (a, b) {
-                  var i = a.index;
-                  var j = b.index;
-                  if (i === j) return 0;else if (i < j) return -1;else return 1;
                 }) // set z-index & options
                 .map(function (_ref2) {
                   var layer = _ref2.layer,
@@ -50338,12 +48394,6 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                       index = _ref2.index,
                       isRaster = _ref2.isRaster,
                       temporal = _ref2.temporal;
-
-                  if (isRaster) {
-                    layer.on('add', function () {
-                      return GmxTimeLine.addLayer(layer);
-                    });
-                  }
 
                   if (typeof layer.disablePopup === 'function') {
                     layer.disablePopup();
@@ -50383,45 +48433,30 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                     layer: this._layers.quadrants,
                     legend: this._legend,
                     content: this._content,
-                    apiPath: this._apiPath,
-                    permissions: this._permissions
+                    path: this._apiPath,
+                    permissions: this._permissions,
+                    notifications: this._notifications
                   });
 
-                  this._controllers.quadrants.on('error', function (e) {
-                    console.log(e.detail);
-                    alert(e.detail);
-
-                    _this3.showMain();
-                  }).on('request:create', /*#__PURE__*/function () {
+                  this._controllers.quadrants.on('quadrant:toggle', /*#__PURE__*/function () {
                     var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(e) {
-                      var event, _this3$_layers$projec, LayerID, c, z;
+                      var _e$detail, gmx_id, forestryID;
 
                       return regeneratorRuntime.wrap(function _callee6$(_context6) {
                         while (1) {
                           switch (_context6.prev = _context6.next) {
                             case 0:
-                              event = document.createEvent('Event');
-                              event.initEvent('request:create', false, false);
-                              event.detail = e.detail;
+                              _e$detail = e.detail, gmx_id = _e$detail.gmx_id, forestryID = _e$detail.forestryID;
+                              _context6.next = 3;
+                              return _this3._controllers.projects.toggleQuadrant({
+                                gmx_id: gmx_id,
+                                forestryID: forestryID
+                              });
 
-                              _this3.dispatchEvent(event);
+                            case 3:
+                              _this3._layers.quadrants.repaint();
 
-                              if (!_this3._layers.projects) {
-                                _context6.next = 11;
-                                break;
-                              }
-
-                              _this3$_layers$projec = _this3._layers.projects.getGmxProperties(), LayerID = _this3$_layers$projec.LayerID;
-                              _context6.next = 8;
-                              return getObjectCenter(_this3._gmxPath, LayerID, e.detail);
-
-                            case 8:
-                              c = _context6.sent;
-                              z = 10;
-
-                              _this3._map.setView(c, z);
-
-                            case 11:
+                            case 4:
                             case "end":
                               return _context6.stop();
                           }
@@ -50431,78 +48466,6 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
                     return function (_x) {
                       return _ref4.apply(this, arguments);
-                    };
-                  }()).on('project:edit', /*#__PURE__*/function () {
-                    var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(e) {
-                      var _this3$_layers$projec2, LayerID, c, z;
-
-                      return regeneratorRuntime.wrap(function _callee7$(_context7) {
-                        while (1) {
-                          switch (_context7.prev = _context7.next) {
-                            case 0:
-                              if (!_this3._layers.projects) {
-                                _context7.next = 7;
-                                break;
-                              }
-
-                              _this3$_layers$projec2 = _this3._layers.projects.getGmxProperties(), LayerID = _this3$_layers$projec2.LayerID;
-                              _context7.next = 4;
-                              return getObjectCenter(_this3._gmxPath, LayerID, e.detail);
-
-                            case 4:
-                              c = _context7.sent;
-                              z = 10;
-
-                              _this3._map.setView(c, z);
-
-                            case 7:
-                            case "end":
-                              return _context7.stop();
-                          }
-                        }
-                      }, _callee7);
-                    }));
-
-                    return function (_x2) {
-                      return _ref5.apply(this, arguments);
-                    };
-                  }()).on('project:view', /*#__PURE__*/function () {
-                    var _ref6 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(e) {
-                      var _this3$_layers$projec3, LayerID, c, z;
-
-                      return regeneratorRuntime.wrap(function _callee8$(_context8) {
-                        while (1) {
-                          switch (_context8.prev = _context8.next) {
-                            case 0:
-                              if (!_this3._layers.projects) {
-                                _context8.next = 8;
-                                break;
-                              }
-
-                              if (_this3._controllers.projects) {
-                                _this3._controllers.projects.view(e.detail);
-                              }
-
-                              _this3$_layers$projec3 = _this3._layers.projects.getGmxProperties(), LayerID = _this3$_layers$projec3.LayerID;
-                              _context8.next = 5;
-                              return getObjectCenter(_this3._gmxPath, LayerID, e.detail);
-
-                            case 5:
-                              c = _context8.sent;
-                              z = 10;
-
-                              _this3._map.setView(c, z);
-
-                            case 8:
-                            case "end":
-                              return _context8.stop();
-                          }
-                        }
-                      }, _callee8);
-                    }));
-
-                    return function (_x3) {
-                      return _ref6.apply(this, arguments);
                     };
                   }());
                 }
@@ -50514,14 +48477,8 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                     legend: this._legend,
                     content: this._content,
                     path: this._apiPath,
-                    permissions: this._permissions
-                  });
-
-                  this._controllers.stands.on('error', function (e) {
-                    console.log(e.detail);
-                    alert(e.detail);
-
-                    _this3.showMain();
+                    permissions: this._permissions,
+                    notifications: this._notifications
                   });
                 }
 
@@ -50531,14 +48488,8 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                     layer: this._layers.declarations,
                     legend: this._legend,
                     content: this._content,
-                    path: this._apiPath
-                  });
-
-                  this._controllers.declarations.on('error', function (e) {
-                    console.log(e.detail);
-                    alert(e.detail);
-
-                    _this3.showMain();
+                    path: this._apiPath,
+                    notifications: this._notifications
                   });
                 }
 
@@ -50552,14 +48503,8 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                     content: this._content,
                     path: this._apiPath,
                     permissions: this._permissions,
-                    dateInterval: this._dateInterval
-                  });
-
-                  this._controllers.fires.on('error', function (e) {
-                    console.log(e.detail);
-                    alert(e.detail);
-
-                    _this3.showMain();
+                    dateInterval: this._dateInterval,
+                    notifications: this._notifications
                   });
                 }
 
@@ -50569,63 +48514,63 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                     layer: this._layers.parks,
                     legend: this._legend,
                     content: this._content,
-                    path: this._apiPath
-                  });
-
-                  this._controllers.parks.on('error', function (e) {
-                    console.log(e.detail);
-                    alert(e.detail);
-
-                    _this3.showMain();
+                    path: this._apiPath,
+                    notifications: this._notifications
                   });
                 }
 
                 if (this._layers.projects && this._permissions.ForestProjectsView) {
                   this._controllers.projects = new Projects({
                     map: this._map,
-                    layer: this._layers.projects,
+                    layers: this._layers,
                     legend: this._legend,
                     content: this._content,
                     path: this._apiPath,
                     permissions: this._permissions,
-                    requests: this._layers.requests
+                    notifications: this._notifications
                   });
 
-                  this._controllers.projects.on('request:create', function (e) {
-                    var event = document.createEvent('Event');
-                    event.initEvent('request:create', false, false);
-                    event.detail = e.detail;
-
-                    _this3.dispatchEvent(event);
-                  }).on('project:edit', /*#__PURE__*/function () {
-                    var _ref7 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9(e) {
-                      var _e$detail, id, forestry_id;
-
-                      return regeneratorRuntime.wrap(function _callee9$(_context9) {
+                  this._controllers.projects.on('create', /*#__PURE__*/function () {
+                    var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(e) {
+                      var event;
+                      return regeneratorRuntime.wrap(function _callee7$(_context7) {
                         while (1) {
-                          switch (_context9.prev = _context9.next) {
+                          switch (_context7.prev = _context7.next) {
                             case 0:
-                              _e$detail = e.detail, id = _e$detail.id, forestry_id = _e$detail.forestry_id;
-                              _context9.next = 3;
-                              return _this3._controllers.quadrants.edit(id, forestry_id);
+                              event = document.createEvent('Event');
+                              event.initEvent('request:create', false, false);
+                              event.detail = e.detail;
 
-                            case 3:
+                              _this3.dispatchEvent(event);
+
+                            case 4:
                             case "end":
-                              return _context9.stop();
+                              return _context7.stop();
                           }
                         }
-                      }, _callee9);
+                      }, _callee7);
                     }));
 
-                    return function (_x4) {
-                      return _ref7.apply(this, arguments);
+                    return function (_x2) {
+                      return _ref5.apply(this, arguments);
                     };
-                  }()).on('error', function (e) {
-                    console.log(e.detail);
-                    alert(e.detail);
+                  }());
 
-                    _this3.showMain();
-                  });
+                  this._controllers.projects.on('back', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8() {
+                    return regeneratorRuntime.wrap(function _callee8$(_context8) {
+                      while (1) {
+                        switch (_context8.prev = _context8.next) {
+                          case 0:
+                            _context8.next = 2;
+                            return _this3.showRequests();
+
+                          case 2:
+                          case "end":
+                            return _context8.stop();
+                        }
+                      }
+                    }, _callee8);
+                  })));
                 }
 
                 if (this._layers.plots && this._permissions.ForestProjectsView) {
@@ -50635,15 +48580,121 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                     legend: this._legend,
                     content: this._content,
                     path: this._apiPath,
-                    permissions: this._permissions
+                    permissions: this._permissions,
+                    notifications: this._notifications
+                  });
+                }
+
+                if (this._permissions.ForestProjectsView) {
+                  this._controllers.requests = new Requests$1({
+                    map: this._map,
+                    content: this._content,
+                    path: this._apiPath,
+                    layers: this._layers,
+                    legend: this._legend,
+                    permissions: this._permissions,
+                    notifications: this._notifications
                   });
 
-                  this._controllers.plots.on('error', function (e) {
-                    console.log(e.detail);
-                    alert(e.detail);
+                  this._controllers.requests.on('view', /*#__PURE__*/function () {
+                    var _ref7 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9(e) {
+                      var _e$detail2, id, forestryID, _this3$_layers$projec, LayerID, c, z;
 
-                    _this3.showMain();
+                      return regeneratorRuntime.wrap(function _callee9$(_context9) {
+                        while (1) {
+                          switch (_context9.prev = _context9.next) {
+                            case 0:
+                              _e$detail2 = e.detail, id = _e$detail2.id, forestryID = _e$detail2.forestryID;
+                              _context9.next = 3;
+                              return _this3._controllers.projects.view({
+                                id: id,
+                                forestryID: forestryID
+                              });
+
+                            case 3:
+                              _this3$_layers$projec = _this3._layers.projects.getGmxProperties(), LayerID = _this3$_layers$projec.LayerID;
+                              _context9.prev = 4;
+                              _context9.next = 7;
+                              return getObjectCenter(_this3._gmxPath, LayerID, id);
+
+                            case 7:
+                              c = _context9.sent;
+                              z = 10;
+
+                              _this3._map.setView(c, z);
+
+                              _context9.next = 15;
+                              break;
+
+                            case 12:
+                              _context9.prev = 12;
+                              _context9.t0 = _context9["catch"](4);
+                              console.log(_context9.t0);
+
+                            case 15:
+                            case "end":
+                              return _context9.stop();
+                          }
+                        }
+                      }, _callee9, null, [[4, 12]]);
+                    }));
+
+                    return function (_x3) {
+                      return _ref7.apply(this, arguments);
+                    };
+                  }());
+
+                  this._controllers.requests.on('create', function () {
+                    _this3._controllers.projects.create();
                   });
+
+                  this._controllers.requests.on('edit', /*#__PURE__*/function () {
+                    var _ref8 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(e) {
+                      var _e$detail3, id, forestryID, _this3$_layers$projec2, LayerID, c, z;
+
+                      return regeneratorRuntime.wrap(function _callee10$(_context10) {
+                        while (1) {
+                          switch (_context10.prev = _context10.next) {
+                            case 0:
+                              _e$detail3 = e.detail, id = _e$detail3.id, forestryID = _e$detail3.forestryID;
+                              _context10.next = 3;
+                              return _this3._controllers.projects.edit({
+                                id: id,
+                                forestryID: forestryID
+                              });
+
+                            case 3:
+                              _this3$_layers$projec2 = _this3._layers.projects.getGmxProperties(), LayerID = _this3$_layers$projec2.LayerID;
+                              _context10.prev = 4;
+                              _context10.next = 7;
+                              return getObjectCenter(_this3._gmxPath, LayerID, id);
+
+                            case 7:
+                              c = _context10.sent;
+                              z = 10;
+
+                              _this3._map.setView(c, z);
+
+                              _context10.next = 15;
+                              break;
+
+                            case 12:
+                              _context10.prev = 12;
+                              _context10.t0 = _context10["catch"](4);
+                              console.log(_context10.t0);
+
+                            case 15:
+                            case "end":
+                              return _context10.stop();
+                          }
+                        }
+                      }, _callee10, null, [[4, 12]]);
+                    }));
+
+                    return function (_x4) {
+                      return _ref8.apply(this, arguments);
+                    };
+                  }());
                 }
 
                 if (this._layers.roads) {
@@ -50651,7 +48702,8 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                     map: this._map,
                     layer: this._layers.roads,
                     legend: this._legend,
-                    content: this._content
+                    content: this._content,
+                    notifications: this._notifications
                   });
                 }
 
@@ -50660,7 +48712,8 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                     map: this._map,
                     layer: this._layers.warehouses,
                     legend: this._legend,
-                    content: this._content
+                    content: this._content,
+                    notifications: this._notifications
                   });
                 }
 
@@ -50668,12 +48721,9 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   this._controllers.borders = new Borders({
                     map: this._map,
                     layers: this._layers,
-                    legend: this._legend
-                  }).on('error', function (e) {
-                    console.log(e.detail);
-                    alert(e.detail);
-
-                    _this3.showMain();
+                    legend: this._legend,
+                    content: this._content,
+                    notifications: this._notifications
                   });
                 }
 
@@ -50686,15 +48736,11 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                     content: this._content,
                     path: this._monPath,
                     permissions: this._permissions,
-                    dateInterval: this._dateInterval
+                    dateInterval: this._dateInterval,
+                    notifications: this._notifications
                   });
 
-                  this._controllers.incidents.on('error', function (e) {
-                    console.log(e.detail);
-                    alert(e.detail);
-
-                    _this3.showMain();
-                  }).on('incident:docs', function (e) {
+                  this._controllers.incidents.on('incident:docs', function (e) {
                     var event = document.createEvent('Event');
                     event.initEvent('incident:docs', false, false);
                     event.detail = e.detail;
@@ -50706,28 +48752,16 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 if (this._permissions.AnaliticData) {
                   this._controllers.reports = new Reports$1({
                     path: this._apiPath,
-                    content: this._content
-                  });
-
-                  this._controllers.reports.on('error', function (e) {
-                    console.log(e.detail);
-                    alert(e.detail);
-
-                    _this3.showMain();
+                    content: this._content,
+                    notifications: this._notifications
                   });
                 }
 
                 if (this._permissions.MyData) {
                   this._controllers.uploaded = new Uploaded$1({
                     path: this._gmxPath,
-                    content: this._content
-                  });
-
-                  this._controllers.uploaded.on('error', function (e) {
-                    console.log(e.detail);
-                    alert(e.detail);
-
-                    _this3.showMain();
+                    content: this._content,
+                    notifications: this._notifications
                   });
                 }
 
@@ -50739,15 +48773,16 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 this._controllers.legend = new Legend$1({
                   map: this._map,
                   legend: this._legend,
-                  tags: ['regions', 'forestries']
+                  tags: ['regions', 'forestries'],
+                  notifications: this._notifications
                 });
 
-              case 34:
+              case 35:
               case "end":
-                return _context10.stop();
+                return _context11.stop();
             }
           }
-        }, _callee10, this);
+        }, _callee11, this);
       }));
 
       function load() {
@@ -50764,16 +48799,15 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "addCRLayer",
     value: function () {
-      var _addCRLayer = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11(layerID) {
+      var _addCRLayer = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee12(layerID, mapID) {
         var arr, layer;
-        return regeneratorRuntime.wrap(function _callee11$(_context11) {
+        return regeneratorRuntime.wrap(function _callee12$(_context12) {
           while (1) {
-            switch (_context11.prev = _context11.next) {
+            switch (_context12.prev = _context12.next) {
               case 0:
-                _context11.next = 2;
+                _context12.next = 2;
                 return L$1.gmx.loadLayers([{
                   hostName: '/',
-                  // setZIndex: true,
                   gmxEndPoints: {
                     checkVersion: "".concat(this._gmxPath, "/Layer/CheckVersion.ashx"),
                     layerProps: "".concat(this._gmxPath, "/Layer/GetLayerJson.ashx"),
@@ -50781,39 +48815,41 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                     tileProps: "".concat(this._gmxPath, "/TileSender.ashx"),
                     mapProps: "".concat(this._gmxPath, "/TileSender.ashx")
                   },
-                  mapID: '3B9D614D7AFA4A1ABF2BF1E0918677EF',
+                  mapID: mapID || '3D448C6108A8441CAC25371616B0CBB0',
                   layerID: layerID
                 }], {});
 
               case 2:
-                arr = _context11.sent;
+                arr = _context12.sent;
                 layer = arr[0];
 
                 if (layer) {
-                  // const CRLayer = this._gmxMap.layersByID['958E59D9911E4889AB3E787DE2AC028B'];	// Каталог растров
-                  // this._map.addControl(nsGmx.gmxTimeLine.afterViewer({gmxMap: this._gmxMap}, this._map));	// Контрол таймлайна CR
-                  if (!GmxTimeLine._map) {
-                    this._map.addControl(GmxTimeLine); // Контрол таймлайна CR
+                  layer.setZIndexOffset(-500000);
 
-                  }
+                  this._dateInterval.addLayer(layer);
 
                   this._map.addLayer(layer);
                 }
 
               case 5:
               case "end":
-                return _context11.stop();
+                return _context12.stop();
             }
           }
-        }, _callee11, this);
+        }, _callee12, this);
       }));
 
-      function addCRLayer(_x5) {
+      function addCRLayer(_x5, _x6) {
         return _addCRLayer.apply(this, arguments);
       }
 
       return addCRLayer;
     }()
+  }, {
+    key: "removeCRLayer",
+    value: function removeCRLayer(layerID) {
+      this._dateInterval.removeLayerByID(layerID);
+    }
   }]);
 
   return Map;
