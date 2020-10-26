@@ -26701,9 +26701,15 @@ var Forbidden = /*#__PURE__*/function (_BaseView) {
   return Forbidden;
 }(View);
 
-var Loading = /*#__PURE__*/function () {
+var Loading = /*#__PURE__*/function (_EventTarget) {
+  _inherits(Loading, _EventTarget);
+
+  var _super = _createSuper(Loading);
+
   function Loading() {
     _classCallCheck(this, Loading);
+
+    return _super.call(this);
   }
 
   _createClass(Loading, [{
@@ -26723,7 +26729,7 @@ var Loading = /*#__PURE__*/function () {
   }]);
 
   return Loading;
-}();
+}(EventTarget);
 
 var strings$4 = {
   rus: {
