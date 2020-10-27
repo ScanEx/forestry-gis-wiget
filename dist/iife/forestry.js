@@ -63007,8 +63007,8 @@ var Forestry = (function () {
 	    _this._chart = new apexcharts_common(_this._container.querySelector('.chart'), {
 	      chart: {
 	        type: 'donut',
-	        height: '200px',
-	        width: '400px',
+	        width: '450px',
+	        height: '150px',
 	        fontFamily: 'Open Sans'
 	      },
 	      dataLabels: {
@@ -63017,8 +63017,8 @@ var Forestry = (function () {
 	      labels: [],
 	      series: [],
 	      legend: {
-	        position: 'bottom',
-	        width: '200px',
+	        position: 'right',
+	        width: '180px',
 	        formatter: _this.chartFormatLegend.bind(_assertThisInitialized(_this)),
 	        horizontalAlign: 'right'
 	      },
