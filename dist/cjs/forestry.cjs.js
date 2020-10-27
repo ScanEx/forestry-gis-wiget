@@ -8931,7 +8931,7 @@ currentStyle
 style
     стиль в новом формате
     style.image - для type='image' (`<HTMLCanvasElement || HTMLImageElement>`)
-*/L.gmxUtil.drawGeoItem=function(geoItem,item,options,currentStyle,style){var propsArr=geoItem.properties,idr=propsArr[0],i,len,j,len1,gmx=options.gmx,ctx=options.ctx,geom=propsArr[propsArr.length-1],coords=null,dataOption=geoItem.dataOption,rasters=options.rasters||{},tbounds=options.tbounds;item.currentStyle=L.extend({},currentStyle);if(style){if(gmx.styleHook){if(!geoItem.styleExtend){item.ctx=ctx;geoItem.styleExtend=gmx.styleHook(item,gmx.lastHover&&idr===gmx.lastHover.id);}if(geoItem.styleExtend){if(typeof geoItem.styleExtend.strokeStyle==='number'){geoItem.styleExtend.strokeStyle=gmxAPIutils.dec2color(geoItem.styleExtend.strokeStyle,1);}if(typeof geoItem.styleExtend.fillStyle==='number'){geoItem.styleExtend.fillStyle=gmxAPIutils.dec2color(geoItem.styleExtend.fillStyle,1);}item.currentStyle=L.extend(item.currentStyle,geoItem.styleExtend);}else {return false;}}setCanvasStyle(propsArr,gmx.tileAttributeIndexes,ctx,item.currentStyle);}else {style={};}var geoType=geom.type.toUpperCase(),dattr={gmx:gmx,item:item,style:style,styleExtend:geoItem.styleExtend||{},ctx:ctx,topLeft:options.topLeft,tpx:options.tpx,tpy:options.tpy};if(geoType==='POINT'){dattr.pointAttr=utils.getPixelPoint(dattr,geom.coordinates);if(!dattr.pointAttr){return false;}// point not in canvas tile
+*/L.gmxUtil.drawGeoItem=function(geoItem,item,options,currentStyle,style){var propsArr=geoItem.properties,idr=propsArr[0],i,len,j,len1,gmx=options.gmx,ctx=options.ctx,geom=propsArr[propsArr.length-1],coords=null,dataOption=geoItem.dataOption,rasters=options.rasters||{},tbounds=options.tbounds;if(item){item.currentStyle=L.extend({},currentStyle);}if(style){if(gmx.styleHook){if(!geoItem.styleExtend){item.ctx=ctx;geoItem.styleExtend=gmx.styleHook(item,gmx.lastHover&&idr===gmx.lastHover.id);}if(geoItem.styleExtend){if(typeof geoItem.styleExtend.strokeStyle==='number'){geoItem.styleExtend.strokeStyle=gmxAPIutils.dec2color(geoItem.styleExtend.strokeStyle,1);}if(typeof geoItem.styleExtend.fillStyle==='number'){geoItem.styleExtend.fillStyle=gmxAPIutils.dec2color(geoItem.styleExtend.fillStyle,1);}item.currentStyle=L.extend(item.currentStyle,geoItem.styleExtend);}else {return false;}}setCanvasStyle(propsArr,gmx.tileAttributeIndexes,ctx,item.currentStyle);}else {style={};}var geoType=geom.type.toUpperCase(),dattr={gmx:gmx,item:item,style:style,styleExtend:geoItem.styleExtend||{},ctx:ctx,topLeft:options.topLeft,tpx:options.tpx,tpy:options.tpy};if(geoType==='POINT'){dattr.pointAttr=utils.getPixelPoint(dattr,geom.coordinates);if(!dattr.pointAttr){return false;}// point not in canvas tile
 }if(geoType==='POINT'||geoType==='MULTIPOINT'){// Отрисовка геометрии точек
 coords=geom.coordinates;if('iconColor'in style&&style.image&&!L.gmxUtil.isIE11){if(style.lastImage!==style.image){style.lastImage=style.image;style.lastImageData=utils.getImageData(style.image);}dattr.imageData=style.lastImageData;}if(geoType==='MULTIPOINT'){for(i=0,len=coords.length;i<len;i++){dattr.coords=coords[i];utils.pointToCanvas(dattr);}}else {dattr.coords=coords;utils.pointToCanvas(dattr);}}else if(geoType==='POLYGON'||geoType==='MULTIPOLYGON'){if(style.image){// set MULTIPOLYGON as marker
 dattr.coords=[(dataOption.bounds.min.x+dataOption.bounds.max.x)/2,(dataOption.bounds.min.y+dataOption.bounds.max.y)/2];dattr.pointAttr=utils.getPixelPoint(dattr,dattr.coords);if(dattr.pointAttr){utils.pointToCanvas(dattr);}}else {coords=geom.coordinates;if(geoType==='POLYGON'){coords=[coords];}var hiddenLines=dataOption.hiddenLines||[],pixelsMap=dataOption.pixels,flagPixels=true;// console.log('pixelsMap', gmx.currentZoom, pixelsMap);
@@ -8945,7 +8945,7 @@ _sessionKeys:{}//promise for each host
 */var gmxMapManager={//serverHost should be host only string like 'maps.kosmosnimki.ru' without any slashes or 'http://' prefixes
 getMap:function getMap(serverHost,apiKey,mapName,skipTiles,srs){return gmxMapManager.loadMapProperties({srs:srs,hostName:serverHost,apiKey:apiKey,mapName:mapName,skipTiles:skipTiles});},_addMapProperties:function _addMapProperties(res,serverHost,mapName){L.gmx._maps[serverHost]=L.gmx._maps[serverHost]||{};L.gmx._maps[serverHost][mapName]={_rawTree:res,_nodes:{}};gmxMapManager.iterateNode(res,function(it){// TODO: удалить после переделки стилей на сервере
 if(it.type==='layer'){var props=it.content.properties;if(props.styles&&!props.gmxStyles){it.content.properties.gmxStyles=L.gmx.StyleManager.decodeOldStyles(props);}}});if(L.gmx.mapPropertiesHook){L.gmx.mapPropertiesHook(res);}},getMapFolder:function getMapFolder(options){var serverHost=options.hostName||options.serverHost||'maps.kosmosnimki.ru',mapId=options.mapId,folderId=options.folderId;var opt={folderId:folderId||'',mapId:mapId,skipTiles:options.skipTiles||'All',// All, NotVisible, None
-srs:options.srs||3857};return new Promise(function(resolve,reject){if(L.gmx.sendCmd){console.log('TODO: L.gmx.sendCmd');}else {L.gmx.gmxSessionManager.requestSessionKey(serverHost,options.apiKey).then(function(sessionKey){opt.key=sessionKey;gmxAPIutils.requestJSONP(L.gmxUtil.protocol+'//'+serverHost+'/Map/GetMapFolder',opt).then(function(json){if(json&&json.Status==='ok'&&json.Result){var mapInfo=L.gmx._maps[serverHost][mapId],gmxMap=mapInfo.loaded,res=json.Result.content,outInfo={children:res.children,properties:gmxMap.properties};gmxMapManager.iterateNode(mapInfo._rawTree,function(it){if(folderId===it.content.properties.GroupID){L.extend(it,json.Result);}},true);gmxMap.layersCreated.then(function(){gmxMap.layersCreatePromise(outInfo).then(function(){resolve(json.Result);});});}else {reject(json);}},reject);},reject);}});},loadMapProperties:function loadMapProperties(options){options=options||{};var maps=this._maps,serverHost=options.hostName||options.serverHost||'maps.kosmosnimki.ru',mapPropsEndPoint=options.gmxEndPoints&&options.gmxEndPoints.mapProps?options.gmxEndPoints.mapProps:'/TileSender.ashx',apiKeyEndPoint=options.gmxEndPoints&&options.gmxEndPoints.apiKey?options.gmxEndPoints.apiKey:'/ApiKey.ashx',mapName=options.mapName;if(!maps[serverHost]||!maps[serverHost][mapName]){var opt={WrapStyle:'func',skipTiles:options.skipTiles||'All',// All, NotVisible, None
+srs:options.srs||3857};return new Promise(function(resolve,reject){if(L.gmx.sendCmd){console.log('TODO: L.gmx.sendCmd');}else {L.gmx.gmxSessionManager.requestSessionKey(serverHost,options.apiKey).then(function(sessionKey){opt.key=sessionKey;gmxAPIutils.requestJSONP(L.gmxUtil.protocol+'//'+serverHost+'/Map/GetMapFolder',opt).then(function(json){if(json&&json.Status==='ok'&&json.Result){var mapInfo=L.gmx._maps[serverHost][mapId],gmxMap=mapInfo.loaded,res=json.Result.content,outInfo={children:res.children,properties:gmxMap.properties};gmxMapManager.iterateNode(mapInfo._rawTree,function(it){if(folderId===it.content.properties.GroupID){L.extend(it,json.Result);}},true);gmxMap.layersCreated.then(function(){gmxMap.layersCreatePromise(outInfo).then(function(){resolve(json.Result);});});}else {reject(json);}},reject);},reject);}});},loadMapProperties:function loadMapProperties(options){options=options||{};var maps=this._maps,disableCache=options.disableCache,serverHost=options.hostName||options.serverHost||'maps.kosmosnimki.ru',mapPropsEndPoint=options.gmxEndPoints&&options.gmxEndPoints.mapProps?options.gmxEndPoints.mapProps:'/TileSender.ashx',apiKeyEndPoint=options.gmxEndPoints&&options.gmxEndPoints.apiKey?options.gmxEndPoints.apiKey:'/ApiKey.ashx',mapName=options.mapName;if(disableCache||!maps[serverHost]||!maps[serverHost][mapName]){var opt={WrapStyle:'func',skipTiles:options.skipTiles||'All',// All, NotVisible, None
 MapName:mapName,srs:options.srs||3857,ftc:options.ftc||'osm',ModeKey:'map'};if(options.visibleItemOnly){opt.visibleItemOnly=true;}var promise=new Promise(function(resolve,reject){if(L.gmx.sendCmd){L.gmx.sendCmd('mapProperties',{serverHost:serverHost,apiKeyEndPoint:apiKeyEndPoint,mapPropsEndPoint:mapPropsEndPoint,apiKey:options.apiKey,WrapStyle:'func',skipTiles:options.skipTiles||'All',// All, NotVisible, None
 MapName:mapName,visibleItemOnly:opt.visibleItemOnly||false,srs:options.srs||3857,ftc:options.ftc||'osm',ModeKey:'map'}).then(function(json){if(json&&json.load&&json.res){gmxMapManager._addMapProperties(json.res,serverHost,mapName);resolve(json.res);}else {reject(json);}}).catch(reject);}else {L.gmx.gmxSessionManager.requestSessionKey(serverHost,options.apiKey).then(function(sessionKey){opt.key=sessionKey;gmxAPIutils.requestJSONP(L.gmxUtil.protocol+'//'+serverHost+mapPropsEndPoint,opt).then(function(json){if(json&&json.Status==='ok'&&json.Result){json.Result.properties.hostName=serverHost;json.Result.properties.sessionKey=sessionKey;gmxMapManager._addMapProperties(json.Result,serverHost,mapName);resolve(json.Result);}else {reject(json);}},reject);},reject);}});maps[serverHost]=maps[serverHost]||{};maps[serverHost][mapName]={promise:promise};}return maps[serverHost][mapName].promise;},syncParams:{},// установка дополнительных параметров для серверных запросов
 setSyncParams:function setSyncParams(hash){this.syncParams=hash;},getSyncParams:function getSyncParams(stringFlag){var res=this.syncParams;if(stringFlag){var arr=[];for(var key in res){arr.push(key+'='+res[key]);}res=arr.join('&');}return res;},//we will (lazy) create index by layer name to speed up multiple function calls
@@ -9132,7 +9132,7 @@ removeObserver:function removeObserver(id){if(this._observers[id]){this._observe
 getItemsBounds:function getItemsBounds(){// get all objects bounds
 var bounds=gmxAPIutils.bounds(),tile,key;for(key in this._activeTileKeys){tile=this._tiles[key].tile;tile.dataOptions.map(function(it){bounds.extendBounds(it.bounds);});}return bounds;},getItemBounds:function getItemBounds(id){// получение bbox по отдельным кускам item
 var bounds=gmxAPIutils.bounds(),arr=this._getItemArrByActiveTileKeys(id);arr.map(function(it){bounds.extendBounds(it.bounds);});return bounds;},_getItemArrByActiveTileKeys:function _getItemArrByActiveTileKeys(id,firstOnly){var arr=[];for(var key in this._activeTileKeys){// get full object bounds
-var tile=this._tiles[key].tile;if(this.processingTile===tile){arr=tile.dataOptions.filter(function(it){return id===it.id;});break;}if(tile.data&&id in tile.itemsKeys){arr.push(tile.dataOptions[tile.itemsKeys[id]]);if(firstOnly){break;}}}return arr;},// ??? combine and return all parts of geometry
+var tile=this._tiles[key].tile;if(this.processingTile===tile&&tile.dataOptions){arr=tile.dataOptions.filter(function(it){return id===it.id;});break;}if(tile.data&&id in tile.itemsKeys){arr.push(tile.dataOptions[tile.itemsKeys[id]]);if(firstOnly){break;}}}return arr;},// ??? combine and return all parts of geometry
 getItem:function getItem(id){return this._getItemArrByActiveTileKeys(id)[0];},getItemMembers:function getItemMembers(id){var members=this._getItemArrByActiveTileKeys(id).map(function(it){var props=it.properties,bbox=it.bounds;return {geo:props[props.length-1],width:bbox.max.x-bbox.min.x,dataOption:it};});return members.sort(function(a,b){return b.width-a.width;});},getItemGeometries:function getItemGeometries(id){return this._getItemArrByActiveTileKeys(id).map(function(it){var props=it.properties;return gmxAPIutils.getUnFlattenGeo(props[props.length-1]);});},addTile:function addTile(tile){this._tiles[tile.vectorTileKey]={tile:tile};this._getActiveTileKeys()[tile.vectorTileKey]=true;this._observerTileLoader.addTile(tile);this.checkObservers();},checkObserver:function checkObserver(observer){if(observer.needRefresh&&observer.isActive()){this._observerTileLoader.startLoadTiles(observer);}},checkObservers:function checkObservers(){// if (L.gmx._animatingZoom) {
 // console.log('___ checkObservers', L.gmx._animatingZoom);
 // return;
@@ -14782,28 +14782,28 @@ var m = function m(v) {
   return v && v.toLocaleString('ru-RU', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
-  }) || '';
+  }) || 0;
 };
 
 var ha = function ha(v) {
   return v && v.toLocaleString('ru-RU', {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1
-  }) || '';
+  }) || 0;
 };
 
 var rub = function rub(v) {
   return v && v.toLocaleString('ru-RU', {
     style: 'currency',
     currency: 'RUB'
-  }) || '';
+  }) || 0;
 };
 
 var fmt = function fmt(v) {
   return v && v.toLocaleString('ru-RU', {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1
-  }) || '';
+  }) || 0;
 };
 
 var date = function date(v) {
@@ -14905,14 +14905,14 @@ window.Scanex.Translations = window.Scanex.Translations || {};
 window.Scanex.translations = window.Scanex.translations || new Translations();
 var T = window.Scanex.translations;
 
-var translate = T.getText.bind(T);
+var translate$1 = T.getText.bind(T);
 T.addText('rus', {
   baseLayers: {
     title: 'Подложки',
     Rostelecom: 'Ростелеком'
   }
 });
-var iconPrefix = 'images'; //'//maps.kosmosnimki.ru/api/img/baseLayers/';
+var iconPrefix = '/assets/images'; //'//maps.kosmosnimki.ru/api/img/baseLayers/';
 
 var hybrid = L$1.tileLayer('//{s}tilecart.kosmosnimki.ru/kosmohyb/{z}/{x}/{y}.png', {
   zIndex: -999999,
@@ -14927,7 +14927,7 @@ var baseLayers = {
       zIndex: -1000000,
       maxZoom: 22,
       maxNativeZoom: 18,
-      attribution: '<a href="http://maps.sputnik.ru">Спутник</a> © ' + translate('baseLayers.Rostelecom') + ' | © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      attribution: '<a href="http://maps.sputnik.ru">Спутник</a> © ' + translate$1('baseLayers.Rostelecom') + ' | © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     })]
   },
   // satellite: {
@@ -14961,7 +14961,7 @@ var BaseLayers = L$1.Control.extend({
     this._icon = L$1.DomUtil.create('div', 'map-right', this._container);
     L$1.DomUtil.create('div', 'substrates', this._icon);
     this._content = L$1.DomUtil.create('div', 'table-baselayers-popup hidden', this._container);
-    this._content.innerHTML = "<table>\n            <thead>\n                <tr>                    \n                    <td colspan=\"3\">\n                        <label>".concat(translate('baseLayers.title'), "</label>\n                    </td>\n                </tr>\n            </thead>            \n            <tbody>\n                <tr class=\"line\">").concat(Object.keys(baseLayers).map(function (k) {
+    this._content.innerHTML = "<table>\n            <thead>\n                <tr>                    \n                    <td colspan=\"3\">\n                        <label>".concat(translate$1('baseLayers.title'), "</label>\n                    </td>\n                </tr>\n            </thead>            \n            <tbody>\n                <tr class=\"line\">").concat(Object.keys(baseLayers).map(function (k) {
       return "<td><img src=\"".concat(baseLayers[k].icon, "\" class=\"baseLayer\" data=\"").concat(k, "\" /></td>");
     }).join(''), "</tr>\n             </tbody>\n        </table>");
     L$1.DomEvent.on(this._icon, 'click', function (e) {
@@ -22540,7 +22540,7 @@ if (typeof L.gmx === 'undefined') {
 
 L.gmx.timeline = links;
 
-var translate$1 = T.getText.bind(T);
+var translate$2 = T.getText.bind(T);
 T.addText('rus', {
   DateInterval: {
     title: 'Приблизьте карту для загрузки на таймлайн'
@@ -22572,7 +22572,7 @@ var DateInterval = L$1.Control.extend({
     this._tabs = L$1.DomUtil.create('div', 'buttons', this._container);
     this._timelineNode = L$1.DomUtil.create('div', 'timeline', this._container);
     this._icon = L$1.DomUtil.create('div', 'icon', this._container);
-    this._icon.innerHTML = translate$1('DateInterval.title');
+    this._icon.innerHTML = translate$2('DateInterval.title');
     this._timeline = new links.Timeline(this._timelineNode, {
       locale: 'ru',
       width: '100%',
@@ -23648,7 +23648,95 @@ var Zoom = L$1.Control.extend({
   onRemove: function onRemove() {}
 });
 
-var translate$2 = T.getText.bind(T);
+var s = {
+  rus: {
+    alert: {
+      error: 'Ошибка!',
+      warn: 'Внимание!',
+      info: 'Успешно!'
+    },
+    forbidden: {
+      analytics: 'Нет разрешения для отображения аналитики',
+      declaration: 'Нет разрешения для отображения декларации',
+      requests: 'Нет разрешения для отображения списка заявок',
+      plot: 'Нет разрешения для отображения участка',
+      project: {
+        create: 'Нет разрешения для создания проекта участка',
+        edit: 'Нет разрешения для редактирования проекта участка',
+        view: 'Нет разрешения для отображения проекта участка',
+        remove: 'Нет разрешения для удаления проекта участка'
+      },
+      incident: 'Нет разрешения для отображения инцидента',
+      park: 'Нет разрешения для отображения ООПТ',
+      quadrant: 'Нет разрешения для отображения квартала',
+      stand: 'Нет разрешения для отображения выдела',
+      uploaded: 'Нет разрешения для отображения данных'
+    },
+    warn: {
+      notavailable: 'Ведется подготовка данных'
+    },
+    error: {
+      unauthorized: 'Не авторизован',
+      forbidden: 'Нет разрешения',
+      notfound: 'Не найдено',
+      server: 'Внутренняя ошибка сервера',
+      other: 'Прочие ошибки'
+    },
+    units: {
+      pc: '%',
+      cm: 'см',
+      m: 'м',
+      ha: 'га',
+      m3: 'куб. м',
+      m2: 'кв. м'
+    },
+    legend: {
+      quadrants: 'Лесохозяйственные кварталы',
+      stands: 'Выделы',
+      parks: 'ООПТ',
+      fires: 'Пожары',
+      declarations: 'Декларации',
+      incidents: 'Космический мониторинг',
+      projects: 'Проекты участков',
+      plots: 'Арендованные участки',
+      borders: 'Административные границы',
+      regions: 'Регионы',
+      roads: 'Дороги',
+      warehouses: 'Пункты погрузки',
+      forestries: 'Лесничества',
+      forestries_local: 'Участковые лесничества',
+      burn: {
+        unconfirmed: 'Гарь неподтвержденная',
+        working: 'Гарь в работе (проверки)',
+        faux: 'Гарь ложная',
+        confirmed: 'Гарь подтвержденная'
+      },
+      cut: {
+        unconfirmed: 'Рубка неподтвержденная',
+        working: 'Рубка в работе (проверки)',
+        faux: 'Рубка ложная',
+        confirmed: 'Рубка подтвержденная'
+      },
+      windthrow: {
+        unconfirmed: 'Ветровал неподтвержденный',
+        working: 'Ветровал в работе (проверки)',
+        faux: 'Ветровал ложный',
+        confirmed: 'Ветровал подтвержденный'
+      },
+      disease: {
+        unconfirmed: 'Патология неподтвержденная',
+        working: 'Патология в работе (проверки)',
+        faux: 'Патология ложная',
+        confirmed: 'Патология подтвержденная'
+      }
+    }
+  }
+};
+
+Object.keys(s).forEach(function (lang) {
+  return T.addText(lang, s[lang]);
+});
+var translate$3 = T.getText.bind(T);
 
 var Controller = /*#__PURE__*/function (_EventTarget) {
   _inherits(Controller, _EventTarget);
@@ -23660,14 +23748,16 @@ var Controller = /*#__PURE__*/function (_EventTarget) {
 
     var map = _ref.map,
         content = _ref.content,
-        notifications = _ref.notifications;
+        notification = _ref.notification,
+        loading = _ref.loading;
 
     _classCallCheck(this, Controller);
 
     _this = _super.call(this);
     _this._map = map;
     _this._content = content;
-    _this._notifications = notifications;
+    _this._notification = notification;
+    _this._loading = loading;
     return _this;
   }
 
@@ -23679,27 +23769,28 @@ var Controller = /*#__PURE__*/function (_EventTarget) {
           return response.json();
 
         case 401:
-          this._notifications.unAuthorized.open();
+          this._notification.error(translate$3('error.unauthorized'));
 
           return;
 
         case 403:
-          this._notifications.forbidden.open();
+          this._notification.error(translate$3('error.forbidden'));
 
           return;
 
         case 404:
-          this._notifications.notFound.open();
+          this._notification.error(translate$3('error.notfound'));
 
           return;
 
         case 500:
-          this._notifications.serverError.open();
+          this._notification.error(translate$3('error.server'));
 
           return;
 
         default:
-          alert(response.status);
+          this._notification.error(translate$3('error.other'));
+
           return;
       }
     }
@@ -23709,7 +23800,7 @@ var Controller = /*#__PURE__*/function (_EventTarget) {
       var _this2 = this;
 
       return new Promise(function (resolve) {
-        _this2._notifications.loading.open();
+        _this2._loading.open();
 
         fetch(url, {
           method: 'POST',
@@ -23719,11 +23810,11 @@ var Controller = /*#__PURE__*/function (_EventTarget) {
           },
           body: JSON.stringify(options)
         }).then(_this2._status.bind(_this2)).then(function (data) {
-          _this2._notifications.loading.close();
+          _this2._loading.close();
 
           resolve(data);
         }).catch(function (e) {
-          _this2._notifications.loading.close();
+          _this2._loading.close();
 
           resolve();
         });
@@ -23736,7 +23827,7 @@ var Controller = /*#__PURE__*/function (_EventTarget) {
 
       var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
       return new Promise(function (resolve) {
-        _this3._notifications.loading.open();
+        _this3._loading.open();
 
         var args = Object.keys(options);
         fetch("".concat(args.length > 0 ? "".concat(url, "?").concat(args.map(function (k) {
@@ -23748,11 +23839,11 @@ var Controller = /*#__PURE__*/function (_EventTarget) {
             'Content-Type': 'application/json'
           }
         }).then(_this3._status.bind(_this3)).then(function (data) {
-          _this3._notifications.loading.close();
+          _this3._loading.close();
 
           resolve(data);
         }).catch(function (e) {
-          _this3._notifications.loading.close();
+          _this3._loading.close();
 
           resolve();
         });
@@ -23764,7 +23855,7 @@ var Controller = /*#__PURE__*/function (_EventTarget) {
       var _this4 = this;
 
       return new Promise(function (resolve) {
-        _this4._notifications.loading.open();
+        _this4._loading.open();
 
         fetch(url, {
           method: 'POST',
@@ -23774,11 +23865,11 @@ var Controller = /*#__PURE__*/function (_EventTarget) {
           },
           body: fd
         }).then(_this4._status.bind(_this4)).then(function (data) {
-          _this4._notifications.loading.close();
+          _this4._loading.close();
 
           resolve(data);
         }).catch(function (e) {
-          _this4._notifications.loading.close();
+          _this4._loading.close();
 
           resolve();
         });
@@ -23811,7 +23902,8 @@ var LayerController = /*#__PURE__*/function (_Controller) {
     var kind = _ref2.kind,
         map = _ref2.map,
         content = _ref2.content,
-        notifications = _ref2.notifications,
+        notification = _ref2.notification,
+        loading = _ref2.loading,
         layer = _ref2.layer,
         legend = _ref2.legend;
 
@@ -23820,7 +23912,8 @@ var LayerController = /*#__PURE__*/function (_Controller) {
     _this5 = _super2.call(this, {
       map: map,
       content: content,
-      notifications: notifications
+      notification: notification,
+      loading: loading
     });
     _this5._kind = kind;
     _this5._layer = layer;
@@ -23848,7 +23941,7 @@ var LayerController = /*#__PURE__*/function (_Controller) {
       }
     });
 
-    _this5._legend.addComponent(_this5._kind, translate$2("legend.".concat(_this5._kind)));
+    _this5._legend.addComponent(_this5._kind, translate$3("legend.".concat(_this5._kind)));
 
     _this5._legend.on('click', _this5._toggle, _assertThisInitialized(_this5));
 
@@ -23900,7 +23993,7 @@ var LayerController = /*#__PURE__*/function (_Controller) {
   return LayerController;
 }(Controller);
 
-var translate$3 = T.getText.bind(T);
+var translate$4 = T.getText.bind(T);
 
 var Borders = /*#__PURE__*/function (_Controller) {
   _inherits(Borders, _Controller);
@@ -23912,7 +24005,8 @@ var Borders = /*#__PURE__*/function (_Controller) {
 
     var map = _ref.map,
         content = _ref.content,
-        notifications = _ref.notifications,
+        notification = _ref.notification,
+        loading = _ref.loading,
         layers = _ref.layers,
         legend = _ref.legend;
 
@@ -23921,7 +24015,8 @@ var Borders = /*#__PURE__*/function (_Controller) {
     _this = _super.call(this, {
       map: map,
       content: content,
-      notifications: notifications
+      notification: notification,
+      loading: loading
     });
     _this._map = map;
     _this._layers = layers;
@@ -23929,18 +24024,18 @@ var Borders = /*#__PURE__*/function (_Controller) {
 
     _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
 
-    var p = _this._legend.addGroup('borders', translate$3("legend.borders"));
+    var p = _this._legend.addGroup('borders', translate$4("legend.borders"));
 
     if (_this._layers.regions) {
-      _this._legend.addComponent('regions', translate$3('legend.regions'), p);
+      _this._legend.addComponent('regions', translate$4('legend.regions'), p);
     }
 
     if (_this._layers.forestries) {
-      _this._legend.addComponent('forestries', translate$3('legend.forestries'), p);
+      _this._legend.addComponent('forestries', translate$4('legend.forestries'), p);
     }
 
     if (_this._layers.forestries_local) {
-      _this._legend.addComponent('forestries_local', translate$3('legend.forestries_local'), p);
+      _this._legend.addComponent('forestries_local', translate$4('legend.forestries_local'), p);
     }
 
     return _this;
@@ -23965,59 +24060,6 @@ var Borders = /*#__PURE__*/function (_Controller) {
 
   return Borders;
 }(Controller);
-
-var s = {
-  rus: {
-    units: {
-      pc: '%',
-      cm: 'см',
-      m: 'м',
-      ha: 'га',
-      m3: 'куб. м',
-      m2: 'кв. м'
-    },
-    legend: {
-      quadrants: 'Лесохозяйственные кварталы',
-      stands: 'Выделы',
-      parks: 'ООПТ',
-      fires: 'Пожары',
-      declarations: 'Декларации',
-      incidents: 'Космический мониторинг',
-      projects: 'Проекты участков',
-      plots: 'Арендованные участки',
-      borders: 'Административные границы',
-      regions: 'Регионы',
-      roads: 'Дороги',
-      warehouses: 'Пункты погрузки',
-      forestries: 'Лесничества',
-      forestries_local: 'Участковые лесничества',
-      burn: {
-        unconfirmed: 'Гарь неподтвержденная',
-        working: 'Гарь (проверки)',
-        faux: 'Гарь ложная',
-        confirmed: 'Гарь подтвержденная'
-      },
-      cut: {
-        unconfirmed: 'Рубка неподтвержденная',
-        working: 'Рубка (проверки)',
-        faux: 'Рубка ложная',
-        confirmed: 'Рубка подтвержденная'
-      },
-      windthrow: {
-        unconfirmed: 'Ветровал неподтвержденный',
-        working: 'Ветровал (проверки)',
-        faux: 'Ветровал ложный',
-        confirmed: 'Ветровал подтвержденный'
-      },
-      disease: {
-        unconfirmed: 'Патология неподтвержденная',
-        working: 'Патология (проверки)',
-        faux: 'Патология ложная',
-        confirmed: 'Патология подтвержденная'
-      }
-    }
-  }
-};
 
 var View = /*#__PURE__*/function (_EventTarget) {
   _inherits(View, _EventTarget);
@@ -24116,6 +24158,28 @@ var View = /*#__PURE__*/function (_EventTarget) {
     value: function ha$1(value) {
       return ha(value);
     }
+  }, {
+    key: "chartFormatLegend",
+    value: function chartFormatLegend(name, opts) {
+      return "".concat(name, " - ").concat(this.m(parseFloat(opts.w.globals.series[opts.seriesIndex])));
+    }
+  }, {
+    key: "chartFormatValue",
+    value: function chartFormatValue(val) {
+      return "".concat(this.m(parseFloat(val)), " ").concat(this.translate('units.m3'));
+    }
+  }, {
+    key: "chartFormatDataLabels",
+    value: function chartFormatDataLabels(val, opts) {
+      return "".concat(this.m(parseFloat(opts.w.globals.series[opts.seriesIndex])), " ").concat(this.translate('units.m3'));
+    }
+  }, {
+    key: "chartFormatTotal",
+    value: function chartFormatTotal(w) {
+      return this.chartFormatValue(w.globals.seriesTotals.reduce(function (a, b) {
+        return a + b;
+      }, 0));
+    }
   }]);
 
   return View;
@@ -24170,7 +24234,7 @@ var Declaration = /*#__PURE__*/function (_BaseView) {
 
     _this._container.classList.add('scanex-forestry-declaration');
 
-    _this._container.innerHTML = "<div class=\"header\">\n            <label>".concat(_this.translate('declaration.title'), "</label>            \n            <label class=\"number\"></label>\n        </div>\n        <div class=\"scrollable\">\n            <table cellspacing=\"0\" cellpadding=\"0\">\n                <tbody>\n                    <!--\n                    <tr>\n                        <td>").concat(_this.translate('declaration.federalSubject'), "</td>\n                        <td class=\"federal-subject\"></td>\n                    </tr>\n                    -->\n                    <tr>\n                        <td>").concat(_this.translate('declaration.executive'), "</td>\n                        <td class=\"executive\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(_this.translate('declaration.officer'), "</td>\n                        <td class=\"officer\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(_this.translate('declaration.lessee'), "</td>\n                        <td class=\"lessee\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(_this.translate('declaration.contract'), "</td>\n                        <td class=\"contract\"></td>\n                    </tr>\n                </tbody>\n            </table>\n            <div>\n                <i class=\"scanex-declaration-icon doc\"></i>\n                <button class=\"open-doc\">").concat(_this.translate('declaration.doc'), "</button>\n            </div>        \n            <table cellspacing=\"0\" cellpadding=\"0\">\n                <tbody>\n                    <tr>\n                        <td>").concat(_this.translate('declaration.purpose_of_forest'), "</td>\n                        <td class=\"purpose_of_forest\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(_this.translate('declaration.protective_forest_category'), "</td>\n                        <td class=\"protective_forest_category\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(_this.translate('declaration.forestry_name'), "</td>\n                        <td class=\"forestry_name\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(_this.translate('declaration.local_forestry_name'), "</td>\n                        <td class=\"local_forestry_name\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(_this.translate('declaration.tract_name'), "</td>\n                        <td class=\"tract_name\"></td>\n                    </tr>                                \n                    <tr>\n                        <td>").concat(_this.translate('declaration.quadrant_number'), "</td>\n                        <td class=\"quadrant_number\"></td>\n                    </tr>\n                    <tr>\n                        <td>").concat(_this.translate('declaration.forest_inventory_unit_number'), "</td>\n                        <td class=\"forest_inventory_unit_number\"></td>\n                    </tr>\n                </tbody>\n            </table>\n            <div class=\"content\"></div>\n        </div>");
+    _this._container.innerHTML = "<h1 class=\"header\">\n            <label>".concat(_this.translate('declaration.title'), "</label>\n            <label class=\"number\"></label>\n        </h1>\n        <div class=\"scrollable\">\n            <table cellspacing=\"0\" cellpadding=\"0\">\n                <tbody>                    \n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.executive'), "</td>\n                        <td class=\"value executive\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.officer'), "</td>\n                        <td class=\"value officer\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.lessee'), "</td>\n                        <td class=\"value lessee\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.contract'), "</td>\n                        <td class=\"value contract\"></td>\n                    </tr>\n                </tbody>\n            </table>\n            <div>\n                <i class=\"scanex-declaration-icon doc\"></i>\n                <button class=\"open-doc\">").concat(_this.translate('declaration.doc'), "</button>\n            </div>        \n            <table cellspacing=\"0\" cellpadding=\"0\">\n                <tbody>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.purpose_of_forest'), "</td>\n                        <td class=\"value purpose_of_forest\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.protective_forest_category'), "</td>\n                        <td class=\"value protective_forest_category\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.forestry_name'), "</td>\n                        <td class=\"value forestry_name\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.local_forestry_name'), "</td>\n                        <td class=\"value local_forestry_name\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.tract_name'), "</td>\n                        <td class=\"value tract_name\"></td>\n                    </tr>                                \n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.quadrant_number'), "</td>\n                        <td class=\"value quadrant_number\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.forest_inventory_unit_number'), "</td>\n                        <td class=\"value forest_inventory_unit_number\"></td>\n                    </tr>\n                </tbody>\n            </table>\n            <div class=\"content\"></div>\n        </div>");
     return _this;
   }
 
@@ -24225,7 +24289,7 @@ var Declaration = /*#__PURE__*/function (_BaseView) {
               species = _ref4.species,
               unit_of_measurement = _ref4.unit_of_measurement,
               stock = _ref4.stock;
-          return "<tr>\n                            <td>".concat(_this2.translate('declaration.total_square'), ", ").concat(_this2.translate('units.ha'), "</td>\n                            <td class=\"amount\">").concat(_this2.ha(total_square), "</td>\n                        </tr>\n                        <tr>\n                            <td>").concat(_this2.translate('declaration.felling_form'), "</td>\n                            <td class=\"amount\">").concat(felling_form || '', "</td>\n                        </tr>\n                        <tr>\n                            <td>").concat(_this2.translate('declaration.felling_type'), "</td>\n                            <td class=\"amount\">").concat(felling_type || '', "</td>\n                        </tr>\n                        <tr>\n                            <td>").concat(_this2.translate('declaration.farm'), "</td>\n                            <td class=\"amount\">").concat(farm || '', "</td>\n                        </tr>\n                        <tr>\n                            <td>").concat(_this2.translate('declaration.species'), "</td>\n                            <td class=\"amount\">").concat(species || '', "</td>\n                        </tr>                        \n                        <tr>\n                            <td>").concat(_this2.translate('declaration.stock'), ", ").concat(_this2.translate('units.m'), "<sup>3</sup></td>\n                            <td class=\"amount\">").concat(_this2.m(stock), "</td>\n                        </tr>");
+          return "<tr>\n                            <td class=\"text\">".concat(_this2.translate('declaration.total_square'), ", ").concat(_this2.translate('units.ha'), "</td>\n                            <td class=\"value amount\">").concat(_this2.ha(total_square), "</td>\n                        </tr>\n                        <tr>\n                            <td class=\"text\">").concat(_this2.translate('declaration.felling_form'), "</td>\n                            <td class=\"value amount\">").concat(felling_form || '', "</td>\n                        </tr>\n                        <tr>\n                            <td class=\"text\">").concat(_this2.translate('declaration.felling_type'), "</td>\n                            <td class=\"value amount\">").concat(felling_type || '', "</td>\n                        </tr>\n                        <tr>\n                            <td class=\"text\">").concat(_this2.translate('declaration.farm'), "</td>\n                            <td class=\"value amount\">").concat(farm || '', "</td>\n                        </tr>\n                        <tr>\n                            <td class=\"text\">").concat(_this2.translate('declaration.species'), "</td>\n                            <td class=\"value amount\">").concat(species || '', "</td>\n                        </tr>                        \n                        <tr>\n                            <td class=\"text\">").concat(_this2.translate('declaration.stock'), ", ").concat(_this2.translate('units.m'), "<sup>3</sup></td>\n                            <td class=\"value amount\">").concat(_this2.m(stock), "</td>\n                        </tr>");
         }).join('') : '');
       }).join('') : '', "              \n            </tbody>\n        </table>");
     }
@@ -24260,7 +24324,8 @@ var Declarations = /*#__PURE__*/function (_LayerController) {
 
     var map = _ref.map,
         content = _ref.content,
-        notifications = _ref.notifications,
+        notification = _ref.notification,
+        loading = _ref.loading,
         layer = _ref.layer,
         legend = _ref.legend,
         path = _ref.path;
@@ -24271,7 +24336,8 @@ var Declarations = /*#__PURE__*/function (_LayerController) {
       kind: 'declarations',
       map: map,
       content: content,
-      notifications: notifications,
+      notification: notification,
+      loading: loading,
       layer: layer,
       legend: legend
     });
@@ -24386,14 +24452,14 @@ var Fires = /*#__PURE__*/function (_BaseView) {
     value: function open(props) {
       _get(_getPrototypeOf(Fires.prototype), "open", this).call(this);
 
-      this._container.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <thead>\n                <tr>\n                    <th colspan=\"2\" class=\"title\">".concat(this.translate('hotspot.fire'), "</th>\n                </tr>\n            </thead>\n            <tbody>\n                <tr>\n                    <td class=\"name\">").concat(this.translate('hotspot.date'), "</td>\n                    <td class=\"value\">").concat(this.date(props.Timestamp * 1000), "</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(this.translate('hotspot.satelite'), "</td>\n                    <td class=\"value\">").concat(props.Satellite, "</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(this.translate('hotspot.from'), "</td>\n                    <td class=\"value\">").concat(this.translate('hotspot.scanex'), "</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(this.translate('hotspot.confidence'), "</td>\n                    <td class=\"value\">").concat(props.Confidence, " %</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(this.translate('hotspot.brightness'), "</td>\n                    <td class=\"value\">").concat(props.Brightness, "</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(this.translate('hotspot.frp'), "</td>\n                    <td class=\"value\">").concat(props.Frp, "</td>\n                </tr>\n                <tr>\n                    <td class=\"name\">").concat(this.translate('hotspot.coords'), "</td>\n                    <td class=\"value\">").concat(props.coords, "</td>\n                </tr>\n            </tbody>\n        </table>");
+      this._container.innerHTML = "<h1>".concat(this.translate('hotspot.fire'), "</h1>\n            <table cellspacing=\"0\" cellpadding=\"0\">            \n                <tbody>\n                    <tr>\n                        <td class=\"text\">").concat(this.translate('hotspot.date'), "</td>\n                        <td class=\"value\">").concat(this.date(new Date(props.Timestamp * 1000)), "</td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(this.translate('hotspot.satelite'), "</td>\n                        <td class=\"value\">").concat(props.Satellite, "</td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(this.translate('hotspot.from'), "</td>\n                        <td class=\"value\">").concat(this.translate('hotspot.scanex'), "</td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(this.translate('hotspot.confidence'), "</td>\n                        <td class=\"value\">").concat(this.fmt(props.Confidence), " %</td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(this.translate('hotspot.brightness'), "</td>\n                        <td class=\"value\">").concat(this.fmt(props.Brightness), "</td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(this.translate('hotspot.frp'), "</td>\n                        <td class=\"value\">").concat(this.fmt(props.Frp), "</td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(this.translate('hotspot.coords'), "</td>\n                        <td class=\"value\">").concat(props.coords, "</td>\n                    </tr>\n                </tbody>\n            </table>");
     }
   }]);
 
   return Fires;
 }(View);
 
-var translate$4 = T.getText.bind(T);
+var translate$5 = T.getText.bind(T);
 var hotSpotLayerID = '9DC30891452449DD8D551D0AA62FFF54';
 
 var Fires$1 = /*#__PURE__*/function (_EventTarget) {
@@ -24406,7 +24472,8 @@ var Fires$1 = /*#__PURE__*/function (_EventTarget) {
 
     var map = _ref.map,
         content = _ref.content,
-        notifications = _ref.notifications,
+        notification = _ref.notification,
+        loading = _ref.loading,
         layers = _ref.layers,
         legend = _ref.legend,
         dateInterval = _ref.dateInterval,
@@ -24422,7 +24489,7 @@ var Fires$1 = /*#__PURE__*/function (_EventTarget) {
     _this._dateInterval = dateInterval;
     _this._permissions = permissions;
 
-    _this._legend.addComponent('fires', translate$4('legend.fires'));
+    _this._legend.addComponent('fires', translate$5('legend.fires'));
 
     _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
 
@@ -24574,6 +24641,17 @@ var Fires$1 = /*#__PURE__*/function (_EventTarget) {
 
       return _toggle;
     }()
+  }, {
+    key: "canClick",
+    get: function get() {
+      switch (this._content.getCurrentId()) {
+        case 'edit-project':
+          return false;
+
+        default:
+          return true;
+      }
+    }
   }]);
 
   return Fires$1;
@@ -26157,7 +26235,7 @@ var Incidents = /*#__PURE__*/function (_BaseView) {
   return Incidents;
 }(View);
 
-var translate$5 = T.getText.bind(T);
+var translate$6 = T.getText.bind(T);
 
 var Incidents$1 = /*#__PURE__*/function (_Controller) {
   _inherits(Incidents$1, _Controller);
@@ -26170,7 +26248,8 @@ var Incidents$1 = /*#__PURE__*/function (_Controller) {
     var map = _ref.map,
         layer = _ref.layer,
         content = _ref.content,
-        notifications = _ref.notifications,
+        notification = _ref.notification,
+        loading = _ref.loading,
         legend = _ref.legend,
         path = _ref.path,
         dateInterval = _ref.dateInterval,
@@ -26181,7 +26260,8 @@ var Incidents$1 = /*#__PURE__*/function (_Controller) {
     _this = _super.call(this, {
       map: map,
       content: content,
-      notifications: notifications
+      notification: notification,
+      loading: loading
     });
     _this._cache = {};
     _this._kind = 'incidents';
@@ -26219,35 +26299,35 @@ var Incidents$1 = /*#__PURE__*/function (_Controller) {
 
     _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
 
-    var p = _this._legend.addGroup(_this._kind, translate$5('legend.incidents'));
+    var p = _this._legend.addGroup(_this._kind, translate$6('legend.incidents'));
 
-    _this._legend.addComponent('cut-unconfirmed', translate$5('legend.cut.unconfirmed'), p);
+    _this._legend.addComponent('cut-unconfirmed', translate$6('legend.cut.unconfirmed'), p);
 
-    _this._legend.addComponent('cut-working', translate$5('legend.cut.working'), p);
+    _this._legend.addComponent('cut-working', translate$6('legend.cut.working'), p);
 
-    _this._legend.addComponent('cut-faux', translate$5('legend.cut.faux'), p);
+    _this._legend.addComponent('cut-faux', translate$6('legend.cut.faux'), p);
 
-    _this._legend.addComponent('cut-confirmed', translate$5('legend.cut.confirmed'), p); // this._legend.addComponent('windthrow-unconfirmed', translate('legend.windthrow.unconfirmed'), p);
+    _this._legend.addComponent('cut-confirmed', translate$6('legend.cut.confirmed'), p); // this._legend.addComponent('windthrow-unconfirmed', translate('legend.windthrow.unconfirmed'), p);
     // this._legend.addComponent('windthrow-working', translate('legend.windthrow.working'), p);
     // this._legend.addComponent('windthrow-faux', translate('legend.windthrow.faux'), p);
     // this._legend.addComponent('windthrow-confirmed', translate('legend.windthrow.confirmed'), p);
 
 
-    _this._legend.addComponent('disease-unconfirmed', translate$5('legend.disease.unconfirmed'), p);
+    _this._legend.addComponent('disease-unconfirmed', translate$6('legend.disease.unconfirmed'), p);
 
-    _this._legend.addComponent('disease-working', translate$5('legend.disease.working'), p);
+    _this._legend.addComponent('disease-working', translate$6('legend.disease.working'), p);
 
-    _this._legend.addComponent('disease-faux', translate$5('legend.disease.faux'), p);
+    _this._legend.addComponent('disease-faux', translate$6('legend.disease.faux'), p);
 
-    _this._legend.addComponent('disease-confirmed', translate$5('legend.disease.confirmed'), p);
+    _this._legend.addComponent('disease-confirmed', translate$6('legend.disease.confirmed'), p);
 
-    _this._legend.addComponent('burn-unconfirmed', translate$5('legend.burn.unconfirmed'), p);
+    _this._legend.addComponent('burn-unconfirmed', translate$6('legend.burn.unconfirmed'), p);
 
-    _this._legend.addComponent('burn-working', translate$5('legend.burn.working'), p);
+    _this._legend.addComponent('burn-working', translate$6('legend.burn.working'), p);
 
-    _this._legend.addComponent('burn-faux', translate$5('legend.burn.faux'), p);
+    _this._legend.addComponent('burn-faux', translate$6('legend.burn.faux'), p);
 
-    _this._legend.addComponent('burn-confirmed', translate$5('legend.burn.confirmed'), p);
+    _this._legend.addComponent('burn-confirmed', translate$6('legend.burn.confirmed'), p);
 
     _this._view = _this._content.add(_this._kind, Incidents, {
       permissions: _this._permissions
@@ -26672,35 +26752,6 @@ var Legend$1 = /*#__PURE__*/function (_EventTarget) {
   return Legend;
 }(EventTarget);
 
-var strings$3 = {
-  rus: {
-    alert: {
-      forbidden: 'Нет разрешения'
-    }
-  }
-};
-
-var Forbidden = /*#__PURE__*/function (_BaseView) {
-  _inherits(Forbidden, _BaseView);
-
-  var _super = _createSuper(Forbidden);
-
-  function Forbidden(container) {
-    var _this;
-
-    _classCallCheck(this, Forbidden);
-
-    _this = _super.call(this, container, strings$3);
-
-    _this._container.classList.add('scanex-forestry-forbidden');
-
-    _this._container.innerHTML = "<div>".concat(_this.translate('alert.forbidden'), "</div>");
-    return _this;
-  }
-
-  return Forbidden;
-}(View);
-
 var Loading = /*#__PURE__*/function (_EventTarget) {
   _inherits(Loading, _EventTarget);
 
@@ -26731,153 +26782,120 @@ var Loading = /*#__PURE__*/function (_EventTarget) {
   return Loading;
 }(EventTarget);
 
-var strings$4 = {
-  rus: {
-    alert: {
-      notAvailable: 'Ведётся подготовка данных...'
-    }
-  }
-};
+var translate$7 = T.getText.bind(T);
+var NOTIFY_DELAY = 3000;
 
-var STYLES$1 = {
-  fillStyle: document.createElement('canvas').getContext('2d').createPattern(L.gmxUtil.getPatternIcon(null, {
-    type: '',
-    color: parseInt('FFD700', 16),
-    opacity: 1,
-    weight: 1,
-    fillOpacity: 1,
-    fillPattern: {
-      style: 'diagonal1',
-      width: 8,
-      step: 0,
-      colors: [parseInt('FFD700', 16), 0]
-    },
-    common: true
-  }).canvas, 'repeat'),
-  strokeStyle: '#FFD700',
-  lineWidth: 2
-};
+var Notification = /*#__PURE__*/function (_EventTarget) {
+  _inherits(Notification, _EventTarget);
 
-var NotAvailable = /*#__PURE__*/function (_BaseView) {
-  _inherits(NotAvailable, _BaseView);
+  var _super = _createSuper(Notification);
 
-  var _super = _createSuper(NotAvailable);
-
-  function NotAvailable(container) {
+  function Notification() {
     var _this;
 
-    _classCallCheck(this, NotAvailable);
+    _classCallCheck(this, Notification);
 
-    _this = _super.call(this, container, strings$4);
+    _this = _super.call(this);
+    _this._container = document.createElement('div');
+    document.body.appendChild(_this._container);
 
-    _this._container.classList.add('scanex-forestry-not-available');
+    _this._container.classList.add('scanex-foresty-notify');
 
-    _this._container.innerHTML = "<div>".concat(_this.translate('alert.notAvailable'), "</div>");
+    _this._container.innerHTML = "<div class=\"notify\">\n            <div class=\"close\"></div>\n            <span class=\"title\"></span>\n            <span class=\"message\"></span>\n        </div>";
+
+    var btnClose = _this._container.querySelector('.close');
+
+    btnClose.addEventListener('click', function (e) {
+      e.stopPropagation();
+
+      _this.close();
+    });
+    _this._notify = _this._container.querySelector('.notify');
+    _this._title = _this._container.querySelector('.title');
+    _this._message = _this._container.querySelector('.message');
+
+    _this.close();
+
     return _this;
   }
 
-  _createClass(NotAvailable, [{
-    key: "getStyleHook",
-    value: function getStyleHook(kind, item) {
-      if (kind === 'quadrants') {
-        return item.id === this._gmx_id ? STYLES$1 : {};
-      } else {
-        return {};
-      }
+  _createClass(Notification, [{
+    key: "close",
+    value: function close() {
+      this._container.classList.add('hidden');
+
+      this._notify.classList.remove('notify-orange');
+
+      this._notify.classList.remove('notify-green');
+
+      this._notify.classList.remove('notify-red');
+
+      this._title.innerText = '';
+      this._message.innerText = '';
+    }
+  }, {
+    key: "error",
+    value: function error(message) {
+      this._notify.classList.remove('notify-orange');
+
+      this._notify.classList.remove('notify-green');
+
+      this._notify.classList.add('notify-red');
+
+      this._title.innerText = translate$7('alert.error');
+      this._message.innerText = message;
+
+      this._container.classList.remove('hidden');
+    }
+  }, {
+    key: "warn",
+    value: function warn(message) {
+      this._notify.classList.remove('notify-red');
+
+      this._notify.classList.remove('notify-green');
+
+      this._notify.classList.add('notify-orange');
+
+      this._title.innerText = translate$7('alert.warn');
+      this._message.innerText = message;
+
+      this._container.classList.remove('hidden');
+
+      this.delay();
+    }
+  }, {
+    key: "delay",
+    value: function delay() {
+      var _this2 = this;
+
+      var id = setInterval(function () {
+        clearInterval(id);
+
+        _this2.close();
+      }, NOTIFY_DELAY);
+    }
+  }, {
+    key: "info",
+    value: function info(message) {
+      this._notify.classList.remove('notify-red');
+
+      this._notify.classList.remove('notify-orange');
+
+      this._notify.classList.add('notify-green');
+
+      this._title.innerText = translate$7('alert.info');
+      this._message.innerText = message;
+
+      this._container.classList.remove('hidden');
+
+      this.delay();
     }
   }]);
 
-  return NotAvailable;
-}(View);
+  return Notification;
+}(EventTarget);
 
-var strings$5 = {
-  rus: {
-    alert: {
-      notFound: 'Не найдено'
-    }
-  }
-};
-
-var NotFound = /*#__PURE__*/function (_BaseView) {
-  _inherits(NotFound, _BaseView);
-
-  var _super = _createSuper(NotFound);
-
-  function NotFound(container) {
-    var _this;
-
-    _classCallCheck(this, NotFound);
-
-    _this = _super.call(this, container, strings$5);
-
-    _this._container.classList.add('scanex-forestry-not-found');
-
-    _this._container.innerHTML = "<div>".concat(_this.translate('alert.notFound'), "</div>");
-    return _this;
-  }
-
-  return NotFound;
-}(View);
-
-var strings$6 = {
-  rus: {
-    alert: {
-      serverError: 'Ошибка сервера'
-    }
-  }
-};
-
-var ServerError = /*#__PURE__*/function (_BaseView) {
-  _inherits(ServerError, _BaseView);
-
-  var _super = _createSuper(ServerError);
-
-  function ServerError(container) {
-    var _this;
-
-    _classCallCheck(this, ServerError);
-
-    _this = _super.call(this, container, strings$6);
-
-    _this._container.classList.add('scanex-forestry-server-error');
-
-    _this._container.innerHTML = "<div>".concat(_this.translate('alert.serverError'), "</div>");
-    return _this;
-  }
-
-  return ServerError;
-}(View);
-
-var strings$7 = {
-  rus: {
-    alert: {
-      unAuthorized: 'Вы не вошли в систему'
-    }
-  }
-};
-
-var UnAuthorized = /*#__PURE__*/function (_BaseView) {
-  _inherits(UnAuthorized, _BaseView);
-
-  var _super = _createSuper(UnAuthorized);
-
-  function UnAuthorized(container) {
-    var _this;
-
-    _classCallCheck(this, UnAuthorized);
-
-    _this = _super.call(this, container, strings$7);
-
-    _this._container.classList.add('scanex-forestry-unauthorized');
-
-    _this._container.innerHTML = "<div>".concat(_this.translate('alert.unAuthorized'), "</div>");
-    return _this;
-  }
-
-  return UnAuthorized;
-}(View);
-
-var strings$8 = {
+var strings$3 = {
   rus: {
     park: {
       title: 'ООПТ',
@@ -26900,7 +26918,7 @@ var Parks = /*#__PURE__*/function (_BaseView) {
 
     _classCallCheck(this, Parks);
 
-    _this = _super.call(this, container, strings$8);
+    _this = _super.call(this, container, strings$3);
 
     _this._container.classList.add('scanex-forestry-naturalpark');
 
@@ -26919,7 +26937,7 @@ var Parks = /*#__PURE__*/function (_BaseView) {
           YEAR_ = properties.YEAR_,
           PROV_NL = properties.PROV_NL,
           AREA_DOC = properties.AREA_DOC;
-      this._container.innerHTML = "<div class=\"header\">".concat(this.translate('park.title'), ": ").concat(NAME_R, "</div>\n\t\t\t<table cellspacing=\"0\" cellpadding=\"0\">\t\t\t\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"name title\">").concat(this.translate('park.name'), "</td>\n\t\t\t\t\t<td class=\"name value\">").concat(NAME_R, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"type title\">").concat(this.translate('park.type'), "</td>\n\t\t\t\t\t<td class=\"type value\">").concat(TYPE_NL, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"year title\">").concat(this.translate('park.year'), "</td>\n\t\t\t\t\t<td class=\"year value\">").concat(YEAR_, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"prov title\">").concat(this.translate('park.prov'), "</td>\n\t\t\t\t\t<td class=\"prov value\">").concat(PROV_NL, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"area title\">").concat(this.translate('park.area'), ", ").concat(this.translate('units.m'), "<sup>2</sup></td>\n\t\t\t\t\t<td class=\"area value\">").concat(this.m(AREA_DOC), "</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
+      this._container.innerHTML = "<h1>".concat(this.translate('park.title'), ": ").concat(NAME_R, "</h1>\n\t\t\t<table cellspacing=\"0\" cellpadding=\"0\">\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('park.name'), "</td>\n\t\t\t\t\t<td class=\"name value\">").concat(NAME_R, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('park.type'), "</td>\n\t\t\t\t\t<td class=\"type value\">").concat(TYPE_NL, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('park.year'), "</td>\n\t\t\t\t\t<td class=\"year value\">").concat(YEAR_, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('park.prov'), "</td>\n\t\t\t\t\t<td class=\"prov value\">").concat(PROV_NL, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('park.area'), ", ").concat(this.translate('units.m'), "<sup>2</sup></td>\n\t\t\t\t\t<td class=\"area value\">").concat(this.m(AREA_DOC), "</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
     }
   }]);
 
@@ -26936,7 +26954,8 @@ var Parks$1 = /*#__PURE__*/function (_LayerController) {
 
     var map = _ref.map,
         content = _ref.content,
-        notifications = _ref.notifications,
+        notification = _ref.notification,
+        loading = _ref.loading,
         layer = _ref.layer,
         legend = _ref.legend;
 
@@ -26946,7 +26965,8 @@ var Parks$1 = /*#__PURE__*/function (_LayerController) {
       kind: 'parks',
       map: map,
       content: content,
-      notifications: notifications,
+      notification: notification,
+      loading: loading,
       layer: layer,
       legend: legend
     });
@@ -44138,7 +44158,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
   module.exports = Yt;
 });
 
-var strings$9 = {
+var strings$4 = {
   rus: {
     plot: {
       title: 'Лесной участок №',
@@ -44161,11 +44181,11 @@ var Plots = /*#__PURE__*/function (_BaseView) {
 
     _classCallCheck(this, Plots);
 
-    _this = _super.call(this, container, strings$9);
+    _this = _super.call(this, container, strings$4);
 
     _this._container.classList.add('scanex-forestry-view-plot');
 
-    _this._container.innerHTML = "<div class=\"head1\">                \n                <label>".concat(_this.translate('plot.title'), "</label>\n                <label class=\"title\"></label>\n            </div>\n            <div class=\"head2\">\n                <label>").concat(_this.translate('plot.forestry'), ":</label>\n                <label class=\"forestry\"></label>\n            </div>\n            <div class=\"content\">\n                <div class=\"stats\"></div>\n                <div class=\"chart\"></div>\n            </div>");
+    _this._container.innerHTML = "<h1>                \n                <label>".concat(_this.translate('plot.title'), "</label>\n                <label class=\"title\"></label>\n            </h1>\n            <h2>\n                <label>").concat(_this.translate('plot.forestry'), ":</label>\n                <label class=\"forestry\"></label>\n            </h2>\n            <div class=\"content scrollable\">\n                <div class=\"stats\"></div>\n                <div class=\"chart\"></div>\n            </div>");
     _this._title = _this._container.querySelector('.title');
     _this._forestry = _this._container.querySelector('.forestry');
     _this._stats = _this._container.querySelector('.stats');
@@ -44184,10 +44204,7 @@ var Plots = /*#__PURE__*/function (_BaseView) {
         position: 'bottom',
         width: '200px',
         horizontalAlign: 'right',
-        formatter: function formatter(name, opts) {
-          var val = parseFloat(opts.w.globals.series[opts.seriesIndex]);
-          return "".concat(name, " - ").concat(_this.m(val));
-        }
+        formatter: _this.chartFormatLegend.bind(_assertThisInitialized(_this))
       },
       plotOptions: {
         pie: {
@@ -44196,19 +44213,12 @@ var Plots = /*#__PURE__*/function (_BaseView) {
             labels: {
               show: true,
               value: {
-                formatter: function formatter(val) {
-                  return "".concat(_this.m(val), " ").concat(_this.translate('units.m3'));
-                },
+                formatter: _this.chartFormatValue.bind(_assertThisInitialized(_this)),
                 fontSize: '12px',
                 show: true
               },
               total: {
-                formatter: function formatter(_ref) {
-                  var series = _ref.config.series;
-                  return "".concat(_this.m(series.reduce(function (p, c) {
-                    return p + c;
-                  }, 0)), " ").concat(_this.translate('units.m3'));
-                },
+                formatter: _this.chartFormatTotal.bind(_assertThisInitialized(_this)),
                 label: _this.translate('quadrant.stock.all'),
                 fontSize: '12px',
                 fontWeight: 600,
@@ -44227,11 +44237,11 @@ var Plots = /*#__PURE__*/function (_BaseView) {
 
   _createClass(Plots, [{
     key: "open",
-    value: function open(_ref2) {
+    value: function open(_ref) {
       var _this2 = this;
 
-      var gmx_id = _ref2.gmx_id,
-          data = _objectWithoutProperties(_ref2, ["gmx_id"]);
+      var gmx_id = _ref.gmx_id,
+          data = _objectWithoutProperties(_ref, ["gmx_id"]);
 
       _get(_getPrototypeOf(Plots.prototype), "open", this).call(this);
 
@@ -44257,17 +44267,17 @@ var Plots = /*#__PURE__*/function (_BaseView) {
         end = new Date(y + (!isNaN(t) && t || 0), m, d);
       }
 
-      this._stats.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <tbody>\n                <tr>\n                    <td>".concat(this.translate('plot.lessee'), "</td>\n                    <td>").concat(Renter || '', "</td>\n                </tr>                    \n                <tr>\n                    <td>").concat(this.translate('plot.term'), "</td>\n                    <td>").concat(this.date(start), " - ").concat(this.date(end), "</td>\n                </tr>\n                <tr>\n                    <td>").concat(this.translate('plot.cost'), "</td>\n                    <td>").concat(this.rub(RentCost), "</td>\n                </tr>                                        \n            </tbody>\n        </table>\n        ").concat(Array.isArray(Volumes) && Volumes.length ? "\n        <div>".concat(this.translate('plot.volumes'), "</div>\n        <table cellpadding=\"0\" cellspacing=\"0\">\n            <tbody>").concat(Volumes.map(function (_ref3) {
-        var farm = _ref3.farm,
-            rent_cost = _ref3.rent_cost,
-            value = _ref3.value;
-        return "<tr>\n                    <td>".concat(farm, "</td>\n                    <td>").concat(_this2.m(value), "</td>\n                </tr>");
+      this._stats.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <tbody>\n                <tr>\n                    <td class=\"text\">".concat(this.translate('plot.lessee'), "</td>\n                    <td class=\"value\">").concat(Renter || '', "</td>\n                </tr>                    \n                <tr>\n                    <td class=\"text\">").concat(this.translate('plot.term'), "</td>\n                    <td class=\"value\">").concat(this.date(start), " - ").concat(this.date(end), "</td>\n                </tr>\n                <tr>\n                    <td class=\"text\">").concat(this.translate('plot.cost'), "</td>\n                    <td class=\"value\">").concat(this.rub(RentCost), "</td>\n                </tr>                                        \n            </tbody>\n        </table>\n        ").concat(Array.isArray(Volumes) && Volumes.length ? "\n        <h3>".concat(this.translate('plot.volumes'), "</h3>        \n        <table cellpadding=\"0\" cellspacing=\"0\">\n            <tbody>").concat(Volumes.map(function (_ref2) {
+        var farm = _ref2.farm,
+            rent_cost = _ref2.rent_cost,
+            value = _ref2.value;
+        return "<tr>\n                    <td class=\"text\">".concat(farm, "</td>\n                    <td class=\"value\">").concat(_this2.m(value), "</td>\n                </tr>");
       }).join(''), "</tbody>\n        </table>") : '');
 
       if (Array.isArray(Volumes)) {
-        var _Volumes$reduce = Volumes.reduce(function (a, _ref4) {
-          var farm = _ref4.farm,
-              value = _ref4.value;
+        var _Volumes$reduce = Volumes.reduce(function (a, _ref3) {
+          var farm = _ref3.farm,
+              value = _ref3.value;
           a.labels.push(farm);
           a.series.push(value || 0);
           return a;
@@ -44300,7 +44310,8 @@ var Plots$1 = /*#__PURE__*/function (_LayerController) {
 
     var map = _ref.map,
         content = _ref.content,
-        notifications = _ref.notifications,
+        notification = _ref.notification,
+        loading = _ref.loading,
         layer = _ref.layer,
         legend = _ref.legend,
         path = _ref.path,
@@ -44312,7 +44323,8 @@ var Plots$1 = /*#__PURE__*/function (_LayerController) {
       kind: 'plots',
       map: map,
       content: content,
-      notifications: notifications,
+      notification: notification,
+      loading: loading,
       layer: layer,
       legend: legend
     });
@@ -44356,15 +44368,14 @@ var Plots$1 = /*#__PURE__*/function (_LayerController) {
                   this._view.open(_objectSpread2({
                     gmx_id: id
                   }, data));
-                } // this._layer.repaint();
-
+                }
 
               case 8:
                 _context.next = 11;
                 break;
 
               case 10:
-                this._notifications.forbidden.open();
+                this._notification.error(translate('forbidden.plot.view'));
 
               case 11:
               case "end":
@@ -44385,7 +44396,7 @@ var Plots$1 = /*#__PURE__*/function (_LayerController) {
   return Plots$1;
 }(LayerController);
 
-var strings$a = {
+var strings$5 = {
   rus: {
     info: {
       approve: 'Дата принятия решения о проведении аукциона',
@@ -44432,11 +44443,11 @@ var Info = /*#__PURE__*/function (_View) {
 
     _classCallCheck(this, Info);
 
-    _this = _super.call(this, container, strings$a);
+    _this = _super.call(this, container, strings$5);
 
     _this._container.classList.add('scanex-forestry-view-project');
 
-    _this._container.innerHTML = "<div class=\"header\">    \n            <button class=\"scanex-requests-icon back\"></button>\n            <label class=\"title\"></label>\n        </div>\n        <div>\n            <label>".concat(_this.translate('project.forestry'), "</label>\n            <label class=\"forestry\"></label>\n        </div>        \n        <div class=\"content\">\n            <div class=\"stats\">\n                <div class=\"costs\"></div>\n                <div>").concat(_this.translate('info.available'), ", ").concat(_this.translate('units.m'), "<sup>3</sup></div>\n                <div class=\"species\"></div>\n            </div>\n            <div class=\"chart\"></div>\n        </div>");
+    _this._container.innerHTML = "<h1>    \n            <button class=\"scanex-requests-icon back\"></button>\n            <label class=\"title\"></label>\n        </h1>\n        <h2>\n            <label>".concat(_this.translate('project.forestry'), "</label>\n            <label class=\"forestry\"></label>\n        </h2>\n        <div class=\"content\">\n            <div class=\"stats scrollable\">\n                <div class=\"costs\"></div>\n                <div>").concat(_this.translate('info.available'), ", ").concat(_this.translate('units.m'), "<sup>3</sup></div>\n                <div class=\"species\"></div>\n            </div>\n            <div class=\"chart\"></div>\n        </div>");
 
     var btnBack = _this._container.querySelector('.back');
 
@@ -44454,8 +44465,9 @@ var Info = /*#__PURE__*/function (_View) {
     _this._chart = new apexcharts_common(_this._container.querySelector('.chart'), {
       chart: {
         type: 'donut',
-        width: '400px' // height: '250px',
-
+        height: '200px',
+        width: '400px',
+        fontFamily: 'Open Sans'
       },
       dataLabels: {
         enabled: false
@@ -44464,12 +44476,9 @@ var Info = /*#__PURE__*/function (_View) {
       series: [],
       legend: {
         position: 'bottom',
-        // width: '200px',                
-        horizontalAlign: 'right',
-        formatter: function formatter(name, opts) {
-          var val = parseFloat(opts.w.globals.series[opts.seriesIndex]);
-          return "".concat(name, " - ").concat(_this.m(val));
-        }
+        width: '200px',
+        formatter: _this.chartFormatLegend.bind(_assertThisInitialized(_this)),
+        horizontalAlign: 'right'
       },
       plotOptions: {
         pie: {
@@ -44478,20 +44487,13 @@ var Info = /*#__PURE__*/function (_View) {
             labels: {
               show: true,
               value: {
-                formatter: function formatter(v) {
-                  return "".concat(_this.m(v), " ").concat(_this.translate('units.m3'));
-                },
+                formatter: _this.chartFormatValue.bind(_assertThisInitialized(_this)),
                 fontSize: '12px',
                 show: true
               },
               total: {
-                formatter: function formatter(_ref) {
-                  var series = _ref.config.series;
-                  return "".concat(_this.m(series.reduce(function (p, c) {
-                    return p + c;
-                  }, 0)), " ").concat(_this.translate('units.m3'));
-                },
-                label: _this.translate('project.stock.all'),
+                formatter: _this.chartFormatTotal.bind(_assertThisInitialized(_this)),
+                label: _this.translate('quadrant.stock.all'),
                 fontSize: '12px',
                 fontWeight: 600,
                 show: true
@@ -44549,18 +44551,18 @@ var Info = /*#__PURE__*/function (_View) {
       this._forestry.innerHTML = "".concat(Forestry, " ").concat(ForestBlocks);
       var start = AuctionStart && new Date(AuctionStart);
       var end = AuctionEnd && new Date(AuctionEnd);
-      this._costs.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <tbody>\n                <tr>\n                    <td>".concat(this.translate('info.approve'), "</td>\n                    <td>").concat(ApproveDate || '', "</td>\n                </tr>\n                <tr>\n                    <td>").concat(this.translate('info.status'), "</td>\n                    <td>").concat(Status || '', "</td>\n                </tr>\n                <tr>\n                    <td>").concat(this.translate('info.period'), "</td>\n                    <td>").concat(start && end ? "".concat(this.date(start), " - ").concat(this.date(end)) : '', "</td>\n                </tr>\n                <tr>\n                    <td>").concat(this.translate('info.cost'), "</td>\n                    <td>").concat(this.rub(RentCost), "</td>\n                </tr>\n            </tbody>\n        </table>");
+      this._costs.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <tbody>\n                <tr>\n                    <td class=\"text\">".concat(this.translate('info.approve'), "</td>\n                    <td class=\"value\">").concat(ApproveDate || '', "</td>\n                </tr>\n                <tr>\n                    <td class=\"text\">").concat(this.translate('info.status'), "</td>\n                    <td class=\"value\">").concat(Status || '', "</td>\n                </tr>\n                <tr>\n                    <td class=\"text\">").concat(this.translate('info.period'), "</td>\n                    <td class=\"value\">").concat(start && end ? "".concat(this.date(start), " - ").concat(this.date(end)) : '', "</td>\n                </tr>\n                <tr>\n                    <td class=\"text\">").concat(this.translate('info.cost'), "</td>\n                    <td class=\"value\">").concat(this.rub(RentCost), "</td>\n                </tr>\n            </tbody>\n        </table>");
 
       if (Array.isArray(ForestAvailable) && ForestAvailable.length) {
-        this._species.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">                \n                <tbody>".concat(ForestAvailable.map(function (_ref2) {
-          var species = _ref2.species,
-              value = _ref2.value;
-          return "<tr>\n                        <td>".concat(species, "</td>\n                        <td>").concat(_this2.m(value), "</td>\n                    </tr>");
+        this._species.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">                \n                <tbody>".concat(ForestAvailable.map(function (_ref) {
+          var species = _ref.species,
+              value = _ref.value;
+          return "<tr>\n                        <td class=\"text\">".concat(species, "</td>\n                        <td class=\"value\">").concat(_this2.m(value), "</td>\n                    </tr>");
         }).join(''), "</tbody>\n            </table>");
 
-        var _ForestAvailable$redu = ForestAvailable.reduce(function (a, _ref3) {
-          var species = _ref3.species,
-              value = _ref3.value;
+        var _ForestAvailable$redu = ForestAvailable.reduce(function (a, _ref2) {
+          var species = _ref2.species,
+              value = _ref2.value;
           a.labels.push(species);
           a.series.push(value);
           return a;
@@ -44583,7 +44585,7 @@ var Info = /*#__PURE__*/function (_View) {
   return Info;
 }(View);
 
-var translate$6 = T.getText.bind(T);
+var translate$8 = T.getText.bind(T);
 
 var Quadrants = /*#__PURE__*/function (_EventTarget) {
   _inherits(Quadrants, _EventTarget);
@@ -44610,11 +44612,11 @@ var Quadrants = /*#__PURE__*/function (_EventTarget) {
       var _this2 = this;
 
       this._items = Array.isArray(items) && items || [];
-      this._container.innerHTML = this._items.length ? "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th>".concat(translate$6('project.localForestry'), " / ").concat(translate$6('project.tract'), "</th>                    \n                    <th>").concat(translate$6('project.quadrants'), "</th>\n                </tr>\n            </thead>\n        </table>\n        <div class=\"scrollable style-4\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody>").concat(this._items.map(function (_ref) {
+      this._container.innerHTML = this._items.length ? "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th>".concat(translate$8('project.localForestry'), " / ").concat(translate$8('project.tract'), "</th>                    \n                    <th>").concat(translate$8('project.quadrants'), "</th>\n                </tr>\n            </thead>\n        </table>\n        <div class=\"scrollable style-4\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody>").concat(this._items.map(function (_ref) {
         var local_forestry = _ref.local_forestry,
             stow = _ref.stow,
             num = _ref.num;
-        return "<tr class=\"quadrant\">\n                        <td>".concat(local_forestry).concat(stow ? " / ".concat(stow) : '', "</td>\n                        <td>").concat(num, "</td>\n                    </tr>");
+        return "<tr class=\"quadrant\">\n                        <td class=\"text\">".concat(local_forestry).concat(stow ? " / ".concat(stow) : '', "</td>\n                        <td class=\"value\">").concat(num, "</td>\n                    </tr>");
       }).join(''), "</tbody>\n            </table>\n        </div>") : '';
 
       var rows = this._container.querySelectorAll('tbody > tr');
@@ -44688,7 +44690,7 @@ var Quadrants = /*#__PURE__*/function (_EventTarget) {
   return Quadrants;
 }(EventTarget);
 
-var translate$7 = T.getText.bind(T);
+var translate$9 = T.getText.bind(T);
 
 var SpeciesTable = /*#__PURE__*/function (_EventTarget) {
   _inherits(SpeciesTable, _EventTarget);
@@ -44724,16 +44726,16 @@ var SpeciesTable = /*#__PURE__*/function (_EventTarget) {
             species = _ref.species,
             total_stock = _ref.total_stock,
             total_stock_deal = _ref.total_stock_deal;
-        return "<tr class=\"type\">\n                <td class=\"label\">".concat(species, "</td>\n                <td class=\"value\">").concat(m(permitted_stock), "</td>\n                <td class=\"value\">").concat(m(permitted_stock_deal), "</td>\n                <td class=\"value\">").concat(m(probable_stock), "</td>\n                <td class=\"value\">").concat(m(probable_stock_deal), "</td>\n                <td class=\"value\">").concat(m(total_stock), "</td>\n                <td class=\"value\">").concat(m(total_stock_deal), "</td>\n            </tr>");
+        return "<tr class=\"type\">\n                <td class=\"text\">".concat(species, "</td>\n                <td class=\"value\">").concat(m(permitted_stock), "</td>\n                <td class=\"value\">").concat(m(permitted_stock_deal), "</td>\n                <td class=\"value\">").concat(m(probable_stock), "</td>\n                <td class=\"value\">").concat(m(probable_stock_deal), "</td>\n                <td class=\"value\">").concat(m(total_stock), "</td>\n                <td class=\"value\">").concat(m(total_stock_deal), "</td>\n            </tr>");
       }).join('');
-      this._container.innerHTML = rows ? "<div class=\"title\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>                 \n                        <tr>\n                            <td>".concat(translate$7('project.species'), "</td>\n                            <td class=\"label\" colspan=\"3\">").concat(translate$7('project.stock.label'), ", ").concat(translate$7('units.m'), "<sup>3</sup></td>\n                        </tr>\n                        <tr>\n                            <td></td>\n                            <td class=\"label\">").concat(translate$7('project.stock.permitted'), "</td>                        \n                            <td class=\"label\">").concat(translate$7('project.stock.probable'), "</td>\n                            <td class=\"label\">").concat(translate$7('project.stock.total'), "</td>\n                        </tr>\n                    </tbody>\t\t\t\t\t\t\n                </table>\n            </div>\n            <div class=\"content style-4\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>").concat(rows, "</tbody>\n                </table>\n            </div>") : '';
+      this._container.innerHTML = rows ? "<div class=\"title\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>                 \n                        <tr>\n                            <td class=\"text\">".concat(translate$9('project.species'), "</td>\n                            <td class=\"text\" colspan=\"3\">").concat(translate$9('project.stock.label'), ", ").concat(translate$9('units.m'), "<sup>3</sup></td>\n                        </tr>\n                        <tr>\n                            <td></td>\n                            <td class=\"text\">").concat(translate$9('project.stock.permitted'), "</td>                        \n                            <td class=\"text\">").concat(translate$9('project.stock.probable'), "</td>\n                            <td class=\"text\">").concat(translate$9('project.stock.total'), "</td>\n                        </tr>\n                    </tbody>\t\t\t\t\t\t\n                </table>\n            </div>\n            <div class=\"content style-4\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>").concat(rows, "</tbody>\n                </table>\n            </div>") : '';
     }
   }]);
 
   return SpeciesTable;
 }(EventTarget);
 
-var translate$8 = T.getText.bind(T);
+var translate$a = T.getText.bind(T);
 
 var Species = /*#__PURE__*/function () {
   function Species(container) {
@@ -44743,7 +44745,7 @@ var Species = /*#__PURE__*/function () {
 
     this._species = [];
     this._container = container;
-    this._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<thead class=\"menu\">\n\t\t\t\t<tr>\n\t\t\t\t\t<th colspan=\"3\">\n\t\t\t\t\t\t<button class=\"stock active\">".concat(translate$8('project.stock.table'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"permitted\">").concat(translate$8('project.stock.permitted'), "</button>\n\t\t\t\t\t</th>\t\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"probable\">").concat(translate$8('project.stock.probable'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"total\">").concat(translate$8('project.stock.total'), "</button>\n\t\t\t\t\t</th>\t\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td colspan=\"3\">\n\t\t\t\t\t\t<div class=\"table\"></div>\n\t\t\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t\t</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
+    this._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<thead class=\"menu\">\n\t\t\t\t<tr>\n\t\t\t\t\t<th colspan=\"3\">\n\t\t\t\t\t\t<button class=\"stock active\">".concat(translate$a('project.stock.table'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"permitted\">").concat(translate$a('project.stock.permitted'), "</button>\n\t\t\t\t\t</th>\t\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"probable\">").concat(translate$a('project.stock.probable'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"total\">").concat(translate$a('project.stock.total'), "</button>\n\t\t\t\t\t</th>\t\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td colspan=\"3\">\n\t\t\t\t\t\t<div class=\"table\"></div>\n\t\t\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t\t</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
     this._buttons = this._container.querySelectorAll('button');
 
     var btnStock = this._container.querySelector('.stock');
@@ -44774,21 +44776,41 @@ var Species = /*#__PURE__*/function () {
       _this.mode = 'total';
     });
 
-    var _formatter = function formatter(n, s, d) {
-      if (s) {
-        return d ? [n, ' - ', s.toLocaleString('ru-RU', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        }), ' / ', d.toLocaleString(undefined, {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        })] : [n, ' - ', s.toLocaleString('ru-RU', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        })];
+    var fmt = function fmt(n, s, d) {
+      return [n, s ? "- ".concat(m(s)) : '', d ? "/ ".concat(m(d)) : ''];
+    };
+
+    var fmt_legend = function fmt_legend(name, opts) {
+      var i = opts.seriesIndex;
+      var s = _this._species[i] || {};
+
+      if (_this._mode === 'permitted') {
+        var permitted_stock = s.permitted_stock,
+            permitted_stock_deal = s.permitted_stock_deal;
+        return fmt(name, permitted_stock, permitted_stock_deal);
+      } else if (_this._mode === 'probable') {
+        var probable_stock = s.probable_stock,
+            probable_stock_deal = s.probable_stock_deal;
+        return fmt(name, probable_stock, probable_stock_deal);
       } else {
-        return n;
+        var total_stock = s.total_stock,
+            total_stock_deal = s.total_stock_deal;
+        return fmt(name, total_stock, total_stock_deal);
       }
+    };
+
+    var fmt_labels = function fmt_labels(val, opts) {
+      return "".concat(m(parseFloat(opts.w.globals.series[opts.seriesIndex])), " ").concat(translate$a('units.m3'));
+    };
+
+    var fmt_value = function fmt_value(val) {
+      return "".concat(m(parseFloat(val)), " ").concat(translate$a('units.m3'));
+    };
+
+    var fmt_total = function fmt_total(w) {
+      return fmt_value(w.globals.seriesTotals.reduce(function (a, b) {
+        return a + b;
+      }, 0));
     };
 
     this._chart = new apexcharts_common(this._container.querySelector('.chart'), {
@@ -44798,7 +44820,8 @@ var Species = /*#__PURE__*/function () {
         height: '160px'
       },
       dataLabels: {
-        enabled: false
+        enabled: false,
+        formatter: fmt_labels
       },
       labels: [],
       series: [],
@@ -44806,24 +44829,7 @@ var Species = /*#__PURE__*/function () {
         position: 'right',
         width: '200px',
         offsetY: -10,
-        formatter: function formatter(seriesName, opts) {
-          var i = opts.seriesIndex;
-          var s = _this._species[i] || {};
-
-          if (_this._mode === 'permitted') {
-            var permitted_stock = s.permitted_stock,
-                permitted_stock_deal = s.permitted_stock_deal;
-            return _formatter(seriesName, permitted_stock, permitted_stock_deal);
-          } else if (_this._mode === 'probable') {
-            var probable_stock = s.probable_stock,
-                probable_stock_deal = s.probable_stock_deal;
-            return _formatter(seriesName, probable_stock, probable_stock_deal);
-          } else {
-            var total_stock = s.total_stock,
-                total_stock_deal = s.total_stock_deal;
-            return _formatter(seriesName, total_stock, total_stock_deal);
-          }
-        }
+        formatter: fmt_legend
       },
       plotOptions: {
         pie: {
@@ -44832,23 +44838,16 @@ var Species = /*#__PURE__*/function () {
             labels: {
               show: true,
               value: {
-                formatter: function formatter(v) {
-                  return "".concat(m(v), " ").concat(translate$8('units.m3'));
-                },
-                fontSize: '12px',
-                show: true
+                show: true,
+                formatter: fmt_value,
+                fontSize: '12px'
               },
               total: {
-                formatter: function formatter(_ref) {
-                  var series = _ref.config.series;
-                  return "".concat(m(series.reduce(function (p, c) {
-                    return p + c;
-                  }, 0)), ", ").concat(translate$8('units.m3'));
-                },
-                label: translate$8('project.stock.all'),
+                show: true,
+                formatter: fmt_total,
+                label: translate$a('project.stock.all'),
                 fontSize: '12px',
-                fontWeight: 600,
-                show: true
+                fontWeight: 600
               }
             }
           }
@@ -44986,7 +44985,7 @@ var Project = /*#__PURE__*/function (_BaseView) {
 
     _classCallCheck(this, Project);
 
-    _this = _super.call(this, container, strings$a);
+    _this = _super.call(this, container, strings$5);
     _this._layer = layer;
     _this._forestryIndex = forestryIndex;
     _this._projectIndex = projectIndex;
@@ -45146,7 +45145,7 @@ var Project = /*#__PURE__*/function (_BaseView) {
   return Project;
 }(View);
 
-var translate$9 = T.getText.bind(T);
+var translate$b = T.getText.bind(T);
 
 var indexByName = function indexByName(layer, name) {
   var _layer$getGmxProperti = layer.getGmxProperties(),
@@ -45171,7 +45170,8 @@ var Projects = /*#__PURE__*/function (_LayerController) {
 
     var map = _ref.map,
         content = _ref.content,
-        notifications = _ref.notifications,
+        notification = _ref.notification,
+        loading = _ref.loading,
         layers = _ref.layers,
         legend = _ref.legend,
         path = _ref.path,
@@ -45183,7 +45183,8 @@ var Projects = /*#__PURE__*/function (_LayerController) {
       kind: 'projects',
       map: map,
       content: content,
-      notifications: notifications,
+      notification: notification,
+      loading: loading,
       layer: layers.projects,
       legend: legend
     });
@@ -45246,7 +45247,7 @@ var Projects = /*#__PURE__*/function (_LayerController) {
 
     _this._project.on('create', /*#__PURE__*/function () {
       var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(e) {
-        var _e$detail2, forestProjectID, title, forestQs, data, SquareStat, ForestStat;
+        var _e$detail2, forestProjectID, title, forestQs, data, ForestProjectID, SquareStat, ForestStat;
 
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
@@ -45268,9 +45269,9 @@ var Projects = /*#__PURE__*/function (_LayerController) {
                   break;
                 }
 
-                SquareStat = data.SquareStat, ForestStat = data.ForestStat;
+                ForestProjectID = data.ForestProjectID, SquareStat = data.SquareStat, ForestStat = data.ForestStat;
                 _context2.next = 8;
-                return _this._createRequest(forestProjectID);
+                return _this._createRequest(ForestProjectID);
 
               case 8:
               case "end":
@@ -45401,17 +45402,21 @@ var Projects = /*#__PURE__*/function (_LayerController) {
   }, {
     key: "create",
     value: function create() {
-      this._legend.enable('quadrants');
+      if (this._permissions.ApplicationMake) {
+        this._legend.enable('quadrants');
 
-      this._legend.enable('projects');
+        this._legend.enable('projects');
 
-      this._legend.enable('plots');
+        this._legend.enable('plots');
 
-      this._legend.enable('parks');
+        this._legend.enable('parks');
 
-      this._project.open();
+        this._project.open();
 
-      this._layer.repaint();
+        this._layer.repaint();
+      } else {
+        this._notification.error(translate$b('forbidden.project.create'));
+      }
     } // draft
 
   }, {
@@ -45485,7 +45490,8 @@ var Projects = /*#__PURE__*/function (_LayerController) {
                 return _context5.abrupt("return", true);
 
               case 23:
-                alert(translate$9('quadrant.invalid'));
+                this._notification.warn(translate$b('quadrant.invalid'));
+
                 return _context5.abrupt("return", false);
 
               case 25:
@@ -45493,7 +45499,7 @@ var Projects = /*#__PURE__*/function (_LayerController) {
                 break;
 
               case 27:
-                this._notifications.forbidden.open();
+                this._notification.error(translate$b('forbidden.project.edit'));
 
               case 28:
               case "end":
@@ -45541,7 +45547,7 @@ var Projects = /*#__PURE__*/function (_LayerController) {
                 break;
 
               case 8:
-                this._notifications.forbidden.open();
+                this._notification.error(translate$b('forbidden.project.edit'));
 
               case 9:
               case "end":
@@ -45641,32 +45647,24 @@ var Projects = /*#__PURE__*/function (_LayerController) {
             switch (_context9.prev = _context9.next) {
               case 0:
                 gmx_id = _ref7.gmx_id, forestryID = _ref7.forestryID;
-
-                if (this._executing) {
-                  _context9.next = 13;
-                  break;
-                }
-
-                this._executing = true;
                 ids = this._project.toggle(gmx_id);
 
                 if (!(ids.length === 0)) {
-                  _context9.next = 8;
+                  _context9.next = 6;
                   break;
                 }
 
                 this._project.clear();
 
-                _context9.next = 13;
+                _context9.next = 10;
                 break;
 
-              case 8:
-                _context9.next = 10;
+              case 6:
+                _context9.next = 8;
                 return this._validate(ids);
 
-              case 10:
+              case 8:
                 data = _context9.sent;
-                this._executing = false;
 
                 if (data) {
                   Status = data.Status, SquareStat = data.SquareStat, ForestStat = data.ForestStat;
@@ -45678,7 +45676,7 @@ var Projects = /*#__PURE__*/function (_LayerController) {
                       species: ForestStat
                     };
                   } else {
-                    alert(translate$9('quadrant.invalid'));
+                    this._notification.warn(translate$b('quadrant.invalid'));
                   }
 
                   this._project.open(this._valid);
@@ -45686,7 +45684,7 @@ var Projects = /*#__PURE__*/function (_LayerController) {
                   this._layers.quadrants.repaint();
                 }
 
-              case 13:
+              case 10:
               case "end":
                 return _context9.stop();
             }
@@ -45705,7 +45703,7 @@ var Projects = /*#__PURE__*/function (_LayerController) {
   return Projects;
 }(LayerController);
 
-var strings$b = {
+var strings$6 = {
   rus: {
     quadrant: {
       stock: {
@@ -45722,7 +45720,7 @@ var strings$b = {
   }
 };
 
-var STYLES$2 = {
+var STYLES$1 = {
   fillStyle: document.createElement('canvas').getContext('2d').createPattern(L.gmxUtil.getPatternIcon(null, {
     type: '',
     color: parseInt('FFB801', 16),
@@ -45751,7 +45749,7 @@ var Quadrants$1 = /*#__PURE__*/function (_BaseView) {
 
     _classCallCheck(this, Quadrants);
 
-    _this = _super.call(this, container, strings$b);
+    _this = _super.call(this, container, strings$6);
 
     _this._container.classList.add('scanex-forestry-quadrant');
 
@@ -45760,45 +45758,34 @@ var Quadrants$1 = /*#__PURE__*/function (_BaseView) {
     _this._chart = new apexcharts_common(_this._container.querySelector('.chart'), {
       chart: {
         type: 'donut',
-        height: '160px',
         width: '500px',
+        height: '150px',
         fontFamily: 'Open Sans'
-      },
-      dataLabels: {
-        enabled: false
       },
       labels: [],
       series: [],
+      dataLabels: {
+        enabled: false
+      },
       legend: {
         position: 'right',
-        width: '200px',
-        offsetY: -10,
-        formatter: function formatter(name, opts) {
-          var val = parseFloat(opts.w.globals.series[opts.seriesIndex]);
-          return "".concat(name, " - ").concat(_this.m(val));
-        },
+        height: '150px',
+        fontSize: '15px',
         horizontalAlign: 'right'
       },
       plotOptions: {
         pie: {
           donut: {
-            size: '78%',
+            size: '85%',
             labels: {
               show: true,
               value: {
-                formatter: function formatter(val) {
-                  return "".concat(_this.m(val), " ").concat(_this.translate('units.m3'));
-                },
+                formatter: _this.chartFormatValue.bind(_assertThisInitialized(_this)),
                 fontSize: '12px',
                 show: true
               },
               total: {
-                formatter: function formatter(_ref) {
-                  var series = _ref.config.series;
-                  return "".concat(_this.m(series.reduce(function (p, c) {
-                    return p + c;
-                  }, 0)), " ").concat(_this.translate('units.m3'));
-                },
+                formatter: _this.chartFormatTotal.bind(_assertThisInitialized(_this)),
                 label: _this.translate('quadrant.stock.all'),
                 fontSize: '12px',
                 fontWeight: 600,
@@ -45852,7 +45839,7 @@ var Quadrants$1 = /*#__PURE__*/function (_BaseView) {
     key: "getStyleHook",
     value: function getStyleHook(kind, item) {
       if (kind === 'quadrants') {
-        return item.id === this._gmx_id ? STYLES$2 : {};
+        return item.id === this._gmx_id ? STYLES$1 : {};
       } else {
         return {};
       }
@@ -45874,6 +45861,8 @@ var Quadrants$1 = /*#__PURE__*/function (_BaseView) {
   return Quadrants;
 }(View);
 
+var translate$c = T.getText.bind(T);
+
 var Quadrants$2 = /*#__PURE__*/function (_LayerController) {
   _inherits(Quadrants, _LayerController);
 
@@ -45884,7 +45873,8 @@ var Quadrants$2 = /*#__PURE__*/function (_LayerController) {
 
     var map = _ref.map,
         content = _ref.content,
-        notifications = _ref.notifications,
+        notification = _ref.notification,
+        loading = _ref.loading,
         layer = _ref.layer,
         legend = _ref.legend,
         path = _ref.path,
@@ -45896,15 +45886,16 @@ var Quadrants$2 = /*#__PURE__*/function (_LayerController) {
       kind: 'quadrants',
       map: map,
       content: content,
-      notifications: notifications,
+      notification: notification,
+      loading: loading,
       layer: layer,
       legend: legend
     });
     _this._path = path;
     _this._permissions = permissions;
-    _this._quadrants = _this._content.add('quadrants', Quadrants$1);
+    _this._view = _this._content.add('quadrants', Quadrants$1);
 
-    _this._quadrants.on('close', function () {
+    _this._view.on('close', function () {
       _this._layer.repaint();
     });
 
@@ -46004,14 +45995,16 @@ var Quadrants$2 = /*#__PURE__*/function (_LayerController) {
 
                 if (data) {
                   if (Array.isArray(data.Stock) && data.Stock.length > 0) {
-                    this._quadrants.open(_objectSpread2({
+                    this._view.open(_objectSpread2({
                       gmx_id: gmx_id
                     }, data));
                   } else {
-                    this._notifications.notAvailable.open({
-                      gmx_id: gmx_id
-                    });
+                    this._view.close();
+
+                    this._notification.warn(translate$c('warn.notavailable'));
                   }
+                } else {
+                  this._view.close();
                 }
 
               case 10:
@@ -46036,10 +46029,11 @@ var Quadrants$2 = /*#__PURE__*/function (_LayerController) {
   return Quadrants;
 }(LayerController);
 
-var strings$c = {
+var strings$7 = {
   rus: {
     report: {
       title: 'Сводная аналитика',
+      nodata: 'Данные отсутствуют',
       type: 'Тип отчета',
       typeOption: ['Оплачено и вырублено', 'Баланс древесины', 'Топ-5 нарушителей'],
       region: 'Регион',
@@ -46071,15 +46065,18 @@ var Reports = /*#__PURE__*/function (_BaseView) {
 
   var _super = _createSuper(Reports);
 
-  function Reports(container) {
+  function Reports(container, _ref) {
     var _this;
+
+    var path = _ref.path;
 
     _classCallCheck(this, Reports);
 
-    _this = _super.call(this, container, strings$c);
+    _this = _super.call(this, container, strings$7);
 
     _this._container.classList.add('scanex-forestry-analytics');
 
+    _this._path = path;
     return _this;
   }
 
@@ -46159,7 +46156,7 @@ var Reports = /*#__PURE__*/function (_BaseView) {
       });
 
       this._container.querySelector('.save').addEventListener('click', /*#__PURE__*/function () {
-        var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e) {
+        var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e) {
           var d1, d2, pdata, url;
           return regeneratorRuntime.wrap(function _callee$(_context) {
             while (1) {
@@ -46174,7 +46171,8 @@ var Reports = /*#__PURE__*/function (_BaseView) {
                     LocalForestryID: _this2.currentLocalForestry,
                     DateBegin: d1 ? d1.toISOString() : '',
                     DateEnd: d2 ? d2.toISOString() : ''
-                  };
+                  }; // let url = '';
+
                   url = _this2._path;
 
                   if (_this2.currentType === 0) {
@@ -46187,7 +46185,14 @@ var Reports = /*#__PURE__*/function (_BaseView) {
                     }
                   } else if (_this2.currentType === 2) {
                     url += '/Forest/GetOrganizationAnalytics';
-                  }
+                  } // let event = document.createEvent('Event');
+                  // event.initEvent('reports:save', false, false);
+                  // event.detail = {
+                  // url: url,
+                  // options: pdata
+                  // };
+                  // this.dispatchEvent(event);
+
 
                   url += '?' + Object.keys(pdata).map(function (key) {
                     return key + '=' + pdata[key];
@@ -46204,7 +46209,7 @@ var Reports = /*#__PURE__*/function (_BaseView) {
         }));
 
         return function (_x) {
-          return _ref.apply(this, arguments);
+          return _ref2.apply(this, arguments);
         };
       }());
 
@@ -46214,7 +46219,12 @@ var Reports = /*#__PURE__*/function (_BaseView) {
 
       this._setForestry(this.currentForestry);
 
-      this.currentSpecies = data.species[0].idnDigital;
+      this.currentSpecies = data.species[0].idndigital;
+    }
+  }, {
+    key: "parseResult",
+    value: function parseResult(data) {
+      console.log('parseResult', data);
     }
   }, {
     key: "_save",
@@ -46330,7 +46340,7 @@ var Reports = /*#__PURE__*/function (_BaseView) {
     key: "_parseOptionsHeader",
     value: function _parseOptionsHeader(data) {
       return data.map(function (it) {
-        return "<option value=\"".concat(it.id || it.idnDigital, "\">").concat(it.name, "</option>");
+        return "<option value=\"".concat(it.id || it.idndigital, "\">").concat(it.name, "</option>");
       }).join('\n');
     }
   }, {
@@ -46343,21 +46353,31 @@ var Reports = /*#__PURE__*/function (_BaseView) {
   }, {
     key: "_parseTop5",
     value: function _parseTop5(data) {
-      var maxHeight = 240;
-      var maxValue = data.reduce(function (p, c) {
-        return Math.max(p, c.payed, c.cutDown);
-      }, 0);
-      var str = data.map(function (it) {
-        return "<div class=\"chart-row__left-el\">\n\t\t\t\t<div class=\"chart-row__left-el-chart\">\n\t\t\t\t\t<div class=\"chart-row__left-el-chart__text\">".concat(it.payed, " \u043C<sup>3</sup></div>\n\t\t\t\t\t<div class=\"chart-row__left-el-chart__arrow green-bg\" style=\"height: ").concat(Math.floor(maxHeight * Math.min(it.payed, maxValue) / maxValue), "px\"></div>\n\t\t\t\t\t<div class=\"chart-row__left-el-chart__text_bot\">").concat(it.organization || it.species, "</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"chart-row__left-el-chart\">\n\t\t\t\t\t<div class=\"chart-row__left-el-chart__text\">").concat(it.cutDown, " \u043C<sup>3</sup></div>\n\t\t\t\t\t<div class=\"chart-row__left-el-chart__arrow blue-bg\" style=\"height: ").concat(Math.floor(maxHeight * Math.min(it.cutDown, maxValue) / maxValue), "px\"></div>\n\t\t\t\t\t<div class=\"chart-row__left-el-chart__text_bot\">&nbsp;</div>\n\t\t\t\t</div>\n\t\t\t</div>");
-      }).join('\n');
-      this._chartCont.innerHTML = "<div class=\"line\">\n\t\t\t<div class=\"chart-header black\">".concat(this.translate('report.sootn'), "&nbsp;<span class=\"green\">").concat(this.translate('report.oplach'), "</span>&nbsp;\u0438&nbsp;<span class=\"blue\">").concat(this.translate('report.vyrub'), "</span>&nbsp;").concat(this.translate('report.dreves'), "\n\t\t\t</div>\n\t\t</div>\n\t\t<div class=\"chart-row\">\n\t\t\t<div class=\"chart-row__left\">\n\t\t\t\t").concat(str, "\n\t\t\t</div>\n\t\t\t<div class=\"chart-row__right\">\n\t\t\t\t<div class=\"chart-row__right_line\">\n\t\t\t\t\t<div class=\"rec green-bg\"></div>\n\t\t\t\t\t<div class=\"rec-text\">").concat(this.translate('report.opl'), "</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"chart-row__right_line\">\n\t\t\t\t\t<div class=\"rec blue-bg\"></div>\n\t\t\t\t\t<div class=\"rec-text\">").concat(this.translate('report.vyr'), "</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>");
+      data = data || [];
+
+      if (data.length) {
+        var maxHeight = 240;
+        var maxValue = data.reduce(function (p, c) {
+          return Math.max(p, c.payed, c.cutDown);
+        }, 0);
+        var str = data.map(function (it) {
+          return "<div class=\"chart-row__left-el\">\n\t\t\t\t\t<div class=\"chart-row__left-el-chart\">\n\t\t\t\t\t\t<div class=\"chart-row__left-el-chart__text\">".concat(it.payed, " \u043C<sup>3</sup></div>\n\t\t\t\t\t\t<div class=\"chart-row__left-el-chart__arrow green-bg\" style=\"height: ").concat(Math.floor(maxHeight * Math.min(it.payed, maxValue) / maxValue), "px\"></div>\n\t\t\t\t\t\t<div class=\"chart-row__left-el-chart__text_bot\">").concat(it.organization || it.species, "</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"chart-row__left-el-chart\">\n\t\t\t\t\t\t<div class=\"chart-row__left-el-chart__text\">").concat(it.cutDown, " \u043C<sup>3</sup></div>\n\t\t\t\t\t\t<div class=\"chart-row__left-el-chart__arrow blue-bg\" style=\"height: ").concat(Math.floor(maxHeight * Math.min(it.cutDown, maxValue) / maxValue), "px\"></div>\n\t\t\t\t\t\t<div class=\"chart-row__left-el-chart__text_bot\">&nbsp;</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>");
+        }).join('\n');
+        this._chartCont.innerHTML = "<div class=\"line\">\n\t\t\t\t<div class=\"chart-header black\">".concat(this.translate('report.sootn'), "&nbsp;<span class=\"green\">").concat(this.translate('report.oplach'), "</span>&nbsp;\u0438&nbsp;<span class=\"blue\">").concat(this.translate('report.vyrub'), "</span>&nbsp;").concat(this.translate('report.dreves'), "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"chart-row\">\n\t\t\t\t<div class=\"chart-row__left\">\n\t\t\t\t\t").concat(str, "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"chart-row__right\">\n\t\t\t\t\t<div class=\"chart-row__right_line\">\n\t\t\t\t\t\t<div class=\"rec green-bg\"></div>\n\t\t\t\t\t\t<div class=\"rec-text\">").concat(this.translate('report.opl'), "</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"chart-row__right_line\">\n\t\t\t\t\t\t<div class=\"rec blue-bg\"></div>\n\t\t\t\t\t\t<div class=\"rec-text\">").concat(this.translate('report.vyr'), "</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>");
+      } else {
+        this._chartCont.innerHTML = "<div class=\"line nodata\">".concat(this.translate('report.nodata'), "</div>");
+      }
     }
   }, {
     key: "_parseBallance",
     value: function _parseBallance(data) {
-      var maxValue = data.total;
-      var maxWidth = 220;
-      this._chartCont.innerHTML = "<table class=\"line\">\n            <tr>\n\t\t\t\t<td class=\"first\">".concat(this.translate('report.growth'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act green-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.growth.quantity, maxValue) / maxValue), "px\"></div></td>\n                <td class=\"third green\">").concat(data.growth.quantity, " \u043C<sup>3</sup></td>\n                <td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"green\">").concat(data.growth.summa, " ").concat(this.translate('report.milr'), "</span></td>\n            </tr>\n            <tr>\n\t\t\t\t<td class=\"first\">").concat(this.translate('report.burntOut'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act red-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.burntOut.quantity, maxValue) / maxValue), "px\"></div></td>\n                <td class=\"third red\">").concat(data.burntOut.quantity, " \u043C<sup>3</sup></td>\n                <td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"red\">").concat(data.burntOut.summa, " ").concat(this.translate('report.milr'), "</span></td>\n            </tr>\n            <tr>\n\t\t\t\t<td class=\"first\">").concat(this.translate('report.cutDown'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act red-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.cutDown.quantity, maxValue) / maxValue), "px\"></div></td>\n                <td class=\"third red\">").concat(data.cutDown.quantity, " \u043C<sup>3</sup></td>\n                <td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"red\">").concat(data.cutDown.summa, " ").concat(this.translate('report.milr'), "</span></td>\n            </tr>\n            <tr>\n\t\t\t\t<td class=\"first\">").concat(this.translate('report.ballanceChanges'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act red-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.ballanceChanges.quantity, maxValue) / maxValue), "px\"></div></td>\n                <td class=\"third red\">").concat(data.ballanceChanges.quantity, " \u043C<sup>3</sup></td>\n                <td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"red\">").concat(data.ballanceChanges.summa, " ").concat(this.translate('report.milr'), "</span></td>\n            </tr>\n            <tr>\n\t\t\t\t<td class=\"first\">").concat(this.translate('report.total'), "</td>\n                <td class=\"sec\"><div class=\"horizont-sec-act green-bg\" style=\"width: 100%\"></div></td>\n                <td class=\"third gray\">125 684 \u043C<sup>3</sup></td>\n                <td class=\"last\"></td>\n            </tr>\n\t\t</table>");
+      if (data) {
+        var maxValue = data.total;
+        var maxWidth = 220;
+        this._chartCont.innerHTML = "<table class=\"line\">\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"first\">".concat(this.translate('report.growth'), "</td>\n\t\t\t\t\t<td class=\"sec\"><div class=\"horizont-sec-act green-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.growth.quantity, maxValue) / maxValue), "px\"></div></td>\n\t\t\t\t\t<td class=\"third green\">").concat(data.growth.quantity, " \u043C<sup>3</sup></td>\n\t\t\t\t\t<td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"green\">").concat(data.growth.summa, " ").concat(this.translate('report.milr'), "</span></td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"first\">").concat(this.translate('report.burntOut'), "</td>\n\t\t\t\t\t<td class=\"sec\"><div class=\"horizont-sec-act red-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.burntOut.quantity, maxValue) / maxValue), "px\"></div></td>\n\t\t\t\t\t<td class=\"third red\">").concat(data.burntOut.quantity, " \u043C<sup>3</sup></td>\n\t\t\t\t\t<td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"red\">").concat(data.burntOut.summa, " ").concat(this.translate('report.milr'), "</span></td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"first\">").concat(this.translate('report.cutDown'), "</td>\n\t\t\t\t\t<td class=\"sec\"><div class=\"horizont-sec-act red-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.cutDown.quantity, maxValue) / maxValue), "px\"></div></td>\n\t\t\t\t\t<td class=\"third red\">").concat(data.cutDown.quantity, " \u043C<sup>3</sup></td>\n\t\t\t\t\t<td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"red\">").concat(data.cutDown.summa, " ").concat(this.translate('report.milr'), "</span></td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"first\">").concat(this.translate('report.ballanceChanges'), "</td>\n\t\t\t\t\t<td class=\"sec\"><div class=\"horizont-sec-act red-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.ballanceChanges.quantity, maxValue) / maxValue), "px\"></div></td>\n\t\t\t\t\t<td class=\"third red\">").concat(data.ballanceChanges.quantity, " \u043C<sup>3</sup></td>\n\t\t\t\t\t<td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"red\">").concat(data.ballanceChanges.summa, " ").concat(this.translate('report.milr'), "</span></td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"first\">").concat(this.translate('report.total'), "</td>\n\t\t\t\t\t<td class=\"sec\"><div class=\"horizont-sec-act green-bg\" style=\"width: 100%\"></div></td>\n\t\t\t\t\t<td class=\"third gray\">125 684 \u043C<sup>3</sup></td>\n\t\t\t\t\t<td class=\"last\"></td>\n\t\t\t\t</tr>\n\t\t\t</table>");
+      } else {
+        this._chartCont.innerHTML = "<div class=\"line nodata\">".concat(this.translate('report.nodata'), "</div>");
+      }
     }
   }]);
 
@@ -46374,18 +46394,26 @@ var Reports$1 = /*#__PURE__*/function (_Controller) {
 
     var map = _ref.map,
         content = _ref.content,
-        notifications = _ref.notifications,
-        path = _ref.path;
+        notification = _ref.notification,
+        loading = _ref.loading,
+        path = _ref.path,
+        permissions = _ref.permissions;
 
     _classCallCheck(this, Reports$1);
 
     _this = _super.call(this, {
       map: map,
       content: content,
-      notifications: notifications
+      notification: notification,
+      loading: loading
     });
     _this._path = path;
-    _this._view = _this._content.add('reports', Reports);
+    _this._permissions = permissions;
+    _this._view = _this._content.add('reports', Reports, {
+      path: path
+    }).on('reports:save', function (e) {
+      _this._save(e.detail);
+    });
     return _this;
   }
 
@@ -46398,21 +46426,33 @@ var Reports$1 = /*#__PURE__*/function (_Controller) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                _context.next = 2;
-                return this.httpGet("".concat(this._path, "/Forest/GetReportHeaderData"));
-
-              case 2:
-                data = _context.sent;
-
-                if (!data) {
-                  _context.next = 6;
+                if (!this._permissions.AnaliticData) {
+                  _context.next = 9;
                   break;
                 }
 
-                _context.next = 6;
+                _context.next = 3;
+                return this.httpGet("".concat(this._path, "/Forest/GetReportHeaderData"));
+
+              case 3:
+                data = _context.sent;
+
+                if (!data) {
+                  _context.next = 7;
+                  break;
+                }
+
+                _context.next = 7;
                 return this._view.open(data);
 
-              case 6:
+              case 7:
+                _context.next = 10;
+                break;
+
+              case 9:
+                this._notification.error(translate('forbidden.analytics'));
+
+              case 10:
               case "end":
                 return _context.stop();
             }
@@ -46426,12 +46466,50 @@ var Reports$1 = /*#__PURE__*/function (_Controller) {
 
       return view;
     }()
+  }, {
+    key: "_save",
+    value: function () {
+      var _save2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(opt) {
+        var data;
+        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                console.log('reports:save', opt);
+                _context2.next = 3;
+                return this.httpGet("".concat(this._path, "/").concat(opt.url));
+
+              case 3:
+                data = _context2.sent;
+
+                if (!data) {
+                  _context2.next = 7;
+                  break;
+                }
+
+                _context2.next = 7;
+                return this._view.parseResult(data);
+
+              case 7:
+              case "end":
+                return _context2.stop();
+            }
+          }
+        }, _callee2, this);
+      }));
+
+      function _save(_x) {
+        return _save2.apply(this, arguments);
+      }
+
+      return _save;
+    }()
   }]);
 
   return Reports$1;
 }(Controller);
 
-var strings$d = {
+var strings$8 = {
   rus: {
     request: {
       id: '#',
@@ -46458,11 +46536,11 @@ var Requests = /*#__PURE__*/function (_BaseView) {
 
     _classCallCheck(this, Requests);
 
-    _this = _super.call(this, container, strings$d);
+    _this = _super.call(this, container, strings$8);
 
     _this._container.classList.add('scanex-forestry-requests');
 
-    _this._container.innerHTML = "<div class=\"header\">           \n            <label class=\"title\">".concat(_this.translate('request.header'), "</label>                   \n            <button class=\"create\">").concat(_this.translate('request.create'), "</button>                              \n        </div>\n        <table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr height=\"42\">\n                    <th data-id=\"id\">").concat(_this.translate('request.id'), "</th>\n                    <th data-id=\"title\">").concat(_this.translate('request.title'), "</th>\n                    <th data-id=\"status\">").concat(_this.translate('request.status'), "</th>\n                    <th data-id=\"forestry\">").concat(_this.translate('request.forestry'), "</th>\n                    <th data-id=\"local_forestry\">").concat(_this.translate('request.local_forestry'), "</th>\n                    <th data-id=\"area\">").concat(_this.translate('request.area'), "</th>\n                    <th data-id=\"amount\">").concat(_this.translate('request.amount'), "<sup>3</sup></th>\n                    <th data-id=\"remove\"></th>\n                </tr>\n            </thead>\n        </table> \n        <div class=\"content style-4\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody class=\"items\"></tbody>\n            </table>\n        </div>");
+    _this._container.innerHTML = "<h1 class=\"header\">           \n            <label class=\"title\">".concat(_this.translate('request.header'), "</label>                   \n            <button class=\"create\">").concat(_this.translate('request.create'), "</button>                              \n        </h1>\n        <table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr height=\"42\">\n                    <th data-id=\"id\">").concat(_this.translate('request.id'), "</th>\n                    <th data-id=\"title\">").concat(_this.translate('request.title'), "</th>\n                    <th data-id=\"status\">").concat(_this.translate('request.status'), "</th>\n                    <th data-id=\"forestry\">").concat(_this.translate('request.forestry'), "</th>\n                    <th data-id=\"local_forestry\">").concat(_this.translate('request.local_forestry'), "</th>\n                    <th data-id=\"area\">").concat(_this.translate('request.area'), "</th>\n                    <th data-id=\"amount\">").concat(_this.translate('request.amount'), "<sup>3</sup></th>\n                    <th data-id=\"remove\"></th>\n                </tr>\n            </thead>\n        </table> \n        <div class=\"content style-4\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody class=\"items\"></tbody>\n            </table>\n        </div>");
     _this._content = _this._container.querySelector('.items');
 
     _this._container.querySelector('.create').addEventListener('click', function (e) {
@@ -46498,10 +46576,7 @@ var Requests = /*#__PURE__*/function (_BaseView) {
             forestry = _ref2.forestry,
             localForestries = _ref2.localForestries,
             totalSquare = _ref2.totalSquare;
-        return "<tr height=\"42\" class=\"request\">\n                <td data-id=\"id\">".concat(number, "</td>\n                <td data-id=\"title\">").concat(title, "</td>\n                <td data-id=\"status\">").concat(status, "</td>\n                <td data-id=\"forestry\">").concat(forestry, "</td>\n                <td data-id=\"local_forestry\">").concat(localForestries, "</td>\n                <td data-id=\"area\">").concat(totalSquare.toLocaleString('ru-RU', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        }), "</td>\n                <td data-id=\"amount\"></td>\n                <td data-id=\"remove\">").concat(statusID === 1 ? '<i class="scanex-requests-icon remove"></i>' : '', "</td>\n            </tr>");
+        return "<tr height=\"42\" class=\"request\">\n                <td class=\"value\" data-id=\"id\">".concat(number, "</td>\n                <td class=\"value\" data-id=\"title\">").concat(title, "</td>\n                <td class=\"value\" data-id=\"status\">").concat(status, "</td>\n                <td class=\"value\" data-id=\"forestry\">").concat(forestry, "</td>\n                <td class=\"value\" data-id=\"local_forestry\">").concat(localForestries, "</td>\n                <td class=\"value\" data-id=\"area\">").concat(_this2.ha(totalSquare), "</td>\n                <td class=\"value\" data-id=\"amount\"></td>\n                <td class=\"value\" data-id=\"remove\">").concat(statusID === 1 ? '<i class="scanex-requests-icon remove"></i>' : '', "</td>\n            </tr>");
       }).join('');
 
       var rows = this._content.querySelectorAll('.request');
@@ -46576,7 +46651,8 @@ var Requests$1 = /*#__PURE__*/function (_Controller) {
 
     var map = _ref.map,
         content = _ref.content,
-        notifications = _ref.notifications,
+        notification = _ref.notification,
+        loading = _ref.loading,
         legend = _ref.legend,
         layers = _ref.layers,
         permissions = _ref.permissions,
@@ -46587,7 +46663,8 @@ var Requests$1 = /*#__PURE__*/function (_Controller) {
     _this = _super.call(this, {
       map: map,
       content: content,
-      notifications: notifications
+      notification: notification,
+      loading: loading
     });
     _this._legend = legend;
     _this._layers = layers;
@@ -46658,10 +46735,15 @@ var Requests$1 = /*#__PURE__*/function (_Controller) {
           while (1) {
             switch (_context2.prev = _context2.next) {
               case 0:
-                _context2.next = 2;
+                if (!this._permissions.ForestProjectsView) {
+                  _context2.next = 7;
+                  break;
+                }
+
+                _context2.next = 3;
                 return this.httpGet("".concat(this._path, "/Forest/GetPlotProjectsList"));
 
-              case 2:
+              case 3:
                 data = _context2.sent;
 
                 if (data) {
@@ -46674,7 +46756,13 @@ var Requests$1 = /*#__PURE__*/function (_Controller) {
                   this._layers.projects.repaint();
                 }
 
-              case 4:
+                _context2.next = 8;
+                break;
+
+              case 7:
+                this._notification.error(translate('forbidden.requests'));
+
+              case 8:
               case "end":
                 return _context2.stop();
             }
@@ -46711,7 +46799,7 @@ var Requests$1 = /*#__PURE__*/function (_Controller) {
                 break;
 
               case 5:
-                this._notifications.forbidden.open();
+                this._notification.error(translate('forbidden.project.remove'));
 
               case 6:
               case "end":
@@ -46740,7 +46828,8 @@ var Roads = /*#__PURE__*/function (_LayerController) {
   function Roads(_ref) {
     var map = _ref.map,
         content = _ref.content,
-        notifications = _ref.notifications,
+        notification = _ref.notification,
+        loading = _ref.loading,
         layer = _ref.layer,
         legend = _ref.legend;
 
@@ -46750,7 +46839,8 @@ var Roads = /*#__PURE__*/function (_LayerController) {
       kind: 'roads',
       map: map,
       content: content,
-      notifications: notifications,
+      notification: notification,
+      loading: loading,
       layer: layer,
       legend: legend
     });
@@ -46759,12 +46849,12 @@ var Roads = /*#__PURE__*/function (_LayerController) {
   return Roads;
 }(LayerController);
 
-var strings$e = {
+var strings$9 = {
   rus: {
     stand: {
       title: 'Выдел',
       usage: 'Целевое назначение лесов',
-      year: 'Год актуализации',
+      year: 'Год лесоустройства',
       area: 'Площадь выдела',
       category: 'Категория земель',
       protected: 'Особозащитные участки (ОЗУ)',
@@ -46796,7 +46886,7 @@ var strings$e = {
   }
 };
 
-var STYLES$3 = {
+var STYLES$2 = {
   fillStyle: document.createElement('canvas').getContext('2d').createPattern(L.gmxUtil.getPatternIcon(null, {
     type: '',
     color: parseInt('FFB801', 16),
@@ -46826,11 +46916,13 @@ var Stands = /*#__PURE__*/function (_BaseView) {
 
     _classCallCheck(this, Stands);
 
-    _this = _super.call(this, container, strings$e);
+    _this = _super.call(this, container, strings$9);
 
     _this._container.classList.add('scanex-forestry-stand');
 
-    _this._container.innerHTML = "\n\t\t<div class=\"header1\">".concat(_this.translate('stand.title'), "</div>\n\t\t<div class=\"header2\"></div>\n\t\t<div class=\"content\">\n\t\t\t<div class=\"stats\"></div>\t\t\t\n\t\t\t<div>\n\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t<div class=\"events\"></div>\n\t\t\t</div>\n\t\t\t<div class=\"levels\"></div>\t\t\n\t\t</div>");
+    _this._container.classList.add('scrollable');
+
+    _this._container.innerHTML = "\n\t\t<h1 class=\"header1\">".concat(_this.translate('stand.title'), "</h1>\n\t\t<h2 class=\"header2\"></h2>\n\t\t<div class=\"content\">\n\t\t\t<div class=\"stats\"></div>\t\t\t\n\t\t\t<div>\n\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t<div class=\"events scrollable\"></div>\n\t\t\t</div>\n\t\t\t<div class=\"levels\"></div>\t\t\n\t\t</div>");
     _this._header = _this._container.querySelector('.header2');
     _this._stats = _this._container.querySelector('.stats');
     _this._chart = new apexcharts_common(_this._container.querySelector('.chart'), {
@@ -46840,18 +46932,15 @@ var Stands = /*#__PURE__*/function (_BaseView) {
         width: '500px',
         fontFamily: 'Open Sans'
       },
+      labels: [],
+      series: [],
       dataLabels: {
         enabled: false
       },
-      labels: [],
-      series: [],
       legend: {
         position: 'right',
         // width: '150px',
-        formatter: function formatter(name, opts) {
-          var val = parseFloat(opts.w.globals.series[opts.seriesIndex]);
-          return "".concat(name, " - ").concat(_this.m(val));
-        },
+        formatter: _this.chartFormatLegend.bind(_assertThisInitialized(_this)),
         horizontalAlign: 'right'
       },
       plotOptions: {
@@ -46861,19 +46950,12 @@ var Stands = /*#__PURE__*/function (_BaseView) {
             labels: {
               show: true,
               value: {
-                formatter: function formatter(val) {
-                  return "".concat(_this.m(val), " ").concat(_this.translate('units.m3'));
-                },
+                formatter: _this.chartFormatValue.bind(_assertThisInitialized(_this)),
                 fontSize: '12px',
                 show: true
               },
               total: {
-                formatter: function formatter(_ref) {
-                  var series = _ref.config.series;
-                  return "".concat(_this.m(series.reduce(function (p, c) {
-                    return p + c;
-                  }, 0)), " ").concat(_this.translate('units.m3'));
-                },
+                formatter: _this.chartFormatTotal.bind(_assertThisInitialized(_this)),
                 label: _this.translate('stand.stock.all'),
                 fontSize: '12px',
                 fontWeight: 600,
@@ -46922,12 +47004,14 @@ var Stands = /*#__PURE__*/function (_BaseView) {
           StoreyAggInfo = data.StoreyAggInfo,
           Events = data.Events;
       this._gmx_id = gmx_id;
-      this._header.innerText = [Forestry, LocalForestry, Stow, Quadrant, Stand].join(', ');
-      this._stats.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td>".concat(this.translate('stand.usage'), "</td>\n\t\t\t\t\t<td>").concat(ForestUseType, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td>").concat(this.translate('stand.year'), "</td>\n\t\t\t\t\t<td>").concat(UpdatingYear, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td>").concat(this.translate('stand.area'), "</td>\n\t\t\t\t\t<td>").concat(this.ha(Square), "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td>").concat(this.translate('stand.category'), "</td>\n\t\t\t\t\t<td>").concat(LandCategory, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td>").concat(this.translate('stand.protected'), "</td>\n\t\t\t\t\t<td>").concat(OZU, "</td>                    \n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td>").concat(this.translate('stand.slope'), "</td>\n\t\t\t\t\t<td>").concat(Exposition, " / ").concat(Steepness, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<!--tr>\n\t\t\t\t\t<td>").concat(this.translate('stand.targetSpecies'), "</td>\n\t\t\t\t\t<td>").concat(TargetSpecies, "</td>                    \n\t\t\t\t</tr-->\n\t\t\t\t<tr>\n\t\t\t\t\t<td>").concat(this.translate('stand.mainSpecies'), "</td>\n\t\t\t\t\t<td>").concat(PredominantSpecies, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td>").concat(this.translate('stand.age'), "</td>\n\t\t\t\t\t<td>").concat(AgeGroup, "</td>                    \n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td>").concat(this.translate('stand.klass'), "</td>\n\t\t\t\t\t<td>").concat(AgeClass, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td>").concat(this.translate('stand.bonitet'), "</td>\n\t\t\t\t\t<td>").concat(Bonitet, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td>").concat(this.translate('stand.type'), "</td>\n\t\t\t\t\t<td></td>                    \n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
+      this._header.innerText = [Forestry, LocalForestry, Stow, Quadrant, Stand].filter(function (v) {
+        return v;
+      }).join(', ');
+      this._stats.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">".concat(this.translate('stand.usage'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(ForestUseType, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.year'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(UpdatingYear, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.area'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(this.ha(Square), "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.category'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(LandCategory, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.protected'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(OZU, "</td>                    \n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.slope'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(Exposition, " / ").concat(Steepness, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<!--tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.targetSpecies'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(TargetSpecies, "</td>                    \n\t\t\t\t</tr-->\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.mainSpecies'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(PredominantSpecies, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.age'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(AgeGroup, "</td>                    \n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.klass'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(AgeClass, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.bonitet'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(Bonitet, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.type'), "</td>\n\t\t\t\t\t<td class=\"value\"></td>                    \n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
 
-      var _Stock$reduce = Stock.reduce(function (a, _ref2) {
-        var stock = _ref2.stock,
-            species = _ref2.species;
+      var _Stock$reduce = Stock.reduce(function (a, _ref) {
+        var stock = _ref.stock,
+            species = _ref.species;
         a.labels.push(species);
         a.series.push(stock);
         return a;
@@ -46945,27 +47029,27 @@ var Stands = /*#__PURE__*/function (_BaseView) {
       this._chart.updateSeries(series);
 
       if (Array.isArray(StoreyAggInfo)) {
-        this._levels.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t\t<tbody>".concat(StoreyAggInfo.map(function (_ref3) {
-          var storey = _ref3.storey,
-              abbr = _ref3.abbr,
-              age = _ref3.age,
-              basal_area_sum = _ref3.basal_area_sum,
-              dbh = _ref3.dbh,
-              density = _ref3.density,
-              gross_volume = _ref3.gross_volume,
-              height = _ref3.height,
-              marketability_class = _ref3.marketability_class,
-              rate = _ref3.rate;
-          return "<tr class=\"storey\">\n\t\t\t\t\t\t<td>".concat(_this2.translate('stand.storey.title'), "</td>\n\t\t\t\t\t\t<td>").concat(storey, "</td>\t\t\t\t\t\t\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(_this2.translate('stand.storey.species'), "</td>\n\t\t\t\t\t\t<td>").concat(abbr, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(_this2.translate('stand.storey.rate'), "</td>\n\t\t\t\t\t\t<td>").concat(_this2.fmt(rate), "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(_this2.translate('stand.storey.gross_volume'), ", ").concat(_this2.translate('units.m'), "<sup>3</sup></td>\n\t\t\t\t\t\t<td>").concat(_this2.m(gross_volume), "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(_this2.translate('stand.storey.age'), "</td>\n\t\t\t\t\t\t<td>").concat(age, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(_this2.translate('stand.storey.basal_area_sum'), ", ").concat(_this2.translate('units.m'), "<sup>2</sup></td>\n\t\t\t\t\t\t<td>").concat(_this2.m(basal_area_sum), "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(_this2.translate('stand.storey.dbh'), ", ").concat(_this2.translate('units.cm'), "</td>\n\t\t\t\t\t\t<td>").concat(_this2.fmt(dbh), "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(_this2.translate('stand.storey.density'), "</td>\n\t\t\t\t\t\t<td>").concat(_this2.fmt(density), "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(_this2.translate('stand.storey.height'), ", ").concat(_this2.translate('units.m'), "</td>\n\t\t\t\t\t\t<td>").concat(_this2.fmt(height), "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(_this2.translate('stand.storey.marketability_class'), "</td>\n\t\t\t\t\t\t<td>").concat(marketability_class, "</td>\n\t\t\t\t\t</tr>");
+        this._levels.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t\t<tbody>".concat(StoreyAggInfo.map(function (_ref2) {
+          var storey = _ref2.storey,
+              abbr = _ref2.abbr,
+              age = _ref2.age,
+              basal_area_sum = _ref2.basal_area_sum,
+              dbh = _ref2.dbh,
+              density = _ref2.density,
+              gross_volume = _ref2.gross_volume,
+              height = _ref2.height,
+              marketability_class = _ref2.marketability_class,
+              rate = _ref2.rate;
+          return "<tr class=\"storey\">\n\t\t\t\t\t\t<td class=\"text\">".concat(_this2.translate('stand.storey.title'), "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(storey, "</td>\t\t\t\t\t\t\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.species'), "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(abbr, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.rate'), "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(_this2.fmt(rate), "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.gross_volume'), ", ").concat(_this2.translate('units.m'), "<sup>3</sup></td>\n\t\t\t\t\t\t<td class=\"value\">").concat(_this2.m(gross_volume), "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.age'), "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(age, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.basal_area_sum'), ", ").concat(_this2.translate('units.m'), "<sup>2</sup></td>\n\t\t\t\t\t\t<td class=\"value\">").concat(_this2.m(basal_area_sum), "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.dbh'), ", ").concat(_this2.translate('units.cm'), "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(_this2.fmt(dbh), "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.density'), "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(_this2.fmt(density), "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.height'), ", ").concat(_this2.translate('units.m'), "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(_this2.fmt(height), "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.marketability_class'), "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(marketability_class, "</td>\n\t\t\t\t\t</tr>");
         }).join(''), "</tbody>\n\t\t\t</table>");
       }
 
       if (Array.isArray(Events)) {
-        this._events.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t\t<tbody>".concat(Events.map(function (_ref4) {
-          var name = _ref4.name,
-              activity = _ref4.activity,
-              fillingpercent = _ref4.fillingpercent;
-          return "<tr>\n\t\t\t\t\t\t<td>".concat(name, "</td>\n\t\t\t\t\t\t<td>").concat(activity, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>").concat(_this2.translate('stand.percentage'), "</td>\n\t\t\t\t\t\t<td class=\"percentage\">").concat(_this2.fmt(fillingpercent)).concat(_this2.translate('units.pc'), "</td>\n\t\t\t\t\t</tr>");
+        this._events.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t\t<tbody>".concat(Events.map(function (_ref3) {
+          var name = _ref3.name,
+              activity = _ref3.activity,
+              fillingpercent = _ref3.fillingpercent;
+          return "<tr>\n\t\t\t\t\t\t<td class=\"text\">".concat(name, "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(activity, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.percentage'), "</td>\n\t\t\t\t\t\t<td class=\"value percentage\">").concat(_this2.fmt(fillingpercent)).concat(_this2.translate('units.pc'), "</td>\n\t\t\t\t\t</tr>");
         }).join(''), "</tbody>\n\t\t\t</table>");
       }
     }
@@ -46973,7 +47057,7 @@ var Stands = /*#__PURE__*/function (_BaseView) {
     key: "getStyleHook",
     value: function getStyleHook(kind, item) {
       if (kind === 'stands') {
-        return item.id === this._gmx_id ? STYLES$3 : {};
+        return item.id === this._gmx_id ? STYLES$2 : {};
       } else {
         return {};
       }
@@ -46990,6 +47074,8 @@ var Stands = /*#__PURE__*/function (_BaseView) {
   return Stands;
 }(View);
 
+var translate$d = T.getText.bind(T);
+
 var Stands$1 = /*#__PURE__*/function (_LayerController) {
   _inherits(Stands$1, _LayerController);
 
@@ -47000,7 +47086,8 @@ var Stands$1 = /*#__PURE__*/function (_LayerController) {
 
     var map = _ref.map,
         content = _ref.content,
-        notifications = _ref.notifications,
+        notification = _ref.notification,
+        loading = _ref.loading,
         layer = _ref.layer,
         legend = _ref.legend,
         path = _ref.path;
@@ -47011,7 +47098,8 @@ var Stands$1 = /*#__PURE__*/function (_LayerController) {
       kind: 'stands',
       map: map,
       content: content,
-      notifications: notifications,
+      notification: notification,
+      loading: loading,
       layer: layer,
       legend: legend
     });
@@ -47079,9 +47167,7 @@ var Stands$1 = /*#__PURE__*/function (_LayerController) {
                 break;
 
               case 18:
-                this._notifications.notAvailable.open({
-                  gmx_id: this._gmx_id
-                });
+                this._notification.warn(translate$d('warn.notavailable'));
 
               case 19:
               case "end":
@@ -47116,7 +47202,7 @@ _export({ target: 'Number', stat: true }, {
   isInteger: isInteger
 });
 
-var translate$a = T.getText.bind(T);
+var translate$e = T.getText.bind(T);
 T.addText('rus', {
   pager: {
     previous: 'Предыдущая',
@@ -47136,7 +47222,7 @@ var Pager = /*#__PURE__*/function (_EventTarget) {
 
     _this = _super.call(this);
     _this._container = container;
-    _this._container.innerHTML = "<table class=\"scanex-forestry-pager\" cellpadding=\"0\" cellspacing=\"0\">\n            <tr>\n                <td>\n                    <button class=\"first\">1</button>\n                </td>                \n                <td>\n                    <button class=\"previous\">".concat(translate$a('pager.previous'), "</button>\n                </td>\n                <td>\n                    <input type=\"text\" value=\"\" />\n                </td>\n                <td>\n                    <button class=\"next\">").concat(translate$a('pager.next'), "</button>\n                </td>                \n                <td>\n                    <button class=\"last\"></button>\n                </td>\n            </tr>\n        </table>");
+    _this._container.innerHTML = "<table class=\"scanex-forestry-pager\" cellpadding=\"0\" cellspacing=\"0\">\n            <tr>\n                <td>\n                    <button class=\"first\">1</button>\n                </td>                \n                <td>\n                    <button class=\"previous\">".concat(translate$e('pager.previous'), "</button>\n                </td>\n                <td>\n                    <input type=\"text\" value=\"\" />\n                </td>\n                <td>\n                    <button class=\"next\">").concat(translate$e('pager.next'), "</button>\n                </td>                \n                <td>\n                    <button class=\"last\"></button>\n                </td>\n            </tr>\n        </table>");
 
     _this._container.querySelector('.first').addEventListener('click', function (e) {
       e.stopPropagation();
@@ -47203,7 +47289,7 @@ var Pager = /*#__PURE__*/function (_EventTarget) {
   return Pager;
 }(EventTarget);
 
-var strings$f = {
+var strings$a = {
   rus: {
     uploaded: {
       title: 'Мои данные',
@@ -47234,7 +47320,7 @@ var Uploaded = /*#__PURE__*/function (_BaseView) {
 
     _classCallCheck(this, Uploaded);
 
-    _this = _super.call(this, container, strings$f);
+    _this = _super.call(this, container, strings$a);
     _this._columns = columns;
     _this._types = types;
     _this._pageSize = pageSize;
@@ -47449,7 +47535,7 @@ var UploadProgress = /*#__PURE__*/function (_EventTarget) {
   return UploadProgress;
 }(EventTarget);
 
-var translate$b = T.getText.bind(T);
+var translate$f = T.getText.bind(T);
 
 var Uploaded$1 = /*#__PURE__*/function (_Controller) {
   _inherits(Uploaded$1, _Controller);
@@ -47461,8 +47547,10 @@ var Uploaded$1 = /*#__PURE__*/function (_Controller) {
 
     var map = _ref.map,
         content = _ref.content,
-        notifications = _ref.notifications,
+        notification = _ref.notification,
+        loading = _ref.loading,
         path = _ref.path,
+        permissions = _ref.permissions,
         _ref$pageSize = _ref.pageSize,
         pageSize = _ref$pageSize === void 0 ? 4 : _ref$pageSize,
         _ref$uploadFileSize = _ref.uploadFileSize,
@@ -47473,10 +47561,12 @@ var Uploaded$1 = /*#__PURE__*/function (_Controller) {
     _this = _super.call(this, {
       map: map,
       content: content,
-      notifications: notifications
+      notification: notification,
+      loading: loading
     });
     _this._path = path;
     _this._pageSize = pageSize;
+    _this._permissions = permissions;
     _this._uploadFileSize = uploadFileSize;
     _this._progress = new UploadProgress();
 
@@ -47536,17 +47626,28 @@ var Uploaded$1 = /*#__PURE__*/function (_Controller) {
           while (1) {
             switch (_context2.prev = _context2.next) {
               case 0:
-                _context2.next = 2;
+                if (!this._permissions.MyData) {
+                  _context2.next = 7;
+                  break;
+                }
+
+                _context2.next = 3;
                 return this._query(this._view.page);
 
-              case 2:
+              case 3:
                 data = _context2.sent;
 
                 if (data) {
                   this._view.open(data);
                 }
 
-              case 4:
+                _context2.next = 8;
+                break;
+
+              case 7:
+                this._notification.error(translate$f('forbidden.uploaded'));
+
+              case 8:
               case "end":
                 return _context2.stop();
             }
@@ -47986,7 +48087,8 @@ var Warehouses = /*#__PURE__*/function (_LayerController) {
   function Warehouses(_ref) {
     var map = _ref.map,
         content = _ref.content,
-        notifications = _ref.notifications,
+        notification = _ref.notification,
+        loading = _ref.loading,
         layer = _ref.layer,
         legend = _ref.legend;
 
@@ -47996,7 +48098,8 @@ var Warehouses = /*#__PURE__*/function (_LayerController) {
       kind: 'warehouses',
       map: map,
       content: content,
-      notifications: notifications,
+      notification: notification,
+      loading: loading,
       layer: layer,
       legend: legend
     });
@@ -48005,6 +48108,7 @@ var Warehouses = /*#__PURE__*/function (_LayerController) {
   return Warehouses;
 }(LayerController);
 
+var translate$g = T.getText.bind(T);
 var ALLOWED_LAYERS = ['warehouses', 'roads', 'declarations', 'incidents', 'quadrants', 'stands', 'projects', 'plots', 'fires', 'parks', 'forestries_local', 'forestries', 'regions'].reverse();
 
 var Map = /*#__PURE__*/function (_EventTarget) {
@@ -48032,7 +48136,6 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
     _this = _super.call(this);
     _this._layers = {};
-    _this._hilited = {};
     _this._permissions = Array.isArray(permissions) && permissions.reduce(function (a, k) {
       a[k] = true;
       return a;
@@ -48075,23 +48178,17 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
     _this._content.addTo(_this._map);
 
-    _this._notifications = {
-      unAuthorized: _this._content.add('unauthorized', UnAuthorized),
-      forbidden: _this._content.add('forbidden', Forbidden),
-      notAvailable: _this._content.add('not-available', NotAvailable),
-      notFound: _this._content.add('not-found', NotFound),
-      serverError: _this._content.add('server-error', ServerError)
-    };
-    _this._notifications.loading = new Loading();
+    _this._notification = new Notification();
+    _this._loading = new Loading();
 
-    _this._notifications.loading.on('start', function () {
+    _this._loading.on('start', function () {
       var event = document.createEvent('Event');
       event.initEvent('loading:start', false, false);
 
       _this.dispatchEvent(event);
     });
 
-    _this._notifications.loading.on('stop', function () {
+    _this._loading.on('stop', function () {
       var event = document.createEvent('Event');
       event.initEvent('loading:stop', false, false);
 
@@ -48193,22 +48290,10 @@ var Map = /*#__PURE__*/function (_EventTarget) {
           while (1) {
             switch (_context2.prev = _context2.next) {
               case 0:
-                if (!this._permissions.AnaliticData) {
-                  _context2.next = 5;
-                  break;
-                }
-
-                _context2.next = 3;
+                _context2.next = 2;
                 return this._controllers.reports.view();
 
-              case 3:
-                _context2.next = 6;
-                break;
-
-              case 5:
-                this._notifications.forbidden.open();
-
-              case 6:
+              case 2:
               case "end":
                 return _context2.stop();
             }
@@ -48230,22 +48315,10 @@ var Map = /*#__PURE__*/function (_EventTarget) {
           while (1) {
             switch (_context3.prev = _context3.next) {
               case 0:
-                if (!this._permissions.ForestProjectsView) {
-                  _context3.next = 5;
-                  break;
-                }
-
-                _context3.next = 3;
+                _context3.next = 2;
                 return this._controllers.requests.view();
 
-              case 3:
-                _context3.next = 6;
-                break;
-
-              case 5:
-                this._notifications.forbidden.open();
-
-              case 6:
+              case 2:
               case "end":
                 return _context3.stop();
             }
@@ -48261,26 +48334,31 @@ var Map = /*#__PURE__*/function (_EventTarget) {
     }()
   }, {
     key: "createRequest",
+    value: function createRequest() {
+      this._controllers.projects.create();
+    }
+  }, {
+    key: "showUploaded",
     value: function () {
-      var _createRequest = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
+      var _showUploaded = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
         return regeneratorRuntime.wrap(function _callee4$(_context4) {
           while (1) {
             switch (_context4.prev = _context4.next) {
               case 0:
-                if (!this._permissions.ApplicationMake) {
+                if (!this._permissions.MyData) {
                   _context4.next = 5;
                   break;
                 }
 
                 _context4.next = 3;
-                return this._controllers.projects.create();
+                return this._controllers.uploaded.view();
 
               case 3:
                 _context4.next = 6;
                 break;
 
               case 5:
-                this._notifications.forbidden.open();
+                this._notification.error(translate$g('forbidden.uploaded'));
 
               case 6:
               case "end":
@@ -48288,43 +48366,6 @@ var Map = /*#__PURE__*/function (_EventTarget) {
             }
           }
         }, _callee4, this);
-      }));
-
-      function createRequest() {
-        return _createRequest.apply(this, arguments);
-      }
-
-      return createRequest;
-    }()
-  }, {
-    key: "showUploaded",
-    value: function () {
-      var _showUploaded = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5() {
-        return regeneratorRuntime.wrap(function _callee5$(_context5) {
-          while (1) {
-            switch (_context5.prev = _context5.next) {
-              case 0:
-                if (!this._permissions.MyData) {
-                  _context5.next = 5;
-                  break;
-                }
-
-                _context5.next = 3;
-                return this._controllers.uploaded.view();
-
-              case 3:
-                _context5.next = 6;
-                break;
-
-              case 5:
-                this._notifications.forbidden.open();
-
-              case 6:
-              case "end":
-                return _context5.stop();
-            }
-          }
-        }, _callee5, this);
       }));
 
       function showUploaded() {
@@ -48336,21 +48377,22 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "load",
     value: function () {
-      var _load = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11() {
+      var _load = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10() {
         var _this3 = this;
 
         var mapId;
-        return regeneratorRuntime.wrap(function _callee11$(_context11) {
+        return regeneratorRuntime.wrap(function _callee10$(_context10) {
           while (1) {
-            switch (_context11.prev = _context11.next) {
+            switch (_context10.prev = _context10.next) {
               case 0:
                 window.SELF = this;
                 mapId = 'default';
-                _context11.next = 4;
+                _context10.next = 4;
                 return L$1.gmx.loadMap(mapId, {
                   leafletMap: this._map,
                   hostName: '/',
                   setZIndex: true,
+                  // disableCache: true,
                   gmxEndPoints: {
                     checkVersion: "".concat(this._gmxPath, "/Layer/CheckVersion.ashx"),
                     layerProps: "".concat(this._gmxPath, "/Layer/GetLayerJson.ashx"),
@@ -48361,7 +48403,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 });
 
               case 4:
-                this._gmxMap = _context11.sent;
+                this._gmxMap = _context10.sent;
 
                 this._map.on('zoomend', function (e) {
                   if (_this3._grid) {
@@ -48467,19 +48509,20 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                     content: this._content,
                     path: this._apiPath,
                     permissions: this._permissions,
-                    notifications: this._notifications
+                    notification: this._notification,
+                    loading: this._loading
                   });
 
                   this._controllers.quadrants.on('quadrant:toggle', /*#__PURE__*/function () {
-                    var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(e) {
+                    var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(e) {
                       var _e$detail, gmx_id, forestryID;
 
-                      return regeneratorRuntime.wrap(function _callee6$(_context6) {
+                      return regeneratorRuntime.wrap(function _callee5$(_context5) {
                         while (1) {
-                          switch (_context6.prev = _context6.next) {
+                          switch (_context5.prev = _context5.next) {
                             case 0:
                               _e$detail = e.detail, gmx_id = _e$detail.gmx_id, forestryID = _e$detail.forestryID;
-                              _context6.next = 3;
+                              _context5.next = 3;
                               return _this3._controllers.projects.toggleQuadrant({
                                 gmx_id: gmx_id,
                                 forestryID: forestryID
@@ -48490,10 +48533,10 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
                             case 4:
                             case "end":
-                              return _context6.stop();
+                              return _context5.stop();
                           }
                         }
-                      }, _callee6);
+                      }, _callee5);
                     }));
 
                     return function (_x) {
@@ -48510,7 +48553,8 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                     content: this._content,
                     path: this._apiPath,
                     permissions: this._permissions,
-                    notifications: this._notifications
+                    notification: this._notification,
+                    loading: this._loading
                   });
                 }
 
@@ -48521,7 +48565,8 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                     legend: this._legend,
                     content: this._content,
                     path: this._apiPath,
-                    notifications: this._notifications
+                    notification: this._notification,
+                    loading: this._loading
                   });
                 }
 
@@ -48536,7 +48581,8 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                     path: this._apiPath,
                     permissions: this._permissions,
                     dateInterval: this._dateInterval,
-                    notifications: this._notifications
+                    notification: this._notification,
+                    loading: this._loading
                   });
                 }
 
@@ -48547,7 +48593,9 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                     legend: this._legend,
                     content: this._content,
                     path: this._apiPath,
-                    notifications: this._notifications
+                    notification: this._notification,
+                    loading: this._loading,
+                    permissions: this._permissions
                   });
                 }
 
@@ -48559,15 +48607,16 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                     content: this._content,
                     path: this._apiPath,
                     permissions: this._permissions,
-                    notifications: this._notifications
+                    notification: this._notification,
+                    loading: this._loading
                   });
 
                   this._controllers.projects.on('create', /*#__PURE__*/function () {
-                    var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(e) {
+                    var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(e) {
                       var event;
-                      return regeneratorRuntime.wrap(function _callee7$(_context7) {
+                      return regeneratorRuntime.wrap(function _callee6$(_context6) {
                         while (1) {
-                          switch (_context7.prev = _context7.next) {
+                          switch (_context6.prev = _context6.next) {
                             case 0:
                               event = document.createEvent('Event');
                               event.initEvent('request:create', false, false);
@@ -48577,10 +48626,10 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
                             case 4:
                             case "end":
-                              return _context7.stop();
+                              return _context6.stop();
                           }
                         }
-                      }, _callee7);
+                      }, _callee6);
                     }));
 
                     return function (_x2) {
@@ -48588,20 +48637,20 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                     };
                   }());
 
-                  this._controllers.projects.on('back', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8() {
-                    return regeneratorRuntime.wrap(function _callee8$(_context8) {
+                  this._controllers.projects.on('back', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7() {
+                    return regeneratorRuntime.wrap(function _callee7$(_context7) {
                       while (1) {
-                        switch (_context8.prev = _context8.next) {
+                        switch (_context7.prev = _context7.next) {
                           case 0:
-                            _context8.next = 2;
+                            _context7.next = 2;
                             return _this3.showRequests();
 
                           case 2:
                           case "end":
-                            return _context8.stop();
+                            return _context7.stop();
                         }
                       }
-                    }, _callee8);
+                    }, _callee7);
                   })));
                 }
 
@@ -48613,7 +48662,8 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                     content: this._content,
                     path: this._apiPath,
                     permissions: this._permissions,
-                    notifications: this._notifications
+                    notification: this._notification,
+                    loading: this._loading
                   });
                 }
 
@@ -48625,19 +48675,20 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                     layers: this._layers,
                     legend: this._legend,
                     permissions: this._permissions,
-                    notifications: this._notifications
+                    notification: this._notification,
+                    loading: this._loading
                   });
 
                   this._controllers.requests.on('view', /*#__PURE__*/function () {
-                    var _ref7 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9(e) {
+                    var _ref7 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(e) {
                       var _e$detail2, id, forestryID, _this3$_layers$projec, LayerID, c, z;
 
-                      return regeneratorRuntime.wrap(function _callee9$(_context9) {
+                      return regeneratorRuntime.wrap(function _callee8$(_context8) {
                         while (1) {
-                          switch (_context9.prev = _context9.next) {
+                          switch (_context8.prev = _context8.next) {
                             case 0:
                               _e$detail2 = e.detail, id = _e$detail2.id, forestryID = _e$detail2.forestryID;
-                              _context9.next = 3;
+                              _context8.next = 3;
                               return _this3._controllers.projects.view({
                                 id: id,
                                 forestryID: forestryID
@@ -48645,6 +48696,58 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
                             case 3:
                               _this3$_layers$projec = _this3._layers.projects.getGmxProperties(), LayerID = _this3$_layers$projec.LayerID;
+                              _context8.prev = 4;
+                              _context8.next = 7;
+                              return getObjectCenter(_this3._gmxPath, LayerID, id);
+
+                            case 7:
+                              c = _context8.sent;
+                              z = 10;
+
+                              _this3._map.setView(c, z);
+
+                              _context8.next = 15;
+                              break;
+
+                            case 12:
+                              _context8.prev = 12;
+                              _context8.t0 = _context8["catch"](4);
+                              console.log(_context8.t0);
+
+                            case 15:
+                            case "end":
+                              return _context8.stop();
+                          }
+                        }
+                      }, _callee8, null, [[4, 12]]);
+                    }));
+
+                    return function (_x3) {
+                      return _ref7.apply(this, arguments);
+                    };
+                  }());
+
+                  this._controllers.requests.on('create', function () {
+                    _this3._controllers.projects.create();
+                  });
+
+                  this._controllers.requests.on('edit', /*#__PURE__*/function () {
+                    var _ref8 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9(e) {
+                      var _e$detail3, id, forestryID, _this3$_layers$projec2, LayerID, c, z;
+
+                      return regeneratorRuntime.wrap(function _callee9$(_context9) {
+                        while (1) {
+                          switch (_context9.prev = _context9.next) {
+                            case 0:
+                              _e$detail3 = e.detail, id = _e$detail3.id, forestryID = _e$detail3.forestryID;
+                              _context9.next = 3;
+                              return _this3._controllers.projects.edit({
+                                id: id,
+                                forestryID: forestryID
+                              });
+
+                            case 3:
+                              _this3$_layers$projec2 = _this3._layers.projects.getGmxProperties(), LayerID = _this3$_layers$projec2.LayerID;
                               _context9.prev = 4;
                               _context9.next = 7;
                               return getObjectCenter(_this3._gmxPath, LayerID, id);
@@ -48671,58 +48774,6 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                       }, _callee9, null, [[4, 12]]);
                     }));
 
-                    return function (_x3) {
-                      return _ref7.apply(this, arguments);
-                    };
-                  }());
-
-                  this._controllers.requests.on('create', function () {
-                    _this3._controllers.projects.create();
-                  });
-
-                  this._controllers.requests.on('edit', /*#__PURE__*/function () {
-                    var _ref8 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(e) {
-                      var _e$detail3, id, forestryID, _this3$_layers$projec2, LayerID, c, z;
-
-                      return regeneratorRuntime.wrap(function _callee10$(_context10) {
-                        while (1) {
-                          switch (_context10.prev = _context10.next) {
-                            case 0:
-                              _e$detail3 = e.detail, id = _e$detail3.id, forestryID = _e$detail3.forestryID;
-                              _context10.next = 3;
-                              return _this3._controllers.projects.edit({
-                                id: id,
-                                forestryID: forestryID
-                              });
-
-                            case 3:
-                              _this3$_layers$projec2 = _this3._layers.projects.getGmxProperties(), LayerID = _this3$_layers$projec2.LayerID;
-                              _context10.prev = 4;
-                              _context10.next = 7;
-                              return getObjectCenter(_this3._gmxPath, LayerID, id);
-
-                            case 7:
-                              c = _context10.sent;
-                              z = 10;
-
-                              _this3._map.setView(c, z);
-
-                              _context10.next = 15;
-                              break;
-
-                            case 12:
-                              _context10.prev = 12;
-                              _context10.t0 = _context10["catch"](4);
-                              console.log(_context10.t0);
-
-                            case 15:
-                            case "end":
-                              return _context10.stop();
-                          }
-                        }
-                      }, _callee10, null, [[4, 12]]);
-                    }));
-
                     return function (_x4) {
                       return _ref8.apply(this, arguments);
                     };
@@ -48735,7 +48786,9 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                     layer: this._layers.roads,
                     legend: this._legend,
                     content: this._content,
-                    notifications: this._notifications
+                    notification: this._notification,
+                    loading: this._loading,
+                    permissions: this._permissions
                   });
                 }
 
@@ -48745,7 +48798,9 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                     layer: this._layers.warehouses,
                     legend: this._legend,
                     content: this._content,
-                    notifications: this._notifications
+                    notification: this._notification,
+                    loading: this._loading,
+                    permissions: this._permissions
                   });
                 }
 
@@ -48755,7 +48810,9 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                     layers: this._layers,
                     legend: this._legend,
                     content: this._content,
-                    notifications: this._notifications
+                    notification: this._notification,
+                    loading: this._loading,
+                    permissions: this._permissions
                   });
                 }
 
@@ -48769,7 +48826,8 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                     path: this._monPath,
                     permissions: this._permissions,
                     dateInterval: this._dateInterval,
-                    notifications: this._notifications
+                    notification: this._notification,
+                    loading: this._loading
                   });
 
                   this._controllers.incidents.on('incident:docs', function (e) {
@@ -48785,7 +48843,9 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   this._controllers.reports = new Reports$1({
                     path: this._apiPath,
                     content: this._content,
-                    notifications: this._notifications
+                    notification: this._notification,
+                    loading: this._loading,
+                    permissions: this._permissions
                   });
                 }
 
@@ -48793,7 +48853,8 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   this._controllers.uploaded = new Uploaded$1({
                     path: this._gmxPath,
                     content: this._content,
-                    notifications: this._notifications
+                    notification: this._notification,
+                    loading: this._loading
                   });
                 }
 
@@ -48806,15 +48867,15 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   map: this._map,
                   legend: this._legend,
                   tags: ['regions', 'forestries'],
-                  notifications: this._notifications
+                  notification: this._notification
                 });
 
               case 35:
               case "end":
-                return _context11.stop();
+                return _context10.stop();
             }
           }
-        }, _callee11, this);
+        }, _callee10, this);
       }));
 
       function load() {
@@ -48831,13 +48892,13 @@ var Map = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "addCRLayer",
     value: function () {
-      var _addCRLayer = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee12(layerID, mapID) {
+      var _addCRLayer = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11(layerID, mapID) {
         var arr, layer;
-        return regeneratorRuntime.wrap(function _callee12$(_context12) {
+        return regeneratorRuntime.wrap(function _callee11$(_context11) {
           while (1) {
-            switch (_context12.prev = _context12.next) {
+            switch (_context11.prev = _context11.next) {
               case 0:
-                _context12.next = 2;
+                _context11.next = 2;
                 return L$1.gmx.loadLayers([{
                   hostName: '/',
                   gmxEndPoints: {
@@ -48852,7 +48913,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                 }], {});
 
               case 2:
-                arr = _context12.sent;
+                arr = _context11.sent;
                 layer = arr[0];
 
                 if (layer) {
@@ -48865,10 +48926,10 @@ var Map = /*#__PURE__*/function (_EventTarget) {
 
               case 5:
               case "end":
-                return _context12.stop();
+                return _context11.stop();
             }
           }
-        }, _callee12, this);
+        }, _callee11, this);
       }));
 
       function addCRLayer(_x5, _x6) {
