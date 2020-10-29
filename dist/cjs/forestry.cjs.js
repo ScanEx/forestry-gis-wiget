@@ -46023,17 +46023,25 @@ var RasterCatalog = /*#__PURE__*/function () {
     this._layers = layers;
     this._legend = legend;
     this._dateInterval = dateInterval;
+    var ids = Object.keys(this._layers);
 
-    var p = this._legend.addGroup('rasters', translate$d('legend.rasters'));
+    if (ids.some(function (id) {
+      return _this._layers[id];
+    })) {
+      var p = this._legend.addGroup('rasters', translate$d('legend.rasters'));
 
-    Object.keys(this._layers).forEach(function (kind) {
-      var layer = _this._layers[kind];
-      layer.setZIndexOffset(zIndexOffset);
+      ids.forEach(function (kind) {
+        var layer = _this._layers[kind];
 
-      _this._legend.addComponent(kind, translate$d("legend.".concat(kind)), p);
-    });
+        if (layer) {
+          layer.setZIndexOffset(zIndexOffset);
 
-    this._legend.on('click', this._toggle, this);
+          _this._legend.addComponent(kind, translate$d("legend.".concat(kind)), p);
+        }
+      });
+
+      this._legend.on('click', this._toggle, this);
+    }
   }
 
   _createClass(RasterCatalog, [{

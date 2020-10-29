@@ -889,59 +889,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
 .scanex-baselayers.baselayer-map-right.leaflet-control {
     margin-right: -10px;
 } */
-.leaflet-gmx-center {
-    height: 100%;
-    width: 100%;
-    margin-left: 6px;
-    margin-top: 6px;
-    pointer-events: none;
-    position: absolute;
-    opacity: 0;
-}
-.leaflet-gmx-center div {
-    height: 12px;
-    width: 12px;
-    margin-bottom: 5px;
-    margin-right: 5px;
-    margin-right: 3px;
-    bottom: 50%;
-    right: 50%;
-    position: absolute;
-}
-
-.scanex-forestry-content > .view.hidden {
-    display: none;
-}
-.scanex-forestry-content .view {
-    background-color: #FFFFFF;
-    padding: 15px 15px 0 15px;
-    border-radius: 6px;
-    height: 310px;
-    display: -webkit-inline-box;
-    display: -ms-inline-flexbox;
-    display: inline-flex;    
-    -webkit-box-pack: justify;
-    -ms-flex-pack: justify;
-    justify-content: space-between;
-    -webkit-box-align: start;
-    -ms-flex-align: start;
-    align-items: flex-start;    
-}
-
-.scanex-forestry-content .view .scanex-component-icon {
-    background-repeat: no-repeat;
-    background-position: center;
-    cursor: pointer;
-    width: 24px;
-    height: 24px;
-    vertical-align: middle;
-    float: right;
-    opacity: 0.3;
-    position: relative;
-    left: 10px;
-    bottom: 10px;
-    transform: scaleY(0.9);
-}
 .scanex-date-interval div.timeline-frame {
 	background-color: #d3d3d3b5;
 }
@@ -995,6 +942,26 @@ svg.leaflet-image-layer.leaflet-interactive path {
 .scanex-date-interval div.timeline-event-dot.active
 {
 	border-color: red;
+}
+
+.leaflet-gmx-center {
+    height: 100%;
+    width: 100%;
+    margin-left: 6px;
+    margin-top: 6px;
+    pointer-events: none;
+    position: absolute;
+    opacity: 0;
+}
+.leaflet-gmx-center div {
+    height: 12px;
+    width: 12px;
+    margin-bottom: 5px;
+    margin-right: 5px;
+    margin-right: 3px;
+    bottom: 50%;
+    right: 50%;
+    position: absolute;
 }
 
 .gmxLocation-input {
@@ -1073,6 +1040,39 @@ svg.leaflet-image-layer.leaflet-interactive path {
 	margin-left: 4px;
 }
 
+.scanex-forestry-content > .view.hidden {
+    display: none;
+}
+.scanex-forestry-content .view {
+    background-color: #FFFFFF;
+    padding: 15px 15px 0 15px;
+    border-radius: 6px;
+    height: 310px;
+    display: -webkit-inline-box;
+    display: -ms-inline-flexbox;
+    display: inline-flex;    
+    -webkit-box-pack: justify;
+    -ms-flex-pack: justify;
+    justify-content: space-between;
+    -webkit-box-align: start;
+    -ms-flex-align: start;
+    align-items: flex-start;    
+}
+
+.scanex-forestry-content .view .scanex-component-icon {
+    background-repeat: no-repeat;
+    background-position: center;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    vertical-align: middle;
+    float: right;
+    opacity: 0.3;
+    position: relative;
+    left: 10px;
+    bottom: 10px;
+    transform: scaleY(0.9);
+}
 .leaflet-control.scanex-forestry-legend {  
     clear: none;      
 }
@@ -1412,59 +1412,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
 .scanex-forestry-content .view[data-id=fires] {
     margin-bottom: 60px;
 }
-.scanex-forestry-declaration .scrollable {
-    max-height: 240px;
-}
-.scanex-forestry-declaration td:first-child {
-    width: 350px;
-}
-.scanex-forestry-declaration .scanex-declaration-icon {
-    background-repeat: no-repeat;
-    background-position: center;
-    cursor: pointer;
-    width: 24px;
-    height: 24px;
-    display: inline-block;
-    vertical-align: middle;
-}
-.scanex-forestry-declaration .open-doc {
-    font-family: 'Open Sans', 'Arial';
-    font-style: normal;
-    font-weight: 600;
-    font-size: 16px;
-    line-height: 24px;
-    color: #067A57;
-    border: none;
-    background-color: transparent;
-    vertical-align: middle;
-    margin-top: 20px;
-    margin-bottom: 20px;
-}
-.scanex-forestry-declaration .federal-subject,
-.scanex-forestry-declaration .executive,
-.scanex-forestry-declaration .officer,
-.scanex-forestry-declaration .lessee,
-.scanex-forestry-declaration .contract {
-    text-align: left;
-    width: 100%;
-}
-.scanex-forestry-declaration .num > td {
-    border-top: 1px solid grey;
-}
-.scanex-forestry-view-plot .content > * {
-    float: left;
-}
-.scanex-forestry-view-plot .chart {    
-    width: 450px;
-}
-.scanex-forestry-view-plot .separator {
-    font-size: 13px;
-    font-weight: bold;
-    padding: 10px 0px 10px 0px;
-}
-.scanex-forestry-view-plot .stats {
-    max-height: 195px;
-}
 .scanex-forestry-incident .hidden {
     display: none;
 }
@@ -1652,6 +1599,59 @@ hr {
     display: flex;
     flex-direction: column;
 }
+.scanex-forestry-declaration .scrollable {
+    max-height: 240px;
+}
+.scanex-forestry-declaration td:first-child {
+    width: 350px;
+}
+.scanex-forestry-declaration .scanex-declaration-icon {
+    background-repeat: no-repeat;
+    background-position: center;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    display: inline-block;
+    vertical-align: middle;
+}
+.scanex-forestry-declaration .open-doc {
+    font-family: 'Open Sans', 'Arial';
+    font-style: normal;
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 24px;
+    color: #067A57;
+    border: none;
+    background-color: transparent;
+    vertical-align: middle;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+.scanex-forestry-declaration .federal-subject,
+.scanex-forestry-declaration .executive,
+.scanex-forestry-declaration .officer,
+.scanex-forestry-declaration .lessee,
+.scanex-forestry-declaration .contract {
+    text-align: left;
+    width: 100%;
+}
+.scanex-forestry-declaration .num > td {
+    border-top: 1px solid grey;
+}
+.scanex-forestry-view-plot .content > * {
+    float: left;
+}
+.scanex-forestry-view-plot .chart {    
+    width: 450px;
+}
+.scanex-forestry-view-plot .separator {
+    font-size: 13px;
+    font-weight: bold;
+    padding: 10px 0px 10px 0px;
+}
+.scanex-forestry-view-plot .stats {
+    max-height: 195px;
+}
 
 .scanex-forestry-project .header-left>*,
 .scanex-forestry-project .header-right>* {
@@ -1773,6 +1773,70 @@ hr {
 
 .scanex-forestry-content .view>.container.scanex-forestry-project {
     min-width: 1200px;
+}
+/*.scanex-forestry-quadrant .title {
+    font-family: 'Open Sans', 'Arial';
+    font-style: normal;
+    font-weight: bold;
+    font-size: 24px;
+    white-space: nowrap;
+    margin-bottom: -10px;
+}*/
+
+.scanex-forestry-quadrant>div {
+    white-space: nowrap;
+}
+
+.scanex-forestry-quadrant .about {
+    margin-top: -5px;
+    margin-bottom: 5px;
+    font-family: 'Open Sans', 'Arial';
+    font-size: 14px;
+    line-height: 20px;
+    color: #000000;
+    display: block;
+    margin: 0 0 20px 0;
+    white-space: nowrap;
+    font-weight: bold;
+    max-width: 900px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    opacity: 0.6;
+}
+
+.scanex-forestry-quadrant .stock {
+    font-family: 'Open Sans', 'Arial';
+    margin-top: -5px;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 18px;
+    line-height: 37px;
+    color: #000000;
+    max-width: 900px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.scanex-forestry-quadrant .chart {
+    width: 500px;
+    height: 150px;
+}
+
+.content .quadrants {
+    margin-top: 10px;
+    margin-right: 15px;
+    margin-left: 15px;
+}
+
+.container.scanex-forestry-quadrant .chart {
+    position: relative;
+    bottom: 23px;
+    right: 50px;
+    transform: scale(0.9);
+}
+
+.container.scanex-forestry-quadrant .apexcharts-legend.apexcharts-align-right.position-right {
+    top: 10px;
 }
 .scanex-forestry-content [data-id=reports].component {
     height: 100vh;
@@ -2168,70 +2232,6 @@ hr {
 }
 
 /*END SCROLLBAR STYLES*/
-/*.scanex-forestry-quadrant .title {
-    font-family: 'Open Sans', 'Arial';
-    font-style: normal;
-    font-weight: bold;
-    font-size: 24px;
-    white-space: nowrap;
-    margin-bottom: -10px;
-}*/
-
-.scanex-forestry-quadrant>div {
-    white-space: nowrap;
-}
-
-.scanex-forestry-quadrant .about {
-    margin-top: -5px;
-    margin-bottom: 5px;
-    font-family: 'Open Sans', 'Arial';
-    font-size: 14px;
-    line-height: 20px;
-    color: #000000;
-    display: block;
-    margin: 0 0 20px 0;
-    white-space: nowrap;
-    font-weight: bold;
-    max-width: 900px;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    opacity: 0.6;
-}
-
-.scanex-forestry-quadrant .stock {
-    font-family: 'Open Sans', 'Arial';
-    margin-top: -5px;
-    font-style: normal;
-    font-weight: bold;
-    font-size: 18px;
-    line-height: 37px;
-    color: #000000;
-    max-width: 900px;
-    text-overflow: ellipsis;
-    overflow: hidden;
-}
-
-.scanex-forestry-quadrant .chart {
-    width: 500px;
-    height: 150px;
-}
-
-.content .quadrants {
-    margin-top: 10px;
-    margin-right: 15px;
-    margin-left: 15px;
-}
-
-.container.scanex-forestry-quadrant .chart {
-    position: relative;
-    bottom: 23px;
-    right: 50px;
-    transform: scale(0.9);
-}
-
-.container.scanex-forestry-quadrant .apexcharts-legend.apexcharts-align-right.position-right {
-    top: 10px;
-}
 .scanex-forestry-requests>table>thead {
     background-color: #F3F3F3;
     color: #6B707B;
@@ -2877,47 +2877,6 @@ div.timeline-navigation-move-right {
     background: url('images/moveright.png') no-repeat center;
 }
 
-.scanex-forestry-view-project table {
-    table-layout: fixed;
-    border-collapse: collapse;
-}
-.scanex-forestry-view-project > .content > * {
-    float: left;
-}
-.scanex-forestry-view-project > .content .stats {    
-    padding-right: 15px;
-    max-height: 190px;
-}
-.scanex-forestry-view-project .species > table td:last-child {
-    width: 100px;
-    text-align: right;
-}
-.container.scanex-forestry-view-project label {
-    font-weight: bold;
-}
-.container.scanex-forestry-view-project .separator {
-    font-size: 13px;
-    font-weight: bold;
-    padding: 10px 0px 10px 0px;
-}
-
-.scanex-forestry-view-project > .content .chart {
-    width: 450px;    
-}
-
-.scanex-forestry-view-project .scanex-requests-icon {
-    background-color: transparent;
-    background-position: center;
-    background-repeat: no-repeat;
-    width: 24px;
-    height: 24px;
-    border: none;
-    transform: scale(0.84);
-    opacity: 0.5;
-    margin-bottom: 3px;
-    position: relative;
-    top: 3px;
-}
 @charset "UTF-8";
 
 /*!
@@ -3158,66 +3117,6 @@ http://nicolasgallagher.com/micro-clearfix-hack/
 }
 
 
-.scanex-forestry-project .quadrants>.scrollable {
-    overflow-y: auto;
-    max-height: 185px;
-    overflow-x: hidden;
-    padding-right: 4px;
-}
-
-.scanex-forestry-project .quadrants table>thead>tr>th {
-    font-size: 14px;
-    line-height: 28px;
-}
-
-/* .scanex-forestry-project .quadrants table>thead>tr>th,
-.scanex-forestry-project .quadrants table>tbody>tr>td {
-    white-space: nowrap;
-    padding: 5px 15px;
-    border: 1px solid #E6E6E6;
-    border-top: none;
-    font-family: 'Open Sans', 'Arial';
-    font-style: normal;
-    font-weight: 600;
-    font-size: 14px;
-    color: #6B707B;
-} */
-
-.scanex-forestry-project .quadrants table>thead>tr>th:nth-child(1),
-.scanex-forestry-project .quadrants table>tbody>tr>td:nth-child(1) {
-    width: 220px;
-}
-
-.scanex-forestry-project .quadrants table>thead>tr>th:nth-child(2),
-.scanex-forestry-project .quadrants table>tbody>tr>td:nth-child(2) {
-    width: 70px;
-    border-left: none;
-}
-
-.scanex-forestry-project .quadrants table>thead>tr>th,
-.scanex-forestry-project .quadrants table>thead>tr>td:nth-child(1) {
-    text-align: left;
-}
-
-.scanex-forestry-project .quadrants table>tbody>tr>td:nth-child(2) {
-    text-align: left;
-}
-
-.scanex-forestry-project .quadrants table {
-    table-layout: fixed;
-    width: 500px;
-    padding-right: 10px;
-}
-
-.scanex-forestry-project .quadrants table>thead>tr>th {
-    font-family: 'Open Sans', 'Arial';
-    font-style: normal;
-    font-weight: bold;
-    font-size: 16px;
-    line-height: 22px;
-    color: #453D3D;
-    border-top: 1px solid #E6E6E6;
-}
 .scanex-forestry-project .species {
     width: 715px;
     position: relative;
@@ -3355,6 +3254,107 @@ http://nicolasgallagher.com/micro-clearfix-hack/
  .scanex-forestry-project .species .content td.value:last-child {
     border-right: 1px solid #E6E6E6;
 } 
+.scanex-forestry-project .quadrants>.scrollable {
+    overflow-y: auto;
+    max-height: 185px;
+    overflow-x: hidden;
+    padding-right: 4px;
+}
+
+.scanex-forestry-project .quadrants table>thead>tr>th {
+    font-size: 14px;
+    line-height: 28px;
+}
+
+/* .scanex-forestry-project .quadrants table>thead>tr>th,
+.scanex-forestry-project .quadrants table>tbody>tr>td {
+    white-space: nowrap;
+    padding: 5px 15px;
+    border: 1px solid #E6E6E6;
+    border-top: none;
+    font-family: 'Open Sans', 'Arial';
+    font-style: normal;
+    font-weight: 600;
+    font-size: 14px;
+    color: #6B707B;
+} */
+
+.scanex-forestry-project .quadrants table>thead>tr>th:nth-child(1),
+.scanex-forestry-project .quadrants table>tbody>tr>td:nth-child(1) {
+    width: 220px;
+}
+
+.scanex-forestry-project .quadrants table>thead>tr>th:nth-child(2),
+.scanex-forestry-project .quadrants table>tbody>tr>td:nth-child(2) {
+    width: 70px;
+    border-left: none;
+}
+
+.scanex-forestry-project .quadrants table>thead>tr>th,
+.scanex-forestry-project .quadrants table>thead>tr>td:nth-child(1) {
+    text-align: left;
+}
+
+.scanex-forestry-project .quadrants table>tbody>tr>td:nth-child(2) {
+    text-align: left;
+}
+
+.scanex-forestry-project .quadrants table {
+    table-layout: fixed;
+    width: 500px;
+    padding-right: 10px;
+}
+
+.scanex-forestry-project .quadrants table>thead>tr>th {
+    font-family: 'Open Sans', 'Arial';
+    font-style: normal;
+    font-weight: bold;
+    font-size: 16px;
+    line-height: 22px;
+    color: #453D3D;
+    border-top: 1px solid #E6E6E6;
+}
+.scanex-forestry-view-project table {
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+.scanex-forestry-view-project > .content > * {
+    float: left;
+}
+.scanex-forestry-view-project > .content .stats {    
+    padding-right: 15px;
+    max-height: 190px;
+}
+.scanex-forestry-view-project .species > table td:last-child {
+    width: 100px;
+    text-align: right;
+}
+.container.scanex-forestry-view-project label {
+    font-weight: bold;
+}
+.container.scanex-forestry-view-project .separator {
+    font-size: 13px;
+    font-weight: bold;
+    padding: 10px 0px 10px 0px;
+}
+
+.scanex-forestry-view-project > .content .chart {
+    width: 450px;    
+}
+
+.scanex-forestry-view-project .scanex-requests-icon {
+    background-color: transparent;
+    background-position: center;
+    background-repeat: no-repeat;
+    width: 24px;
+    height: 24px;
+    border: none;
+    transform: scale(0.84);
+    opacity: 0.5;
+    margin-bottom: 3px;
+    position: relative;
+    top: 3px;
+}
 .scanex-forestry-pager input[type=text],
 .scanex-forestry-pager button {    
     font-family: 'Open Sans', 'Arial';
