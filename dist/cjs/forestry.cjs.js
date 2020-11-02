@@ -44804,7 +44804,7 @@ var Info = /*#__PURE__*/function (_View) {
 
     _this._container.classList.add('scanex-forestry-view-project');
 
-    _this._container.innerHTML = "<h1>    \n            <button class=\"scanex-requests-icon back\"></button>\n            <label class=\"title\"></label>\n        </h1>\n        <h2>\n            <label>".concat(_this.translate('project.forestry'), "</label>\n            <label class=\"forestry\"></label>\n        </h2>\n        <div class=\"content\">\n            <div class=\"stats scrollable\"></div>\n            <div class=\"chart\"></div>\n        </div>");
+    _this._container.innerHTML = "<h1>    \n            <button class=\"scanex-project-icon back\"></button>\n            <label class=\"title\"></label>\n        </h1>\n        <h2>\n            <label>".concat(_this.translate('project.forestry'), "</label>\n            <label class=\"forestry\"></label>\n        </h2>\n        <div class=\"content\">\n            <div class=\"stats scrollable\"></div>\n            <div class=\"chart\"></div>\n        </div>");
 
     var btnBack = _this._container.querySelector('.back');
 
