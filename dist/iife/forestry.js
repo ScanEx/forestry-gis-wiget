@@ -4295,88 +4295,6 @@ var Forestry = (function () {
 	  redefine(global_1, NUMBER, NumberWrapper);
 	}
 
-	var freezing = !fails(function () {
-	  return Object.isExtensible(Object.preventExtensions({}));
-	});
-
-	var internalMetadata = createCommonjsModule(function (module) {
-	var defineProperty = objectDefineProperty.f;
-
-
-
-	var METADATA = uid('meta');
-	var id = 0;
-
-	var isExtensible = Object.isExtensible || function () {
-	  return true;
-	};
-
-	var setMetadata = function (it) {
-	  defineProperty(it, METADATA, { value: {
-	    objectID: 'O' + ++id, // object ID
-	    weakData: {}          // weak collections IDs
-	  } });
-	};
-
-	var fastKey = function (it, create) {
-	  // return a primitive with prefix
-	  if (!isObject(it)) return typeof it == 'symbol' ? it : (typeof it == 'string' ? 'S' : 'P') + it;
-	  if (!has(it, METADATA)) {
-	    // can't set metadata to uncaught frozen object
-	    if (!isExtensible(it)) return 'F';
-	    // not necessary to add metadata
-	    if (!create) return 'E';
-	    // add missing metadata
-	    setMetadata(it);
-	  // return object ID
-	  } return it[METADATA].objectID;
-	};
-
-	var getWeakData = function (it, create) {
-	  if (!has(it, METADATA)) {
-	    // can't set metadata to uncaught frozen object
-	    if (!isExtensible(it)) return true;
-	    // not necessary to add metadata
-	    if (!create) return false;
-	    // add missing metadata
-	    setMetadata(it);
-	  // return the store of weak collections IDs
-	  } return it[METADATA].weakData;
-	};
-
-	// add metadata on freeze-family methods calling
-	var onFreeze = function (it) {
-	  if (freezing && meta.REQUIRED && isExtensible(it) && !has(it, METADATA)) setMetadata(it);
-	  return it;
-	};
-
-	var meta = module.exports = {
-	  REQUIRED: false,
-	  fastKey: fastKey,
-	  getWeakData: getWeakData,
-	  onFreeze: onFreeze
-	};
-
-	hiddenKeys[METADATA] = true;
-	});
-	var internalMetadata_1 = internalMetadata.REQUIRED;
-	var internalMetadata_2 = internalMetadata.fastKey;
-	var internalMetadata_3 = internalMetadata.getWeakData;
-	var internalMetadata_4 = internalMetadata.onFreeze;
-
-	var onFreeze = internalMetadata.onFreeze;
-
-	var nativeFreeze = Object.freeze;
-	var FAILS_ON_PRIMITIVES$2 = fails(function () { nativeFreeze(1); });
-
-	// `Object.freeze` method
-	// https://tc39.github.io/ecma262/#sec-object.freeze
-	_export({ target: 'Object', stat: true, forced: FAILS_ON_PRIMITIVES$2, sham: !freezing }, {
-	  freeze: function freeze(it) {
-	    return nativeFreeze && isObject(it) ? nativeFreeze(onFreeze(it)) : it;
-	  }
-	});
-
 	var MATCH = wellKnownSymbol('match');
 
 	// `IsRegExp` abstract operation
@@ -5869,27 +5787,21 @@ var Forestry = (function () {
 
 	var leafletSrc = createCommonjsModule(function (module, exports) {
 	  /* @preserve
-	   * Leaflet 1.6.0, a JS library for interactive maps. http://leafletjs.com
+	   * Leaflet 1.7.1, a JS library for interactive maps. http://leafletjs.com
 	   * (c) 2010-2019 Vladimir Agafonkin, (c) 2010-2011 CloudMade
 	   */
 	  (function (global, factory) {
 	     factory(exports) ;
 	  })(commonjsGlobal, function (exports) {
 
-	    var version = "1.6.0";
+	    var version = "1.7.1";
 	    /*
 	     * @namespace Util
 	     *
 	     * Various utility functions, used by Leaflet internally.
 	     */
-
-	    var freeze = Object.freeze;
-
-	    Object.freeze = function (obj) {
-	      return obj;
-	    }; // @function extend(dest: Object, src?: Object): Object
+	    // @function extend(dest: Object, src?: Object): Object
 	    // Merges the properties of the `src` object (or multiple objects) into `dest` object and returns the latter. Has an `L.extend` shortcut.
-
 
 	    function extend(dest) {
 	      var i, j, len, src;
@@ -6018,7 +5930,7 @@ var Forestry = (function () {
 
 
 	    function setOptions(obj, options) {
-	      if (!obj.hasOwnProperty('options')) {
+	      if (!Object.prototype.hasOwnProperty.call(obj, 'options')) {
 	        obj.options = obj.options ? create(obj.options) : {};
 	      }
 
@@ -6129,8 +6041,7 @@ var Forestry = (function () {
 	      }
 	    }
 
-	    var Util = (Object.freeze || Object)({
-	      freeze: freeze,
+	    var Util = {
 	      extend: extend,
 	      create: create,
 	      bind: bind,
@@ -6152,7 +6063,7 @@ var Forestry = (function () {
 	      cancelFn: cancelFn,
 	      requestAnimFrame: requestAnimFrame,
 	      cancelAnimFrame: cancelAnimFrame
-	    }); // @class Class
+	    }; // @class Class
 	    // @aka L.Class
 	    // @section
 	    // @uninheritable
@@ -6180,7 +6091,7 @@ var Forestry = (function () {
 	      NewClass.prototype = proto; // inherit parent's statics
 
 	      for (var i in this) {
-	        if (this.hasOwnProperty(i) && i !== 'prototype' && i !== '__super__') {
+	        if (Object.prototype.hasOwnProperty.call(this, i) && i !== 'prototype' && i !== '__super__') {
 	          NewClass[i] = this[i];
 	        }
 	      } // mix static properties into the class
@@ -6571,7 +6482,7 @@ var Forestry = (function () {
 	     * map.panBy(L.point(200, 300));
 	     * ```
 	     *
-	     * Note that `Point` does not inherit from Leafet's `Class` object,
+	     * Note that `Point` does not inherit from Leaflet's `Class` object,
 	     * which means new classes can't inherit from it, and new methods
 	     * can't be added to it with the `include` function.
 	     */
@@ -6762,7 +6673,7 @@ var Forestry = (function () {
 	     * otherBounds.intersects([[10, 10], [40, 60]]);
 	     * ```
 	     *
-	     * Note that `Bounds` does not inherit from Leafet's `Class` object,
+	     * Note that `Bounds` does not inherit from Leaflet's `Class` object,
 	     * which means new classes can't inherit from it, and new methods
 	     * can't be added to it with the `include` function.
 	     */
@@ -6925,7 +6836,7 @@ var Forestry = (function () {
 	     *
 	     * Caution: if the area crosses the antimeridian (often confused with the International Date Line), you must specify corners _outside_ the [-180, 180] degrees longitude range.
 	     *
-	     * Note that `LatLngBounds` does not inherit from Leafet's `Class` object,
+	     * Note that `LatLngBounds` does not inherit from Leaflet's `Class` object,
 	     * which means new classes can't inherit from it, and new methods
 	     * can't be added to it with the `include` function.
 	     */
@@ -7077,7 +6988,7 @@ var Forestry = (function () {
 	            lngIntersects = ne2.lng >= sw.lng && sw2.lng <= ne.lng;
 	        return latIntersects && lngIntersects;
 	      },
-	      // @method overlaps(otherBounds: Bounds): Boolean
+	      // @method overlaps(otherBounds: LatLngBounds): Boolean
 	      // Returns `true` if the rectangle overlaps the given bounds. Two bounds overlap if their intersection is an area.
 	      overlaps: function overlaps(bounds) {
 	        bounds = toLatLngBounds(bounds);
@@ -7256,7 +7167,7 @@ var Forestry = (function () {
 	     * CRS not defined by default, take a look at the
 	     * [Proj4Leaflet](https://github.com/kartena/Proj4Leaflet) plugin.
 	     *
-	     * Note that the CRS instances do not inherit from Leafet's `Class` object,
+	     * Note that the CRS instances do not inherit from Leaflet's `Class` object,
 	     * and can't be instantiated. Also, new classes can't inherit from them,
 	     * and methods can't be added to them with the `include` function.
 	     */
@@ -7587,7 +7498,7 @@ var Forestry = (function () {
 
 	    var opera = !!window.opera; // @property chrome: Boolean; `true` for the Chrome browser.
 
-	    var chrome = userAgentContains('chrome'); // @property gecko: Boolean; `true` for gecko-based browsers like Firefox.
+	    var chrome = !edge && userAgentContains('chrome'); // @property gecko: Boolean; `true` for gecko-based browsers like Firefox.
 
 	    var gecko = userAgentContains('gecko') && !webkit && !opera && !ie; // @property safari: Boolean; `true` for the Safari browser.
 
@@ -7619,7 +7530,7 @@ var Forestry = (function () {
 	    var msPointer = !window.PointerEvent && window.MSPointerEvent; // @property pointer: Boolean
 	    // `true` for all browsers supporting [pointer events](https://msdn.microsoft.com/en-us/library/dn433244%28v=vs.85%29.aspx).
 
-	    var pointer = !webkit && !!(window.PointerEvent || msPointer); // @property touch: Boolean
+	    var pointer = !!(window.PointerEvent || msPointer); // @property touch: Boolean
 	    // `true` for all browsers supporting [touch events](https://developer.mozilla.org/docs/Web/API/Touch_events).
 	    // This does not necessarily mean that the browser is running in a computer with
 	    // a touchscreen, it only means that the browser is capable of understanding
@@ -7636,12 +7547,13 @@ var Forestry = (function () {
 	    var retina = (window.devicePixelRatio || window.screen.deviceXDPI / window.screen.logicalXDPI) > 1; // @property passiveEvents: Boolean
 	    // `true` for browsers that support passive events.
 
-	    var passiveEvents = function passiveEvents() {
+	    var passiveEvents = function () {
 	      var supportsPassiveOption = false;
 
 	      try {
 	        var opts = Object.defineProperty({}, 'passive', {
 	          get: function get() {
+	            // eslint-disable-line getter-return
 	            supportsPassiveOption = true;
 	          }
 	        });
@@ -7651,7 +7563,7 @@ var Forestry = (function () {
 	      }
 
 	      return supportsPassiveOption;
-	    }; // @property canvas: Boolean
+	    }(); // @property canvas: Boolean
 	    // `true` when the browser supports [`<canvas>`](https://developer.mozilla.org/docs/Web/API/Canvas_API).
 
 
@@ -7680,7 +7592,7 @@ var Forestry = (function () {
 	      return navigator.userAgent.toLowerCase().indexOf(str) >= 0;
 	    }
 
-	    var Browser = (Object.freeze || Object)({
+	    var Browser = {
 	      ie: ie,
 	      ielt9: ielt9,
 	      edge: edge,
@@ -7712,7 +7624,7 @@ var Forestry = (function () {
 	      canvas: canvas,
 	      svg: svg,
 	      vml: vml
-	    });
+	    };
 	    /*
 	     * Extends L.DomEvent to provide touch support for Internet Explorer and Windows-based devices.
 	     */
@@ -7721,11 +7633,8 @@ var Forestry = (function () {
 	    var POINTER_MOVE = msPointer ? 'MSPointerMove' : 'pointermove';
 	    var POINTER_UP = msPointer ? 'MSPointerUp' : 'pointerup';
 	    var POINTER_CANCEL = msPointer ? 'MSPointerCancel' : 'pointercancel';
-	    var TAG_WHITE_LIST = ['INPUT', 'SELECT', 'OPTION'];
 	    var _pointers = {};
-	    var _pointerDocListener = false; // DomEvent.DoubleTap needs to know about this
-
-	    var _pointersCount = 0; // Provides a touch events wrapper for (ms)pointer events.
+	    var _pointerDocListener = false; // Provides a touch events wrapper for (ms)pointer events.
 	    // ref http://www.w3.org/TR/pointerevents/ https://www.w3.org/Bugs/Public/show_bug.cgi?id=22890
 
 	    function addPointerListener(obj, type, handler, id) {
@@ -7757,15 +7666,9 @@ var Forestry = (function () {
 
 	    function _addPointerStart(obj, handler, id) {
 	      var onDown = bind(function (e) {
-	        if (e.pointerType !== 'mouse' && e.MSPOINTER_TYPE_MOUSE && e.pointerType !== e.MSPOINTER_TYPE_MOUSE) {
-	          // In IE11, some touch events needs to fire for form controls, or
-	          // the controls will stop working. We keep a whitelist of tag names that
-	          // need these events. For other target tags, we prevent default on the event.
-	          if (TAG_WHITE_LIST.indexOf(e.target.tagName) < 0) {
-	            preventDefault(e);
-	          } else {
-	            return;
-	          }
+	        // IE10 specific: MsTouch needs preventDefault. See #2000
+	        if (e.MSPOINTER_TYPE_TOUCH && e.pointerType === e.MSPOINTER_TYPE_TOUCH) {
+	          preventDefault(e);
 	        }
 
 	        _handlePointer(e, handler);
@@ -7774,18 +7677,17 @@ var Forestry = (function () {
 	      obj.addEventListener(POINTER_DOWN, onDown, false); // need to keep track of what pointers and how many are active to provide e.touches emulation
 
 	      if (!_pointerDocListener) {
-	        // we listen documentElement as any drags that end by moving the touch off the screen get fired there
-	        document.documentElement.addEventListener(POINTER_DOWN, _globalPointerDown, true);
-	        document.documentElement.addEventListener(POINTER_MOVE, _globalPointerMove, true);
-	        document.documentElement.addEventListener(POINTER_UP, _globalPointerUp, true);
-	        document.documentElement.addEventListener(POINTER_CANCEL, _globalPointerUp, true);
+	        // we listen document as any drags that end by moving the touch off the screen get fired there
+	        document.addEventListener(POINTER_DOWN, _globalPointerDown, true);
+	        document.addEventListener(POINTER_MOVE, _globalPointerMove, true);
+	        document.addEventListener(POINTER_UP, _globalPointerUp, true);
+	        document.addEventListener(POINTER_CANCEL, _globalPointerUp, true);
 	        _pointerDocListener = true;
 	      }
 	    }
 
 	    function _globalPointerDown(e) {
 	      _pointers[e.pointerId] = e;
-	      _pointersCount++;
 	    }
 
 	    function _globalPointerMove(e) {
@@ -7796,7 +7698,6 @@ var Forestry = (function () {
 
 	    function _globalPointerUp(e) {
 	      delete _pointers[e.pointerId];
-	      _pointersCount--;
 	    }
 
 	    function _handlePointer(e, handler) {
@@ -7813,7 +7714,7 @@ var Forestry = (function () {
 	    function _addPointerMove(obj, handler, id) {
 	      var onMove = function onMove(e) {
 	        // don't fire touch moves when mouse isn't down
-	        if ((e.pointerType === e.MSPOINTER_TYPE_MOUSE || e.pointerType === 'mouse') && e.buttons === 0) {
+	        if (e.pointerType === (e.MSPOINTER_TYPE_MOUSE || 'mouse') && e.buttons === 0) {
 	          return;
 	        }
 
@@ -7851,19 +7752,16 @@ var Forestry = (function () {
 	          delay = 250;
 
 	      function onTouchStart(e) {
-	        var count;
-
 	        if (pointer) {
-	          if (!edge || e.pointerType === 'mouse') {
+	          if (!e.isPrimary) {
 	            return;
 	          }
 
-	          count = _pointersCount;
-	        } else {
-	          count = e.touches.length;
-	        }
+	          if (e.pointerType === 'mouse') {
+	            return;
+	          } // mouse fires native dblclick
 
-	        if (count > 1) {
+	        } else if (e.touches.length > 1) {
 	          return;
 	        }
 
@@ -7877,7 +7775,7 @@ var Forestry = (function () {
 	      function onTouchEnd(e) {
 	        if (doubleTap && !touch$$1.cancelBubble) {
 	          if (pointer) {
-	            if (!edge || e.pointerType === 'mouse') {
+	            if (e.pointerType === 'mouse') {
 	              return;
 	            } // work around .type being readonly with MSPointer* events
 
@@ -7928,11 +7826,7 @@ var Forestry = (function () {
 	      obj.removeEventListener(_touchend, touchend, passiveEvents ? {
 	        passive: false
 	      } : false);
-
-	      if (!edge) {
-	        obj.removeEventListener('dblclick', dblclick, false);
-	      }
-
+	      obj.removeEventListener('dblclick', dblclick, false);
 	      return this;
 	    }
 	    /*
@@ -8226,9 +8120,7 @@ var Forestry = (function () {
 	      off(window, 'dragstart', preventDefault);
 	    }
 
-	    var _outlineElement;
-
-	    var _outlineStyle; // @function preventOutline(el: HTMLElement)
+	    var _outlineElement, _outlineStyle; // @function preventOutline(el: HTMLElement)
 	    // Makes the [outline](https://developer.mozilla.org/docs/Web/CSS/outline)
 	    // of the element `el` invisible. Used internally by Leaflet to prevent
 	    // focusable elements from displaying an outline when the user performs a
@@ -8288,7 +8180,7 @@ var Forestry = (function () {
 	      };
 	    }
 
-	    var DomUtil = (Object.freeze || Object)({
+	    var DomUtil = {
 	      TRANSFORM: TRANSFORM,
 	      TRANSITION: TRANSITION,
 	      TRANSITION_END: TRANSITION_END,
@@ -8317,7 +8209,7 @@ var Forestry = (function () {
 	      restoreOutline: restoreOutline,
 	      getSizedParentNode: getSizedParentNode,
 	      getScale: getScale
-	    });
+	    };
 	    /*
 	     * @namespace DomEvent
 	     * Utility functions to work with the [DOM events](https://developer.mozilla.org/docs/Web/API/Event), used by Leaflet internally.
@@ -8378,6 +8270,19 @@ var Forestry = (function () {
 	      return this;
 	    }
 
+	    function browserFiresNativeDblClick() {
+	      // See https://github.com/w3c/pointerevents/issues/171
+	      if (pointer) {
+	        return !(edge || safari);
+	      }
+	    }
+
+	    var mouseSubst = {
+	      mouseenter: 'mouseover',
+	      mouseleave: 'mouseout',
+	      wheel: !('onwheel' in window) && 'mousewheel'
+	    };
+
 	    function addOne(obj, type, fn, context) {
 	      var id = type + stamp(fn) + (context ? '_' + stamp(context) : '');
 
@@ -8394,13 +8299,11 @@ var Forestry = (function () {
 	      if (pointer && type.indexOf('touch') === 0) {
 	        // Needs DomEvent.Pointer.js
 	        addPointerListener(obj, type, handler, id);
-	      } else if (touch && type === 'dblclick' && addDoubleTapListener && !(pointer && chrome)) {
-	        // Chrome >55 does not need the synthetic dblclicks from addDoubleTapListener
-	        // See #5180
+	      } else if (touch && type === 'dblclick' && !browserFiresNativeDblClick()) {
 	        addDoubleTapListener(obj, handler, id);
 	      } else if ('addEventListener' in obj) {
-	        if (type === 'mousewheel') {
-	          obj.addEventListener('onwheel' in obj ? 'wheel' : 'mousewheel', handler, passiveEvents ? {
+	        if (type === 'touchstart' || type === 'touchmove' || type === 'wheel' || type === 'mousewheel') {
+	          obj.addEventListener(mouseSubst[type] || type, handler, passiveEvents ? {
 	            passive: false
 	          } : false);
 	        } else if (type === 'mouseenter' || type === 'mouseleave') {
@@ -8412,15 +8315,9 @@ var Forestry = (function () {
 	            }
 	          };
 
-	          obj.addEventListener(type === 'mouseenter' ? 'mouseover' : 'mouseout', handler, false);
+	          obj.addEventListener(mouseSubst[type], handler, false);
 	        } else {
-	          if (type === 'click' && android) {
-	            handler = function handler(e) {
-	              filterClick(e, originalHandler);
-	            };
-	          }
-
-	          obj.addEventListener(type, handler, false);
+	          obj.addEventListener(type, originalHandler, false);
 	        }
 	      } else if ('attachEvent' in obj) {
 	        obj.attachEvent('on' + type, handler);
@@ -8440,16 +8337,10 @@ var Forestry = (function () {
 
 	      if (pointer && type.indexOf('touch') === 0) {
 	        removePointerListener(obj, type, id);
-	      } else if (touch && type === 'dblclick' && removeDoubleTapListener && !(pointer && chrome)) {
+	      } else if (touch && type === 'dblclick' && !browserFiresNativeDblClick()) {
 	        removeDoubleTapListener(obj, id);
 	      } else if ('removeEventListener' in obj) {
-	        if (type === 'mousewheel') {
-	          obj.removeEventListener('onwheel' in obj ? 'wheel' : 'mousewheel', handler, passiveEvents ? {
-	            passive: false
-	          } : false);
-	        } else {
-	          obj.removeEventListener(type === 'mouseenter' ? 'mouseover' : type === 'mouseleave' ? 'mouseout' : type, handler, false);
-	        }
+	        obj.removeEventListener(mouseSubst[type] || type, handler, false);
 	      } else if ('detachEvent' in obj) {
 	        obj.detachEvent('on' + type, handler);
 	      }
@@ -8477,11 +8368,11 @@ var Forestry = (function () {
 	      skipped(e);
 	      return this;
 	    } // @function disableScrollPropagation(el: HTMLElement): this
-	    // Adds `stopPropagation` to the element's `'mousewheel'` events (plus browser variants).
+	    // Adds `stopPropagation` to the element's `'wheel'` events (plus browser variants).
 
 
 	    function disableScrollPropagation(el) {
-	      addOne(el, 'mousewheel', stopPropagation);
+	      addOne(el, 'wheel', stopPropagation);
 	      return this;
 	    } // @function disableClickPropagation(el: HTMLElement): this
 	    // Adds `stopPropagation` to the element's `'click'`, `'doubleclick'`,
@@ -8536,7 +8427,7 @@ var Forestry = (function () {
 
 
 	    var wheelPxFactor = win && chrome ? 2 * window.devicePixelRatio : gecko ? window.devicePixelRatio : 1; // @function getWheelDelta(ev: DOMEvent): Number
-	    // Gets normalized wheel delta from a mousewheel DOM event, in vertical
+	    // Gets normalized wheel delta from a wheel DOM event, in vertical
 	    // pixels scrolled (negative if scrolling down).
 	    // Events from pointing devices without precise scrolling are mapped to
 	    // a best guess of 60 pixels.
@@ -8586,25 +8477,7 @@ var Forestry = (function () {
 	      return related !== el;
 	    }
 
-	    var lastClick; // this is a horrible workaround for a bug in Android where a single touch triggers two click events
-
-	    function filterClick(e, handler) {
-	      var timeStamp = e.timeStamp || e.originalEvent && e.originalEvent.timeStamp,
-	          elapsed = lastClick && timeStamp - lastClick; // are they closer together than 500ms yet more than 100ms?
-	      // Android typically triggers them ~300ms apart while multiple listeners
-	      // on the same event should be triggered far faster;
-	      // or check if click is simulated on the element, and if it is, reject any non-simulated events
-
-	      if (elapsed && elapsed > 100 && elapsed < 500 || e.target._simulatedClick && !e._simulated) {
-	        stop(e);
-	        return;
-	      }
-
-	      lastClick = timeStamp;
-	      handler(e);
-	    }
-
-	    var DomEvent = (Object.freeze || Object)({
+	    var DomEvent = {
 	      on: on,
 	      off: off,
 	      stopPropagation: stopPropagation,
@@ -8619,7 +8492,7 @@ var Forestry = (function () {
 	      isExternalTarget: isExternalTarget,
 	      addListener: on,
 	      removeListener: off
-	    });
+	    };
 	    /*
 	     * @class PosAnimation
 	     * @aka L.PosAnimation
@@ -9123,7 +8996,7 @@ var Forestry = (function () {
 
 	        return this.flyTo(target.center, target.zoom, options);
 	      },
-	      // @method setMaxBounds(bounds: Bounds): this
+	      // @method setMaxBounds(bounds: LatLngBounds): this
 	      // Restricts the map view to the given bounds (see the [maxBounds](#map-maxbounds) option).
 	      setMaxBounds: function setMaxBounds(bounds) {
 	        bounds = toLatLngBounds(bounds);
@@ -9432,6 +9305,8 @@ var Forestry = (function () {
 	      // Destroys the map and clears all related event listeners.
 	      remove: function remove() {
 	        this._initEvents(true);
+
+	        this.off('moveend', this._panInsideMaxBounds);
 
 	        if (this._containerId !== this._container._leaflet_id) {
 	          throw new Error('Map container is being reused by another instance');
@@ -9791,10 +9666,10 @@ var Forestry = (function () {
 	        // Pane for `GridLayer`s and `TileLayer`s
 
 	        this.createPane('tilePane'); // @pane overlayPane: HTMLElement = 400
-	        // Pane for vectors (`Path`s, like `Polyline`s and `Polygon`s), `ImageOverlay`s and `VideoOverlay`s
+	        // Pane for overlay shadows (e.g. `Marker` shadows)
 
 	        this.createPane('shadowPane'); // @pane shadowPane: HTMLElement = 500
-	        // Pane for overlay shadows (e.g. `Marker` shadows)
+	        // Pane for vectors (`Path`s, like `Polyline`s and `Polygon`s), `ImageOverlay`s and `VideoOverlay`s
 
 	        this.createPane('overlayPane'); // @pane markerPane: HTMLElement = 600
 	        // Pane for `Icon`s of `Marker`s
@@ -10760,11 +10635,11 @@ var Forestry = (function () {
 	        var obj = this._getLayer(stamp(e.target)); // @namespace Map
 	        // @section Layer events
 	        // @event baselayerchange: LayersControlEvent
-	        // Fired when the base layer is changed through the [layer control](#control-layers).
+	        // Fired when the base layer is changed through the [layers control](#control-layers).
 	        // @event overlayadd: LayersControlEvent
-	        // Fired when an overlay is selected through the [layer control](#control-layers).
+	        // Fired when an overlay is selected through the [layers control](#control-layers).
 	        // @event overlayremove: LayersControlEvent
-	        // Fired when an overlay is deselected through the [layer control](#control-layers).
+	        // Fired when an overlay is deselected through the [layers control](#control-layers).
 	        // @namespace Control.Layers
 
 
@@ -11462,7 +11337,7 @@ var Forestry = (function () {
 	          this._lastTarget = e.target || e.srcElement; // IE and Edge do not give the <use> element, so fetch it
 	          // if necessary
 
-	          if (window.SVGElementInstance && this._lastTarget instanceof SVGElementInstance) {
+	          if (window.SVGElementInstance && this._lastTarget instanceof window.SVGElementInstance) {
 	            this._lastTarget = this._lastTarget.correspondingUseElement;
 	          }
 
@@ -11772,7 +11647,7 @@ var Forestry = (function () {
 	      return isFlat(latlngs);
 	    }
 
-	    var LineUtil = (Object.freeze || Object)({
+	    var LineUtil = {
 	      simplify: simplify,
 	      pointToSegmentDistance: pointToSegmentDistance,
 	      closestPointOnSegment: closestPointOnSegment,
@@ -11782,7 +11657,7 @@ var Forestry = (function () {
 	      _sqClosestPointOnSegment: _sqClosestPointOnSegment,
 	      isFlat: isFlat,
 	      _flat: _flat
-	    });
+	    };
 	    /*
 	     * @namespace PolyUtil
 	     * Various utility functions for polygon geometries.
@@ -11842,9 +11717,9 @@ var Forestry = (function () {
 	      return points;
 	    }
 
-	    var PolyUtil = (Object.freeze || Object)({
+	    var PolyUtil = {
 	      clipPolygon: clipPolygon
-	    });
+	    };
 	    /*
 	     * @namespace Projection
 	     * @section
@@ -11909,32 +11784,26 @@ var Forestry = (function () {
 	    };
 	    /*
 	     * @class Projection
-	    
-	     * An object with methods for projecting geographical coordinates of the world onto
+	      * An object with methods for projecting geographical coordinates of the world onto
 	     * a flat surface (and back). See [Map projection](http://en.wikipedia.org/wiki/Map_projection).
-	    
-	     * @property bounds: Bounds
+	      * @property bounds: Bounds
 	     * The bounds (specified in CRS units) where the projection is valid
-	    
-	     * @method project(latlng: LatLng): Point
+	      * @method project(latlng: LatLng): Point
 	     * Projects geographical coordinates into a 2D point.
 	     * Only accepts actual `L.LatLng` instances, not arrays.
-	    
-	     * @method unproject(point: Point): LatLng
+	      * @method unproject(point: Point): LatLng
 	     * The inverse of `project`. Projects a 2D point into a geographical location.
 	     * Only accepts actual `L.Point` instances, not arrays.
-	    
-	     * Note that the projection instances do not inherit from Leafet's `Class` object,
+	      * Note that the projection instances do not inherit from Leaflet's `Class` object,
 	     * and can't be instantiated. Also, new classes can't inherit from them,
 	     * and methods can't be added to them with the `include` function.
-	    
-	     */
+	      */
 
-	    var index = (Object.freeze || Object)({
+	    var index = {
 	      LonLat: LonLat,
 	      Mercator: Mercator,
 	      SphericalMercator: SphericalMercator
-	    });
+	    };
 	    /*
 	     * @namespace CRS
 	     * @crs L.CRS.EPSG3395
@@ -12053,6 +11922,10 @@ var Forestry = (function () {
 	      },
 	      // @method removeFrom(map: Map): this
 	      // Removes the layer from the given map
+	      //
+	      // @alternative
+	      // @method removeFrom(group: LayerGroup): this
+	      // Removes the layer from the given `LayerGroup`
 	      removeFrom: function removeFrom(obj) {
 	        if (obj) {
 	          obj.removeLayer(this);
@@ -12331,7 +12204,12 @@ var Forestry = (function () {
 	      // @method hasLayer(id: Number): Boolean
 	      // Returns `true` if the given internal ID is currently added to the group.
 	      hasLayer: function hasLayer(layer) {
-	        return !!layer && (layer in this._layers || this.getLayerId(layer) in this._layers);
+	        if (!layer) {
+	          return false;
+	        }
+
+	        var layerId = typeof layer === 'number' ? layer : this.getLayerId(layer);
+	        return layerId in this._layers;
 	      },
 	      // @method clearLayers(): this
 	      // Removes all the layers from the group.
@@ -12486,11 +12364,11 @@ var Forestry = (function () {
 
 	        return bounds;
 	      }
-	    }); // @factory L.featureGroup(layers: Layer[])
-	    // Create a feature group, optionally given an initial set of layers.
+	    }); // @factory L.featureGroup(layers?: Layer[], options?: Object)
+	    // Create a feature group, optionally given an initial set of layers and an `options` object.
 
-	    var featureGroup = function featureGroup(layers) {
-	      return new FeatureGroup(layers);
+	    var featureGroup = function featureGroup(layers, options) {
+	      return new FeatureGroup(layers, options);
 	    };
 	    /*
 	     * @class Icon
@@ -12773,9 +12651,11 @@ var Forestry = (function () {
 	        // Fired when the user starts dragging the marker.
 	        // @event movestart: Event
 	        // Fired when the marker starts moving (because of dragging).
-	        this._oldLatLng = this._marker.getLatLng();
+	        this._oldLatLng = this._marker.getLatLng(); // When using ES6 imports it could not be set when `Popup` was not imported as well
 
-	        this._marker.closePopup().fire('movestart').fire('dragstart');
+	        this._marker.closePopup && this._marker.closePopup();
+
+	        this._marker.fire('movestart').fire('dragstart');
 	      },
 	      _onPreDrag: function _onPreDrag(e) {
 	        if (this._marker.options.autoPan) {
@@ -12860,7 +12740,7 @@ var Forestry = (function () {
 	        // @option pane: String = 'markerPane'
 	        // `Map pane` where the markers icon will be added.
 	        pane: 'markerPane',
-	        // @option pane: String = 'shadowPane'
+	        // @option shadowPane: String = 'shadowPane'
 	        // `Map pane` where the markers shadow will be added.
 	        shadowPane: 'shadowPane',
 	        // @option bubblingMouseEvents: Boolean = false
@@ -13246,7 +13126,7 @@ var Forestry = (function () {
 	        if (this._renderer) {
 	          this._renderer._updateStyle(this);
 
-	          if (this.options.stroke && style && style.hasOwnProperty('weight')) {
+	          if (this.options.stroke && style && Object.prototype.hasOwnProperty.call(style, 'weight')) {
 	            this._updateBounds();
 	          }
 	        }
@@ -13625,7 +13505,7 @@ var Forestry = (function () {
 	      getBounds: function getBounds() {
 	        return this._bounds;
 	      },
-	      // @method addLatLng(latlng: LatLng, latlngs? LatLng[]): this
+	      // @method addLatLng(latlng: LatLng, latlngs?: LatLng[]): this
 	      // Adds a given point to the polyline. By default, adds to the first ring of
 	      // the polyline in case of a multi-polyline, but can be overridden by passing
 	      // a specific ring as a LatLng array (that you can earlier access with [`getLatLngs`](#polyline-getlatlngs)).
@@ -14683,7 +14563,10 @@ var Forestry = (function () {
 	        // @option keepAspectRatio: Boolean = true
 	        // Whether the video will save aspect ratio after the projection.
 	        // Relevant for supported browsers. Browser compatibility- https://developer.mozilla.org/en-US/docs/Web/CSS/object-fit
-	        keepAspectRatio: true
+	        keepAspectRatio: true,
+	        // @option muted: Boolean = false
+	        // Whether the video starts on mute when loaded.
+	        muted: false
 	      },
 	      _initImage: function _initImage() {
 	        var wasElementSupplied = this._url.tagName === 'VIDEO';
@@ -14720,12 +14603,13 @@ var Forestry = (function () {
 	          this._url = [this._url];
 	        }
 
-	        if (!this.options.keepAspectRatio && vid.style.hasOwnProperty('objectFit')) {
+	        if (!this.options.keepAspectRatio && Object.prototype.hasOwnProperty.call(vid.style, 'objectFit')) {
 	          vid.style['objectFit'] = 'fill';
 	        }
 
 	        vid.autoplay = !!this.options.autoplay;
 	        vid.loop = !!this.options.loop;
+	        vid.muted = !!this.options.muted;
 
 	        for (var i = 0; i < this._url.length; i++) {
 	          var source = create$1('source');
@@ -14881,7 +14765,7 @@ var Forestry = (function () {
 	        return this;
 	      },
 	      // @method getElement: String|HTMLElement
-	      // Alias for [getContent()](#popup-getcontent)
+	      // Returns the HTML container of the popup.
 	      getElement: function getElement() {
 	        return this._container;
 	      },
@@ -15171,9 +15055,9 @@ var Forestry = (function () {
 	            container = this._container = create$1('div', prefix + ' ' + (this.options.className || '') + ' leaflet-zoom-animated');
 	        var wrapper = this._wrapper = create$1('div', prefix + '-content-wrapper', container);
 	        this._contentNode = create$1('div', prefix + '-content', wrapper);
-	        disableClickPropagation(wrapper);
+	        disableClickPropagation(container);
 	        disableScrollPropagation(this._contentNode);
-	        on(wrapper, 'contextmenu', stopPropagation);
+	        on(container, 'contextmenu', stopPropagation);
 	        this._tipContainer = create$1('div', prefix + '-tip-container', container);
 	        this._tip = create$1('div', prefix + '-tip', this._tipContainer);
 
@@ -15600,7 +15484,9 @@ var Forestry = (function () {
 	      _updateLayout: function _updateLayout() {},
 	      _adjustPan: function _adjustPan() {},
 	      _setPosition: function _setPosition(pos) {
-	        var map = this._map,
+	        var subX,
+	            subY,
+	            map = this._map,
 	            container = this._container,
 	            centerPoint = map.latLngToContainerPoint(map.getCenter()),
 	            tooltipPoint = map.layerPointToContainerPoint(pos),
@@ -15611,19 +15497,31 @@ var Forestry = (function () {
 	            anchor = this._getAnchor();
 
 	        if (direction === 'top') {
-	          pos = pos.add(toPoint(-tooltipWidth / 2 + offset.x, -tooltipHeight + offset.y + anchor.y, true));
+	          subX = tooltipWidth / 2;
+	          subY = tooltipHeight;
 	        } else if (direction === 'bottom') {
-	          pos = pos.subtract(toPoint(tooltipWidth / 2 - offset.x, -offset.y, true));
+	          subX = tooltipWidth / 2;
+	          subY = 0;
 	        } else if (direction === 'center') {
-	          pos = pos.subtract(toPoint(tooltipWidth / 2 + offset.x, tooltipHeight / 2 - anchor.y + offset.y, true));
-	        } else if (direction === 'right' || direction === 'auto' && tooltipPoint.x < centerPoint.x) {
+	          subX = tooltipWidth / 2;
+	          subY = tooltipHeight / 2;
+	        } else if (direction === 'right') {
+	          subX = 0;
+	          subY = tooltipHeight / 2;
+	        } else if (direction === 'left') {
+	          subX = tooltipWidth;
+	          subY = tooltipHeight / 2;
+	        } else if (tooltipPoint.x < centerPoint.x) {
 	          direction = 'right';
-	          pos = pos.add(toPoint(offset.x + anchor.x, anchor.y - tooltipHeight / 2 + offset.y, true));
+	          subX = 0;
+	          subY = tooltipHeight / 2;
 	        } else {
 	          direction = 'left';
-	          pos = pos.subtract(toPoint(tooltipWidth + anchor.x - offset.x, tooltipHeight / 2 - anchor.y - offset.y, true));
+	          subX = tooltipWidth + (offset.x + anchor.x) * 2;
+	          subY = tooltipHeight / 2;
 	        }
 
+	        pos = pos.subtract(toPoint(subX, subY, true)).add(offset).add(anchor);
 	        removeClass(container, 'leaflet-tooltip-right');
 	        removeClass(container, 'leaflet-tooltip-left');
 	        removeClass(container, 'leaflet-tooltip-top');
@@ -16278,6 +16176,8 @@ var Forestry = (function () {
 	        }
 
 	        for (var z in this._levels) {
+	          z = Number(z);
+
 	          if (this._levels[z].el.children.length || z === zoom) {
 	            this._levels[z].el.style.zIndex = maxZoom - Math.abs(zoom - z);
 
@@ -16373,7 +16273,7 @@ var Forestry = (function () {
 	        for (var z in this._levels) {
 	          _remove(this._levels[z].el);
 
-	          this._onRemoveLevel(z);
+	          this._onRemoveLevel(Number(z));
 
 	          delete this._levels[z];
 	        }
@@ -16449,10 +16349,12 @@ var Forestry = (function () {
 	        return zoom;
 	      },
 	      _setView: function _setView(center, zoom, noPrune, noUpdate) {
-	        var tileZoom = this._clampZoom(Math.round(zoom));
+	        var tileZoom = Math.round(zoom);
 
 	        if (this.options.maxZoom !== undefined && tileZoom > this.options.maxZoom || this.options.minZoom !== undefined && tileZoom < this.options.minZoom) {
 	          tileZoom = undefined;
+	        } else {
+	          tileZoom = this._clampZoom(tileZoom);
 	        }
 
 	        var tileZoomChanged = this.options.updateWhenZooming && tileZoom !== this._tileZoom;
@@ -17547,7 +17449,13 @@ var Forestry = (function () {
 
 	          this._ctx.clearRect(bounds.min.x, bounds.min.y, size.x, size.y);
 	        } else {
+	          this._ctx.save();
+
+	          this._ctx.setTransform(1, 0, 0, 1, 0, 0);
+
 	          this._ctx.clearRect(0, 0, this._container.width, this._container.height);
+
+	          this._ctx.restore();
 	        }
 	      },
 	      _draw: function _draw() {
@@ -17670,8 +17578,10 @@ var Forestry = (function () {
 	        for (var order = this._drawFirst; order; order = order.next) {
 	          layer = order.layer;
 
-	          if (layer.options.interactive && layer._containsPoint(point) && !this._map._draggableMoved(layer)) {
-	            clickedLayer = layer;
+	          if (layer.options.interactive && layer._containsPoint(point)) {
+	            if (!(e.type === 'click' || e.type !== 'preclick') || !this._map._draggableMoved(layer)) {
+	              clickedLayer = layer;
+	            }
 	          }
 	        }
 
@@ -17735,7 +17645,7 @@ var Forestry = (function () {
 	        }
 
 	        this._mouseHoverThrottled = true;
-	        setTimeout(L.bind(function () {
+	        setTimeout(bind(function () {
 	          this._mouseHoverThrottled = false;
 	        }, this), 32);
 	      },
@@ -18804,7 +18714,7 @@ var Forestry = (function () {
 	    // @section Interaction Options
 
 	    Map.mergeOptions({
-	      // @section Mousewheel options
+	      // @section Mouse wheel options
 	      // @option scrollWheelZoom: Boolean|String = true
 	      // Whether the map can be zoomed by using the mouse wheel. If passed `'center'`,
 	      // it will zoom to the center of the view regardless of where the mouse was.
@@ -18821,11 +18731,11 @@ var Forestry = (function () {
 	    });
 	    var ScrollWheelZoom = Handler.extend({
 	      addHooks: function addHooks() {
-	        on(this._map._container, 'mousewheel', this._onWheelScroll, this);
+	        on(this._map._container, 'wheel', this._onWheelScroll, this);
 	        this._delta = 0;
 	      },
 	      removeHooks: function removeHooks() {
-	        off(this._map._container, 'mousewheel', this._onWheelScroll, this);
+	        off(this._map._container, 'wheel', this._onWheelScroll, this);
 	      },
 	      _onWheelScroll: function _onWheelScroll(e) {
 	        var delta = getWheelDelta(e);
@@ -18980,7 +18890,7 @@ var Forestry = (function () {
 	    // @property tap: Handler
 	    // Mobile touch hacks (quick tap and touch hold) handler.
 
-	    if (touch && !pointer) {
+	    if (touch && (!pointer || safari)) {
 	      Map.addInitHook('addHandler', 'tap', Tap);
 	    }
 	    /*
@@ -19094,8 +19004,8 @@ var Forestry = (function () {
 
 	        this._zooming = false;
 	        cancelAnimFrame(this._animRequest);
-	        off(document, 'touchmove', this._onTouchMove);
-	        off(document, 'touchend', this._onTouchEnd); // Pinch updates GridLayers' levels only when zoomSnap is off, so zoomSnap becomes noUpdate.
+	        off(document, 'touchmove', this._onTouchMove, this);
+	        off(document, 'touchend', this._onTouchEnd, this); // Pinch updates GridLayers' levels only when zoomSnap is off, so zoomSnap becomes noUpdate.
 
 	        if (this._map.options.zoomAnimation) {
 	          this._map._animateZoom(this._center, this._map._limitZoom(this._zoom), true, this._map.options.zoomSnap);
@@ -19115,7 +19025,6 @@ var Forestry = (function () {
 	    Map.ScrollWheelZoom = ScrollWheelZoom;
 	    Map.Tap = Tap;
 	    Map.TouchZoom = TouchZoom;
-	    Object.freeze = freeze;
 	    exports.version = version;
 	    exports.Control = Control;
 	    exports.control = control;
@@ -19619,8 +19528,8 @@ var Forestry = (function () {
 	var nativeGetOwnPropertyDescriptor$2 = objectGetOwnPropertyDescriptor.f;
 
 
-	var FAILS_ON_PRIMITIVES$3 = fails(function () { nativeGetOwnPropertyDescriptor$2(1); });
-	var FORCED$8 = !descriptors || FAILS_ON_PRIMITIVES$3;
+	var FAILS_ON_PRIMITIVES$2 = fails(function () { nativeGetOwnPropertyDescriptor$2(1); });
+	var FORCED$8 = !descriptors || FAILS_ON_PRIMITIVES$2;
 
 	// `Object.getOwnPropertyDescriptor` method
 	// https://tc39.github.io/ecma262/#sec-object.getownpropertydescriptor
@@ -19632,11 +19541,11 @@ var Forestry = (function () {
 
 	var nativeGetOwnPropertyNames$2 = objectGetOwnPropertyNamesExternal.f;
 
-	var FAILS_ON_PRIMITIVES$4 = fails(function () { return !Object.getOwnPropertyNames(1); });
+	var FAILS_ON_PRIMITIVES$3 = fails(function () { return !Object.getOwnPropertyNames(1); });
 
 	// `Object.getOwnPropertyNames` method
 	// https://tc39.github.io/ecma262/#sec-object.getownpropertynames
-	_export({ target: 'Object', stat: true, forced: FAILS_ON_PRIMITIVES$4 }, {
+	_export({ target: 'Object', stat: true, forced: FAILS_ON_PRIMITIVES$3 }, {
 	  getOwnPropertyNames: nativeGetOwnPropertyNames$2
 	});
 
@@ -22330,9 +22239,9 @@ var Forestry = (function () {
 	if(typeof this.jobs[src]==='undefined'){this.jobs[src]=[];}this.jobs[src].push(attr);this.worker.postMessage({src:src,options:options});L.gmxUtil.loaderStatus(src);return new Promise(function(resolve,reject){attr.resolve=resolve;attr.reject=reject;}).catch(L.Util.falseFn);}};var imageBitmapLoader=new ImageBitmapLoader();L.gmx.getBitmap=imageBitmapLoader.push.bind(imageBitmapLoader);L.gmx.getJSON=imageBitmapLoader.push.bind(imageBitmapLoader);if(L.gmxUtil.debug===2){L.gmx.sendCmd=function(cmd,options){options.cmd=cmd;options.syncParams=L.gmx.gmxMapManager.syncParams;return imageBitmapLoader.push(null,options);};}worker.onerror=function(ev){console.warn('Error: Worker init: ImageBitmapLoader-worker.js',ev);ev.target.terminate();delete L.gmx.getBitmap;delete L.gmx.getJSON;delete L.gmx.sendCmd;};});})();var HAS_SPECIES_SUPPORT$2$1=arrayMethodHasSpeciesSupport$1('splice');var USES_TO_LENGTH$5$1=arrayMethodUsesToLength$1('splice',{ACCESSORS:true,0:0,1:2});var max$3$1=Math.max;var min$6$1=Math.min;var MAX_SAFE_INTEGER$1$1=0x1FFFFFFFFFFFFF;var MAXIMUM_ALLOWED_LENGTH_EXCEEDED$1='Maximum allowed length exceeded';// `Array.prototype.splice` method
 	// https://tc39.github.io/ecma262/#sec-array.prototype.splice
 	// with adding support of @@species
-	_export$1({target:'Array',proto:true,forced:!HAS_SPECIES_SUPPORT$2$1||!USES_TO_LENGTH$5$1},{splice:function splice(start,deleteCount/* , ...items */){var O=toObject$1(this);var len=toLength$1(O.length);var actualStart=toAbsoluteIndex$1(start,len);var argumentsLength=arguments.length;var insertCount,actualDeleteCount,A,k,from,to;if(argumentsLength===0){insertCount=actualDeleteCount=0;}else if(argumentsLength===1){insertCount=0;actualDeleteCount=len-actualStart;}else {insertCount=argumentsLength-2;actualDeleteCount=min$6$1(max$3$1(toInteger$1(deleteCount),0),len-actualStart);}if(len+insertCount-actualDeleteCount>MAX_SAFE_INTEGER$1$1){throw TypeError(MAXIMUM_ALLOWED_LENGTH_EXCEEDED$1);}A=arraySpeciesCreate$1(O,actualDeleteCount);for(k=0;k<actualDeleteCount;k++){from=actualStart+k;if(from in O)createProperty$1(A,k,O[from]);}A.length=actualDeleteCount;if(insertCount<actualDeleteCount){for(k=actualStart;k<len-actualDeleteCount;k++){from=k+actualDeleteCount;to=k+insertCount;if(from in O)O[to]=O[from];else delete O[to];}for(k=len;k>len-actualDeleteCount+insertCount;k--){delete O[k-1];}}else if(insertCount>actualDeleteCount){for(k=len-actualDeleteCount;k>actualStart;k--){from=k+actualDeleteCount-1;to=k+insertCount-1;if(from in O)O[to]=O[from];else delete O[to];}}for(k=0;k<insertCount;k++){O[k+actualStart]=arguments[k+2];}O.length=len-actualDeleteCount+insertCount;return A;}});var FAILS_ON_PRIMITIVES$5=fails$1(function(){objectKeys$1(1);});// `Object.keys` method
+	_export$1({target:'Array',proto:true,forced:!HAS_SPECIES_SUPPORT$2$1||!USES_TO_LENGTH$5$1},{splice:function splice(start,deleteCount/* , ...items */){var O=toObject$1(this);var len=toLength$1(O.length);var actualStart=toAbsoluteIndex$1(start,len);var argumentsLength=arguments.length;var insertCount,actualDeleteCount,A,k,from,to;if(argumentsLength===0){insertCount=actualDeleteCount=0;}else if(argumentsLength===1){insertCount=0;actualDeleteCount=len-actualStart;}else {insertCount=argumentsLength-2;actualDeleteCount=min$6$1(max$3$1(toInteger$1(deleteCount),0),len-actualStart);}if(len+insertCount-actualDeleteCount>MAX_SAFE_INTEGER$1$1){throw TypeError(MAXIMUM_ALLOWED_LENGTH_EXCEEDED$1);}A=arraySpeciesCreate$1(O,actualDeleteCount);for(k=0;k<actualDeleteCount;k++){from=actualStart+k;if(from in O)createProperty$1(A,k,O[from]);}A.length=actualDeleteCount;if(insertCount<actualDeleteCount){for(k=actualStart;k<len-actualDeleteCount;k++){from=k+actualDeleteCount;to=k+insertCount;if(from in O)O[to]=O[from];else delete O[to];}for(k=len;k>len-actualDeleteCount+insertCount;k--){delete O[k-1];}}else if(insertCount>actualDeleteCount){for(k=len-actualDeleteCount;k>actualStart;k--){from=k+actualDeleteCount-1;to=k+insertCount-1;if(from in O)O[to]=O[from];else delete O[to];}}for(k=0;k<insertCount;k++){O[k+actualStart]=arguments[k+2];}O.length=len-actualDeleteCount+insertCount;return A;}});var FAILS_ON_PRIMITIVES$4=fails$1(function(){objectKeys$1(1);});// `Object.keys` method
 	// https://tc39.github.io/ecma262/#sec-object.keys
-	_export$1({target:'Object',stat:true,forced:FAILS_ON_PRIMITIVES$5},{keys:function keys(it){return objectKeys$1(toObject$1(it));}});(function(){var ImageRequest=function ImageRequest(id,url,options){this._id=id;this.def=new L.gmx.Deferred(L.gmx.imageLoader._cancelRequest.bind(L.gmx.imageLoader,this));this.remove=L.gmx.imageLoader._removeRequestFromCache.bind(L.gmx.imageLoader,this);this.url=url;this.options=options||{};};var GmxImageLoader=L.Class.extend({includes:L.Evented?L.Evented.prototype:L.Mixin.Events,statics:{MAX_COUNT:20// max number of parallel requests
+	_export$1({target:'Object',stat:true,forced:FAILS_ON_PRIMITIVES$4},{keys:function keys(it){return objectKeys$1(toObject$1(it));}});(function(){var ImageRequest=function ImageRequest(id,url,options){this._id=id;this.def=new L.gmx.Deferred(L.gmx.imageLoader._cancelRequest.bind(L.gmx.imageLoader,this));this.remove=L.gmx.imageLoader._removeRequestFromCache.bind(L.gmx.imageLoader,this);this.url=url;this.options=options||{};};var GmxImageLoader=L.Class.extend({includes:L.Evented?L.Evented.prototype:L.Mixin.Events,statics:{MAX_COUNT:20// max number of parallel requests
 	},initialize:function initialize(){this.curCount=0;// number of currently processing requests (number of items in "inProgress")
 	this.requests=[];// not yet processed image requests
 	this.inProgress={};// hash of in progress image loadings
@@ -27913,239 +27822,6 @@ var Forestry = (function () {
 	  }
 	});
 	leafletSrc.GmxDrawing.PointMarkers;
-
-	leafletSrc.GmxDrawing.utils = {
-	  snaping: 10,
-	  // snap distance
-	  isOldVersion: leafletSrc.version.substr(0, 3) === '0.7',
-	  defaultStyles: {
-	    mode: '',
-	    map: true,
-	    editable: true,
-	    holeStyle: {
-	      opacity: 0.5,
-	      color: '#003311'
-	    },
-	    lineStyle: {
-	      opacity: 1,
-	      weight: 2,
-	      clickable: false,
-	      className: 'leaflet-drawing-lines',
-	      color: '#0033ff',
-	      dashArray: null,
-	      lineCap: null,
-	      lineJoin: null,
-	      fill: false,
-	      fillColor: null,
-	      fillOpacity: 0.2,
-	      smoothFactor: 0,
-	      noClip: true,
-	      stroke: true
-	    },
-	    pointStyle: {
-	      className: 'leaflet-drawing-points',
-	      smoothFactor: 0,
-	      noClip: true,
-	      opacity: 1,
-	      shape: 'circle',
-	      fill: true,
-	      fillColor: '#ffffff',
-	      fillOpacity: 1,
-	      size: leafletSrc.Browser.mobile ? 40 : 8,
-	      weight: 2,
-	      clickable: true,
-	      color: '#0033ff',
-	      dashArray: null,
-	      lineCap: null,
-	      lineJoin: null,
-	      stroke: true
-	    },
-	    markerStyle: {
-	      mode: '',
-	      editable: false,
-	      title: 'Text example',
-	      options: {
-	        alt: '',
-	        //title: '',
-	        clickable: true,
-	        draggable: false,
-	        keyboard: true,
-	        opacity: 1,
-	        zIndexOffset: 0,
-	        riseOffset: 250,
-	        riseOnHover: false,
-	        icon: {
-	          className: '',
-	          iconUrl: '',
-	          iconAnchor: [12, 41],
-	          iconSize: [25, 41],
-	          popupAnchor: [1, -34],
-	          shadowSize: [41, 41]
-	        }
-	      }
-	    }
-	  },
-	  getClosestOnGeometry: function getClosestOnGeometry(latlng, gmxGeoJson, map) {
-	    if (leafletSrc.GeometryUtil && map) {
-	      return leafletSrc.GeometryUtil.closestLayerSnap(map, [leafletSrc.geoJson(leafletSrc.gmxUtil.geometryToGeoJSON(gmxGeoJson, true, true))], latlng, Number(map.options.snaping || leafletSrc.GmxDrawing.utils.snaping), true);
-	    }
-
-	    return null;
-	  },
-	  snapPoint: function snapPoint(latlng, obj, map) {
-	    var res = latlng;
-
-	    if (leafletSrc.GeometryUtil) {
-	      var drawingObjects = map.gmxDrawing.getFeatures().filter(function (it) {
-	        return it !== obj._parent && it._obj !== obj;
-	      }).map(function (it) {
-	        return it.options.type === 'Point' ? it._obj : it;
-	      }),
-	          snaping = Number(map.options.snaping || leafletSrc.GmxDrawing.utils.snaping),
-	          closest = leafletSrc.GeometryUtil.closestLayerSnap(map, drawingObjects, latlng, snaping, true);
-
-	      if (closest) {
-	        res = closest.latlng;
-	      }
-	    }
-
-	    return res;
-	  },
-	  getNotDefaults: function getNotDefaults(from, def) {
-	    var res = {};
-
-	    for (var key in from) {
-	      if (key === 'icon' || key === 'map') {
-	        continue;
-	      } else if (key === 'iconAnchor' || key === 'iconSize' || key === 'popupAnchor' || key === 'shadowSize') {
-	        if (!def[key]) {
-	          continue;
-	        }
-
-	        if (def[key][0] !== from[key][0] || def[key][1] !== from[key][1]) {
-	          res[key] = from[key];
-	        }
-	      } else if (key === 'lineStyle' || key === 'pointStyle' || key === 'markerStyle') {
-	        res[key] = this.getNotDefaults(from[key], def[key]);
-	      } else if (!def || def[key] !== from[key] || key === 'fill') {
-	        res[key] = from[key];
-	      }
-	    }
-
-	    return res;
-	  },
-	  getShiftLatlng: function getShiftLatlng(latlng, map, shiftPixel) {
-	    if (shiftPixel && map) {
-	      var p = map.latLngToLayerPoint(latlng)._add(shiftPixel);
-
-	      latlng = map.layerPointToLatLng(p);
-	    }
-
-	    return latlng;
-	  },
-	  getDownType: function getDownType(ev, map, feature) {
-	    var layerPoint = ev.layerPoint,
-	        originalEvent = ev.originalEvent,
-	        ctrlKey = false,
-	        shiftKey = false,
-	        altKey = false,
-	        latlng = ev.latlng;
-
-	    if (originalEvent) {
-	      ctrlKey = originalEvent.ctrlKey;
-	      shiftKey = originalEvent.shiftKey;
-	      altKey = originalEvent.altKey;
-	    }
-
-	    if (ev.touches && ev.touches.length === 1) {
-	      var first = ev.touches[0],
-	          containerPoint = map.mouseEventToContainerPoint(first);
-	      layerPoint = map.containerPointToLayerPoint(containerPoint);
-	      latlng = map.layerPointToLatLng(layerPoint);
-	    }
-
-	    var out = {
-	      type: '',
-	      latlng: latlng,
-	      ctrlKey: ctrlKey,
-	      shiftKey: shiftKey,
-	      altKey: altKey
-	    },
-	        ring = this.points ? this : ev.ring || ev.relatedEvent,
-	        points = ring.points._originalPoints || ring.points._parts[0] || [],
-	        len = points.length;
-
-	    if (len === 0) {
-	      return out;
-	    }
-
-	    var size = (ring.points.options.size || 10) / 2;
-	    size += 1 + (ring.points.options.weight || 2);
-	    var cursorBounds = new leafletSrc.Bounds(leafletSrc.point(layerPoint.x - size, layerPoint.y - size), leafletSrc.point(layerPoint.x + size, layerPoint.y + size)),
-	        prev = points[len - 1],
-	        lastIndex = len - (ring.mode === 'add' ? 2 : 1);
-	    out = {
-	      mode: ring.mode,
-	      layerPoint: ev.layerPoint,
-	      ctrlKey: ctrlKey,
-	      shiftKey: shiftKey,
-	      altKey: altKey,
-	      latlng: latlng
-	    };
-
-	    for (var i = 0; i < len; i++) {
-	      var point = points[i];
-
-	      if (feature.shiftPixel) {
-	        point = points[i].add(feature.shiftPixel);
-	      }
-
-	      if (cursorBounds.contains(point)) {
-	        out.type = 'node';
-	        out.num = i;
-	        out.end = i === 0 || i === lastIndex ? true : false;
-	        break;
-	      }
-
-	      var dist = leafletSrc.LineUtil.pointToSegmentDistance(layerPoint, prev, point);
-
-	      if (dist < size) {
-	        out.type = 'edge';
-	        out.num = i === 0 ? len : i;
-	      }
-
-	      prev = point;
-	    }
-
-	    return out;
-	  },
-	  _getLastObject: function _getLastObject(obj) {
-	    if (obj.getLayers) {
-	      var layer = obj.getLayers().shift();
-	      return layer.getLayers ? this._getLastObject(layer) : obj;
-	    }
-
-	    return obj;
-	  },
-	  getMarkerByPos: function getMarkerByPos(pos, features) {
-	    for (var i = 0, len = features.length; i < len; i++) {
-	      var feature = features[i],
-	          fobj = feature._obj ? feature._obj : null,
-	          mpos = fobj && fobj._icon ? fobj._icon._leaflet_pos : null;
-
-	      if (mpos && mpos.x === pos.x && mpos.y === pos.y) {
-	        return fobj._latlng;
-	      }
-	    }
-
-	    return null;
-	  },
-	  getLocale: function getLocale(key) {
-	    var res = leafletSrc.gmxLocale ? leafletSrc.gmxLocale.getText(key) : null;
-	    return res || key;
-	  }
-	};
-	leafletSrc.GmxDrawing.utils;
 
 	function getObjectCenter(_x, _x2, _x3) {
 	  return _getObjectCenter.apply(this, arguments);
@@ -35978,6 +35654,7 @@ var Forestry = (function () {
 	var translate$2 = T.getText.bind(T);
 	T.addText('rus', {
 	  DateInterval: {
+	    onlyChecked: 'Только отмеченные',
 	    title: 'Приблизьте карту для загрузки на таймлайн'
 	  }
 	});
@@ -35990,6 +35667,7 @@ var Forestry = (function () {
 	    position: 'bottom',
 	    id: 'DateInterval',
 	    minZoom: 9,
+	    onlyChecked: true,
 	    className: 'DateInterval'
 	  },
 	  initialize: function initialize(options) {
@@ -36008,6 +35686,14 @@ var Forestry = (function () {
 	    this._timelineNode = leafletSrc.DomUtil.create('div', 'timeline', this._container);
 	    this._icon = leafletSrc.DomUtil.create('div', 'icon', this._container);
 	    this._icon.innerHTML = translate$2('DateInterval.title');
+	    this._topCont = leafletSrc.DomUtil.create('div', 'top', this._container);
+	    this._onlyCheckedNode = leafletSrc.DomUtil.create('input', '', this._topCont);
+	    this._onlyCheckedNode.type = 'checkbox';
+	    this._onlyCheckedNode.checked = true; // this._topCont.innerHTML = `<input type="checkbox" id="onlyChecked" checked=${this.options.onlyChecked} /><label htmlFor="onlyChecked">${translate('DateInterval.onlyChecked')}</label>`;
+
+	    leafletSrc.DomEvent.on(this._onlyCheckedNode, 'click', this._onlyChecked, this);
+	    this._onlyCheckedLabel = leafletSrc.DomUtil.create('label', '', this._topCont);
+	    this._onlyCheckedLabel.innerHTML = translate$2('DateInterval.onlyChecked');
 	    this._timeline = new links.Timeline(this._timelineNode, {
 	      locale: 'ru',
 	      width: '100%',
@@ -36052,6 +35738,29 @@ var Forestry = (function () {
 	    }
 
 	    this._timeline = null;
+	  },
+	  _onlyChecked: function _onlyChecked(e) {
+	    leafletSrc.DomEvent.stopPropagation(e);
+	    var checked = e.target.checked;
+	    var layer = this._layers[this._activeTab];
+
+	    if (layer) {
+	      // console.log('onlyChecked', checked, layer._showDates, this._timeline);
+	      var tm = this._timeline;
+	      tm.data.forEach(function (it, ind) {
+	        var key = it.start.getTime() / 1000;
+
+	        if (checked) {
+	          it.className = '';
+	          delete layer._showDates[key];
+	        } else {
+	          it.className = 'active';
+	          layer._showDates[key] = true;
+	        }
+	      });
+	      tm.redraw();
+	      layer.repaint();
+	    }
 	  },
 	  _toggleActive: function _toggleActive(node, utm) {
 	    var classList = node.classList;
@@ -36166,7 +35875,8 @@ var Forestry = (function () {
 	          layer._showDates[maxUtm] = true;
 	          data[data.length - 1].className = 'active';
 	          layer.repaint();
-	        }
+	        } // console.log('setData', data);
+
 
 	        tm.setData(data); // Перерисовка таймлайна
 	      }
@@ -36293,7 +36003,9 @@ var Forestry = (function () {
 	    layer = this._layers[layerID];
 
 	    if (layer) {
-	      this._addObserver(layer);
+	      if (!layer._observer) {
+	        this._addObserver(layer);
+	      }
 
 	      var interval = layer.getDateInterval();
 
@@ -36904,12 +36616,12 @@ var Forestry = (function () {
 	  onAdd: function onAdd(map) {
 	    var _this = this;
 
-	    this._container = leafletSrc.DomUtil.create('div', 'scanex-forestry-legend');
+	    this._container = leafletSrc.DomUtil.create('div', 'scanex-forestry-legend noselect');
 	    leafletSrc.DomEvent.disableScrollPropagation(this._container);
 	    leafletSrc.DomEvent.disableClickPropagation(this._container);
 	    this._icon = leafletSrc.DomUtil.create('div', 'scanex-legend-icon icon', this._container);
 	    this._panel = leafletSrc.DomUtil.create('div', 'panel hidden', this._container);
-	    this._content = leafletSrc.DomUtil.create('div', 'scrollable style-4', this._panel);
+	    this._content = leafletSrc.DomUtil.create('div', 'scrollable', this._panel);
 	    leafletSrc.DomEvent.on(this._icon, 'click', function (e) {
 	      leafletSrc.DomEvent.stopPropagation(e);
 	      _this._active = !_this._active;
@@ -38108,11 +37820,11 @@ var Forestry = (function () {
 	}(EventTarget);
 
 	var nativeIsFrozen = Object.isFrozen;
-	var FAILS_ON_PRIMITIVES$6 = fails(function () { nativeIsFrozen(1); });
+	var FAILS_ON_PRIMITIVES$5 = fails(function () { nativeIsFrozen(1); });
 
 	// `Object.isFrozen` method
 	// https://tc39.github.io/ecma262/#sec-object.isfrozen
-	_export({ target: 'Object', stat: true, forced: FAILS_ON_PRIMITIVES$6 }, {
+	_export({ target: 'Object', stat: true, forced: FAILS_ON_PRIMITIVES$5 }, {
 	  isFrozen: function isFrozen(it) {
 	    return isObject(it) ? nativeIsFrozen ? nativeIsFrozen(it) : false : true;
 	  }
@@ -40413,7 +40125,7 @@ var Forestry = (function () {
 	      }
 	    }
 
-	    hooks.createFromInputFallback = deprecate('value provided is not in a recognized RFC2822 or ISO format. moment construction falls back to js Date(), ' + 'which is not reliable across all browsers and versions. Non RFC2822/ISO date formats are ' + 'discouraged and will be removed in an upcoming major release. Please refer to ' + 'http://momentjs.com/guides/#/warnings/js-date/ for more info.', function (config) {
+	    hooks.createFromInputFallback = deprecate('value provided is not in a recognized RFC2822 or ISO format. moment construction falls back to js Date(), ' + 'which is not reliable across all browsers and versions. Non RFC2822/ISO date formats are ' + 'discouraged. Please refer to http://momentjs.com/guides/#/warnings/js-date/ for more info.', function (config) {
 	      config._d = new Date(config._i + (config._useUTC ? ' UTC' : ''));
 	    }); // Pick the first defined of two or three arguments.
 
@@ -41468,7 +41180,10 @@ var Forestry = (function () {
 	    function calendar$1(time, formats) {
 	      // Support for single parameter, formats only overload to the calendar function
 	      if (arguments.length === 1) {
-	        if (isMomentInput(arguments[0])) {
+	        if (!arguments[0]) {
+	          time = undefined;
+	          formats = undefined;
+	        } else if (isMomentInput(arguments[0])) {
 	          time = arguments[0];
 	          formats = undefined;
 	        } else if (isCalendarSpec(arguments[0])) {
@@ -42120,7 +41835,7 @@ var Forestry = (function () {
 
 	      for (i = 0, l = eras.length; i < l; ++i) {
 	        // truncate time
-	        val = this.startOf('day').valueOf();
+	        val = this.clone().startOf('day').valueOf();
 
 	        if (eras[i].since <= val && val <= eras[i].until) {
 	          return eras[i].name;
@@ -42142,7 +41857,7 @@ var Forestry = (function () {
 
 	      for (i = 0, l = eras.length; i < l; ++i) {
 	        // truncate time
-	        val = this.startOf('day').valueOf();
+	        val = this.clone().startOf('day').valueOf();
 
 	        if (eras[i].since <= val && val <= eras[i].until) {
 	          return eras[i].narrow;
@@ -42164,7 +41879,7 @@ var Forestry = (function () {
 
 	      for (i = 0, l = eras.length; i < l; ++i) {
 	        // truncate time
-	        val = this.startOf('day').valueOf();
+	        val = this.clone().startOf('day').valueOf();
 
 	        if (eras[i].since <= val && val <= eras[i].until) {
 	          return eras[i].abbr;
@@ -42188,7 +41903,7 @@ var Forestry = (function () {
 	      for (i = 0, l = eras.length; i < l; ++i) {
 	        dir = eras[i].since <= eras[i].until ? +1 : -1; // truncate time
 
-	        val = this.startOf('day').valueOf();
+	        val = this.clone().startOf('day').valueOf();
 
 	        if (eras[i].since <= val && val <= eras[i].until || eras[i].until <= val && val <= eras[i].since) {
 	          return (this.year() - hooks(eras[i].since).year()) * dir + eras[i].offset;
@@ -43163,7 +42878,7 @@ var Forestry = (function () {
 	      config._d = new Date(toInt(input));
 	    }); //! moment.js
 
-	    hooks.version = '2.27.0';
+	    hooks.version = '2.29.1';
 	    setHookCallback(createLocal);
 	    hooks.fn = proto;
 	    hooks.min = min;
@@ -43284,7 +42999,7 @@ var Forestry = (function () {
 	      return day === 0 || day === 6;
 	    },
 	        isLeapYear = function isLeapYear(year) {
-	      // solution by Matti Virkkunen: http://stackoverflow.com/a/4881951
+	      // solution lifted from date.js (MIT license): https://github.com/datejs/Datejs
 	      return year % 4 === 0 && year % 100 !== 0 || year % 400 === 0;
 	    },
 	        getDaysInMonth = function getDaysInMonth(year, month) {
@@ -43358,7 +43073,7 @@ var Forestry = (function () {
 	      field: null,
 	      // automatically show/hide the picker on `field` focus (default `true` if `field` is set)
 	      bound: undefined,
-	      // data-attribute on the input field with an aria assistance tekst (only applied when `bound` is set)
+	      // data-attribute on the input field with an aria assistance text (only applied when `bound` is set)
 	      ariaLabel: 'Use the arrow keys to pick a date',
 	      // position of the datepicker, relative to the field (default to bottom & left)
 	      // ('bottom' & 'left' keywords are not used, 'top' & 'right' are modifier on the bottom/left position)
@@ -43378,6 +43093,9 @@ var Forestry = (function () {
 	      setDefaultDate: false,
 	      // first day of week (0: Sunday, 1: Monday etc)
 	      firstDay: 0,
+	      // minimum number of days in the week that gets week number one
+	      // default ISO 8601, week 01 is the week with the first Thursday (4)
+	      firstWeekOfYearMinDays: 4,
 	      // the default flag for moment's strict date parsing
 	      formatStrict: false,
 	      // the minimum/earliest date that can be selected
@@ -43495,11 +43213,33 @@ var Forestry = (function () {
 
 	      return '<td data-day="' + opts.day + '" class="' + arr.join(' ') + '" aria-selected="' + ariaSelected + '">' + '<button class="pika-button pika-day" type="button" ' + 'data-pika-year="' + opts.year + '" data-pika-month="' + opts.month + '" data-pika-day="' + opts.day + '">' + opts.day + '</button>' + '</td>';
 	    },
-	        renderWeek = function renderWeek(d, m, y) {
-	      // Lifted from http://javascript.about.com/library/blweekyear.htm, lightly modified.
-	      var onejan = new Date(y, 0, 1),
-	          weekNum = Math.ceil(((new Date(y, m, d) - onejan) / 86400000 + onejan.getDay() + 1) / 7);
-	      return '<td class="pika-week">' + weekNum + '</td>';
+	        isoWeek = function isoWeek(date, firstWeekOfYearMinDays) {
+	      // Ensure we're at the start of the day.
+	      date.setHours(0, 0, 0, 0); // Thursday in current week decides the year because January 4th
+	      // is always in the first week according to ISO8601.
+
+	      var yearDay = date.getDate(),
+	          weekDay = date.getDay(),
+	          dayInFirstWeek = firstWeekOfYearMinDays,
+	          dayShift = dayInFirstWeek - 1,
+	          // counting starts at 0
+	      daysPerWeek = 7,
+	          prevWeekDay = function prevWeekDay(day) {
+	        return (day + daysPerWeek - 1) % daysPerWeek;
+	      }; // Adjust to Thursday in week 1 and count number of weeks from date to week 1.
+
+
+	      date.setDate(yearDay + dayShift - prevWeekDay(weekDay));
+	      var jan4th = new Date(date.getFullYear(), 0, dayInFirstWeek),
+	          msPerDay = 24 * 60 * 60 * 1000,
+	          daysBetween = (date.getTime() - jan4th.getTime()) / msPerDay,
+	          weekNum = 1 + Math.round((daysBetween - dayShift + prevWeekDay(jan4th.getDay())) / daysPerWeek);
+	      return weekNum;
+	    },
+	        renderWeek = function renderWeek(d, m, y, firstWeekOfYearMinDays) {
+	      var date = new Date(y, m, d),
+	          week = hasMoment ? moment(date).isoWeek() : isoWeek(date, firstWeekOfYearMinDays);
+	      return '<td class="pika-week">' + week + '</td>';
 	    },
 	        renderRow = function renderRow(days, isRTL, pickWholeWeek, isRowSelected) {
 	      return '<tr class="pika-row' + (pickWholeWeek ? ' pick-whole-week' : '') + (isRowSelected ? ' is-selected' : '') + '">' + (isRTL ? days.reverse() : days).join('') + '</tr>';
@@ -43535,7 +43275,7 @@ var Forestry = (function () {
 	          next = true;
 
 	      for (arr = [], i = 0; i < 12; i++) {
-	        arr.push('<option value="' + (year === refYear ? i - c : 12 + i - c) + '"' + (i === month ? ' selected="selected"' : '') + (isMinYear && i < opts.minMonth || isMaxYear && i > opts.maxMonth ? 'disabled="disabled"' : '') + '>' + opts.i18n.months[i] + '</option>');
+	        arr.push('<option value="' + (year === refYear ? i - c : 12 + i - c) + '"' + (i === month ? ' selected="selected"' : '') + (isMinYear && i < opts.minMonth || isMaxYear && i > opts.maxMonth ? ' disabled="disabled"' : '') + '>' + opts.i18n.months[i] + '</option>');
 	      }
 
 	      monthHtml = '<div class="pika-label">' + opts.i18n.months[month] + '<select class="pika-select pika-select-month" tabindex="-1">' + arr.join('') + '</select></div>';
@@ -43665,7 +43405,6 @@ var Forestry = (function () {
 	              break;
 
 	            case 37:
-	              e.preventDefault();
 	              self.adjustDate('subtract', 1);
 	              break;
 
@@ -43680,7 +43419,23 @@ var Forestry = (function () {
 	            case 40:
 	              self.adjustDate('add', 7);
 	              break;
+
+	            case 8:
+	            case 46:
+	              self.setDate(null);
+	              break;
 	          }
+	        }
+	      };
+
+	      self._parseFieldValue = function () {
+	        if (opts.parse) {
+	          return opts.parse(opts.field.value, opts.format);
+	        } else if (hasMoment) {
+	          var date = moment(opts.field.value, opts.format, opts.formatStrict);
+	          return date && date.isValid() ? date.toDate() : null;
+	        } else {
+	          return new Date(Date.parse(opts.field.value));
 	        }
 	      };
 
@@ -43691,14 +43446,7 @@ var Forestry = (function () {
 	          return;
 	        }
 
-	        if (opts.parse) {
-	          date = opts.parse(opts.field.value, opts.format);
-	        } else if (hasMoment) {
-	          date = moment(opts.field.value, opts.format, opts.formatStrict);
-	          date = date && date.isValid() ? date.toDate() : null;
-	        } else {
-	          date = new Date(Date.parse(opts.field.value));
-	        }
+	        date = self._parseFieldValue();
 
 	        if (isDate(date)) {
 	          self.setDate(date);
@@ -43785,12 +43533,7 @@ var Forestry = (function () {
 	        addEvent(opts.field, 'change', self._onInputChange);
 
 	        if (!opts.defaultDate) {
-	          if (hasMoment && opts.field.value) {
-	            opts.defaultDate = moment(opts.field.value, opts.format).toDate();
-	          } else {
-	            opts.defaultDate = new Date(Date.parse(opts.field.value));
-	          }
-
+	          opts.defaultDate = self._parseFieldValue();
 	          opts.setDefaultDate = true;
 	        }
 	      }
@@ -43972,6 +43715,13 @@ var Forestry = (function () {
 	      },
 
 	      /**
+	       * clear and reset the date
+	       */
+	      clear: function clear() {
+	        this.setDate(null);
+	      },
+
+	      /**
 	       * change view to a specific date
 	       */
 	      gotoDate: function gotoDate(date) {
@@ -44137,9 +43887,8 @@ var Forestry = (function () {
 	          }
 	        }
 
-	        randId = 'pika-title-' + Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 2);
-
 	        for (var c = 0; c < opts.numberOfMonths; c++) {
+	          randId = 'pika-title-' + Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 2);
 	          html += '<div class="pika-lendar">' + renderTitle(this, c, this.calendars[c].year, this.calendars[c].month, this.calendars[0].year, randId) + this.render(this.calendars[c].year, this.calendars[c].month, randId) + '</div>';
 	        }
 
@@ -44294,7 +44043,7 @@ var Forestry = (function () {
 
 	          if (++r === 7) {
 	            if (opts.showWeekNumber) {
-	              row.unshift(renderWeek(i - before, month, year));
+	              row.unshift(renderWeek(i - before, month, year, opts.firstWeekOfYearMinDays));
 	            }
 
 	            data.push(renderRow(row, opts.isRTL, opts.pickWholeWeek, isWeekSelected));
@@ -44333,10 +44082,13 @@ var Forestry = (function () {
 	            removeEvent(document, 'click', this._onClick);
 	          }
 
-	          this.el.style.position = 'static'; // reset
+	          if (!this._o.container) {
+	            this.el.style.position = 'static'; // reset
 
-	          this.el.style.left = 'auto';
-	          this.el.style.top = 'auto';
+	            this.el.style.left = 'auto';
+	            this.el.style.top = 'auto';
+	          }
+
 	          addClass(this.el, 'is-hidden');
 	          this._v = false;
 
@@ -44513,6 +44265,8 @@ var Forestry = (function () {
 	      _get(_getPrototypeOf(Incidents.prototype), "open", this).call(this);
 
 	      var props = data.properties || {};
+	      var statusList = data.statusList || {};
+	      var curStatus = statusList[data.Status];
 	      var title = '';
 
 	      switch (props.class_id) {
@@ -44547,7 +44301,7 @@ var Forestry = (function () {
 
 	      var str2 = this._parseProps(data);
 
-	      this._container.innerHTML = "\n\t\t\t".concat(title, "\n\n\t\t\t<div class=\"inside\">\n\t\t\t\t<div class=\"inside_left\">\n\t\t\t\t\t<div class=\"table1\">\n\t\t\t\t\t\t").concat(str2, "\n\n\t\t\t\t\t\t<div class=\"table1_row\">").concat(this.translate('incident.comment'), "</div>\n\t\t\t\t\t\t\n\t\t\t\t\t\t<textarea class=\"usr-text-area\" ").concat(this._permission.IncidentEdit && data.Status === 'в работе' ? '' : 'disabled', ">").concat(data.Comment || '', "</textarea>\n\t\t\t\t\t\t<div class=\"table1_row \">").concat(this.translate('incident.bpla'), ":</div>\n\n\t\t\t\t\t\t<div class=\"table1_row \">\n\t\t\t\t\t\t\t<span>").concat(props.uav_date || '', "</span>\n\t\t\t\t\t\t\t<span>").concat(props.uav_description || '', "</span>\n\t\t\t\t\t\t\t<div class=\"group_buttons\">\n\t\t\t\t\t\t\t\t").concat(this._permission.BplaView && props.uav_raster_id ? "<div class=\"mini-green-but BplaView\">".concat(this.translate('incident.BplaView'), "</div>") : '', "\n\t\t\t\t\t\t\t\t").concat(this._permission.BplaDownload ? "<div class=\"mini-green-but BplaDownload\">".concat(this.translate('incident.BplaDownload'), "</div>") : '', "\n\t\t\t\t\t\t\t\t").concat(this._permission.BplaRemove && props.uav_raster_id ? "<div class=\"mini-green-but BplaRemove\">".concat(this.translate('incident.BplaRemove'), "</div>") : '', "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t").concat(str1, "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"rubka\">\n\t\t\t\t\t<div class=\"right-wrapper-top \">\n\t\t\t\t\t\t").concat(this._buttonsStr, "\n\t\t\t\t\t </div>\n\t\t\t\t\t<hr />\n\t\t\t\t\t <div class=\"right-wrapper-bottom \">\n\t\t\t\t\t\t").concat(this._permission.IncidentAccept && data.Status === 'в работе' ? "<button class=\"IncidentAccept button\">".concat(this.translate('incident.IncidentAccept'), "</button>") : '', "\n\t\t\t\t\t\t").concat(this._permission.IncidentCheck && data.Status === 'неподтвержденная' ? "<button class=\"IncidentCheck button\">".concat(this.translate('incident.IncidentCheck'), "</button>") : '', "\n\t\t\t\t\t\t").concat(this._permission.IncidentDecline && (data.Status === 'неподтвержденная' || data.Status === 'в работе') ? "<button class=\"IncidentDecline button\">".concat(this.translate('incident.IncidentDecline'), "</button>") : '', "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>");
+	      this._container.innerHTML = "\n\t\t\t".concat(title, "\n\n\t\t\t<div class=\"inside\">\n\t\t\t\t<div class=\"inside_left\">\n\t\t\t\t\t<div class=\"table1\">\n\t\t\t\t\t\t").concat(str2, "\n\n\t\t\t\t\t\t<div class=\"table1_row\">").concat(this.translate('incident.comment'), "</div>\n\t\t\t\t\t\t\n\t\t\t\t\t\t<textarea class=\"usr-text-area\" ").concat(this._permission.IncidentEdit && curStatus === 2 ? '' : 'disabled', ">").concat(data.Comment || '', "</textarea>\n\t\t\t\t\t\t<div class=\"table1_row \">").concat(this.translate('incident.bpla'), ":</div>\n\n\t\t\t\t\t\t<div class=\"table1_row \">\n\t\t\t\t\t\t\t<span>").concat(props.uav_date || '', "</span>\n\t\t\t\t\t\t\t<span>").concat(props.uav_description || '', "</span>\n\t\t\t\t\t\t\t<div class=\"group_buttons\">\n\t\t\t\t\t\t\t\t").concat(this._permission.BplaView && props.uav_raster_id ? "<div class=\"mini-green-but BplaView\">".concat(this.translate('incident.BplaView'), "</div>") : '', "\n\t\t\t\t\t\t\t\t").concat(this._permission.BplaDownload ? "<div class=\"mini-green-but BplaDownload\">".concat(this.translate('incident.BplaDownload'), "</div>") : '', "\n\t\t\t\t\t\t\t\t").concat(this._permission.BplaRemove && props.uav_raster_id ? "<div class=\"mini-green-but BplaRemove\">".concat(this.translate('incident.BplaRemove'), "</div>") : '', "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t").concat(str1, "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"rubka\">\n\t\t\t\t\t<div class=\"right-wrapper-top \">\n\t\t\t\t\t\t").concat(this._buttonsStr, "\n\t\t\t\t\t </div>\n\t\t\t\t\t<hr />\n\t\t\t\t\t <div class=\"right-wrapper-bottom \">\n\t\t\t\t\t\t").concat(this._permission.IncidentAccept && curStatus === 2 ? "<button class=\"IncidentAccept button\">".concat(this.translate('incident.IncidentAccept'), "</button>") : '', "\n\t\t\t\t\t\t").concat(this._permission.IncidentCheck && curStatus === 1 ? "<button class=\"IncidentCheck button\">".concat(this.translate('incident.IncidentCheck'), "</button>") : '', "\n\t\t\t\t\t\t").concat(this._permission.IncidentDecline && (curStatus === 1 || curStatus === 2) ? "<button class=\"IncidentDecline button\">".concat(this.translate('incident.IncidentDecline'), "</button>") : '', "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>");
 
 	      var node = this._container.querySelector('.verRastr');
 
@@ -44587,7 +44341,8 @@ var Forestry = (function () {
 	          _this3.dispatchEvent(event);
 	        });
 
-	        if (data.Status !== 'в работе') {
+	        if (curStatus === 1) {
+	          //  статус === неподтв
 	          node.classList.add('hidden');
 	        }
 	      }
@@ -44713,7 +44468,7 @@ var Forestry = (function () {
 	      node = this._container.querySelector('.dateCheck');
 
 	      if (node) {
-	        if (!this._permission.IncidentEdit || data.Status !== 'в работе') {
+	        if (!this._permission.IncidentEdit || curStatus !== 2) {
 	          node.classList.add('white');
 	          node.disabled = true;
 	        }
@@ -44737,7 +44492,7 @@ var Forestry = (function () {
 	        }
 	      }
 
-	      if (!this._permission.IncidentEdit || data.Status !== 'в работе') {
+	      if (!this._permission.IncidentEdit || curStatus !== 2) {
 	        var confirmedNodes = this._container.getElementsByClassName('confirmed_vol');
 
 	        confirmedNodes.forEach(function (node) {
@@ -44834,7 +44589,7 @@ var Forestry = (function () {
 
 	    _this._map.addLayer(_this._layer);
 
-	    _this._layer.setStyleHook(_this.getStyleHook.bind(_assertThisInitialized(_this)));
+	    _this._layer.setFilter(_this.getFilter.bind(_assertThisInitialized(_this)));
 
 	    var _this$_layer$getGmxPr = _this._layer.getGmxProperties(),
 	        attributes = _this$_layer$getGmxPr.attributes,
@@ -44967,17 +44722,57 @@ var Forestry = (function () {
 	      }
 	    });
 
+	    _this.StatusList = {};
+
+	    _this._getForestChangeStatusList();
+
 	    return _this;
 	  }
 
 	  _createClass(Incidents$1, [{
-	    key: "_saveItem",
+	    key: "_getForestChangeStatusList",
 	    value: function () {
-	      var _saveItem2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(out) {
-	        var response;
+	      var _getForestChangeStatusList2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+	        var data;
 	        return regeneratorRuntime.wrap(function _callee$(_context) {
 	          while (1) {
 	            switch (_context.prev = _context.next) {
+	              case 0:
+	                _context.next = 2;
+	                return this.httpGet("".concat(this._path, "/Monitoring/GetForestChangeStatusList"), {});
+
+	              case 2:
+	                data = _context.sent;
+
+	                if (data) {
+	                  this.StatusList = (data.forestChangeStatusList || []).reduce(function (p, c) {
+	                    p[c.description] = c.id;
+	                    return p;
+	                  }, {});
+	                }
+
+	              case 4:
+	              case "end":
+	                return _context.stop();
+	            }
+	          }
+	        }, _callee, this);
+	      }));
+
+	      function _getForestChangeStatusList() {
+	        return _getForestChangeStatusList2.apply(this, arguments);
+	      }
+
+	      return _getForestChangeStatusList;
+	    }()
+	  }, {
+	    key: "_saveItem",
+	    value: function () {
+	      var _saveItem2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(out) {
+	        var response;
+	        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+	          while (1) {
+	            switch (_context2.prev = _context2.next) {
 	              case 0:
 	                if (this._drawingObj) {
 	                  out.wkbGeometry = JSON.stringify(this._drawingObj[0].toGeoJSON().geometry);
@@ -44985,7 +44780,7 @@ var Forestry = (function () {
 	                  this._removeDrawing();
 	                }
 
-	                _context.next = 3;
+	                _context2.next = 3;
 	                return fetch("".concat(this._path, "/Monitoring/SaveIncident"), {
 	                  method: 'POST',
 	                  credentials: 'include',
@@ -44996,15 +44791,15 @@ var Forestry = (function () {
 	                });
 
 	              case 3:
-	                response = _context.sent;
+	                response = _context2.sent;
 	                L.gmx.layersVersion.now();
 
 	              case 5:
 	              case "end":
-	                return _context.stop();
+	                return _context2.stop();
 	            }
 	          }
-	        }, _callee, this);
+	        }, _callee2, this);
 	      }));
 
 	      function _saveItem(_x) {
@@ -45062,33 +44857,34 @@ var Forestry = (function () {
 	  }, {
 	    key: "_click",
 	    value: function () {
-	      var _click2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(e) {
+	      var _click2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(e) {
 	        var _e$gmx, id, properties, data;
 
-	        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+	        return regeneratorRuntime.wrap(function _callee3$(_context3) {
 	          while (1) {
-	            switch (_context2.prev = _context2.next) {
+	            switch (_context3.prev = _context3.next) {
 	              case 0:
 	                if (!this.canClick) {
-	                  _context2.next = 8;
+	                  _context3.next = 8;
 	                  break;
 	                }
 
 	                L.DomEvent.stopPropagation(e);
 	                _e$gmx = e.gmx, id = _e$gmx.id, properties = _e$gmx.properties;
-	                _context2.next = 5;
+	                _context3.next = 5;
 	                return this.httpGet("".concat(this._path, "/Monitoring/GetIncident"), {
 	                  IncidentID: properties.id
 	                });
 
 	              case 5:
-	                data = _context2.sent;
+	                data = _context3.sent;
 
 	                if (data) {
 	                  this._gmx_id = id;
 
 	                  this._view.open(_objectSpread2({
 	                    gmx_id: this._gmx_id,
+	                    statusList: this.StatusList,
 	                    properties: properties
 	                  }, data));
 	                }
@@ -45097,10 +44893,10 @@ var Forestry = (function () {
 
 	              case 8:
 	              case "end":
-	                return _context2.stop();
+	                return _context3.stop();
 	            }
 	          }
-	        }, _callee2, this);
+	        }, _callee3, this);
 	      }));
 
 	      function _click(_x2) {
@@ -45158,8 +44954,8 @@ var Forestry = (function () {
 	      }
 	    }
 	  }, {
-	    key: "getStyleHook",
-	    value: function getStyleHook(_ref2) {
+	    key: "getFilter",
+	    value: function getFilter(_ref2) {
 	      var properties = _ref2.properties;
 	      var c = properties[this._cid];
 	      var s = properties[this._sid];
@@ -45168,77 +44964,77 @@ var Forestry = (function () {
 	        case 1:
 	          switch (s) {
 	            case 1:
-	              return this._cache['cut-unconfirmed'] ? {} : null;
+	              return this._cache['cut-unconfirmed'];
 
 	            case 2:
-	              return this._cache['cut-working'] ? {} : null;
+	              return this._cache['cut-working'];
 
 	            case 3:
-	              return this._cache['cut-faux'] ? {} : null;
+	              return this._cache['cut-faux'];
 
 	            case 4:
-	              return this._cache['cut-confirmed'] ? {} : null;
+	              return this._cache['cut-confirmed'];
 
 	            default:
-	              return null;
+	              return false;
 	          }
 
 	        case 2:
 	          switch (s) {
 	            case 1:
-	              return this._cache['windthrow-unconfirmed'] ? {} : null;
+	              return this._cache['windthrow-unconfirmed'];
 
 	            case 2:
-	              return this._cache['windthrow-working'] ? {} : null;
+	              return this._cache['windthrow-working'];
 
 	            case 3:
-	              return this._cache['windthrow-faux'] ? {} : null;
+	              return this._cache['windthrow-faux'];
 
 	            case 4:
-	              return this._cache['windthrow-confirmed'] ? {} : null;
+	              return this._cache['windthrow-confirmed'];
 
 	            default:
-	              return null;
+	              return false;
 	          }
 
 	        case 3:
 	          switch (s) {
 	            case 1:
-	              return this._cache['disease-unconfirmed'] ? {} : null;
+	              return this._cache['disease-unconfirmed'];
 
 	            case 2:
-	              return this._cache['disease-working'] ? {} : null;
+	              return this._cache['disease-working'];
 
 	            case 3:
-	              return this._cache['disease-faux'] ? {} : null;
+	              return this._cache['disease-faux'];
 
 	            case 4:
-	              return this._cache['disease-confirmed'] ? {} : null;
+	              return this._cache['disease-confirmed'];
 
 	            default:
-	              return null;
+	              return false;
 	          }
 
 	        case 4:
 	          switch (s) {
 	            case 1:
-	              return this._cache['burn-unconfirmed'] ? {} : null;
+	              return this._cache['burn-unconfirmed'];
 
 	            case 2:
-	              return this._cache['burn-working'] ? {} : null;
+	              return this._cache['burn-working'];
 
 	            case 3:
-	              return this._cache['burn-faux'] ? {} : null;
+	              return this._cache['burn-faux'];
 
 	            case 4:
-	              return this._cache['burn-confirmed'] ? {} : null;
+	              return this._cache['burn-confirmed'];
 
 	            default:
-	              return null;
+	              return false;
 	          }
 
 	        default:
-	          return null;
+	          return false;
 	      }
 	    }
 	  }]);
@@ -46135,21 +45931,18 @@ var Forestry = (function () {
 	        var a = this,
 	            s = this.w,
 	            r = i.intensity;
-
-	        if (!f.isFirefox()) {
-	          t.unfilter(!0);
-	          new window.SVG.Filter();
-	          t.filter(function (t) {
-	            var i = s.config.chart.dropShadow;
-	            (i.enabled ? a.addShadow(t, e, i) : t).componentTransfer({
-	              rgb: {
-	                type: "linear",
-	                slope: 1.5,
-	                intercept: r
-	              }
-	            });
-	          }), t.filterer.node.setAttribute("filterUnits", "userSpaceOnUse"), this._scaleFilterSize(t.filterer.node);
-	        }
+	        t.unfilter(!0);
+	        new window.SVG.Filter();
+	        t.filter(function (t) {
+	          var i = s.config.chart.dropShadow;
+	          (i.enabled ? a.addShadow(t, e, i) : t).componentTransfer({
+	            rgb: {
+	              type: "linear",
+	              slope: 1.5,
+	              intercept: r
+	            }
+	          });
+	        }), t.filterer.node.setAttribute("filterUnits", "userSpaceOnUse"), this._scaleFilterSize(t.filterer.node);
 	      }
 	    }, {
 	      key: "addDarkenFilter",
@@ -46157,20 +45950,17 @@ var Forestry = (function () {
 	        var a = this,
 	            s = this.w,
 	            r = i.intensity;
-
-	        if (!f.isFirefox()) {
-	          t.unfilter(!0);
-	          new window.SVG.Filter();
-	          t.filter(function (t) {
-	            var i = s.config.chart.dropShadow;
-	            (i.enabled ? a.addShadow(t, e, i) : t).componentTransfer({
-	              rgb: {
-	                type: "linear",
-	                slope: r
-	              }
-	            });
-	          }), t.filterer.node.setAttribute("filterUnits", "userSpaceOnUse"), this._scaleFilterSize(t.filterer.node);
-	        }
+	        t.unfilter(!0);
+	        new window.SVG.Filter();
+	        t.filter(function (t) {
+	          var i = s.config.chart.dropShadow;
+	          (i.enabled ? a.addShadow(t, e, i) : t).componentTransfer({
+	            rgb: {
+	              type: "linear",
+	              slope: r
+	            }
+	          });
+	        }), t.filterer.node.setAttribute("filterUnits", "userSpaceOnUse"), this._scaleFilterSize(t.filterer.node);
 	      }
 	    }, {
 	      key: "applyFilter",
@@ -46910,7 +46700,7 @@ var Forestry = (function () {
 	      key: "addBackgroundToAnno",
 	      value: function value(t, e) {
 	        var i = this.w;
-	        if (!e.label.text || e.label.text && !e.label.text.trim()) return null;
+	        if (!t || !e.label.text || e.label.text && !e.label.text.trim()) return null;
 	        var a = i.globals.dom.baseEl.querySelector(".apexcharts-grid").getBoundingClientRect(),
 	            s = t.getBoundingClientRect(),
 	            r = e.label.style.padding.left,
@@ -47026,6 +46816,153 @@ var Forestry = (function () {
 	  }(),
 	      y = function () {
 	    function t(i) {
+	      e(this, t), this.ctx = i, this.w = i.w, this.months31 = [1, 3, 5, 7, 8, 10, 12], this.months30 = [2, 4, 6, 9, 11], this.daysCntOfYear = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+	    }
+
+	    return a(t, [{
+	      key: "isValidDate",
+	      value: function value(t) {
+	        return !isNaN(this.parseDate(t));
+	      }
+	    }, {
+	      key: "getTimeStamp",
+	      value: function value(t) {
+	        return Date.parse(t) ? this.w.config.xaxis.labels.datetimeUTC ? new Date(new Date(t).toISOString().substr(0, 25)).getTime() : new Date(t).getTime() : t;
+	      }
+	    }, {
+	      key: "getDate",
+	      value: function value(t) {
+	        return this.w.config.xaxis.labels.datetimeUTC ? new Date(new Date(t).toUTCString()) : new Date(t);
+	      }
+	    }, {
+	      key: "parseDate",
+	      value: function value(t) {
+	        var e = Date.parse(t);
+	        if (!isNaN(e)) return this.getTimeStamp(t);
+	        var i = Date.parse(t.replace(/-/g, "/").replace(/[a-z]+/gi, " "));
+	        return i = this.getTimeStamp(i);
+	      }
+	    }, {
+	      key: "parseDateWithTimezone",
+	      value: function value(t) {
+	        return Date.parse(t.replace(/-/g, "/").replace(/[a-z]+/gi, " "));
+	      }
+	    }, {
+	      key: "formatDate",
+	      value: function value(t, e) {
+	        var i = this.w.globals.locale,
+	            a = this.w.config.xaxis.labels.datetimeUTC,
+	            s = ["\0"].concat(g(i.months)),
+	            r = ["\x01"].concat(g(i.shortMonths)),
+	            n = ["\x02"].concat(g(i.days)),
+	            o = ["\x03"].concat(g(i.shortDays));
+
+	        function l(t, e) {
+	          var i = t + "";
+
+	          for (e = e || 2; i.length < e;) {
+	            i = "0" + i;
+	          }
+
+	          return i;
+	        }
+
+	        var h = a ? t.getUTCFullYear() : t.getFullYear();
+	        e = (e = (e = e.replace(/(^|[^\\])yyyy+/g, "$1" + h)).replace(/(^|[^\\])yy/g, "$1" + h.toString().substr(2, 2))).replace(/(^|[^\\])y/g, "$1" + h);
+	        var c = (a ? t.getUTCMonth() : t.getMonth()) + 1;
+	        e = (e = (e = (e = e.replace(/(^|[^\\])MMMM+/g, "$1" + s[0])).replace(/(^|[^\\])MMM/g, "$1" + r[0])).replace(/(^|[^\\])MM/g, "$1" + l(c))).replace(/(^|[^\\])M/g, "$1" + c);
+	        var d = a ? t.getUTCDate() : t.getDate();
+	        e = (e = (e = (e = e.replace(/(^|[^\\])dddd+/g, "$1" + n[0])).replace(/(^|[^\\])ddd/g, "$1" + o[0])).replace(/(^|[^\\])dd/g, "$1" + l(d))).replace(/(^|[^\\])d/g, "$1" + d);
+	        var u = a ? t.getUTCHours() : t.getHours(),
+	            f = u > 12 ? u - 12 : 0 === u ? 12 : u;
+	        e = (e = (e = (e = e.replace(/(^|[^\\])HH+/g, "$1" + l(u))).replace(/(^|[^\\])H/g, "$1" + u)).replace(/(^|[^\\])hh+/g, "$1" + l(f))).replace(/(^|[^\\])h/g, "$1" + f);
+	        var p = a ? t.getUTCMinutes() : t.getMinutes();
+	        e = (e = e.replace(/(^|[^\\])mm+/g, "$1" + l(p))).replace(/(^|[^\\])m/g, "$1" + p);
+	        var x = a ? t.getUTCSeconds() : t.getSeconds();
+	        e = (e = e.replace(/(^|[^\\])ss+/g, "$1" + l(x))).replace(/(^|[^\\])s/g, "$1" + x);
+	        var b = a ? t.getUTCMilliseconds() : t.getMilliseconds();
+	        e = e.replace(/(^|[^\\])fff+/g, "$1" + l(b, 3)), b = Math.round(b / 10), e = e.replace(/(^|[^\\])ff/g, "$1" + l(b)), b = Math.round(b / 10);
+	        var m = u < 12 ? "AM" : "PM";
+	        e = (e = (e = e.replace(/(^|[^\\])f/g, "$1" + b)).replace(/(^|[^\\])TT+/g, "$1" + m)).replace(/(^|[^\\])T/g, "$1" + m.charAt(0));
+	        var v = m.toLowerCase();
+	        e = (e = e.replace(/(^|[^\\])tt+/g, "$1" + v)).replace(/(^|[^\\])t/g, "$1" + v.charAt(0));
+	        var y = -t.getTimezoneOffset(),
+	            w = a || !y ? "Z" : y > 0 ? "+" : "-";
+
+	        if (!a) {
+	          var k = (y = Math.abs(y)) % 60;
+	          w += l(Math.floor(y / 60)) + ":" + l(k);
+	        }
+
+	        e = e.replace(/(^|[^\\])K/g, "$1" + w);
+	        var A = (a ? t.getUTCDay() : t.getDay()) + 1;
+	        return e = (e = (e = (e = (e = e.replace(new RegExp(n[0], "g"), n[A])).replace(new RegExp(o[0], "g"), o[A])).replace(new RegExp(s[0], "g"), s[c])).replace(new RegExp(r[0], "g"), r[c])).replace(/\\(.)/g, "$1");
+	      }
+	    }, {
+	      key: "getTimeUnitsfromTimestamp",
+	      value: function value(t, e, i) {
+	        var a = this.w;
+	        void 0 !== a.config.xaxis.min && (t = a.config.xaxis.min), void 0 !== a.config.xaxis.max && (e = a.config.xaxis.max);
+	        var s = this.getDate(t),
+	            r = this.getDate(e),
+	            n = this.formatDate(s, "yyyy MM dd HH mm").split(" "),
+	            o = this.formatDate(r, "yyyy MM dd HH mm").split(" ");
+	        return {
+	          minMinute: parseInt(n[4], 10),
+	          maxMinute: parseInt(o[4], 10),
+	          minHour: parseInt(n[3], 10),
+	          maxHour: parseInt(o[3], 10),
+	          minDate: parseInt(n[2], 10),
+	          maxDate: parseInt(o[2], 10),
+	          minMonth: parseInt(n[1], 10) - 1,
+	          maxMonth: parseInt(o[1], 10) - 1,
+	          minYear: parseInt(n[0], 10),
+	          maxYear: parseInt(o[0], 10)
+	        };
+	      }
+	    }, {
+	      key: "isLeapYear",
+	      value: function value(t) {
+	        return t % 4 == 0 && t % 100 != 0 || t % 400 == 0;
+	      }
+	    }, {
+	      key: "calculcateLastDaysOfMonth",
+	      value: function value(t, e, i) {
+	        return this.determineDaysOfMonths(t, e) - i;
+	      }
+	    }, {
+	      key: "determineDaysOfYear",
+	      value: function value(t) {
+	        var e = 365;
+	        return this.isLeapYear(t) && (e = 366), e;
+	      }
+	    }, {
+	      key: "determineRemainingDaysOfYear",
+	      value: function value(t, e, i) {
+	        var a = this.daysCntOfYear[e] + i;
+	        return e > 1 && this.isLeapYear() && a++, a;
+	      }
+	    }, {
+	      key: "determineDaysOfMonths",
+	      value: function value(t, e) {
+	        var i = 30;
+
+	        switch (t = f.monthMod(t), !0) {
+	          case this.months30.indexOf(t) > -1:
+	            2 === t && (i = this.isLeapYear(e) ? 29 : 28);
+	            break;
+
+	          case this.months31.indexOf(t) > -1:
+	          default:
+	            i = 31;
+	        }
+
+	        return i;
+	      }
+	    }]), t;
+	  }(),
+	      w = function () {
+	    function t(i) {
 	      e(this, t), this.ctx = i, this.w = i.w;
 	    }
 
@@ -47076,11 +47013,16 @@ var Forestry = (function () {
 	    }, {
 	      key: "getCategoryLabels",
 	      value: function value(t) {
-	        var e = this.w,
-	            i = t.slice();
-	        return e.config.xaxis.convertedCatToNumeric && (i = t.map(function (t) {
-	          return e.config.xaxis.labels.formatter(t - e.globals.minX + 1);
-	        })), i;
+	        var e = this,
+	            i = this.w,
+	            a = t.slice();
+	        return i.config.xaxis.convertedCatToNumeric && (a = t.map(function (t, a) {
+	          return i.config.xaxis.labels.formatter(t - i.globals.minX + 1, {
+	            i: a,
+	            dateFormatter: new y(e.ctx).formatDate,
+	            w: i
+	          });
+	        })), a;
 	      }
 	    }, {
 	      key: "getLargestSeries",
@@ -47241,7 +47183,7 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      w = function () {
+	      k = function () {
 	    function t(i) {
 	      e(this, t), this.w = i.w, this.annoCtx = i;
 	    }
@@ -47298,7 +47240,7 @@ var Forestry = (function () {
 	          n && (i = parseFloat(n.getAttribute("y")));
 	        } else {
 	          var o;
-	          if (s.config.yaxis[e.yAxisIndex].logarithmic) o = (a = new y(this.annoCtx.ctx).getLogVal(a, e.yAxisIndex)) / s.globals.yLogRatio[e.yAxisIndex];else o = (a - s.globals.minYArr[e.yAxisIndex]) / (s.globals.yRange[e.yAxisIndex] / s.globals.gridHeight);
+	          if (s.config.yaxis[e.yAxisIndex].logarithmic) o = (a = new w(this.annoCtx.ctx).getLogVal(a, e.yAxisIndex)) / s.globals.yLogRatio[e.yAxisIndex];else o = (a - s.globals.minYArr[e.yAxisIndex]) / (s.globals.yRange[e.yAxisIndex] / s.globals.gridHeight);
 	          i = s.globals.gridHeight - o, s.config.yaxis[e.yAxisIndex] && s.config.yaxis[e.yAxisIndex].reversed && (i = o);
 	        }
 
@@ -47318,7 +47260,7 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      k = function () {
+	      A = function () {
 	    function t(i) {
 	      e(this, t), this.w = i.w, this.annoCtx = i;
 	    }
@@ -47339,7 +47281,7 @@ var Forestry = (function () {
 	          a.config.xaxis.convertedCatToNumeric && (h = a.globals.categoryLabels.indexOf(t.x)), s = this.annoCtx.helpers.getStringX(t.x), null === t.y && (l = a.globals.series[t.seriesIndex][h]);
 	        } else s = (t.x - a.globals.minX) / (a.globals.xRange / a.globals.gridWidth);
 
-	        a.config.yaxis[t.yAxisIndex].logarithmic ? o = (l = new y(this.annoCtx.ctx).getLogVal(l, t.yAxisIndex)) / a.globals.yLogRatio[t.yAxisIndex] : o = (l - a.globals.minYArr[t.yAxisIndex]) / (a.globals.yRange[t.yAxisIndex] / a.globals.gridHeight);
+	        a.config.yaxis[t.yAxisIndex].logarithmic ? o = (l = new w(this.annoCtx.ctx).getLogVal(l, t.yAxisIndex)) / a.globals.yLogRatio[t.yAxisIndex] : o = (l - a.globals.minYArr[t.yAxisIndex]) / (a.globals.yRange[t.yAxisIndex] / a.globals.gridHeight);
 
 	        if (r = a.globals.gridHeight - o - parseFloat(t.label.style.fontSize) - t.marker.size, n = a.globals.gridHeight - o, a.config.yaxis[t.yAxisIndex] && a.config.yaxis[t.yAxisIndex].reversed && (r = o + parseFloat(t.label.style.fontSize) + t.marker.size, n = o), f.isNumber(s)) {
 	          var c = {
@@ -47406,9 +47348,7 @@ var Forestry = (function () {
 	    }]), t;
 	  }();
 
-	  var A,
-	      S,
-	      C = {
+	  var S = {
 	    name: "en",
 	    options: {
 	      months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
@@ -47429,7 +47369,7 @@ var Forestry = (function () {
 	      }
 	    }
 	  },
-	      L = function () {
+	      C = function () {
 	    function t() {
 	      e(this, t), this.yAxis = {
 	        show: !0,
@@ -47674,7 +47614,7 @@ var Forestry = (function () {
 	              }
 	            },
 	            background: "transparent",
-	            locales: [C],
+	            locales: [S],
 	            defaultLocale: "en",
 	            dropShadow: {
 	              enabled: !1,
@@ -47699,8 +47639,10 @@ var Forestry = (function () {
 	              dataPointMouseEnter: void 0,
 	              dataPointMouseLeave: void 0,
 	              beforeZoom: void 0,
+	              beforeResetZoom: void 0,
 	              zoomed: void 0,
-	              scrolled: void 0
+	              scrolled: void 0,
+	              brushScrolled: void 0
 	            },
 	            foreColor: "#373d3f",
 	            fontFamily: "Helvetica, Arial, sans-serif",
@@ -47801,6 +47743,7 @@ var Forestry = (function () {
 	              startingShape: "flat",
 	              endingShape: "flat",
 	              rangeBarOverlap: !0,
+	              rangeBarGroupRows: !1,
 	              colors: {
 	                ranges: [],
 	                backgroundBarColors: [],
@@ -47832,6 +47775,18 @@ var Forestry = (function () {
 	              enableShades: !0,
 	              shadeIntensity: .5,
 	              reverseNegativeShade: !1,
+	              distributed: !1,
+	              useFillColorAsStroke: !1,
+	              colorScale: {
+	                inverse: !1,
+	                ranges: [],
+	                min: void 0,
+	                max: void 0
+	              }
+	            },
+	            treemap: {
+	              enableShades: !0,
+	              shadeIntensity: .5,
 	              distributed: !1,
 	              useFillColorAsStroke: !1,
 	              colorScale: {
@@ -48188,14 +48143,14 @@ var Forestry = (function () {
 	            hover: {
 	              filter: {
 	                type: "lighten",
-	                value: .15
+	                value: .1
 	              }
 	            },
 	            active: {
 	              allowMultipleDataPointsSelection: !1,
 	              filter: {
 	                type: "darken",
-	                value: .65
+	                value: .5
 	              }
 	            }
 	          },
@@ -48407,9 +48362,9 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      P = function () {
+	      L = function () {
 	    function t(i) {
-	      e(this, t), this.ctx = i, this.w = i.w, this.graphics = new b(this.ctx), this.w.globals.isBarHorizontal && (this.invertAxis = !0), this.helpers = new m(this), this.xAxisAnnotations = new v(this), this.yAxisAnnotations = new w(this), this.pointsAnnotations = new k(this), this.w.globals.isBarHorizontal && this.w.config.yaxis[0].reversed && (this.inversedReversedAxis = !0), this.xDivision = this.w.globals.gridWidth / this.w.globals.dataPoints;
+	      e(this, t), this.ctx = i, this.w = i.w, this.graphics = new b(this.ctx), this.w.globals.isBarHorizontal && (this.invertAxis = !0), this.helpers = new m(this), this.xAxisAnnotations = new v(this), this.yAxisAnnotations = new k(this), this.pointsAnnotations = new A(this), this.w.globals.isBarHorizontal && this.w.config.yaxis[0].reversed && (this.inversedReversedAxis = !0), this.xDivision = this.w.globals.gridWidth / this.w.globals.dataPoints;
 	    }
 
 	    return a(t, [{
@@ -48572,7 +48527,7 @@ var Forestry = (function () {
 	            o = n.w,
 	            l = o.globals.dom.baseEl.querySelector(".apexcharts-".concat(s, "-annotations")),
 	            h = l.childNodes.length + 1,
-	            c = new L(),
+	            c = new C(),
 	            d = Object.assign({}, "xaxis" === s ? c.xAxisAnnotation : "yaxis" === s ? c.yAxisAnnotation : c.pointAnnotation),
 	            g = f.extend(d, e);
 
@@ -48625,7 +48580,7 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      T = function () {
+	      P = function () {
 	    function t(i) {
 	      e(this, t), this.ctx = i, this.w = i.w, this.opts = null, this.seriesIndex = 0;
 	    }
@@ -48662,7 +48617,7 @@ var Forestry = (function () {
 	      key: "getSeriesIndex",
 	      value: function value(t) {
 	        var e = this.w;
-	        return ("bar" === e.config.chart.type || "rangeBar" === e.config.chart.type) && e.config.plotOptions.bar.distributed || "heatmap" === e.config.chart.type ? this.seriesIndex = t.seriesNumber : this.seriesIndex = t.seriesNumber % e.globals.series.length, this.seriesIndex;
+	        return ("bar" === e.config.chart.type || "rangeBar" === e.config.chart.type) && e.config.plotOptions.bar.distributed || "heatmap" === e.config.chart.type || "treemap" === e.config.chart.type ? this.seriesIndex = t.seriesNumber : this.seriesIndex = t.seriesNumber % e.globals.series.length, this.seriesIndex;
 	      }
 	    }, {
 	      key: "fillPath",
@@ -48682,10 +48637,11 @@ var Forestry = (function () {
 	          w: e
 	        }));
 	        var o = this.getFillType(this.seriesIndex),
-	            l = Array.isArray(r.fill.opacity) ? r.fill.opacity[this.seriesIndex] : r.fill.opacity,
-	            h = n;
+	            l = Array.isArray(r.fill.opacity) ? r.fill.opacity[this.seriesIndex] : r.fill.opacity;
+	        t.color && (n = t.color);
+	        var h = n;
 
-	        if (t.color && (n = t.color), -1 === n.indexOf("rgb") ? n.length < 9 && (h = f.hexToRgba(n, l)) : n.indexOf("rgba") > -1 && (l = f.getOpacityFromRGBA(n)), t.opacity && (l = t.opacity), "pattern" === o && (a = this.handlePatternFill(a, n, l, h)), "gradient" === o && (s = this.handleGradientFill(n, l, this.seriesIndex)), "image" === o) {
+	        if (-1 === n.indexOf("rgb") ? n.length < 9 && (h = f.hexToRgba(n, l)) : n.indexOf("rgba") > -1 && (l = f.getOpacityFromRGBA(n)), t.opacity && (l = t.opacity), "pattern" === o && (a = this.handlePatternFill(a, n, l, h)), "gradient" === o && (s = this.handleGradientFill(n, l, this.seriesIndex)), "image" === o) {
 	          var c = r.fill.image.src,
 	              d = t.patternID ? t.patternID : "";
 	          this.clippedImgArea({
@@ -48753,7 +48709,7 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      z = function () {
+	      T = function () {
 	    function t(i, a) {
 	      e(this, t), this.ctx = i, this.w = i.w;
 	    }
@@ -48846,7 +48802,7 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      I = function () {
+	      z = function () {
 	    function t(i) {
 	      e(this, t), this.ctx = i, this.w = i.w, this.initialAnim = this.w.config.chart.animations.enabled, this.dynamicAnim = this.initialAnim && this.w.config.chart.animations.dynamicAnimation.enabled;
 	    }
@@ -48895,8 +48851,8 @@ var Forestry = (function () {
 	            l = s,
 	            h = new x(this.ctx),
 	            c = new p(this.ctx),
-	            d = new T(this.ctx),
-	            g = new z(this.ctx),
+	            d = new P(this.ctx),
+	            g = new T(this.ctx),
 	            u = new b(this.ctx),
 	            f = g.getMarkerConfig("apexcharts-marker", l),
 	            m = d.fillPath({
@@ -48938,8 +48894,8 @@ var Forestry = (function () {
 	              L = o.config.chart.animations.dynamicAnimation.speed;
 	          null != (C = o.globals.previousPaths[s] && o.globals.previousPaths[s][n]) && (k = C.x, A = C.y, S = void 0 !== C.r ? C.r : a);
 
-	          for (var P = 0; P < o.globals.collapsedSeries.length; P++) {
-	            o.globals.collapsedSeries[P].index === s && (L = 1, a = 0);
+	          for (var z = 0; z < o.globals.collapsedSeries.length; z++) {
+	            o.globals.collapsedSeries[z].index === s && (L = 1, a = 0);
 	          }
 
 	          0 === t && 0 === e && (a = 0), h.animateCircle(v, {
@@ -48971,7 +48927,7 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      M = function () {
+	      I = function () {
 	    function t(i) {
 	      e(this, t), this.ctx = i, this.w = i.w;
 	    }
@@ -49039,7 +48995,7 @@ var Forestry = (function () {
 
 	            if ("bubble" === r.config.chart.type) {
 	              f = p(u = r.globals.seriesZ[e][c]), h = t.y[g];
-	              var x = new I(this.ctx),
+	              var x = new z(this.ctx),
 	                  m = x.centerTextInBubble(h, e, c);
 	              h = m.y;
 	            } else void 0 !== u && (f = p(u));
@@ -49070,48 +49026,49 @@ var Forestry = (function () {
 	            n = t.j,
 	            o = t.text,
 	            l = t.textAnchor,
-	            h = t.parent,
-	            c = t.dataLabelsConfig,
-	            d = t.color,
-	            g = t.alwaysDrawDataLabel,
-	            u = t.offsetCorrection;
+	            h = t.fontSize,
+	            c = t.parent,
+	            d = t.dataLabelsConfig,
+	            g = t.color,
+	            u = t.alwaysDrawDataLabel,
+	            f = t.offsetCorrection;
 
 	        if (!(Array.isArray(e.config.dataLabels.enabledOnSeries) && e.config.dataLabels.enabledOnSeries.indexOf(r) < 0)) {
-	          var f = {
+	          var x = {
 	            x: a,
 	            y: s,
 	            drawnextLabel: !0
 	          };
-	          u && (f = this.dataLabelsCorrection(a, s, o, r, n, g, parseInt(c.style.fontSize, 10))), e.globals.zoomed || (a = f.x, s = f.y), f.textRects && (a + f.textRects.width < -20 || a > e.globals.gridWidth + 20) && (o = "");
-	          var x = e.globals.dataLabels.style.colors[r];
-	          (("bar" === e.config.chart.type || "rangeBar" === e.config.chart.type) && e.config.plotOptions.bar.distributed || e.config.dataLabels.distributed) && (x = e.globals.dataLabels.style.colors[n]), d && (x = d);
-	          var m = c.offsetX,
-	              v = c.offsetY;
+	          f && (x = this.dataLabelsCorrection(a, s, o, r, n, u, parseInt(d.style.fontSize, 10))), e.globals.zoomed || (a = x.x, s = x.y), x.textRects && (a + x.textRects.width < -20 || a > e.globals.gridWidth + 20) && (o = "");
+	          var m = e.globals.dataLabels.style.colors[r];
+	          (("bar" === e.config.chart.type || "rangeBar" === e.config.chart.type) && e.config.plotOptions.bar.distributed || e.config.dataLabels.distributed) && (m = e.globals.dataLabels.style.colors[n]), g && (m = g);
+	          var v = d.offsetX,
+	              y = d.offsetY;
 
-	          if ("bar" !== e.config.chart.type && "rangeBar" !== e.config.chart.type || (m = 0, v = 0), f.drawnextLabel) {
-	            var y = i.drawText({
+	          if ("bar" !== e.config.chart.type && "rangeBar" !== e.config.chart.type || (v = 0, y = 0), x.drawnextLabel) {
+	            var w = i.drawText({
 	              width: 100,
-	              height: parseInt(c.style.fontSize, 10),
-	              x: a + m,
-	              y: s + v,
-	              foreColor: x,
-	              textAnchor: l || c.textAnchor,
+	              height: parseInt(d.style.fontSize, 10),
+	              x: a + v,
+	              y: s + y,
+	              foreColor: m,
+	              textAnchor: l || d.textAnchor,
 	              text: o,
-	              fontSize: c.style.fontSize,
-	              fontFamily: c.style.fontFamily,
-	              fontWeight: c.style.fontWeight || "normal"
+	              fontSize: h || d.style.fontSize,
+	              fontFamily: d.style.fontFamily,
+	              fontWeight: d.style.fontWeight || "normal"
 	            });
 
-	            if (y.attr({
+	            if (w.attr({
 	              class: "apexcharts-datalabel",
 	              cx: a,
 	              cy: s
-	            }), c.dropShadow.enabled) {
-	              var w = c.dropShadow;
-	              new p(this.ctx).dropShadow(y, w);
+	            }), d.dropShadow.enabled) {
+	              var k = d.dropShadow;
+	              new p(this.ctx).dropShadow(w, k);
 	            }
 
-	            h.add(y), void 0 === e.globals.lastDrawnDataLabelsIndexes[r] && (e.globals.lastDrawnDataLabelsIndexes[r] = []), e.globals.lastDrawnDataLabelsIndexes[r].push(n);
+	            c.add(w), void 0 === e.globals.lastDrawnDataLabelsIndexes[r] && (e.globals.lastDrawnDataLabelsIndexes[r] = []), e.globals.lastDrawnDataLabelsIndexes[r].push(n);
 	          }
 	        }
 	      }
@@ -49157,7 +49114,7 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      E = function () {
+	      M = function () {
 	    function t(i) {
 	      e(this, t), this.w = i.w, this.barCtx = i;
 	    }
@@ -49345,7 +49302,7 @@ var Forestry = (function () {
 	            d = this.w,
 	            g = "rotate(0)";
 	        "vertical" === d.config.plotOptions.bar.dataLabels.orientation && (g = "rotate(-90, ".concat(e, ", ").concat(i, ")"));
-	        var u = new M(this.barCtx.ctx),
+	        var u = new I(this.barCtx.ctx),
 	            f = new b(this.barCtx.ctx),
 	            p = c.formatter,
 	            x = null,
@@ -49365,7 +49322,7 @@ var Forestry = (function () {
 	          var y = d.globals.series[s][r] <= 0,
 	              w = d.config.plotOptions.bar.dataLabels.position;
 	          if ("vertical" === d.config.plotOptions.bar.dataLabels.orientation && ("top" === w && (c.textAnchor = y ? "end" : "start"), "center" === w && (c.textAnchor = "middle"), "bottom" === w && (c.textAnchor = y ? "end" : "start")), this.barCtx.isTimelineBar && this.barCtx.barOptions.dataLabels.hideOverflowingLabels) h < f.getTextRects(v, parseFloat(c.style.fontSize)).width && (v = "");
-	          d.config.chart.stacked && this.barCtx.barOptions.dataLabels.hideOverflowingLabels && (this.barCtx.isHorizontal ? ((h = Math.abs(d.globals.series[s][r]) / this.barCtx.invertedYRatio[this.barCtx.yaxisIndex]) > 0 && o.width / 1.6 > h || h < 0 && o.width / 1.6 < h) && (v = "") : (l = Math.abs(d.globals.series[s][r]) / this.barCtx.yRatio[this.barCtx.yaxisIndex], o.height / 1.6 > l && (v = "")));
+	          d.config.chart.stacked && this.barCtx.barOptions.dataLabels.hideOverflowingLabels && (this.barCtx.isHorizontal ? (h > 0 && o.width / 1.6 > h || h < 0 && o.width / 1.6 < h) && (v = "") : o.height / 1.6 > l && (v = ""));
 	          var k = n({}, c);
 	          this.barCtx.isHorizontal && a < 0 && ("start" === c.textAnchor ? k.textAnchor = "end" : "end" === c.textAnchor && (k.textAnchor = "start")), u.plotDataLabelsText({
 	            x: e,
@@ -49384,7 +49341,7 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      X = function () {
+	      E = function () {
 	    function t(i) {
 	      e(this, t), this.ctx = i, this.w = i.w, this.legendInactiveClass = "legend-mouseover-inactive";
 	    }
@@ -49397,7 +49354,7 @@ var Forestry = (function () {
 	    }, {
 	      key: "getSeriesByName",
 	      value: function value(t) {
-	        return this.w.globals.dom.baseEl.querySelector("[seriesName='".concat(f.escapeString(t), "']"));
+	        return this.w.globals.dom.baseEl.querySelector(".apexcharts-inner .apexcharts-series[seriesName='".concat(f.escapeString(t), "']"));
 	      }
 	    }, {
 	      key: "isSeriesHidden",
@@ -49547,15 +49504,30 @@ var Forestry = (function () {
 	            e(s, r, i);
 	          }
 	        }), this.handlePrevBubbleScatterPaths("bubble"), this.handlePrevBubbleScatterPaths("scatter");
-	        var i = t.globals.dom.baseEl.querySelectorAll(".apexcharts-heatmap .apexcharts-series");
-	        if (i.length > 0) for (var a = 0; a < i.length; a++) {
-	          for (var s = t.globals.dom.baseEl.querySelectorAll(".apexcharts-heatmap .apexcharts-series[data\\:realIndex='".concat(a, "'] rect")), r = [], n = 0; n < s.length; n++) {
-	            r.push({
-	              color: s[n].getAttribute("color")
+	        var i = t.globals.dom.baseEl.querySelectorAll(".apexcharts-".concat(t.config.chart.type, " .apexcharts-series"));
+	        if (i.length > 0) for (var a = function a(e) {
+	          for (var i = t.globals.dom.baseEl.querySelectorAll(".apexcharts-".concat(t.config.chart.type, " .apexcharts-series[data\\:realIndex='").concat(e, "'] rect")), a = [], s = function s(t) {
+	            var e = function e(_e) {
+	              return i[t].getAttribute(_e);
+	            },
+	                s = {
+	              x: parseFloat(e("x")),
+	              y: parseFloat(e("y")),
+	              width: parseFloat(e("width")),
+	              height: parseFloat(e("height"))
+	            };
+
+	            a.push({
+	              rect: s,
+	              color: i[t].getAttribute("color")
 	            });
+	          }, r = 0; r < i.length; r++) {
+	            s(r);
 	          }
 
-	          t.globals.previousPaths.push(r);
+	          t.globals.previousPaths.push(a);
+	        }, s = 0; s < i.length; s++) {
+	          a(s);
 	        }
 	        t.globals.axisCharts || (t.globals.previousPaths = t.globals.series);
 	      }
@@ -49640,7 +49612,7 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      Y = function () {
+	      X = function () {
 	    function t(i) {
 	      e(this, t), this.w = i.w, this.barCtx = i;
 	    }
@@ -49672,10 +49644,12 @@ var Forestry = (function () {
 	            o,
 	            l = this.w,
 	            h = l.globals.dataPoints;
-	        if (this.barCtx.isTimelineBar && (h = l.globals.labels.length), this.barCtx.isHorizontal) s = (i = l.globals.gridHeight / h) / this.barCtx.seriesLen, l.globals.isXNumeric && (s = (i = l.globals.gridHeight / this.barCtx.totalItems) / this.barCtx.seriesLen), s = s * parseInt(this.barCtx.barOptions.barHeight, 10) / 100, o = this.barCtx.baseLineInvertedY + l.globals.padHorizontal + (this.barCtx.isReversed ? l.globals.gridWidth : 0) - (this.barCtx.isReversed ? 2 * this.barCtx.baseLineInvertedY : 0), e = (i - s * this.barCtx.seriesLen) / 2;else {
+	        this.barCtx.isTimelineBar && (h = l.globals.labels.length);
+	        var c = this.barCtx.seriesLen;
+	        if (l.config.plotOptions.bar.rangeBarGroupRows && (c = 1), this.barCtx.isHorizontal) s = (i = l.globals.gridHeight / h) / c, l.globals.isXNumeric && (s = (i = l.globals.gridHeight / this.barCtx.totalItems) / this.barCtx.seriesLen), s = s * parseInt(this.barCtx.barOptions.barHeight, 10) / 100, o = this.barCtx.baseLineInvertedY + l.globals.padHorizontal + (this.barCtx.isReversed ? l.globals.gridWidth : 0) - (this.barCtx.isReversed ? 2 * this.barCtx.baseLineInvertedY : 0), e = (i - s * this.barCtx.seriesLen) / 2;else {
 	          if (a = l.globals.gridWidth / this.barCtx.visibleItems, l.config.xaxis.convertedCatToNumeric && (a = l.globals.gridWidth / l.globals.dataPoints), r = a / this.barCtx.seriesLen * parseInt(this.barCtx.barOptions.columnWidth, 10) / 100, l.globals.isXNumeric) {
-	            var c = this.barCtx.xRatio;
-	            l.config.xaxis.convertedCatToNumeric && (c = this.barCtx.initialXRatio), l.globals.minXDiff && .5 !== l.globals.minXDiff && l.globals.minXDiff / c > 0 && (a = l.globals.minXDiff / c), (r = a / this.barCtx.seriesLen * parseInt(this.barCtx.barOptions.columnWidth, 10) / 100) < 1 && (r = 1);
+	            var d = this.barCtx.xRatio;
+	            l.config.xaxis.convertedCatToNumeric && (d = this.barCtx.initialXRatio), l.globals.minXDiff && .5 !== l.globals.minXDiff && l.globals.minXDiff / d > 0 && (a = l.globals.minXDiff / d), (r = a / this.barCtx.seriesLen * parseInt(this.barCtx.barOptions.columnWidth, 10) / 100) < 1 && (r = 1);
 	          }
 
 	          n = l.globals.gridHeight - this.barCtx.baseLineY[this.barCtx.yaxisIndex] - (this.barCtx.isReversed ? l.globals.gridHeight : 0) + (this.barCtx.isReversed ? 2 * this.barCtx.baseLineY[this.barCtx.yaxisIndex] : 0), t = l.globals.padHorizontal + (a - r * this.barCtx.seriesLen) / 2;
@@ -49695,7 +49669,7 @@ var Forestry = (function () {
 	      key: "getPathFillColor",
 	      value: function value(t, e, i, a) {
 	        var s = this.w,
-	            r = new T(this.barCtx.ctx),
+	            r = new P(this.barCtx.ctx),
 	            n = null,
 	            o = this.barCtx.barOptions.distributed ? i : e;
 	        this.barCtx.barOptions.colors.ranges.length > 0 && this.barCtx.barOptions.colors.ranges.map(function (a) {
@@ -49727,7 +49701,7 @@ var Forestry = (function () {
 	            o = t.elSeries,
 	            l = this.w,
 	            h = new b(this.barCtx.ctx),
-	            c = new X(this.barCtx.ctx).getActiveConfigSeriesIndex();
+	            c = new E(this.barCtx.ctx).getActiveConfigSeriesIndex();
 
 	        if (this.barCtx.barOptions.colors.backgroundBarColors.length > 0 && c === i) {
 	          e >= this.barCtx.barOptions.colors.backgroundBarColors.length && (e -= this.barCtx.barOptions.colors.backgroundBarColors.length);
@@ -49883,11 +49857,11 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      F = function () {
+	      Y = function () {
 	    function t(i, a) {
 	      e(this, t), this.ctx = i, this.w = i.w;
 	      var s = this.w;
-	      this.barOptions = s.config.plotOptions.bar, this.isHorizontal = this.barOptions.horizontal, this.strokeWidth = s.config.stroke.width, this.isNullValue = !1, this.isTimelineBar = "datetime" === s.config.xaxis.type && s.globals.seriesRangeBarTimeline.length, this.xyRatios = a, null !== this.xyRatios && (this.xRatio = a.xRatio, this.initialXRatio = a.initialXRatio, this.yRatio = a.yRatio, this.invertedXRatio = a.invertedXRatio, this.invertedYRatio = a.invertedYRatio, this.baseLineY = a.baseLineY, this.baseLineInvertedY = a.baseLineInvertedY), this.yaxisIndex = 0, this.seriesLen = 0, this.barHelpers = new Y(this);
+	      this.barOptions = s.config.plotOptions.bar, this.isHorizontal = this.barOptions.horizontal, this.strokeWidth = s.config.stroke.width, this.isNullValue = !1, this.isTimelineBar = "datetime" === s.config.xaxis.type && s.globals.seriesRangeBarTimeline.length, this.xyRatios = a, null !== this.xyRatios && (this.xRatio = a.xRatio, this.initialXRatio = a.initialXRatio, this.yRatio = a.yRatio, this.invertedXRatio = a.invertedXRatio, this.invertedYRatio = a.invertedYRatio, this.baseLineY = a.baseLineY, this.baseLineInvertedY = a.baseLineInvertedY), this.yaxisIndex = 0, this.seriesLen = 0, this.barHelpers = new X(this);
 	    }
 
 	    return a(t, [{
@@ -49895,7 +49869,7 @@ var Forestry = (function () {
 	      value: function value(t, e) {
 	        var i = this.w,
 	            a = new b(this.ctx),
-	            s = new y(this.ctx, i);
+	            s = new w(this.ctx, i);
 	        t = s.getLogSeries(t), this.series = t, this.yRatio = s.getLogYRatios(this.yRatio), this.barHelpers.initVariables(t);
 	        var r = a.group({
 	          class: "apexcharts-bar-series apexcharts-plot-series"
@@ -49912,13 +49886,13 @@ var Forestry = (function () {
 	              x = [],
 	              m = [],
 	              v = i.globals.comboCharts ? e[o] : o,
-	              w = a.group({
+	              y = a.group({
 	            class: "apexcharts-series",
 	            rel: o + 1,
 	            seriesName: f.escapeString(i.globals.seriesNames[v]),
 	            "data:realIndex": v
 	          });
-	          this.ctx.series.addCollapsedClassToSeries(w, v), t[o].length > 0 && (this.visibleI = this.visibleI + 1);
+	          this.ctx.series.addCollapsedClassToSeries(y, v), t[o].length > 0 && (this.visibleI = this.visibleI + 1);
 	          var k = 0,
 	              A = 0;
 	          this.yRatio.length > 1 && (this.yaxisIndex = v), this.isReversed = i.config.yaxis[this.yaxisIndex] && i.config.yaxis[this.yaxisIndex].reversed;
@@ -49941,7 +49915,7 @@ var Forestry = (function () {
 	              x: u,
 	              y: p,
 	              strokeWidth: P,
-	              elSeries: w
+	              elSeries: y
 	            };
 	            this.isHorizontal ? (T = this.drawBarPaths(n(n({}, z), {}, {
 	              barHeight: k,
@@ -49961,7 +49935,7 @@ var Forestry = (function () {
 	              pathFrom: T.pathFrom,
 	              pathTo: T.pathTo,
 	              strokeWidth: P,
-	              elSeries: w,
+	              elSeries: y,
 	              x: u,
 	              y: p,
 	              series: t,
@@ -49973,7 +49947,7 @@ var Forestry = (function () {
 	            });
 	          }
 
-	          i.globals.seriesXvalues[v] = m, i.globals.seriesYvalues[v] = x, r.add(w);
+	          i.globals.seriesXvalues[v] = m, i.globals.seriesYvalues[v] = x, r.add(y);
 	        }
 
 	        return r;
@@ -50021,7 +49995,7 @@ var Forestry = (function () {
 	          className: "apexcharts-".concat(k, "-area")
 	        });
 	        L.attr("clip-path", "url(#gridRectMask".concat(A.globals.cuid, ")")), void 0 !== g && void 0 !== u && (L.attr("data-range-y1", g), L.attr("data-range-y2", u)), new p(this.ctx).setSelectionFilter(L, e, s), h.add(L);
-	        var P = new E(this).handleBarDataLabels({
+	        var P = new M(this).handleBarDataLabels({
 	          x: c,
 	          y: d,
 	          y1: g,
@@ -50143,155 +50117,8 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      D = function () {
-	    function t(i) {
-	      e(this, t), this.ctx = i, this.w = i.w, this.months31 = [1, 3, 5, 7, 8, 10, 12], this.months30 = [2, 4, 6, 9, 11], this.daysCntOfYear = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
-	    }
-
-	    return a(t, [{
-	      key: "isValidDate",
-	      value: function value(t) {
-	        return !isNaN(this.parseDate(t));
-	      }
-	    }, {
-	      key: "getTimeStamp",
-	      value: function value(t) {
-	        return Date.parse(t) ? this.w.config.xaxis.labels.datetimeUTC ? new Date(new Date(t).toISOString().substr(0, 25)).getTime() : new Date(t).getTime() : t;
-	      }
-	    }, {
-	      key: "getDate",
-	      value: function value(t) {
-	        return this.w.config.xaxis.labels.datetimeUTC ? new Date(new Date(t).toUTCString()) : new Date(t);
-	      }
-	    }, {
-	      key: "parseDate",
-	      value: function value(t) {
-	        var e = Date.parse(t);
-	        if (!isNaN(e)) return this.getTimeStamp(t);
-	        var i = Date.parse(t.replace(/-/g, "/").replace(/[a-z]+/gi, " "));
-	        return i = this.getTimeStamp(i);
-	      }
-	    }, {
-	      key: "parseDateWithTimezone",
-	      value: function value(t) {
-	        return Date.parse(t.replace(/-/g, "/").replace(/[a-z]+/gi, " "));
-	      }
-	    }, {
-	      key: "formatDate",
-	      value: function value(t, e) {
-	        var i = this.w.globals.locale,
-	            a = this.w.config.xaxis.labels.datetimeUTC,
-	            s = ["\0"].concat(g(i.months)),
-	            r = ["\x01"].concat(g(i.shortMonths)),
-	            n = ["\x02"].concat(g(i.days)),
-	            o = ["\x03"].concat(g(i.shortDays));
-
-	        function l(t, e) {
-	          var i = t + "";
-
-	          for (e = e || 2; i.length < e;) {
-	            i = "0" + i;
-	          }
-
-	          return i;
-	        }
-
-	        var h = a ? t.getUTCFullYear() : t.getFullYear();
-	        e = (e = (e = e.replace(/(^|[^\\])yyyy+/g, "$1" + h)).replace(/(^|[^\\])yy/g, "$1" + h.toString().substr(2, 2))).replace(/(^|[^\\])y/g, "$1" + h);
-	        var c = (a ? t.getUTCMonth() : t.getMonth()) + 1;
-	        e = (e = (e = (e = e.replace(/(^|[^\\])MMMM+/g, "$1" + s[0])).replace(/(^|[^\\])MMM/g, "$1" + r[0])).replace(/(^|[^\\])MM/g, "$1" + l(c))).replace(/(^|[^\\])M/g, "$1" + c);
-	        var d = a ? t.getUTCDate() : t.getDate();
-	        e = (e = (e = (e = e.replace(/(^|[^\\])dddd+/g, "$1" + n[0])).replace(/(^|[^\\])ddd/g, "$1" + o[0])).replace(/(^|[^\\])dd/g, "$1" + l(d))).replace(/(^|[^\\])d/g, "$1" + d);
-	        var u = a ? t.getUTCHours() : t.getHours(),
-	            f = u > 12 ? u - 12 : 0 === u ? 12 : u;
-	        e = (e = (e = (e = e.replace(/(^|[^\\])HH+/g, "$1" + l(u))).replace(/(^|[^\\])H/g, "$1" + u)).replace(/(^|[^\\])hh+/g, "$1" + l(f))).replace(/(^|[^\\])h/g, "$1" + f);
-	        var p = a ? t.getUTCMinutes() : t.getMinutes();
-	        e = (e = e.replace(/(^|[^\\])mm+/g, "$1" + l(p))).replace(/(^|[^\\])m/g, "$1" + p);
-	        var x = a ? t.getUTCSeconds() : t.getSeconds();
-	        e = (e = e.replace(/(^|[^\\])ss+/g, "$1" + l(x))).replace(/(^|[^\\])s/g, "$1" + x);
-	        var b = a ? t.getUTCMilliseconds() : t.getMilliseconds();
-	        e = e.replace(/(^|[^\\])fff+/g, "$1" + l(b, 3)), b = Math.round(b / 10), e = e.replace(/(^|[^\\])ff/g, "$1" + l(b)), b = Math.round(b / 10);
-	        var m = u < 12 ? "AM" : "PM";
-	        e = (e = (e = e.replace(/(^|[^\\])f/g, "$1" + b)).replace(/(^|[^\\])TT+/g, "$1" + m)).replace(/(^|[^\\])T/g, "$1" + m.charAt(0));
-	        var v = m.toLowerCase();
-	        e = (e = e.replace(/(^|[^\\])tt+/g, "$1" + v)).replace(/(^|[^\\])t/g, "$1" + v.charAt(0));
-	        var y = -t.getTimezoneOffset(),
-	            w = a || !y ? "Z" : y > 0 ? "+" : "-";
-
-	        if (!a) {
-	          var k = (y = Math.abs(y)) % 60;
-	          w += l(Math.floor(y / 60)) + ":" + l(k);
-	        }
-
-	        e = e.replace(/(^|[^\\])K/g, "$1" + w);
-	        var A = (a ? t.getUTCDay() : t.getDay()) + 1;
-	        return e = (e = (e = (e = (e = e.replace(new RegExp(n[0], "g"), n[A])).replace(new RegExp(o[0], "g"), o[A])).replace(new RegExp(s[0], "g"), s[c])).replace(new RegExp(r[0], "g"), r[c])).replace(/\\(.)/g, "$1");
-	      }
-	    }, {
-	      key: "getTimeUnitsfromTimestamp",
-	      value: function value(t, e, i) {
-	        var a = this.w;
-	        void 0 !== a.config.xaxis.min && (t = a.config.xaxis.min), void 0 !== a.config.xaxis.max && (e = a.config.xaxis.max);
-	        var s = this.getDate(t),
-	            r = this.getDate(e),
-	            n = this.formatDate(s, "yyyy MM dd HH mm").split(" "),
-	            o = this.formatDate(r, "yyyy MM dd HH mm").split(" ");
-	        return {
-	          minMinute: parseInt(n[4], 10),
-	          maxMinute: parseInt(o[4], 10),
-	          minHour: parseInt(n[3], 10),
-	          maxHour: parseInt(o[3], 10),
-	          minDate: parseInt(n[2], 10),
-	          maxDate: parseInt(o[2], 10),
-	          minMonth: parseInt(n[1], 10) - 1,
-	          maxMonth: parseInt(o[1], 10) - 1,
-	          minYear: parseInt(n[0], 10),
-	          maxYear: parseInt(o[0], 10)
-	        };
-	      }
-	    }, {
-	      key: "isLeapYear",
-	      value: function value(t) {
-	        return t % 4 == 0 && t % 100 != 0 || t % 400 == 0;
-	      }
-	    }, {
-	      key: "calculcateLastDaysOfMonth",
-	      value: function value(t, e, i) {
-	        return this.determineDaysOfMonths(t, e) - i;
-	      }
-	    }, {
-	      key: "determineDaysOfYear",
-	      value: function value(t) {
-	        var e = 365;
-	        return this.isLeapYear(t) && (e = 366), e;
-	      }
-	    }, {
-	      key: "determineRemainingDaysOfYear",
-	      value: function value(t, e, i) {
-	        var a = this.daysCntOfYear[e] + i;
-	        return e > 1 && this.isLeapYear() && a++, a;
-	      }
-	    }, {
-	      key: "determineDaysOfMonths",
-	      value: function value(t, e) {
-	        var i = 30;
-
-	        switch (t = f.monthMod(t), !0) {
-	          case this.months30.indexOf(t) > -1:
-	            2 === t && (i = this.isLeapYear(e) ? 29 : 28);
-	            break;
-
-	          case this.months31.indexOf(t) > -1:
-	          default:
-	            i = 31;
-	        }
-
-	        return i;
-	      }
-	    }]), t;
-	  }(),
-	      R = function (t) {
-	    o(s, F);
+	      F = function (t) {
+	    o(s, Y);
 	    var i = d(s);
 
 	    function s() {
@@ -50346,20 +50173,22 @@ var Forestry = (function () {
 
 	            if (g = v.yDivision, x = v.barHeight, this.isHorizontal) {
 	              L = d + x * this.visibleI;
-	              var T = (g - x * this.seriesLen) / 2;
+	              var T = this.seriesLen;
+	              i.config.plotOptions.bar.rangeBarGroupRows && (T = 1);
+	              var z = (g - x * T) / 2;
 	              if (void 0 === i.config.series[r].data[w]) break;
 
 	              if (this.isTimelineBar && i.config.series[r].data[w].x) {
-	                var z = this.detectOverlappingBars({
+	                var I = this.detectOverlappingBars({
 	                  i: r,
 	                  j: w,
 	                  barYPosition: L,
-	                  srty: T,
+	                  srty: z,
 	                  barHeight: x,
 	                  yDivision: g,
 	                  initPositions: v
 	                });
-	                x = z.barHeight, L = z.barYPosition;
+	                x = I.barHeight, L = I.barYPosition;
 	              }
 
 	              m = (C = this.drawRangeBarPaths(n({
@@ -50387,12 +50216,12 @@ var Forestry = (function () {
 	            }, P))).barHeight;
 
 	            d = C.y, c = C.x;
-	            var I = this.barHelpers.getPathFillColor(t, r, w, u),
-	                M = i.globals.stroke.colors[u];
+	            var M = this.barHelpers.getPathFillColor(t, r, w, u),
+	                E = i.globals.stroke.colors[u];
 	            this.renderSeries({
 	              realIndex: u,
-	              pathFill: I,
-	              lineFill: M,
+	              pathFill: M,
+	              lineFill: E,
 	              j: w,
 	              i: r,
 	              x: c,
@@ -50436,7 +50265,7 @@ var Forestry = (function () {
 	            u = l.globals.seriesRangeBarTimeline[e].findIndex(function (t) {
 	          return t.x === d && t.overlaps.length > 0;
 	        });
-	        return a = s + r * this.visibleI + n * g, u > -1 && !l.config.plotOptions.bar.rangeBarOverlap && (h = l.globals.seriesRangeBarTimeline[e][u].overlaps).indexOf(c) > -1 && (a = (r = o.barHeight / h.length) * this.visibleI + n * (100 - parseInt(this.barOptions.barHeight, 10)) / 100 / 2 + r * (this.visibleI + h.indexOf(c)) + n * g), {
+	        return a = l.config.plotOptions.bar.rangeBarGroupRows ? s + n * g : s + r * this.visibleI + n * g, u > -1 && !l.config.plotOptions.bar.rangeBarOverlap && (h = l.globals.seriesRangeBarTimeline[e][u].overlaps).indexOf(c) > -1 && (a = (r = o.barHeight / h.length) * this.visibleI + n * (100 - parseInt(this.barOptions.barHeight, 10)) / 100 / 2 + r * (this.visibleI + h.indexOf(c)) + n * g), {
 	          barYPosition: a,
 	          barHeight: r
 	        };
@@ -50550,7 +50379,7 @@ var Forestry = (function () {
 	            x = n.globals.colors[i];
 	        if (void 0 === n.config.tooltip.x.formatter) {
 	          if ("datetime" === n.config.xaxis.type) {
-	            var b = new D(e);
+	            var b = new y(e);
 	            f = b.formatDate(b.getDate(o), n.config.tooltip.x.format), p = b.formatDate(b.getDate(l), n.config.tooltip.x.format);
 	          } else f = o, p = l;
 	        } else f = n.config.tooltip.x.formatter(o), p = n.config.tooltip.x.formatter(l);
@@ -50573,7 +50402,7 @@ var Forestry = (function () {
 	      }
 	    }]), s;
 	  }(),
-	      H = function () {
+	      D = function () {
 	    function t(i) {
 	      e(this, t), this.opts = i;
 	    }
@@ -50788,7 +50617,7 @@ var Forestry = (function () {
 	            followCursor: !0,
 	            custom: function custom(t) {
 	              return t.w.config.plotOptions && t.w.config.plotOptions.bar && t.w.config.plotOptions.bar.horizontal ? function (t) {
-	                var e = new R(t.ctx, null),
+	                var e = new F(t.ctx, null),
 	                    i = e.getTooltipValues(t),
 	                    a = i.color,
 	                    s = i.seriesName,
@@ -50803,7 +50632,7 @@ var Forestry = (function () {
 	                  end: o
 	                });
 	              }(t) : function (t) {
-	                var e = new R(t.ctx, null),
+	                var e = new F(t.ctx, null),
 	                    i = e.getTooltipValues(t),
 	                    a = i.color,
 	                    s = i.seriesName,
@@ -51009,6 +50838,57 @@ var Forestry = (function () {
 	          grid: {
 	            padding: {
 	              right: 20
+	            }
+	          }
+	        };
+	      }
+	    }, {
+	      key: "treemap",
+	      value: function value() {
+	        return {
+	          chart: {
+	            zoom: {
+	              enabled: !1
+	            }
+	          },
+	          dataLabels: {
+	            style: {
+	              fontSize: 14,
+	              fontWeight: 600,
+	              colors: ["#fff"]
+	            }
+	          },
+	          stroke: {
+	            show: !0,
+	            width: 2,
+	            colors: ["#fff"]
+	          },
+	          legend: {
+	            show: !1
+	          },
+	          fill: {
+	            gradient: {
+	              stops: [0, 100]
+	            }
+	          },
+	          tooltip: {
+	            followCursor: !0,
+	            x: {
+	              show: !1
+	            }
+	          },
+	          grid: {
+	            padding: {
+	              left: 0,
+	              right: 0
+	            }
+	          },
+	          xaxis: {
+	            crosshairs: {
+	              show: !1
+	            },
+	            tooltip: {
+	              enabled: !1
 	            }
 	          }
 	        };
@@ -51226,7 +51106,7 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      N = function () {
+	      R = function () {
 	    function i(t) {
 	      e(this, i), this.opts = t;
 	    }
@@ -51236,8 +51116,8 @@ var Forestry = (function () {
 	      value: function value(e) {
 	        var i = e.responsiveOverride,
 	            a = this.opts,
-	            s = new L(),
-	            r = new H(a);
+	            s = new C(),
+	            r = new D(a);
 	        this.chartType = a.chart.type, "histogram" === this.chartType && (a.chart.type = "bar", a = f.extend({
 	          plotOptions: {
 	            bar: {
@@ -51250,7 +51130,7 @@ var Forestry = (function () {
 
 	        if (a && "object" === t(a)) {
 	          var l = {};
-	          l = -1 !== ["line", "area", "bar", "candlestick", "rangeBar", "histogram", "bubble", "scatter", "heatmap", "pie", "polarArea", "donut", "radar", "radialBar"].indexOf(a.chart.type) ? r[a.chart.type]() : r.line(), a.chart.brush && a.chart.brush.enabled && (l = r.brush(l)), a.chart.stacked && "100%" === a.chart.stackType && (a = r.stacked100(a)), this.checkForDarkTheme(window.Apex), this.checkForDarkTheme(a), a.xaxis = a.xaxis || window.Apex.xaxis || {}, i || (a.xaxis.convertedCatToNumeric = !1), ((a = this.checkForCatToNumericXAxis(this.chartType, l, a)).chart.sparkline && a.chart.sparkline.enabled || window.Apex.chart && window.Apex.chart.sparkline && window.Apex.chart.sparkline.enabled) && (l = r.sparkline(l)), o = f.extend(n, l);
+	          l = -1 !== ["line", "area", "bar", "candlestick", "rangeBar", "histogram", "bubble", "scatter", "heatmap", "treemap", "pie", "polarArea", "donut", "radar", "radialBar"].indexOf(a.chart.type) ? r[a.chart.type]() : r.line(), a.chart.brush && a.chart.brush.enabled && (l = r.brush(l)), a.chart.stacked && "100%" === a.chart.stackType && (a = r.stacked100(a)), this.checkForDarkTheme(window.Apex), this.checkForDarkTheme(a), a.xaxis = a.xaxis || window.Apex.xaxis || {}, i || (a.xaxis.convertedCatToNumeric = !1), ((a = this.checkForCatToNumericXAxis(this.chartType, l, a)).chart.sparkline && a.chart.sparkline.enabled || window.Apex.chart && window.Apex.chart.sparkline && window.Apex.chart.sparkline.enabled) && (l = r.sparkline(l)), o = f.extend(n, l);
 	        }
 
 	        var h = f.extend(o, window.Apex);
@@ -51259,7 +51139,7 @@ var Forestry = (function () {
 	    }, {
 	      key: "checkForCatToNumericXAxis",
 	      value: function value(t, e, i) {
-	        var a = new H(i),
+	        var a = new D(i),
 	            s = "bar" === t && i.plotOptions && i.plotOptions.bar && i.plotOptions.bar.horizontal,
 	            r = "pie" === t || "polarArea" === t || "donut" === t || "radar" === t || "radialBar" === t || "heatmap" === t,
 	            n = "datetime" !== i.xaxis.type && "numeric" !== i.xaxis.type,
@@ -51269,7 +51149,7 @@ var Forestry = (function () {
 	    }, {
 	      key: "extendYAxis",
 	      value: function value(t, e) {
-	        var i = new L();
+	        var i = new C();
 	        (void 0 === t.yaxis || !t.yaxis || Array.isArray(t.yaxis) && 0 === t.yaxis.length) && (t.yaxis = {}), t.yaxis.constructor !== Array && window.Apex.yaxis && window.Apex.yaxis.constructor !== Array && (t.yaxis = f.extend(t.yaxis, window.Apex.yaxis)), t.yaxis.constructor !== Array ? t.yaxis = [f.extend(i.yAxis, t.yaxis)] : t.yaxis = f.extendArray(t.yaxis, i.yAxis);
 	        var a = !1;
 	        t.yaxis.forEach(function (t) {
@@ -51290,19 +51170,19 @@ var Forestry = (function () {
 	    }, {
 	      key: "extendYAxisAnnotations",
 	      value: function value(t) {
-	        var e = new L();
+	        var e = new C();
 	        return t.annotations.yaxis = f.extendArray(void 0 !== t.annotations.yaxis ? t.annotations.yaxis : [], e.yAxisAnnotation), t;
 	      }
 	    }, {
 	      key: "extendXAxisAnnotations",
 	      value: function value(t) {
-	        var e = new L();
+	        var e = new C();
 	        return t.annotations.xaxis = f.extendArray(void 0 !== t.annotations.xaxis ? t.annotations.xaxis : [], e.xAxisAnnotation), t;
 	      }
 	    }, {
 	      key: "extendPointAnnotations",
 	      value: function value(t) {
-	        var e = new L();
+	        var e = new C();
 	        return t.annotations.points = f.extendArray(void 0 !== t.annotations.points ? t.annotations.points : [], e.pointAnnotation), t;
 	      }
 	    }, {
@@ -51325,7 +51205,7 @@ var Forestry = (function () {
 	      }
 	    }]), i;
 	  }(),
-	      O = function () {
+	      H = function () {
 	    function t() {
 	      e(this, t);
 	    }
@@ -51473,7 +51353,7 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      W = function () {
+	      N = function () {
 	    function t(i) {
 	      e(this, t), this.opts = i;
 	    }
@@ -51481,19 +51361,19 @@ var Forestry = (function () {
 	    return a(t, [{
 	      key: "init",
 	      value: function value() {
-	        var t = new N(this.opts).init({
+	        var t = new R(this.opts).init({
 	          responsiveOverride: !1
 	        });
 	        return {
 	          config: t,
-	          globals: new O().init(t)
+	          globals: new H().init(t)
 	        };
 	      }
 	    }]), t;
 	  }(),
-	      B = function () {
+	      O = function () {
 	    function t(i) {
-	      e(this, t), this.ctx = i, this.w = i.w, this.twoDSeries = [], this.threeDSeries = [], this.twoDSeriesX = [], this.coreUtils = new y(this.ctx);
+	      e(this, t), this.ctx = i, this.w = i.w, this.twoDSeries = [], this.threeDSeries = [], this.twoDSeriesX = [], this.coreUtils = new w(this.ctx);
 	    }
 
 	    return a(t, [{
@@ -51505,14 +51385,14 @@ var Forestry = (function () {
 	      key: "isFormatXY",
 	      value: function value() {
 	        var t = this.w.config.series.slice(),
-	            e = new X(this.ctx);
+	            e = new E(this.ctx);
 	        if (this.activeSeriesIndex = e.getActiveConfigSeriesIndex(), void 0 !== t[this.activeSeriesIndex].data && t[this.activeSeriesIndex].data.length > 0 && null !== t[this.activeSeriesIndex].data[0] && void 0 !== t[this.activeSeriesIndex].data[0].x && null !== t[this.activeSeriesIndex].data[0]) return !0;
 	      }
 	    }, {
 	      key: "isFormat2DArray",
 	      value: function value() {
 	        var t = this.w.config.series.slice(),
-	            e = new X(this.ctx);
+	            e = new E(this.ctx);
 	        if (this.activeSeriesIndex = e.getActiveConfigSeriesIndex(), void 0 !== t[this.activeSeriesIndex].data && t[this.activeSeriesIndex].data.length > 0 && void 0 !== t[this.activeSeriesIndex].data[0] && null !== t[this.activeSeriesIndex].data[0] && t[this.activeSeriesIndex].data[0].constructor === Array) return !0;
 	      }
 	    }, {
@@ -51542,7 +51422,7 @@ var Forestry = (function () {
 	      value: function value(t, e) {
 	        var i = this.w.config,
 	            a = this.w.globals,
-	            s = new D(this.ctx),
+	            s = new y(this.ctx),
 	            r = e;
 	        a.collapsedSeriesIndices.indexOf(e) > -1 && (r = this.activeSeriesIndex), i.xaxis.sorted && ("datetime" === i.xaxis.type ? t[e].data.sort(function (t, e) {
 	          return new Date(t.x).getTime() - new Date(e.x).getTime();
@@ -51619,7 +51499,7 @@ var Forestry = (function () {
 	          };
 	        }),
 	            n = "Please provide [Start, End] values in valid format. Read more https://apexcharts.com/docs/series/#rangecharts",
-	            o = new X(this.ctx).getActiveConfigSeriesIndex();
+	            o = new E(this.ctx).getActiveConfigSeriesIndex();
 
 	        if ("array" === t) {
 	          if (2 !== e[o].data[0][1].length) throw new Error(n);
@@ -51657,38 +51537,39 @@ var Forestry = (function () {
 	    }, {
 	      key: "handleCandleStickDataFormat",
 	      value: function value(t, e, i) {
-	        var a = [],
+	        var a = this.w,
 	            s = [],
 	            r = [],
 	            n = [],
-	            o = "Please provide [Open, High, Low and Close] values in valid format. Read more https://apexcharts.com/docs/series/#candlestick";
+	            o = [],
+	            l = "Please provide [Open, High, Low and Close] values in valid format. Read more https://apexcharts.com/docs/series/#candlestick";
 
 	        if ("array" === t) {
-	          if (!Array.isArray(e[i].data[0][1]) && 5 !== e[i].data[0].length || Array.isArray(e[i].data[0][1]) && 4 !== e[i].data[0][1].length) throw new Error(o);
-	          if (5 === e[i].data[0].length) for (var l = 0; l < e[i].data.length; l++) {
-	            a.push(e[i].data[l][1]), s.push(e[i].data[l][2]), r.push(e[i].data[l][3]), n.push(e[i].data[l][4]);
-	          } else for (var h = 0; h < e[i].data.length; h++) {
-	            a.push(e[i].data[h][1][0]), s.push(e[i].data[h][1][1]), r.push(e[i].data[h][1][2]), n.push(e[i].data[h][1][3]);
+	          if (!Array.isArray(e[i].data[0][1]) && 5 !== e[i].data[0].length || Array.isArray(e[i].data[0][1]) && 4 !== e[i].data[0][1].length) throw new Error(l);
+	          if (5 === e[i].data[0].length) for (var h = 0; h < e[i].data.length; h++) {
+	            s.push(e[i].data[h][1]), r.push(e[i].data[h][2]), n.push(e[i].data[h][3]), o.push(e[i].data[h][4]);
+	          } else for (var c = 0; c < e[i].data.length; c++) {
+	            s.push(e[i].data[c][1][0]), r.push(e[i].data[c][1][1]), n.push(e[i].data[c][1][2]), o.push(e[i].data[c][1][3]);
 	          }
 	        } else if ("xy" === t) {
-	          if (4 !== e[i].data[0].y.length) throw new Error(o);
+	          if (!a.globals.comboCharts && 4 !== e[i].data[0].y.length || a.globals.comboCharts && "candlestick" === e[i].type && e[i].data.length && 4 !== e[i].data[0].y.length) throw new Error(l);
 
-	          for (var c = 0; c < e[i].data.length; c++) {
-	            a.push(e[i].data[c].y[0]), s.push(e[i].data[c].y[1]), r.push(e[i].data[c].y[2]), n.push(e[i].data[c].y[3]);
+	          for (var d = 0; d < e[i].data.length; d++) {
+	            s.push(e[i].data[d].y[0]), r.push(e[i].data[d].y[1]), n.push(e[i].data[d].y[2]), o.push(e[i].data[d].y[3]);
 	          }
 	        }
 
 	        return {
-	          o: a,
-	          h: s,
-	          l: r,
-	          c: n
+	          o: s,
+	          h: r,
+	          l: n,
+	          c: o
 	        };
 	      }
 	    }, {
 	      key: "parseDataAxisCharts",
 	      value: function value(t) {
-	        for (var e = this, i = arguments.length > 1 && void 0 !== arguments[1] ? arguments[1] : this.ctx, a = this.w.config, s = this.w.globals, r = new D(i), n = a.labels.length > 0 ? a.labels.slice() : a.xaxis.categories.slice(), o = function o() {
+	        for (var e = this, i = arguments.length > 1 && void 0 !== arguments[1] ? arguments[1] : this.ctx, a = this.w.config, s = this.w.globals, r = new y(i), n = a.labels.length > 0 ? a.labels.slice() : a.xaxis.categories.slice(), o = function o() {
 	          for (var t = 0; t < n.length; t++) {
 	            if ("string" == typeof n[t]) {
 	              if (!r.isValidDate(n[t])) throw new Error("You have provided invalid Date format. Please provide a valid JavaScript Date");
@@ -51734,7 +51615,7 @@ var Forestry = (function () {
 	            });
 	          }), i.labels = i.labels.filter(function (t, e, i) {
 	            return i.indexOf(t) === e;
-	          })), e.xaxis.convertedCatToNumeric) new H(e).convertCatToNumericXaxis(e, this.ctx, i.seriesX[0]), this._generateExternalLabels(t);
+	          })), e.xaxis.convertedCatToNumeric) new D(e).convertCatToNumericXaxis(e, this.ctx, i.seriesX[0]), this._generateExternalLabels(t);
 	        } else this._generateExternalLabels(t);
 	      }
 	    }, {
@@ -51779,7 +51660,7 @@ var Forestry = (function () {
 	            a = e.globals;
 
 	        if (this.excludeCollapsedSeriesInYAxis(), this.fallbackToCategory = !1, this.ctx.core.resetGlobals(), this.ctx.core.isMultipleY(), a.axisCharts ? this.parseDataAxisCharts(t) : this.parseDataNonAxisCharts(t), this.coreUtils.getLargestSeries(), "bar" === i.chart.type && i.chart.stacked) {
-	          var s = new X(this.ctx);
+	          var s = new E(this.ctx);
 	          a.series = s.setNullSeriesToZeroValues(a.series);
 	        }
 
@@ -51803,22 +51684,22 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      V = function () {
+	      W = function () {
 	    function t(i) {
 	      e(this, t), this.ctx = i, this.w = i.w, this.tooltipKeyFormat = "dd MMM";
 	    }
 
 	    return a(t, [{
 	      key: "xLabelFormat",
-	      value: function value(t, e, i) {
-	        var a = this.w;
+	      value: function value(t, e, i, a) {
+	        var s = this.w;
 
-	        if ("datetime" === a.config.xaxis.type && void 0 === a.config.xaxis.labels.formatter && void 0 === a.config.tooltip.x.formatter) {
-	          var s = new D(this.ctx);
-	          return s.formatDate(s.getDate(e), a.config.tooltip.x.format);
+	        if ("datetime" === s.config.xaxis.type && void 0 === s.config.xaxis.labels.formatter && void 0 === s.config.tooltip.x.formatter) {
+	          var r = new y(this.ctx);
+	          return r.formatDate(r.getDate(e), s.config.tooltip.x.format);
 	        }
 
-	        return t(e, i);
+	        return t(e, i, a);
 	      }
 	    }, {
 	      key: "defaultGeneralFormatter",
@@ -51879,7 +51760,7 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      G = function () {
+	      B = function () {
 	    function t(i) {
 	      e(this, t), this.ctx = i, this.w = i.w;
 	    }
@@ -51895,9 +51776,17 @@ var Forestry = (function () {
 	            h = n.globals.xLabelFormatter,
 	            c = n.config.xaxis.labels.formatter,
 	            d = !1,
-	            g = new V(this.ctx),
+	            g = new W(this.ctx),
 	            u = o;
-	        l = g.xLabelFormat(h, o, u), void 0 !== c && (l = c(o, t[a], a));
+	        l = g.xLabelFormat(h, o, u, {
+	          i: a,
+	          dateFormatter: new y(this.ctx).formatDate,
+	          w: n
+	        }), void 0 !== c && (l = c(o, t[a], {
+	          i: a,
+	          dateFormatter: new y(this.ctx).formatDate,
+	          w: n
+	        }));
 
 	        var f = function f(t) {
 	          var i = null;
@@ -51909,12 +51798,21 @@ var Forestry = (function () {
 	        e.length > 0 ? (d = f(e[a].unit), i = e[a].position, l = e[a].value) : "datetime" === n.config.xaxis.type && void 0 === c && (l = ""), void 0 === l && (l = ""), l = Array.isArray(l) ? l : l.toString();
 	        var p = new b(this.ctx),
 	            x = {};
-	        return x = n.globals.rotateXLabels ? p.getTextRects(l, parseInt(r, 10), null, "rotate(".concat(n.config.xaxis.labels.rotate, " 0 0)"), !1) : p.getTextRects(l, parseInt(r, 10)), !Array.isArray(l) && (0 === l.indexOf("NaN") || 0 === l.toLowerCase().indexOf("invalid") || l.toLowerCase().indexOf("infinity") >= 0 || s.indexOf(l) >= 0 && !n.config.xaxis.labels.showDuplicates && "hours" !== this.ctx.timeScale.tickInterval && "minutes" !== this.ctx.timeScale.tickInterval) && (l = ""), {
+	        x = n.globals.rotateXLabels ? p.getTextRects(l, parseInt(r, 10), null, "rotate(".concat(n.config.xaxis.labels.rotate, " 0 0)"), !1) : p.getTextRects(l, parseInt(r, 10));
+	        var m = !n.config.xaxis.labels.showDuplicates && this.ctx.timeScale && "hours" !== this.ctx.timeScale.tickInterval && "minutes" !== this.ctx.timeScale.tickInterval;
+	        return !Array.isArray(l) && (0 === l.indexOf("NaN") || 0 === l.toLowerCase().indexOf("invalid") || l.toLowerCase().indexOf("infinity") >= 0 || s.indexOf(l) >= 0 && m) && (l = ""), {
 	          x: i,
 	          text: l,
 	          textRect: x,
 	          isBold: d
 	        };
+	      }
+	    }, {
+	      key: "checkLabelBasedOnTickamount",
+	      value: function value(t, e, i) {
+	        var a = this.w,
+	            s = a.config.xaxis.tickAmount;
+	        return "dataPoints" === s && (s = Math.round(a.globals.gridWidth / 120)), s > i || t % Math.round(i / (s + 1)) == 0 || (e.text = ""), e;
 	      }
 	    }, {
 	      key: "checkForOverflowingLabels",
@@ -51938,8 +51836,14 @@ var Forestry = (function () {
 	      key: "isYAxisHidden",
 	      value: function value(t) {
 	        var e = this.w,
-	            i = new y(this.ctx);
+	            i = new w(this.ctx);
 	        return !e.config.yaxis[t].show || !e.config.yaxis[t].showForNullSeries && i.isSeriesNull(t) && -1 === e.globals.collapsedSeriesIndices.indexOf(t);
+	      }
+	    }, {
+	      key: "getYAxisForeColor",
+	      value: function value(t, e) {
+	        var i = this.w;
+	        return Array.isArray(t) && i.globals.yAxisScale[e] && this.ctx.theme.pushExtraColors(t, i.globals.yAxisScale[e].result.length, !1), t;
 	      }
 	    }, {
 	      key: "drawYAxisTicks",
@@ -51961,7 +51865,7 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      _ = function () {
+	      V = function () {
 	    function t(i) {
 	      e(this, t), this.ctx = i, this.w = i.w;
 	    }
@@ -52073,15 +51977,15 @@ var Forestry = (function () {
 	            o = [],
 	            l = [],
 	            h = "data:text/csv;charset=utf-8,",
-	            c = new B(this.ctx),
-	            d = new G(this.ctx),
+	            c = new O(this.ctx),
+	            d = new B(this.ctx),
 	            g = function g(t) {
 	          var i = "";
 
 	          if (n.globals.axisCharts) {
 	            if ("category" === n.config.xaxis.type || n.config.xaxis.convertedCatToNumeric) if (n.globals.isBarHorizontal) {
 	              var a = n.globals.yLabelFormatters[0],
-	                  s = new X(e.ctx).getActiveConfigSeriesIndex();
+	                  s = new E(e.ctx).getActiveConfigSeriesIndex();
 	              i = a(n.globals.labels[t], {
 	                seriesIndex: s,
 	                dataPointIndex: t,
@@ -52124,11 +52028,11 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      j = function () {
+	      G = function () {
 	    function t(i) {
 	      e(this, t), this.ctx = i, this.w = i.w;
 	      var a = this.w;
-	      this.axesUtils = new G(i), this.xaxisLabels = a.globals.labels.slice(), a.globals.timescaleLabels.length > 0 && !a.globals.isBarHorizontal && (this.xaxisLabels = a.globals.timescaleLabels.slice()), this.drawnLabels = [], this.drawnLabelsRects = [], "top" === a.config.xaxis.position ? this.offY = 0 : this.offY = a.globals.gridHeight + 1, this.offY = this.offY + a.config.xaxis.axisBorder.offsetY, this.isCategoryBarHorizontal = "bar" === a.config.chart.type && a.config.plotOptions.bar.horizontal, this.xaxisFontSize = a.config.xaxis.labels.style.fontSize, this.xaxisFontFamily = a.config.xaxis.labels.style.fontFamily, this.xaxisForeColors = a.config.xaxis.labels.style.colors, this.xaxisBorderWidth = a.config.xaxis.axisBorder.width, this.isCategoryBarHorizontal && (this.xaxisBorderWidth = a.config.yaxis[0].axisBorder.width.toString()), this.xaxisBorderWidth.indexOf("%") > -1 ? this.xaxisBorderWidth = a.globals.gridWidth * parseInt(this.xaxisBorderWidth, 10) / 100 : this.xaxisBorderWidth = parseInt(this.xaxisBorderWidth, 10), this.xaxisBorderHeight = a.config.xaxis.axisBorder.height, this.yaxis = a.config.yaxis[0];
+	      this.axesUtils = new B(i), this.xaxisLabels = a.globals.labels.slice(), a.globals.timescaleLabels.length > 0 && !a.globals.isBarHorizontal && (this.xaxisLabels = a.globals.timescaleLabels.slice()), this.drawnLabels = [], this.drawnLabelsRects = [], "top" === a.config.xaxis.position ? this.offY = 0 : this.offY = a.globals.gridHeight + 1, this.offY = this.offY + a.config.xaxis.axisBorder.offsetY, this.isCategoryBarHorizontal = "bar" === a.config.chart.type && a.config.plotOptions.bar.horizontal, this.xaxisFontSize = a.config.xaxis.labels.style.fontSize, this.xaxisFontFamily = a.config.xaxis.labels.style.fontFamily, this.xaxisForeColors = a.config.xaxis.labels.style.colors, this.xaxisBorderWidth = a.config.xaxis.axisBorder.width, this.isCategoryBarHorizontal && (this.xaxisBorderWidth = a.config.yaxis[0].axisBorder.width.toString()), this.xaxisBorderWidth.indexOf("%") > -1 ? this.xaxisBorderWidth = a.globals.gridWidth * parseInt(this.xaxisBorderWidth, 10) / 100 : this.xaxisBorderWidth = parseInt(this.xaxisBorderWidth, 10), this.xaxisBorderHeight = a.config.xaxis.axisBorder.height, this.yaxis = a.config.yaxis[0];
 	    }
 
 	    return a(t, [{
@@ -52165,7 +52069,7 @@ var Forestry = (function () {
 	          var c = e.axesUtils.getLabel(o, i.globals.timescaleLabels, l, s, e.drawnLabels, e.xaxisFontSize),
 	              d = 28;
 	          i.globals.rotateXLabels && (d = 22);
-	          (c = e.axesUtils.checkForOverflowingLabels(s, c, h, e.drawnLabels, e.drawnLabelsRects)).text && i.globals.xaxisLabelsCount++;
+	          (c = void 0 !== i.config.xaxis.tickAmount && "dataPoints" !== i.config.xaxis.tickAmount && "datetime" !== i.config.xaxis.type ? e.axesUtils.checkLabelBasedOnTickamount(s, c, h) : e.axesUtils.checkForOverflowingLabels(s, c, h, e.drawnLabels, e.drawnLabelsRects)).text && i.globals.xaxisLabelsCount++;
 	          var g = a.drawText({
 	            x: c.x,
 	            y: e.offY + i.config.xaxis.labels.offsetY + d - ("top" === i.config.xaxis.position ? i.globals.xAxisHeight + i.config.xaxis.axisTicks.height - 2 : 0),
@@ -52216,86 +52120,90 @@ var Forestry = (function () {
 	      value: function value(t) {
 	        var e,
 	            i,
-	            a = this.w,
-	            s = new b(this.ctx),
-	            r = a.config.yaxis[0].opposite ? a.globals.translateYAxisX[t] : 0,
-	            n = s.group({
+	            a = this,
+	            s = this.w,
+	            r = new b(this.ctx),
+	            n = s.config.yaxis[0].opposite ? s.globals.translateYAxisX[t] : 0,
+	            o = r.group({
 	          class: "apexcharts-yaxis apexcharts-xaxis-inversed",
 	          rel: t
 	        }),
-	            o = s.group({
+	            l = r.group({
 	          class: "apexcharts-yaxis-texts-g apexcharts-xaxis-inversed-texts-g",
-	          transform: "translate(" + r + ", 0)"
+	          transform: "translate(" + n + ", 0)"
 	        });
-	        n.add(o);
-	        var l = [];
-	        if (a.config.yaxis[t].show) for (var h = 0; h < this.xaxisLabels.length; h++) {
-	          l.push(this.xaxisLabels[h]);
+	        o.add(l);
+	        var h = [];
+	        if (s.config.yaxis[t].show) for (var c = 0; c < this.xaxisLabels.length; c++) {
+	          h.push(this.xaxisLabels[c]);
 	        }
-	        i = -(e = a.globals.gridHeight / l.length) / 2.2;
-	        var c = a.globals.yLabelFormatters[0],
-	            d = a.config.yaxis[0].labels;
-	        if (d.show) for (var g = 0; g <= l.length - 1; g++) {
-	          var u = void 0 === l[g] ? "" : l[g];
-	          u = c(u, {
+	        e = s.globals.gridHeight / h.length, i = -e / 2.2;
+	        var d = s.globals.yLabelFormatters[0],
+	            g = s.config.yaxis[0].labels;
+	        if (g.show) for (var u = function u(n) {
+	          var o = void 0 === h[n] ? "" : h[n];
+	          o = d(o, {
 	            seriesIndex: t,
-	            dataPointIndex: g,
-	            w: a
+	            dataPointIndex: n,
+	            w: s
 	          });
-	          var f = 0;
-	          Array.isArray(u) && (f = u.length / 2 * parseInt(d.style.fontSize, 10));
-	          var p = s.drawText({
-	            x: d.offsetX - 15,
-	            y: i + e + d.offsetY - f,
-	            text: u,
-	            textAnchor: this.yaxis.opposite ? "start" : "end",
-	            foreColor: Array.isArray(d.style.colors) ? d.style.colors[g] : d.style.colors,
-	            fontSize: d.style.fontSize,
-	            fontFamily: d.style.fontFamily,
-	            fontWeight: d.style.fontWeight,
+	          var c = a.axesUtils.getYAxisForeColor(g.style.colors, t),
+	              u = 0;
+	          Array.isArray(o) && (u = o.length / 2 * parseInt(g.style.fontSize, 10));
+	          var f = r.drawText({
+	            x: g.offsetX - 15,
+	            y: i + e + g.offsetY - u,
+	            text: o,
+	            textAnchor: a.yaxis.opposite ? "start" : "end",
+	            foreColor: Array.isArray(c) ? c[n] : c,
+	            fontSize: g.style.fontSize,
+	            fontFamily: g.style.fontFamily,
+	            fontWeight: g.style.fontWeight,
 	            isPlainText: !1,
-	            cssClass: "apexcharts-yaxis-label " + d.style.cssClass
+	            cssClass: "apexcharts-yaxis-label " + g.style.cssClass
 	          });
-	          o.add(p);
-	          var x = document.createElementNS(a.globals.SVGNS, "title");
+	          l.add(f);
+	          var p = document.createElementNS(s.globals.SVGNS, "title");
 
-	          if (x.textContent = u.text, p.node.appendChild(x), 0 !== a.config.yaxis[t].labels.rotate) {
-	            var m = s.rotateAroundCenter(p.node);
-	            p.node.setAttribute("transform", "rotate(".concat(a.config.yaxis[t].labels.rotate, " 0 ").concat(m.y, ")"));
+	          if (p.textContent = o.text, f.node.appendChild(p), 0 !== s.config.yaxis[t].labels.rotate) {
+	            var x = r.rotateAroundCenter(f.node);
+	            f.node.setAttribute("transform", "rotate(".concat(s.config.yaxis[t].labels.rotate, " 0 ").concat(x.y, ")"));
 	          }
 
 	          i += e;
+	        }, f = 0; f <= h.length - 1; f++) {
+	          u(f);
 	        }
 
-	        if (void 0 !== a.config.yaxis[0].title.text) {
-	          var v = s.group({
+	        if (void 0 !== s.config.yaxis[0].title.text) {
+	          var p = r.group({
 	            class: "apexcharts-yaxis-title apexcharts-xaxis-title-inversed",
-	            transform: "translate(" + r + ", 0)"
+	            transform: "translate(" + n + ", 0)"
 	          }),
-	              y = s.drawText({
+	              x = r.drawText({
 	            x: 0,
-	            y: a.globals.gridHeight / 2,
-	            text: a.config.yaxis[0].title.text,
+	            y: s.globals.gridHeight / 2,
+	            text: s.config.yaxis[0].title.text,
 	            textAnchor: "middle",
-	            foreColor: a.config.yaxis[0].title.style.color,
-	            fontSize: a.config.yaxis[0].title.style.fontSize,
-	            fontWeight: a.config.yaxis[0].title.style.fontWeight,
-	            fontFamily: a.config.yaxis[0].title.style.fontFamily,
-	            cssClass: "apexcharts-yaxis-title-text " + a.config.yaxis[0].title.style.cssClass
+	            foreColor: s.config.yaxis[0].title.style.color,
+	            fontSize: s.config.yaxis[0].title.style.fontSize,
+	            fontWeight: s.config.yaxis[0].title.style.fontWeight,
+	            fontFamily: s.config.yaxis[0].title.style.fontFamily,
+	            cssClass: "apexcharts-yaxis-title-text " + s.config.yaxis[0].title.style.cssClass
 	          });
-	          v.add(y), n.add(v);
+	          p.add(x), o.add(p);
 	        }
 
-	        var w = 0;
-	        this.isCategoryBarHorizontal && a.config.yaxis[0].opposite && (w = a.globals.gridWidth);
-	        var k = a.config.xaxis.axisBorder;
+	        var m = 0;
+	        this.isCategoryBarHorizontal && s.config.yaxis[0].opposite && (m = s.globals.gridWidth);
+	        var v = s.config.xaxis.axisBorder;
 
-	        if (k.show) {
-	          var A = s.drawLine(a.globals.padHorizontal + k.offsetX + w, 1 + k.offsetY, a.globals.padHorizontal + k.offsetX + w, a.globals.gridHeight + k.offsetY, k.color, 0);
-	          n.add(A);
+	        if (v.show) {
+	          var y = r.drawLine(s.globals.padHorizontal + v.offsetX + m, 1 + v.offsetY, s.globals.padHorizontal + v.offsetX + m, s.globals.gridHeight + v.offsetY, v.color, 0);
+	          o.add(y);
 	        }
 
-	        return a.config.yaxis[0].axisTicks.show && this.axesUtils.drawYAxisTicks(w, l.length, a.config.yaxis[0].axisBorder, a.config.yaxis[0].axisTicks, 0, e, n), n;
+	        return s.config.yaxis[0].axisTicks.show && this.axesUtils.drawYAxisTicks(m, h.length, s.config.yaxis[0].axisBorder, s.config.yaxis[0].axisTicks, 0, e, o), o;
 	      }
 	    }, {
 	      key: "drawXaxisTicks",
@@ -52366,11 +52274,11 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      U = function () {
+	      _ = function () {
 	    function t(i) {
 	      e(this, t), this.ctx = i, this.w = i.w;
 	      var a = this.w;
-	      this.xaxisLabels = a.globals.labels.slice(), this.axesUtils = new G(i), this.isTimelineBar = "datetime" === a.config.xaxis.type && a.globals.seriesRangeBarTimeline.length, a.globals.timescaleLabels.length > 0 && (this.xaxisLabels = a.globals.timescaleLabels.slice());
+	      this.xaxisLabels = a.globals.labels.slice(), this.axesUtils = new B(i), this.isTimelineBar = "datetime" === a.config.xaxis.type && a.globals.seriesRangeBarTimeline.length, a.globals.timescaleLabels.length > 0 && (this.xaxisLabels = a.globals.timescaleLabels.slice());
 	    }
 
 	    return a(t, [{
@@ -52411,7 +52319,7 @@ var Forestry = (function () {
 	        var r = t.config.chart.type,
 	            n = 0,
 	            o = 0;
-	        ("bar" === r || "rangeBar" === r || t.globals.comboBarCount > 0) && t.globals.isXNumeric && !t.globals.isBarHorizontal && (n = t.config.grid.padding.left, o = t.config.grid.padding.right, e.barPadForNumericAxis > n && (n = e.barPadForNumericAxis, o = e.barPadForNumericAxis)), e.dom.elGridRect = i.drawRect(-a / 2 - n - 2, -a / 2, e.gridWidth + a + o + n + 4, e.gridHeight + a, 0, "#fff"), new y(this).getLargestMarkerSize();
+	        ("bar" === r || "rangeBar" === r || t.globals.comboBarCount > 0) && t.globals.isXNumeric && !t.globals.isBarHorizontal && (n = t.config.grid.padding.left, o = t.config.grid.padding.right, e.barPadForNumericAxis > n && (n = e.barPadForNumericAxis, o = e.barPadForNumericAxis)), e.dom.elGridRect = i.drawRect(-a / 2 - n - 2, -a / 2, e.gridWidth + a + o + n + 4, e.gridHeight + a, 0, "#fff"), new w(this).getLargestMarkerSize();
 	        var l = t.globals.markers.largestSize + 1;
 	        e.dom.elGridRectMarker = i.drawRect(2 * -l, 2 * -l, e.gridWidth + 4 * l, e.gridHeight + 4 * l, 0, "#fff"), e.dom.elGridRectMask.appendChild(e.dom.elGridRect.node), e.dom.elGridRectMarkerMask.appendChild(e.dom.elGridRectMarker.node);
 	        var h = e.dom.baseEl.querySelector("defs");
@@ -52434,7 +52342,7 @@ var Forestry = (function () {
 	          x2: s,
 	          y2: r,
 	          parent: o
-	        }), new j(this.ctx).drawXaxisTicks(i, this.elg));
+	        }), new G(this.ctx).drawXaxisTicks(i, this.elg));
 	      }
 	    }, {
 	      key: "_drawGridLine",
@@ -52500,7 +52408,24 @@ var Forestry = (function () {
 	            x2: void 0,
 	            y2: n
 	          }) : (s.globals.isXNumeric && (i = s.globals.xAxisScale.result.length), s.config.xaxis.convertedCatToNumeric && (i = s.globals.xaxisLabelsCount), function (t) {
-	            for (var a = t.xC, r = t.x1, n = t.y1, o = t.x2, l = t.y2, h = 0; h < a + (s.globals.isXNumeric ? 0 : 1); h++) {
+	            var a = t.xC,
+	                r = t.x1,
+	                n = t.y1,
+	                o = t.x2,
+	                l = t.y2;
+	            if (void 0 !== s.config.xaxis.tickAmount && "dataPoints" !== s.config.xaxis.tickAmount) s.globals.dom.baseEl.querySelectorAll(".apexcharts-text.apexcharts-xaxis-label tspan:not(:empty)").forEach(function (t, a) {
+	              var s = t.getBBox();
+
+	              e._drawGridLines({
+	                i: a,
+	                x1: s.x + s.width / 2,
+	                y1: n,
+	                x2: s.x + s.width / 2,
+	                y2: l,
+	                xCount: i,
+	                parent: e.elgridLinesV
+	              });
+	            });else for (var h = 0; h < a + (s.globals.isXNumeric ? 0 : 1); h++) {
 	              0 === h && 1 === a && 1 === s.globals.dataPoints && (o = r = s.globals.gridWidth / 2), e._drawGridLines({
 	                i: h,
 	                x1: r,
@@ -52550,7 +52475,7 @@ var Forestry = (function () {
 	            x2: a,
 	            y2: r,
 	            parent: this.elgridLinesV
-	          }), new j(this.ctx).drawXaxisTicks(s, this.elg), a = s = s + i.globals.gridWidth / e + .3;
+	          }), new G(this.ctx).drawXaxisTicks(s, this.elg), a = s = s + i.globals.gridWidth / e + .3;
 	        }
 	        if (i.config.grid.yaxis.lines.show) for (var o = 0, l = 0, h = i.globals.gridWidth, c = 0; c < i.globals.dataPoints + 1; c++) {
 	          this._drawGridLine({
@@ -52616,7 +52541,7 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      q = function () {
+	      j = function () {
 	    function t(i) {
 	      e(this, t), this.ctx = i, this.w = i.w;
 	    }
@@ -52871,9 +52796,9 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      Z = function () {
+	      U = function () {
 	    function t(i) {
-	      e(this, t), this.ctx = i, this.w = i.w, this.scales = new q(i);
+	      e(this, t), this.ctx = i, this.w = i.w, this.scales = new j(i);
 	    }
 
 	    return a(t, [{
@@ -53001,7 +52926,7 @@ var Forestry = (function () {
 	            e = this.w.config;
 
 	        if (t.minX === t.maxX) {
-	          var i = new D(this.ctx);
+	          var i = new y(this.ctx);
 
 	          if ("datetime" === e.xaxis.type) {
 	            var a = i.getDate(t.minX);
@@ -53046,97 +52971,99 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      $ = function () {
+	      q = function () {
 	    function t(i) {
 	      e(this, t), this.ctx = i, this.w = i.w;
 	      var a = this.w;
-	      this.xaxisFontSize = a.config.xaxis.labels.style.fontSize, this.axisFontFamily = a.config.xaxis.labels.style.fontFamily, this.xaxisForeColors = a.config.xaxis.labels.style.colors, this.isCategoryBarHorizontal = "bar" === a.config.chart.type && a.config.plotOptions.bar.horizontal, this.xAxisoffX = 0, "bottom" === a.config.xaxis.position && (this.xAxisoffX = a.globals.gridHeight), this.drawnLabels = [], this.axesUtils = new G(i);
+	      this.xaxisFontSize = a.config.xaxis.labels.style.fontSize, this.axisFontFamily = a.config.xaxis.labels.style.fontFamily, this.xaxisForeColors = a.config.xaxis.labels.style.colors, this.isCategoryBarHorizontal = "bar" === a.config.chart.type && a.config.plotOptions.bar.horizontal, this.xAxisoffX = 0, "bottom" === a.config.xaxis.position && (this.xAxisoffX = a.globals.gridHeight), this.drawnLabels = [], this.axesUtils = new B(i);
 	    }
 
 	    return a(t, [{
 	      key: "drawYaxis",
 	      value: function value(t) {
-	        var e = this.w,
-	            i = new b(this.ctx),
-	            a = e.config.yaxis[t].labels.style,
-	            s = a.fontSize,
-	            r = a.fontFamily,
-	            n = a.fontWeight,
-	            o = i.group({
+	        var e = this,
+	            i = this.w,
+	            a = new b(this.ctx),
+	            s = i.config.yaxis[t].labels.style,
+	            r = s.fontSize,
+	            n = s.fontFamily,
+	            o = s.fontWeight,
+	            l = a.group({
 	          class: "apexcharts-yaxis",
 	          rel: t,
-	          transform: "translate(" + e.globals.translateYAxisX[t] + ", 0)"
+	          transform: "translate(" + i.globals.translateYAxisX[t] + ", 0)"
 	        });
-	        if (this.axesUtils.isYAxisHidden(t)) return o;
-	        var l = i.group({
+	        if (this.axesUtils.isYAxisHidden(t)) return l;
+	        var h = a.group({
 	          class: "apexcharts-yaxis-texts-g"
 	        });
-	        o.add(l);
-	        var h = e.globals.yAxisScale[t].result.length - 1,
-	            c = e.globals.gridHeight / h,
-	            d = e.globals.translateY,
-	            g = e.globals.yLabelFormatters[t],
-	            u = e.globals.yAxisScale[t].result.slice();
-	        u = this.axesUtils.checkForReversedLabels(t, u);
-	        var f = "";
-	        if (e.config.yaxis[t].labels.show) for (var p = function p(o) {
-	          var p = u[o];
-	          p = g(p, o);
-	          var x = e.config.yaxis[t].labels.padding;
-	          e.config.yaxis[t].opposite && 0 !== e.config.yaxis.length && (x *= -1);
-	          var b = i.drawText({
-	            x: x,
-	            y: d + h / 10 + e.config.yaxis[t].labels.offsetY + 1,
-	            text: p,
-	            textAnchor: e.config.yaxis[t].opposite ? "start" : "end",
-	            fontSize: s,
-	            fontFamily: r,
-	            fontWeight: n,
-	            foreColor: Array.isArray(a.colors) ? a.colors[o] : a.colors,
+	        l.add(h);
+	        var c = i.globals.yAxisScale[t].result.length - 1,
+	            d = i.globals.gridHeight / c,
+	            g = i.globals.translateY,
+	            u = i.globals.yLabelFormatters[t],
+	            f = i.globals.yAxisScale[t].result.slice();
+	        f = this.axesUtils.checkForReversedLabels(t, f);
+	        var p = "";
+	        if (i.config.yaxis[t].labels.show) for (var x = function x(l) {
+	          var x = f[l];
+	          x = u(x, l);
+	          var b = i.config.yaxis[t].labels.padding;
+	          i.config.yaxis[t].opposite && 0 !== i.config.yaxis.length && (b *= -1);
+	          var m = e.axesUtils.getYAxisForeColor(s.colors, t),
+	              v = a.drawText({
+	            x: b,
+	            y: g + c / 10 + i.config.yaxis[t].labels.offsetY + 1,
+	            text: x,
+	            textAnchor: i.config.yaxis[t].opposite ? "start" : "end",
+	            fontSize: r,
+	            fontFamily: n,
+	            fontWeight: o,
+	            foreColor: Array.isArray(m) ? m[l] : m,
 	            isPlainText: !1,
-	            cssClass: "apexcharts-yaxis-label " + a.cssClass
+	            cssClass: "apexcharts-yaxis-label " + s.cssClass
 	          });
 
-	          if (o === h && (f = b), l.add(b), 0 !== e.config.yaxis[t].labels.rotate) {
-	            var m = i.rotateAroundCenter(f.node),
-	                v = i.rotateAroundCenter(b.node);
-	            b.node.setAttribute("transform", "rotate(".concat(e.config.yaxis[t].labels.rotate, " ").concat(m.x, " ").concat(v.y, ")"));
+	          if (l === c && (p = v), h.add(v), 0 !== i.config.yaxis[t].labels.rotate) {
+	            var y = a.rotateAroundCenter(p.node),
+	                w = a.rotateAroundCenter(v.node);
+	            v.node.setAttribute("transform", "rotate(".concat(i.config.yaxis[t].labels.rotate, " ").concat(y.x, " ").concat(w.y, ")"));
 	          }
 
-	          d += c;
-	        }, x = h; x >= 0; x--) {
-	          p(x);
+	          g += d;
+	        }, m = c; m >= 0; m--) {
+	          x(m);
 	        }
 
-	        if (void 0 !== e.config.yaxis[t].title.text) {
-	          var m = i.group({
+	        if (void 0 !== i.config.yaxis[t].title.text) {
+	          var v = a.group({
 	            class: "apexcharts-yaxis-title"
 	          }),
-	              v = 0;
-	          e.config.yaxis[t].opposite && (v = e.globals.translateYAxisX[t]);
-	          var y = i.drawText({
-	            x: v,
-	            y: e.globals.gridHeight / 2 + e.globals.translateY + e.config.yaxis[t].title.offsetY,
-	            text: e.config.yaxis[t].title.text,
+	              y = 0;
+	          i.config.yaxis[t].opposite && (y = i.globals.translateYAxisX[t]);
+	          var w = a.drawText({
+	            x: y,
+	            y: i.globals.gridHeight / 2 + i.globals.translateY + i.config.yaxis[t].title.offsetY,
+	            text: i.config.yaxis[t].title.text,
 	            textAnchor: "end",
-	            foreColor: e.config.yaxis[t].title.style.color,
-	            fontSize: e.config.yaxis[t].title.style.fontSize,
-	            fontWeight: e.config.yaxis[t].title.style.fontWeight,
-	            fontFamily: e.config.yaxis[t].title.style.fontFamily,
-	            cssClass: "apexcharts-yaxis-title-text " + e.config.yaxis[t].title.style.cssClass
+	            foreColor: i.config.yaxis[t].title.style.color,
+	            fontSize: i.config.yaxis[t].title.style.fontSize,
+	            fontWeight: i.config.yaxis[t].title.style.fontWeight,
+	            fontFamily: i.config.yaxis[t].title.style.fontFamily,
+	            cssClass: "apexcharts-yaxis-title-text " + i.config.yaxis[t].title.style.cssClass
 	          });
-	          m.add(y), o.add(m);
+	          v.add(w), l.add(v);
 	        }
 
-	        var w = e.config.yaxis[t].axisBorder,
-	            k = 31 + w.offsetX;
+	        var k = i.config.yaxis[t].axisBorder,
+	            A = 31 + k.offsetX;
 
-	        if (e.config.yaxis[t].opposite && (k = -31 - w.offsetX), w.show) {
-	          var A = i.drawLine(k, e.globals.translateY + w.offsetY - 2, k, e.globals.gridHeight + e.globals.translateY + w.offsetY + 2, w.color, 0, w.width);
-	          o.add(A);
+	        if (i.config.yaxis[t].opposite && (A = -31 - k.offsetX), k.show) {
+	          var S = a.drawLine(A, i.globals.translateY + k.offsetY - 2, A, i.globals.gridHeight + i.globals.translateY + k.offsetY + 2, k.color, 0, k.width);
+	          l.add(S);
 	        }
 
-	        return e.config.yaxis[t].axisTicks.show && this.axesUtils.drawYAxisTicks(k, h, w, e.config.yaxis[t].axisTicks, t, c, o), o;
+	        return i.config.yaxis[t].axisTicks.show && this.axesUtils.drawYAxisTicks(A, c, k, i.config.yaxis[t].axisTicks, t, d, l), l;
 	      }
 	    }, {
 	      key: "drawYaxisInversed",
@@ -53219,6 +53146,7 @@ var Forestry = (function () {
 	            fontSize: e.config.xaxis.title.style.fontSize,
 	            fontFamily: e.config.xaxis.title.style.fontFamily,
 	            fontWeight: e.config.xaxis.title.style.fontWeight,
+	            foreColor: e.config.xaxis.title.style.color,
 	            cssClass: "apexcharts-xaxis-title-text " + e.config.xaxis.title.style.cssClass
 	          });
 	          a.add(s), t.add(a);
@@ -53288,7 +53216,7 @@ var Forestry = (function () {
 	        (e = f.listToArray(e)).forEach(function (e, i) {
 	          var a = t.config.yaxis[i];
 
-	          if (void 0 !== a.labels.align) {
+	          if (a && void 0 !== a.labels.align) {
 	            var s = t.globals.dom.baseEl.querySelector(".apexcharts-yaxis[rel='".concat(i, "'] .apexcharts-yaxis-texts-g")),
 	                r = t.globals.dom.baseEl.querySelectorAll(".apexcharts-yaxis[rel='".concat(i, "'] .apexcharts-yaxis-label"));
 	            r = f.listToArray(r);
@@ -53305,7 +53233,7 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      J = function () {
+	      Z = function () {
 	    function t(i) {
 	      e(this, t), this.ctx = i, this.w = i.w, this.documentEvent = f.bind(this.documentEvent, this);
 	    }
@@ -53376,7 +53304,7 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      Q = function () {
+	      $ = function () {
 	    function t(i) {
 	      e(this, t), this.ctx = i, this.w = i.w;
 	    }
@@ -53390,12 +53318,12 @@ var Forestry = (function () {
 	          return e.name === t;
 	        })[0];
 	        if (!i) throw new Error("Wrong locale name provided. Please make sure you set the correct locale name in options");
-	        var a = f.extend(C, i);
+	        var a = f.extend(S, i);
 	        this.w.globals.locale = a.options;
 	      }
 	    }]), t;
 	  }(),
-	      K = function () {
+	      J = function () {
 	    function t(i) {
 	      e(this, t), this.ctx = i, this.w = i.w;
 	    }
@@ -53407,8 +53335,8 @@ var Forestry = (function () {
 	            a,
 	            s = this.w.globals,
 	            r = this.w.config,
-	            n = new j(this.ctx),
-	            o = new $(this.ctx);
+	            n = new G(this.ctx),
+	            o = new q(this.ctx);
 	        s.axisCharts && "radar" !== t && (s.isBarHorizontal ? (a = o.drawYaxisInversed(0), i = n.drawXaxisInversed(0), s.dom.elGraphical.add(i), s.dom.elGraphical.add(a)) : (i = n.drawXaxis(), s.dom.elGraphical.add(i), r.yaxis.map(function (t, e) {
 	          -1 === s.ignoreYAxisIndexes.indexOf(e) && (a = o.drawYaxis(e), s.dom.Paper.add(a));
 	        })));
@@ -53418,7 +53346,7 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      tt = function () {
+	      Q = function () {
 	    function t(i) {
 	      e(this, t), this.ctx = i, this.w = i.w;
 	    }
@@ -53492,7 +53420,7 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      et = function () {
+	      K = function () {
 	    function t(i) {
 	      e(this, t), this.ctx = i, this.w = i.w;
 	    }
@@ -53510,22 +53438,22 @@ var Forestry = (function () {
 	            return t.breakpoint > e.breakpoint ? 1 : e.breakpoint > t.breakpoint ? -1 : 0;
 	          }).reverse();
 
-	          var r = new N({}),
+	          var r = new R({}),
 	              n = function n() {
 	            var t = arguments.length > 0 && void 0 !== arguments[0] ? arguments[0] : {},
 	                a = s[0].breakpoint,
 	                n = window.innerWidth > 0 ? window.innerWidth : screen.width;
 
 	            if (n > a) {
-	              var o = y.extendArrayProps(r, i.globals.initialConfig, i);
+	              var o = w.extendArrayProps(r, i.globals.initialConfig, i);
 	              t = f.extend(o, t), t = f.extend(i.config, t), e.overrideResponsiveOptions(t);
 	            } else for (var l = 0; l < s.length; l++) {
-	              n < s[l].breakpoint && (t = y.extendArrayProps(r, s[l].options, i), t = f.extend(i.config, t), e.overrideResponsiveOptions(t));
+	              n < s[l].breakpoint && (t = w.extendArrayProps(r, s[l].options, i), t = f.extend(i.config, t), e.overrideResponsiveOptions(t));
 	            }
 	          };
 
 	          if (t) {
-	            var o = y.extendArrayProps(r, t, i);
+	            var o = w.extendArrayProps(r, t, i);
 	            o = f.extend(i.config, o), n(o = f.extend(o, t));
 	          } else n({});
 	        }
@@ -53533,18 +53461,18 @@ var Forestry = (function () {
 	    }, {
 	      key: "overrideResponsiveOptions",
 	      value: function value(t) {
-	        var e = new N(t).init({
+	        var e = new R(t).init({
 	          responsiveOverride: !0
 	        });
 	        this.w.config = e;
 	      }
 	    }]), t;
 	  }(),
-	      it = function () {
+	      tt = function () {
 	    function t(i) {
 	      e(this, t), this.ctx = i, this.colors = [], this.w = i.w;
 	      var a = this.w;
-	      this.isColorFn = !1, this.isBarDistributed = a.config.plotOptions.bar.distributed && ("bar" === a.config.chart.type || "rangeBar" === a.config.chart.type);
+	      this.isColorFn = !1, this.isHeatmapDistributed = "treemap" === a.config.chart.type && a.config.plotOptions.treemap.distributed || "heatmap" === a.config.chart.type && a.config.plotOptions.heatmap.distributed, this.isBarDistributed = a.config.plotOptions.bar.distributed && ("bar" === a.config.chart.type || "rangeBar" === a.config.chart.type);
 	    }
 
 	    return a(t, [{
@@ -53572,7 +53500,7 @@ var Forestry = (function () {
 	        }), e.config.theme.monochrome.enabled) {
 	          var a = [],
 	              s = e.globals.series.length;
-	          this.isBarDistributed && (s = e.globals.series[0].length * e.globals.series.length);
+	          (this.isBarDistributed || this.isHeatmapDistributed) && (s = e.globals.series[0].length * e.globals.series.length);
 
 	          for (var r = e.config.theme.monochrome.color, n = 1 / (s / e.config.theme.monochrome.shadeIntensity), o = e.config.theme.monochrome.shadeTo, l = 0, h = 0; h < s; h++) {
 	            var c = void 0;
@@ -53594,7 +53522,7 @@ var Forestry = (function () {
 	        var i = arguments.length > 2 && void 0 !== arguments[2] ? arguments[2] : null,
 	            a = this.w,
 	            s = e || a.globals.series.length;
-	        if (null === i && (i = this.isBarDistributed || "heatmap" === a.config.chart.type && a.config.plotOptions.heatmap.colorScale.inverse), i && (s = a.globals.series[0].length * a.globals.series.length), t.length < s) for (var r = s - t.length, n = 0; n < r; n++) {
+	        if (null === i && (i = this.isBarDistributed || this.isHeatmapDistributed || "heatmap" === a.config.chart.type && a.config.plotOptions.heatmap.colorScale.inverse), i && a.globals.series.length && (s = a.globals.series[a.globals.maxValsInArrayIndex].length * a.globals.series.length), t.length < s) for (var r = s - t.length, n = 0; n < r; n++) {
 	          t.push(t[n]);
 	        }
 	      }
@@ -53659,7 +53587,7 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      at = function () {
+	      et = function () {
 	    function t(i) {
 	      e(this, t), this.ctx = i, this.w = i.w;
 	    }
@@ -53695,7 +53623,7 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      st = function () {
+	      it = function () {
 	    function t(i) {
 	      e(this, t), this.w = i.w, this.dCtx = i;
 	    }
@@ -53723,8 +53651,9 @@ var Forestry = (function () {
 	      key: "getLegendsRect",
 	      value: function value() {
 	        var t = this.w,
-	            e = t.globals.dom.baseEl.querySelector(".apexcharts-legend"),
-	            i = Object.assign({}, f.getBoundingClientRect(e));
+	            e = t.globals.dom.baseEl.querySelector(".apexcharts-legend");
+	        t.config.legend.height || "top" !== t.config.legend.position && "bottom" !== t.config.legend.position || (e.style.maxHeight = t.globals.svgHeight / 2 + "px");
+	        var i = Object.assign({}, f.getBoundingClientRect(e));
 	        return null !== e && !t.config.legend.floating && t.config.legend.show ? this.dCtx.lgRect = {
 	          x: i.x,
 	          y: i.y,
@@ -53754,7 +53683,7 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      rt = function () {
+	      at = function () {
 	    function t(i) {
 	      e(this, t), this.w = i.w, this.dCtx = i;
 	    }
@@ -53780,9 +53709,17 @@ var Forestry = (function () {
 	          e.globals.isBarHorizontal && (n = r = e.globals.yAxisScale[0].result.reduce(function (t, e) {
 	            return t.length > e.length ? t : e;
 	          }, 0));
-	          var o = new V(this.dCtx.ctx),
+	          var o = new W(this.dCtx.ctx),
 	              l = r;
-	          r = o.xLabelFormat(s, r, l), n = o.xLabelFormat(s, n, l), (e.config.xaxis.convertedCatToNumeric && void 0 === r || "" === String(r).trim()) && (n = r = "1");
+	          r = o.xLabelFormat(s, r, l, {
+	            i: void 0,
+	            dateFormatter: new y(this.dCtx.ctx).formatDate,
+	            w: e
+	          }), n = o.xLabelFormat(s, n, l, {
+	            i: void 0,
+	            dateFormatter: new y(this.dCtx.ctx).formatDate,
+	            w: e
+	          }), (e.config.xaxis.convertedCatToNumeric && void 0 === r || "" === String(r).trim()) && (n = r = "1");
 	          var h = new b(this.dCtx.ctx),
 	              c = h.getTextRects(r, e.config.xaxis.labels.style.fontSize),
 	              d = c;
@@ -53862,7 +53799,7 @@ var Forestry = (function () {
 	              var s = e.dCtx.timescaleLabels[0],
 	                  o = e.dCtx.timescaleLabels[e.dCtx.timescaleLabels.length - 1].position + n / 1.75 - e.dCtx.yAxisWidthRight,
 	                  l = s.position - n / 1.75 + e.dCtx.yAxisWidthLeft;
-	              o > a.gridWidth && (a.skipLastTimelinelabel = !0), l < 0 && (a.skipFirstTimelinelabel = !0);
+	              o > a.svgWidth - a.translateX && (a.skipLastTimelinelabel = !0), l < 0 && (a.skipFirstTimelinelabel = !0);
 	            } else "datetime" === r ? e.dCtx.gridPad.right < n && !a.rotateXLabels && (a.skipLastTimelinelabel = !0) : "datetime" !== r && e.dCtx.gridPad.right < n / 2 - e.dCtx.yAxisWidthRight && !a.rotateXLabels && ("between" !== i.config.xaxis.tickPlacement || i.globals.isBarHorizontal) && (e.dCtx.xPadRight = n / 2 + 1);
 	          }());
 	        };
@@ -53873,7 +53810,7 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      nt = function () {
+	      st = function () {
 	    function t(i) {
 	      e(this, t), this.w = i.w, this.dCtx = i;
 	    }
@@ -53885,7 +53822,7 @@ var Forestry = (function () {
 	            e = this.w,
 	            i = [],
 	            a = 10,
-	            s = new G(this.dCtx.ctx);
+	            s = new B(this.dCtx.ctx);
 	        return e.config.yaxis.map(function (r, n) {
 	          var o = e.globals.yAxisScale[n];
 
@@ -53949,7 +53886,7 @@ var Forestry = (function () {
 	            i = 0,
 	            a = 0,
 	            s = t.globals.yAxisScale.length > 1 ? 10 : 0,
-	            r = new G(this.dCtx.ctx),
+	            r = new B(this.dCtx.ctx),
 	            n = function n(_n, o) {
 	          var l = t.config.yaxis[o].floating,
 	              h = 0;
@@ -53966,7 +53903,7 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      ot = function () {
+	      rt = function () {
 	    function t(i) {
 	      e(this, t), this.w = i.w, this.dCtx = i;
 	    }
@@ -54009,16 +53946,16 @@ var Forestry = (function () {
 	      key: "setGridXPosForDualYAxis",
 	      value: function value(t, e) {
 	        var i = this.w,
-	            a = new G(this.dCtx.ctx);
+	            a = new B(this.dCtx.ctx);
 	        i.config.yaxis.map(function (s, r) {
 	          -1 !== i.globals.ignoreYAxisIndexes.indexOf(r) || s.floating || a.isYAxisHidden(r) || (s.opposite && (i.globals.translateX = i.globals.translateX - (e[r].width + t[r].width) - parseInt(i.config.yaxis[r].labels.style.fontSize, 10) / 1.2 - 12), i.globals.translateX < 2 && (i.globals.translateX = 2));
 	        });
 	      }
 	    }]), t;
 	  }(),
-	      lt = function () {
+	      nt = function () {
 	    function t(i) {
-	      e(this, t), this.ctx = i, this.w = i.w, this.lgRect = {}, this.yAxisWidth = 0, this.yAxisWidthLeft = 0, this.yAxisWidthRight = 0, this.xAxisHeight = 0, this.isSparkline = this.w.config.chart.sparkline.enabled, this.dimHelpers = new st(this), this.dimYAxis = new nt(this), this.dimXAxis = new rt(this), this.dimGrid = new ot(this), this.lgWidthForSideLegends = 0, this.gridPad = this.w.config.grid.padding, this.xPadRight = 0, this.xPadLeft = 0;
+	      e(this, t), this.ctx = i, this.w = i.w, this.lgRect = {}, this.yAxisWidth = 0, this.yAxisWidthLeft = 0, this.yAxisWidthRight = 0, this.xAxisHeight = 0, this.isSparkline = this.w.config.chart.sparkline.enabled, this.dimHelpers = new it(this), this.dimYAxis = new st(this), this.dimXAxis = new at(this), this.dimGrid = new rt(this), this.lgWidthForSideLegends = 0, this.gridPad = this.w.config.grid.padding, this.xPadRight = 0, this.xPadLeft = 0;
 	    }
 
 	    return a(t, [{
@@ -54056,10 +53993,10 @@ var Forestry = (function () {
 	        ("radar" === e.config.chart.type || this.isSparkline) && (o = 0, l = i.goldenPadding), this.isSparkline && (this.lgRect = {
 	          height: 0,
 	          width: 0
-	        }, l = 0, o = 0, h = 0), this.dimXAxis.additionalPaddingXLabels(r);
+	        }), (this.isSparkline || "treemap" === e.config.chart.type) && (o = 0, l = 0, h = 0), this.isSparkline || this.dimXAxis.additionalPaddingXLabels(r);
 
 	        var c = function c() {
-	          i.translateX = o, i.gridHeight = i.svgHeight - t.lgRect.height - l - (t.isSparkline ? 0 : e.globals.rotateXLabels ? 10 : 15), i.gridWidth = i.svgWidth - o;
+	          i.translateX = o, i.gridHeight = i.svgHeight - t.lgRect.height - l - (t.isSparkline || "treemap" === e.config.chart.type ? 0 : e.globals.rotateXLabels ? 10 : 15), i.gridWidth = i.svgWidth - o;
 	        };
 
 	        switch ("top" === e.config.xaxis.position && (h = i.xAxisHeight - e.config.xaxis.axisTicks.height - 5), e.config.legend.position) {
@@ -54083,7 +54020,7 @@ var Forestry = (function () {
 	            throw new Error("Legend position not supported");
 	        }
 
-	        this.dimGrid.setGridXPosForDualYAxis(s, a), new $(this.ctx).setYAxisXPosition(a, s);
+	        this.dimGrid.setGridXPosForDualYAxis(s, a), new q(this.ctx).setYAxisXPosition(a, s);
 	      }
 	    }, {
 	      key: "setDimensionsForNonAxisCharts",
@@ -54132,7 +54069,7 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      ht = function () {
+	      ot = function () {
 	    function t(i) {
 	      e(this, t), this.w = i.w, this.lgCtx = i;
 	    }
@@ -54258,9 +54195,9 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      ct = function () {
+	      lt = function () {
 	    function t(i, a) {
-	      e(this, t), this.ctx = i, this.w = i.w, this.onLegendClick = this.onLegendClick.bind(this), this.onLegendHovered = this.onLegendHovered.bind(this), this.isBarsDistributed = "bar" === this.w.config.chart.type && this.w.config.plotOptions.bar.distributed && 1 === this.w.config.series.length, this.legendHelpers = new ht(this);
+	      e(this, t), this.ctx = i, this.w = i.w, this.onLegendClick = this.onLegendClick.bind(this), this.onLegendHovered = this.onLegendHovered.bind(this), this.isBarsDistributed = "bar" === this.w.config.chart.type && this.w.config.plotOptions.bar.distributed && 1 === this.w.config.series.length, this.legendHelpers = new ot(this);
 	    }
 
 	    return a(t, [{
@@ -54310,37 +54247,38 @@ var Forestry = (function () {
 	          }
 	          var u = document.createElement("span");
 	          u.classList.add("apexcharts-legend-marker");
-	          var f = t.config.legend.markers.offsetX,
-	              p = t.config.legend.markers.offsetY,
-	              x = t.config.legend.markers.height,
-	              m = t.config.legend.markers.width,
-	              v = t.config.legend.markers.strokeWidth,
-	              w = t.config.legend.markers.strokeColor,
-	              k = t.config.legend.markers.radius,
-	              A = u.style;
-	          A.background = a[o], A.color = a[o], t.config.legend.markers.fillColors && t.config.legend.markers.fillColors[o] && (A.background = t.config.legend.markers.fillColors[o]), void 0 !== t.globals.seriesColors[o] && (A.background = t.globals.seriesColors[o], A.color = t.globals.seriesColors[o]), A.height = Array.isArray(x) ? parseFloat(x[o]) + "px" : parseFloat(x) + "px", A.width = Array.isArray(m) ? parseFloat(m[o]) + "px" : parseFloat(m) + "px", A.left = Array.isArray(f) ? f[o] : f, A.top = Array.isArray(p) ? p[o] : p, A.borderWidth = Array.isArray(v) ? v[o] : v, A.borderColor = Array.isArray(w) ? w[o] : w, A.borderRadius = Array.isArray(k) ? parseFloat(k[o]) + "px" : parseFloat(k) + "px", t.config.legend.markers.customHTML && (Array.isArray(t.config.legend.markers.customHTML) ? t.config.legend.markers.customHTML[o] && (u.innerHTML = t.config.legend.markers.customHTML[o]()) : u.innerHTML = t.config.legend.markers.customHTML()), b.setAttrs(u, {
+	          var p = t.config.legend.markers.offsetX,
+	              x = t.config.legend.markers.offsetY,
+	              m = t.config.legend.markers.height,
+	              v = t.config.legend.markers.width,
+	              y = t.config.legend.markers.strokeWidth,
+	              k = t.config.legend.markers.strokeColor,
+	              A = t.config.legend.markers.radius,
+	              S = u.style;
+	          S.background = a[o], S.color = a[o], S.setProperty("background", a[o], "important"), t.config.legend.markers.fillColors && t.config.legend.markers.fillColors[o] && (S.background = t.config.legend.markers.fillColors[o]), void 0 !== t.globals.seriesColors[o] && (S.background = t.globals.seriesColors[o], S.color = t.globals.seriesColors[o]), S.height = Array.isArray(m) ? parseFloat(m[o]) + "px" : parseFloat(m) + "px", S.width = Array.isArray(v) ? parseFloat(v[o]) + "px" : parseFloat(v) + "px", S.left = Array.isArray(p) ? p[o] : p, S.top = Array.isArray(x) ? x[o] : x, S.borderWidth = Array.isArray(y) ? y[o] : y, S.borderColor = Array.isArray(k) ? k[o] : k, S.borderRadius = Array.isArray(A) ? parseFloat(A[o]) + "px" : parseFloat(A) + "px", t.config.legend.markers.customHTML && (Array.isArray(t.config.legend.markers.customHTML) ? t.config.legend.markers.customHTML[o] && (u.innerHTML = t.config.legend.markers.customHTML[o]()) : u.innerHTML = t.config.legend.markers.customHTML()), b.setAttrs(u, {
 	            rel: o + 1,
 	            "data:collapsed": h || c
 	          }), (h || c) && u.classList.add("apexcharts-inactive-legend");
-	          var S = document.createElement("div"),
-	              C = document.createElement("span");
-	          C.classList.add("apexcharts-legend-text"), C.innerHTML = Array.isArray(l) ? l.join(" ") : l;
-	          var L = t.config.legend.labels.useSeriesColors ? t.globals.colors[o] : t.config.legend.labels.colors;
-	          L || (L = t.config.chart.foreColor), C.style.color = L, C.style.fontSize = parseFloat(t.config.legend.fontSize) + "px", C.style.fontWeight = t.config.legend.fontWeight, C.style.fontFamily = e || t.config.chart.fontFamily, b.setAttrs(C, {
+	          var C = document.createElement("div"),
+	              L = document.createElement("span");
+	          L.classList.add("apexcharts-legend-text"), L.innerHTML = Array.isArray(l) ? l.join(" ") : l;
+	          var P = t.config.legend.labels.useSeriesColors ? t.globals.colors[o] : t.config.legend.labels.colors;
+	          P || (P = t.config.chart.foreColor), L.style.color = P, L.style.fontSize = parseFloat(t.config.legend.fontSize) + "px", L.style.fontWeight = t.config.legend.fontWeight, L.style.fontFamily = e || t.config.chart.fontFamily, b.setAttrs(L, {
 	            rel: o + 1,
 	            i: o,
 	            "data:default-text": encodeURIComponent(l),
 	            "data:collapsed": h || c
-	          }), S.appendChild(u), S.appendChild(C);
-	          var P = new y(this.ctx);
-	          if (!t.config.legend.showForZeroSeries) 0 === P.getSeriesTotalByIndex(o) && P.seriesHaveSameValues(o) && !P.isSeriesNull(o) && -1 === t.globals.collapsedSeriesIndices.indexOf(o) && -1 === t.globals.ancillaryCollapsedSeriesIndices.indexOf(o) && S.classList.add("apexcharts-hidden-zero-series");
-	          t.config.legend.showForNullSeries || P.isSeriesNull(o) && -1 === t.globals.collapsedSeriesIndices.indexOf(o) && -1 === t.globals.ancillaryCollapsedSeriesIndices.indexOf(o) && S.classList.add("apexcharts-hidden-null-series"), t.globals.dom.elLegendWrap.appendChild(S), t.globals.dom.elLegendWrap.classList.add("apexcharts-align-".concat(t.config.legend.horizontalAlign)), t.globals.dom.elLegendWrap.classList.add("position-" + t.config.legend.position), S.classList.add("apexcharts-legend-series"), S.style.margin = "".concat(t.config.legend.itemMargin.vertical, "px ").concat(t.config.legend.itemMargin.horizontal, "px"), t.globals.dom.elLegendWrap.style.width = t.config.legend.width ? t.config.legend.width + "px" : "", t.globals.dom.elLegendWrap.style.height = t.config.legend.height ? t.config.legend.height + "px" : "", b.setAttrs(S, {
+	          }), C.appendChild(u), C.appendChild(L);
+	          var T = new w(this.ctx);
+	          if (!t.config.legend.showForZeroSeries) 0 === T.getSeriesTotalByIndex(o) && T.seriesHaveSameValues(o) && !T.isSeriesNull(o) && -1 === t.globals.collapsedSeriesIndices.indexOf(o) && -1 === t.globals.ancillaryCollapsedSeriesIndices.indexOf(o) && C.classList.add("apexcharts-hidden-zero-series");
+	          t.config.legend.showForNullSeries || T.isSeriesNull(o) && -1 === t.globals.collapsedSeriesIndices.indexOf(o) && -1 === t.globals.ancillaryCollapsedSeriesIndices.indexOf(o) && C.classList.add("apexcharts-hidden-null-series"), t.globals.dom.elLegendWrap.appendChild(C), t.globals.dom.elLegendWrap.classList.add("apexcharts-align-".concat(t.config.legend.horizontalAlign)), t.globals.dom.elLegendWrap.classList.add("position-" + t.config.legend.position), C.classList.add("apexcharts-legend-series"), C.style.margin = "".concat(t.config.legend.itemMargin.vertical, "px ").concat(t.config.legend.itemMargin.horizontal, "px"), t.globals.dom.elLegendWrap.style.width = t.config.legend.width ? t.config.legend.width + "px" : "", t.globals.dom.elLegendWrap.style.height = t.config.legend.height ? t.config.legend.height + "px" : "", b.setAttrs(C, {
 	            rel: o + 1,
+	            seriesName: f.escapeString(i[o]),
 	            "data:collapsed": h || c
-	          }), (h || c) && S.classList.add("apexcharts-inactive-legend"), t.config.legend.onItemClick.toggleDataSeries || S.classList.add("apexcharts-no-click");
+	          }), (h || c) && C.classList.add("apexcharts-inactive-legend"), t.config.legend.onItemClick.toggleDataSeries || C.classList.add("apexcharts-no-click");
 	        }
 
-	        "heatmap" !== t.config.chart.type && !this.isBarsDistributed && t.config.legend.onItemClick.toggleDataSeries && t.globals.dom.elWrap.addEventListener("click", this.onLegendClick, !0), t.config.legend.onItemHover.highlightDataSeries && (t.globals.dom.elWrap.addEventListener("mousemove", this.onLegendHovered, !0), t.globals.dom.elWrap.addEventListener("mouseout", this.onLegendHovered, !0));
+	        "treemap" !== t.config.chart.type && "heatmap" !== t.config.chart.type && !this.isBarsDistributed && t.config.legend.onItemClick.toggleDataSeries && t.globals.dom.elWrap.addEventListener("click", this.onLegendClick, !0), t.config.legend.onItemHover.highlightDataSeries && (t.globals.dom.elWrap.addEventListener("mousemove", this.onLegendHovered, !0), t.globals.dom.elWrap.addEventListener("mouseout", this.onLegendHovered, !0));
 	      }
 	    }, {
 	      key: "setLegendWrapXY",
@@ -54351,7 +54289,7 @@ var Forestry = (function () {
 	            r = 0,
 	            n = 0;
 	        if ("bottom" === i.config.legend.position) n += i.globals.svgHeight - s.height / 2;else if ("top" === i.config.legend.position) {
-	          var o = new lt(this.ctx),
+	          var o = new nt(this.ctx),
 	              l = o.dimHelpers.getTitleSubtitleCoords("title").height,
 	              h = o.dimHelpers.getTitleSubtitleCoords("subtitle").height;
 	          n = n + (l > 0 ? l - 10 : 0) + (h > 0 ? h - 10 : 0);
@@ -54367,7 +54305,7 @@ var Forestry = (function () {
 	        var t = this.w;
 	        t.globals.dom.baseEl.querySelector(".apexcharts-legend").style.right = 0;
 	        var e = this.legendHelpers.getLegendBBox(),
-	            i = new lt(this.ctx),
+	            i = new nt(this.ctx),
 	            a = i.dimHelpers.getTitleSubtitleCoords("title"),
 	            s = i.dimHelpers.getTitleSubtitleCoords("subtitle"),
 	            r = 0;
@@ -54390,9 +54328,9 @@ var Forestry = (function () {
 	        if ("heatmap" === e.config.chart.type || this.isBarsDistributed) {
 	          if (i) {
 	            var a = parseInt(t.target.getAttribute("rel"), 10) - 1;
-	            this.ctx.events.fireEvent("legendHover", [this.ctx, a, this.w]), new X(this.ctx).highlightRangeInSeries(t, t.target);
+	            this.ctx.events.fireEvent("legendHover", [this.ctx, a, this.w]), new E(this.ctx).highlightRangeInSeries(t, t.target);
 	          }
-	        } else !t.target.classList.contains("apexcharts-inactive-legend") && i && new X(this.ctx).toggleSeriesOnHover(t, t.target);
+	        } else !t.target.classList.contains("apexcharts-inactive-legend") && i && new E(this.ctx).toggleSeriesOnHover(t, t.target);
 	      }
 	    }, {
 	      key: "onLegendClick",
@@ -54408,7 +54346,7 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      dt = function () {
+	      ht = function () {
 	    function t(i) {
 	      e(this, t), this.ctx = i, this.w = i.w, this.ev = this.w.config.chart.events, this.selectedClass = "apexcharts-selected", this.localeValues = this.w.globals.locale.toolbar;
 	    }
@@ -54612,7 +54550,7 @@ var Forestry = (function () {
 	              xaxis: a
 	            },
 	                n = f.clone(i.globals.initialConfig.yaxis);
-	            if (i.config.chart.zoom.autoScaleYaxis) n = new q(this.ctx).autoScaleY(this.ctx, n, {
+	            if (i.config.chart.zoom.autoScaleYaxis) n = new j(this.ctx).autoScaleY(this.ctx, n, {
 	              xaxis: a
 	            });
 	            i.config.chart.group || (r.yaxis = n), this.w.globals.zoomed = !0, this.ctx.updateHelpers._updateOptions(r, !1, this.w.config.chart.animations.dynamicAnimation.enabled), this.zoomCallback(a, n);
@@ -54648,7 +54586,7 @@ var Forestry = (function () {
 	      key: "handleDownload",
 	      value: function value(t) {
 	        var e = this.w,
-	            i = new _(this.ctx);
+	            i = new V(this.ctx);
 
 	        switch (t) {
 	          case "svg":
@@ -54671,13 +54609,19 @@ var Forestry = (function () {
 	      value: function value(t) {
 	        this.ctx.getSyncedCharts().forEach(function (t) {
 	          var e = t.w;
-	          e.globals.lastXAxis.min = void 0, e.globals.lastXAxis.max = void 0, t.updateHelpers.revertDefaultAxisMinMax(), "function" == typeof e.config.chart.events.zoomed && t.ctx.toolbar.zoomCallback({
+
+	          if (e.globals.lastXAxis.min = void 0, e.globals.lastXAxis.max = void 0, t.updateHelpers.revertDefaultAxisMinMax(), "function" == typeof e.config.chart.events.beforeResetZoom) {
+	            var i = e.config.chart.events.beforeResetZoom(t, e);
+	            i && t.updateHelpers.revertDefaultAxisMinMax(i);
+	          }
+
+	          "function" == typeof e.config.chart.events.zoomed && t.ctx.toolbar.zoomCallback({
 	            min: e.config.xaxis.min,
 	            max: e.config.xaxis.max
 	          }), e.globals.zoomed = !1;
-	          var i = t.ctx.series.emptyCollapsedSeries(f.clone(e.globals.initialSeries));
+	          var a = t.ctx.series.emptyCollapsedSeries(f.clone(e.globals.initialSeries));
 
-	          t.updateHelpers._updateSeries(i, e.config.chart.animations.dynamicAnimation.enabled);
+	          t.updateHelpers._updateSeries(a, e.config.chart.animations.dynamicAnimation.enabled);
 	        });
 	      }
 	    }, {
@@ -54687,8 +54631,8 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      gt = function (t) {
-	    o(s, dt);
+	      ct = function (t) {
+	    o(s, ht);
 	    var i = d(s);
 
 	    function s(t) {
@@ -54912,20 +54856,17 @@ var Forestry = (function () {
 	        a.globals.selection = l, "function" == typeof a.config.chart.events.selection && a.globals.selectionEnabled && (clearTimeout(this.w.globals.selectionResizeTimer), this.w.globals.selectionResizeTimer = window.setTimeout(function () {
 	          var t = i.gridRect.getBoundingClientRect(),
 	              e = r.node.getBoundingClientRect(),
-	              n = a.globals.xAxisScale.niceMin + (e.left - t.left) * s.xRatio,
-	              o = a.globals.xAxisScale.niceMin + (e.right - t.left) * s.xRatio,
-	              l = a.globals.yAxisScale[0].niceMin + (t.bottom - e.bottom) * s.yRatio[0],
-	              h = a.globals.yAxisScale[0].niceMax - (e.top - t.top) * s.yRatio[0];
-	          a.config.chart.events.selection(i.ctx, {
+	              n = {
 	            xaxis: {
-	              min: n,
-	              max: o
+	              min: a.globals.xAxisScale.niceMin + (e.left - t.left) * s.xRatio,
+	              max: a.globals.xAxisScale.niceMin + (e.right - t.left) * s.xRatio
 	            },
 	            yaxis: {
-	              min: l,
-	              max: h
+	              min: a.globals.yAxisScale[0].niceMin + (t.bottom - e.bottom) * s.yRatio[0],
+	              max: a.globals.yAxisScale[0].niceMax - (e.top - t.top) * s.yRatio[0]
 	            }
-	          });
+	          };
+	          a.config.chart.events.selection(i.ctx, n), a.config.chart.brush.enabled && void 0 !== a.config.chart.events.brushScrolled && a.config.chart.events.brushScrolled(i.ctx, n);
 	        }, n));
 	      }
 	    }, {
@@ -54964,7 +54905,7 @@ var Forestry = (function () {
 	          }), "xy" !== i && "y" !== i || u.forEach(function (t, e) {
 	            u[e].min = g[e], u[e].max = d[e];
 	          }), a.config.chart.zoom.autoScaleYaxis) {
-	            var x = new q(s.ctx);
+	            var x = new j(s.ctx);
 	            u = x.autoScaleY(s.ctx, u, {
 	              xaxis: p
 	            });
@@ -55039,7 +54980,7 @@ var Forestry = (function () {
 	          min: t,
 	          max: e
 	        };
-	        i.config.chart.zoom.autoScaleYaxis && (s = new q(this.ctx).autoScaleY(this.ctx, s, {
+	        i.config.chart.zoom.autoScaleYaxis && (s = new j(this.ctx).autoScaleY(this.ctx, s, {
 	          xaxis: r
 	        }));
 	        var n = {
@@ -55063,7 +55004,7 @@ var Forestry = (function () {
 	      }
 	    }]), s;
 	  }(),
-	      ut = function () {
+	      dt = function () {
 	    function t(i) {
 	      e(this, t), this.w = i.w, this.ttCtx = i, this.ctx = i.ctx;
 	    }
@@ -55240,9 +55181,9 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      ft = function () {
+	      gt = function () {
 	    function t(i) {
-	      e(this, t), this.w = i.w, this.ctx = i.ctx, this.ttCtx = i, this.tooltipUtil = new ut(i);
+	      e(this, t), this.w = i.w, this.ctx = i.ctx, this.ttCtx = i, this.tooltipUtil = new dt(i);
 	    }
 
 	    return a(t, [{
@@ -55257,27 +55198,29 @@ var Forestry = (function () {
 	            o = void 0 === n ? null : n,
 	            l = t.y1,
 	            h = t.y2,
-	            c = this.w;
-	        void 0 !== c.config.tooltip.custom ? this.handleCustomTooltip({
+	            c = t.e,
+	            d = this.w;
+	        void 0 !== d.config.tooltip.custom ? this.handleCustomTooltip({
 	          i: r,
 	          j: o,
 	          y1: l,
 	          y2: h,
-	          w: c
+	          w: d
 	        }) : this.toggleActiveInactiveSeries(i);
-	        var d = this.getValuesToPrint({
+	        var g = this.getValuesToPrint({
 	          i: r,
 	          j: o
 	        });
 	        this.printLabels({
 	          i: r,
 	          j: o,
-	          values: d,
+	          values: g,
 	          ttItems: a,
-	          shared: i
+	          shared: i,
+	          e: c
 	        });
-	        var g = this.ttCtx.getElTooltip();
-	        this.ttCtx.tooltipRect.ttWidth = g.getBoundingClientRect().width, this.ttCtx.tooltipRect.ttHeight = g.getBoundingClientRect().height;
+	        var u = this.ttCtx.getElTooltip();
+	        this.ttCtx.tooltipRect.ttWidth = u.getBoundingClientRect().width, this.ttCtx.tooltipRect.ttHeight = u.getBoundingClientRect().height;
 	      }
 	    }, {
 	      key: "printLabels",
@@ -55289,59 +55232,65 @@ var Forestry = (function () {
 	            r = t.values,
 	            n = t.ttItems,
 	            o = t.shared,
-	            l = this.w,
-	            h = r.xVal,
-	            c = r.zVal,
-	            d = r.xAxisTTVal,
-	            g = "",
-	            u = l.globals.colors[a];
-	        null !== s && l.config.plotOptions.bar.distributed && (u = l.globals.colors[s]);
+	            l = t.e,
+	            h = this.w,
+	            c = r.xVal,
+	            d = r.zVal,
+	            g = r.xAxisTTVal,
+	            u = "",
+	            f = h.globals.colors[a];
+	        null !== s && h.config.plotOptions.bar.distributed && (f = h.globals.colors[s]);
 
-	        for (var f = function f(t, r) {
-	          var f = i.getFormatters(a);
-	          g = i.getSeriesName({
-	            fn: f.yLbTitleFormatter,
+	        for (var p = function p(t, r) {
+	          var p = i.getFormatters(a);
+	          u = i.getSeriesName({
+	            fn: p.yLbTitleFormatter,
 	            index: a,
 	            seriesIndex: a,
 	            j: s
-	          });
-	          var p = l.config.tooltip.inverseOrder ? r : t;
+	          }), "treemap" === h.config.chart.type && (u = p.yLbTitleFormatter(String(h.config.series[a].data[s].x), {
+	            series: h.globals.series,
+	            seriesIndex: a,
+	            dataPointIndex: s,
+	            w: h
+	          }));
+	          var x = h.config.tooltip.inverseOrder ? r : t;
 
-	          if (l.globals.axisCharts) {
-	            var x = function x(t) {
-	              return f.yLbFormatter(l.globals.series[t][s], {
-	                series: l.globals.series,
+	          if (h.globals.axisCharts) {
+	            var b = function b(t) {
+	              return p.yLbFormatter(h.globals.series[t][s], {
+	                series: h.globals.series,
 	                seriesIndex: t,
 	                dataPointIndex: s,
-	                w: l
+	                w: h
 	              });
 	            };
 
-	            o ? (f = i.getFormatters(p), g = i.getSeriesName({
-	              fn: f.yLbTitleFormatter,
-	              index: p,
+	            o ? (p = i.getFormatters(x), u = i.getSeriesName({
+	              fn: p.yLbTitleFormatter,
+	              index: x,
 	              seriesIndex: a,
 	              j: s
-	            }), u = l.globals.colors[p], e = x(p)) : e = x(a);
+	            }), f = h.globals.colors[x], e = b(x)) : (l && l.target && l.target.getAttribute("fill") && (f = l.target.getAttribute("fill")), e = b(a));
 	          }
 
-	          null === s && (e = f.yLbFormatter(l.globals.series[a], l)), i.DOMHandling({
+	          null === s && (e = p.yLbFormatter(h.globals.series[a], h)), i.DOMHandling({
 	            i: a,
-	            t: p,
+	            t: x,
 	            j: s,
 	            ttItems: n,
 	            values: {
 	              val: e,
-	              xVal: h,
-	              xAxisTTVal: d,
-	              zVal: c
+	              xVal: c,
+	              xAxisTTVal: g,
+	              zVal: d
 	            },
-	            seriesName: g,
+	            seriesName: u,
 	            shared: o,
-	            pColor: u
+	            pColor: f
 	          });
-	        }, p = 0, x = l.globals.series.length - 1; p < l.globals.series.length; p++, x--) {
-	          f(p, x);
+	        }, x = 0, b = h.globals.series.length - 1; x < h.globals.series.length; x++, b--) {
+	          p(x, b);
 	        }
 	      }
 	    }, {
@@ -55426,9 +55375,13 @@ var Forestry = (function () {
 	          w: a
 	        },
 	            c = a.globals.ttZFormatter;
-	        null === i ? l = a.globals.series[e] : a.globals.isXNumeric ? (r = s[e][i], 0 === s[e].length && (r = s[this.tooltipUtil.getFirstActiveXArray(s)][i])) : r = void 0 !== a.globals.labels[i] ? a.globals.labels[i] : "";
+	        null === i ? l = a.globals.series[e] : a.globals.isXNumeric && "treemap" !== a.config.chart.type ? (r = s[e][i], 0 === s[e].length && (r = s[this.tooltipUtil.getFirstActiveXArray(s)][i])) : r = void 0 !== a.globals.labels[i] ? a.globals.labels[i] : "";
 	        var d = r;
-	        a.globals.isXNumeric && "datetime" === a.config.xaxis.type ? r = new V(this.ctx).xLabelFormat(a.globals.ttKeyFormatter, d, d) : a.globals.isBarHorizontal || (r = a.globals.xLabelFormatter(d, h));
+	        a.globals.isXNumeric && "datetime" === a.config.xaxis.type ? r = new W(this.ctx).xLabelFormat(a.globals.ttKeyFormatter, d, d, {
+	          i: void 0,
+	          dateFormatter: new y(this.ctx).formatDate,
+	          w: this.w
+	        }) : a.globals.isBarHorizontal || (r = a.globals.xLabelFormatter(d, h));
 	        return void 0 !== a.config.tooltip.x.formatter && (r = a.globals.ttKeyFormatter(d, h)), a.globals.seriesZ.length > 0 && a.globals.seriesZ[0].length > 0 && (o = c(a.globals.seriesZ[e][i], a)), n = "function" == typeof a.config.xaxis.tooltip.formatter ? a.globals.xaxisTooltipFormatter(d, h) : r, {
 	          val: Array.isArray(l) ? l.join(" ") : l,
 	          xVal: Array.isArray(r) ? r.join(" ") : r,
@@ -55458,7 +55411,7 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      pt = function () {
+	      ut = function () {
 	    function t(i) {
 	      e(this, t), this.ttCtx = i, this.ctx = i.ctx, this.w = i.w;
 	    }
@@ -55588,7 +55541,7 @@ var Forestry = (function () {
 	            s = 0,
 	            r = 0,
 	            n = a.globals.pointsArray;
-	        e = new X(this.ctx).getActiveConfigSeriesIndex(!0);
+	        e = new E(this.ctx).getActiveConfigSeriesIndex(!0);
 	        var o = i.tooltipUtil.getHoverMarkerSize(e);
 	        n[e] && (s = n[e][t][0], r = n[e][t][1]);
 	        var l = i.tooltipUtil.getAllMarkers();
@@ -55627,9 +55580,9 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      xt = function () {
+	      ft = function () {
 	    function t(i) {
-	      e(this, t), this.w = i.w, this.ttCtx = i, this.ctx = i.ctx, this.tooltipPosition = new pt(i);
+	      e(this, t), this.w = i.w, this.ttCtx = i, this.ctx = i.ctx, this.tooltipPosition = new ut(i);
 	    }
 
 	    return a(t, [{
@@ -55637,7 +55590,7 @@ var Forestry = (function () {
 	      value: function value() {
 	        var t = this.w,
 	            e = new b(this.ctx),
-	            i = new z(this.ctx),
+	            i = new T(this.ctx),
 	            a = t.globals.dom.baseEl.querySelectorAll(".apexcharts-series");
 	        a = g(a), t.config.chart.stacked && a.sort(function (t, e) {
 	          return parseFloat(t.getAttribute("data:realIndex")) - parseFloat(e.getAttribute("data:realIndex"));
@@ -55720,7 +55673,7 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      bt = function () {
+	      pt = function () {
 	    function t(i) {
 	      e(this, t), this.w = i.w, this.ttCtx = i;
 	    }
@@ -55731,31 +55684,33 @@ var Forestry = (function () {
 	        return parseFloat(t.target.getAttribute(e));
 	      }
 	    }, {
-	      key: "handleHeatTooltip",
+	      key: "handleHeatTreeTooltip",
 	      value: function value(t) {
 	        var e = t.e,
 	            i = t.opt,
 	            a = t.x,
 	            s = t.y,
-	            r = this.ttCtx,
-	            n = this.w;
+	            r = t.type,
+	            n = this.ttCtx,
+	            o = this.w;
 
-	        if (e.target.classList.contains("apexcharts-heatmap-rect")) {
-	          var o = this.getAttr(e, "i"),
-	              l = this.getAttr(e, "j"),
-	              h = this.getAttr(e, "cx"),
-	              c = this.getAttr(e, "cy"),
-	              d = this.getAttr(e, "width"),
-	              g = this.getAttr(e, "height");
+	        if (e.target.classList.contains("apexcharts-".concat(r, "-rect"))) {
+	          var l = this.getAttr(e, "i"),
+	              h = this.getAttr(e, "j"),
+	              c = this.getAttr(e, "cx"),
+	              d = this.getAttr(e, "cy"),
+	              g = this.getAttr(e, "width"),
+	              u = this.getAttr(e, "height");
 
-	          if (r.tooltipLabels.drawSeriesTexts({
+	          if (n.tooltipLabels.drawSeriesTexts({
 	            ttItems: i.ttItems,
-	            i: o,
-	            j: l,
-	            shared: !1
-	          }), n.globals.capturedSeriesIndex = o, n.globals.capturedDataPointIndex = l, a = h + r.tooltipRect.ttWidth / 2 + d, s = c + r.tooltipRect.ttHeight / 2 - g / 2, r.tooltipPosition.moveXCrosshairs(h + d / 2), a > n.globals.gridWidth / 2 && (a = h - r.tooltipRect.ttWidth / 2 + d), r.w.config.tooltip.followCursor) {
-	            var u = r.getElGrid().getBoundingClientRect();
-	            s = r.e.clientY - u.top + n.globals.translateY / 2 - 10;
+	            i: l,
+	            j: h,
+	            shared: !1,
+	            e: e
+	          }), o.globals.capturedSeriesIndex = l, o.globals.capturedDataPointIndex = h, a = c + n.tooltipRect.ttWidth / 2 + g, s = d + n.tooltipRect.ttHeight / 2 - u / 2, n.tooltipPosition.moveXCrosshairs(c + g / 2), a > o.globals.gridWidth / 2 && (a = c - n.tooltipRect.ttWidth / 2 + g), n.w.config.tooltip.followCursor) {
+	            var f = n.getElGrid().getBoundingClientRect();
+	            (a = n.e.clientX - f.left + 10) > o.globals.gridWidth / 2 && (a = a - n.tooltipRect.ttWidth - 10), s = n.e.clientY - f.top + o.globals.translateY / 2 - 10;
 	          }
 	        }
 
@@ -55790,7 +55745,8 @@ var Forestry = (function () {
 	            ttItems: s.ttItems,
 	            i: e,
 	            j: i,
-	            shared: !l.showOnIntersect && o.config.tooltip.shared
+	            shared: !l.showOnIntersect && o.config.tooltip.shared,
+	            e: a
 	          }), "mouseup" === a.type && l.markerClick(a, e, i), o.globals.capturedSeriesIndex = e, o.globals.capturedDataPointIndex = i, r = h, n = c + o.globals.translateY - 1.4 * l.tooltipRect.ttHeight, l.w.config.tooltip.followCursor) {
 	            var u = l.getElGrid().getBoundingClientRect();
 	            n = l.e.clientY + o.globals.translateY - u.top;
@@ -55872,7 +55828,8 @@ var Forestry = (function () {
 	            j: s,
 	            y1: y ? parseInt(y, 10) : null,
 	            y2: w ? parseInt(w, 10) : null,
-	            shared: !r.showOnIntersect && a.config.tooltip.shared
+	            shared: !r.showOnIntersect && a.config.tooltip.shared,
+	            e: e
 	          }), a.config.tooltip.followCursor ? a.globals.isBarHorizontal ? (o = v - f.left + 15, l = m - r.dataPointsDividedHeight + p / 2 - r.tooltipRect.ttHeight / 2) : (o = a.globals.isXNumeric ? b - x / 2 : b - r.dataPointsDividedWidth + x / 2, l = e.clientY - f.top - r.tooltipRect.ttHeight / 2 - 15) : a.globals.isBarHorizontal ? ((o = b) < r.xyRatios.baseLineInvertedY && (o = b - r.tooltipRect.ttWidth), l = m - r.dataPointsDividedHeight + p / 2 - r.tooltipRect.ttHeight / 2) : (o = a.globals.isXNumeric ? b - x / 2 : b - r.dataPointsDividedWidth + x / 2, l = m);
 	        }
 
@@ -55887,7 +55844,7 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      mt = function () {
+	      xt = function () {
 	    function t(i) {
 	      e(this, t), this.w = i.w, this.ttCtx = i;
 	    }
@@ -55976,11 +55933,11 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      vt = function () {
+	      bt = function () {
 	    function t(i) {
 	      e(this, t), this.ctx = i, this.w = i.w;
 	      var a = this.w;
-	      this.tConfig = a.config.tooltip, this.tooltipUtil = new ut(this), this.tooltipLabels = new ft(this), this.tooltipPosition = new pt(this), this.marker = new xt(this), this.intersect = new bt(this), this.axesTooltip = new mt(this), this.showOnIntersect = this.tConfig.intersect, this.showTooltipTitle = this.tConfig.x.show, this.fixedTooltip = this.tConfig.fixed.enabled, this.xaxisTooltip = null, this.yaxisTTEls = null, this.isBarShared = !a.globals.isBarHorizontal && this.tConfig.shared;
+	      this.tConfig = a.config.tooltip, this.tooltipUtil = new dt(this), this.tooltipLabels = new gt(this), this.tooltipPosition = new ut(this), this.marker = new ft(this), this.intersect = new pt(this), this.axesTooltip = new xt(this), this.showOnIntersect = this.tConfig.intersect, this.showTooltipTitle = this.tConfig.x.show, this.fixedTooltip = this.tConfig.fixed.enabled, this.xaxisTooltip = null, this.yaxisTTEls = null, this.isBarShared = !a.globals.isBarHorizontal && this.tConfig.shared;
 	    }
 
 	    return a(t, [{
@@ -56009,7 +55966,7 @@ var Forestry = (function () {
 
 	        if (i.classList.add("apexcharts-tooltip"), i.classList.add("apexcharts-theme-".concat(this.tConfig.theme)), e.globals.dom.elWrap.appendChild(i), e.globals.axisCharts) {
 	          this.axesTooltip.drawXaxisTooltip(), this.axesTooltip.drawYaxisTooltip(), this.axesTooltip.setXCrosshairWidth(), this.axesTooltip.handleYCrosshair();
-	          var a = new j(this.ctx);
+	          var a = new G(this.ctx);
 	          this.xAxisTicksPositions = a.getXAxisTicksPositions();
 	        }
 
@@ -56024,7 +55981,7 @@ var Forestry = (function () {
 	      value: function value(t) {
 	        for (var e = this.w, i = [], a = this.getElTooltip(), s = 0; s < t; s++) {
 	          var r = document.createElement("div");
-	          r.classList.add("apexcharts-tooltip-series-group"), this.tConfig.shared && this.tConfig.enabledOnSeries && Array.isArray(this.tConfig.enabledOnSeries) && this.tConfig.enabledOnSeries.indexOf(s) < 0 && r.classList.add("apexcharts-tooltip-series-group-hidden");
+	          r.classList.add("apexcharts-tooltip-series-group"), r.style.order = e.config.tooltip.inverseOrder ? t - s : s + 1, this.tConfig.shared && this.tConfig.enabledOnSeries && Array.isArray(this.tConfig.enabledOnSeries) && this.tConfig.enabledOnSeries.indexOf(s) < 0 && r.classList.add("apexcharts-tooltip-series-group-hidden");
 	          var n = document.createElement("span");
 	          n.classList.add("apexcharts-tooltip-marker"), n.style.backgroundColor = e.globals.colors[s], r.appendChild(n);
 	          var o = document.createElement("div");
@@ -56067,10 +56024,10 @@ var Forestry = (function () {
 	          tooltipX: h,
 	          ttItems: this.ttItems
 	        };
-	        if (t.globals.axisCharts && (s ? o = t.globals.dom.baseEl.querySelectorAll(".apexcharts-series[data\\:longestSeries='true'] .apexcharts-marker") : a ? o = t.globals.dom.baseEl.querySelectorAll(".apexcharts-series .apexcharts-bar-area, .apexcharts-series .apexcharts-candlestick-area, .apexcharts-series .apexcharts-rangebar-area") : "heatmap" === e && (o = t.globals.dom.baseEl.querySelectorAll(".apexcharts-series .apexcharts-heatmap")), o && o.length)) for (var d = 0; d < o.length; d++) {
+	        if (t.globals.axisCharts && (s ? o = t.globals.dom.baseEl.querySelectorAll(".apexcharts-series[data\\:longestSeries='true'] .apexcharts-marker") : a ? o = t.globals.dom.baseEl.querySelectorAll(".apexcharts-series .apexcharts-bar-area, .apexcharts-series .apexcharts-candlestick-area, .apexcharts-series .apexcharts-rangebar-area") : "heatmap" !== e && "treemap" !== e || (o = t.globals.dom.baseEl.querySelectorAll(".apexcharts-series .apexcharts-heatmap, .apexcharts-series .apexcharts-treemap")), o && o.length)) for (var d = 0; d < o.length; d++) {
 	          l.push(o[d].getAttribute("cy")), h.push(o[d].getAttribute("cx"));
 	        }
-	        if (t.globals.xyCharts && !this.showOnIntersect || t.globals.comboCharts && !this.showOnIntersect || a && this.tooltipUtil.hasBars() && this.tConfig.shared) this.addPathsEventListeners([r], c);else if (a && !t.globals.comboCharts || s && this.showOnIntersect) this.addDatapointEventsListeners(c);else if (!t.globals.axisCharts || "heatmap" === e) {
+	        if (t.globals.xyCharts && !this.showOnIntersect || t.globals.comboCharts && !this.showOnIntersect || a && this.tooltipUtil.hasBars() && this.tConfig.shared) this.addPathsEventListeners([r], c);else if (a && !t.globals.comboCharts || s && this.showOnIntersect) this.addDatapointEventsListeners(c);else if (!t.globals.axisCharts || "heatmap" === e || "treemap" === e) {
 	          var g = t.globals.dom.baseEl.querySelectorAll(".apexcharts-series");
 	          this.addPathsEventListeners(g, c);
 	        }
@@ -56171,7 +56128,7 @@ var Forestry = (function () {
 	          y: 0,
 	          ttWidth: n.getBoundingClientRect().width,
 	          ttHeight: n.getBoundingClientRect().height
-	        }, i.e = s, !i.tooltipUtil.hasBars() || r.globals.comboCharts || i.isBarShared) || this.tConfig.onDatasetHover.highlightDataSeries && new X(e).toggleSeriesOnHover(s, s.target.parentNode);
+	        }, i.e = s, !i.tooltipUtil.hasBars() || r.globals.comboCharts || i.isBarShared) || this.tConfig.onDatasetHover.highlightDataSeries && new E(e).toggleSeriesOnHover(s, s.target.parentNode);
 	        i.fixedTooltip && i.drawFixedTooltipRect(), r.globals.axisCharts ? i.axisChartsTooltips({
 	          e: s,
 	          opt: a,
@@ -56208,12 +56165,13 @@ var Forestry = (function () {
 	            var u = this.yaxisTooltips.filter(function (t) {
 	              return !0 === t;
 	            });
-	            if (null !== this.ycrosshairs && u.length && this.ycrosshairs.classList.add("apexcharts-active"), g && !this.showOnIntersect) this.handleStickyTooltip(a, o, l, s);else if ("heatmap" === r.config.chart.type) {
-	              var f = this.intersect.handleHeatTooltip({
+	            if (null !== this.ycrosshairs && u.length && this.ycrosshairs.classList.add("apexcharts-active"), g && !this.showOnIntersect) this.handleStickyTooltip(a, o, l, s);else if ("heatmap" === r.config.chart.type || "treemap" === r.config.chart.type) {
+	              var f = this.intersect.handleHeatTreeTooltip({
 	                e: a,
 	                opt: s,
 	                x: e,
-	                y: i
+	                y: i,
+	                type: r.config.chart.type
 	              });
 	              e = f.x, i = f.y, c.style.left = e + "px", c.style.top = i + "px";
 	            } else this.tooltipUtil.hasBars() && this.intersect.handleBarTooltip({
@@ -56370,8 +56328,8 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      yt = function (t) {
-	    o(s, F);
+	      mt = function (t) {
+	    o(s, Y);
 	    var i = d(s);
 
 	    function s() {
@@ -56383,8 +56341,8 @@ var Forestry = (function () {
 	      value: function value(t, e) {
 	        var i = this,
 	            a = this.w;
-	        this.graphics = new b(this.ctx), this.bar = new F(this.ctx, this.xyRatios);
-	        var s = new y(this.ctx, a);
+	        this.graphics = new b(this.ctx), this.bar = new Y(this.ctx, this.xyRatios);
+	        var s = new w(this.ctx, a);
 	        t = s.getLogSeries(t), this.yRatio = s.getLogYRatios(this.yRatio), this.barHelpers.initVariables(t), "100%" === a.config.chart.stackType && (t = a.globals.seriesPercent.slice()), this.series = t, this.totalItems = 0, this.prevY = [], this.prevX = [], this.prevYF = [], this.prevXF = [], this.prevYVal = [], this.prevXVal = [], this.xArrj = [], this.xArrjF = [], this.xArrjVal = [], this.yArrj = [], this.yArrjF = [], this.yArrjVal = [];
 
 	        for (var r = 0; r < t.length; r++) {
@@ -56617,8 +56575,8 @@ var Forestry = (function () {
 	      }
 	    }]), s;
 	  }(),
-	      wt = function (t) {
-	    o(s, F);
+	      vt = function (t) {
+	    o(s, Y);
 	    var i = d(s);
 
 	    function s() {
@@ -56630,9 +56588,9 @@ var Forestry = (function () {
 	      value: function value(t, e) {
 	        var i = this.w,
 	            a = new b(this.ctx),
-	            s = new T(this.ctx);
+	            s = new P(this.ctx);
 	        this.candlestickOptions = this.w.config.plotOptions.candlestick;
-	        var r = new y(this.ctx, i);
+	        var r = new w(this.ctx, i);
 	        t = r.getLogSeries(t), this.series = t, this.yRatio = r.getLogYRatios(this.yRatio), this.barHelpers.initVariables(t);
 
 	        for (var n = a.group({
@@ -56654,8 +56612,8 @@ var Forestry = (function () {
 	          t[o].length > 0 && (this.visibleI = this.visibleI + 1);
 	          var m, v;
 	          this.yRatio.length > 1 && (this.yaxisIndex = p);
-	          var w = this.barHelpers.initialPositions();
-	          d = w.y, m = w.barHeight, c = w.x, v = w.barWidth, l = w.xDivision, h = w.zeroH, u.push(c + v / 2);
+	          var y = this.barHelpers.initialPositions();
+	          d = y.y, m = y.barHeight, c = y.x, v = y.barWidth, l = y.xDivision, h = y.zeroH, u.push(c + v / 2);
 
 	          for (var k = a.group({
 	            class: "apexcharts-datalabels",
@@ -56678,7 +56636,7 @@ var Forestry = (function () {
 	              elSeries: x
 	            });
 	            d = L.y, c = L.x, S = L.color, A > 0 && u.push(c + v / 2), g.push(d);
-	            var P = s.fillPath({
+	            var T = s.fillPath({
 	              seriesNumber: p,
 	              dataPointIndex: A,
 	              color: S,
@@ -56687,7 +56645,7 @@ var Forestry = (function () {
 	                z = this.candlestickOptions.wick.useFillColor ? S : void 0;
 	            this.renderSeries({
 	              realIndex: p,
-	              pathFill: P,
+	              pathFill: T,
 	              lineFill: z,
 	              j: A,
 	              i: o,
@@ -56762,9 +56720,113 @@ var Forestry = (function () {
 	      }
 	    }]), s;
 	  }(),
-	      kt = function () {
+	      yt = function () {
+	    function t(i) {
+	      e(this, t), this.ctx = i, this.w = i.w;
+	    }
+
+	    return a(t, [{
+	      key: "checkColorRange",
+	      value: function value() {
+	        var t = this.w,
+	            e = !1,
+	            i = t.config.plotOptions[t.config.chart.type];
+	        return i.colorScale.ranges.length > 0 && i.colorScale.ranges.map(function (t, i) {
+	          t.from <= 0 && (e = !0);
+	        }), e;
+	      }
+	    }, {
+	      key: "getShadeColor",
+	      value: function value(t, e, i, a) {
+	        var s = this.w,
+	            r = 1,
+	            n = s.config.plotOptions[t].shadeIntensity,
+	            o = this.determineColor(t, e, i);
+	        s.globals.hasNegs || a ? r = s.config.plotOptions[t].reverseNegativeShade ? o.percent < 0 ? o.percent / 100 * (1.25 * n) : (1 - o.percent / 100) * (1.25 * n) : o.percent <= 0 ? 1 - (1 + o.percent / 100) * n : (1 - o.percent / 100) * n : (r = 1 - o.percent / 100, "treemap" === t && (r = (1 - o.percent / 100) * (1.25 * n)));
+	        var l = o.color,
+	            h = new f();
+	        return s.config.plotOptions[t].enableShades && (r < 0 && (r = 0), l = "dark" === this.w.config.theme.mode ? f.hexToRgba(h.shadeColor(-1 * r, o.color), s.config.fill.opacity) : f.hexToRgba(h.shadeColor(r, o.color), s.config.fill.opacity)), {
+	          color: l,
+	          colorProps: o
+	        };
+	      }
+	    }, {
+	      key: "determineColor",
+	      value: function value(t, e, i) {
+	        var a = this.w,
+	            s = a.globals.series[e][i],
+	            r = a.config.plotOptions[t],
+	            n = r.colorScale.inverse ? i : e;
+	        a.config.plotOptions[t].distributed && (n = i);
+	        var o = a.globals.colors[n],
+	            l = null,
+	            h = Math.min.apply(Math, g(a.globals.series[e])),
+	            c = Math.max.apply(Math, g(a.globals.series[e]));
+	        r.distributed || "heatmap" !== t || (h = a.globals.minY, c = a.globals.maxY), void 0 !== r.colorScale.min && (h = r.colorScale.min < a.globals.minY ? r.colorScale.min : a.globals.minY, c = r.colorScale.max > a.globals.maxY ? r.colorScale.max : a.globals.maxY);
+	        var d = Math.abs(c) + Math.abs(h),
+	            u = 100 * s / (0 === d ? d - 1e-6 : d);
+	        r.colorScale.ranges.length > 0 && r.colorScale.ranges.map(function (t, e) {
+	          if (s >= t.from && s <= t.to) {
+	            o = t.color, l = t.foreColor ? t.foreColor : null, h = t.from, c = t.to;
+	            var i = Math.abs(c) + Math.abs(h);
+	            u = 100 * s / (0 === i ? i - 1e-6 : i);
+	          }
+	        });
+	        return {
+	          color: o,
+	          foreColor: l,
+	          percent: u
+	        };
+	      }
+	    }, {
+	      key: "calculateDataLabels",
+	      value: function value(t) {
+	        var e = t.text,
+	            i = t.x,
+	            a = t.y,
+	            s = t.i,
+	            r = t.j,
+	            n = t.colorProps,
+	            o = t.fontSize,
+	            l = this.w.config.dataLabels,
+	            h = new b(this.ctx),
+	            c = new I(this.ctx),
+	            d = null;
+
+	        if (l.enabled) {
+	          d = h.group({
+	            class: "apexcharts-data-labels"
+	          });
+	          var g = l.offsetX,
+	              u = l.offsetY,
+	              f = i + g,
+	              p = a + parseFloat(l.style.fontSize) / 3 + u;
+	          c.plotDataLabelsText({
+	            x: f,
+	            y: p,
+	            text: e,
+	            i: s,
+	            j: r,
+	            color: n.foreColor,
+	            parent: d,
+	            fontSize: o,
+	            dataLabelsConfig: l
+	          });
+	        }
+
+	        return d;
+	      }
+	    }, {
+	      key: "addListeners",
+	      value: function value(t) {
+	        var e = new b(this.ctx);
+	        t.node.addEventListener("mouseenter", e.pathMouseEnter.bind(this, t)), t.node.addEventListener("mouseleave", e.pathMouseLeave.bind(this, t)), t.node.addEventListener("mousedown", e.pathMouseDown.bind(this, t));
+	      }
+	    }]), t;
+	  }(),
+	      wt = function () {
 	    function t(i, a) {
-	      e(this, t), this.ctx = i, this.w = i.w, this.xRatio = a.xRatio, this.yRatio = a.yRatio, this.negRange = !1, this.dynamicAnim = this.w.config.chart.animations.dynamicAnimation, this.rectRadius = this.w.config.plotOptions.heatmap.radius, this.strokeWidth = this.w.config.stroke.show ? this.w.config.stroke.width : 0;
+	      e(this, t), this.ctx = i, this.w = i.w, this.xRatio = a.xRatio, this.yRatio = a.yRatio, this.dynamicAnim = this.w.config.chart.animations.dynamicAnimation, this.helpers = new yt(i), this.rectRadius = this.w.config.plotOptions.heatmap.radius, this.strokeWidth = this.w.config.stroke.show ? this.w.config.stroke.width : 0;
 	    }
 
 	    return a(t, [{
@@ -56780,7 +56842,7 @@ var Forestry = (function () {
 	            r = e.globals.gridHeight / e.globals.series.length,
 	            n = 0,
 	            o = !1;
-	        this.checkColorRange();
+	        this.negRange = this.helpers.checkColorRange();
 	        var l = t.slice();
 	        e.config.yaxis[0].reversed && (o = !0, l.reverse());
 
@@ -56797,62 +56859,64 @@ var Forestry = (function () {
 	            new p(this.ctx).dropShadow(c, d, h);
 	          }
 
-	          for (var g = 0, u = 0; u < l[h].length; u++) {
-	            var x = 1,
-	                m = e.config.plotOptions.heatmap.shadeIntensity,
-	                v = this.determineHeatColor(h, u);
-	            x = e.globals.hasNegs || this.negRange ? e.config.plotOptions.heatmap.reverseNegativeShade ? v.percent < 0 ? v.percent / 100 * (1.25 * m) : (1 - v.percent / 100) * (1.25 * m) : v.percent <= 0 ? 1 - (1 + v.percent / 100) * m : (1 - v.percent / 100) * m : 1 - v.percent / 100;
-	            var y = v.color,
-	                w = new f();
-	            if (e.config.plotOptions.heatmap.enableShades && (x < 0 && (x = 0), y = "dark" === this.w.config.theme.mode ? f.hexToRgba(w.shadeColor(-1 * x, v.color), e.config.fill.opacity) : f.hexToRgba(w.shadeColor(x, v.color), e.config.fill.opacity)), "image" === e.config.fill.type) y = new T(this.ctx).fillPath({
+	          for (var g = 0, u = e.config.plotOptions.heatmap.shadeIntensity, x = 0; x < l[h].length; x++) {
+	            var m = this.helpers.getShadeColor(e.config.chart.type, h, x, this.negRange),
+	                v = m.color,
+	                y = m.colorProps;
+	            if ("image" === e.config.fill.type) v = new P(this.ctx).fillPath({
 	              seriesNumber: h,
-	              dataPointIndex: u,
-	              opacity: e.globals.hasNegs ? v.percent < 0 ? 1 - (1 + v.percent / 100) : m + v.percent / 100 : v.percent / 100,
+	              dataPointIndex: x,
+	              opacity: e.globals.hasNegs ? y.percent < 0 ? 1 - (1 + y.percent / 100) : u + y.percent / 100 : y.percent / 100,
 	              patternID: f.randomId(),
 	              width: e.config.fill.image.width ? e.config.fill.image.width : s,
 	              height: e.config.fill.image.height ? e.config.fill.image.height : r
 	            });
-	            var k = this.rectRadius,
-	                A = i.drawRect(g, n, s, r, k);
+	            var w = this.rectRadius,
+	                k = i.drawRect(g, n, s, r, w);
 
-	            if (A.attr({
+	            if (k.attr({
 	              cx: g,
 	              cy: n
-	            }), A.node.classList.add("apexcharts-heatmap-rect"), c.add(A), A.attr({
-	              fill: y,
+	            }), k.node.classList.add("apexcharts-heatmap-rect"), c.add(k), k.attr({
+	              fill: v,
 	              i: h,
 	              index: h,
-	              j: u,
-	              val: l[h][u],
+	              j: x,
+	              val: l[h][x],
 	              "stroke-width": this.strokeWidth,
-	              stroke: e.config.plotOptions.heatmap.useFillColorAsStroke ? y : e.globals.stroke.colors[0],
-	              color: y
-	            }), A.node.addEventListener("mouseenter", i.pathMouseEnter.bind(this, A)), A.node.addEventListener("mouseleave", i.pathMouseLeave.bind(this, A)), A.node.addEventListener("mousedown", i.pathMouseDown.bind(this, A)), e.config.chart.animations.enabled && !e.globals.dataChanged) {
-	              var S = 1;
-	              e.globals.resized || (S = e.config.chart.animations.speed), this.animateHeatMap(A, g, n, s, r, S);
+	              stroke: e.config.plotOptions.heatmap.useFillColorAsStroke ? v : e.globals.stroke.colors[0],
+	              color: v
+	            }), this.helpers.addListeners(k), e.config.chart.animations.enabled && !e.globals.dataChanged) {
+	              var A = 1;
+	              e.globals.resized || (A = e.config.chart.animations.speed), this.animateHeatMap(k, g, n, s, r, A);
 	            }
 
 	            if (e.globals.dataChanged) {
-	              var C = 1;
+	              var S = 1;
 
 	              if (this.dynamicAnim.enabled && e.globals.shouldAnimate) {
-	                C = this.dynamicAnim.speed;
-	                var L = e.globals.previousPaths[h] && e.globals.previousPaths[h][u] && e.globals.previousPaths[h][u].color;
-	                L || (L = "rgba(255, 255, 255, 0)"), this.animateHeatColor(A, f.isColorHex(L) ? L : f.rgb2hex(L), f.isColorHex(y) ? y : f.rgb2hex(y), C);
+	                S = this.dynamicAnim.speed;
+	                var C = e.globals.previousPaths[h] && e.globals.previousPaths[h][x] && e.globals.previousPaths[h][x].color;
+	                C || (C = "rgba(255, 255, 255, 0)"), this.animateHeatColor(k, f.isColorHex(C) ? C : f.rgb2hex(C), f.isColorHex(v) ? v : f.rgb2hex(v), S);
 	              }
 	            }
 
-	            var P = this.calculateHeatmapDataLabels({
-	              x: g,
-	              y: n,
+	            var L = (0, e.config.dataLabels.formatter)(e.globals.series[h][x], {
+	              value: e.globals.series[h][x],
+	              seriesIndex: h,
+	              dataPointIndex: x,
+	              w: e
+	            }),
+	                T = this.helpers.calculateDataLabels({
+	              text: L,
+	              x: g + s / 2,
+	              y: n + r / 2,
 	              i: h,
-	              j: u,
-	              heatColorProps: v,
-	              series: l,
-	              rectHeight: r,
-	              rectWidth: s
+	              j: x,
+	              colorProps: y,
+	              series: l
 	            });
-	            null !== P && c.add(P), g += s;
+	            null !== T && c.add(T), g += s;
 	          }
 
 	          n += r, a.add(c);
@@ -56862,86 +56926,6 @@ var Forestry = (function () {
 	        e.config.yaxis[0].reversed ? z.unshift("") : z.push(""), e.globals.yAxisScale[0].result = z;
 	        var I = e.globals.gridHeight / e.globals.series.length;
 	        return e.config.yaxis[0].labels.offsetY = -I / 2, a;
-	      }
-	    }, {
-	      key: "checkColorRange",
-	      value: function value() {
-	        var t = this,
-	            e = this.w.config.plotOptions.heatmap;
-	        e.colorScale.ranges.length > 0 && e.colorScale.ranges.map(function (e, i) {
-	          e.from <= 0 && (t.negRange = !0);
-	        });
-	      }
-	    }, {
-	      key: "determineHeatColor",
-	      value: function value(t, e) {
-	        var i = this.w,
-	            a = i.globals.series[t][e],
-	            s = i.config.plotOptions.heatmap,
-	            r = s.colorScale.inverse ? e : t,
-	            n = i.globals.colors[r],
-	            o = null,
-	            l = Math.min.apply(Math, g(i.globals.series[t])),
-	            h = Math.max.apply(Math, g(i.globals.series[t]));
-	        s.distributed || (l = i.globals.minY, h = i.globals.maxY), void 0 !== s.colorScale.min && (l = s.colorScale.min < i.globals.minY ? s.colorScale.min : i.globals.minY, h = s.colorScale.max > i.globals.maxY ? s.colorScale.max : i.globals.maxY);
-	        var c = Math.abs(h) + Math.abs(l),
-	            d = 100 * a / (0 === c ? c - 1e-6 : c);
-	        s.colorScale.ranges.length > 0 && s.colorScale.ranges.map(function (t, e) {
-	          if (a >= t.from && a <= t.to) {
-	            n = t.color, o = t.foreColor ? t.foreColor : null, l = t.from, h = t.to;
-	            var i = Math.abs(h) + Math.abs(l);
-	            d = 100 * a / (0 === i ? i - 1e-6 : i);
-	          }
-	        });
-	        return {
-	          color: n,
-	          foreColor: o,
-	          percent: d
-	        };
-	      }
-	    }, {
-	      key: "calculateHeatmapDataLabels",
-	      value: function value(t) {
-	        var e = t.x,
-	            i = t.y,
-	            a = t.i,
-	            s = t.j,
-	            r = t.heatColorProps,
-	            n = (t.series, t.rectHeight),
-	            o = t.rectWidth,
-	            l = this.w,
-	            h = l.config.dataLabels,
-	            c = new b(this.ctx),
-	            d = new M(this.ctx),
-	            g = h.formatter,
-	            u = null;
-
-	        if (h.enabled) {
-	          u = c.group({
-	            class: "apexcharts-data-labels"
-	          });
-	          var f = h.offsetX,
-	              p = h.offsetY,
-	              x = e + o / 2 + f,
-	              m = i + n / 2 + parseFloat(h.style.fontSize) / 3 + p,
-	              v = g(l.globals.series[a][s], {
-	            seriesIndex: a,
-	            dataPointIndex: s,
-	            w: l
-	          });
-	          d.plotDataLabelsText({
-	            x: x,
-	            y: m,
-	            text: v,
-	            i: a,
-	            j: s,
-	            color: r.foreColor,
-	            parent: u,
-	            dataLabelsConfig: h
-	          });
-	        }
-
-	        return u;
 	      }
 	    }, {
 	      key: "animateHeatMap",
@@ -56972,7 +56956,7 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      At = function () {
+	      kt = function () {
 	    function t(i) {
 	      e(this, t), this.ctx = i, this.w = i.w;
 	    }
@@ -56995,7 +56979,7 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      St = function () {
+	      At = function () {
 	    function t(i) {
 	      e(this, t), this.ctx = i, this.w = i.w;
 	      var a = this.w;
@@ -57079,7 +57063,7 @@ var Forestry = (function () {
 	        var i = this.w,
 	            a = new p(this.ctx),
 	            s = new b(this.ctx),
-	            r = new T(this.ctx),
+	            r = new P(this.ctx),
 	            n = s.group({
 	          class: "apexcharts-slices"
 	        }),
@@ -57160,8 +57144,8 @@ var Forestry = (function () {
 	                L = 100 * x / this.fullAngle + "%";
 
 	            if (0 !== x && i.config.plotOptions.pie.dataLabels.minAngleToShowLabel < t[g]) {
-	              var P = i.config.dataLabels.formatter;
-	              void 0 !== P && (L = P(i.globals.seriesPercent[g][0], {
+	              var T = i.config.dataLabels.formatter;
+	              void 0 !== T && (L = T(i.globals.seriesPercent[g][0], {
 	                seriesIndex: g,
 	                w: i
 	              }));
@@ -57320,9 +57304,9 @@ var Forestry = (function () {
 	      key: "drawPolarElements",
 	      value: function value() {
 	        var t = this.w,
-	            e = new q(this.ctx),
+	            e = new j(this.ctx),
 	            i = new b(this.ctx),
-	            a = new At(this.ctx),
+	            a = new kt(this.ctx),
 	            s = i.group(),
 	            r = i.group(),
 	            n = void 0 === t.config.yaxis[0].max && void 0 === t.config.yaxis[0].min,
@@ -57462,7 +57446,7 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      Ct = function () {
+	      St = function () {
 	    function t(i) {
 	      e(this, t), this.ctx = i, this.w = i.w, this.chartType = this.w.config.chart.type, this.initialAnim = this.w.config.chart.animations.enabled, this.dynamicAnim = this.initialAnim && this.w.config.chart.animations.dynamicAnimation.enabled, this.animDur = 0;
 	      var a = this.w;
@@ -57474,9 +57458,9 @@ var Forestry = (function () {
 	      value: function value(t) {
 	        var e = this,
 	            i = this.w,
-	            a = new T(this.ctx),
+	            a = new P(this.ctx),
 	            s = [],
-	            r = new M(this.ctx);
+	            r = new I(this.ctx);
 	        t.length && (this.dataPointsLen = t[i.globals.maxValsInArrayIndex].length), this.disAngle = 2 * Math.PI / this.dataPointsLen;
 	        var o = i.globals.gridWidth / 2,
 	            l = i.globals.gridHeight / 2,
@@ -57565,7 +57549,7 @@ var Forestry = (function () {
 	          }
 
 	          t.forEach(function (t, a) {
-	            var s = new z(e.ctx).getMarkerConfig("apexcharts-marker", o, a),
+	            var s = new T(e.ctx).getMarkerConfig("apexcharts-marker", o, a),
 	                l = e.graphics.drawMarker(g[a].x, g[a].y, s);
 	            l.attr("rel", a), l.attr("j", a), l.attr("index", o), l.node.setAttribute("default-marker-size", s.pSize);
 	            var c = e.graphics.group({
@@ -57609,7 +57593,7 @@ var Forestry = (function () {
 	    }, {
 	      key: "drawPolygons",
 	      value: function value(t) {
-	        for (var e = this, i = this.w, a = t.parent, s = new At(this.ctx), r = i.globals.yAxisScale[0].result.reverse(), n = r.length, o = [], l = this.size / (n - 1), h = 0; h < n; h++) {
+	        for (var e = this, i = this.w, a = t.parent, s = new kt(this.ctx), r = i.globals.yAxisScale[0].result.reverse(), n = r.length, o = [], l = this.size / (n - 1), h = 0; h < n; h++) {
 	          o[h] = l * h;
 	        }
 
@@ -57654,7 +57638,7 @@ var Forestry = (function () {
 	            s = this.getPolygonPos(this.size);
 	        return e.globals.labels.forEach(function (r, o) {
 	          var l = e.config.xaxis.labels.formatter,
-	              h = new M(t.ctx);
+	              h = new I(t.ctx);
 
 	          if (s[o]) {
 	            var c = t.getTextPos(s[o], t.size),
@@ -57671,7 +57655,7 @@ var Forestry = (function () {
 	              i: o,
 	              j: o,
 	              parent: a,
-	              color: i.style.colors[o] ? i.style.colors[o] : "#a8a8a8",
+	              color: Array.isArray(i.style.colors) && i.style.colors[o] ? i.style.colors[o] : "#a8a8a8",
 	              dataLabelsConfig: n({
 	                textAnchor: c.textAnchor,
 	                dropShadow: {
@@ -57755,8 +57739,8 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      Lt = function (t) {
-	    o(s, St);
+	      Ct = function (t) {
+	    o(s, At);
 	    var i = d(s);
 
 	    function s(t) {
@@ -57820,7 +57804,7 @@ var Forestry = (function () {
 	          class: "apexcharts-tracks"
 	        }),
 	            s = new p(this.ctx),
-	            r = new T(this.ctx),
+	            r = new P(this.ctx),
 	            n = this.getStrokeWidth(t);
 	        t.size = t.size - n / 2;
 
@@ -57877,7 +57861,7 @@ var Forestry = (function () {
 	      value: function value(t) {
 	        var e = this.w,
 	            i = new b(this.ctx),
-	            a = new T(this.ctx),
+	            a = new P(this.ctx),
 	            s = new p(this.ctx),
 	            r = i.group(),
 	            n = this.getStrokeWidth(t);
@@ -57931,7 +57915,7 @@ var Forestry = (function () {
 	              C = void 0;
 	          e.globals.dataChanged && (k = this.startAngle, C = Math.round(this.totalAngle * f.negToZero(e.globals.previousPaths[m]) / 100) + k), Math.abs(S) + Math.abs(w) >= 360 && (S -= .01), Math.abs(C) + Math.abs(k) >= 360 && (C -= .01);
 	          var L = S - w,
-	              P = Array.isArray(e.config.stroke.dashArray) ? e.config.stroke.dashArray[m] : e.config.stroke.dashArray,
+	              T = Array.isArray(e.config.stroke.dashArray) ? e.config.stroke.dashArray[m] : e.config.stroke.dashArray,
 	              z = i.drawPath({
 	            d: "",
 	            stroke: y,
@@ -57939,7 +57923,7 @@ var Forestry = (function () {
 	            fill: "none",
 	            fillOpacity: e.config.fill.opacity,
 	            classes: "apexcharts-radialbar-area apexcharts-radialbar-slice-" + m,
-	            strokeDashArray: P
+	            strokeDashArray: T
 	          });
 
 	          if (b.setAttrs(z.node, {
@@ -57994,7 +57978,7 @@ var Forestry = (function () {
 	      key: "drawHollowImage",
 	      value: function value(t, e, i, a) {
 	        var s = this.w,
-	            r = new T(this.ctx),
+	            r = new P(this.ctx),
 	            n = f.randomId(),
 	            o = s.config.plotOptions.radialBar.hollow.image;
 	        if (s.config.plotOptions.radialBar.hollow.imageClipped) r.clippedImgArea({
@@ -58028,7 +58012,7 @@ var Forestry = (function () {
 	      }
 	    }]), s;
 	  }(),
-	      Pt = function () {
+	      Lt = function () {
 	    function t(i) {
 	      e(this, t), this.w = i.w, this.lineCtx = i;
 	    }
@@ -58038,7 +58022,7 @@ var Forestry = (function () {
 	      value: function value(t, e) {
 	        var i = this.w;
 
-	        if ("line" === i.config.chart.type && ("gradient" === i.config.fill.type || "gradient" === i.config.fill.type[t]) && new y(this.lineCtx.ctx, i).seriesHaveSameValues(t)) {
+	        if ("line" === i.config.chart.type && ("gradient" === i.config.fill.type || "gradient" === i.config.fill.type[t]) && new w(this.lineCtx.ctx, i).seriesHaveSameValues(t)) {
 	          var a = e[t].slice();
 	          a[a.length - 1] = a[a.length - 1] + 1e-6, e[t] = a;
 	        }
@@ -58103,9 +58087,9 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      Tt = function () {
+	      Pt = function () {
 	    function t(i, a, s) {
-	      e(this, t), this.ctx = i, this.w = i.w, this.xyRatios = a, this.pointsChart = !("bubble" !== this.w.config.chart.type && "scatter" !== this.w.config.chart.type) || s, this.scatter = new I(this.ctx), this.noNegatives = this.w.globals.minX === Number.MAX_VALUE, this.lineHelpers = new Pt(this), this.markers = new z(this.ctx), this.prevSeriesY = [], this.categoryAxisCorrection = 0, this.yaxisIndex = 0;
+	      e(this, t), this.ctx = i, this.w = i.w, this.xyRatios = a, this.pointsChart = !("bubble" !== this.w.config.chart.type && "scatter" !== this.w.config.chart.type) || s, this.scatter = new z(this.ctx), this.noNegatives = this.w.globals.minX === Number.MAX_VALUE, this.lineHelpers = new Lt(this), this.markers = new T(this.ctx), this.prevSeriesY = [], this.categoryAxisCorrection = 0, this.yaxisIndex = 0;
 	    }
 
 	    return a(t, [{
@@ -58117,7 +58101,7 @@ var Forestry = (function () {
 	            n = s.group({
 	          class: "apexcharts-".concat(r, "-series apexcharts-plot-series")
 	        }),
-	            o = new y(this.ctx, a);
+	            o = new w(this.ctx, a);
 	        this.yRatio = this.xyRatios.yRatio, this.zRatio = this.xyRatios.zRatio, this.xRatio = this.xyRatios.xRatio, this.baseLineY = this.xyRatios.baseLineY, t = o.getLogSeries(t), this.yRatio = o.getLogYRatios(this.yRatio);
 
 	        for (var l = [], h = 0; h < t.length; h++) {
@@ -58148,7 +58132,7 @@ var Forestry = (function () {
 	            prevX: x,
 	            prevY: m
 	          }),
-	              w = this._iterateOverDataPoints({
+	              y = this._iterateOverDataPoints({
 	            series: t,
 	            realIndex: c,
 	            i: h,
@@ -58169,7 +58153,7 @@ var Forestry = (function () {
 	            type: r,
 	            realIndex: c,
 	            i: h,
-	            paths: w
+	            paths: y
 	          }), this.elSeries.add(this.elPointsMain), this.elSeries.add(this.elDataLabelsWrap), l.push(this.elSeries);
 	        }
 
@@ -58253,7 +58237,7 @@ var Forestry = (function () {
 	            s = t.paths,
 	            r = this.w,
 	            o = new b(this.ctx),
-	            l = new T(this.ctx);
+	            l = new P(this.ctx);
 	        this.prevSeriesY.push(s.yArrj), r.globals.seriesXvalues[i] = s.xArrj, r.globals.seriesYvalues[i] = s.yArrj, this.pointsChart || r.globals.delayedElements.push({
 	          el: this.elPointsMain.node,
 	          index: i
@@ -58381,7 +58365,7 @@ var Forestry = (function () {
 	            a = t.j,
 	            s = t.realIndex,
 	            r = this.w,
-	            n = new M(this.ctx);
+	            n = new I(this.ctx);
 	        if (this.pointsChart) this.scatter.draw(this.elSeries, a, {
 	          realIndex: s,
 	          pointsPos: e,
@@ -58449,8 +58433,306 @@ var Forestry = (function () {
 	        }
 	      }
 	    }]), t;
+	  }();
+
+	  window.TreemapSquared = {}, window.TreemapSquared.generate = function () {
+	    function t(e, i, a, r) {
+	      this.xoffset = e, this.yoffset = i, this.height = r, this.width = a, this.shortestEdge = function () {
+	        return Math.min(this.height, this.width);
+	      }, this.getCoordinates = function (t) {
+	        var e,
+	            i = [],
+	            a = this.xoffset,
+	            r = this.yoffset,
+	            n = s(t) / this.height,
+	            o = s(t) / this.width;
+	        if (this.width >= this.height) for (e = 0; e < t.length; e++) {
+	          i.push([a, r, a + n, r + t[e] / n]), r += t[e] / n;
+	        } else for (e = 0; e < t.length; e++) {
+	          i.push([a, r, a + t[e] / o, r + o]), a += t[e] / o;
+	        }
+	        return i;
+	      }, this.cutArea = function (e) {
+	        var i;
+
+	        if (this.width >= this.height) {
+	          var a = e / this.height,
+	              s = this.width - a;
+	          i = new t(this.xoffset + a, this.yoffset, s, this.height);
+	        } else {
+	          var r = e / this.width,
+	              n = this.height - r;
+	          i = new t(this.xoffset, this.yoffset + r, this.width, n);
+	        }
+
+	        return i;
+	      };
+	    }
+
+	    function e(e, a, r, n, o) {
+	      return n = void 0 === n ? 0 : n, o = void 0 === o ? 0 : o, function (t) {
+	        var e,
+	            i,
+	            a = [];
+
+	        for (e = 0; e < t.length; e++) {
+	          for (i = 0; i < t[e].length; i++) {
+	            a.push(t[e][i]);
+	          }
+	        }
+
+	        return a;
+	      }(function t(e, a, r, n) {
+	        var o, l, h;
+	        if (0 !== e.length) return o = r.shortestEdge(), l = e[0], function (t, e, a) {
+	          var s;
+	          if (0 === t.length) return !0;
+	          (s = t.slice()).push(e);
+	          var r = i(t, a),
+	              n = i(s, a);
+	          return r >= n;
+	        }(a, l, o) ? (a.push(l), t(e.slice(1), a, r, n)) : (h = r.cutArea(s(a), n), n.push(r.getCoordinates(a)), t(e, [], h, n)), n;
+	        n.push(r.getCoordinates(a));
+	      }(function (t, e) {
+	        var i,
+	            a = [],
+	            r = e / s(t);
+
+	        for (i = 0; i < t.length; i++) {
+	          a[i] = t[i] * r;
+	        }
+
+	        return a;
+	      }(e, a * r), [], new t(n, o, a, r), []));
+	    }
+
+	    function i(t, e) {
+	      var i = Math.min.apply(Math, t),
+	          a = Math.max.apply(Math, t),
+	          r = s(t);
+	      return Math.max(Math.pow(e, 2) * a / Math.pow(r, 2), Math.pow(r, 2) / (Math.pow(e, 2) * i));
+	    }
+
+	    function a(t) {
+	      return t && t.constructor === Array;
+	    }
+
+	    function s(t) {
+	      var e,
+	          i = 0;
+
+	      for (e = 0; e < t.length; e++) {
+	        i += t[e];
+	      }
+
+	      return i;
+	    }
+
+	    function r(t) {
+	      var e,
+	          i = 0;
+	      if (a(t[0])) for (e = 0; e < t.length; e++) {
+	        i += r(t[e]);
+	      } else i = s(t);
+	      return i;
+	    }
+
+	    return function t(i, s, n, o, l) {
+	      o = void 0 === o ? 0 : o, l = void 0 === l ? 0 : l;
+	      var h,
+	          c,
+	          d = [],
+	          g = [];
+
+	      if (a(i[0])) {
+	        for (c = 0; c < i.length; c++) {
+	          d[c] = r(i[c]);
+	        }
+
+	        for (h = e(d, s, n, o, l), c = 0; c < i.length; c++) {
+	          g.push(t(i[c], h[c][2] - h[c][0], h[c][3] - h[c][1], h[c][0], h[c][1]));
+	        }
+	      } else g = e(i, s, n, o, l);
+
+	      return g;
+	    };
+	  }();
+
+	  var Tt,
+	      zt,
+	      It = function () {
+	    function t(i, a) {
+	      e(this, t), this.ctx = i, this.w = i.w, this.strokeWidth = this.w.config.stroke.width, this.helpers = new yt(i), this.dynamicAnim = this.w.config.chart.animations.dynamicAnimation, this.labels = [];
+	    }
+
+	    return a(t, [{
+	      key: "draw",
+	      value: function value(t) {
+	        var e = this,
+	            i = this.w,
+	            a = new b(this.ctx),
+	            s = new P(this.ctx),
+	            r = a.group({
+	          class: "apexcharts-treemap"
+	        }),
+	            n = [];
+	        return t.forEach(function (t) {
+	          var e = t.map(function (t) {
+	            return Math.abs(t);
+	          });
+	          n.push(e);
+	        }), this.negRange = this.helpers.checkColorRange(), i.config.series.forEach(function (t, i) {
+	          t.data.forEach(function (t) {
+	            Array.isArray(e.labels[i]) || (e.labels[i] = []), e.labels[i].push(t.x);
+	          });
+	        }), window.TreemapSquared.generate(n, i.globals.gridWidth, i.globals.gridHeight).forEach(function (n, o) {
+	          var l = a.group({
+	            class: "apexcharts-series apexcharts-treemap-series",
+	            seriesName: f.escapeString(i.globals.seriesNames[o]),
+	            rel: o + 1,
+	            "data:realIndex": o
+	          });
+
+	          if (i.config.chart.dropShadow.enabled) {
+	            var h = i.config.chart.dropShadow;
+	            new p(e.ctx).dropShadow(r, h, o);
+	          }
+
+	          var c = a.group({
+	            class: "apexcharts-data-labels"
+	          });
+	          n.forEach(function (r, n) {
+	            var h = r[0],
+	                c = r[1],
+	                d = r[2],
+	                g = r[3],
+	                u = a.drawRect(h, c, d - h, g - c, 0, "#fff", 1, e.strokeWidth, i.config.plotOptions.treemap.useFillColorAsStroke ? p : i.globals.stroke.colors[o]);
+	            u.attr({
+	              cx: h,
+	              cy: c,
+	              i: o,
+	              j: n,
+	              width: d - h,
+	              height: g - c
+	            });
+	            var f = e.helpers.getShadeColor(i.config.chart.type, o, n, e.negRange),
+	                p = f.color;
+	            void 0 !== i.config.series[o].data[n] && i.config.series[o].data[n].fillColor && (p = i.config.series[o].data[n].fillColor);
+	            var x = s.fillPath({
+	              color: p,
+	              seriesNumber: o,
+	              dataPointIndex: n
+	            });
+	            u.node.classList.add("apexcharts-treemap-rect"), u.attr({
+	              fill: x
+	            }), e.helpers.addListeners(u);
+	            var b = {
+	              x: h + (d - h) / 2,
+	              y: c + (g - c) / 2,
+	              width: 0,
+	              height: 0
+	            },
+	                m = {
+	              x: h,
+	              y: c,
+	              width: d - h,
+	              height: g - c
+	            };
+
+	            if (i.config.chart.animations.enabled && !i.globals.dataChanged) {
+	              var v = 1;
+	              i.globals.resized || (v = i.config.chart.animations.speed), e.animateTreemap(u, b, m, v);
+	            }
+
+	            if (i.globals.dataChanged) {
+	              var y = 1;
+	              e.dynamicAnim.enabled && i.globals.shouldAnimate && (y = e.dynamicAnim.speed, i.globals.previousPaths[o][n] && i.globals.previousPaths[o][n].rect && (b = i.globals.previousPaths[o][n].rect), e.animateTreemap(u, b, m, y));
+	            }
+
+	            var w = e.getFontSize(r),
+	                k = i.config.dataLabels.formatter(e.labels[o][n], {
+	              value: i.globals.series[o][n],
+	              seriesIndex: o,
+	              dataPointIndex: n,
+	              w: i
+	            }),
+	                A = e.helpers.calculateDataLabels({
+	              text: k,
+	              x: (h + d) / 2,
+	              y: (c + g) / 2 + e.strokeWidth / 2 + w / 3,
+	              i: o,
+	              j: n,
+	              colorProps: f,
+	              fontSize: w,
+	              series: t
+	            });
+	            i.config.dataLabels.enabled && A && e.rotateToFitLabel(A, k, h, c, d, g), l.add(u), null !== A && l.add(A);
+	          }), l.add(c), r.add(l);
+	        }), r;
+	      }
+	    }, {
+	      key: "getFontSize",
+	      value: function value(t) {
+	        var e = this.w;
+
+	        var i,
+	            a,
+	            s,
+	            r,
+	            n = function t(e) {
+	          var i,
+	              a = 0;
+	          if (Array.isArray(e[0])) for (i = 0; i < e.length; i++) {
+	            a += t(e[i]);
+	          } else for (i = 0; i < e.length; i++) {
+	            a += e[i].length;
+	          }
+	          return a;
+	        }(this.labels) / function t(e) {
+	          var i,
+	              a = 0;
+	          if (Array.isArray(e[0])) for (i = 0; i < e.length; i++) {
+	            a += t(e[i]);
+	          } else for (i = 0; i < e.length; i++) {
+	            a += 1;
+	          }
+	          return a;
+	        }(this.labels);
+
+	        return i = t[2] - t[0], a = t[3] - t[1], s = i * a, r = Math.pow(s, .5), Math.min(r / n, parseInt(e.config.dataLabels.style.fontSize, 10));
+	      }
+	    }, {
+	      key: "rotateToFitLabel",
+	      value: function value(t, e, i, a, s, r) {
+	        var n = new b(this.ctx),
+	            o = n.getTextRects(e);
+
+	        if (o.width + 5 > s - i && o.width <= r - a) {
+	          var l = n.rotateAroundCenter(t.node);
+	          t.node.setAttribute("transform", "rotate(-90 ".concat(l.x, " ").concat(l.y, ")"));
+	        }
+	      }
+	    }, {
+	      key: "animateTreemap",
+	      value: function value(t, e, i, a) {
+	        var s = new x(this.ctx);
+	        s.animateRect(t, {
+	          x: e.x,
+	          y: e.y,
+	          width: e.width,
+	          height: e.height
+	        }, {
+	          x: i.x,
+	          y: i.y,
+	          width: i.width,
+	          height: i.height
+	        }, a, function () {
+	          s.animationCompleted(t);
+	        });
+	      }
+	    }]), t;
 	  }(),
-	      zt = function () {
+	      Mt = function () {
 	    function t(i) {
 	      e(this, t), this.ctx = i, this.w = i.w, this.timeScaleArray = [], this.utc = this.w.config.xaxis.labels.datetimeUTC;
 	    }
@@ -58461,7 +58743,7 @@ var Forestry = (function () {
 	        var i = this,
 	            a = this.w;
 	        if (a.globals.allSeriesCollapsed) return a.globals.labels = [], a.globals.timescaleLabels = [], [];
-	        var s = new D(this.ctx),
+	        var s = new y(this.ctx),
 	            r = (e - t) / 864e5;
 	        this.determineInterval(r), a.globals.disableZoomIn = !1, a.globals.disableZoomOut = !1, r < .005 ? a.globals.disableZoomIn = !0 : r > 5e4 && (a.globals.disableZoomOut = !0);
 	        var o = s.getTimeUnitsfromTimestamp(t, e, this.utc),
@@ -58598,7 +58880,7 @@ var Forestry = (function () {
 	        var i = this.w,
 	            a = this.formatDates(t),
 	            s = this.removeOverlappingTS(a);
-	        i.globals.timescaleLabels = s.slice(), new lt(this.ctx).plotCoords();
+	        i.globals.timescaleLabels = s.slice(), new nt(this.ctx).plotCoords();
 	      }
 	    }, {
 	      key: "determineInterval",
@@ -58654,7 +58936,7 @@ var Forestry = (function () {
 	            r = t.numberOfYears,
 	            n = e.minYear,
 	            o = 0,
-	            l = new D(this.ctx);
+	            l = new y(this.ctx);
 
 	        if (e.minDate > 1 || e.minMonth > 0) {
 	          var h = l.determineRemainingDaysOfYear(e.minYear, e.minMonth, e.minDate);
@@ -58694,7 +58976,7 @@ var Forestry = (function () {
 	            n = t.numberOfMonths,
 	            o = a,
 	            l = 0,
-	            h = new D(this.ctx),
+	            h = new y(this.ctx),
 	            c = "month",
 	            d = 0;
 
@@ -58721,15 +59003,15 @@ var Forestry = (function () {
 	        for (var x = o + 1, b = l, m = 0, v = 1; m < n; m++, v++) {
 	          0 === (x = f.monthMod(x)) ? (c = "year", d += 1) : c = "month";
 
-	          var y = this._getYear(s, x, d);
+	          var w = this._getYear(s, x, d);
 
-	          b = h.determineDaysOfMonths(x, y) * r + b;
-	          var w = 0 === x ? y : x;
+	          b = h.determineDaysOfMonths(x, w) * r + b;
+	          var k = 0 === x ? w : x;
 	          this.timeScaleArray.push({
 	            position: b,
-	            value: w,
+	            value: k,
 	            unit: c,
-	            year: y,
+	            year: w,
 	            month: 0 === x ? 1 : x
 	          }), x++;
 	        }
@@ -58742,7 +59024,7 @@ var Forestry = (function () {
 	            a = t.currentYear,
 	            s = t.hoursWidthOnXAxis,
 	            r = t.numberOfDays,
-	            n = new D(this.ctx),
+	            n = new y(this.ctx),
 	            o = "day",
 	            l = e.minDate + 1,
 	            h = l,
@@ -58788,7 +59070,7 @@ var Forestry = (function () {
 	            s = t.currentYear,
 	            r = t.minutesWidthOnXAxis,
 	            n = t.numberOfHours,
-	            o = new D(this.ctx),
+	            o = new y(this.ctx),
 	            l = "hour",
 	            h = function h(t, e) {
 	          return t > o.determineDaysOfMonths(e + 1, s) && (x = 1, e += 1), {
@@ -58820,17 +59102,17 @@ var Forestry = (function () {
 	        for (var m = g, v = 0; v < n; v++) {
 	          if (l = "hour", p >= 24) p = 0, l = "day", b = h(x += 1, b).month, b = c(x, b);
 
-	          var y = this._getYear(s, b, 0);
+	          var w = this._getYear(s, b, 0);
 
 	          m = 0 === p && 0 === v ? d * r : 60 * r + m;
-	          var w = 0 === p ? x : p;
+	          var k = 0 === p ? x : p;
 	          this.timeScaleArray.push({
 	            position: m,
-	            value: w,
+	            value: k,
 	            unit: l,
 	            hour: p,
 	            day: x,
-	            year: y,
+	            year: w,
 	            month: f.monthMod(b)
 	          }), p++;
 	        }
@@ -58890,7 +59172,7 @@ var Forestry = (function () {
 	            i = this.w;
 	        return t.map(function (t) {
 	          var a = t.value.toString(),
-	              s = new D(e.ctx),
+	              s = new y(e.ctx),
 	              r = e.createRawDateString(t, a),
 	              n = s.getDate(s.parseDate(r));
 
@@ -58941,7 +59223,7 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      It = function () {
+	      Et = function () {
 	    function t(i, a) {
 	      e(this, t), this.ctx = a, this.w = a.w, this.el = i;
 	    }
@@ -58952,7 +59234,7 @@ var Forestry = (function () {
 	        var t = this.w.globals,
 	            e = this.w.config,
 	            i = e.chart.type;
-	        t.axisCharts = ["line", "area", "bar", "rangeBar", "candlestick", "scatter", "bubble", "radar", "heatmap"].indexOf(i) > -1, t.xyCharts = ["line", "area", "bar", "rangeBar", "candlestick", "scatter", "bubble"].indexOf(i) > -1, t.isBarHorizontal = ("bar" === e.chart.type || "rangeBar" === e.chart.type) && e.plotOptions.bar.horizontal, t.chartClass = ".apexcharts" + t.cuid, t.dom.baseEl = this.el, t.dom.elWrap = document.createElement("div"), b.setAttrs(t.dom.elWrap, {
+	        t.axisCharts = ["line", "area", "bar", "rangeBar", "candlestick", "scatter", "bubble", "radar", "heatmap", "treemap"].indexOf(i) > -1, t.xyCharts = ["line", "area", "bar", "rangeBar", "candlestick", "scatter", "bubble"].indexOf(i) > -1, t.isBarHorizontal = ("bar" === e.chart.type || "rangeBar" === e.chart.type) && e.plotOptions.bar.horizontal, t.chartClass = ".apexcharts" + t.chartID, t.dom.baseEl = this.el, t.dom.elWrap = document.createElement("div"), b.setAttrs(t.dom.elWrap, {
 	          id: t.chartClass.substring(1),
 	          class: "apexcharts-canvas " + t.chartClass.substring(1)
 	        }), this.el.appendChild(t.dom.elWrap), t.dom.Paper = new window.SVG.Doc(t.dom.elWrap), t.dom.Paper.attr({
@@ -58998,76 +59280,80 @@ var Forestry = (function () {
 	        s.series.map(function (e, d) {
 	          void 0 !== t[d].type ? ("column" === t[d].type || "bar" === t[d].type ? (s.series.length > 1 && a.plotOptions.bar.horizontal && console.warn("Horizontal bars are not supported in a mixed/combo chart. Please turn off `plotOptions.bar.horizontal`"), h.series.push(e), h.i.push(d), i.globals.columnSeries = h.series) : "area" === t[d].type ? (n.series.push(e), n.i.push(d)) : "line" === t[d].type ? (r.series.push(e), r.i.push(d)) : "scatter" === t[d].type ? (o.series.push(e), o.i.push(d)) : "bubble" === t[d].type ? (l.series.push(e), l.i.push(d)) : "candlestick" === t[d].type ? (c.series.push(e), c.i.push(d)) : console.warn("You have specified an unrecognized chart type. Available types for this propery are line/area/column/bar/scatter/bubble"), s.comboCharts = !0) : (r.series.push(e), r.i.push(d));
 	        });
-	        var d = new Tt(this.ctx, e),
-	            g = new wt(this.ctx, e);
-	        this.ctx.pie = new St(this.ctx);
-	        var u = new Lt(this.ctx),
-	            f = new R(this.ctx, e),
-	            p = new Ct(this.ctx),
-	            x = [];
+	        var d = new Pt(this.ctx, e),
+	            g = new vt(this.ctx, e);
+	        this.ctx.pie = new At(this.ctx);
+	        var u = new Ct(this.ctx);
+	        this.ctx.rangeBar = new F(this.ctx, e);
+	        var f = new St(this.ctx),
+	            p = [];
 
 	        if (s.comboCharts) {
-	          if (n.series.length > 0 && x.push(d.draw(n.series, "area", n.i)), h.series.length > 0) if (i.config.chart.stacked) {
-	            var b = new yt(this.ctx, e);
-	            x.push(b.draw(h.series, h.i));
+	          if (n.series.length > 0 && p.push(d.draw(n.series, "area", n.i)), h.series.length > 0) if (i.config.chart.stacked) {
+	            var x = new mt(this.ctx, e);
+	            p.push(x.draw(h.series, h.i));
 	          } else {
-	            var m = new F(this.ctx, e);
-	            x.push(m.draw(h.series, h.i));
+	            var b = new Y(this.ctx, e);
+	            p.push(b.draw(h.series, h.i));
 	          }
 
-	          if (r.series.length > 0 && x.push(d.draw(r.series, "line", r.i)), c.series.length > 0 && x.push(g.draw(c.series, c.i)), o.series.length > 0) {
-	            var v = new Tt(this.ctx, e, !0);
-	            x.push(v.draw(o.series, "scatter", o.i));
+	          if (r.series.length > 0 && p.push(d.draw(r.series, "line", r.i)), c.series.length > 0 && p.push(g.draw(c.series, c.i)), o.series.length > 0) {
+	            var m = new Pt(this.ctx, e, !0);
+	            p.push(m.draw(o.series, "scatter", o.i));
 	          }
 
 	          if (l.series.length > 0) {
-	            var y = new Tt(this.ctx, e, !0);
-	            x.push(y.draw(l.series, "bubble", l.i));
+	            var v = new Pt(this.ctx, e, !0);
+	            p.push(v.draw(l.series, "bubble", l.i));
 	          }
 	        } else switch (a.chart.type) {
 	          case "line":
-	            x = d.draw(s.series, "line");
+	            p = d.draw(s.series, "line");
 	            break;
 
 	          case "area":
-	            x = d.draw(s.series, "area");
+	            p = d.draw(s.series, "area");
 	            break;
 
 	          case "bar":
-	            if (a.chart.stacked) x = new yt(this.ctx, e).draw(s.series);else x = new F(this.ctx, e).draw(s.series);
+	            if (a.chart.stacked) p = new mt(this.ctx, e).draw(s.series);else p = new Y(this.ctx, e).draw(s.series);
 	            break;
 
 	          case "candlestick":
-	            x = new wt(this.ctx, e).draw(s.series);
+	            p = new vt(this.ctx, e).draw(s.series);
 	            break;
 
 	          case "rangeBar":
-	            x = f.draw(s.series);
+	            p = this.ctx.rangeBar.draw(s.series);
 	            break;
 
 	          case "heatmap":
-	            x = new kt(this.ctx, e).draw(s.series);
+	            p = new wt(this.ctx, e).draw(s.series);
+	            break;
+
+	          case "treemap":
+	            p = new It(this.ctx, e).draw(s.series);
 	            break;
 
 	          case "pie":
 	          case "donut":
 	          case "polarArea":
-	            x = this.ctx.pie.draw(s.series);
+	            p = this.ctx.pie.draw(s.series);
 	            break;
 
 	          case "radialBar":
-	            x = u.draw(s.series);
+	            p = u.draw(s.series);
 	            break;
 
 	          case "radar":
-	            x = p.draw(s.series);
+	            p = f.draw(s.series);
 	            break;
 
 	          default:
-	            x = d.draw(s.series);
+	            p = d.draw(s.series);
 	        }
 
-	        return x;
+	        return p;
 	      }
 	    }, {
 	      key: "setSVGDimensions",
@@ -59107,7 +59393,7 @@ var Forestry = (function () {
 	            e = t.globals,
 	            i = 0,
 	            a = t.config.chart.sparkline.enabled ? 1 : 15;
-	        a += t.config.grid.padding.bottom, "top" !== t.config.legend.position && "bottom" !== t.config.legend.position || !t.config.legend.show || t.config.legend.floating || (i = new ct(this.ctx).legendHelpers.getLegendBBox().clwh + 10);
+	        a += t.config.grid.padding.bottom, "top" !== t.config.legend.position && "bottom" !== t.config.legend.position || !t.config.legend.show || t.config.legend.floating || (i = new lt(this.ctx).legendHelpers.getLegendBBox().clwh + 10);
 	        var s = t.globals.dom.baseEl.querySelector(".apexcharts-radialbar"),
 	            r = 2.05 * t.globals.radialSize;
 
@@ -59126,7 +59412,7 @@ var Forestry = (function () {
 	    }, {
 	      key: "coreCalculations",
 	      value: function value() {
-	        new Z(this.ctx).init();
+	        new U(this.ctx).init();
 	      }
 	    }, {
 	      key: "resetGlobals",
@@ -59137,7 +59423,7 @@ var Forestry = (function () {
 	            return [];
 	          });
 	        },
-	            i = new O(),
+	            i = new H(),
 	            a = this.w.globals;
 
 	        i.initGlobalVars(a), a.seriesXvalues = e(), a.seriesYvalues = e();
@@ -59154,16 +59440,16 @@ var Forestry = (function () {
 	            e = this.w;
 
 	        if (e.globals.axisCharts) {
-	          if ("back" === e.config.xaxis.crosshairs.position) new tt(this.ctx).drawXCrosshairs();
-	          if ("back" === e.config.yaxis[0].crosshairs.position) new tt(this.ctx).drawYCrosshairs();
+	          if ("back" === e.config.xaxis.crosshairs.position) new Q(this.ctx).drawXCrosshairs();
+	          if ("back" === e.config.yaxis[0].crosshairs.position) new Q(this.ctx).drawYCrosshairs();
 
 	          if ("datetime" === e.config.xaxis.type && void 0 === e.config.xaxis.labels.formatter) {
-	            this.ctx.timeScale = new zt(this.ctx);
+	            this.ctx.timeScale = new Mt(this.ctx);
 	            var i = [];
 	            isFinite(e.globals.minX) && isFinite(e.globals.maxX) && !e.globals.isBarHorizontal ? i = this.ctx.timeScale.calculateTimeScaleTicks(e.globals.minX, e.globals.maxX) : e.globals.isBarHorizontal && (i = this.ctx.timeScale.calculateTimeScaleTicks(e.globals.minY, e.globals.maxY)), this.ctx.timeScale.recalcDimensionsBasedOnFormat(i);
 	          }
 
-	          t = new y(this.ctx).getCalculatedRatios();
+	          t = new w(this.ctx).getCalculatedRatios();
 	        }
 
 	        return t;
@@ -59203,7 +59489,7 @@ var Forestry = (function () {
 	                  s = f.clone(e.config.yaxis);
 
 	              if (e.config.chart.brush.autoScaleYaxis && 1 === i.w.globals.series.length) {
-	                var r = new q(i);
+	                var r = new j(i);
 	                s = r.autoScaleY(i, s, a);
 	              }
 
@@ -59227,7 +59513,7 @@ var Forestry = (function () {
 	      }
 	    }]), t;
 	  }(),
-	      Mt = function () {
+	      Xt = function () {
 	    function i(t) {
 	      e(this, i), this.ctx = t, this.w = t.w;
 	    }
@@ -59243,7 +59529,7 @@ var Forestry = (function () {
 	            o = [this.ctx];
 	        r && (o = this.ctx.getSyncedCharts()), this.ctx.w.globals.isExecCalled && (o = [this.ctx], this.ctx.w.globals.isExecCalled = !1), o.forEach(function (r) {
 	          var o = r.w;
-	          return o.globals.shouldAnimate = s, a || (o.globals.resized = !0, o.globals.dataChanged = !0, s && r.series.getPreviousPaths()), e && "object" === t(e) && (r.config = new N(e), e = y.extendArrayProps(r.config, e, o), r.w.globals.chartID !== i.ctx.w.globals.chartID && delete e.series, o.config = f.extend(o.config, e), n && (o.globals.lastXAxis = e.xaxis ? f.clone(e.xaxis) : [], o.globals.lastYAxis = e.yaxis ? f.clone(e.yaxis) : [], o.globals.initialConfig = f.extend({}, o.config), o.globals.initialSeries = f.clone(o.config.series))), r.update(e);
+	          return o.globals.shouldAnimate = s, a || (o.globals.resized = !0, o.globals.dataChanged = !0, s && r.series.getPreviousPaths()), e && "object" === t(e) && (r.config = new R(e), e = w.extendArrayProps(r.config, e, o), r.w.globals.chartID !== i.ctx.w.globals.chartID && delete e.series, o.config = f.extend(o.config, e), n && (o.globals.lastXAxis = e.xaxis ? f.clone(e.xaxis) : [], o.globals.lastYAxis = e.yaxis ? f.clone(e.yaxis) : [], o.globals.initialConfig = f.extend({}, o.config), o.globals.initialSeries = f.clone(o.config.series))), r.update(e);
 	        });
 	      }
 	    }, {
@@ -59257,9 +59543,7 @@ var Forestry = (function () {
 	          return a._extendSeries(t, e);
 	        })).length && (i = [{
 	          data: []
-	        }]), r.config.series = i) : r.config.series = t.slice(), s && (r.globals.initialSeries = f.clone(r.config.series)), this.ctx.update({
-	          series: t
-	        });
+	        }]), r.config.series = i) : r.config.series = t.slice(), s && (r.globals.initialSeries = f.clone(r.config.series)), this.ctx.update();
 	      }
 	    }, {
 	      key: "_extendSeries",
@@ -59289,7 +59573,7 @@ var Forestry = (function () {
 	        if (["min", "max"].forEach(function (i) {
 	          void 0 !== t.xaxis[i] && (e.config.xaxis[i] = t.xaxis[i], e.globals.lastXAxis[i] = t.xaxis[i]);
 	        }), t.xaxis.categories && t.xaxis.categories.length && (e.config.xaxis.categories = t.xaxis.categories), e.config.xaxis.convertedCatToNumeric) {
-	          var i = new H(t);
+	          var i = new D(t);
 	          t = i.convertCatToNumericXaxis(t, this.ctx);
 	        }
 
@@ -59305,23 +59589,25 @@ var Forestry = (function () {
 	      }
 	    }, {
 	      key: "revertDefaultAxisMinMax",
-	      value: function value() {
-	        var t = this,
-	            e = this.w;
-	        e.config.xaxis.min = e.globals.lastXAxis.min, e.config.xaxis.max = e.globals.lastXAxis.max;
+	      value: function value(t) {
+	        var e = this,
+	            i = this.w,
+	            a = i.globals.lastXAxis,
+	            s = i.globals.lastYAxis;
+	        t && t.xaxis && (a = t.xaxis), t && t.yaxis && (s = t.yaxis), i.config.xaxis.min = a.min, i.config.xaxis.max = a.max;
 
-	        var i = function i(t) {
-	          void 0 !== e.globals.lastYAxis[t] && (e.config.yaxis[t].min = e.globals.lastYAxis[t].min, e.config.yaxis[t].max = e.globals.lastYAxis[t].max);
+	        var r = function r(t) {
+	          void 0 !== s[t] && (i.config.yaxis[t].min = s[t].min, i.config.yaxis[t].max = s[t].max);
 	        };
 
-	        e.config.yaxis.map(function (a, s) {
-	          e.globals.zoomed || void 0 !== e.globals.lastYAxis[s] ? i(s) : void 0 !== t.ctx.opts.yaxis[s] && (a.min = t.ctx.opts.yaxis[s].min, a.max = t.ctx.opts.yaxis[s].max);
+	        i.config.yaxis.map(function (t, a) {
+	          i.globals.zoomed || void 0 !== s[a] ? r(a) : void 0 !== e.ctx.opts.yaxis[a] && (t.min = e.ctx.opts.yaxis[a].min, t.max = e.ctx.opts.yaxis[a].max);
 	        });
 	      }
 	    }]), i;
 	  }();
 
-	  A = "undefined" != typeof window ? window : void 0, S = function S(e, i) {
+	  Tt = "undefined" != typeof window ? window : void 0, zt = function zt(e, i) {
 	    var a = (void 0 !== this ? this : e).SVG = function (t) {
 	      if (a.supported) return t = new a.Doc(t), a.parser.draw || a.prepare(), t;
 	    };
@@ -61102,9 +61388,9 @@ var Forestry = (function () {
 	    } else a.CustomEvent = e.CustomEvent;
 
 	    return a;
-	  },  "object" === ( t(exports)) && "undefined" != 'object' ? module.exports = A.document ? S(A, A.document) : function (t) {
-	    return S(t, t.document);
-	  } : A.SVG = S(A, A.document),
+	  },  "object" === ( t(exports)) && "undefined" != 'object' ? module.exports = Tt.document ? zt(Tt, Tt.document) : function (t) {
+	    return zt(t, t.document);
+	  } : Tt.SVG = zt(Tt, Tt.document),
 	  /*! svg.filter.js - v2.0.2 - 2016-02-24
 	  * https://github.com/wout/svg.filter.js
 	  * Copyright (c) 2016 Wout Fierens; Licensed MIT */
@@ -62205,7 +62491,7 @@ var Forestry = (function () {
 	          s = document.createElement("style");
 	      s.type = "text/css", "top" === i && a.firstChild ? a.insertBefore(s, a.firstChild) : a.appendChild(s), s.styleSheet ? s.styleSheet.cssText = t : s.appendChild(document.createTextNode(t));
 	    }
-	  }('.apexcharts-canvas {\n  position: relative;\n  user-select: none;\n  /* cannot give overflow: hidden as it will crop tooltips which overflow outside chart area */\n}\n\n\n/* scrollbar is not visible by default for legend, hence forcing the visibility */\n.apexcharts-canvas ::-webkit-scrollbar {\n  -webkit-appearance: none;\n  width: 6px;\n}\n\n.apexcharts-canvas ::-webkit-scrollbar-thumb {\n  border-radius: 4px;\n  background-color: rgba(0, 0, 0, .5);\n  box-shadow: 0 0 1px rgba(255, 255, 255, .5);\n  -webkit-box-shadow: 0 0 1px rgba(255, 255, 255, .5);\n}\n\n\n.apexcharts-inner {\n  position: relative;\n}\n\n.apexcharts-text tspan {\n  font-family: inherit;\n}\n\n.legend-mouseover-inactive {\n  transition: 0.15s ease all;\n  opacity: 0.20;\n}\n\n.apexcharts-series-collapsed {\n  opacity: 0;\n}\n\n.apexcharts-tooltip {\n  border-radius: 5px;\n  box-shadow: 2px 2px 6px -4px #999;\n  cursor: default;\n  font-size: 14px;\n  left: 62px;\n  opacity: 0;\n  pointer-events: none;\n  position: absolute;\n  top: 20px;\n  overflow: hidden;\n  white-space: nowrap;\n  z-index: 12;\n  transition: 0.15s ease all;\n}\n\n.apexcharts-tooltip.apexcharts-active {\n  opacity: 1;\n  transition: 0.15s ease all;\n}\n\n.apexcharts-tooltip.apexcharts-theme-light {\n  border: 1px solid #e3e3e3;\n  background: rgba(255, 255, 255, 0.96);\n}\n\n.apexcharts-tooltip.apexcharts-theme-dark {\n  color: #fff;\n  background: rgba(30, 30, 30, 0.8);\n}\n\n.apexcharts-tooltip * {\n  font-family: inherit;\n}\n\n\n.apexcharts-tooltip-title {\n  padding: 6px;\n  font-size: 15px;\n  margin-bottom: 4px;\n}\n\n.apexcharts-tooltip.apexcharts-theme-light .apexcharts-tooltip-title {\n  background: #ECEFF1;\n  border-bottom: 1px solid #ddd;\n}\n\n.apexcharts-tooltip.apexcharts-theme-dark .apexcharts-tooltip-title {\n  background: rgba(0, 0, 0, 0.7);\n  border-bottom: 1px solid #333;\n}\n\n.apexcharts-tooltip-text-value,\n.apexcharts-tooltip-text-z-value {\n  display: inline-block;\n  font-weight: 600;\n  margin-left: 5px;\n}\n\n.apexcharts-tooltip-text-z-label:empty,\n.apexcharts-tooltip-text-z-value:empty {\n  display: none;\n}\n\n.apexcharts-tooltip-text-value,\n.apexcharts-tooltip-text-z-value {\n  font-weight: 600;\n}\n\n.apexcharts-tooltip-marker {\n  width: 12px;\n  height: 12px;\n  position: relative;\n  top: 0px;\n  margin-right: 10px;\n  border-radius: 50%;\n}\n\n.apexcharts-tooltip-series-group {\n  padding: 0 10px;\n  display: none;\n  text-align: left;\n  justify-content: left;\n  align-items: center;\n}\n\n.apexcharts-tooltip-series-group.apexcharts-active .apexcharts-tooltip-marker {\n  opacity: 1;\n}\n\n.apexcharts-tooltip-series-group.apexcharts-active,\n.apexcharts-tooltip-series-group:last-child {\n  padding-bottom: 4px;\n}\n\n.apexcharts-tooltip-series-group-hidden {\n  opacity: 0;\n  height: 0;\n  line-height: 0;\n  padding: 0 !important;\n}\n\n.apexcharts-tooltip-y-group {\n  padding: 6px 0 5px;\n}\n\n.apexcharts-tooltip-candlestick {\n  padding: 4px 8px;\n}\n\n.apexcharts-tooltip-candlestick>div {\n  margin: 4px 0;\n}\n\n.apexcharts-tooltip-candlestick span.value {\n  font-weight: bold;\n}\n\n.apexcharts-tooltip-rangebar {\n  padding: 5px 8px;\n}\n\n.apexcharts-tooltip-rangebar .category {\n  font-weight: 600;\n  color: #777;\n}\n\n.apexcharts-tooltip-rangebar .series-name {\n  font-weight: bold;\n  display: block;\n  margin-bottom: 5px;\n}\n\n.apexcharts-xaxistooltip {\n  opacity: 0;\n  padding: 9px 10px;\n  pointer-events: none;\n  color: #373d3f;\n  font-size: 13px;\n  text-align: center;\n  border-radius: 2px;\n  position: absolute;\n  z-index: 10;\n  background: #ECEFF1;\n  border: 1px solid #90A4AE;\n  transition: 0.15s ease all;\n}\n\n.apexcharts-xaxistooltip.apexcharts-theme-dark {\n  background: rgba(0, 0, 0, 0.7);\n  border: 1px solid rgba(0, 0, 0, 0.5);\n  color: #fff;\n}\n\n.apexcharts-xaxistooltip:after,\n.apexcharts-xaxistooltip:before {\n  left: 50%;\n  border: solid transparent;\n  content: " ";\n  height: 0;\n  width: 0;\n  position: absolute;\n  pointer-events: none;\n}\n\n.apexcharts-xaxistooltip:after {\n  border-color: rgba(236, 239, 241, 0);\n  border-width: 6px;\n  margin-left: -6px;\n}\n\n.apexcharts-xaxistooltip:before {\n  border-color: rgba(144, 164, 174, 0);\n  border-width: 7px;\n  margin-left: -7px;\n}\n\n.apexcharts-xaxistooltip-bottom:after,\n.apexcharts-xaxistooltip-bottom:before {\n  bottom: 100%;\n}\n\n.apexcharts-xaxistooltip-top:after,\n.apexcharts-xaxistooltip-top:before {\n  top: 100%;\n}\n\n.apexcharts-xaxistooltip-bottom:after {\n  border-bottom-color: #ECEFF1;\n}\n\n.apexcharts-xaxistooltip-bottom:before {\n  border-bottom-color: #90A4AE;\n}\n\n.apexcharts-xaxistooltip-bottom.apexcharts-theme-dark:after {\n  border-bottom-color: rgba(0, 0, 0, 0.5);\n}\n\n.apexcharts-xaxistooltip-bottom.apexcharts-theme-dark:before {\n  border-bottom-color: rgba(0, 0, 0, 0.5);\n}\n\n.apexcharts-xaxistooltip-top:after {\n  border-top-color: #ECEFF1\n}\n\n.apexcharts-xaxistooltip-top:before {\n  border-top-color: #90A4AE;\n}\n\n.apexcharts-xaxistooltip-top.apexcharts-theme-dark:after {\n  border-top-color: rgba(0, 0, 0, 0.5);\n}\n\n.apexcharts-xaxistooltip-top.apexcharts-theme-dark:before {\n  border-top-color: rgba(0, 0, 0, 0.5);\n}\n\n.apexcharts-xaxistooltip.apexcharts-active {\n  opacity: 1;\n  transition: 0.15s ease all;\n}\n\n.apexcharts-yaxistooltip {\n  opacity: 0;\n  padding: 4px 10px;\n  pointer-events: none;\n  color: #373d3f;\n  font-size: 13px;\n  text-align: center;\n  border-radius: 2px;\n  position: absolute;\n  z-index: 10;\n  background: #ECEFF1;\n  border: 1px solid #90A4AE;\n}\n\n.apexcharts-yaxistooltip.apexcharts-theme-dark {\n  background: rgba(0, 0, 0, 0.7);\n  border: 1px solid rgba(0, 0, 0, 0.5);\n  color: #fff;\n}\n\n.apexcharts-yaxistooltip:after,\n.apexcharts-yaxistooltip:before {\n  top: 50%;\n  border: solid transparent;\n  content: " ";\n  height: 0;\n  width: 0;\n  position: absolute;\n  pointer-events: none;\n}\n\n.apexcharts-yaxistooltip:after {\n  border-color: rgba(236, 239, 241, 0);\n  border-width: 6px;\n  margin-top: -6px;\n}\n\n.apexcharts-yaxistooltip:before {\n  border-color: rgba(144, 164, 174, 0);\n  border-width: 7px;\n  margin-top: -7px;\n}\n\n.apexcharts-yaxistooltip-left:after,\n.apexcharts-yaxistooltip-left:before {\n  left: 100%;\n}\n\n.apexcharts-yaxistooltip-right:after,\n.apexcharts-yaxistooltip-right:before {\n  right: 100%;\n}\n\n.apexcharts-yaxistooltip-left:after {\n  border-left-color: #ECEFF1;\n}\n\n.apexcharts-yaxistooltip-left:before {\n  border-left-color: #90A4AE;\n}\n\n.apexcharts-yaxistooltip-left.apexcharts-theme-dark:after {\n  border-left-color: rgba(0, 0, 0, 0.5);\n}\n\n.apexcharts-yaxistooltip-left.apexcharts-theme-dark:before {\n  border-left-color: rgba(0, 0, 0, 0.5);\n}\n\n.apexcharts-yaxistooltip-right:after {\n  border-right-color: #ECEFF1;\n}\n\n.apexcharts-yaxistooltip-right:before {\n  border-right-color: #90A4AE;\n}\n\n.apexcharts-yaxistooltip-right.apexcharts-theme-dark:after {\n  border-right-color: rgba(0, 0, 0, 0.5);\n}\n\n.apexcharts-yaxistooltip-right.apexcharts-theme-dark:before {\n  border-right-color: rgba(0, 0, 0, 0.5);\n}\n\n.apexcharts-yaxistooltip.apexcharts-active {\n  opacity: 1;\n}\n\n.apexcharts-yaxistooltip-hidden {\n  display: none;\n}\n\n.apexcharts-xcrosshairs,\n.apexcharts-ycrosshairs {\n  pointer-events: none;\n  opacity: 0;\n  transition: 0.15s ease all;\n}\n\n.apexcharts-xcrosshairs.apexcharts-active,\n.apexcharts-ycrosshairs.apexcharts-active {\n  opacity: 1;\n  transition: 0.15s ease all;\n}\n\n.apexcharts-ycrosshairs-hidden {\n  opacity: 0;\n}\n\n.apexcharts-selection-rect {\n  cursor: move;\n}\n\n.svg_select_boundingRect, .svg_select_points_rot {\n  pointer-events: none;\n  opacity: 0;\n  visibility: hidden;\n}\n.apexcharts-selection-rect + g .svg_select_boundingRect,\n.apexcharts-selection-rect + g .svg_select_points_rot {\n  opacity: 0;\n  visibility: hidden;\n}\n\n.apexcharts-selection-rect + g .svg_select_points_l,\n.apexcharts-selection-rect + g .svg_select_points_r {\n  cursor: ew-resize;\n  opacity: 1;\n  visibility: visible;\n}\n\n.svg_select_points {\n  fill: #efefef;\n  stroke: #333;\n  rx: 2;\n}\n\n.apexcharts-svg.apexcharts-zoomable.hovering-zoom {\n  cursor: crosshair\n}\n\n.apexcharts-svg.apexcharts-zoomable.hovering-pan {\n  cursor: move\n}\n\n.apexcharts-zoom-icon,\n.apexcharts-zoomin-icon,\n.apexcharts-zoomout-icon,\n.apexcharts-reset-icon,\n.apexcharts-pan-icon,\n.apexcharts-selection-icon,\n.apexcharts-menu-icon,\n.apexcharts-toolbar-custom-icon {\n  cursor: pointer;\n  width: 20px;\n  height: 20px;\n  line-height: 24px;\n  color: #6E8192;\n  text-align: center;\n}\n\n.apexcharts-zoom-icon svg,\n.apexcharts-zoomin-icon svg,\n.apexcharts-zoomout-icon svg,\n.apexcharts-reset-icon svg,\n.apexcharts-menu-icon svg {\n  fill: #6E8192;\n}\n\n.apexcharts-selection-icon svg {\n  fill: #444;\n  transform: scale(0.76)\n}\n\n.apexcharts-theme-dark .apexcharts-zoom-icon svg,\n.apexcharts-theme-dark .apexcharts-zoomin-icon svg,\n.apexcharts-theme-dark .apexcharts-zoomout-icon svg,\n.apexcharts-theme-dark .apexcharts-reset-icon svg,\n.apexcharts-theme-dark .apexcharts-pan-icon svg,\n.apexcharts-theme-dark .apexcharts-selection-icon svg,\n.apexcharts-theme-dark .apexcharts-menu-icon svg,\n.apexcharts-theme-dark .apexcharts-toolbar-custom-icon svg {\n  fill: #f3f4f5;\n}\n\n.apexcharts-canvas .apexcharts-zoom-icon.apexcharts-selected svg,\n.apexcharts-canvas .apexcharts-selection-icon.apexcharts-selected svg,\n.apexcharts-canvas .apexcharts-reset-zoom-icon.apexcharts-selected svg {\n  fill: #008FFB;\n}\n\n.apexcharts-theme-light .apexcharts-selection-icon:not(.apexcharts-selected):hover svg,\n.apexcharts-theme-light .apexcharts-zoom-icon:not(.apexcharts-selected):hover svg,\n.apexcharts-theme-light .apexcharts-zoomin-icon:hover svg,\n.apexcharts-theme-light .apexcharts-zoomout-icon:hover svg,\n.apexcharts-theme-light .apexcharts-reset-icon:hover svg,\n.apexcharts-theme-light .apexcharts-menu-icon:hover svg {\n  fill: #333;\n}\n\n.apexcharts-selection-icon,\n.apexcharts-menu-icon {\n  position: relative;\n}\n\n.apexcharts-reset-icon {\n  margin-left: 5px;\n}\n\n.apexcharts-zoom-icon,\n.apexcharts-reset-icon,\n.apexcharts-menu-icon {\n  transform: scale(0.85);\n}\n\n.apexcharts-zoomin-icon,\n.apexcharts-zoomout-icon {\n  transform: scale(0.7)\n}\n\n.apexcharts-zoomout-icon {\n  margin-right: 3px;\n}\n\n.apexcharts-pan-icon {\n  transform: scale(0.62);\n  position: relative;\n  left: 1px;\n  top: 0px;\n}\n\n.apexcharts-pan-icon svg {\n  fill: #fff;\n  stroke: #6E8192;\n  stroke-width: 2;\n}\n\n.apexcharts-pan-icon.apexcharts-selected svg {\n  stroke: #008FFB;\n}\n\n.apexcharts-pan-icon:not(.apexcharts-selected):hover svg {\n  stroke: #333;\n}\n\n.apexcharts-toolbar {\n  position: absolute;\n  z-index: 11;\n  max-width: 176px;\n  text-align: right;\n  border-radius: 3px;\n  padding: 0px 6px 2px 6px;\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n}\n\n.apexcharts-menu {\n  background: #fff;\n  position: absolute;\n  top: 100%;\n  border: 1px solid #ddd;\n  border-radius: 3px;\n  padding: 3px;\n  right: 10px;\n  opacity: 0;\n  min-width: 110px;\n  transition: 0.15s ease all;\n  pointer-events: none;\n}\n\n.apexcharts-menu.apexcharts-menu-open {\n  opacity: 1;\n  pointer-events: all;\n  transition: 0.15s ease all;\n}\n\n.apexcharts-menu-item {\n  padding: 6px 7px;\n  font-size: 12px;\n  cursor: pointer;\n}\n\n.apexcharts-theme-light .apexcharts-menu-item:hover {\n  background: #eee;\n}\n\n.apexcharts-theme-dark .apexcharts-menu {\n  background: rgba(0, 0, 0, 0.7);\n  color: #fff;\n}\n\n@media screen and (min-width: 768px) {\n  .apexcharts-canvas:hover .apexcharts-toolbar {\n    opacity: 1;\n  }\n}\n\n.apexcharts-datalabel.apexcharts-element-hidden {\n  opacity: 0;\n}\n\n.apexcharts-pie-label,\n.apexcharts-datalabels,\n.apexcharts-datalabel,\n.apexcharts-datalabel-label,\n.apexcharts-datalabel-value {\n  cursor: default;\n  pointer-events: none;\n}\n\n.apexcharts-pie-label-delay {\n  opacity: 0;\n  animation-name: opaque;\n  animation-duration: 0.3s;\n  animation-fill-mode: forwards;\n  animation-timing-function: ease;\n}\n\n.apexcharts-canvas .apexcharts-element-hidden {\n  opacity: 0;\n}\n\n.apexcharts-hide .apexcharts-series-points {\n  opacity: 0;\n}\n\n.apexcharts-gridline,\n.apexcharts-annotation-rect,\n.apexcharts-tooltip .apexcharts-marker,\n.apexcharts-area-series .apexcharts-area,\n.apexcharts-line,\n.apexcharts-zoom-rect,\n.apexcharts-toolbar svg,\n.apexcharts-area-series .apexcharts-series-markers .apexcharts-marker.no-pointer-events,\n.apexcharts-line-series .apexcharts-series-markers .apexcharts-marker.no-pointer-events,\n.apexcharts-radar-series path,\n.apexcharts-radar-series polygon {\n  pointer-events: none;\n}\n\n\n/* markers */\n\n.apexcharts-marker {\n  transition: 0.15s ease all;\n}\n\n@keyframes opaque {\n  0% {\n    opacity: 0;\n  }\n  100% {\n    opacity: 1;\n  }\n}\n\n\n/* Resize generated styles */\n\n@keyframes resizeanim {\n  from {\n    opacity: 0;\n  }\n  to {\n    opacity: 0;\n  }\n}\n\n.resize-triggers {\n  animation: 1ms resizeanim;\n  visibility: hidden;\n  opacity: 0;\n}\n\n.resize-triggers,\n.resize-triggers>div,\n.contract-trigger:before {\n  content: " ";\n  display: block;\n  position: absolute;\n  top: 0;\n  left: 0;\n  height: 100%;\n  width: 100%;\n  overflow: hidden;\n}\n\n.resize-triggers>div {\n  background: #eee;\n  overflow: auto;\n}\n\n.contract-trigger:before {\n  width: 200%;\n  height: 200%;\n}'), function () {
+	  }('.apexcharts-canvas {\n  position: relative;\n  user-select: none;\n  /* cannot give overflow: hidden as it will crop tooltips which overflow outside chart area */\n}\n\n\n/* scrollbar is not visible by default for legend, hence forcing the visibility */\n.apexcharts-canvas ::-webkit-scrollbar {\n  -webkit-appearance: none;\n  width: 6px;\n}\n\n.apexcharts-canvas ::-webkit-scrollbar-thumb {\n  border-radius: 4px;\n  background-color: rgba(0, 0, 0, .5);\n  box-shadow: 0 0 1px rgba(255, 255, 255, .5);\n  -webkit-box-shadow: 0 0 1px rgba(255, 255, 255, .5);\n}\n\n\n.apexcharts-inner {\n  position: relative;\n}\n\n.apexcharts-text tspan {\n  font-family: inherit;\n}\n\n.legend-mouseover-inactive {\n  transition: 0.15s ease all;\n  opacity: 0.20;\n}\n\n.apexcharts-series-collapsed {\n  opacity: 0;\n}\n\n.apexcharts-tooltip {\n  border-radius: 5px;\n  box-shadow: 2px 2px 6px -4px #999;\n  cursor: default;\n  font-size: 14px;\n  left: 62px;\n  opacity: 0;\n  pointer-events: none;\n  position: absolute;\n  top: 20px;\n  display: flex;\n  flex-direction: column;\n  overflow: hidden;\n  white-space: nowrap;\n  z-index: 12;\n  transition: 0.15s ease all;\n}\n\n.apexcharts-tooltip.apexcharts-active {\n  opacity: 1;\n  transition: 0.15s ease all;\n}\n\n.apexcharts-tooltip.apexcharts-theme-light {\n  border: 1px solid #e3e3e3;\n  background: rgba(255, 255, 255, 0.96);\n}\n\n.apexcharts-tooltip.apexcharts-theme-dark {\n  color: #fff;\n  background: rgba(30, 30, 30, 0.8);\n}\n\n.apexcharts-tooltip * {\n  font-family: inherit;\n}\n\n\n.apexcharts-tooltip-title {\n  padding: 6px;\n  font-size: 15px;\n  margin-bottom: 4px;\n}\n\n.apexcharts-tooltip.apexcharts-theme-light .apexcharts-tooltip-title {\n  background: #ECEFF1;\n  border-bottom: 1px solid #ddd;\n}\n\n.apexcharts-tooltip.apexcharts-theme-dark .apexcharts-tooltip-title {\n  background: rgba(0, 0, 0, 0.7);\n  border-bottom: 1px solid #333;\n}\n\n.apexcharts-tooltip-text-value,\n.apexcharts-tooltip-text-z-value {\n  display: inline-block;\n  font-weight: 600;\n  margin-left: 5px;\n}\n\n.apexcharts-tooltip-text-z-label:empty,\n.apexcharts-tooltip-text-z-value:empty {\n  display: none;\n}\n\n.apexcharts-tooltip-text-value,\n.apexcharts-tooltip-text-z-value {\n  font-weight: 600;\n}\n\n.apexcharts-tooltip-marker {\n  width: 12px;\n  height: 12px;\n  position: relative;\n  top: 0px;\n  margin-right: 10px;\n  border-radius: 50%;\n}\n\n.apexcharts-tooltip-series-group {\n  padding: 0 10px;\n  display: none;\n  text-align: left;\n  justify-content: left;\n  align-items: center;\n}\n\n.apexcharts-tooltip-series-group.apexcharts-active .apexcharts-tooltip-marker {\n  opacity: 1;\n}\n\n.apexcharts-tooltip-series-group.apexcharts-active,\n.apexcharts-tooltip-series-group:last-child {\n  padding-bottom: 4px;\n}\n\n.apexcharts-tooltip-series-group-hidden {\n  opacity: 0;\n  height: 0;\n  line-height: 0;\n  padding: 0 !important;\n}\n\n.apexcharts-tooltip-y-group {\n  padding: 6px 0 5px;\n}\n\n.apexcharts-tooltip-candlestick {\n  padding: 4px 8px;\n}\n\n.apexcharts-tooltip-candlestick>div {\n  margin: 4px 0;\n}\n\n.apexcharts-tooltip-candlestick span.value {\n  font-weight: bold;\n}\n\n.apexcharts-tooltip-rangebar {\n  padding: 5px 8px;\n}\n\n.apexcharts-tooltip-rangebar .category {\n  font-weight: 600;\n  color: #777;\n}\n\n.apexcharts-tooltip-rangebar .series-name {\n  font-weight: bold;\n  display: block;\n  margin-bottom: 5px;\n}\n\n.apexcharts-xaxistooltip {\n  opacity: 0;\n  padding: 9px 10px;\n  pointer-events: none;\n  color: #373d3f;\n  font-size: 13px;\n  text-align: center;\n  border-radius: 2px;\n  position: absolute;\n  z-index: 10;\n  background: #ECEFF1;\n  border: 1px solid #90A4AE;\n  transition: 0.15s ease all;\n}\n\n.apexcharts-xaxistooltip.apexcharts-theme-dark {\n  background: rgba(0, 0, 0, 0.7);\n  border: 1px solid rgba(0, 0, 0, 0.5);\n  color: #fff;\n}\n\n.apexcharts-xaxistooltip:after,\n.apexcharts-xaxistooltip:before {\n  left: 50%;\n  border: solid transparent;\n  content: " ";\n  height: 0;\n  width: 0;\n  position: absolute;\n  pointer-events: none;\n}\n\n.apexcharts-xaxistooltip:after {\n  border-color: rgba(236, 239, 241, 0);\n  border-width: 6px;\n  margin-left: -6px;\n}\n\n.apexcharts-xaxistooltip:before {\n  border-color: rgba(144, 164, 174, 0);\n  border-width: 7px;\n  margin-left: -7px;\n}\n\n.apexcharts-xaxistooltip-bottom:after,\n.apexcharts-xaxistooltip-bottom:before {\n  bottom: 100%;\n}\n\n.apexcharts-xaxistooltip-top:after,\n.apexcharts-xaxistooltip-top:before {\n  top: 100%;\n}\n\n.apexcharts-xaxistooltip-bottom:after {\n  border-bottom-color: #ECEFF1;\n}\n\n.apexcharts-xaxistooltip-bottom:before {\n  border-bottom-color: #90A4AE;\n}\n\n.apexcharts-xaxistooltip-bottom.apexcharts-theme-dark:after {\n  border-bottom-color: rgba(0, 0, 0, 0.5);\n}\n\n.apexcharts-xaxistooltip-bottom.apexcharts-theme-dark:before {\n  border-bottom-color: rgba(0, 0, 0, 0.5);\n}\n\n.apexcharts-xaxistooltip-top:after {\n  border-top-color: #ECEFF1\n}\n\n.apexcharts-xaxistooltip-top:before {\n  border-top-color: #90A4AE;\n}\n\n.apexcharts-xaxistooltip-top.apexcharts-theme-dark:after {\n  border-top-color: rgba(0, 0, 0, 0.5);\n}\n\n.apexcharts-xaxistooltip-top.apexcharts-theme-dark:before {\n  border-top-color: rgba(0, 0, 0, 0.5);\n}\n\n.apexcharts-xaxistooltip.apexcharts-active {\n  opacity: 1;\n  transition: 0.15s ease all;\n}\n\n.apexcharts-yaxistooltip {\n  opacity: 0;\n  padding: 4px 10px;\n  pointer-events: none;\n  color: #373d3f;\n  font-size: 13px;\n  text-align: center;\n  border-radius: 2px;\n  position: absolute;\n  z-index: 10;\n  background: #ECEFF1;\n  border: 1px solid #90A4AE;\n}\n\n.apexcharts-yaxistooltip.apexcharts-theme-dark {\n  background: rgba(0, 0, 0, 0.7);\n  border: 1px solid rgba(0, 0, 0, 0.5);\n  color: #fff;\n}\n\n.apexcharts-yaxistooltip:after,\n.apexcharts-yaxistooltip:before {\n  top: 50%;\n  border: solid transparent;\n  content: " ";\n  height: 0;\n  width: 0;\n  position: absolute;\n  pointer-events: none;\n}\n\n.apexcharts-yaxistooltip:after {\n  border-color: rgba(236, 239, 241, 0);\n  border-width: 6px;\n  margin-top: -6px;\n}\n\n.apexcharts-yaxistooltip:before {\n  border-color: rgba(144, 164, 174, 0);\n  border-width: 7px;\n  margin-top: -7px;\n}\n\n.apexcharts-yaxistooltip-left:after,\n.apexcharts-yaxistooltip-left:before {\n  left: 100%;\n}\n\n.apexcharts-yaxistooltip-right:after,\n.apexcharts-yaxistooltip-right:before {\n  right: 100%;\n}\n\n.apexcharts-yaxistooltip-left:after {\n  border-left-color: #ECEFF1;\n}\n\n.apexcharts-yaxistooltip-left:before {\n  border-left-color: #90A4AE;\n}\n\n.apexcharts-yaxistooltip-left.apexcharts-theme-dark:after {\n  border-left-color: rgba(0, 0, 0, 0.5);\n}\n\n.apexcharts-yaxistooltip-left.apexcharts-theme-dark:before {\n  border-left-color: rgba(0, 0, 0, 0.5);\n}\n\n.apexcharts-yaxistooltip-right:after {\n  border-right-color: #ECEFF1;\n}\n\n.apexcharts-yaxistooltip-right:before {\n  border-right-color: #90A4AE;\n}\n\n.apexcharts-yaxistooltip-right.apexcharts-theme-dark:after {\n  border-right-color: rgba(0, 0, 0, 0.5);\n}\n\n.apexcharts-yaxistooltip-right.apexcharts-theme-dark:before {\n  border-right-color: rgba(0, 0, 0, 0.5);\n}\n\n.apexcharts-yaxistooltip.apexcharts-active {\n  opacity: 1;\n}\n\n.apexcharts-yaxistooltip-hidden {\n  display: none;\n}\n\n.apexcharts-xcrosshairs,\n.apexcharts-ycrosshairs {\n  pointer-events: none;\n  opacity: 0;\n  transition: 0.15s ease all;\n}\n\n.apexcharts-xcrosshairs.apexcharts-active,\n.apexcharts-ycrosshairs.apexcharts-active {\n  opacity: 1;\n  transition: 0.15s ease all;\n}\n\n.apexcharts-ycrosshairs-hidden {\n  opacity: 0;\n}\n\n.apexcharts-selection-rect {\n  cursor: move;\n}\n\n.svg_select_boundingRect, .svg_select_points_rot {\n  pointer-events: none;\n  opacity: 0;\n  visibility: hidden;\n}\n.apexcharts-selection-rect + g .svg_select_boundingRect,\n.apexcharts-selection-rect + g .svg_select_points_rot {\n  opacity: 0;\n  visibility: hidden;\n}\n\n.apexcharts-selection-rect + g .svg_select_points_l,\n.apexcharts-selection-rect + g .svg_select_points_r {\n  cursor: ew-resize;\n  opacity: 1;\n  visibility: visible;\n}\n\n.svg_select_points {\n  fill: #efefef;\n  stroke: #333;\n  rx: 2;\n}\n\n.apexcharts-svg.apexcharts-zoomable.hovering-zoom {\n  cursor: crosshair\n}\n\n.apexcharts-svg.apexcharts-zoomable.hovering-pan {\n  cursor: move\n}\n\n.apexcharts-zoom-icon,\n.apexcharts-zoomin-icon,\n.apexcharts-zoomout-icon,\n.apexcharts-reset-icon,\n.apexcharts-pan-icon,\n.apexcharts-selection-icon,\n.apexcharts-menu-icon,\n.apexcharts-toolbar-custom-icon {\n  cursor: pointer;\n  width: 20px;\n  height: 20px;\n  line-height: 24px;\n  color: #6E8192;\n  text-align: center;\n}\n\n.apexcharts-zoom-icon svg,\n.apexcharts-zoomin-icon svg,\n.apexcharts-zoomout-icon svg,\n.apexcharts-reset-icon svg,\n.apexcharts-menu-icon svg {\n  fill: #6E8192;\n}\n\n.apexcharts-selection-icon svg {\n  fill: #444;\n  transform: scale(0.76)\n}\n\n.apexcharts-theme-dark .apexcharts-zoom-icon svg,\n.apexcharts-theme-dark .apexcharts-zoomin-icon svg,\n.apexcharts-theme-dark .apexcharts-zoomout-icon svg,\n.apexcharts-theme-dark .apexcharts-reset-icon svg,\n.apexcharts-theme-dark .apexcharts-pan-icon svg,\n.apexcharts-theme-dark .apexcharts-selection-icon svg,\n.apexcharts-theme-dark .apexcharts-menu-icon svg,\n.apexcharts-theme-dark .apexcharts-toolbar-custom-icon svg {\n  fill: #f3f4f5;\n}\n\n.apexcharts-canvas .apexcharts-zoom-icon.apexcharts-selected svg,\n.apexcharts-canvas .apexcharts-selection-icon.apexcharts-selected svg,\n.apexcharts-canvas .apexcharts-reset-zoom-icon.apexcharts-selected svg {\n  fill: #008FFB;\n}\n\n.apexcharts-theme-light .apexcharts-selection-icon:not(.apexcharts-selected):hover svg,\n.apexcharts-theme-light .apexcharts-zoom-icon:not(.apexcharts-selected):hover svg,\n.apexcharts-theme-light .apexcharts-zoomin-icon:hover svg,\n.apexcharts-theme-light .apexcharts-zoomout-icon:hover svg,\n.apexcharts-theme-light .apexcharts-reset-icon:hover svg,\n.apexcharts-theme-light .apexcharts-menu-icon:hover svg {\n  fill: #333;\n}\n\n.apexcharts-selection-icon,\n.apexcharts-menu-icon {\n  position: relative;\n}\n\n.apexcharts-reset-icon {\n  margin-left: 5px;\n}\n\n.apexcharts-zoom-icon,\n.apexcharts-reset-icon,\n.apexcharts-menu-icon {\n  transform: scale(0.85);\n}\n\n.apexcharts-zoomin-icon,\n.apexcharts-zoomout-icon {\n  transform: scale(0.7)\n}\n\n.apexcharts-zoomout-icon {\n  margin-right: 3px;\n}\n\n.apexcharts-pan-icon {\n  transform: scale(0.62);\n  position: relative;\n  left: 1px;\n  top: 0px;\n}\n\n.apexcharts-pan-icon svg {\n  fill: #fff;\n  stroke: #6E8192;\n  stroke-width: 2;\n}\n\n.apexcharts-pan-icon.apexcharts-selected svg {\n  stroke: #008FFB;\n}\n\n.apexcharts-pan-icon:not(.apexcharts-selected):hover svg {\n  stroke: #333;\n}\n\n.apexcharts-toolbar {\n  position: absolute;\n  z-index: 11;\n  max-width: 176px;\n  text-align: right;\n  border-radius: 3px;\n  padding: 0px 6px 2px 6px;\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n}\n\n.apexcharts-menu {\n  background: #fff;\n  position: absolute;\n  top: 100%;\n  border: 1px solid #ddd;\n  border-radius: 3px;\n  padding: 3px;\n  right: 10px;\n  opacity: 0;\n  min-width: 110px;\n  transition: 0.15s ease all;\n  pointer-events: none;\n}\n\n.apexcharts-menu.apexcharts-menu-open {\n  opacity: 1;\n  pointer-events: all;\n  transition: 0.15s ease all;\n}\n\n.apexcharts-menu-item {\n  padding: 6px 7px;\n  font-size: 12px;\n  cursor: pointer;\n}\n\n.apexcharts-theme-light .apexcharts-menu-item:hover {\n  background: #eee;\n}\n\n.apexcharts-theme-dark .apexcharts-menu {\n  background: rgba(0, 0, 0, 0.7);\n  color: #fff;\n}\n\n@media screen and (min-width: 768px) {\n  .apexcharts-canvas:hover .apexcharts-toolbar {\n    opacity: 1;\n  }\n}\n\n.apexcharts-datalabel.apexcharts-element-hidden {\n  opacity: 0;\n}\n\n.apexcharts-pie-label,\n.apexcharts-datalabels,\n.apexcharts-datalabel,\n.apexcharts-datalabel-label,\n.apexcharts-datalabel-value {\n  cursor: default;\n  pointer-events: none;\n}\n\n.apexcharts-pie-label-delay {\n  opacity: 0;\n  animation-name: opaque;\n  animation-duration: 0.3s;\n  animation-fill-mode: forwards;\n  animation-timing-function: ease;\n}\n\n.apexcharts-canvas .apexcharts-element-hidden {\n  opacity: 0;\n}\n\n.apexcharts-hide .apexcharts-series-points {\n  opacity: 0;\n}\n\n.apexcharts-gridline,\n.apexcharts-annotation-rect,\n.apexcharts-tooltip .apexcharts-marker,\n.apexcharts-area-series .apexcharts-area,\n.apexcharts-line,\n.apexcharts-zoom-rect,\n.apexcharts-toolbar svg,\n.apexcharts-area-series .apexcharts-series-markers .apexcharts-marker.no-pointer-events,\n.apexcharts-line-series .apexcharts-series-markers .apexcharts-marker.no-pointer-events,\n.apexcharts-radar-series path,\n.apexcharts-radar-series polygon {\n  pointer-events: none;\n}\n\n\n/* markers */\n\n.apexcharts-marker {\n  transition: 0.15s ease all;\n}\n\n@keyframes opaque {\n  0% {\n    opacity: 0;\n  }\n  100% {\n    opacity: 1;\n  }\n}\n\n\n/* Resize generated styles */\n\n@keyframes resizeanim {\n  from {\n    opacity: 0;\n  }\n  to {\n    opacity: 0;\n  }\n}\n\n.resize-triggers {\n  animation: 1ms resizeanim;\n  visibility: hidden;\n  opacity: 0;\n}\n\n.resize-triggers,\n.resize-triggers>div,\n.contract-trigger:before {\n  content: " ";\n  display: block;\n  position: absolute;\n  top: 0;\n  left: 0;\n  height: 100%;\n  width: 100%;\n  overflow: hidden;\n}\n\n.resize-triggers>div {\n  background: #eee;\n  overflow: auto;\n}\n\n.contract-trigger:before {\n  width: 200%;\n  height: 200%;\n}'), function () {
 	    function t(t) {
 	      var e = t.__resizeTriggers__,
 	          i = e.firstElementChild,
@@ -62253,9 +62539,9 @@ var Forestry = (function () {
 	    }, window.removeResizeListener = function (t, i) {
 	      t && (t.__resizeListeners__.splice(t.__resizeListeners__.indexOf(i), 1), t.__resizeListeners__.length || (t.removeEventListener("scroll", e), t.__resizeTriggers__.parentNode && (t.__resizeTriggers__ = !t.removeChild(t.__resizeTriggers__))));
 	    };
-	  }(), window.Apex = {};
+	  }(), void 0 === window.Apex && (window.Apex = {});
 
-	  var Et = function () {
+	  var Yt = function () {
 	    function t(i) {
 	      e(this, t), this.ctx = i, this.w = i.w;
 	    }
@@ -62263,19 +62549,22 @@ var Forestry = (function () {
 	    return a(t, [{
 	      key: "initModules",
 	      value: function value() {
-	        this.ctx.publicMethods = ["updateOptions", "updateSeries", "appendData", "appendSeries", "toggleSeries", "showSeries", "hideSeries", "setLocale", "resetSeries", "zoomX", "toggleDataPointSelection", "dataURI", "addXaxisAnnotation", "addYaxisAnnotation", "addPointAnnotation", "clearAnnotations", "removeAnnotation", "paper", "destroy"], this.ctx.eventList = ["click", "mousedown", "mousemove", "touchstart", "touchmove", "mouseup", "touchend"], this.ctx.animations = new x(this.ctx), this.ctx.axes = new K(this.ctx), this.ctx.core = new It(this.ctx.el, this.ctx), this.ctx.config = new N({}), this.ctx.data = new B(this.ctx), this.ctx.grid = new U(this.ctx), this.ctx.graphics = new b(this.ctx), this.ctx.coreUtils = new y(this.ctx), this.ctx.crosshairs = new tt(this.ctx), this.ctx.events = new J(this.ctx), this.ctx.exports = new _(this.ctx), this.ctx.localization = new Q(this.ctx), this.ctx.options = new L(), this.ctx.responsive = new et(this.ctx), this.ctx.series = new X(this.ctx), this.ctx.theme = new it(this.ctx), this.ctx.formatters = new V(this.ctx), this.ctx.titleSubtitle = new at(this.ctx), this.ctx.legend = new ct(this.ctx), this.ctx.toolbar = new dt(this.ctx), this.ctx.dimensions = new lt(this.ctx), this.ctx.updateHelpers = new Mt(this.ctx), this.ctx.zoomPanSelection = new gt(this.ctx), this.ctx.w.globals.tooltip = new vt(this.ctx);
+	        this.ctx.publicMethods = ["updateOptions", "updateSeries", "appendData", "appendSeries", "toggleSeries", "showSeries", "hideSeries", "setLocale", "resetSeries", "zoomX", "toggleDataPointSelection", "dataURI", "addXaxisAnnotation", "addYaxisAnnotation", "addPointAnnotation", "clearAnnotations", "removeAnnotation", "paper", "destroy"], this.ctx.eventList = ["click", "mousedown", "mousemove", "touchstart", "touchmove", "mouseup", "touchend"], this.ctx.animations = new x(this.ctx), this.ctx.axes = new J(this.ctx), this.ctx.core = new Et(this.ctx.el, this.ctx), this.ctx.config = new R({}), this.ctx.data = new O(this.ctx), this.ctx.grid = new _(this.ctx), this.ctx.graphics = new b(this.ctx), this.ctx.coreUtils = new w(this.ctx), this.ctx.crosshairs = new Q(this.ctx), this.ctx.events = new Z(this.ctx), this.ctx.exports = new V(this.ctx), this.ctx.localization = new $(this.ctx), this.ctx.options = new C(), this.ctx.responsive = new K(this.ctx), this.ctx.series = new E(this.ctx), this.ctx.theme = new tt(this.ctx), this.ctx.formatters = new W(this.ctx), this.ctx.titleSubtitle = new et(this.ctx), this.ctx.legend = new lt(this.ctx), this.ctx.toolbar = new ht(this.ctx), this.ctx.dimensions = new nt(this.ctx), this.ctx.updateHelpers = new Xt(this.ctx), this.ctx.zoomPanSelection = new ct(this.ctx), this.ctx.w.globals.tooltip = new bt(this.ctx);
 	      }
 	    }]), t;
 	  }(),
-	      Xt = function () {
+	      Ft = function () {
 	    function t(i) {
 	      e(this, t), this.ctx = i, this.w = i.w;
 	    }
 
 	    return a(t, [{
 	      key: "clear",
-	      value: function value() {
-	        this.ctx.zoomPanSelection && this.ctx.zoomPanSelection.destroy(), this.ctx.toolbar && this.ctx.toolbar.destroy(), this.ctx.animations = null, this.ctx.axes = null, this.ctx.annotations = null, this.ctx.core = null, this.ctx.data = null, this.ctx.grid = null, this.ctx.series = null, this.ctx.responsive = null, this.ctx.theme = null, this.ctx.formatters = null, this.ctx.titleSubtitle = null, this.ctx.legend = null, this.ctx.dimensions = null, this.ctx.options = null, this.ctx.crosshairs = null, this.ctx.zoomPanSelection = null, this.ctx.updateHelpers = null, this.ctx.toolbar = null, this.ctx.localization = null, this.ctx.w.globals.tooltip = null, this.clearDomElements();
+	      value: function value(t) {
+	        var e = t.isUpdating;
+	        this.ctx.zoomPanSelection && this.ctx.zoomPanSelection.destroy(), this.ctx.toolbar && this.ctx.toolbar.destroy(), this.ctx.animations = null, this.ctx.axes = null, this.ctx.annotations = null, this.ctx.core = null, this.ctx.data = null, this.ctx.grid = null, this.ctx.series = null, this.ctx.responsive = null, this.ctx.theme = null, this.ctx.formatters = null, this.ctx.titleSubtitle = null, this.ctx.legend = null, this.ctx.dimensions = null, this.ctx.options = null, this.ctx.crosshairs = null, this.ctx.zoomPanSelection = null, this.ctx.updateHelpers = null, this.ctx.toolbar = null, this.ctx.localization = null, this.ctx.w.globals.tooltip = null, this.clearDomElements({
+	          isUpdating: e
+	        });
 	      }
 	    }, {
 	      key: "killSVG",
@@ -62286,23 +62575,26 @@ var Forestry = (function () {
 	      }
 	    }, {
 	      key: "clearDomElements",
-	      value: function value() {
-	        var t = this,
-	            e = this.w.globals.dom.Paper.node;
-	        e.parentNode && e.parentNode.parentNode && (e.parentNode.parentNode.style.minHeight = "unset"), this.ctx.eventList.forEach(function (e) {
-	          t.w.globals.dom.baseEl.removeEventListener(e, t.ctx.events.documentEvent);
+	      value: function value(t) {
+	        var e = this,
+	            i = t.isUpdating,
+	            a = this.w.globals.dom.Paper.node;
+	        a.parentNode && a.parentNode.parentNode && !i && (a.parentNode.parentNode.style.minHeight = "unset");
+	        var s = this.w.globals.dom.baseEl;
+	        s && this.ctx.eventList.forEach(function (t) {
+	          s.removeEventListener(t, e.ctx.events.documentEvent);
 	        });
-	        var i = this.w.globals.dom;
+	        var r = this.w.globals.dom;
 	        if (null !== this.ctx.el) for (; this.ctx.el.firstChild;) {
 	          this.ctx.el.removeChild(this.ctx.el.firstChild);
 	        }
-	        this.killSVG(i.Paper), i.Paper.remove(), i.elWrap = null, i.elGraphical = null, i.elAnnotations = null, i.elLegendWrap = null, i.baseEl = null, i.elGridRect = null, i.elGridRectMask = null, i.elGridRectMarkerMask = null, i.elDefs = null;
+	        this.killSVG(r.Paper), r.Paper.remove(), r.elWrap = null, r.elGraphical = null, r.elAnnotations = null, r.elLegendWrap = null, r.baseEl = null, r.elGridRect = null, r.elGridRectMask = null, r.elGridRectMarkerMask = null, r.elDefs = null;
 	      }
 	    }]), t;
 	  }(),
-	      Yt = function () {
+	      Dt = function () {
 	    function t(i, a) {
-	      e(this, t), this.opts = a, this.ctx = this, this.w = new W(a).init(), this.el = i, this.w.globals.cuid = f.randomId(), this.w.globals.chartID = this.w.config.chart.id ? this.w.config.chart.id : this.w.globals.cuid, new Et(this).initModules(), this.create = f.bind(this.create, this), this.windowResizeHandler = this._windowResize.bind(this);
+	      e(this, t), this.opts = a, this.ctx = this, this.w = new N(a).init(), this.el = i, this.w.globals.cuid = f.randomId(), this.w.globals.chartID = this.w.config.chart.id ? f.escapeString(this.w.config.chart.id) : this.w.globals.cuid, new Yt(this).initModules(), this.create = f.bind(this.create, this), this.windowResizeHandler = this._windowResize.bind(this);
 	    }
 
 	    return a(t, [{
@@ -62332,21 +62624,21 @@ var Forestry = (function () {
 	      key: "create",
 	      value: function value(t, e) {
 	        var i = this.w;
-	        new Et(this).initModules();
+	        new Yt(this).initModules();
 	        var a = this.w.globals;
-	        (a.noData = !1, a.animationEnded = !1, this.responsive.checkResponsiveConfig(e), i.config.xaxis.convertedCatToNumeric) && new H(i.config).convertCatToNumericXaxis(i.config, this.ctx);
+	        (a.noData = !1, a.animationEnded = !1, this.responsive.checkResponsiveConfig(e), i.config.xaxis.convertedCatToNumeric) && new D(i.config).convertCatToNumericXaxis(i.config, this.ctx);
 	        if (null === this.el) return a.animationEnded = !0, null;
-	        if (this.core.setupElements(), 0 === a.svgWidth) return a.animationEnded = !0, null;
-	        var s = y.checkComboSeries(t);
+	        if (this.core.setupElements(), "treemap" === i.config.chart.type && (i.config.grid.show = !1, i.config.yaxis[0].show = !1), 0 === a.svgWidth) return a.animationEnded = !0, null;
+	        var s = w.checkComboSeries(t);
 	        a.comboCharts = s.comboCharts, a.comboBarCount = s.comboBarCount;
 	        var r = t.every(function (t) {
 	          return t.data && 0 === t.data.length;
 	        });
-	        (0 === t.length || r) && this.series.handleNoData(), this.events.setupEventHandlers(), this.data.parseData(t), this.theme.init(), new z(this).setGlobalMarkerSize(), this.formatters.setLabelFormatters(), this.titleSubtitle.draw(), a.noData && a.collapsedSeries.length !== a.series.length && !i.config.legend.showForSingleSeries || this.legend.init(), this.series.hasAllSeriesEqualX(), a.axisCharts && (this.core.coreCalculations(), "category" !== i.config.xaxis.type && this.formatters.setLabelFormatters()), this.formatters.heatmapLabelFormatters(), this.dimensions.plotCoords();
+	        (0 === t.length || r) && this.series.handleNoData(), this.events.setupEventHandlers(), this.data.parseData(t), this.theme.init(), new T(this).setGlobalMarkerSize(), this.formatters.setLabelFormatters(), this.titleSubtitle.draw(), a.noData && a.collapsedSeries.length !== a.series.length && !i.config.legend.showForSingleSeries || this.legend.init(), this.series.hasAllSeriesEqualX(), a.axisCharts && (this.core.coreCalculations(), "category" !== i.config.xaxis.type && this.formatters.setLabelFormatters()), this.formatters.heatmapLabelFormatters(), this.dimensions.plotCoords();
 	        var n = this.core.xySettings();
 	        this.grid.createGridMask();
 	        var o = this.core.plotChartType(t, n),
-	            l = new M(this);
+	            l = new I(this);
 	        l.bringForward(), i.config.dataLabels.background.enabled && l.dataLabelsBackground(), this.core.shiftGraphPosition();
 	        var h = {
 	          plot: {
@@ -62372,11 +62664,11 @@ var Forestry = (function () {
 	            a = i.w;
 	        return new Promise(function (s, r) {
 	          if (null === i.el) return r(new Error("Not enough data to display or target element not found"));
-	          (null === e || a.globals.allSeriesCollapsed) && i.series.handleNoData(), i.axes.drawAxis(a.config.chart.type, e.xyRatios), i.grid = new U(i);
+	          (null === e || a.globals.allSeriesCollapsed) && i.series.handleNoData(), "treemap" !== a.config.chart.type && i.axes.drawAxis(a.config.chart.type, e.xyRatios), i.grid = new _(i);
 	          var n = i.grid.drawGrid();
-	          i.annotations = new P(i), i.annotations.drawImageAnnos(), i.annotations.drawTextAnnos(), "back" === a.config.grid.position && n && a.globals.dom.elGraphical.add(n.el);
-	          var o = new j(t.ctx),
-	              l = new $(t.ctx);
+	          i.annotations = new L(i), i.annotations.drawImageAnnos(), i.annotations.drawTextAnnos(), "back" === a.config.grid.position && n && a.globals.dom.elGraphical.add(n.el);
+	          var o = new G(t.ctx),
+	              l = new q(t.ctx);
 	          if (null !== n && (o.xAxisLabelCorrections(n.xAxisTickWidth), l.setYAxisTextAlignments()), "back" === a.config.annotations.position && (a.globals.dom.Paper.add(a.globals.dom.elAnnotations), i.annotations.drawAxesAnnotations()), Array.isArray(e.elGraph)) for (var h = 0; h < e.elGraph.length; h++) {
 	            a.globals.dom.elGraphical.add(e.elGraph[h]);
 	          } else a.globals.dom.elGraphical.add(e.elGraph);
@@ -62404,8 +62696,10 @@ var Forestry = (function () {
 	        window.removeEventListener("resize", this.windowResizeHandler), window.removeResizeListener(this.el.parentNode, this._parentResizeCallback.bind(this));
 	        var t = this.w.config.chart.id;
 	        t && Apex._chartInstances.forEach(function (e, i) {
-	          e.id === t && Apex._chartInstances.splice(i, 1);
-	        }), new Xt(this.ctx).clear();
+	          e.id === f.escapeString(t) && Apex._chartInstances.splice(i, 1);
+	        }), new Ft(this.ctx).clear({
+	          isUpdating: !1
+	        });
 	      }
 	    }, {
 	      key: "updateOptions",
@@ -62449,16 +62743,16 @@ var Forestry = (function () {
 	          }
 	        }
 
-	        return i.w.config.series = a, e && (i.w.globals.initialSeries = f.clone(i.w.config.series)), this.update({
-	          series: this.w.config.series
-	        });
+	        return i.w.config.series = a, e && (i.w.globals.initialSeries = f.clone(i.w.config.series)), this.update();
 	      }
 	    }, {
 	      key: "update",
 	      value: function value(t) {
 	        var e = this;
 	        return new Promise(function (i, a) {
-	          new Xt(e.ctx).clear();
+	          new Ft(e.ctx).clear({
+	            isUpdating: !0
+	          });
 	          var s = e.create(e.w.config.series, t);
 	          if (!s) return i(e);
 	          e.mount(s).then(function () {
@@ -62571,14 +62865,14 @@ var Forestry = (function () {
 	      key: "getHighestValueInSeries",
 	      value: function value() {
 	        var t = arguments.length > 0 && void 0 !== arguments[0] ? arguments[0] : 0,
-	            e = new Z(this.ctx);
+	            e = new U(this.ctx);
 	        return e.getMinYMaxY(t).highestY;
 	      }
 	    }, {
 	      key: "getLowestValueInSeries",
 	      value: function value() {
 	        var t = arguments.length > 0 && void 0 !== arguments[0] ? arguments[0] : 0,
-	            e = new Z(this.ctx);
+	            e = new U(this.ctx);
 	        return e.getMinYMaxY(t).lowestY;
 	      }
 	    }, {
@@ -62604,7 +62898,7 @@ var Forestry = (function () {
 	    }, {
 	      key: "dataURI",
 	      value: function value() {
-	        return new _(this.ctx).dataURI();
+	        return new V(this.ctx).dataURI();
 	      }
 	    }, {
 	      key: "paper",
@@ -62621,19 +62915,18 @@ var Forestry = (function () {
 	      value: function value() {
 	        var t = this;
 	        clearTimeout(this.w.globals.resizeTimer), this.w.globals.resizeTimer = window.setTimeout(function () {
-	          t.w.globals.resized = !0, t.w.globals.dataChanged = !1, t.ctx.update({
-	            series: t.w.config.series
-	          });
+	          t.w.globals.resized = !0, t.w.globals.dataChanged = !1, t.ctx.update();
 	        }, 150);
 	      }
 	    }], [{
 	      key: "getChartByID",
 	      value: function value(t) {
-	        var e = Apex._chartInstances.filter(function (e) {
-	          return e.id === t;
+	        var e = f.escapeString(t),
+	            i = Apex._chartInstances.filter(function (t) {
+	          return t.id === e;
 	        })[0];
 
-	        return e && e.chart;
+	        return i && i.chart;
 	      }
 	    }, {
 	      key: "initOnLoad",
@@ -62670,7 +62963,7 @@ var Forestry = (function () {
 	    }]), t;
 	  }();
 
-	  module.exports = Yt;
+	  module.exports = Dt;
 	});
 
 	var strings$4 = {
@@ -62945,7 +63238,8 @@ var Forestry = (function () {
 	        create: 'Создание проекта лесного участка',
 	        edit: 'Редактирование проекта лесного участка'
 	      },
-	      tract: 'Урочище'
+	      tract: 'Урочище',
+	      year: 'Год таксации'
 	    }
 	  }
 	};
@@ -63127,11 +63421,12 @@ var Forestry = (function () {
 	      var _this2 = this;
 
 	      this._items = Array.isArray(items) && items || [];
-	      this._container.innerHTML = this._items.length ? "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th>".concat(translate$8('project.localForestry'), " / ").concat(translate$8('project.tract'), "</th>                    \n                    <th>").concat(translate$8('project.quadrants'), "</th>\n                </tr>\n            </thead>\n        </table>\n        <div class=\"scrollable style-4\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody>").concat(this._items.map(function (_ref) {
+	      this._container.innerHTML = this._items.length ? "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th>".concat(translate$8('project.localForestry'), " / ").concat(translate$8('project.tract'), "</th>                    \n                    <th>").concat(translate$8('project.quadrants'), "</th>\n                    <th>").concat(translate$8('project.year'), "</th>                    \n                </tr>\n            </thead>\n        </table>\n        <div class=\"scrollable\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody>").concat(this._items.map(function (_ref) {
 	        var local_forestry = _ref.local_forestry,
 	            stow = _ref.stow,
-	            num = _ref.num;
-	        return "<tr class=\"quadrant\">\n                        <td class=\"text\">".concat(local_forestry).concat(stow ? " / ".concat(stow) : '', "</td>\n                        <td class=\"value\">").concat(num, "</td>\n                    </tr>");
+	            num = _ref.num,
+	            taxation_year = _ref.taxation_year;
+	        return "<tr class=\"quadrant\">\n                        <td class=\"text\">".concat(local_forestry).concat(stow ? " / ".concat(stow) : '', "</td>                        \n                        <td class=\"value\">").concat(num, "</td>\n                        <td class=\"value\">").concat(taxation_year, "</td>\n                        <td>\n                            <i class=\"scanex-project-icon remove\"></i>\n                        </td>\n                    </tr>");
 	      }).join(''), "</tbody>\n            </table>\n        </div>") : '';
 
 	      var rows = this._container.querySelectorAll('tbody > tr');
@@ -63146,23 +63441,20 @@ var Forestry = (function () {
 	          event.detail = item.gmx_id;
 
 	          _this2.dispatchEvent(event);
-	        });
-	        row.addEventListener('mouseenter', function (e) {
-	          e.stopPropagation();
-	          var event = document.createEvent('Event');
-	          event.initEvent('item:over', false, false);
-	          event.detail = item.gmx_id;
-
-	          _this2.dispatchEvent(event);
-	        });
-	        row.addEventListener('mouseleave', function (e) {
-	          e.stopPropagation();
-	          var event = document.createEvent('Event');
-	          event.initEvent('item:out', false, false);
-	          event.detail = item.gmx_id;
-
-	          _this2.dispatchEvent(event);
-	        });
+	        }); // row.addEventListener('mouseenter', e => {
+	        //     e.stopPropagation();
+	        //     let event = document.createEvent('Event');            
+	        //     event.initEvent('item:over', false, false);
+	        //     event.detail = item.gmx_id;
+	        //     this.dispatchEvent(event);
+	        // });
+	        // row.addEventListener('mouseleave', e => {
+	        //     e.stopPropagation();
+	        //     let event = document.createEvent('Event');            
+	        //     event.initEvent('item:out', false, false);
+	        //     event.detail = item.gmx_id;
+	        //     this.dispatchEvent(event);
+	        // });
 	      };
 
 	      for (var i = 0; i < rows.length; ++i) {
@@ -63243,7 +63535,7 @@ var Forestry = (function () {
 	            total_stock_deal = _ref.total_stock_deal;
 	        return "<tr class=\"type\">\n                <td class=\"text\">".concat(species, "</td>\n                <td class=\"value\">").concat(m(permitted_stock), "</td>\n                <td class=\"value\">").concat(m(permitted_stock_deal), "</td>\n                <td class=\"value\">").concat(m(probable_stock), "</td>\n                <td class=\"value\">").concat(m(probable_stock_deal), "</td>\n                <td class=\"value\">").concat(m(total_stock), "</td>\n                <td class=\"value\">").concat(m(total_stock_deal), "</td>\n            </tr>");
 	      }).join('');
-	      this._container.innerHTML = rows ? "<div class=\"title\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>                 \n                        <tr>\n                            <td class=\"text\">".concat(translate$9('project.species'), "</td>\n                            <td class=\"text\" colspan=\"3\">").concat(translate$9('project.stock.label'), ", ").concat(translate$9('units.m'), "<sup>3</sup></td>\n                        </tr>\n                        <tr>\n                            <td></td>\n                            <td class=\"text\">").concat(translate$9('project.stock.permitted'), "</td>                        \n                            <td class=\"text\">").concat(translate$9('project.stock.probable'), "</td>\n                            <td class=\"text\">").concat(translate$9('project.stock.total'), "</td>\n                        </tr>\n                    </tbody>\t\t\t\t\t\t\n                </table>\n            </div>\n            <div class=\"content style-4\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>").concat(rows, "</tbody>\n                </table>\n            </div>") : '';
+	      this._container.innerHTML = rows ? "<div class=\"title\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>                 \n                        <tr>\n                            <td class=\"text\">".concat(translate$9('project.species'), "</td>\n                            <td class=\"text\" colspan=\"3\">").concat(translate$9('project.stock.label'), ", ").concat(translate$9('units.m'), "<sup>3</sup></td>\n                        </tr>\n                        <tr>\n                            <td></td>\n                            <td class=\"text\">").concat(translate$9('project.stock.permitted'), "</td>                        \n                            <td class=\"text\">").concat(translate$9('project.stock.probable'), "</td>\n                            <td class=\"text\">").concat(translate$9('project.stock.total'), "</td>\n                        </tr>\n                    </tbody>\t\t\t\t\t\t\n                </table>\n            </div>\n            <div class=\"content scrollable\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>").concat(rows, "</tbody>\n                </table>\n            </div>") : '';
 	    }
 	  }]);
 
@@ -63508,7 +63800,7 @@ var Forestry = (function () {
 
 	    _this._container.classList.add('scanex-forestry-project');
 
-	    _this._container.innerHTML = "<div class=\"header\">\n            <div class=\"header-left\">\n                <button class=\"scanex-requests-icon back\"></button>\n                <label class=\"head\">".concat(_this.translate('project.title.edit'), "</label>\n                <input class=\"description\" type=\"text\" value=\"\"></input>\n            </div>\n            <div class=\"header-right\">                                \n                <button class=\"request\">").concat(_this.translate('project.request'), "</button>\n                <button class=\"save\">").concat(_this.translate('project.save'), "</button>\n            </div>\n        </div>\n        <div class=\"content\">\n            <div class=\"species\"></div>\n            <div class=\"quadrants\"></div>            \n        </div>");
+	    _this._container.innerHTML = "<div class=\"header\">\n            <div class=\"header-left\">\n                <button class=\"scanex-project-icon back\"></button>\n                <label class=\"head\">".concat(_this.translate('project.title.edit'), "</label>\n                <input class=\"description\" type=\"text\" value=\"\"></input>\n            </div>\n            <div class=\"header-right\">                                \n                <button class=\"request\">").concat(_this.translate('project.request'), "</button>\n                <button class=\"save\">").concat(_this.translate('project.save'), "</button>\n            </div>\n        </div>\n        <div class=\"content\">\n            <div class=\"species\"></div>\n            <div class=\"quadrants\"></div>            \n        </div>");
 	    _this._description = _this._container.querySelector('.description');
 
 	    var btnBack = _this._container.querySelector('.back');
@@ -63559,6 +63851,19 @@ var Forestry = (function () {
 	      _this.dispatchEvent(event);
 	    });
 	    _this._quadrants = new Quadrants(_this._container.querySelector('.quadrants'));
+
+	    _this._quadrants.on('item:click', function (e) {
+	      var gmx_id = e.detail;
+	      var event = document.createEvent('Event');
+	      event.initEvent('quadrant:remove', false, false);
+	      event.detail = {
+	        gmx_id: gmx_id,
+	        forestryID: _this._forestryID
+	      };
+
+	      _this.dispatchEvent(event);
+	    });
+
 	    _this._species = new Species(_this._container.querySelector('.species'));
 	    return _this;
 	  }
@@ -63585,6 +63890,14 @@ var Forestry = (function () {
 	      }
 
 	      return ids;
+	    }
+	  }, {
+	    key: "remove",
+	    value: function remove(gmx_id) {
+	      var ids = this.quadrants.slice();
+	      return ids.filter(function (id) {
+	        return id !== gmx_id;
+	      });
 	    }
 	  }, {
 	    key: "getFilter",
@@ -63802,6 +64115,34 @@ var Forestry = (function () {
 	      };
 	    }());
 
+	    _this._project.on('quadrant:remove', /*#__PURE__*/function () {
+	      var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(e) {
+	        var _e$detail3, gmx_id, forestryID;
+
+	        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+	          while (1) {
+	            switch (_context3.prev = _context3.next) {
+	              case 0:
+	                _e$detail3 = e.detail, gmx_id = _e$detail3.gmx_id, forestryID = _e$detail3.forestryID;
+	                _context3.next = 3;
+	                return _this._removeQuadrant({
+	                  gmx_id: gmx_id,
+	                  forestryID: forestryID
+	                });
+
+	              case 3:
+	              case "end":
+	                return _context3.stop();
+	            }
+	          }
+	        }, _callee3);
+	      }));
+
+	      return function (_x3) {
+	        return _ref4.apply(this, arguments);
+	      };
+	    }());
+
 	    return _this;
 	  }
 
@@ -63817,15 +64158,15 @@ var Forestry = (function () {
 	  }, {
 	    key: "_click",
 	    value: function () {
-	      var _click2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(e) {
+	      var _click2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(e) {
 	        var _e$gmx, id, properties, status_calc, forestry_id, plot_project_status_id;
 
-	        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+	        return regeneratorRuntime.wrap(function _callee4$(_context4) {
 	          while (1) {
-	            switch (_context3.prev = _context3.next) {
+	            switch (_context4.prev = _context4.next) {
 	              case 0:
 	                if (!this.canClick) {
-	                  _context3.next = 16;
+	                  _context4.next = 16;
 	                  break;
 	                }
 
@@ -63834,38 +64175,38 @@ var Forestry = (function () {
 	                status_calc = properties.status_calc, forestry_id = properties.forestry_id, plot_project_status_id = properties.plot_project_status_id;
 
 	                if (!(status_calc === 1)) {
-	                  _context3.next = 14;
+	                  _context4.next = 14;
 	                  break;
 	                }
 
 	                if (!(plot_project_status_id === 1)) {
-	                  _context3.next = 10;
+	                  _context4.next = 10;
 	                  break;
 	                }
 
-	                _context3.next = 8;
+	                _context4.next = 8;
 	                return this.edit({
 	                  id: properties.id,
 	                  forestryID: forestry_id
 	                });
 
 	              case 8:
-	                _context3.next = 12;
+	                _context4.next = 12;
 	                break;
 
 	              case 10:
-	                _context3.next = 12;
+	                _context4.next = 12;
 	                return this.view({
 	                  id: properties.id,
 	                  forestryID: forestry_id
 	                });
 
 	              case 12:
-	                _context3.next = 16;
+	                _context4.next = 16;
 	                break;
 
 	              case 14:
-	                _context3.next = 16;
+	                _context4.next = 16;
 	                return this.view({
 	                  id: properties.id,
 	                  forestryID: forestry_id
@@ -63873,13 +64214,13 @@ var Forestry = (function () {
 
 	              case 16:
 	              case "end":
-	                return _context3.stop();
+	                return _context4.stop();
 	            }
 	          }
-	        }, _callee3, this);
+	        }, _callee4, this);
 	      }));
 
-	      function _click(_x3) {
+	      function _click(_x4) {
 	        return _click2.apply(this, arguments);
 	      }
 
@@ -63888,28 +64229,28 @@ var Forestry = (function () {
 	  }, {
 	    key: "_validate",
 	    value: function () {
-	      var _validate2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(ids) {
-	        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+	      var _validate2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(ids) {
+	        return regeneratorRuntime.wrap(function _callee5$(_context5) {
 	          while (1) {
-	            switch (_context4.prev = _context4.next) {
+	            switch (_context5.prev = _context5.next) {
 	              case 0:
-	                _context4.next = 2;
+	                _context5.next = 2;
 	                return this.httpPost("".concat(this._path, "/Forest/ValidateForestProjectGmxIds"), {
 	                  ForestBlocks: ids
 	                });
 
 	              case 2:
-	                return _context4.abrupt("return", _context4.sent);
+	                return _context5.abrupt("return", _context5.sent);
 
 	              case 3:
 	              case "end":
-	                return _context4.stop();
+	                return _context5.stop();
 	            }
 	          }
-	        }, _callee4, this);
+	        }, _callee5, this);
 	      }));
 
-	      function _validate(_x4) {
+	      function _validate(_x5) {
 	        return _validate2.apply(this, arguments);
 	      }
 
@@ -63938,16 +64279,16 @@ var Forestry = (function () {
 	  }, {
 	    key: "edit",
 	    value: function () {
-	      var _edit = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(_ref4) {
+	      var _edit = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(_ref5) {
 	        var id, forestryID, data, title, gmxIds, res, Status, SquareStat, ForestStat;
-	        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+	        return regeneratorRuntime.wrap(function _callee6$(_context6) {
 	          while (1) {
-	            switch (_context5.prev = _context5.next) {
+	            switch (_context6.prev = _context6.next) {
 	              case 0:
-	                id = _ref4.id, forestryID = _ref4.forestryID;
+	                id = _ref5.id, forestryID = _ref5.forestryID;
 
 	                if (!this._permissions.ForestProjectsEdit) {
-	                  _context5.next = 27;
+	                  _context6.next = 27;
 	                  break;
 	                }
 
@@ -63959,35 +64300,35 @@ var Forestry = (function () {
 
 	                this._legend.enable('parks');
 
-	                _context5.next = 8;
+	                _context6.next = 8;
 	                return this.httpGet("".concat(this._path, "/Forest/GetPlotProjectDraft"), {
 	                  ForestProjectID: id
 	                });
 
 	              case 8:
-	                data = _context5.sent;
+	                data = _context6.sent;
 
 	                if (!data) {
-	                  _context5.next = 25;
+	                  _context6.next = 25;
 	                  break;
 	                }
 
 	                title = data.title, gmxIds = data.gmxIds;
-	                _context5.next = 13;
+	                _context6.next = 13;
 	                return this._validate(gmxIds);
 
 	              case 13:
-	                res = _context5.sent;
+	                res = _context6.sent;
 
 	                if (!res) {
-	                  _context5.next = 25;
+	                  _context6.next = 25;
 	                  break;
 	                }
 
 	                Status = res.Status, SquareStat = res.SquareStat, ForestStat = res.ForestStat;
 
 	                if (!(Status === 'valid')) {
-	                  _context5.next = 23;
+	                  _context6.next = 23;
 	                  break;
 	                }
 
@@ -64003,15 +64344,15 @@ var Forestry = (function () {
 
 	                this._layers.quadrants.repaint();
 
-	                return _context5.abrupt("return", true);
+	                return _context6.abrupt("return", true);
 
 	              case 23:
 	                this._notification.warn(translate$b('quadrant.invalid'));
 
-	                return _context5.abrupt("return", false);
+	                return _context6.abrupt("return", false);
 
 	              case 25:
-	                _context5.next = 28;
+	                _context6.next = 28;
 	                break;
 
 	              case 27:
@@ -64019,13 +64360,13 @@ var Forestry = (function () {
 
 	              case 28:
 	              case "end":
-	                return _context5.stop();
+	                return _context6.stop();
 	            }
 	          }
-	        }, _callee5, this);
+	        }, _callee6, this);
 	      }));
 
-	      function edit(_x5) {
+	      function edit(_x6) {
 	        return _edit.apply(this, arguments);
 	      }
 
@@ -64034,32 +64375,32 @@ var Forestry = (function () {
 	  }, {
 	    key: "view",
 	    value: function () {
-	      var _view = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(_ref5) {
+	      var _view = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(_ref6) {
 	        var id, forestryID, data;
-	        return regeneratorRuntime.wrap(function _callee6$(_context6) {
+	        return regeneratorRuntime.wrap(function _callee7$(_context7) {
 	          while (1) {
-	            switch (_context6.prev = _context6.next) {
+	            switch (_context7.prev = _context7.next) {
 	              case 0:
-	                id = _ref5.id, forestryID = _ref5.forestryID;
+	                id = _ref6.id, forestryID = _ref6.forestryID;
 
 	                if (!this._permissions.ForestProjectsView) {
-	                  _context6.next = 8;
+	                  _context7.next = 8;
 	                  break;
 	                }
 
-	                _context6.next = 4;
+	                _context7.next = 4;
 	                return this.httpGet("".concat(this._path, "/Forest/GetPlotProjectApplication"), {
 	                  ForestProjectID: id
 	                });
 
 	              case 4:
-	                data = _context6.sent;
+	                data = _context7.sent;
 
 	                if (data) {
 	                  this._info.open(data);
 	                }
 
-	                _context6.next = 9;
+	                _context7.next = 9;
 	                break;
 
 	              case 8:
@@ -64067,13 +64408,13 @@ var Forestry = (function () {
 
 	              case 9:
 	              case "end":
-	                return _context6.stop();
+	                return _context7.stop();
 	            }
 	          }
-	        }, _callee6, this);
+	        }, _callee7, this);
 	      }));
 
-	      function view(_x6) {
+	      function view(_x7) {
 	        return _view.apply(this, arguments);
 	      }
 
@@ -64082,14 +64423,14 @@ var Forestry = (function () {
 	  }, {
 	    key: "_save",
 	    value: function () {
-	      var _save2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(_ref6) {
+	      var _save2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(_ref7) {
 	        var forestProjectID, title, forestQs;
-	        return regeneratorRuntime.wrap(function _callee7$(_context7) {
+	        return regeneratorRuntime.wrap(function _callee8$(_context8) {
 	          while (1) {
-	            switch (_context7.prev = _context7.next) {
+	            switch (_context8.prev = _context8.next) {
 	              case 0:
-	                forestProjectID = _ref6.forestProjectID, title = _ref6.title, forestQs = _ref6.forestQs;
-	                _context7.next = 3;
+	                forestProjectID = _ref7.forestProjectID, title = _ref7.title, forestQs = _ref7.forestQs;
+	                _context8.next = 3;
 	                return this.httpPost("".concat(this._path, "/Forest/StoreDraftForestProjectGmxIds"), {
 	                  forestProjectID: forestProjectID,
 	                  title: title,
@@ -64097,17 +64438,17 @@ var Forestry = (function () {
 	                });
 
 	              case 3:
-	                return _context7.abrupt("return", _context7.sent);
+	                return _context8.abrupt("return", _context8.sent);
 
 	              case 4:
 	              case "end":
-	                return _context7.stop();
+	                return _context8.stop();
 	            }
 	          }
-	        }, _callee7, this);
+	        }, _callee8, this);
 	      }));
 
-	      function _save(_x7) {
+	      function _save(_x8) {
 	        return _save2.apply(this, arguments);
 	      }
 
@@ -64116,19 +64457,19 @@ var Forestry = (function () {
 	  }, {
 	    key: "_createRequest",
 	    value: function () {
-	      var _createRequest2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(id) {
+	      var _createRequest2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9(id) {
 	        var data, event;
-	        return regeneratorRuntime.wrap(function _callee8$(_context8) {
+	        return regeneratorRuntime.wrap(function _callee9$(_context9) {
 	          while (1) {
-	            switch (_context8.prev = _context8.next) {
+	            switch (_context9.prev = _context9.next) {
 	              case 0:
-	                _context8.next = 2;
+	                _context9.next = 2;
 	                return this.httpPost("".concat(this._path, "/Forest/CreateApplicationFromDraft"), {
 	                  ForestProjectID: id
 	                });
 
 	              case 2:
-	                data = _context8.sent;
+	                data = _context9.sent;
 
 	                if (data) {
 	                  event = document.createEvent('Event');
@@ -64141,46 +64482,46 @@ var Forestry = (function () {
 
 	              case 4:
 	              case "end":
-	                return _context8.stop();
+	                return _context9.stop();
 	            }
 	          }
-	        }, _callee8, this);
+	        }, _callee9, this);
 	      }));
 
-	      function _createRequest(_x8) {
+	      function _createRequest(_x9) {
 	        return _createRequest2.apply(this, arguments);
 	      }
 
 	      return _createRequest;
 	    }()
 	  }, {
-	    key: "toggleQuadrant",
+	    key: "_removeQuadrant",
 	    value: function () {
-	      var _toggleQuadrant = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9(_ref7) {
+	      var _removeQuadrant2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(_ref8) {
 	        var gmx_id, forestryID, ids, data, Status, SquareStat, ForestStat;
-	        return regeneratorRuntime.wrap(function _callee9$(_context9) {
+	        return regeneratorRuntime.wrap(function _callee10$(_context10) {
 	          while (1) {
-	            switch (_context9.prev = _context9.next) {
+	            switch (_context10.prev = _context10.next) {
 	              case 0:
-	                gmx_id = _ref7.gmx_id, forestryID = _ref7.forestryID;
-	                ids = this._project.toggle(gmx_id);
+	                gmx_id = _ref8.gmx_id, forestryID = _ref8.forestryID;
+	                ids = this._project.remove(gmx_id);
 
 	                if (!(ids.length === 0)) {
-	                  _context9.next = 6;
+	                  _context10.next = 6;
 	                  break;
 	                }
 
 	                this._project.clear();
 
-	                _context9.next = 10;
+	                _context10.next = 10;
 	                break;
 
 	              case 6:
-	                _context9.next = 8;
+	                _context10.next = 8;
 	                return this._validate(ids);
 
 	              case 8:
-	                data = _context9.sent;
+	                data = _context10.sent;
 
 	                if (data) {
 	                  Status = data.Status, SquareStat = data.SquareStat, ForestStat = data.ForestStat;
@@ -64202,13 +64543,74 @@ var Forestry = (function () {
 
 	              case 10:
 	              case "end":
-	                return _context9.stop();
+	                return _context10.stop();
 	            }
 	          }
-	        }, _callee9, this);
+	        }, _callee10, this);
 	      }));
 
-	      function toggleQuadrant(_x9) {
+	      function _removeQuadrant(_x10) {
+	        return _removeQuadrant2.apply(this, arguments);
+	      }
+
+	      return _removeQuadrant;
+	    }()
+	  }, {
+	    key: "toggleQuadrant",
+	    value: function () {
+	      var _toggleQuadrant = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11(_ref9) {
+	        var gmx_id, forestryID, ids, data, Status, SquareStat, ForestStat;
+	        return regeneratorRuntime.wrap(function _callee11$(_context11) {
+	          while (1) {
+	            switch (_context11.prev = _context11.next) {
+	              case 0:
+	                gmx_id = _ref9.gmx_id, forestryID = _ref9.forestryID;
+	                ids = this._project.toggle(gmx_id);
+
+	                if (!(ids.length === 0)) {
+	                  _context11.next = 6;
+	                  break;
+	                }
+
+	                this._project.clear();
+
+	                _context11.next = 10;
+	                break;
+
+	              case 6:
+	                _context11.next = 8;
+	                return this._validate(ids);
+
+	              case 8:
+	                data = _context11.sent;
+
+	                if (data) {
+	                  Status = data.Status, SquareStat = data.SquareStat, ForestStat = data.ForestStat;
+
+	                  if (Status === 'valid') {
+	                    this._valid = {
+	                      forestryID: forestryID,
+	                      quadrants: SquareStat,
+	                      species: ForestStat
+	                    };
+	                  } else {
+	                    this._notification.warn(translate$b('quadrant.invalid'));
+	                  }
+
+	                  this._project.open(this._valid);
+
+	                  this._layers.quadrants.repaint();
+	                }
+
+	              case 10:
+	              case "end":
+	                return _context11.stop();
+	            }
+	          }
+	        }, _callee11, this);
+	      }));
+
+	      function toggleQuadrant(_x11) {
 	        return _toggleQuadrant.apply(this, arguments);
 	      }
 
@@ -64679,7 +65081,7 @@ var Forestry = (function () {
 
 	      var speciesOptions = this._parseOptionsHeader(data.species);
 
-	      this._container.innerHTML = "<div class=\"header\">".concat(this.translate('report.title'), "</div>\n\t\t\t<div class=\"content\">\n\t\t\t\t<div class=\"line\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(this.translate('report.type'), "</div>\n\t\t\t\t\t\t<select name=\"type\" class=\"type style-4\">\n\t\t\t\t\t\t\t").concat(typeOption, "\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"right-wrap\">\n\t\t\t\t\t\t<button class=\"save\">\u0421\u0444\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u043E\u0442\u0447\u0435\u0442</button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"line\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(this.translate('report.region'), "</div>\n\t\t\t\t\t\t<select name=\"region\" class=\"region\">\n\t\t\t\t\t\t\t").concat(regionOptions, "\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"right-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(this.translate('report.forestry'), "</div>\n\t\t\t\t\t\t<select name=\"forestry\" class=\"forestry\">\n\t\t\t\t\t\t </select>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"line\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(this.translate('report.districtForestry'), "</div>\n\t\t\t\t\t\t<select name=\"localForestry\" class=\"localForestry\">\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"right-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(this.translate('report.period'), "</div>\n\t\t\t\t\t\t<div class=\"date-inputs\">\n\t\t\t\t\t\t\t<span class=\"date\">\n\t\t\t\t\t\t\t<input class=\"dateBegin\" type=\"text\" placeholder=\"\" value=\"\">\n\t\t\t\t\t\t\t<i class=\"scanex-uploaded-icon calendar\"></i>\n\t\t\t\t\t\t\t</span>\n\n\t\t\t\t\t\t\t<span class=\"date\">\n\t\t\t\t\t\t\t<input class=\"dateEnd\" type=\"text\" placeholder=\"\" value=\"\">\n\t\t\t\t\t\t\t<i class=\"scanex-uploaded-icon calendar\"></i>\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"line species hidden\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(this.translate('report.vybpor'), "</div>\n\t\t\t\t\t\t<select name=\"species\" class=\"species\">\n\t\t\t\t\t\t\t").concat(speciesOptions, "\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"chartCont\">\n\t\t\t\t</div>\n\t\t\t</div>");
+	      this._container.innerHTML = "<div class=\"header\">".concat(this.translate('report.title'), "</div>\n\t\t\t<div class=\"content\">\n\t\t\t\t<div class=\"line\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(this.translate('report.type'), "</div>\n\t\t\t\t\t\t<select name=\"type\" class=\"type scrollable\">\n\t\t\t\t\t\t\t").concat(typeOption, "\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"right-wrap\">\n\t\t\t\t\t\t<button class=\"save\">\u0421\u0444\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u043E\u0442\u0447\u0435\u0442</button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"line\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(this.translate('report.region'), "</div>\n\t\t\t\t\t\t<select name=\"region\" class=\"region\">\n\t\t\t\t\t\t\t").concat(regionOptions, "\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"right-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(this.translate('report.forestry'), "</div>\n\t\t\t\t\t\t<select name=\"forestry\" class=\"forestry\">\n\t\t\t\t\t\t </select>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"line\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(this.translate('report.districtForestry'), "</div>\n\t\t\t\t\t\t<select name=\"localForestry\" class=\"localForestry\">\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"right-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(this.translate('report.period'), "</div>\n\t\t\t\t\t\t<div class=\"date-inputs\">\n\t\t\t\t\t\t\t<span class=\"date\">\n\t\t\t\t\t\t\t<input class=\"dateBegin\" type=\"text\" placeholder=\"\" value=\"\">\n\t\t\t\t\t\t\t<i class=\"scanex-uploaded-icon calendar\"></i>\n\t\t\t\t\t\t\t</span>\n\n\t\t\t\t\t\t\t<span class=\"date\">\n\t\t\t\t\t\t\t<input class=\"dateEnd\" type=\"text\" placeholder=\"\" value=\"\">\n\t\t\t\t\t\t\t<i class=\"scanex-uploaded-icon calendar\"></i>\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"line species hidden\">\n\t\t\t\t\t<div class=\"left-wrap\">\n\t\t\t\t\t\t<div class=\"title\">").concat(this.translate('report.vybpor'), "</div>\n\t\t\t\t\t\t<select name=\"species\" class=\"species\">\n\t\t\t\t\t\t\t").concat(speciesOptions, "\n\t\t\t\t\t\t</select>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"chartCont\">\n\t\t\t\t</div>\n\t\t\t</div>");
 	      var i18n = {
 	        previousMonth: 'Предыдущий месяц',
 	        nextMonth: 'Следующий месяц',
@@ -65121,7 +65523,7 @@ var Forestry = (function () {
 
 	    _this._container.classList.add('scanex-forestry-requests');
 
-	    _this._container.innerHTML = "<h1 class=\"header\">           \n            <label class=\"title\">".concat(_this.translate('request.header'), "</label>                   \n            <button class=\"create\">").concat(_this.translate('request.create'), "</button>                              \n        </h1>\n        <table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr height=\"42\">\n                    <th data-id=\"id\">").concat(_this.translate('request.id'), "</th>\n                    <th data-id=\"title\">").concat(_this.translate('request.title'), "</th>\n                    <th data-id=\"status\">").concat(_this.translate('request.status'), "</th>\n                    <th data-id=\"forestry\">").concat(_this.translate('request.forestry'), "</th>\n                    <th data-id=\"local_forestry\">").concat(_this.translate('request.local_forestry'), "</th>\n                    <th data-id=\"area\">").concat(_this.translate('request.area'), "</th>\n                    <th data-id=\"amount\">").concat(_this.translate('request.amount'), "<sup>3</sup></th>\n                    <th data-id=\"remove\"></th>\n                </tr>\n            </thead>\n        </table> \n        <div class=\"content style-4\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody class=\"items\"></tbody>\n            </table>\n        </div>");
+	    _this._container.innerHTML = "<h1 class=\"header\">           \n            <label class=\"title\">".concat(_this.translate('request.header'), "</label>                   \n            <button class=\"create\">").concat(_this.translate('request.create'), "</button>                              \n        </h1>\n        <table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th data-id=\"id\">").concat(_this.translate('request.id'), "</th>\n                    <th data-id=\"title\">").concat(_this.translate('request.title'), "</th>\n                    <th data-id=\"status\">").concat(_this.translate('request.status'), "</th>\n                    <th data-id=\"forestry\">").concat(_this.translate('request.forestry'), "</th>\n                    <th data-id=\"local_forestry\">").concat(_this.translate('request.local_forestry'), "</th>\n                    <th data-id=\"area\">").concat(_this.translate('request.area'), "</th>\n                    <th data-id=\"amount\">").concat(_this.translate('request.amount'), "<sup>3</sup></th>\n                    <th data-id=\"remove\"></th>\n                </tr>\n            </thead>\n        </table> \n        <div class=\"content scrollable\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody class=\"items\"></tbody>\n            </table>\n        </div>");
 	    _this._content = _this._container.querySelector('.items');
 
 	    _this._container.querySelector('.create').addEventListener('click', function (e) {
@@ -65157,7 +65559,7 @@ var Forestry = (function () {
 	            forestry = _ref2.forestry,
 	            localForestries = _ref2.localForestries,
 	            totalSquare = _ref2.totalSquare;
-	        return "<tr height=\"42\" class=\"request\">\n                <td class=\"value\" data-id=\"id\">".concat(number, "</td>\n                <td class=\"value\" data-id=\"title\">").concat(title, "</td>\n                <td class=\"value\" data-id=\"status\">").concat(status, "</td>\n                <td class=\"value\" data-id=\"forestry\">").concat(forestry, "</td>\n                <td class=\"value\" data-id=\"local_forestry\">").concat(localForestries, "</td>\n                <td class=\"value\" data-id=\"area\">").concat(_this2.ha(totalSquare), "</td>\n                <td class=\"value\" data-id=\"amount\"></td>\n                <td class=\"value\" data-id=\"remove\">").concat(statusID === 1 ? '<i class="scanex-requests-icon remove"></i>' : '', "</td>\n            </tr>");
+	        return "<tr class=\"request\">\n                <td class=\"value\" data-id=\"id\">".concat(number, "</td>\n                <td class=\"value\" data-id=\"title\">").concat(title, "</td>\n                <td class=\"value\" data-id=\"status\">").concat(status, "</td>\n                <td class=\"value\" data-id=\"forestry\">").concat(forestry, "</td>\n                <td class=\"value\" data-id=\"local_forestry\">").concat(localForestries, "</td>\n                <td class=\"value\" data-id=\"area\">").concat(_this2.ha(totalSquare), "</td>\n                <td class=\"value\" data-id=\"amount\"></td>\n                <td class=\"value\" data-id=\"remove\">").concat(statusID === 1 ? '<i class="scanex-requests-icon remove"></i>' : '', "</td>\n            </tr>");
 	      }).join('');
 
 	      var rows = this._content.querySelectorAll('.request');
@@ -65874,14 +66276,35 @@ var Forestry = (function () {
 	var strings$a = {
 	  rus: {
 	    uploaded: {
+	      add: 'Добавить',
+	      cancel: 'Остановить',
+	      cancelled: 'Остановлено',
+	      completed: 'Завершено',
+	      date: 'Дата добавления',
+	      error: 'Ошибка',
+	      load: 'Загрузка',
+	      loading: 'Загружается...',
+	      name: 'Наименование',
+	      next: 'Следующая',
+	      of: 'из',
+	      pause: 'Пауза',
+	      previous: 'Предыдущая',
+	      progress: 'Загружено',
+	      remove: 'Удалить',
+	      resume: 'Возобновить',
+	      speed: 'Скорость',
+	      started: 'Старт',
 	      title: 'Мои данные',
 	      type: 'Тип данных',
-	      date: 'Дата добавления',
-	      name: 'Наименование',
-	      previous: 'Предыдущая',
-	      next: 'Следующая',
-	      add: 'Добавить',
-	      remove: 'Удалить'
+	      waiting: 'Ожидание...',
+	      units: {
+	        tb: 'Тб',
+	        gb: 'Гб',
+	        mb: 'Мб',
+	        kb: 'Кб',
+	        b: 'б',
+	        s: 'с'
+	      }
 	    }
 	  }
 	};
@@ -65974,7 +66397,11 @@ var Forestry = (function () {
 
 	        this._files.setAttribute('multiple', 'true');
 
+	        this._files.setAttribute('accept', '.shp,.shx');
+
 	        this._files.style.visibility = 'hidden';
+	        this._files.style.width = '0px';
+	        this._files.style.height = '0px';
 
 	        this._container.appendChild(this._files);
 
@@ -66041,6 +66468,274 @@ var Forestry = (function () {
 	  return Uploaded;
 	}(View);
 
+	var T$1 = T;
+	T$1.addText('rus', {
+	  minimize: 'Свернуть',
+	  maximize: 'Показать',
+	  close: 'Закрыть'
+	});
+	T$1.addText('eng', {
+	  minimize: 'Minimize',
+	  maximize: 'Maximize',
+	  close: 'Close'
+	});
+
+	var FloatingPanel = /*#__PURE__*/function (_EventTarget) {
+	  _inherits(FloatingPanel, _EventTarget);
+
+	  var _super = _createSuper(FloatingPanel);
+
+	  function FloatingPanel(container) {
+	    var _this;
+
+	    var _ref = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
+	        _ref$title = _ref.title,
+	        title = _ref$title === void 0 ? '' : _ref$title,
+	        _ref$id = _ref.id,
+	        id = _ref$id === void 0 ? '' : _ref$id,
+	        _ref$closable = _ref.closable,
+	        closable = _ref$closable === void 0 ? true : _ref$closable,
+	        _ref$minimizable = _ref.minimizable,
+	        minimizable = _ref$minimizable === void 0 ? true : _ref$minimizable,
+	        _ref$left = _ref.left,
+	        left = _ref$left === void 0 ? 100 : _ref$left,
+	        _ref$top = _ref.top,
+	        top = _ref$top === void 0 ? 100 : _ref$top,
+	        _ref$modal = _ref.modal,
+	        modal = _ref$modal === void 0 ? false : _ref$modal,
+	        _ref$header = _ref.header,
+	        header = _ref$header === void 0 ? true : _ref$header;
+
+	    _classCallCheck(this, FloatingPanel);
+
+	    _this = _super.call(this);
+	    _this._id = id;
+	    _this._left = left;
+	    _this._top = top;
+	    _this._container = container;
+	    _this._modal = modal;
+
+	    _this._container.classList.add('noselect');
+
+	    _this._container.classList.add('scanex-floating-panel');
+
+	    _this._container.innerHTML = "<div class=\"panel-body\">\n                ".concat(header ? "<div class=\"panel-header\">\n                        <label class=\"panel-header-title\">".concat(title, "</label>\n                        <div class=\"panel-header-buttons\">\n                            ").concat(minimizable ? "<i title=\"".concat(T$1.getText('minimize'), "\" class=\"panel-toggle-button scanex-floating-panel-icon minimize\"></i>") : '', "\n                            ").concat(closable ? "<i title=\"".concat(T$1.getText('close'), "\" class=\"panel-close-button scanex-floating-panel-icon close\"></i>") : '', "\n                        </div>\n                    </div>") : '', "\n                <div class=\"panel-content\"></div>\n                <div class=\"panel-footer\"></div>\n            </div>");
+	    _this._body = _this._container.querySelector('.panel-body');
+	    _this._content = _this._container.querySelector('.panel-content');
+	    _this._footer = _this._container.querySelector('.panel-footer');
+	    _this.show = _this.show.bind(_assertThisInitialized(_this));
+	    _this.hide = _this.hide.bind(_assertThisInitialized(_this));
+	    _this._header = _this._container.querySelector('.panel-header');
+	    _this._title = _this._container.querySelector('.panel-header-title');
+	    _this.toggle = _this.toggle.bind(_assertThisInitialized(_this));
+	    _this._toggleButton = _this._container.querySelector('.panel-toggle-button');
+
+	    if (_this._toggleButton) {
+	      _this._toggleButton.addEventListener('click', _this.toggle);
+	    }
+
+	    _this._closeButton = _this._container.querySelector('.panel-close-button');
+
+	    if (_this._closeButton) {
+	      _this._closeButton.addEventListener('click', _this.hide);
+	    }
+
+	    _this._savePosition = _this._savePosition.bind(_assertThisInitialized(_this));
+	    _this._stopPropagation = _this._stopPropagation.bind(_assertThisInitialized(_this));
+	    _this._startMove = _this._startMove.bind(_assertThisInitialized(_this));
+	    _this._stopMove = _this._stopMove.bind(_assertThisInitialized(_this));
+	    _this._handleMove = _this._handleMove.bind(_assertThisInitialized(_this));
+
+	    _this._container.addEventListener('dragstart', _this.preventDefault);
+
+	    if (_this._header) {
+	      _this._header.addEventListener('mousedown', _this._startMove);
+
+	      _this._header.addEventListener('mousemove', _this._handleMove);
+	    }
+
+	    document.body.addEventListener('mouseup', _this._stopMove);
+
+	    _this._container.addEventListener('mousewheel', _this._stopPropagation);
+
+	    if (_this._modal) {
+	      _this._ovl = document.querySelector('.panel-modal-overlay');
+
+	      if (!_this._ovl) {
+	        _this._ovl = document.createElement('div');
+	        document.body.appendChild(_this._ovl);
+	        _this._ovl.className = 'panel-modal-overlay';
+	        _this._ovl.style.display = 'none';
+
+	        _this._ovl.addEventListener('mousemove', _this._stopPropagation);
+
+	        _this._ovl.addEventListener('mousewheel', _this._stopPropagation);
+
+	        _this._ovl.addEventListener('click', _this._stopPropagation);
+	      }
+
+	      _this._container.classList.add('panel-modal');
+	    } else {
+	      _this._container.classList.add('panel-non-modal');
+	    }
+
+	    return _this;
+	  }
+
+	  _createClass(FloatingPanel, [{
+	    key: "_startMove",
+	    value: function _startMove(e) {
+	      var _this$_container$getB = this._container.getBoundingClientRect(),
+	          left = _this$_container$getB.left,
+	          top = _this$_container$getB.top;
+
+	      this._offset = {
+	        x: e.clientX - left,
+	        y: e.clientY - top
+	      };
+	    }
+	  }, {
+	    key: "_stopMove",
+	    value: function _stopMove(e) {
+	      this._offset = null;
+
+	      this._savePosition();
+	    }
+	  }, {
+	    key: "_handleMove",
+	    value: function _handleMove(e) {
+	      if (this._offset) {
+	        this._container.style.left = "".concat(e.clientX - this._offset.x, "px");
+	        this._container.style.top = "".concat(e.clientY - this._offset.y, "px");
+	      }
+	    }
+	  }, {
+	    key: "_stopPropagation",
+	    value: function _stopPropagation(e) {
+	      e.stopPropagation();
+	    }
+	  }, {
+	    key: "show",
+	    value: function show() {
+	      if (this._modal) {
+	        this._ovl.style.display = 'block';
+	      }
+
+	      this._body.style.visibility = 'visible';
+	      var height = 0;
+
+	      if (this._header) {
+	        height = this._header.getBoundingClientRect().height;
+	      }
+
+	      var bodyRect = this._body.getBoundingClientRect();
+
+	      this._restorePosition(this._top - Math.round((height + bodyRect.height) / 2), this._left - Math.round(bodyRect.width / 2));
+
+	      var event = document.createEvent('Event');
+	      event.initEvent('show', false, false);
+	      this.dispatchEvent(event);
+	    }
+	  }, {
+	    key: "hide",
+	    value: function hide() {
+	      if (this._modal) {
+	        this._ovl.style.display = 'none';
+	      }
+
+	      this._body.style.visibility = 'hidden';
+	      var event = document.createEvent('Event');
+	      event.initEvent('hide', false, false);
+	      this.dispatchEvent(event);
+	    }
+	  }, {
+	    key: "toggle",
+	    value: function toggle() {
+	      if (this._content.style.display == 'none') {
+	        this._toggleButton.classList.remove('maximize');
+
+	        this._toggleButton.classList.add('minimize');
+
+	        this._content.style.display = 'block';
+	      } else {
+	        this._toggleButton.classList.remove('minimize');
+
+	        this._toggleButton.classList.add('maximize');
+
+	        this._content.style.display = 'none';
+	      }
+	    }
+	  }, {
+	    key: "_restorePosition",
+	    value: function _restorePosition(top, left) {
+	      if (typeof this._id === 'string' && this._id != '') {
+	        var x = localStorage.getItem("".concat(this._id, ".left")) || left;
+	        var y = localStorage.getItem("".concat(this._id, ".top")) || top;
+	        this._container.style.left = "".concat(x, "px");
+	        this._container.style.top = "".concat(y, "px");
+	      }
+	    }
+	  }, {
+	    key: "_savePosition",
+	    value: function _savePosition() {
+	      if (typeof this._id === 'string' && this._id != '') {
+	        var _this$_container$getB2 = this._container.getBoundingClientRect(),
+	            top = _this$_container$getB2.top,
+	            left = _this$_container$getB2.left;
+
+	        localStorage.setItem("".concat(this._id, ".top"), top);
+	        localStorage.setItem("".concat(this._id, ".left"), left);
+	      }
+	    }
+	  }, {
+	    key: "header",
+	    get: function get() {
+	      return this._header;
+	    }
+	  }, {
+	    key: "body",
+	    get: function get() {
+	      return this._body;
+	    }
+	  }, {
+	    key: "footer",
+	    get: function get() {
+	      return this._footer;
+	    }
+	  }, {
+	    key: "content",
+	    get: function get() {
+	      return this._content;
+	    }
+	  }, {
+	    key: "title",
+	    get: function get() {
+	      return this._title.innerText;
+	    },
+	    set: function set(text) {
+	      this._title.innerText = text;
+	    }
+	  }]);
+
+	  return FloatingPanel;
+	}(EventTarget);
+
+	var translate$g = T.getText.bind(T);
+
+	var roundBytes = function roundBytes(s) {
+	  if (s > 1024 * 1024 * 1024 * 1024 * 1.2) {
+	    return "".concat((Math.round(s / (1024 * 1024 * 1024 * 1024) * 100) / 100).toString(), " ").concat(translate$g('uploaded.units.tb'));
+	  } else if (s > 1024 * 1024 * 1024 * 1.2) {
+	    return "".concat((Math.round(s / (1024 * 1024 * 1024) * 100) / 100).toString(), " ").concat(translate$g('uploaded.units.gb'));
+	  } else if (s > 1024 * 1024 * 1.2) {
+	    return "".concat((Math.round(s / (1024 * 1024) * 100) / 100).toString(), " ").concat(translate$g('uploaded.units.mb'));
+	  } else if (s > 1024 * 1.2) {
+	    return "".concat((Math.round(s / 1024 * 100) / 100).toString(), " ").concat(translate$g('uploaded.units.kb'));
+	  } else {
+	    return "".concat(Math.round(s).toString(), " ").concat(translate$g('uploaded.units.b'));
+	  }
+	};
+
 	var UploadProgress = /*#__PURE__*/function (_EventTarget) {
 	  _inherits(UploadProgress, _EventTarget);
 
@@ -66058,46 +66753,105 @@ var Forestry = (function () {
 	      var _this = this;
 
 	      this._container = document.createElement('div');
-	      document.body.appendChild(this._container);
 
 	      this._container.classList.add('scanex-forestry-progress');
 
-	      this._container.innerHTML = "<div>\n            <button class=\"pause\">Pause</button>\n            <button class=\"cancel\">Cancel</button>\n        </div>\n        <ul class=\"files\">\n        </ul>\n        <div class=\"speed\"></div>";
-	      this._btnPause = this._container.querySelector('.pause');
+	      document.body.appendChild(this._container);
+	      this._panel = new FloatingPanel(this._container, {
+	        title: translate$g('uploaded.load'),
+	        id: 'uploaded',
+	        closable: true,
+	        minimizable: false,
+	        left: 500,
+	        top: 300,
+	        modal: false,
+	        header: true
+	      });
 
-	      this._btnPause.addEventListener('click', function (e) {
+	      this._panel.on('hide', this.stop.bind(this));
+
+	      this._panel.content.innerHTML = "<ul class=\"files\"></ul>\n            <div class=\"progress\"></div>\n            <div class=\"speed\"></div>";
+	      this._panel.footer.innerHTML = "<button></button>";
+	      this._btn = this._panel.footer.querySelector('button');
+
+	      this._btn.addEventListener('click', function (e) {
 	        e.stopPropagation();
 	        var event = document.createEvent('Event');
-	        event.initEvent('pause', false, false);
+	        event.initEvent(_this._started ? 'pause' : 'resume', false, false);
 
 	        _this.dispatchEvent(event);
 	      });
 
-	      this._btnCancel = this._container.querySelector('.cancel');
+	      this._files = this._panel.content.querySelector('.files');
+	      this._speed = this._panel.content.querySelector('.speed');
+	      this._progress = this._panel.content.querySelector('.progress');
 
-	      this._btnCancel.addEventListener('click', function (e) {
-	        e.stopPropagation();
-	        var event = document.createEvent('Event');
-	        event.initEvent('cancel', false, false);
-
-	        _this.dispatchEvent(event);
-	      });
-
-	      this._files = this._container.querySelector('.files');
-	      this._speed = this._container.querySelector('.speed');
+	      this._panel.show();
 	    }
 	  }, {
 	    key: "stop",
 	    value: function stop() {
 	      document.body.removeChild(this._container);
+	      var event = document.createEvent('Event');
+	      event.initEvent('stop', false, false);
+	      this.dispatchEvent(event);
 	    }
 	  }, {
-	    key: "status",
-	    value: function status(index, percent, _status) {
+	    key: "cancelled",
+	    value: function cancelled(index) {
+	      this._started = false;
+	      this._btn.innerText = translate$g('uploaded.resume');
+
+	      var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
+
+	      row.querySelector('.status').innerText = translate$g('uploaded.cancelled');
+	    }
+	  }, {
+	    key: "error",
+	    value: function error(index) {
+	      var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
+
+	      row.querySelector('.status').innerText = translate$g('uploaded.error');
+	    }
+	  }, {
+	    key: "completed",
+	    value: function completed(index, percent) {
 	      var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
 
 	      row.querySelector('.percent').innerText = percent;
-	      row.querySelector('.status').innerText = _status;
+	      row.querySelector('.status').innerText = translate$g('uploaded.completed');
+	    }
+	  }, {
+	    key: "waiting",
+	    value: function waiting(index, percent) {
+	      var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
+
+	      row.querySelector('.percent').innerText = percent;
+	      row.querySelector('.status').innerText = translate$g('uploaded.waiting');
+	    }
+	  }, {
+	    key: "started",
+	    value: function started(index) {
+	      this._started = true;
+	      this._btn.innerText = translate$g('uploaded.pause');
+
+	      var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
+
+	      row.querySelector('.status').innerText = translate$g('uploaded.started');
+	    }
+	  }, {
+	    key: "loading",
+	    value: function loading(index, percent) {
+	      var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
+
+	      row.querySelector('.percent').innerText = percent;
+	      row.querySelector('.status').innerText = translate$g('uploaded.loading');
+	    }
+	  }, {
+	    key: "stats",
+	    value: function stats(speed, size, total) {
+	      this._speed.innerText = "".concat(translate$g('uploaded.speed'), ": ").concat(roundBytes(speed), " / ").concat(translate$g('uploaded.units.s'));
+	      this._progress.innerText = "".concat(translate$g('uploaded.progress'), ": ").concat(roundBytes(size), " ").concat(translate$g('uploaded.of'), " ").concat(roundBytes(total));
 	    }
 	  }, {
 	    key: "files",
@@ -66117,7 +66871,7 @@ var Forestry = (function () {
 	  return UploadProgress;
 	}(EventTarget);
 
-	var translate$g = T.getText.bind(T);
+	var translate$h = T.getText.bind(T);
 
 	var Uploaded$1 = /*#__PURE__*/function (_Controller) {
 	  _inherits(Uploaded$1, _Controller);
@@ -66152,11 +66906,11 @@ var Forestry = (function () {
 	    _this._uploadFileSize = uploadFileSize;
 	    _this._progress = new UploadProgress();
 
-	    _this._progress.on('pause', function () {
-	      console.log('pause');
-	    }).on('cancel', function () {
-	      console.log('cancel');
-	    });
+	    _this._progress.on('resume', _this._resume.bind(_assertThisInitialized(_this)));
+
+	    _this._progress.on('pause', _this._pause.bind(_assertThisInitialized(_this)));
+
+	    _this._progress.on('stop', _this._stopSpeedTimer.bind(_assertThisInitialized(_this)));
 
 	    _this._view = _this._content.add('uploaded', Uploaded, {
 	      pageSize: _this._pageSize
@@ -66227,7 +66981,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 7:
-	                this._notification.error(translate$g('forbidden.uploaded'));
+	                this._notification.error(translate$h('forbidden.uploaded'));
 
 	              case 8:
 	              case "end":
@@ -66349,7 +67103,11 @@ var Forestry = (function () {
 
 	        var p = this._percent(this._upfiles[i]);
 
-	        this._progress.status(i, p, wait ? 'Waiting' : 'Completed');
+	        if (wait) {
+	          this._progress.waiting(i, p);
+	        } else {
+	          this._progress.completed(i, p);
+	        }
 	      }
 
 	      for (var _i2 = 0; _i2 < 8; _i2++) {
@@ -66392,7 +67150,7 @@ var Forestry = (function () {
 	            if (t.status === "none") {
 	              t.status = "progress";
 
-	              _this2._progress.status(i1, 0, "0%");
+	              _this2._progress.started(i);
 	            }
 
 	            t.parts[i1].status = "progress";
@@ -66411,7 +67169,7 @@ var Forestry = (function () {
 	              t.parts[i1].xhr = null;
 	              t.status = "error";
 
-	              _this2._progress.status(i, 0, 'Error');
+	              _this2._progress.error(i);
 
 	              _this2._errorUpload();
 	            };
@@ -66424,70 +67182,91 @@ var Forestry = (function () {
 
 	              var p = _this2._percent(t);
 
-	              _this2._progress.status(i, p, 'Loading...');
+	              _this2._progress.loading(i, p);
 
 	              _this2._currentSendBytes += event.loaded - lastSend; //подсчёт скорости
 
 	              lastSend = event.loaded;
 	            };
 
-	            req.onload = function () {
-	              t.parts[i1].xhr = null;
+	            req.onload = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
+	              var oksum, i3, p, sumFilesOk;
+	              return regeneratorRuntime.wrap(function _callee4$(_context4) {
+	                while (1) {
+	                  switch (_context4.prev = _context4.next) {
+	                    case 0:
+	                      t.parts[i1].xhr = null;
 
-	              if (req.status !== 200) {
-	                // анализируем HTTP-статус ответа, если статус не 200, то произошла ошибка
-	                t.parts[i1].status = 'error';
-	                t.status = "error";
+	                      if (!(req.status !== 200)) {
+	                        _context4.next = 8;
+	                        break;
+	                      }
 
-	                var p = _this2._percent(t);
+	                      // анализируем HTTP-статус ответа, если статус не 200, то произошла ошибка
+	                      t.parts[i1].status = 'error';
+	                      t.status = "error";
 
-	                _this2._progress.status(i, p, "Error");
+	                      _this2._progress.error(i);
 
-	                _this2._errorUpload();
-	              } else {
-	                if (_this2._upfilesStatus === "error") {
-	                  //если кто-то глюкнул останавливаем всё. Возможно это отмена
-	                  t.parts[i1].status = 'error';
-	                  t.status = "error";
+	                      _this2._errorUpload();
 
-	                  var _p = _this2._percent(t);
+	                      _context4.next = 23;
+	                      break;
 
-	                  _this2._progress.status(i1, _p, "Error");
+	                    case 8:
+	                      if (!(_this2._upfilesStatus === "error")) {
+	                        _context4.next = 13;
+	                        break;
+	                      }
 
-	                  return;
-	                } // если всё прошло гладко, выводим результат
+	                      //если кто-то глюкнул останавливаем всё. Возможно это отмена
+	                      t.parts[i1].status = 'error';
+	                      t.status = "error";
+
+	                      _this2._progress.error(i);
+
+	                      return _context4.abrupt("return");
+
+	                    case 13:
+	                      // если всё прошло гладко, выводим результат
+	                      t.parts[i1].status = 'finish';
+	                      oksum = 0;
+
+	                      for (i3 = 0; i3 < t.parts.length; i3++) {
+	                        if (t.parts[i3].status === "finish") oksum++;
+	                      }
+
+	                      if (oksum === t.parts.length) {
+	                        t.status = "finish";
+	                        p = _this2._percent(t);
+
+	                        _this2._progress.completed(i, p);
+	                      }
+
+	                      _this2._sendNextPart(); //проверяем что все файлы отосланы
 
 
-	                t.parts[i1].status = 'finish';
-	                var oksum = 0;
+	                      sumFilesOk = 0;
 
-	                for (var i3 = 0; i3 < t.parts.length; i3++) {
-	                  if (t.parts[i3].status === "finish") oksum++;
+	                      _this2._upfiles.forEach(function (a) {
+	                        if (a.status === "finish") sumFilesOk++;
+	                      });
+
+	                      if (!(sumFilesOk === _this2._upfiles.length)) {
+	                        _context4.next = 23;
+	                        break;
+	                      }
+
+	                      _context4.next = 23;
+	                      return _this2._finishUpload();
+
+	                    case 23:
+	                    case "end":
+	                      return _context4.stop();
+	                  }
 	                }
-
-	                if (oksum === t.parts.length) {
-	                  t.status = "finish";
-
-	                  var _p2 = _this2._percent(t);
-
-	                  _this2._progress.status(i, _p2, "Completed");
-	                }
-
-	                _this2._sendNextPart(); //проверяем что все файлы отосланы
-
-
-	                var sumFilesOk = 0;
-
-	                _this2._upfiles.forEach(function (a) {
-	                  if (a.status === "finish") sumFilesOk++;
-	                });
-
-	                if (sumFilesOk === _this2._upfiles.length) {
-	                  _this2._finishUpload();
-	                }
-	              }
-	            };
-
+	              }, _callee4);
+	            }));
 	            req.send(fd);
 	            return {
 	              v: {
@@ -66529,23 +67308,31 @@ var Forestry = (function () {
 	  }, {
 	    key: "_renewSpeedTimer",
 	    value: function _renewSpeedTimer() {
-	      var ready = 0;
-	      var total = 0;
+	      var _this$_upfiles$reduce = this._upfiles.reduce(function (_ref4, t) {
+	        var ready = _ref4.ready,
+	            total = _ref4.total;
+	        ready = t.parts.reduce(function (a, tp) {
+	          switch (tp.status) {
+	            case 'progress':
+	              return a + tp.size * (tp.send / tp.needSend);
 
-	      for (var i = 0; i < this._upfiles.length; i++) {
-	        var t = this._upfiles[i];
-	        total += t.totalBytes;
+	            case 'finish':
+	              return a + tp.size;
 
-	        for (var i5 = 0; i5 < t.parts.length; i5++) {
-	          var tp = t.parts[i5];
-
-	          if (tp.status === "progress") {
-	            ready = ready + tp.size * (tp.send / tp.needSend);
+	            default:
+	              return a;
 	          }
-
-	          if (tp.status === "finish") ready = ready + tp.size;
-	        }
-	      } //история скорости
+	        }, ready);
+	        return {
+	          ready: ready,
+	          total: total + t.totalBytes
+	        };
+	      }, {
+	        ready: 0,
+	        total: 0
+	      }),
+	          ready = _this$_upfiles$reduce.ready,
+	          total = _this$_upfiles$reduce.total; //история скорости
 
 
 	      this._oldSendBytes.unshift(this._currentSendBytes);
@@ -66560,18 +67347,45 @@ var Forestry = (function () {
 	        return sumSend += a;
 	      });
 
-	      var s = Math.round(sumSend / this._oldSendBytes.length); //байт в секунду
+	      var s = Math.round(sumSend / this._oldSendBytes.length); //байт в секунду 
 
-	      var str = this._roundBytes(s) + "/s";
-	      this._progress.speed = "Speed " + str + " Progress: " + this._roundBytes(ready) + " of " + this._roundBytes(total);
+	      this._progress.stats(s, ready, total);
+
 	      this._currentSendBytes = 0;
 	    }
 	  }, {
-	    key: "_roundBytes",
-	    value: function _roundBytes(s) {
-	      var str = "";
-	      if (s > 1024 * 1024 * 1024 * 1024 * 1.2) str = (Math.round(s / (1024 * 1024 * 1024 * 1024) * 100) / 100).toString() + " Tb";else if (s > 1024 * 1024 * 1024 * 1.2) str = (Math.round(s / (1024 * 1024 * 1024) * 100) / 100).toString() + " Gb";else if (s > 1024 * 1024 * 1.2) str = (Math.round(s / (1024 * 1024) * 100) / 100).toString() + " Mb";else if (s > 1024 * 1.2) str = (Math.round(s / 1024 * 100) / 100).toString() + " Kb";else str = Math.round(s).toString() + " b";
-	      return str;
+	    key: "_resume",
+	    value: function _resume() {
+	      if (this._upfilesStatus === "error") {
+	        this._startUpload();
+	      }
+	    }
+	  }, {
+	    key: "_pause",
+	    value: function _pause() {
+	      var _this3 = this;
+
+	      this._stopSpeedTimer();
+
+	      this._upfiles.forEach(function (t, i) {
+	        var ok = t.parts.reduce(function (a, tp) {
+	          if (tp.status === "progress" && tp.xhr != null) {
+	            tp.xhr.abort();
+	            tp.status = 'none';
+	            a = false;
+	          }
+
+	          return a;
+	        }, true);
+
+	        if (!ok) {
+	          t.status = "error";
+
+	          _this3._progress.cancelled(i);
+
+	          _this3._errorUpload();
+	        }
+	      });
 	    }
 	  }, {
 	    key: "_errorUpload",
@@ -66584,70 +67398,98 @@ var Forestry = (function () {
 	        // document.getElementById("resume").disabled = false;
 	        // document.getElementById("send").disabled = false;
 	        // document.getElementById("open").disabled = false;
-
-	        this._progress.stop();
+	        // this._progress.stop();            
 
 	        this.view();
 	      }
 	    }
 	  }, {
 	    key: "_finishUpload",
-	    value: function _finishUpload() {
-	      if (this._upfilesStatus === 'finish') return;
+	    value: function () {
+	      var _finishUpload2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5() {
+	        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+	          while (1) {
+	            switch (_context5.prev = _context5.next) {
+	              case 0:
+	                if (!(this._upfilesStatus === 'finish')) {
+	                  _context5.next = 4;
+	                  break;
+	                }
 
-	      if (this._upfilesStatus === 'progress') {
-	        this._stopSpeedTimer();
+	                _context5.next = 3;
+	                return this._createLayer(this._sandboxId);
 
-	        this._upfilesStatus = 'finish'; // document.getElementById('global_status').textContent = "Finish";
-	        // document.getElementById("cancel").disabled = true;
-	        // document.getElementById("resume").disabled = true;
-	        // document.getElementById("send").disabled = false;
-	        // document.getElementById("open").disabled = false;
+	              case 3:
+	                return _context5.abrupt("return");
 
-	        this._progress.stop();
+	              case 4:
+	                if (this._upfilesStatus === 'progress') {
+	                  this._stopSpeedTimer();
 
-	        this.view();
+	                  this._upfilesStatus = 'finish'; // document.getElementById('global_status').textContent = "Finish";
+	                  // document.getElementById("cancel").disabled = true;
+	                  // document.getElementById("resume").disabled = true;
+	                  // document.getElementById("send").disabled = false;
+	                  // document.getElementById("open").disabled = false;            
+
+	                  this._progress.stop();
+
+	                  this.view();
+	                }
+
+	              case 5:
+	              case "end":
+	                return _context5.stop();
+	            }
+	          }
+	        }, _callee5, this);
+	      }));
+
+	      function _finishUpload() {
+	        return _finishUpload2.apply(this, arguments);
 	      }
-	    }
+
+	      return _finishUpload;
+	    }()
 	  }, {
 	    key: "_query",
 	    value: function () {
-	      var _query2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(page) {
+	      var _query2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(page) {
 	        var fd, _yield$this$sendForm, Status, Result;
 
-	        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+	        return regeneratorRuntime.wrap(function _callee6$(_context6) {
 	          while (1) {
-	            switch (_context4.prev = _context4.next) {
+	            switch (_context6.prev = _context6.next) {
 	              case 0:
 	                fd = new FormData();
 	                fd.append('query', '');
 	                fd.append('orderby', 'datecreate');
 	                fd.append('pagesize', this._pageSize.toString());
 	                fd.append('page', page.toString());
-	                _context4.next = 7;
+	                _context6.next = 7;
 	                return this.sendForm("".concat(this._path, "/Layer/Search2.ashx?WrapStyle=None"), fd);
 
 	              case 7:
-	                _yield$this$sendForm = _context4.sent;
+	                _yield$this$sendForm = _context6.sent;
 	                Status = _yield$this$sendForm.Status;
 	                Result = _yield$this$sendForm.Result;
 
 	                if (!(Status === 'ok')) {
-	                  _context4.next = 14;
+	                  _context6.next = 14;
 	                  break;
 	                }
 
-	                return _context4.abrupt("return", Result);
+	                return _context6.abrupt("return", Result);
 
 	              case 14:
-	                return _context4.abrupt("return", false);
+	                return _context6.abrupt("return", false);
 
 	              case 15:
 	              case "end":
-	                return _context4.stop();
+	                return _context6.stop();
 	            }
 	          }
-	        }, _callee4, this);
+	        }, _callee6, this);
 	      }));
 
 	      function _query(_x2) {
@@ -66655,6 +67497,47 @@ var Forestry = (function () {
 	      }
 
 	      return _query;
+	    }()
+	  }, {
+	    key: "_createLayer",
+	    value: function () {
+	      var _createLayer2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(sandboxId) {
+	        var data;
+	        return regeneratorRuntime.wrap(function _callee7$(_context7) {
+	          while (1) {
+	            switch (_context7.prev = _context7.next) {
+	              case 0:
+	                _context7.next = 2;
+	                return this.httpGet("".concat(this._path, "/Sandbox/CreateLayers"), {
+	                  sandboxId: sandboxId
+	                });
+
+	              case 2:
+	                data = _context7.sent;
+
+	                if (!data) {
+	                  _context7.next = 7;
+	                  break;
+	                }
+
+	                return _context7.abrupt("return", true);
+
+	              case 7:
+	                return _context7.abrupt("return", false);
+
+	              case 8:
+	              case "end":
+	                return _context7.stop();
+	            }
+	          }
+	        }, _callee7, this);
+	      }));
+
+	      function _createLayer(_x3) {
+	        return _createLayer2.apply(this, arguments);
+	      }
+
+	      return _createLayer;
 	    }()
 	  }]);
 
@@ -66690,7 +67573,7 @@ var Forestry = (function () {
 	  return Warehouses;
 	}(LayerController);
 
-	var translate$h = T.getText.bind(T);
+	var translate$i = T.getText.bind(T);
 	var ALLOWED_LAYERS = ['warehouses', 'roads', 'declarations', 'incidents', 'quadrants', 'stands', 'projects', 'plots', 'fires', 'parks', 'forestries_local', 'forestries', 'regions', 'sentinel', 'landsat'].reverse();
 
 	var Map = /*#__PURE__*/function (_EventTarget) {
@@ -66927,27 +67810,11 @@ var Forestry = (function () {
 	          while (1) {
 	            switch (_context4.prev = _context4.next) {
 	              case 0:
-	                if (!this._permissions.MyData) {
-	                  _context4.next = 5;
-	                  break;
-	                }
-
-	                _context4.next = 3;
-	                return this._controllers.uploaded.view();
-
-	              case 3:
-	                _context4.next = 6;
-	                break;
-
-	              case 5:
-	                this._notification.error(translate$h('forbidden.uploaded'));
-
-	              case 6:
 	              case "end":
 	                return _context4.stop();
 	            }
 	          }
-	        }, _callee4, this);
+	        }, _callee4);
 	      }));
 
 	      function showUploaded() {
@@ -67484,30 +68351,7 @@ var Forestry = (function () {
 	    key: "unload",
 	    value: function unload() {
 	      this._baselayers.unload();
-	    } // async addCRLayer(layerID, mapID) {
-	    // 	const arr = await L.gmx.loadLayers([{
-	    //         hostName: '/',
-	    //         gmxEndPoints: {
-	    //             checkVersion: `${this._gmxPath}/Layer/CheckVersion.ashx`,
-	    //             layerProps: `${this._gmxPath}/Layer/GetLayerJson.ashx`,
-	    //             searchLayerItem: `${this._gmxPath}/VectorLayer/Search.ashx`,
-	    //             tileProps: `${this._gmxPath}/TileSender.ashx`,
-	    //             mapProps: `${this._gmxPath}/TileSender.ashx`
-	    // 		},
-	    // 		mapID: mapID || '3D448C6108A8441CAC25371616B0CBB0',
-	    // 		layerID: layerID
-	    // 	}], {})
-	    // 	const layer = arr[0];                
-	    // 	if (layer) {
-	    // 		layer.setZIndexOffset(-500000);
-	    // 		this._dateInterval.addLayer(layer);
-	    // 		this._map.addLayer(layer);
-	    // 	}
-	    // }
-	    // removeCRLayer(layerID) {
-	    // 	this._dateInterval.removeLayerByID(layerID);
-	    // }
-
+	    }
 	  }]);
 
 	  return Map;
