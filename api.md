@@ -35,6 +35,10 @@
 		```js
 		async showRequests();
 		```
+	* показать инциденты
+		```js
+		showIncidents();
+		```
 	* создание проекта
 		```js
 		async createRequest();

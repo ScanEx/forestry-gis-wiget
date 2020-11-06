@@ -2871,6 +2871,41 @@ function _get(target, property, receiver) {
   return _get(target, property, receiver || target);
 }
 
+function _slicedToArray(arr, i) {
+  return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest();
+}
+
+function _arrayWithHoles(arr) {
+  if (Array.isArray(arr)) return arr;
+}
+
+function _iterableToArrayLimit(arr, i) {
+  if (typeof Symbol === "undefined" || !(Symbol.iterator in Object(arr))) return;
+  var _arr = [];
+  var _n = true;
+  var _d = false;
+  var _e = undefined;
+
+  try {
+    for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+      _arr.push(_s.value);
+
+      if (i && _arr.length === i) break;
+    }
+  } catch (err) {
+    _d = true;
+    _e = err;
+  } finally {
+    try {
+      if (!_n && _i["return"] != null) _i["return"]();
+    } finally {
+      if (_d) throw _e;
+    }
+  }
+
+  return _arr;
+}
+
 function _unsupportedIterableToArray(o, minLen) {
   if (!o) return;
   if (typeof o === "string") return _arrayLikeToArray(o, minLen);
@@ -2886,6 +2921,10 @@ function _arrayLikeToArray(arr, len) {
   for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i];
 
   return arr2;
+}
+
+function _nonIterableRest() {
+  throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
 }
 
 function _createForOfIteratorHelper(o, allowArrayLike) {
@@ -22314,6 +22353,7 @@ var translate$2 = T.getText.bind(T);
 T.addText('rus', {
   DateInterval: {
     onlyChecked: 'Только отмеченные',
+    onlyOne: 'Только 1 снимок',
     title: 'Приблизьте карту для загрузки на таймлайн'
   }
 });
@@ -22323,10 +22363,11 @@ var _DAY = 60 * 60 * 24;
 var DateInterval = L$1.Control.extend({
   includes: L$1.Evented.prototype,
   options: {
-    position: 'bottom',
+    position: 'bottomleft',
     id: 'DateInterval',
     minZoom: 9,
     onlyChecked: true,
+    onlyOne: true,
     className: 'DateInterval'
   },
   initialize: function initialize(options) {
@@ -22348,11 +22389,16 @@ var DateInterval = L$1.Control.extend({
     this._topCont = L$1.DomUtil.create('div', 'top', this._container);
     this._onlyCheckedNode = L$1.DomUtil.create('input', '', this._topCont);
     this._onlyCheckedNode.type = 'checkbox';
-    this._onlyCheckedNode.checked = true; // this._topCont.innerHTML = `<input type="checkbox" id="onlyChecked" checked=${this.options.onlyChecked} /><label htmlFor="onlyChecked">${translate('DateInterval.onlyChecked')}</label>`;
-
+    this._onlyCheckedNode.checked = true;
     L$1.DomEvent.on(this._onlyCheckedNode, 'click', this._onlyChecked, this);
     this._onlyCheckedLabel = L$1.DomUtil.create('label', '', this._topCont);
     this._onlyCheckedLabel.innerHTML = translate$2('DateInterval.onlyChecked');
+    this._onlyOneNode = L$1.DomUtil.create('input', '', this._topCont);
+    this._onlyOneNode.type = 'checkbox';
+    this._onlyOneNode.checked = true;
+    L$1.DomEvent.on(this._onlyOneNode, 'click', this._onlyOne, this);
+    this._onlyOneLabel = L$1.DomUtil.create('label', '', this._topCont);
+    this._onlyOneLabel.innerHTML = translate$2('DateInterval.onlyOne');
     this._timeline = new links.Timeline(this._timelineNode, {
       locale: 'ru',
       width: '100%',
@@ -22398,9 +22444,68 @@ var DateInterval = L$1.Control.extend({
 
     this._timeline = null;
   },
+  _onlyOne: function _onlyOne(e) {
+    L$1.DomEvent.stopPropagation(e);
+    var checked = e.target.checked;
+    var layer = this._layers[this._activeTab];
+
+    if (layer) {
+      this.options.onlyOne = checked;
+
+      if (checked) {
+        var arr = Object.keys(layer._showDates);
+
+        this._toggleData(true, Number(arr[0]) || null);
+      }
+    }
+  },
   _onlyChecked: function _onlyChecked(e) {
     L$1.DomEvent.stopPropagation(e);
     var checked = e.target.checked;
+
+    if (checked) {
+      this._onlyOneNode.disabled = false;
+      this._onlyOneNode.checked = true;
+      var tm = this._timeline;
+
+      if (tm.data.length) {
+        var key = tm.data[tm.data.length - 1].start.getTime() / 1000;
+        var layer = this._layers[this._activeTab];
+
+        if (layer) {
+          layer._showDates = {};
+          layer._showDates[key] = true;
+
+          this._refreshTimeLine();
+
+          return;
+        }
+      }
+    } else {
+      this._onlyOneNode.disabled = true;
+      this._onlyOneNode.checked = false;
+    }
+
+    this._toggleData(checked);
+  },
+  _refreshTimeLine: function _refreshTimeLine() {
+    var layer = this._layers[this._activeTab];
+
+    if (layer) {
+      var tm = this._timeline;
+      tm.data.forEach(function (it, ind) {
+        var key = it.start.getTime() / 1000;
+
+        if (layer._showDates[key]) {
+          it.className = 'active';
+        } else {
+          it.className = '';
+        }
+      });
+      tm.redraw(); // layer.repaint();
+    }
+  },
+  _toggleData: function _toggleData(checked, utm) {
     var layer = this._layers[this._activeTab];
 
     if (layer) {
@@ -22409,7 +22514,7 @@ var DateInterval = L$1.Control.extend({
       tm.data.forEach(function (it, ind) {
         var key = it.start.getTime() / 1000;
 
-        if (checked) {
+        if (checked && key !== utm) {
           it.className = '';
           delete layer._showDates[key];
         } else {
@@ -22433,6 +22538,8 @@ var DateInterval = L$1.Control.extend({
       layer._showDates[utm] = true;
     }
 
+    this._timeline.redraw();
+
     layer.repaint();
   },
   // _keydown: function (ev) {
@@ -22455,7 +22562,15 @@ var DateInterval = L$1.Control.extend({
     var layer = this._layers[this._activeTab];
 
     if (ev && ev.date && layer && layer._showDates) {
-      this._toggleActive(ev.originalEvent.target, Math.floor(ev.date.getTime() / 1000));
+      var utm = Math.floor(ev.date.getTime() / 1000);
+
+      if (this.options.onlyOne) {
+        this._toggleData(true, utm);
+
+        layer._showDates = {};
+      }
+
+      this._toggleActive(ev.originalEvent.target, utm);
     }
   },
   _reSetDateInterval: function _reSetDateInterval() {
@@ -23396,10 +23511,20 @@ var Legend = L$1.Control.extend({
       var visible = !L$1.DomUtil.hasClass(btn, 'toggle-active');
 
       if (visible) {
-        L$1.DomUtil.addClass(btn, 'toggle-active');
+        _this3.enableGroup(id);
       } else {
-        L$1.DomUtil.removeClass(btn, 'toggle-active');
+        _this3.disableGroup(id);
       }
+    }, this);
+    return children;
+  },
+  enableGroup: function enableGroup(id) {
+    var container = this._container.querySelector(".group[data-id=".concat(id, "]"));
+
+    if (container) {
+      var btn = container.querySelector('.header').querySelector('.toggle');
+      L$1.DomUtil.addClass(btn, 'toggle-active');
+      var children = container.querySelector('.children');
 
       var _iterator = _createForOfIteratorHelper(children.querySelectorAll('.component')),
           _step;
@@ -23410,19 +23535,40 @@ var Legend = L$1.Control.extend({
 
           var _id = item.getAttribute('data-id');
 
-          if (visible) {
-            _this3.enable(_id);
-          } else {
-            _this3.disable(_id);
-          }
+          this.enable(_id);
         }
       } catch (err) {
         _iterator.e(err);
       } finally {
         _iterator.f();
       }
-    }, this);
-    return children;
+    }
+  },
+  disableGroup: function disableGroup(id) {
+    var container = this._container.querySelector(".group[data-id=".concat(id, "]"));
+
+    if (container) {
+      var btn = container.querySelector('.header').querySelector('.toggle');
+      L$1.DomUtil.removeClass(btn, 'toggle-active');
+      var children = container.querySelector('.children');
+
+      var _iterator2 = _createForOfIteratorHelper(children.querySelectorAll('.component')),
+          _step2;
+
+      try {
+        for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+          var item = _step2.value;
+
+          var _id2 = item.getAttribute('data-id');
+
+          this.disable(_id2);
+        }
+      } catch (err) {
+        _iterator2.e(err);
+      } finally {
+        _iterator2.f();
+      }
+    }
   }
 });
 
@@ -24036,8 +24182,20 @@ var strings = {
 };
 
 var STYLES = {
-  fillStyle: 'rgba(49, 243, 80, 0.25)',
-  strokeStyle: '#61E9F1',
+  fillStyle: document.createElement('canvas').getContext('2d').createPattern(L.gmxUtil.getPatternIcon(null, {
+    type: '',
+    opacity: 1,
+    weight: 1,
+    fillOpacity: 1,
+    fillPattern: {
+      style: 'diagonal1',
+      width: 2,
+      step: 16,
+      colors: [parseInt('61E9F1', 16)]
+    },
+    common: true
+  }).canvas, 'repeat'),
+  strokeStyle: '#1CC486',
   lineWidth: 2
 };
 
@@ -25682,6 +25840,8 @@ var strings$2 = {
     incident: {
       title: 'Рубка',
       titleFire: 'Гарь',
+      quadrant: 'Квартал',
+      stand: 'Выдел',
       titleDisease: 'Патология',
       areaFire: 'Пройденная пожаром площадь (Га)',
       areaFire1: 'Пройденная пожаром площадь насаждений, из которых возможна реализация древесины (Га)',
@@ -25746,31 +25906,7 @@ var Incidents = /*#__PURE__*/function (_BaseView) {
     _this._path = path;
     _this._layer = layer;
     _this._permission = permissions;
-    _this._buttonsStr = '';
-
-    if (_this._permission.IncidentDocuments) {
-      _this._buttonsStr += "<button class=\"detailBtn button\">".concat(_this.translate('incident.detail'), "</button>");
-    }
-
-    if (_this._permission.IncidentEdit) {
-      _this._buttonsStr += "<button class=\"editGeo button\">".concat(_this.translate('incident.editGeo'), "</button>");
-    }
-
-    if (_this._permission.IncidentSave) {
-      _this._buttonsStr += "<button class=\"saveGeo button\">".concat(_this.translate('incident.saveGeo'), "</button>");
-    }
-
-    if (_this._permission.ContiurUnload) {
-      _this._buttonsStr += "<button class=\"download button\">".concat(_this.translate('incident.downloadGeo'), "</button>");
-    }
-
-    if (_this._permission.ProbabilityRasterView) {
-      _this._buttonsStr += "<button class=\"verRastr button\">".concat(_this.translate('incident.verRastr'), "</button>");
-    }
-
-    if (_this._permission.CloudMaskView) {
-      _this._buttonsStr += "<button class=\"maskWater button\">".concat(_this.translate('incident.maskWater'), "</button>");
-    }
+    _this._buttonsStr = "\n\t\t\t".concat(_this._permission.IncidentDocuments ? "<button class=\"detailBtn button\">".concat(_this.translate('incident.detail'), "</button>") : '', "\n\t\t\t").concat(_this._permission.IncidentEdit ? "<button class=\"editGeo button\">".concat(_this.translate('incident.editGeo'), "</button>") : '', "\n\t\t\t").concat(_this._permission.IncidentSave ? "<button class=\"saveGeo button\">".concat(_this.translate('incident.saveGeo'), "</button>") : '', "\n\t\t\t").concat(_this._permission.ContourUnload ? "<button class=\"download button\">".concat(_this.translate('incident.downloadGeo'), "</button>") : '', "\n\t\t\t").concat(_this._permission.ProbabilityRasterView ? "<button class=\"verRastr button\">".concat(_this.translate('incident.verRastr'), "</button>") : '', "\n\t\t\t").concat(_this._permission.CloudMaskView ? "<button class=\"maskWater button\">".concat(_this.translate('incident.maskWater'), "</button>") : '', "\n\t\t");
 
     _this._container.classList.add('scanex-forestry-incident');
 
@@ -25792,7 +25928,7 @@ var Incidents = /*#__PURE__*/function (_BaseView) {
           var str = data.volumes.map(function (it) {
             return "\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"species\">".concat(it.species, " (").concat(it.storey, ")</td>\n\t\t\t\t\t\t<td class=\"probable_volume\">").concat(_this2.m(it.probable_volume), " ").concat(_this2.translate('units.m'), "<sup>3</sup></td>\n\t\t\t\t\t\t<td class=\"confirmed_volume\"><span class=\"\"><input class=\"span-gray confirmed_vol\" id=\"").concat(it.wood_element_id, "\" type=\"text\" placeholder=\"\" value=\"").concat(_this2.m(it.confirmed_vol || 0), "\" />&nbsp;").concat(_this2.translate('units.m'), "<sup>3</sup></span></td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t");
           }).join('\n');
-          return "\n\t\t\t\t<div class=\"vydel\">\n\t\t\t\t\t<div class=\"table2_row\">".concat(_this2.translate('incident.arend'), " <span>").concat(data.renter || '', "</span></div>\n\t\t\t\t\t<table cellspacing=\"0\" cellpadding=\"0\">\n\t\t\t\t\t\t<tbody>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<th class=\"species\">").concat(_this2.translate('incident.titleValue'), "</th>\n\t\t\t\t\t\t\t\t<th class=\"probable_volume\">").concat(_this2.translate('incident.estimValue'), "</th>\n\t\t\t\t\t\t\t\t<th class=\"confirmed_volume\">").concat(_this2.translate('incident.checkedValue'), "</th>\n\t\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t").concat(str, "\n\t\t\t\t\t\t</tbody>\n\t\t\t\t\t</table>\n\t\t\t\t</div>");
+          return "\n\t\t\t\t<div class=\"vydel\">\n\t\t\t\t\t<div class=\"table2_row\"><span>".concat(data.forestry || '', " <span>").concat(data.local_forestry ? ', ' + data.local_forestry : '', "</span><span>").concat(data.stow ? ', ' + data.stow : '', "</span>, <span>").concat(_this2.translate('incident.quadrant'), " ").concat(data.quadrant_num || '', "</span>, <span>").concat(_this2.translate('incident.stand'), " ").concat(data.stand_num || '', "</span></div>\n\t\t\t\t\t<div class=\"table2_row\">").concat(_this2.translate('incident.arend'), " <span>").concat(data.renter || '', "</span></div>\n\t\t\t\t\t<table cellspacing=\"0\" cellpadding=\"0\">\n\t\t\t\t\t\t<tbody>\n\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t<th class=\"species\">").concat(_this2.translate('incident.titleValue'), "</th>\n\t\t\t\t\t\t\t\t<th class=\"probable_volume\">").concat(_this2.translate('incident.estimValue'), "</th>\n\t\t\t\t\t\t\t\t<th class=\"confirmed_volume\">").concat(_this2.translate('incident.checkedValue'), "</th>\n\t\n\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t").concat(str, "\n\t\t\t\t\t\t</tbody>\n\t\t\t\t\t</table>\n\t\t\t\t</div>");
         } else {
           return '';
         }
@@ -25847,7 +25983,7 @@ var Incidents = /*#__PURE__*/function (_BaseView) {
 
       var str2 = this._parseProps(data);
 
-      this._container.innerHTML = "\n\t\t\t".concat(title, "\n\n\t\t\t<div class=\"inside\">\n\t\t\t\t<div class=\"inside_left\">\n\t\t\t\t\t<div class=\"table1\">\n\t\t\t\t\t\t").concat(str2, "\n\n\t\t\t\t\t\t<div class=\"table1_row\">").concat(this.translate('incident.comment'), "</div>\n\t\t\t\t\t\t\n\t\t\t\t\t\t<textarea class=\"usr-text-area\" ").concat(this._permission.IncidentEdit && curStatus === 2 ? '' : 'disabled', ">").concat(data.Comment || '', "</textarea>\n\t\t\t\t\t\t<div class=\"table1_row \">").concat(this.translate('incident.bpla'), ":</div>\n\n\t\t\t\t\t\t<div class=\"table1_row \">\n\t\t\t\t\t\t\t<span>").concat(props.uav_date || '', "</span>\n\t\t\t\t\t\t\t<span>").concat(props.uav_description || '', "</span>\n\t\t\t\t\t\t\t<div class=\"group_buttons\">\n\t\t\t\t\t\t\t\t").concat(this._permission.BplaView && props.uav_raster_id ? "<div class=\"mini-green-but BplaView\">".concat(this.translate('incident.BplaView'), "</div>") : '', "\n\t\t\t\t\t\t\t\t").concat(this._permission.BplaDownload ? "<div class=\"mini-green-but BplaDownload\">".concat(this.translate('incident.BplaDownload'), "</div>") : '', "\n\t\t\t\t\t\t\t\t").concat(this._permission.BplaRemove && props.uav_raster_id ? "<div class=\"mini-green-but BplaRemove\">".concat(this.translate('incident.BplaRemove'), "</div>") : '', "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t").concat(str1, "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"rubka\">\n\t\t\t\t\t<div class=\"right-wrapper-top \">\n\t\t\t\t\t\t").concat(this._buttonsStr, "\n\t\t\t\t\t </div>\n\t\t\t\t\t<hr />\n\t\t\t\t\t <div class=\"right-wrapper-bottom \">\n\t\t\t\t\t\t").concat(this._permission.IncidentAccept && curStatus === 2 ? "<button class=\"IncidentAccept button\">".concat(this.translate('incident.IncidentAccept'), "</button>") : '', "\n\t\t\t\t\t\t").concat(this._permission.IncidentCheck && curStatus === 1 ? "<button class=\"IncidentCheck button\">".concat(this.translate('incident.IncidentCheck'), "</button>") : '', "\n\t\t\t\t\t\t").concat(this._permission.IncidentDecline && (curStatus === 1 || curStatus === 2) ? "<button class=\"IncidentDecline button\">".concat(this.translate('incident.IncidentDecline'), "</button>") : '', "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>");
+      this._container.innerHTML = "\n\t\t\t".concat(title, "\n\n\t\t\t<div class=\"inside\">\n\t\t\t\t<div class=\"inside_left\">\n\t\t\t\t\t<div class=\"table1\">\n\t\t\t\t\t\t").concat(str2, "\n\n\t\t\t\t\t\t<div class=\"table1_row\">").concat(this.translate('incident.comment'), "</div>\n\t\t\t\t\t\t\n\t\t\t\t\t\t<textarea class=\"usr-text-area\" ").concat(this._permission.IncidentEdit && curStatus === 2 ? '' : 'disabled', ">").concat(data.Comment || '', "</textarea>\n\t\t\t\t\t\t<div class=\"table1_row \">").concat(this.translate('incident.bpla'), ":</div>\n\n\t\t\t\t\t\t<div class=\"table1_row f-l-start\">\n\t\t\t\t\t\t\t<span>").concat(props.uav_date || '', "</span>\n\t\t\t\t\t\t\t<span>").concat(props.uav_description || '', "</span>\n\t\t\t\t\t\t\t<div class=\"group_buttons\">\n\t\t\t\t\t\t\t\t").concat(this._permission.BplaView && props.uav_raster_id ? "<div class=\"mini-green-but BplaView\">".concat(this.translate('incident.BplaView'), "</div>") : '', "\n\t\t\t\t\t\t\t\t").concat(this._permission.BplaDownload ? "<div class=\"mini-green-but BplaDownload\">".concat(this.translate('incident.BplaDownload'), "</div>") : '', "\n\t\t\t\t\t\t\t\t").concat(this._permission.BplaRemove && props.uav_raster_id ? "<div class=\"mini-green-but BplaRemove\">".concat(this.translate('incident.BplaRemove'), "</div>") : '', "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t").concat(str1, "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"rubka\">\n\t\t\t\t\t<div class=\"right-wrapper-top \">\n\t\t\t\t\t\t").concat(this._buttonsStr, "\n\t\t\t\t\t </div>\n\t\t\t\t\t<hr />\n\t\t\t\t\t <div class=\"right-wrapper-bottom \">\n\t\t\t\t\t\t").concat(this._permission.IncidentAccept && curStatus === 2 ? "<button class=\"IncidentAccept button\">".concat(this.translate('incident.IncidentAccept'), "</button>") : '', "\n\t\t\t\t\t\t").concat(this._permission.IncidentCheck && curStatus === 1 ? "<button class=\"IncidentCheck button\">".concat(this.translate('incident.IncidentCheck'), "</button>") : '', "\n\t\t\t\t\t\t").concat(this._permission.IncidentDecline && (curStatus === 1 || curStatus === 2) ? "<button class=\"IncidentDecline button\">".concat(this.translate('incident.IncidentDecline'), "</button>") : '', "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>");
 
       var node = this._container.querySelector('.verRastr');
 
@@ -25896,23 +26032,31 @@ var Incidents = /*#__PURE__*/function (_BaseView) {
       node = this._container.querySelector('.editGeo');
 
       if (node) {
-        node.addEventListener('click', function (e) {
-          e.stopPropagation();
-          var event = document.createEvent('Event');
-          event.initEvent('incident:editGeo', false, false);
+        if (curStatus === 2) {
+          node.addEventListener('click', function (e) {
+            e.stopPropagation();
+            var event = document.createEvent('Event');
+            event.initEvent('incident:editGeo', false, false);
 
-          _this3.dispatchEvent(event);
-        });
+            _this3.dispatchEvent(event);
+          });
+        } else {
+          node.classList.add('hidden');
+        }
       }
 
       node = this._container.querySelector('.saveGeo');
 
       if (node) {
-        node.addEventListener('click', function (e) {
-          e.stopPropagation();
+        if (curStatus === 2) {
+          node.addEventListener('click', function (e) {
+            e.stopPropagation();
 
-          _this3._saveItem(data);
-        });
+            _this3._saveItem(data);
+          });
+        } else {
+          node.classList.add('hidden');
+        }
       }
 
       node = this._container.querySelector('.IncidentAccept');
@@ -26048,6 +26192,7 @@ var Incidents = /*#__PURE__*/function (_BaseView) {
       }
 
       this._rastId = props.prob_raster_id;
+      this._container.scrollTop = 0;
     }
   }, {
     key: "_saveItem",
@@ -26096,6 +26241,29 @@ var Incidents = /*#__PURE__*/function (_BaseView) {
   return Incidents;
 }(View);
 
+var colors = [['#fdb9ff', '#ff55b0', '#7e2e4d', '#ffffff'], ['#fdb9ff', '#ff55b0', '#7e2e4d', '#d9004c'], ['#97a8ff', '#3d50fe', '#4c547d', '#4805ff'], ['#ffa743', '#ff7b00', '#f1cfa6', '#ef4e09']];
+var CUR_STYLES = colors.map(function (line) {
+  return line.map(function (color) {
+    return {
+      fillStyle: document.createElement('canvas').getContext('2d').createPattern(L.gmxUtil.getPatternIcon(null, {
+        type: '',
+        opacity: 1,
+        weight: 1,
+        fillOpacity: 1,
+        fillPattern: {
+          style: 'diagonal1',
+          width: 2,
+          step: 16,
+          colors: [parseInt('61E9F1', 16)]
+        },
+        common: true
+      }).canvas, 'repeat'),
+      strokeStyle: color,
+      lineWidth: 2
+    };
+  });
+});
+
 var translate$6 = T.getText.bind(T);
 
 var Incidents$1 = /*#__PURE__*/function (_Controller) {
@@ -26136,6 +26304,8 @@ var Incidents$1 = /*#__PURE__*/function (_Controller) {
     _this._map.addLayer(_this._layer);
 
     _this._layer.setFilter(_this.getFilter.bind(_assertThisInitialized(_this)));
+
+    _this._layer.setStyleHook(_this.getStyle.bind(_assertThisInitialized(_this)));
 
     var _this$_layer$getGmxPr = _this._layer.getGmxProperties(),
         attributes = _this$_layer$getGmxPr.attributes,
@@ -26500,6 +26670,20 @@ var Incidents$1 = /*#__PURE__*/function (_Controller) {
       }
     }
   }, {
+    key: "getStyle",
+    value: function getStyle(props) {
+      var properties = props.properties;
+      var out = {};
+
+      if (props.id === this._gmx_id) {
+        var c = properties[this._cid] - 1;
+        var s = properties[this._sid] - 1;
+        out = CUR_STYLES[c][s] || {};
+      }
+
+      return out;
+    }
+  }, {
     key: "getFilter",
     value: function getFilter(_ref2) {
       var properties = _ref2.properties;
@@ -26765,6 +26949,24 @@ var strings$3 = {
   }
 };
 
+var STYLES$1 = {
+  fillStyle: document.createElement('canvas').getContext('2d').createPattern(L.gmxUtil.getPatternIcon(null, {
+    type: '',
+    opacity: 1,
+    weight: 1,
+    fillOpacity: 1,
+    fillPattern: {
+      style: 'diagonal1',
+      width: 2,
+      step: 16,
+      colors: [parseInt('61E9F1', 16)]
+    },
+    common: true
+  }).canvas, 'repeat'),
+  strokeStyle: '#AD3E2D',
+  lineWidth: 2
+};
+
 var Parks = /*#__PURE__*/function (_BaseView) {
   _inherits(Parks, _BaseView);
 
@@ -26783,18 +26985,36 @@ var Parks = /*#__PURE__*/function (_BaseView) {
   }
 
   _createClass(Parks, [{
+    key: "getStyleHook",
+    value: function getStyleHook(kind, item) {
+      if (kind === 'parks') {
+        return item.id === this._gmx_id ? STYLES$1 : {};
+      } else {
+        return {};
+      }
+    }
+  }, {
     key: "open",
     value: function open(_ref) {
-      var properties = _ref.properties;
+      var gmx_id = _ref.gmx_id,
+          properties = _ref.properties;
 
       _get(_getPrototypeOf(Parks.prototype), "open", this).call(this);
 
+      this._gmx_id = gmx_id;
       var NAME_R = properties.NAME_R,
           TYPE_NL = properties.TYPE_NL,
           YEAR_ = properties.YEAR_,
           PROV_NL = properties.PROV_NL,
           AREA_DOC = properties.AREA_DOC;
       this._container.innerHTML = "<h1>".concat(this.translate('park.title'), ": ").concat(NAME_R, "</h1>\n\t\t\t<table cellspacing=\"0\" cellpadding=\"0\">\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('park.name'), "</td>\n\t\t\t\t\t<td class=\"name value\">").concat(NAME_R, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('park.type'), "</td>\n\t\t\t\t\t<td class=\"type value\">").concat(TYPE_NL, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('park.year'), "</td>\n\t\t\t\t\t<td class=\"year value\">").concat(YEAR_, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('park.prov'), "</td>\n\t\t\t\t\t<td class=\"prov value\">").concat(PROV_NL, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('park.area'), ", ").concat(this.translate('units.m'), "<sup>2</sup></td>\n\t\t\t\t\t<td class=\"area value\">").concat(this.m(AREA_DOC), "</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
+    }
+  }, {
+    key: "close",
+    value: function close() {
+      this._gmx_id = null;
+
+      _get(_getPrototypeOf(Parks.prototype), "close", this).call(this);
     }
   }]);
 
@@ -26828,6 +27048,11 @@ var Parks$1 = /*#__PURE__*/function (_LayerController) {
       legend: legend
     });
     _this._view = _this._content.add('parks', Parks);
+
+    _this._view.on('close', function () {
+      _this._layer.repaint();
+    });
+
     return _this;
   }
 
@@ -26835,18 +27060,30 @@ var Parks$1 = /*#__PURE__*/function (_LayerController) {
     key: "_click",
     value: function () {
       var _click2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e) {
-        var properties;
+        var _e$gmx, id, properties;
+
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
                 if (this.canClick) {
                   L.DomEvent.stopPropagation(e);
-                  properties = e.gmx.properties;
+                  _e$gmx = e.gmx, id = _e$gmx.id, properties = _e$gmx.properties;
 
-                  this._view.open({
-                    properties: properties
-                  });
+                  if (this._gmx_id && this._gmx_id === id) {
+                    this._gmx_id = null;
+
+                    this._view.close();
+                  } else {
+                    this._gmx_id = id;
+
+                    this._view.open({
+                      gmx_id: id,
+                      properties: properties
+                    });
+                  }
+
+                  this._layer.repaint();
                 }
 
               case 1:
@@ -28362,153 +28599,6 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
   }(),
       y = function () {
     function t(i) {
-      e(this, t), this.ctx = i, this.w = i.w, this.months31 = [1, 3, 5, 7, 8, 10, 12], this.months30 = [2, 4, 6, 9, 11], this.daysCntOfYear = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
-    }
-
-    return a(t, [{
-      key: "isValidDate",
-      value: function value(t) {
-        return !isNaN(this.parseDate(t));
-      }
-    }, {
-      key: "getTimeStamp",
-      value: function value(t) {
-        return Date.parse(t) ? this.w.config.xaxis.labels.datetimeUTC ? new Date(new Date(t).toISOString().substr(0, 25)).getTime() : new Date(t).getTime() : t;
-      }
-    }, {
-      key: "getDate",
-      value: function value(t) {
-        return this.w.config.xaxis.labels.datetimeUTC ? new Date(new Date(t).toUTCString()) : new Date(t);
-      }
-    }, {
-      key: "parseDate",
-      value: function value(t) {
-        var e = Date.parse(t);
-        if (!isNaN(e)) return this.getTimeStamp(t);
-        var i = Date.parse(t.replace(/-/g, "/").replace(/[a-z]+/gi, " "));
-        return i = this.getTimeStamp(i);
-      }
-    }, {
-      key: "parseDateWithTimezone",
-      value: function value(t) {
-        return Date.parse(t.replace(/-/g, "/").replace(/[a-z]+/gi, " "));
-      }
-    }, {
-      key: "formatDate",
-      value: function value(t, e) {
-        var i = this.w.globals.locale,
-            a = this.w.config.xaxis.labels.datetimeUTC,
-            s = ["\0"].concat(g(i.months)),
-            r = ["\x01"].concat(g(i.shortMonths)),
-            n = ["\x02"].concat(g(i.days)),
-            o = ["\x03"].concat(g(i.shortDays));
-
-        function l(t, e) {
-          var i = t + "";
-
-          for (e = e || 2; i.length < e;) {
-            i = "0" + i;
-          }
-
-          return i;
-        }
-
-        var h = a ? t.getUTCFullYear() : t.getFullYear();
-        e = (e = (e = e.replace(/(^|[^\\])yyyy+/g, "$1" + h)).replace(/(^|[^\\])yy/g, "$1" + h.toString().substr(2, 2))).replace(/(^|[^\\])y/g, "$1" + h);
-        var c = (a ? t.getUTCMonth() : t.getMonth()) + 1;
-        e = (e = (e = (e = e.replace(/(^|[^\\])MMMM+/g, "$1" + s[0])).replace(/(^|[^\\])MMM/g, "$1" + r[0])).replace(/(^|[^\\])MM/g, "$1" + l(c))).replace(/(^|[^\\])M/g, "$1" + c);
-        var d = a ? t.getUTCDate() : t.getDate();
-        e = (e = (e = (e = e.replace(/(^|[^\\])dddd+/g, "$1" + n[0])).replace(/(^|[^\\])ddd/g, "$1" + o[0])).replace(/(^|[^\\])dd/g, "$1" + l(d))).replace(/(^|[^\\])d/g, "$1" + d);
-        var u = a ? t.getUTCHours() : t.getHours(),
-            f = u > 12 ? u - 12 : 0 === u ? 12 : u;
-        e = (e = (e = (e = e.replace(/(^|[^\\])HH+/g, "$1" + l(u))).replace(/(^|[^\\])H/g, "$1" + u)).replace(/(^|[^\\])hh+/g, "$1" + l(f))).replace(/(^|[^\\])h/g, "$1" + f);
-        var p = a ? t.getUTCMinutes() : t.getMinutes();
-        e = (e = e.replace(/(^|[^\\])mm+/g, "$1" + l(p))).replace(/(^|[^\\])m/g, "$1" + p);
-        var x = a ? t.getUTCSeconds() : t.getSeconds();
-        e = (e = e.replace(/(^|[^\\])ss+/g, "$1" + l(x))).replace(/(^|[^\\])s/g, "$1" + x);
-        var b = a ? t.getUTCMilliseconds() : t.getMilliseconds();
-        e = e.replace(/(^|[^\\])fff+/g, "$1" + l(b, 3)), b = Math.round(b / 10), e = e.replace(/(^|[^\\])ff/g, "$1" + l(b)), b = Math.round(b / 10);
-        var m = u < 12 ? "AM" : "PM";
-        e = (e = (e = e.replace(/(^|[^\\])f/g, "$1" + b)).replace(/(^|[^\\])TT+/g, "$1" + m)).replace(/(^|[^\\])T/g, "$1" + m.charAt(0));
-        var v = m.toLowerCase();
-        e = (e = e.replace(/(^|[^\\])tt+/g, "$1" + v)).replace(/(^|[^\\])t/g, "$1" + v.charAt(0));
-        var y = -t.getTimezoneOffset(),
-            w = a || !y ? "Z" : y > 0 ? "+" : "-";
-
-        if (!a) {
-          var k = (y = Math.abs(y)) % 60;
-          w += l(Math.floor(y / 60)) + ":" + l(k);
-        }
-
-        e = e.replace(/(^|[^\\])K/g, "$1" + w);
-        var A = (a ? t.getUTCDay() : t.getDay()) + 1;
-        return e = (e = (e = (e = (e = e.replace(new RegExp(n[0], "g"), n[A])).replace(new RegExp(o[0], "g"), o[A])).replace(new RegExp(s[0], "g"), s[c])).replace(new RegExp(r[0], "g"), r[c])).replace(/\\(.)/g, "$1");
-      }
-    }, {
-      key: "getTimeUnitsfromTimestamp",
-      value: function value(t, e, i) {
-        var a = this.w;
-        void 0 !== a.config.xaxis.min && (t = a.config.xaxis.min), void 0 !== a.config.xaxis.max && (e = a.config.xaxis.max);
-        var s = this.getDate(t),
-            r = this.getDate(e),
-            n = this.formatDate(s, "yyyy MM dd HH mm").split(" "),
-            o = this.formatDate(r, "yyyy MM dd HH mm").split(" ");
-        return {
-          minMinute: parseInt(n[4], 10),
-          maxMinute: parseInt(o[4], 10),
-          minHour: parseInt(n[3], 10),
-          maxHour: parseInt(o[3], 10),
-          minDate: parseInt(n[2], 10),
-          maxDate: parseInt(o[2], 10),
-          minMonth: parseInt(n[1], 10) - 1,
-          maxMonth: parseInt(o[1], 10) - 1,
-          minYear: parseInt(n[0], 10),
-          maxYear: parseInt(o[0], 10)
-        };
-      }
-    }, {
-      key: "isLeapYear",
-      value: function value(t) {
-        return t % 4 == 0 && t % 100 != 0 || t % 400 == 0;
-      }
-    }, {
-      key: "calculcateLastDaysOfMonth",
-      value: function value(t, e, i) {
-        return this.determineDaysOfMonths(t, e) - i;
-      }
-    }, {
-      key: "determineDaysOfYear",
-      value: function value(t) {
-        var e = 365;
-        return this.isLeapYear(t) && (e = 366), e;
-      }
-    }, {
-      key: "determineRemainingDaysOfYear",
-      value: function value(t, e, i) {
-        var a = this.daysCntOfYear[e] + i;
-        return e > 1 && this.isLeapYear() && a++, a;
-      }
-    }, {
-      key: "determineDaysOfMonths",
-      value: function value(t, e) {
-        var i = 30;
-
-        switch (t = f.monthMod(t), !0) {
-          case this.months30.indexOf(t) > -1:
-            2 === t && (i = this.isLeapYear(e) ? 29 : 28);
-            break;
-
-          case this.months31.indexOf(t) > -1:
-          default:
-            i = 31;
-        }
-
-        return i;
-      }
-    }]), t;
-  }(),
-      w = function () {
-    function t(i) {
       e(this, t), this.ctx = i, this.w = i.w;
     }
 
@@ -28559,16 +28649,11 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
     }, {
       key: "getCategoryLabels",
       value: function value(t) {
-        var e = this,
-            i = this.w,
-            a = t.slice();
-        return i.config.xaxis.convertedCatToNumeric && (a = t.map(function (t, a) {
-          return i.config.xaxis.labels.formatter(t - i.globals.minX + 1, {
-            i: a,
-            dateFormatter: new y(e.ctx).formatDate,
-            w: i
-          });
-        })), a;
+        var e = this.w,
+            i = t.slice();
+        return e.config.xaxis.convertedCatToNumeric && (i = t.map(function (t, i) {
+          return e.config.xaxis.labels.formatter(t - e.globals.minX + 1);
+        })), i;
       }
     }, {
       key: "getLargestSeries",
@@ -28729,7 +28814,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
       }
     }]), t;
   }(),
-      k = function () {
+      w = function () {
     function t(i) {
       e(this, t), this.w = i.w, this.annoCtx = i;
     }
@@ -28744,7 +28829,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             o = t.label.text;
 
         if (null === t.y2 || void 0 === t.y2) {
-          var l = this.annoCtx.graphics.drawLine(0 + t.offsetX, n + t.offsetY, s.globals.gridWidth + t.offsetX, n + t.offsetY, t.borderColor, r, t.borderWidth);
+          var l = this.annoCtx.graphics.drawLine(0 + t.offsetX, n + t.offsetY, this._getYAxisAnnotationWidth(t), n + t.offsetY, t.borderColor, r, t.borderWidth);
           e.appendChild(l.node), t.id && l.node.classList.add(t.id);
         } else {
           if ((a = this._getY1Y2("y2", t)) > n) {
@@ -28752,7 +28837,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             n = a, a = h;
           }
 
-          var c = this.annoCtx.graphics.drawRect(0 + t.offsetX, a + t.offsetY, s.globals.gridWidth + t.offsetX, n - a, 0, t.fillColor, t.opacity, 1, t.borderColor, r);
+          var c = this.annoCtx.graphics.drawRect(0 + t.offsetX, a + t.offsetY, this._getYAxisAnnotationWidth(t), n - a, 0, t.fillColor, t.opacity, 1, t.borderColor, r);
           c.node.classList.add("apexcharts-annotation-rect"), c.attr("clip-path", "url(#gridRectMask".concat(s.globals.cuid, ")")), e.appendChild(c.node), t.id && c.node.classList.add(t.id);
         }
 
@@ -28786,11 +28871,18 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
           n && (i = parseFloat(n.getAttribute("y")));
         } else {
           var o;
-          if (s.config.yaxis[e.yAxisIndex].logarithmic) o = (a = new w(this.annoCtx.ctx).getLogVal(a, e.yAxisIndex)) / s.globals.yLogRatio[e.yAxisIndex];else o = (a - s.globals.minYArr[e.yAxisIndex]) / (s.globals.yRange[e.yAxisIndex] / s.globals.gridHeight);
+          if (s.config.yaxis[e.yAxisIndex].logarithmic) o = (a = new y(this.annoCtx.ctx).getLogVal(a, e.yAxisIndex)) / s.globals.yLogRatio[e.yAxisIndex];else o = (a - s.globals.minYArr[e.yAxisIndex]) / (s.globals.yRange[e.yAxisIndex] / s.globals.gridHeight);
           i = s.globals.gridHeight - o, s.config.yaxis[e.yAxisIndex] && s.config.yaxis[e.yAxisIndex].reversed && (i = o);
         }
 
         return i;
+      }
+    }, {
+      key: "_getYAxisAnnotationWidth",
+      value: function value(t) {
+        var e = this.w;
+        e.globals.gridWidth;
+        return (t.width.indexOf("%") > -1 ? e.globals.gridWidth * parseInt(t.width, 10) / 100 : parseInt(t.width, 10)) + t.offsetX;
       }
     }, {
       key: "drawYAxisAnnotations",
@@ -28806,7 +28898,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
       }
     }]), t;
   }(),
-      A = function () {
+      k = function () {
     function t(i) {
       e(this, t), this.w = i.w, this.annoCtx = i;
     }
@@ -28827,7 +28919,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
           a.config.xaxis.convertedCatToNumeric && (h = a.globals.categoryLabels.indexOf(t.x)), s = this.annoCtx.helpers.getStringX(t.x), null === t.y && (l = a.globals.series[t.seriesIndex][h]);
         } else s = (t.x - a.globals.minX) / (a.globals.xRange / a.globals.gridWidth);
 
-        a.config.yaxis[t.yAxisIndex].logarithmic ? o = (l = new w(this.annoCtx.ctx).getLogVal(l, t.yAxisIndex)) / a.globals.yLogRatio[t.yAxisIndex] : o = (l - a.globals.minYArr[t.yAxisIndex]) / (a.globals.yRange[t.yAxisIndex] / a.globals.gridHeight);
+        a.config.yaxis[t.yAxisIndex].logarithmic ? o = (l = new y(this.annoCtx.ctx).getLogVal(l, t.yAxisIndex)) / a.globals.yLogRatio[t.yAxisIndex] : o = (l - a.globals.minYArr[t.yAxisIndex]) / (a.globals.yRange[t.yAxisIndex] / a.globals.gridHeight);
 
         if (r = a.globals.gridHeight - o - parseFloat(t.label.style.fontSize) - t.marker.size, n = a.globals.gridHeight - o, a.config.yaxis[t.yAxisIndex] && a.config.yaxis[t.yAxisIndex].reversed && (r = o + parseFloat(t.label.style.fontSize) + t.marker.size, n = o), f.isNumber(s)) {
           var c = {
@@ -28894,7 +28986,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
     }]), t;
   }();
 
-  var S = {
+  var A = {
     name: "en",
     options: {
       months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
@@ -28915,7 +29007,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
       }
     }
   },
-      C = function () {
+      S = function () {
     function t() {
       e(this, t), this.yAxis = {
         show: !0,
@@ -29051,6 +29143,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
         opacity: .3,
         offsetX: 0,
         offsetY: 0,
+        width: "100%",
         yAxisIndex: 0,
         label: {
           borderColor: "#c2c2c2",
@@ -29160,7 +29253,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
               }
             },
             background: "transparent",
-            locales: [S],
+            locales: [A],
             defaultLocale: "en",
             dropShadow: {
               enabled: !1,
@@ -29195,6 +29288,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             height: "auto",
             parentHeightOffset: 15,
             redrawOnParentResize: !0,
+            redrawOnWindowResize: !0,
             id: void 0,
             group: void 0,
             offsetX: 0,
@@ -29334,6 +29428,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
               enableShades: !0,
               shadeIntensity: .5,
               distributed: !1,
+              reverseNegativeShade: !1,
               useFillColorAsStroke: !1,
               colorScale: {
                 inverse: !1,
@@ -29908,9 +30003,9 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
       }
     }]), t;
   }(),
-      L = function () {
+      C = function () {
     function t(i) {
-      e(this, t), this.ctx = i, this.w = i.w, this.graphics = new b(this.ctx), this.w.globals.isBarHorizontal && (this.invertAxis = !0), this.helpers = new m(this), this.xAxisAnnotations = new v(this), this.yAxisAnnotations = new k(this), this.pointsAnnotations = new A(this), this.w.globals.isBarHorizontal && this.w.config.yaxis[0].reversed && (this.inversedReversedAxis = !0), this.xDivision = this.w.globals.gridWidth / this.w.globals.dataPoints;
+      e(this, t), this.ctx = i, this.w = i.w, this.graphics = new b(this.ctx), this.w.globals.isBarHorizontal && (this.invertAxis = !0), this.helpers = new m(this), this.xAxisAnnotations = new v(this), this.yAxisAnnotations = new w(this), this.pointsAnnotations = new k(this), this.w.globals.isBarHorizontal && this.w.config.yaxis[0].reversed && (this.inversedReversedAxis = !0), this.xDivision = this.w.globals.gridWidth / this.w.globals.dataPoints;
     }
 
     return a(t, [{
@@ -30073,7 +30168,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             o = n.w,
             l = o.globals.dom.baseEl.querySelector(".apexcharts-".concat(s, "-annotations")),
             h = l.childNodes.length + 1,
-            c = new C(),
+            c = new S(),
             d = Object.assign({}, "xaxis" === s ? c.xAxisAnnotation : "yaxis" === s ? c.yAxisAnnotation : c.pointAnnotation),
             g = f.extend(d, e);
 
@@ -30126,7 +30221,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
       }
     }]), t;
   }(),
-      P = function () {
+      L = function () {
     function t(i) {
       e(this, t), this.ctx = i, this.w = i.w, this.opts = null, this.seriesIndex = 0;
     }
@@ -30255,7 +30350,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
       }
     }]), t;
   }(),
-      T = function () {
+      P = function () {
     function t(i, a) {
       e(this, t), this.ctx = i, this.w = i.w;
     }
@@ -30348,7 +30443,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
       }
     }]), t;
   }(),
-      z = function () {
+      T = function () {
     function t(i) {
       e(this, t), this.ctx = i, this.w = i.w, this.initialAnim = this.w.config.chart.animations.enabled, this.dynamicAnim = this.initialAnim && this.w.config.chart.animations.dynamicAnimation.enabled;
     }
@@ -30397,8 +30492,8 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             l = s,
             h = new x(this.ctx),
             c = new p(this.ctx),
-            d = new P(this.ctx),
-            g = new T(this.ctx),
+            d = new L(this.ctx),
+            g = new P(this.ctx),
             u = new b(this.ctx),
             f = g.getMarkerConfig("apexcharts-marker", l),
             m = d.fillPath({
@@ -30437,11 +30532,11 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
               A,
               S,
               C,
-              L = o.config.chart.animations.dynamicAnimation.speed;
+              T = o.config.chart.animations.dynamicAnimation.speed;
           null != (C = o.globals.previousPaths[s] && o.globals.previousPaths[s][n]) && (k = C.x, A = C.y, S = void 0 !== C.r ? C.r : a);
 
           for (var z = 0; z < o.globals.collapsedSeries.length; z++) {
-            o.globals.collapsedSeries[z].index === s && (L = 1, a = 0);
+            o.globals.collapsedSeries[z].index === s && (T = 1, a = 0);
           }
 
           0 === t && 0 === e && (a = 0), h.animateCircle(v, {
@@ -30452,7 +30547,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             cx: t,
             cy: e,
             r: a
-          }, L, o.globals.easing);
+          }, T, o.globals.easing);
         } else v.attr({
           r: a
         });
@@ -30473,7 +30568,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
       }
     }]), t;
   }(),
-      I = function () {
+      z = function () {
     function t(i) {
       e(this, t), this.ctx = i, this.w = i.w;
     }
@@ -30541,7 +30636,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
 
             if ("bubble" === r.config.chart.type) {
               f = p(u = r.globals.seriesZ[e][c]), h = t.y[g];
-              var x = new z(this.ctx),
+              var x = new T(this.ctx),
                   m = x.centerTextInBubble(h, e, c);
               h = m.y;
             } else void 0 !== u && (f = p(u));
@@ -30660,7 +30755,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
       }
     }]), t;
   }(),
-      M = function () {
+      I = function () {
     function t(i) {
       e(this, t), this.w = i.w, this.barCtx = i;
     }
@@ -30701,7 +30796,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
         };
 
         if (f.config.dataLabels.enabled) {
-          var T = String(f.globals.minY).length > String(f.globals.maxY).length ? f.globals.minY : f.globals.maxY;
+          var T = this.barCtx.series[r][n];
           P = p.getTextRects(f.globals.yLabelFormatters[0](T), parseFloat(A.style.fontSize));
         }
 
@@ -30815,7 +30910,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
 
         switch (this.barCtx.isReversed && (b = i + o - (x ? 2 * o : 0), i = e.globals.gridWidth - o), d.position) {
           case "center":
-            h = x ? b + o / 2 - g : b - o / 2 + g;
+            h = x ? b + o / 2 - g : Math.max(l.width / 2, b - o / 2) + g;
             break;
 
           case "bottom":
@@ -30848,7 +30943,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             d = this.w,
             g = "rotate(0)";
         "vertical" === d.config.plotOptions.bar.dataLabels.orientation && (g = "rotate(-90, ".concat(e, ", ").concat(i, ")"));
-        var u = new I(this.barCtx.ctx),
+        var u = new z(this.barCtx.ctx),
             f = new b(this.barCtx.ctx),
             p = c.formatter,
             x = null,
@@ -30887,7 +30982,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
       }
     }]), t;
   }(),
-      E = function () {
+      M = function () {
     function t(i) {
       e(this, t), this.ctx = i, this.w = i.w, this.legendInactiveClass = "legend-mouseover-inactive";
     }
@@ -31158,7 +31253,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
       }
     }]), t;
   }(),
-      X = function () {
+      E = function () {
     function t(i) {
       e(this, t), this.w = i.w, this.barCtx = i;
     }
@@ -31215,7 +31310,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
       key: "getPathFillColor",
       value: function value(t, e, i, a) {
         var s = this.w,
-            r = new P(this.barCtx.ctx),
+            r = new L(this.barCtx.ctx),
             n = null,
             o = this.barCtx.barOptions.distributed ? i : e;
         this.barCtx.barOptions.colors.ranges.length > 0 && this.barCtx.barOptions.colors.ranges.map(function (a) {
@@ -31247,7 +31342,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             o = t.elSeries,
             l = this.w,
             h = new b(this.barCtx.ctx),
-            c = new E(this.barCtx.ctx).getActiveConfigSeriesIndex();
+            c = new M(this.barCtx.ctx).getActiveConfigSeriesIndex();
 
         if (this.barCtx.barOptions.colors.backgroundBarColors.length > 0 && c === i) {
           e >= this.barCtx.barOptions.colors.backgroundBarColors.length && (e -= this.barCtx.barOptions.colors.backgroundBarColors.length);
@@ -31403,11 +31498,11 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
       }
     }]), t;
   }(),
-      Y = function () {
+      X = function () {
     function t(i, a) {
       e(this, t), this.ctx = i, this.w = i.w;
       var s = this.w;
-      this.barOptions = s.config.plotOptions.bar, this.isHorizontal = this.barOptions.horizontal, this.strokeWidth = s.config.stroke.width, this.isNullValue = !1, this.isTimelineBar = "datetime" === s.config.xaxis.type && s.globals.seriesRangeBarTimeline.length, this.xyRatios = a, null !== this.xyRatios && (this.xRatio = a.xRatio, this.initialXRatio = a.initialXRatio, this.yRatio = a.yRatio, this.invertedXRatio = a.invertedXRatio, this.invertedYRatio = a.invertedYRatio, this.baseLineY = a.baseLineY, this.baseLineInvertedY = a.baseLineInvertedY), this.yaxisIndex = 0, this.seriesLen = 0, this.barHelpers = new X(this);
+      this.barOptions = s.config.plotOptions.bar, this.isHorizontal = this.barOptions.horizontal, this.strokeWidth = s.config.stroke.width, this.isNullValue = !1, this.isTimelineBar = "datetime" === s.config.xaxis.type && s.globals.seriesRangeBarTimeline.length, this.xyRatios = a, null !== this.xyRatios && (this.xRatio = a.xRatio, this.initialXRatio = a.initialXRatio, this.yRatio = a.yRatio, this.invertedXRatio = a.invertedXRatio, this.invertedYRatio = a.invertedYRatio, this.baseLineY = a.baseLineY, this.baseLineInvertedY = a.baseLineInvertedY), this.yaxisIndex = 0, this.seriesLen = 0, this.barHelpers = new E(this);
     }
 
     return a(t, [{
@@ -31415,7 +31510,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
       value: function value(t, e) {
         var i = this.w,
             a = new b(this.ctx),
-            s = new w(this.ctx, i);
+            s = new y(this.ctx, i);
         t = s.getLogSeries(t), this.series = t, this.yRatio = s.getLogYRatios(this.yRatio), this.barHelpers.initVariables(t);
         var r = a.group({
           class: "apexcharts-bar-series apexcharts-plot-series"
@@ -31432,13 +31527,13 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
               x = [],
               m = [],
               v = i.globals.comboCharts ? e[o] : o,
-              y = a.group({
+              w = a.group({
             class: "apexcharts-series",
             rel: o + 1,
             seriesName: f.escapeString(i.globals.seriesNames[v]),
             "data:realIndex": v
           });
-          this.ctx.series.addCollapsedClassToSeries(y, v), t[o].length > 0 && (this.visibleI = this.visibleI + 1);
+          this.ctx.series.addCollapsedClassToSeries(w, v), t[o].length > 0 && (this.visibleI = this.visibleI + 1);
           var k = 0,
               A = 0;
           this.yRatio.length > 1 && (this.yaxisIndex = v), this.isReversed = i.config.yaxis[this.yaxisIndex] && i.config.yaxis[this.yaxisIndex].reversed;
@@ -31461,7 +31556,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
               x: u,
               y: p,
               strokeWidth: P,
-              elSeries: y
+              elSeries: w
             };
             this.isHorizontal ? (T = this.drawBarPaths(n(n({}, z), {}, {
               barHeight: k,
@@ -31481,7 +31576,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
               pathFrom: T.pathFrom,
               pathTo: T.pathTo,
               strokeWidth: P,
-              elSeries: y,
+              elSeries: w,
               x: u,
               y: p,
               series: t,
@@ -31493,7 +31588,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             });
           }
 
-          i.globals.seriesXvalues[v] = m, i.globals.seriesYvalues[v] = x, r.add(y);
+          i.globals.seriesXvalues[v] = m, i.globals.seriesYvalues[v] = x, r.add(w);
         }
 
         return r;
@@ -31541,7 +31636,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
           className: "apexcharts-".concat(k, "-area")
         });
         L.attr("clip-path", "url(#gridRectMask".concat(A.globals.cuid, ")")), void 0 !== g && void 0 !== u && (L.attr("data-range-y1", g), L.attr("data-range-y2", u)), new p(this.ctx).setSelectionFilter(L, e, s), h.add(L);
-        var P = new M(this).handleBarDataLabels({
+        var P = new I(this).handleBarDataLabels({
           x: c,
           y: d,
           y1: g,
@@ -31663,8 +31758,157 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
       }
     }]), t;
   }(),
+      Y = function () {
+    function t(i) {
+      e(this, t), this.ctx = i, this.w = i.w, this.months31 = [1, 3, 5, 7, 8, 10, 12], this.months30 = [2, 4, 6, 9, 11], this.daysCntOfYear = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+    }
+
+    return a(t, [{
+      key: "isValidDate",
+      value: function value(t) {
+        return !isNaN(this.parseDate(t));
+      }
+    }, {
+      key: "getTimeStamp",
+      value: function value(t) {
+        return Date.parse(t) ? this.w.config.xaxis.labels.datetimeUTC ? new Date(new Date(t).toISOString().substr(0, 25)).getTime() : new Date(t).getTime() : t;
+      }
+    }, {
+      key: "getDate",
+      value: function value(t) {
+        return this.w.config.xaxis.labels.datetimeUTC ? new Date(new Date(t).toUTCString()) : new Date(t);
+      }
+    }, {
+      key: "parseDate",
+      value: function value(t) {
+        var e = Date.parse(t);
+        if (!isNaN(e)) return this.getTimeStamp(t);
+        var i = Date.parse(t.replace(/-/g, "/").replace(/[a-z]+/gi, " "));
+        return i = this.getTimeStamp(i);
+      }
+    }, {
+      key: "parseDateWithTimezone",
+      value: function value(t) {
+        return Date.parse(t.replace(/-/g, "/").replace(/[a-z]+/gi, " "));
+      }
+    }, {
+      key: "formatDate",
+      value: function value(t, e) {
+        var i = this.w.globals.locale,
+            a = this.w.config.xaxis.labels.datetimeUTC,
+            s = ["\0"].concat(g(i.months)),
+            r = ["\x01"].concat(g(i.shortMonths)),
+            n = ["\x02"].concat(g(i.days)),
+            o = ["\x03"].concat(g(i.shortDays));
+
+        function l(t, e) {
+          var i = t + "";
+
+          for (e = e || 2; i.length < e;) {
+            i = "0" + i;
+          }
+
+          return i;
+        }
+
+        var h = a ? t.getUTCFullYear() : t.getFullYear();
+        e = (e = (e = e.replace(/(^|[^\\])yyyy+/g, "$1" + h)).replace(/(^|[^\\])yy/g, "$1" + h.toString().substr(2, 2))).replace(/(^|[^\\])y/g, "$1" + h);
+        var c = (a ? t.getUTCMonth() : t.getMonth()) + 1;
+        e = (e = (e = (e = e.replace(/(^|[^\\])MMMM+/g, "$1" + s[0])).replace(/(^|[^\\])MMM/g, "$1" + r[0])).replace(/(^|[^\\])MM/g, "$1" + l(c))).replace(/(^|[^\\])M/g, "$1" + c);
+        var d = a ? t.getUTCDate() : t.getDate();
+        e = (e = (e = (e = e.replace(/(^|[^\\])dddd+/g, "$1" + n[0])).replace(/(^|[^\\])ddd/g, "$1" + o[0])).replace(/(^|[^\\])dd/g, "$1" + l(d))).replace(/(^|[^\\])d/g, "$1" + d);
+        var u = a ? t.getUTCHours() : t.getHours(),
+            f = u > 12 ? u - 12 : 0 === u ? 12 : u;
+        e = (e = (e = (e = e.replace(/(^|[^\\])HH+/g, "$1" + l(u))).replace(/(^|[^\\])H/g, "$1" + u)).replace(/(^|[^\\])hh+/g, "$1" + l(f))).replace(/(^|[^\\])h/g, "$1" + f);
+        var p = a ? t.getUTCMinutes() : t.getMinutes();
+        e = (e = e.replace(/(^|[^\\])mm+/g, "$1" + l(p))).replace(/(^|[^\\])m/g, "$1" + p);
+        var x = a ? t.getUTCSeconds() : t.getSeconds();
+        e = (e = e.replace(/(^|[^\\])ss+/g, "$1" + l(x))).replace(/(^|[^\\])s/g, "$1" + x);
+        var b = a ? t.getUTCMilliseconds() : t.getMilliseconds();
+        e = e.replace(/(^|[^\\])fff+/g, "$1" + l(b, 3)), b = Math.round(b / 10), e = e.replace(/(^|[^\\])ff/g, "$1" + l(b)), b = Math.round(b / 10);
+        var m = u < 12 ? "AM" : "PM";
+        e = (e = (e = e.replace(/(^|[^\\])f/g, "$1" + b)).replace(/(^|[^\\])TT+/g, "$1" + m)).replace(/(^|[^\\])T/g, "$1" + m.charAt(0));
+        var v = m.toLowerCase();
+        e = (e = e.replace(/(^|[^\\])tt+/g, "$1" + v)).replace(/(^|[^\\])t/g, "$1" + v.charAt(0));
+        var y = -t.getTimezoneOffset(),
+            w = a || !y ? "Z" : y > 0 ? "+" : "-";
+
+        if (!a) {
+          var k = (y = Math.abs(y)) % 60;
+          w += l(Math.floor(y / 60)) + ":" + l(k);
+        }
+
+        e = e.replace(/(^|[^\\])K/g, "$1" + w);
+        var A = (a ? t.getUTCDay() : t.getDay()) + 1;
+        return e = (e = (e = (e = (e = e.replace(new RegExp(n[0], "g"), n[A])).replace(new RegExp(o[0], "g"), o[A])).replace(new RegExp(s[0], "g"), s[c])).replace(new RegExp(r[0], "g"), r[c])).replace(/\\(.)/g, "$1");
+      }
+    }, {
+      key: "getTimeUnitsfromTimestamp",
+      value: function value(t, e, i) {
+        var a = this.w;
+        void 0 !== a.config.xaxis.min && (t = a.config.xaxis.min), void 0 !== a.config.xaxis.max && (e = a.config.xaxis.max);
+        var s = this.getDate(t),
+            r = this.getDate(e),
+            n = this.formatDate(s, "yyyy MM dd HH mm ss").split(" "),
+            o = this.formatDate(r, "yyyy MM dd HH mm ss").split(" ");
+        return {
+          minSecond: parseInt(n[5], 10),
+          maxSecond: parseInt(o[5], 10),
+          minMinute: parseInt(n[4], 10),
+          maxMinute: parseInt(o[4], 10),
+          minHour: parseInt(n[3], 10),
+          maxHour: parseInt(o[3], 10),
+          minDate: parseInt(n[2], 10),
+          maxDate: parseInt(o[2], 10),
+          minMonth: parseInt(n[1], 10) - 1,
+          maxMonth: parseInt(o[1], 10) - 1,
+          minYear: parseInt(n[0], 10),
+          maxYear: parseInt(o[0], 10)
+        };
+      }
+    }, {
+      key: "isLeapYear",
+      value: function value(t) {
+        return t % 4 == 0 && t % 100 != 0 || t % 400 == 0;
+      }
+    }, {
+      key: "calculcateLastDaysOfMonth",
+      value: function value(t, e, i) {
+        return this.determineDaysOfMonths(t, e) - i;
+      }
+    }, {
+      key: "determineDaysOfYear",
+      value: function value(t) {
+        var e = 365;
+        return this.isLeapYear(t) && (e = 366), e;
+      }
+    }, {
+      key: "determineRemainingDaysOfYear",
+      value: function value(t, e, i) {
+        var a = this.daysCntOfYear[e] + i;
+        return e > 1 && this.isLeapYear() && a++, a;
+      }
+    }, {
+      key: "determineDaysOfMonths",
+      value: function value(t, e) {
+        var i = 30;
+
+        switch (t = f.monthMod(t), !0) {
+          case this.months30.indexOf(t) > -1:
+            2 === t && (i = this.isLeapYear(e) ? 29 : 28);
+            break;
+
+          case this.months31.indexOf(t) > -1:
+          default:
+            i = 31;
+        }
+
+        return i;
+      }
+    }]), t;
+  }(),
       F = function (t) {
-    o(s, Y);
+    o(s, X);
     var i = d(s);
 
     function s() {
@@ -31925,7 +32169,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             x = n.globals.colors[i];
         if (void 0 === n.config.tooltip.x.formatter) {
           if ("datetime" === n.config.xaxis.type) {
-            var b = new y(e);
+            var b = new Y(e);
             f = b.formatDate(b.getDate(o), n.config.tooltip.x.format), p = b.formatDate(b.getDate(l), n.config.tooltip.x.format);
           } else f = o, p = l;
         } else f = n.config.tooltip.x.formatter(o), p = n.config.tooltip.x.formatter(l);
@@ -31948,7 +32192,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
       }
     }]), s;
   }(),
-      D = function () {
+      R = function () {
     function t(i) {
       e(this, t), this.opts = i;
     }
@@ -32652,7 +32896,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
       }
     }]), t;
   }(),
-      R = function () {
+      D = function () {
     function i(t) {
       e(this, i), this.opts = t;
     }
@@ -32662,8 +32906,8 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
       value: function value(e) {
         var i = e.responsiveOverride,
             a = this.opts,
-            s = new C(),
-            r = new D(a);
+            s = new S(),
+            r = new R(a);
         this.chartType = a.chart.type, "histogram" === this.chartType && (a.chart.type = "bar", a = f.extend({
           plotOptions: {
             bar: {
@@ -32685,7 +32929,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
     }, {
       key: "checkForCatToNumericXAxis",
       value: function value(t, e, i) {
-        var a = new D(i),
+        var a = new R(i),
             s = "bar" === t && i.plotOptions && i.plotOptions.bar && i.plotOptions.bar.horizontal,
             r = "pie" === t || "polarArea" === t || "donut" === t || "radar" === t || "radialBar" === t || "heatmap" === t,
             n = "datetime" !== i.xaxis.type && "numeric" !== i.xaxis.type,
@@ -32695,7 +32939,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
     }, {
       key: "extendYAxis",
       value: function value(t, e) {
-        var i = new C();
+        var i = new S();
         (void 0 === t.yaxis || !t.yaxis || Array.isArray(t.yaxis) && 0 === t.yaxis.length) && (t.yaxis = {}), t.yaxis.constructor !== Array && window.Apex.yaxis && window.Apex.yaxis.constructor !== Array && (t.yaxis = f.extend(t.yaxis, window.Apex.yaxis)), t.yaxis.constructor !== Array ? t.yaxis = [f.extend(i.yAxis, t.yaxis)] : t.yaxis = f.extendArray(t.yaxis, i.yAxis);
         var a = !1;
         t.yaxis.forEach(function (t) {
@@ -32716,19 +32960,19 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
     }, {
       key: "extendYAxisAnnotations",
       value: function value(t) {
-        var e = new C();
+        var e = new S();
         return t.annotations.yaxis = f.extendArray(void 0 !== t.annotations.yaxis ? t.annotations.yaxis : [], e.yAxisAnnotation), t;
       }
     }, {
       key: "extendXAxisAnnotations",
       value: function value(t) {
-        var e = new C();
+        var e = new S();
         return t.annotations.xaxis = f.extendArray(void 0 !== t.annotations.xaxis ? t.annotations.xaxis : [], e.xAxisAnnotation), t;
       }
     }, {
       key: "extendPointAnnotations",
       value: function value(t) {
-        var e = new C();
+        var e = new S();
         return t.annotations.points = f.extendArray(void 0 !== t.annotations.points ? t.annotations.points : [], e.pointAnnotation), t;
       }
     }, {
@@ -32907,7 +33151,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
     return a(t, [{
       key: "init",
       value: function value() {
-        var t = new R(this.opts).init({
+        var t = new D(this.opts).init({
           responsiveOverride: !1
         });
         return {
@@ -32919,7 +33163,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
   }(),
       O = function () {
     function t(i) {
-      e(this, t), this.ctx = i, this.w = i.w, this.twoDSeries = [], this.threeDSeries = [], this.twoDSeriesX = [], this.coreUtils = new w(this.ctx);
+      e(this, t), this.ctx = i, this.w = i.w, this.twoDSeries = [], this.threeDSeries = [], this.twoDSeriesX = [], this.coreUtils = new y(this.ctx);
     }
 
     return a(t, [{
@@ -32931,14 +33175,14 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
       key: "isFormatXY",
       value: function value() {
         var t = this.w.config.series.slice(),
-            e = new E(this.ctx);
+            e = new M(this.ctx);
         if (this.activeSeriesIndex = e.getActiveConfigSeriesIndex(), void 0 !== t[this.activeSeriesIndex].data && t[this.activeSeriesIndex].data.length > 0 && null !== t[this.activeSeriesIndex].data[0] && void 0 !== t[this.activeSeriesIndex].data[0].x && null !== t[this.activeSeriesIndex].data[0]) return !0;
       }
     }, {
       key: "isFormat2DArray",
       value: function value() {
         var t = this.w.config.series.slice(),
-            e = new E(this.ctx);
+            e = new M(this.ctx);
         if (this.activeSeriesIndex = e.getActiveConfigSeriesIndex(), void 0 !== t[this.activeSeriesIndex].data && t[this.activeSeriesIndex].data.length > 0 && void 0 !== t[this.activeSeriesIndex].data[0] && null !== t[this.activeSeriesIndex].data[0] && t[this.activeSeriesIndex].data[0].constructor === Array) return !0;
       }
     }, {
@@ -32968,7 +33212,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
       value: function value(t, e) {
         var i = this.w.config,
             a = this.w.globals,
-            s = new y(this.ctx),
+            s = new Y(this.ctx),
             r = e;
         a.collapsedSeriesIndices.indexOf(e) > -1 && (r = this.activeSeriesIndex), i.xaxis.sorted && ("datetime" === i.xaxis.type ? t[e].data.sort(function (t, e) {
           return new Date(t.x).getTime() - new Date(e.x).getTime();
@@ -33045,7 +33289,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
           };
         }),
             n = "Please provide [Start, End] values in valid format. Read more https://apexcharts.com/docs/series/#rangecharts",
-            o = new E(this.ctx).getActiveConfigSeriesIndex();
+            o = new M(this.ctx).getActiveConfigSeriesIndex();
 
         if ("array" === t) {
           if (2 !== e[o].data[0][1].length) throw new Error(n);
@@ -33115,7 +33359,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
     }, {
       key: "parseDataAxisCharts",
       value: function value(t) {
-        for (var e = this, i = arguments.length > 1 && void 0 !== arguments[1] ? arguments[1] : this.ctx, a = this.w.config, s = this.w.globals, r = new y(i), n = a.labels.length > 0 ? a.labels.slice() : a.xaxis.categories.slice(), o = function o() {
+        for (var e = this, i = arguments.length > 1 && void 0 !== arguments[1] ? arguments[1] : this.ctx, a = this.w.config, s = this.w.globals, r = new Y(i), n = a.labels.length > 0 ? a.labels.slice() : a.xaxis.categories.slice(), o = function o() {
           for (var t = 0; t < n.length; t++) {
             if ("string" == typeof n[t]) {
               if (!r.isValidDate(n[t])) throw new Error("You have provided invalid Date format. Please provide a valid JavaScript Date");
@@ -33161,7 +33405,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             });
           }), i.labels = i.labels.filter(function (t, e, i) {
             return i.indexOf(t) === e;
-          })), e.xaxis.convertedCatToNumeric) new D(e).convertCatToNumericXaxis(e, this.ctx, i.seriesX[0]), this._generateExternalLabels(t);
+          })), e.xaxis.convertedCatToNumeric) new R(e).convertCatToNumericXaxis(e, this.ctx, i.seriesX[0]), this._generateExternalLabels(t);
         } else this._generateExternalLabels(t);
       }
     }, {
@@ -33206,7 +33450,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             a = e.globals;
 
         if (this.excludeCollapsedSeriesInYAxis(), this.fallbackToCategory = !1, this.ctx.core.resetGlobals(), this.ctx.core.isMultipleY(), a.axisCharts ? this.parseDataAxisCharts(t) : this.parseDataNonAxisCharts(t), this.coreUtils.getLargestSeries(), "bar" === i.chart.type && i.chart.stacked) {
-          var s = new E(this.ctx);
+          var s = new M(this.ctx);
           a.series = s.setNullSeriesToZeroValues(a.series);
         }
 
@@ -33241,7 +33485,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
         var s = this.w;
 
         if ("datetime" === s.config.xaxis.type && void 0 === s.config.xaxis.labels.formatter && void 0 === s.config.tooltip.x.formatter) {
-          var r = new y(this.ctx);
+          var r = new Y(this.ctx);
           return r.formatDate(r.getDate(e), s.config.tooltip.x.format);
         }
 
@@ -33258,7 +33502,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
       key: "defaultYFormatter",
       value: function value(t, e, i) {
         var a = this.w;
-        return f.isNumber(t) && (t = 0 !== a.globals.yValueDecimal ? t.toFixed(void 0 !== e.decimalsInFloat ? e.decimalsInFloat : a.globals.yValueDecimal) : a.globals.maxYArr[i] - a.globals.minYArr[i] < 10 ? t.toFixed(1) : t.toFixed(0)), t;
+        return f.isNumber(t) && (t = 0 !== a.globals.yValueDecimal ? t.toFixed(void 0 !== e.decimalsInFloat ? e.decimalsInFloat : a.globals.yValueDecimal) : a.globals.maxYArr[i] - a.globals.minYArr[i] < 5 ? t.toFixed(1) : t.toFixed(0)), t;
       }
     }, {
       key: "setLabelFormatters",
@@ -33326,11 +33570,11 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             u = o;
         l = g.xLabelFormat(h, o, u, {
           i: a,
-          dateFormatter: new y(this.ctx).formatDate,
+          dateFormatter: new Y(this.ctx).formatDate,
           w: n
         }), void 0 !== c && (l = c(o, t[a], {
           i: a,
-          dateFormatter: new y(this.ctx).formatDate,
+          dateFormatter: new Y(this.ctx).formatDate,
           w: n
         }));
 
@@ -33382,7 +33626,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
       key: "isYAxisHidden",
       value: function value(t) {
         var e = this.w,
-            i = new w(this.ctx);
+            i = new y(this.ctx);
         return !e.config.yaxis[t].show || !e.config.yaxis[t].showForNullSeries && i.isSeriesNull(t) && -1 === e.globals.collapsedSeriesIndices.indexOf(t);
       }
     }, {
@@ -33531,7 +33775,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
           if (n.globals.axisCharts) {
             if ("category" === n.config.xaxis.type || n.config.xaxis.convertedCatToNumeric) if (n.globals.isBarHorizontal) {
               var a = n.globals.yLabelFormatters[0],
-                  s = new E(e.ctx).getActiveConfigSeriesIndex();
+                  s = new M(e.ctx).getActiveConfigSeriesIndex();
               i = a(n.globals.labels[t], {
                 seriesIndex: s,
                 dataPointIndex: t,
@@ -33865,7 +34109,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
         var r = t.config.chart.type,
             n = 0,
             o = 0;
-        ("bar" === r || "rangeBar" === r || t.globals.comboBarCount > 0) && t.globals.isXNumeric && !t.globals.isBarHorizontal && (n = t.config.grid.padding.left, o = t.config.grid.padding.right, e.barPadForNumericAxis > n && (n = e.barPadForNumericAxis, o = e.barPadForNumericAxis)), e.dom.elGridRect = i.drawRect(-a / 2 - n - 2, -a / 2, e.gridWidth + a + o + n + 4, e.gridHeight + a, 0, "#fff"), new w(this).getLargestMarkerSize();
+        ("bar" === r || "rangeBar" === r || t.globals.comboBarCount > 0) && t.globals.isXNumeric && !t.globals.isBarHorizontal && (n = t.config.grid.padding.left, o = t.config.grid.padding.right, e.barPadForNumericAxis > n && (n = e.barPadForNumericAxis, o = e.barPadForNumericAxis)), e.dom.elGridRect = i.drawRect(-a / 2 - n - 2, -a / 2, e.gridWidth + a + o + n + 4, e.gridHeight + a, 0, "#fff"), new y(this).getLargestMarkerSize();
         var l = t.globals.markers.largestSize + 1;
         e.dom.elGridRectMarker = i.drawRect(2 * -l, 2 * -l, e.gridWidth + 4 * l, e.gridHeight + 4 * l, 0, "#fff"), e.dom.elGridRectMask.appendChild(e.dom.elGridRect.node), e.dom.elGridRectMarkerMask.appendChild(e.dom.elGridRectMarker.node);
         var h = e.dom.baseEl.querySelector("defs");
@@ -33933,8 +34177,9 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             s = this.w;
 
         if (s.config.grid.xaxis.lines.show || s.config.xaxis.axisTicks.show) {
-          var r = s.globals.padHorizontal,
-              n = s.globals.gridHeight;
+          var r,
+              n = s.globals.padHorizontal,
+              o = s.globals.gridHeight;
           s.globals.timescaleLabels.length ? function (t) {
             for (var a = t.xC, s = t.x1, r = t.y1, n = t.x2, o = t.y2, l = 0; l < a; l++) {
               s = e.xaxisLabels[l].position, n = e.xaxisLabels[l].position, e._drawGridLines({
@@ -33949,10 +34194,10 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             }
           }({
             xC: i,
-            x1: r,
+            x1: n,
             y1: 0,
-            x2: void 0,
-            y2: n
+            x2: r,
+            y2: o
           }) : (s.globals.isXNumeric && (i = s.globals.xAxisScale.result.length), s.config.xaxis.convertedCatToNumeric && (i = s.globals.xaxisLabelsCount), function (t) {
             var a = t.xC,
                 r = t.x1,
@@ -33984,28 +34229,28 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             }
           }({
             xC: i,
-            x1: r,
+            x1: n,
             y1: 0,
-            x2: void 0,
-            y2: n
+            x2: r,
+            y2: o
           }));
         }
 
         if (s.config.grid.yaxis.lines.show) {
-          var o = 0,
-              l = 0,
-              h = s.globals.gridWidth,
-              c = a + 1;
-          this.isTimelineBar && (c = s.globals.labels.length);
+          var l = 0,
+              h = 0,
+              c = s.globals.gridWidth,
+              d = a + 1;
+          this.isTimelineBar && (d = s.globals.labels.length);
 
-          for (var d = 0; d < c + (this.isTimelineBar ? 1 : 0); d++) {
+          for (var g = 0; g < d + (this.isTimelineBar ? 1 : 0); g++) {
             this._drawGridLine({
               x1: 0,
-              y1: o,
-              x2: h,
-              y2: l,
+              y1: l,
+              x2: c,
+              y2: h,
               parent: this.elgridLinesH
-            }), l = o += s.globals.gridHeight / (this.isTimelineBar ? c : a);
+            }), h = l += s.globals.gridHeight / (this.isTimelineBar ? d : a);
           }
         }
       }
@@ -34098,21 +34343,21 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
         var i = arguments.length > 2 && void 0 !== arguments[2] ? arguments[2] : 10,
             a = arguments.length > 3 && void 0 !== arguments[3] ? arguments[3] : 0,
             s = arguments.length > 4 ? arguments[4] : void 0,
-            r = this.w;
+            r = this.w,
+            n = Math.abs(e - t);
 
-        if ("dataPoints" === i && (i = r.globals.dataPoints - 1), t === Number.MIN_VALUE && 0 === e || !f.isNumber(t) && !f.isNumber(e) || t === Number.MIN_VALUE && e === -Number.MAX_VALUE) {
+        if ("dataPoints" === (i = this._adjustTicksForSmallRange(i, a, n)) && (i = r.globals.dataPoints - 1), t === Number.MIN_VALUE && 0 === e || !f.isNumber(t) && !f.isNumber(e) || t === Number.MIN_VALUE && e === -Number.MAX_VALUE) {
           t = 0, e = i;
-          var n = this.linearScale(t, e, i);
-          return n;
+          var o = this.linearScale(t, e, i);
+          return o;
         }
 
         t > e ? (console.warn("axis.min cannot be greater than axis.max"), e = t + .1) : t === e && (t = 0 === t ? 0 : t - .5, e = 0 === e ? 2 : e + .5);
-        var o = [],
-            l = Math.abs(e - t);
-        l < 1 && s && ("candlestick" === r.config.chart.type || "candlestick" === r.config.series[a].type || r.globals.isRangeData) && (e *= 1.01);
+        var l = [];
+        n < 1 && s && ("candlestick" === r.config.chart.type || "candlestick" === r.config.series[a].type || r.globals.isRangeData) && (e *= 1.01);
         var h = i + 1;
         h < 2 ? h = 2 : h > 2 && (h -= 2);
-        var c = l / h,
+        var c = n / h,
             d = Math.floor(f.log10(c)),
             g = Math.pow(10, d),
             u = Math.round(c / g);
@@ -34122,46 +34367,48 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             b = p * Math.ceil(e / p),
             m = x;
 
-        if (s && l > 2) {
-          for (; o.push(m), !((m += p) > b);) {
+        if (s && n > 2) {
+          for (; l.push(m), !((m += p) > b);) {
           }
 
           return {
-            result: o,
-            niceMin: o[0],
-            niceMax: o[o.length - 1]
+            result: l,
+            niceMin: l[0],
+            niceMax: l[l.length - 1]
           };
         }
 
         var v = t;
-        (o = []).push(v);
+        (l = []).push(v);
 
         for (var y = Math.abs(e - t) / i, w = 0; w <= i; w++) {
-          v += y, o.push(v);
+          v += y, l.push(v);
         }
 
-        return o[o.length - 2] >= e && o.pop(), {
-          result: o,
-          niceMin: o[0],
-          niceMax: o[o.length - 1]
+        return l[l.length - 2] >= e && l.pop(), {
+          result: l,
+          niceMin: l[0],
+          niceMax: l[l.length - 1]
         };
       }
     }, {
       key: "linearScale",
       value: function value(t, e) {
         var i = arguments.length > 2 && void 0 !== arguments[2] ? arguments[2] : 10,
-            a = Math.abs(e - t),
-            s = a / i;
-        i === Number.MAX_VALUE && (i = 10, s = 1);
+            a = arguments.length > 3 ? arguments[3] : void 0,
+            s = Math.abs(e - t),
+            r = s / (i = this._adjustTicksForSmallRange(i, a, s));
 
-        for (var r = [], n = t; i >= 0;) {
-          r.push(n), n += s, i -= 1;
+        i === Number.MAX_VALUE && (i = 10, r = 1);
+
+        for (var n = [], o = t; i >= 0;) {
+          n.push(o), o += r, i -= 1;
         }
 
         return {
-          result: r,
-          niceMin: r[0],
-          niceMax: r[r.length - 1]
+          result: n,
+          niceMin: n[0],
+          niceMax: n[n.length - 1]
         };
       }
     }, {
@@ -34186,6 +34433,18 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
         };
       }
     }, {
+      key: "_adjustTicksForSmallRange",
+      value: function value(t, e, i) {
+        var a = t;
+
+        if (void 0 !== e && this.w.config.yaxis[e].labels.formatter) {
+          var s = this.w.config.yaxis[e].labels.formatter(1);
+          f.isNumber(Number(s)) && !f.isFloat(s) && (a = Math.ceil(i));
+        }
+
+        return a < t ? a : t;
+      }
+    }, {
       key: "setYScaleForIndex",
       value: function value(t, e, i) {
         var a = this.w.globals,
@@ -34197,7 +34456,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
           if (a.allSeriesCollapsed = !1, void 0 === r.min && void 0 === r.max || r.forceNiceScale) {
             var o = void 0 === s.yaxis[t].max && void 0 === s.yaxis[t].min || s.yaxis[t].forceNiceScale;
             a.yAxisScale[t] = this.niceScale(e, i, r.tickAmount ? r.tickAmount : n < 5 && n > 1 ? n + 1 : 5, t, o);
-          } else a.yAxisScale[t] = this.linearScale(e, i, r.tickAmount);
+          } else a.yAxisScale[t] = this.linearScale(e, i, r.tickAmount, t);
         } else a.yAxisScale[t] = this.linearScale(0, 5, 5);
       }
     }, {
@@ -34472,7 +34731,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             e = this.w.config;
 
         if (t.minX === t.maxX) {
-          var i = new y(this.ctx);
+          var i = new Y(this.ctx);
 
           if ("datetime" === e.xaxis.type) {
             var a = i.getDate(t.minX);
@@ -34864,7 +35123,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
           return e.name === t;
         })[0];
         if (!i) throw new Error("Wrong locale name provided. Please make sure you set the correct locale name in options");
-        var a = f.extend(S, i);
+        var a = f.extend(A, i);
         this.w.globals.locale = a.options;
       }
     }]), t;
@@ -34984,22 +35243,22 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             return t.breakpoint > e.breakpoint ? 1 : e.breakpoint > t.breakpoint ? -1 : 0;
           }).reverse();
 
-          var r = new R({}),
+          var r = new D({}),
               n = function n() {
             var t = arguments.length > 0 && void 0 !== arguments[0] ? arguments[0] : {},
                 a = s[0].breakpoint,
                 n = window.innerWidth > 0 ? window.innerWidth : screen.width;
 
             if (n > a) {
-              var o = w.extendArrayProps(r, i.globals.initialConfig, i);
+              var o = y.extendArrayProps(r, i.globals.initialConfig, i);
               t = f.extend(o, t), t = f.extend(i.config, t), e.overrideResponsiveOptions(t);
             } else for (var l = 0; l < s.length; l++) {
-              n < s[l].breakpoint && (t = w.extendArrayProps(r, s[l].options, i), t = f.extend(i.config, t), e.overrideResponsiveOptions(t));
+              n < s[l].breakpoint && (t = y.extendArrayProps(r, s[l].options, i), t = f.extend(i.config, t), e.overrideResponsiveOptions(t));
             }
           };
 
           if (t) {
-            var o = w.extendArrayProps(r, t, i);
+            var o = y.extendArrayProps(r, t, i);
             o = f.extend(i.config, o), n(o = f.extend(o, t));
           } else n({});
         }
@@ -35007,7 +35266,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
     }, {
       key: "overrideResponsiveOptions",
       value: function value(t) {
-        var e = new R(t).init({
+        var e = new D(t).init({
           responsiveOverride: !0
         });
         this.w.config = e;
@@ -35259,11 +35518,11 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
               l = r;
           r = o.xLabelFormat(s, r, l, {
             i: void 0,
-            dateFormatter: new y(this.dCtx.ctx).formatDate,
+            dateFormatter: new Y(this.dCtx.ctx).formatDate,
             w: e
           }), n = o.xLabelFormat(s, n, l, {
             i: void 0,
-            dateFormatter: new y(this.dCtx.ctx).formatDate,
+            dateFormatter: new Y(this.dCtx.ctx).formatDate,
             w: e
           }), (e.config.xaxis.convertedCatToNumeric && void 0 === r || "" === String(r).trim()) && (n = r = "1");
           var h = new b(this.dCtx.ctx),
@@ -35583,11 +35842,11 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
 
         switch (i.legend.position) {
           case "bottom":
-            e.gridHeight = e.svgHeight - this.lgRect.height - e.goldenPadding, e.gridWidth = e.gridHeight, e.translateY = r - 10, e.translateX = n + (e.svgWidth - e.gridWidth) / 2;
+            e.gridHeight = e.svgHeight - this.lgRect.height - e.goldenPadding, e.gridWidth = e.svgWidth, e.translateY = r - 10, e.translateX = n + (e.svgWidth - e.gridWidth) / 2;
             break;
 
           case "top":
-            e.gridHeight = e.svgHeight - this.lgRect.height - e.goldenPadding, e.gridWidth = e.gridHeight, e.translateY = this.lgRect.height + r + 10, e.translateX = n + (e.svgWidth - e.gridWidth) / 2;
+            e.gridHeight = e.svgHeight - this.lgRect.height - e.goldenPadding, e.gridWidth = e.svgWidth, e.translateY = this.lgRect.height + r + 10, e.translateX = n + (e.svgWidth - e.gridWidth) / 2;
             break;
 
           case "left":
@@ -35764,67 +36023,68 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
     }, {
       key: "drawLegends",
       value: function value() {
-        var t = this.w,
-            e = t.config.legend.fontFamily,
-            i = t.globals.seriesNames,
-            a = t.globals.colors.slice();
+        var t = this,
+            e = this.w,
+            i = e.config.legend.fontFamily,
+            a = e.globals.seriesNames,
+            s = e.globals.colors.slice();
 
-        if ("heatmap" === t.config.chart.type) {
-          var s = t.config.plotOptions.heatmap.colorScale.ranges;
-          i = s.map(function (t) {
+        if ("heatmap" === e.config.chart.type) {
+          var r = e.config.plotOptions.heatmap.colorScale.ranges;
+          a = r.map(function (t) {
             return t.name ? t.name : t.from + " - " + t.to;
-          }), a = s.map(function (t) {
+          }), s = r.map(function (t) {
             return t.color;
           });
-        } else this.isBarsDistributed && (i = t.globals.labels.slice());
+        } else this.isBarsDistributed && (a = e.globals.labels.slice());
 
-        for (var r = t.globals.legendFormatter, n = t.config.legend.inverseOrder, o = n ? i.length - 1 : 0; n ? o >= 0 : o <= i.length - 1; n ? o-- : o++) {
-          var l = r(i[o], {
-            seriesIndex: o,
-            w: t
+        for (var n = e.globals.legendFormatter, o = e.config.legend.inverseOrder, l = o ? a.length - 1 : 0; o ? l >= 0 : l <= a.length - 1; o ? l-- : l++) {
+          var h = n(a[l], {
+            seriesIndex: l,
+            w: e
           }),
-              h = !1,
-              c = !1;
-          if (t.globals.collapsedSeries.length > 0) for (var d = 0; d < t.globals.collapsedSeries.length; d++) {
-            t.globals.collapsedSeries[d].index === o && (h = !0);
+              c = !1,
+              d = !1;
+          if (e.globals.collapsedSeries.length > 0) for (var g = 0; g < e.globals.collapsedSeries.length; g++) {
+            e.globals.collapsedSeries[g].index === l && (c = !0);
           }
-          if (t.globals.ancillaryCollapsedSeriesIndices.length > 0) for (var g = 0; g < t.globals.ancillaryCollapsedSeriesIndices.length; g++) {
-            t.globals.ancillaryCollapsedSeriesIndices[g] === o && (c = !0);
+          if (e.globals.ancillaryCollapsedSeriesIndices.length > 0) for (var u = 0; u < e.globals.ancillaryCollapsedSeriesIndices.length; u++) {
+            e.globals.ancillaryCollapsedSeriesIndices[u] === l && (d = !0);
           }
-          var u = document.createElement("span");
-          u.classList.add("apexcharts-legend-marker");
-          var p = t.config.legend.markers.offsetX,
-              x = t.config.legend.markers.offsetY,
-              m = t.config.legend.markers.height,
-              v = t.config.legend.markers.width,
-              y = t.config.legend.markers.strokeWidth,
-              k = t.config.legend.markers.strokeColor,
-              A = t.config.legend.markers.radius,
-              S = u.style;
-          S.background = a[o], S.color = a[o], S.setProperty("background", a[o], "important"), t.config.legend.markers.fillColors && t.config.legend.markers.fillColors[o] && (S.background = t.config.legend.markers.fillColors[o]), void 0 !== t.globals.seriesColors[o] && (S.background = t.globals.seriesColors[o], S.color = t.globals.seriesColors[o]), S.height = Array.isArray(m) ? parseFloat(m[o]) + "px" : parseFloat(m) + "px", S.width = Array.isArray(v) ? parseFloat(v[o]) + "px" : parseFloat(v) + "px", S.left = Array.isArray(p) ? p[o] : p, S.top = Array.isArray(x) ? x[o] : x, S.borderWidth = Array.isArray(y) ? y[o] : y, S.borderColor = Array.isArray(k) ? k[o] : k, S.borderRadius = Array.isArray(A) ? parseFloat(A[o]) + "px" : parseFloat(A) + "px", t.config.legend.markers.customHTML && (Array.isArray(t.config.legend.markers.customHTML) ? t.config.legend.markers.customHTML[o] && (u.innerHTML = t.config.legend.markers.customHTML[o]()) : u.innerHTML = t.config.legend.markers.customHTML()), b.setAttrs(u, {
-            rel: o + 1,
-            "data:collapsed": h || c
-          }), (h || c) && u.classList.add("apexcharts-inactive-legend");
-          var C = document.createElement("div"),
-              L = document.createElement("span");
-          L.classList.add("apexcharts-legend-text"), L.innerHTML = Array.isArray(l) ? l.join(" ") : l;
-          var P = t.config.legend.labels.useSeriesColors ? t.globals.colors[o] : t.config.legend.labels.colors;
-          P || (P = t.config.chart.foreColor), L.style.color = P, L.style.fontSize = parseFloat(t.config.legend.fontSize) + "px", L.style.fontWeight = t.config.legend.fontWeight, L.style.fontFamily = e || t.config.chart.fontFamily, b.setAttrs(L, {
-            rel: o + 1,
-            i: o,
-            "data:default-text": encodeURIComponent(l),
-            "data:collapsed": h || c
-          }), C.appendChild(u), C.appendChild(L);
-          var T = new w(this.ctx);
-          if (!t.config.legend.showForZeroSeries) 0 === T.getSeriesTotalByIndex(o) && T.seriesHaveSameValues(o) && !T.isSeriesNull(o) && -1 === t.globals.collapsedSeriesIndices.indexOf(o) && -1 === t.globals.ancillaryCollapsedSeriesIndices.indexOf(o) && C.classList.add("apexcharts-hidden-zero-series");
-          t.config.legend.showForNullSeries || T.isSeriesNull(o) && -1 === t.globals.collapsedSeriesIndices.indexOf(o) && -1 === t.globals.ancillaryCollapsedSeriesIndices.indexOf(o) && C.classList.add("apexcharts-hidden-null-series"), t.globals.dom.elLegendWrap.appendChild(C), t.globals.dom.elLegendWrap.classList.add("apexcharts-align-".concat(t.config.legend.horizontalAlign)), t.globals.dom.elLegendWrap.classList.add("position-" + t.config.legend.position), C.classList.add("apexcharts-legend-series"), C.style.margin = "".concat(t.config.legend.itemMargin.vertical, "px ").concat(t.config.legend.itemMargin.horizontal, "px"), t.globals.dom.elLegendWrap.style.width = t.config.legend.width ? t.config.legend.width + "px" : "", t.globals.dom.elLegendWrap.style.height = t.config.legend.height ? t.config.legend.height + "px" : "", b.setAttrs(C, {
-            rel: o + 1,
-            seriesName: f.escapeString(i[o]),
-            "data:collapsed": h || c
-          }), (h || c) && C.classList.add("apexcharts-inactive-legend"), t.config.legend.onItemClick.toggleDataSeries || C.classList.add("apexcharts-no-click");
+          var p = document.createElement("span");
+          p.classList.add("apexcharts-legend-marker");
+          var x = e.config.legend.markers.offsetX,
+              m = e.config.legend.markers.offsetY,
+              v = e.config.legend.markers.height,
+              w = e.config.legend.markers.width,
+              k = e.config.legend.markers.strokeWidth,
+              A = e.config.legend.markers.strokeColor,
+              S = e.config.legend.markers.radius,
+              C = p.style;
+          C.background = s[l], C.color = s[l], C.setProperty("background", s[l], "important"), e.config.legend.markers.fillColors && e.config.legend.markers.fillColors[l] && (C.background = e.config.legend.markers.fillColors[l]), void 0 !== e.globals.seriesColors[l] && (C.background = e.globals.seriesColors[l], C.color = e.globals.seriesColors[l]), C.height = Array.isArray(v) ? parseFloat(v[l]) + "px" : parseFloat(v) + "px", C.width = Array.isArray(w) ? parseFloat(w[l]) + "px" : parseFloat(w) + "px", C.left = Array.isArray(x) ? x[l] : x, C.top = Array.isArray(m) ? m[l] : m, C.borderWidth = Array.isArray(k) ? k[l] : k, C.borderColor = Array.isArray(A) ? A[l] : A, C.borderRadius = Array.isArray(S) ? parseFloat(S[l]) + "px" : parseFloat(S) + "px", e.config.legend.markers.customHTML && (Array.isArray(e.config.legend.markers.customHTML) ? e.config.legend.markers.customHTML[l] && (p.innerHTML = e.config.legend.markers.customHTML[l]()) : p.innerHTML = e.config.legend.markers.customHTML()), b.setAttrs(p, {
+            rel: l + 1,
+            "data:collapsed": c || d
+          }), (c || d) && p.classList.add("apexcharts-inactive-legend");
+          var L = document.createElement("div"),
+              P = document.createElement("span");
+          P.classList.add("apexcharts-legend-text"), P.innerHTML = Array.isArray(h) ? h.join(" ") : h;
+          var T = e.config.legend.labels.useSeriesColors ? e.globals.colors[l] : e.config.legend.labels.colors;
+          T || (T = e.config.chart.foreColor), P.style.color = T, P.style.fontSize = parseFloat(e.config.legend.fontSize) + "px", P.style.fontWeight = e.config.legend.fontWeight, P.style.fontFamily = i || e.config.chart.fontFamily, b.setAttrs(P, {
+            rel: l + 1,
+            i: l,
+            "data:default-text": encodeURIComponent(h),
+            "data:collapsed": c || d
+          }), L.appendChild(p), L.appendChild(P);
+          var z = new y(this.ctx);
+          if (!e.config.legend.showForZeroSeries) 0 === z.getSeriesTotalByIndex(l) && z.seriesHaveSameValues(l) && !z.isSeriesNull(l) && -1 === e.globals.collapsedSeriesIndices.indexOf(l) && -1 === e.globals.ancillaryCollapsedSeriesIndices.indexOf(l) && L.classList.add("apexcharts-hidden-zero-series");
+          e.config.legend.showForNullSeries || z.isSeriesNull(l) && -1 === e.globals.collapsedSeriesIndices.indexOf(l) && -1 === e.globals.ancillaryCollapsedSeriesIndices.indexOf(l) && L.classList.add("apexcharts-hidden-null-series"), e.globals.dom.elLegendWrap.appendChild(L), e.globals.dom.elLegendWrap.classList.add("apexcharts-align-".concat(e.config.legend.horizontalAlign)), e.globals.dom.elLegendWrap.classList.add("position-" + e.config.legend.position), L.classList.add("apexcharts-legend-series"), L.style.margin = "".concat(e.config.legend.itemMargin.vertical, "px ").concat(e.config.legend.itemMargin.horizontal, "px"), e.globals.dom.elLegendWrap.style.width = e.config.legend.width ? e.config.legend.width + "px" : "", e.globals.dom.elLegendWrap.style.height = e.config.legend.height ? e.config.legend.height + "px" : "", b.setAttrs(L, {
+            rel: l + 1,
+            seriesName: f.escapeString(a[l]),
+            "data:collapsed": c || d
+          }), (c || d) && L.classList.add("apexcharts-inactive-legend"), e.config.legend.onItemClick.toggleDataSeries || L.classList.add("apexcharts-no-click");
         }
 
-        "treemap" !== t.config.chart.type && "heatmap" !== t.config.chart.type && !this.isBarsDistributed && t.config.legend.onItemClick.toggleDataSeries && t.globals.dom.elWrap.addEventListener("click", this.onLegendClick, !0), t.config.legend.onItemHover.highlightDataSeries && (t.globals.dom.elWrap.addEventListener("mousemove", this.onLegendHovered, !0), t.globals.dom.elWrap.addEventListener("mouseout", this.onLegendHovered, !0));
+        "treemap" !== e.config.chart.type && "heatmap" !== e.config.chart.type && !this.isBarsDistributed && e.config.legend.onItemClick.toggleDataSeries && e.globals.dom.elWrap.addEventListener("click", t.onLegendClick, !0), e.config.legend.onItemHover.highlightDataSeries && (e.globals.dom.elWrap.addEventListener("mousemove", t.onLegendHovered, !0), e.globals.dom.elWrap.addEventListener("mouseout", t.onLegendHovered, !0));
       }
     }, {
       key: "setLegendWrapXY",
@@ -35874,9 +36134,9 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
         if ("heatmap" === e.config.chart.type || this.isBarsDistributed) {
           if (i) {
             var a = parseInt(t.target.getAttribute("rel"), 10) - 1;
-            this.ctx.events.fireEvent("legendHover", [this.ctx, a, this.w]), new E(this.ctx).highlightRangeInSeries(t, t.target);
+            this.ctx.events.fireEvent("legendHover", [this.ctx, a, this.w]), new M(this.ctx).highlightRangeInSeries(t, t.target);
           }
-        } else !t.target.classList.contains("apexcharts-inactive-legend") && i && new E(this.ctx).toggleSeriesOnHover(t, t.target);
+        } else !t.target.classList.contains("apexcharts-inactive-legend") && i && new M(this.ctx).toggleSeriesOnHover(t, t.target);
       }
     }, {
       key: "onLegendClick",
@@ -36925,10 +37185,10 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
         var d = r;
         a.globals.isXNumeric && "datetime" === a.config.xaxis.type ? r = new W(this.ctx).xLabelFormat(a.globals.ttKeyFormatter, d, d, {
           i: void 0,
-          dateFormatter: new y(this.ctx).formatDate,
+          dateFormatter: new Y(this.ctx).formatDate,
           w: this.w
         }) : a.globals.isBarHorizontal || (r = a.globals.xLabelFormatter(d, h));
-        return void 0 !== a.config.tooltip.x.formatter && (r = a.globals.ttKeyFormatter(d, h)), a.globals.seriesZ.length > 0 && a.globals.seriesZ[0].length > 0 && (o = c(a.globals.seriesZ[e][i], a)), n = "function" == typeof a.config.xaxis.tooltip.formatter ? a.globals.xaxisTooltipFormatter(d, h) : r, {
+        return void 0 !== a.config.tooltip.x.formatter && (r = a.globals.ttKeyFormatter(d, h)), a.globals.seriesZ.length > 0 && a.globals.seriesZ[e].length > 0 && (o = c(a.globals.seriesZ[e][i], a)), n = "function" == typeof a.config.xaxis.tooltip.formatter ? a.globals.xaxisTooltipFormatter(d, h) : r, {
           val: Array.isArray(l) ? l.join(" ") : l,
           xVal: Array.isArray(r) ? r.join(" ") : r,
           xAxisTTVal: Array.isArray(n) ? n.join(" ") : n,
@@ -37087,7 +37347,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             s = 0,
             r = 0,
             n = a.globals.pointsArray;
-        e = new E(this.ctx).getActiveConfigSeriesIndex(!0);
+        e = new M(this.ctx).getActiveConfigSeriesIndex(!0);
         var o = i.tooltipUtil.getHoverMarkerSize(e);
         n[e] && (s = n[e][t][0], r = n[e][t][1]);
         var l = i.tooltipUtil.getAllMarkers();
@@ -37136,7 +37396,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
       value: function value() {
         var t = this.w,
             e = new b(this.ctx),
-            i = new T(this.ctx),
+            i = new P(this.ctx),
             a = t.globals.dom.baseEl.querySelectorAll(".apexcharts-series");
         a = g(a), t.config.chart.stacked && a.sort(function (t, e) {
           return parseFloat(t.getAttribute("data:realIndex")) - parseFloat(e.getAttribute("data:realIndex"));
@@ -37179,16 +37439,16 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
     }, {
       key: "enlargePoints",
       value: function value(t) {
-        for (var e = this.w, i = this.ttCtx, a = t, s = e.globals.dom.baseEl.querySelectorAll(".apexcharts-series:not(.apexcharts-series-collapsed) .apexcharts-marker"), r = e.config.markers.hover.size, n = 0; n < s.length; n++) {
-          var o = s[n].getAttribute("rel"),
-              l = s[n].getAttribute("index");
+        for (var e = this.w, i = this, a = this.ttCtx, s = t, r = e.globals.dom.baseEl.querySelectorAll(".apexcharts-series:not(.apexcharts-series-collapsed) .apexcharts-marker"), n = e.config.markers.hover.size, o = 0; o < r.length; o++) {
+          var l = r[o].getAttribute("rel"),
+              h = r[o].getAttribute("index");
 
-          if (void 0 === r && (r = e.globals.markers.size[l] + e.config.markers.hover.sizeOffset), a === parseInt(o, 10)) {
-            this.newPointSize(a, s[n]);
-            var h = s[n].getAttribute("cx"),
-                c = s[n].getAttribute("cy");
-            this.tooltipPosition.moveXCrosshairs(h), i.fixedTooltip || this.tooltipPosition.moveTooltip(h, c, r);
-          } else this.oldPointSize(s[n]);
+          if (void 0 === n && (n = e.globals.markers.size[h] + e.config.markers.hover.sizeOffset), s === parseInt(l, 10)) {
+            i.newPointSize(s, r[o]);
+            var c = r[o].getAttribute("cx"),
+                d = r[o].getAttribute("cy");
+            i.tooltipPosition.moveXCrosshairs(c), a.fixedTooltip || i.tooltipPosition.moveTooltip(c, d, n);
+          } else i.oldPointSize(r[o]);
         }
       }
     }, {
@@ -37674,7 +37934,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
           y: 0,
           ttWidth: n.getBoundingClientRect().width,
           ttHeight: n.getBoundingClientRect().height
-        }, i.e = s, !i.tooltipUtil.hasBars() || r.globals.comboCharts || i.isBarShared) || this.tConfig.onDatasetHover.highlightDataSeries && new E(e).toggleSeriesOnHover(s, s.target.parentNode);
+        }, i.e = s, !i.tooltipUtil.hasBars() || r.globals.comboCharts || i.isBarShared) || this.tConfig.onDatasetHover.highlightDataSeries && new M(e).toggleSeriesOnHover(s, s.target.parentNode);
         i.fixedTooltip && i.drawFixedTooltipRect(), r.globals.axisCharts ? i.axisChartsTooltips({
           e: s,
           opt: a,
@@ -37875,7 +38135,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
     }]), t;
   }(),
       mt = function (t) {
-    o(s, Y);
+    o(s, X);
     var i = d(s);
 
     function s() {
@@ -37887,8 +38147,8 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
       value: function value(t, e) {
         var i = this,
             a = this.w;
-        this.graphics = new b(this.ctx), this.bar = new Y(this.ctx, this.xyRatios);
-        var s = new w(this.ctx, a);
+        this.graphics = new b(this.ctx), this.bar = new X(this.ctx, this.xyRatios);
+        var s = new y(this.ctx, a);
         t = s.getLogSeries(t), this.yRatio = s.getLogYRatios(this.yRatio), this.barHelpers.initVariables(t), "100%" === a.config.chart.stackType && (t = a.globals.seriesPercent.slice()), this.series = t, this.totalItems = 0, this.prevY = [], this.prevX = [], this.prevYF = [], this.prevXF = [], this.prevYVal = [], this.prevXVal = [], this.xArrj = [], this.xArrjF = [], this.xArrjVal = [], this.yArrj = [], this.yArrjF = [], this.yArrjVal = [];
 
         for (var r = 0; r < t.length; r++) {
@@ -38122,7 +38382,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
     }]), s;
   }(),
       vt = function (t) {
-    o(s, Y);
+    o(s, X);
     var i = d(s);
 
     function s() {
@@ -38134,9 +38394,9 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
       value: function value(t, e) {
         var i = this.w,
             a = new b(this.ctx),
-            s = new P(this.ctx);
+            s = new L(this.ctx);
         this.candlestickOptions = this.w.config.plotOptions.candlestick;
-        var r = new w(this.ctx, i);
+        var r = new y(this.ctx, i);
         t = r.getLogSeries(t), this.series = t, this.yRatio = r.getLogYRatios(this.yRatio), this.barHelpers.initVariables(t);
 
         for (var n = a.group({
@@ -38158,8 +38418,8 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
           t[o].length > 0 && (this.visibleI = this.visibleI + 1);
           var m, v;
           this.yRatio.length > 1 && (this.yaxisIndex = p);
-          var y = this.barHelpers.initialPositions();
-          d = y.y, m = y.barHeight, c = y.x, v = y.barWidth, l = y.xDivision, h = y.zeroH, u.push(c + v / 2);
+          var w = this.barHelpers.initialPositions();
+          d = w.y, m = w.barHeight, c = w.x, v = w.barWidth, l = w.xDivision, h = w.zeroH, u.push(c + v / 2);
 
           for (var k = a.group({
             class: "apexcharts-datalabels",
@@ -38167,7 +38427,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
           }), A = 0; A < i.globals.dataPoints; A++) {
             var S,
                 C = this.barHelpers.getStrokeWidth(o, A, p),
-                L = this.drawCandleStickPaths({
+                P = this.drawCandleStickPaths({
               indexes: {
                 i: o,
                 j: A,
@@ -38181,7 +38441,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
               strokeWidth: C,
               elSeries: x
             });
-            d = L.y, c = L.x, S = L.color, A > 0 && u.push(c + v / 2), g.push(d);
+            d = P.y, c = P.x, S = P.color, A > 0 && u.push(c + v / 2), g.push(d);
             var T = s.fillPath({
               seriesNumber: p,
               dataPointIndex: A,
@@ -38195,8 +38455,8 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
               lineFill: z,
               j: A,
               i: o,
-              pathFrom: L.pathFrom,
-              pathTo: L.pathTo,
+              pathFrom: P.pathFrom,
+              pathTo: P.pathTo,
               strokeWidth: C,
               elSeries: x,
               x: c,
@@ -38336,7 +38596,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             o = t.fontSize,
             l = this.w.config.dataLabels,
             h = new b(this.ctx),
-            c = new I(this.ctx),
+            c = new z(this.ctx),
             d = null;
 
         if (l.enabled) {
@@ -38409,7 +38669,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             var m = this.helpers.getShadeColor(e.config.chart.type, h, x, this.negRange),
                 v = m.color,
                 y = m.colorProps;
-            if ("image" === e.config.fill.type) v = new P(this.ctx).fillPath({
+            if ("image" === e.config.fill.type) v = new L(this.ctx).fillPath({
               seriesNumber: h,
               dataPointIndex: x,
               opacity: e.globals.hasNegs ? y.percent < 0 ? 1 - (1 + y.percent / 100) : u + y.percent / 100 : y.percent / 100,
@@ -38447,14 +38707,14 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
               }
             }
 
-            var L = (0, e.config.dataLabels.formatter)(e.globals.series[h][x], {
+            var P = (0, e.config.dataLabels.formatter)(e.globals.series[h][x], {
               value: e.globals.series[h][x],
               seriesIndex: h,
               dataPointIndex: x,
               w: e
             }),
                 T = this.helpers.calculateDataLabels({
-              text: L,
+              text: P,
               x: g + s / 2,
               y: n + r / 2,
               i: h,
@@ -38529,7 +38789,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
     function t(i) {
       e(this, t), this.ctx = i, this.w = i.w;
       var a = this.w;
-      this.chartType = this.w.config.chart.type, this.initialAnim = this.w.config.chart.animations.enabled, this.dynamicAnim = this.initialAnim && this.w.config.chart.animations.dynamicAnimation.enabled, this.animBeginArr = [0], this.animDur = 0, this.donutDataLabels = this.w.config.plotOptions.pie.donut.labels, this.lineColorArr = void 0 !== a.globals.stroke.colors ? a.globals.stroke.colors : a.globals.colors, this.defaultSize = a.globals.svgHeight < a.globals.svgWidth ? a.globals.gridHeight : a.globals.gridWidth, this.centerY = this.defaultSize / 2, this.centerX = a.globals.gridWidth / 2, this.fullAngle = 360, a.globals.radialSize = this.defaultSize / 2.05 - a.config.stroke.width - (a.config.chart.sparkline.enabled ? 0 : a.config.chart.dropShadow.blur), this.donutSize = a.globals.radialSize * parseInt(a.config.plotOptions.pie.donut.size, 10) / 100, this.maxY = 0, this.sliceLabels = [], this.sliceSizes = [], this.prevSectorAngleArr = [];
+      this.chartType = this.w.config.chart.type, this.initialAnim = this.w.config.chart.animations.enabled, this.dynamicAnim = this.initialAnim && this.w.config.chart.animations.dynamicAnimation.enabled, this.animBeginArr = [0], this.animDur = 0, this.donutDataLabels = this.w.config.plotOptions.pie.donut.labels, this.lineColorArr = void 0 !== a.globals.stroke.colors ? a.globals.stroke.colors : a.globals.colors, this.defaultSize = Math.min(a.globals.gridWidth, a.globals.gridHeight), this.centerY = this.defaultSize / 2, this.centerX = a.globals.gridWidth / 2, this.fullAngle = 360, a.globals.radialSize = this.defaultSize / 2.05 - a.config.stroke.width - (a.config.chart.sparkline.enabled ? 0 : a.config.chart.dropShadow.blur), this.donutSize = a.globals.radialSize * parseInt(a.config.plotOptions.pie.donut.size, 10) / 100, this.maxY = 0, this.sliceLabels = [], this.sliceSizes = [], this.prevSectorAngleArr = [];
     }
 
     return a(t, [{
@@ -38550,7 +38810,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             o = a.group();
         0 === s && (s = 1e-5), t.forEach(function (t) {
           e.maxY = Math.max(e.maxY, t);
-        }), "polarArea" === this.chartType && this.drawPolarElements();
+        }), i.config.yaxis[0].max && (this.maxY = i.config.yaxis[0].max), "polarArea" === this.chartType && this.drawPolarElements();
 
         for (var l = 0; l < t.length; l++) {
           var h = this.fullAngle * f.negToZero(t[l]) / s;
@@ -38609,7 +38869,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
         var i = this.w,
             a = new p(this.ctx),
             s = new b(this.ctx),
-            r = new P(this.ctx),
+            r = new L(this.ctx),
             n = s.group({
           class: "apexcharts-slices"
         }),
@@ -38687,11 +38947,11 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
           }), i.config.plotOptions.pie.expandOnClick && "polarArea" !== this.chartType && y.click(this.pieClicked.bind(this, g)), i.config.dataLabels.enabled) {
             var S = k.x,
                 C = k.y,
-                L = 100 * x / this.fullAngle + "%";
+                P = 100 * x / this.fullAngle + "%";
 
             if (0 !== x && i.config.plotOptions.pie.dataLabels.minAngleToShowLabel < t[g]) {
               var T = i.config.dataLabels.formatter;
-              void 0 !== T && (L = T(i.globals.seriesPercent[g][0], {
+              void 0 !== T && (P = T(i.globals.seriesPercent[g][0], {
                 seriesIndex: g,
                 w: i
               }));
@@ -38702,7 +38962,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
                   M = s.drawText({
                 x: S,
                 y: C,
-                text: L,
+                text: P,
                 textAnchor: "middle",
                 fontSize: i.config.dataLabels.style.fontSize,
                 fontFamily: i.config.dataLabels.style.fontFamily,
@@ -38785,31 +39045,32 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
       value: function value(t) {
         var e,
             i = this.w,
-            a = this.sliceSizes[t] + (i.config.plotOptions.pie.expandOnClick ? 4 : 0),
-            s = i.globals.dom.Paper.select(".apexcharts-".concat(this.chartType.toLowerCase(), "-slice-").concat(t)).members[0];
+            a = this,
+            s = a.sliceSizes[t] + (i.config.plotOptions.pie.expandOnClick ? 4 : 0),
+            r = i.globals.dom.Paper.select(".apexcharts-".concat(a.chartType.toLowerCase(), "-slice-").concat(t)).members[0];
 
-        if ("true" !== s.attr("data:pieClicked")) {
-          var r = i.globals.dom.baseEl.getElementsByClassName("apexcharts-pie-area");
-          Array.prototype.forEach.call(r, function (t) {
+        if ("true" !== r.attr("data:pieClicked")) {
+          var n = i.globals.dom.baseEl.getElementsByClassName("apexcharts-pie-area");
+          Array.prototype.forEach.call(n, function (t) {
             t.setAttribute("data:pieClicked", "false");
             var e = t.getAttribute("data:pathOrig");
             t.setAttribute("d", e);
-          }), s.attr("data:pieClicked", "true");
-          var n = parseInt(s.attr("data:startAngle"), 10),
-              o = parseInt(s.attr("data:angle"), 10);
-          e = this.getPiePath({
-            me: this,
-            startAngle: n,
-            angle: o,
-            size: a
-          }), 360 !== o && s.plot(e);
+          }), r.attr("data:pieClicked", "true");
+          var o = parseInt(r.attr("data:startAngle"), 10),
+              l = parseInt(r.attr("data:angle"), 10);
+          e = a.getPiePath({
+            me: a,
+            startAngle: o,
+            angle: l,
+            size: s
+          }), 360 !== l && r.plot(e);
         } else {
-          s.attr({
+          r.attr({
             "data:pieClicked": "false"
-          }), this.revertDataLabelsInner(s.node, this.donutDataLabels);
-          var l = s.attr("data:pathOrig");
-          s.attr({
-            d: l
+          }), this.revertDataLabelsInner(r.node, this.donutDataLabels);
+          var h = r.attr("data:pathOrig");
+          r.attr({
+            d: h
           });
         }
       }
@@ -38855,27 +39116,26 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             a = new kt(this.ctx),
             s = i.group(),
             r = i.group(),
-            n = void 0 === t.config.yaxis[0].max && void 0 === t.config.yaxis[0].min,
-            o = e.niceScale(0, Math.ceil(this.maxY), t.config.yaxis[0].tickAmount, 0, n),
-            l = o.result.reverse(),
-            h = o.result.length;
-        this.maxY = o.niceMax;
+            n = e.niceScale(0, Math.ceil(this.maxY), t.config.yaxis[0].tickAmount, 0, !0),
+            o = n.result.reverse(),
+            l = n.result.length;
+        this.maxY = n.niceMax;
 
-        for (var c = t.globals.radialSize, d = c / (h - 1), g = 0; g < h - 1; g++) {
-          var u = i.drawCircle(c);
+        for (var h = t.globals.radialSize, c = h / (l - 1), d = 0; d < l - 1; d++) {
+          var g = i.drawCircle(h);
 
-          if (u.attr({
+          if (g.attr({
             cx: this.centerX,
             cy: this.centerY,
             fill: "none",
             "stroke-width": t.config.plotOptions.polarArea.rings.strokeWidth,
             stroke: t.config.plotOptions.polarArea.rings.strokeColor
           }), t.config.yaxis[0].show) {
-            var f = a.drawYAxisTexts(this.centerX, this.centerY - c + parseInt(t.config.yaxis[0].labels.style.fontSize, 10) / 2, g, l[g]);
-            r.add(f);
+            var u = a.drawYAxisTexts(this.centerX, this.centerY - h + parseInt(t.config.yaxis[0].labels.style.fontSize, 10) / 2, d, o[d]);
+            r.add(u);
           }
 
-          s.add(u), c -= d;
+          s.add(g), h -= c;
         }
 
         this.ret.add(s), this.ret.add(r);
@@ -39004,9 +39264,9 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
       value: function value(t) {
         var e = this,
             i = this.w,
-            a = new P(this.ctx),
+            a = new L(this.ctx),
             s = [],
-            r = new I(this.ctx);
+            r = new z(this.ctx);
         t.length && (this.dataPointsLen = t[i.globals.maxValsInArrayIndex].length), this.disAngle = 2 * Math.PI / this.dataPointsLen;
         var o = i.globals.gridWidth / 2,
             l = i.globals.gridHeight / 2,
@@ -39095,7 +39355,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
           }
 
           t.forEach(function (t, a) {
-            var s = new T(e.ctx).getMarkerConfig("apexcharts-marker", o, a),
+            var s = new P(e.ctx).getMarkerConfig("apexcharts-marker", o, a),
                 l = e.graphics.drawMarker(g[a].x, g[a].y, s);
             l.attr("rel", a), l.attr("j", a), l.attr("index", o), l.node.setAttribute("default-marker-size", s.pSize);
             var c = e.graphics.group({
@@ -39184,7 +39444,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             s = this.getPolygonPos(this.size);
         return e.globals.labels.forEach(function (r, o) {
           var l = e.config.xaxis.labels.formatter,
-              h = new I(t.ctx);
+              h = new z(t.ctx);
 
           if (s[o]) {
             var c = t.getTextPos(s[o], t.size),
@@ -39350,7 +39610,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
           class: "apexcharts-tracks"
         }),
             s = new p(this.ctx),
-            r = new P(this.ctx),
+            r = new L(this.ctx),
             n = this.getStrokeWidth(t);
         t.size = t.size - n / 2;
 
@@ -39407,7 +39667,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
       value: function value(t) {
         var e = this.w,
             i = new b(this.ctx),
-            a = new P(this.ctx),
+            a = new L(this.ctx),
             s = new p(this.ctx),
             r = i.group(),
             n = this.getStrokeWidth(t);
@@ -39460,7 +39720,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
               S = Math.round(this.totalAngle * A) + this.startAngle,
               C = void 0;
           e.globals.dataChanged && (k = this.startAngle, C = Math.round(this.totalAngle * f.negToZero(e.globals.previousPaths[m]) / 100) + k), Math.abs(S) + Math.abs(w) >= 360 && (S -= .01), Math.abs(C) + Math.abs(k) >= 360 && (C -= .01);
-          var L = S - w,
+          var P = S - w,
               T = Array.isArray(e.config.stroke.dashArray) ? e.config.stroke.dashArray[m] : e.config.stroke.dashArray,
               z = i.drawPath({
             d: "",
@@ -39473,7 +39733,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
           });
 
           if (b.setAttrs(z.node, {
-            "data:angle": L,
+            "data:angle": P,
             "data:value": t.series[m]
           }), e.config.chart.dropShadow.enabled) {
             var I = e.config.chart.dropShadow;
@@ -39524,7 +39784,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
       key: "drawHollowImage",
       value: function value(t, e, i, a) {
         var s = this.w,
-            r = new P(this.ctx),
+            r = new L(this.ctx),
             n = f.randomId(),
             o = s.config.plotOptions.radialBar.hollow.image;
         if (s.config.plotOptions.radialBar.hollow.imageClipped) r.clippedImgArea({
@@ -39568,7 +39828,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
       value: function value(t, e) {
         var i = this.w;
 
-        if ("line" === i.config.chart.type && ("gradient" === i.config.fill.type || "gradient" === i.config.fill.type[t]) && new w(this.lineCtx.ctx, i).seriesHaveSameValues(t)) {
+        if ("line" === i.config.chart.type && ("gradient" === i.config.fill.type || "gradient" === i.config.fill.type[t]) && new y(this.lineCtx.ctx, i).seriesHaveSameValues(t)) {
           var a = e[t].slice();
           a[a.length - 1] = a[a.length - 1] + 1e-6, e[t] = a;
         }
@@ -39635,7 +39895,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
   }(),
       Pt = function () {
     function t(i, a, s) {
-      e(this, t), this.ctx = i, this.w = i.w, this.xyRatios = a, this.pointsChart = !("bubble" !== this.w.config.chart.type && "scatter" !== this.w.config.chart.type) || s, this.scatter = new z(this.ctx), this.noNegatives = this.w.globals.minX === Number.MAX_VALUE, this.lineHelpers = new Lt(this), this.markers = new T(this.ctx), this.prevSeriesY = [], this.categoryAxisCorrection = 0, this.yaxisIndex = 0;
+      e(this, t), this.ctx = i, this.w = i.w, this.xyRatios = a, this.pointsChart = !("bubble" !== this.w.config.chart.type && "scatter" !== this.w.config.chart.type) || s, this.scatter = new T(this.ctx), this.noNegatives = this.w.globals.minX === Number.MAX_VALUE, this.lineHelpers = new Lt(this), this.markers = new P(this.ctx), this.prevSeriesY = [], this.categoryAxisCorrection = 0, this.yaxisIndex = 0;
     }
 
     return a(t, [{
@@ -39647,7 +39907,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             n = s.group({
           class: "apexcharts-".concat(r, "-series apexcharts-plot-series")
         }),
-            o = new w(this.ctx, a);
+            o = new y(this.ctx, a);
         this.yRatio = this.xyRatios.yRatio, this.zRatio = this.xyRatios.zRatio, this.xRatio = this.xyRatios.xRatio, this.baseLineY = this.xyRatios.baseLineY, t = o.getLogSeries(t), this.yRatio = o.getLogYRatios(this.yRatio);
 
         for (var l = [], h = 0; h < t.length; h++) {
@@ -39678,7 +39938,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             prevX: x,
             prevY: m
           }),
-              y = this._iterateOverDataPoints({
+              w = this._iterateOverDataPoints({
             series: t,
             realIndex: c,
             i: h,
@@ -39699,7 +39959,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             type: r,
             realIndex: c,
             i: h,
-            paths: y
+            paths: w
           }), this.elSeries.add(this.elPointsMain), this.elSeries.add(this.elDataLabelsWrap), l.push(this.elSeries);
         }
 
@@ -39783,7 +40043,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             s = t.paths,
             r = this.w,
             o = new b(this.ctx),
-            l = new P(this.ctx);
+            l = new L(this.ctx);
         this.prevSeriesY.push(s.yArrj), r.globals.seriesXvalues[i] = s.xArrj, r.globals.seriesYvalues[i] = s.yArrj, this.pointsChart || r.globals.delayedElements.push({
           el: this.elPointsMain.node,
           index: i
@@ -39911,7 +40171,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             a = t.j,
             s = t.realIndex,
             r = this.w,
-            n = new I(this.ctx);
+            n = new z(this.ctx);
         if (this.pointsChart) this.scatter.draw(this.elSeries, a, {
           realIndex: s,
           pointsPos: e,
@@ -39982,20 +40242,20 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
   }();
 
   window.TreemapSquared = {}, window.TreemapSquared.generate = function () {
-    function t(e, i, a, r) {
-      this.xoffset = e, this.yoffset = i, this.height = r, this.width = a, this.shortestEdge = function () {
+    function t(e, i, a, s) {
+      this.xoffset = e, this.yoffset = i, this.height = s, this.width = a, this.shortestEdge = function () {
         return Math.min(this.height, this.width);
       }, this.getCoordinates = function (t) {
         var e,
             i = [],
             a = this.xoffset,
-            r = this.yoffset,
-            n = s(t) / this.height,
-            o = s(t) / this.width;
+            s = this.yoffset,
+            n = r(t) / this.height,
+            o = r(t) / this.width;
         if (this.width >= this.height) for (e = 0; e < t.length; e++) {
-          i.push([a, r, a + n, r + t[e] / n]), r += t[e] / n;
+          i.push([a, s, a + n, s + t[e] / n]), s += t[e] / n;
         } else for (e = 0; e < t.length; e++) {
-          i.push([a, r, a + t[e] / o, r + o]), a += t[e] / o;
+          i.push([a, s, a + t[e] / o, s + o]), a += t[e] / o;
         }
         return i;
       }, this.cutArea = function (e) {
@@ -40015,7 +40275,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
       };
     }
 
-    function e(e, a, r, n, o) {
+    function e(e, a, s, n, o) {
       return n = void 0 === n ? 0 : n, o = void 0 === o ? 0 : o, function (t) {
         var e,
             i,
@@ -40028,42 +40288,44 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
         }
 
         return a;
-      }(function t(e, a, r, n) {
-        var o, l, h;
-        if (0 !== e.length) return o = r.shortestEdge(), l = e[0], function (t, e, a) {
-          var s;
-          if (0 === t.length) return !0;
-          (s = t.slice()).push(e);
-          var r = i(t, a),
-              n = i(s, a);
-          return r >= n;
-        }(a, l, o) ? (a.push(l), t(e.slice(1), a, r, n)) : (h = r.cutArea(s(a), n), n.push(r.getCoordinates(a)), t(e, [], h, n)), n;
-        n.push(r.getCoordinates(a));
-      }(function (t, e) {
+      }(i(function (t, e) {
         var i,
             a = [],
-            r = e / s(t);
+            s = e / r(t);
 
         for (i = 0; i < t.length; i++) {
-          a[i] = t[i] * r;
+          a[i] = t[i] * s;
         }
 
         return a;
-      }(e, a * r), [], new t(n, o, a, r), []));
+      }(e, a * s), [], new t(n, o, a, s), []));
     }
 
-    function i(t, e) {
+    function i(t, e, s, n) {
+      var o, l, h;
+      if (0 !== t.length) return o = s.shortestEdge(), function (t, e, i) {
+        var s;
+        if (0 === t.length) return !0;
+        (s = t.slice()).push(e);
+        var r = a(t, i),
+            n = a(s, i);
+        return r >= n;
+      }(e, l = t[0], o) ? (e.push(l), i(t.slice(1), e, s, n)) : (h = s.cutArea(r(e), n), n.push(s.getCoordinates(e)), i(t, [], h, n)), n;
+      n.push(s.getCoordinates(e));
+    }
+
+    function a(t, e) {
       var i = Math.min.apply(Math, t),
           a = Math.max.apply(Math, t),
-          r = s(t);
-      return Math.max(Math.pow(e, 2) * a / Math.pow(r, 2), Math.pow(r, 2) / (Math.pow(e, 2) * i));
-    }
-
-    function a(t) {
-      return t && t.constructor === Array;
+          s = r(t);
+      return Math.max(Math.pow(e, 2) * a / Math.pow(s, 2), Math.pow(s, 2) / (Math.pow(e, 2) * i));
     }
 
     function s(t) {
+      return t && t.constructor === Array;
+    }
+
+    function r(t) {
       var e,
           i = 0;
 
@@ -40074,31 +40336,31 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
       return i;
     }
 
-    function r(t) {
+    function n(t) {
       var e,
           i = 0;
-      if (a(t[0])) for (e = 0; e < t.length; e++) {
-        i += r(t[e]);
-      } else i = s(t);
+      if (s(t[0])) for (e = 0; e < t.length; e++) {
+        i += n(t[e]);
+      } else i = r(t);
       return i;
     }
 
-    return function t(i, s, n, o, l) {
+    return function t(i, a, r, o, l) {
       o = void 0 === o ? 0 : o, l = void 0 === l ? 0 : l;
       var h,
           c,
           d = [],
           g = [];
 
-      if (a(i[0])) {
+      if (s(i[0])) {
         for (c = 0; c < i.length; c++) {
-          d[c] = r(i[c]);
+          d[c] = n(i[c]);
         }
 
-        for (h = e(d, s, n, o, l), c = 0; c < i.length; c++) {
+        for (h = e(d, a, r, o, l), c = 0; c < i.length; c++) {
           g.push(t(i[c], h[c][2] - h[c][0], h[c][3] - h[c][1], h[c][0], h[c][1]));
         }
-      } else g = e(i, s, n, o, l);
+      } else g = e(i, a, r, o, l);
 
       return g;
     };
@@ -40117,7 +40379,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
         var e = this,
             i = this.w,
             a = new b(this.ctx),
-            s = new P(this.ctx),
+            s = new L(this.ctx),
             r = a.group({
           class: "apexcharts-treemap"
         }),
@@ -40289,69 +40551,75 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
         var i = this,
             a = this.w;
         if (a.globals.allSeriesCollapsed) return a.globals.labels = [], a.globals.timescaleLabels = [], [];
-        var s = new y(this.ctx),
+        var s = new Y(this.ctx),
             r = (e - t) / 864e5;
         this.determineInterval(r), a.globals.disableZoomIn = !1, a.globals.disableZoomOut = !1, r < .005 ? a.globals.disableZoomIn = !0 : r > 5e4 && (a.globals.disableZoomOut = !0);
         var o = s.getTimeUnitsfromTimestamp(t, e, this.utc),
             l = a.globals.gridWidth / r,
             h = l / 24,
             c = h / 60,
-            d = Math.floor(24 * r),
-            g = Math.floor(24 * r * 60),
-            u = Math.floor(r),
-            f = Math.floor(r / 30),
-            p = Math.floor(r / 365),
-            x = {
+            d = c / 60,
+            g = Math.floor(24 * r),
+            u = Math.floor(24 * r * 60),
+            f = Math.floor(24 * r * 60 * 60),
+            p = Math.floor(r),
+            x = Math.floor(r / 30),
+            b = Math.floor(r / 365),
+            m = {
+          minSecond: o.minSecond,
           minMinute: o.minMinute,
           minHour: o.minHour,
           minDate: o.minDate,
           minMonth: o.minMonth,
           minYear: o.minYear
         },
-            b = {
-          firstVal: x,
-          currentMinute: x.minMinute,
-          currentHour: x.minHour,
-          currentMonthDate: x.minDate,
-          currentDate: x.minDate,
-          currentMonth: x.minMonth,
-          currentYear: x.minYear,
+            v = {
+          firstVal: m,
+          currentSecond: m.minSecond,
+          currentMinute: m.minMinute,
+          currentHour: m.minHour,
+          currentMonthDate: m.minDate,
+          currentDate: m.minDate,
+          currentMonth: m.minMonth,
+          currentYear: m.minYear,
           daysWidthOnXAxis: l,
           hoursWidthOnXAxis: h,
           minutesWidthOnXAxis: c,
-          numberOfMinutes: g,
-          numberOfHours: d,
-          numberOfDays: u,
-          numberOfMonths: f,
-          numberOfYears: p
+          secondsWidthOnXAxis: d,
+          numberOfSeconds: f,
+          numberOfMinutes: u,
+          numberOfHours: g,
+          numberOfDays: p,
+          numberOfMonths: x,
+          numberOfYears: b
         };
 
         switch (this.tickInterval) {
           case "years":
-            this.generateYearScale(b);
+            this.generateYearScale(v);
             break;
 
           case "months":
           case "half_year":
-            this.generateMonthScale(b);
+            this.generateMonthScale(v);
             break;
 
           case "months_days":
           case "months_fortnight":
           case "days":
           case "week_days":
-            this.generateDayScale(b);
+            this.generateDayScale(v);
             break;
 
           case "hours":
-            this.generateHourScale(b);
+            this.generateHourScale(v);
             break;
 
           case "minutes":
-            this.generateMinuteScale(b);
+            this.generateMinuteScale(v);
         }
 
-        var m = this.timeScaleArray.map(function (t) {
+        var y = this.timeScaleArray.map(function (t) {
           var e = {
             position: t.position,
             unit: t.unit,
@@ -40370,11 +40638,11 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             minute: t.value
           }) : t;
         });
-        return m.filter(function (t) {
+        return y.filter(function (t) {
           var e = 1,
               s = Math.ceil(a.globals.gridWidth / 120),
               r = t.value;
-          void 0 !== a.config.xaxis.tickAmount && (s = a.config.xaxis.tickAmount), m.length > s && (e = Math.floor(m.length / s));
+          void 0 !== a.config.xaxis.tickAmount && (s = a.config.xaxis.tickAmount), y.length > s && (e = Math.floor(y.length / s));
           var n = !1,
               o = !1;
 
@@ -40482,31 +40750,32 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             r = t.numberOfYears,
             n = e.minYear,
             o = 0,
-            l = new y(this.ctx);
+            l = new Y(this.ctx),
+            h = "year";
 
         if (e.minDate > 1 || e.minMonth > 0) {
-          var h = l.determineRemainingDaysOfYear(e.minYear, e.minMonth, e.minDate);
-          o = (l.determineDaysOfYear(e.minYear) - h + 1) * s, n = e.minYear + 1, this.timeScaleArray.push({
+          var c = l.determineRemainingDaysOfYear(e.minYear, e.minMonth, e.minDate);
+          o = (l.determineDaysOfYear(e.minYear) - c + 1) * s, n = e.minYear + 1, this.timeScaleArray.push({
             position: o,
             value: n,
-            unit: "year",
+            unit: h,
             year: n,
             month: f.monthMod(i + 1)
           });
         } else 1 === e.minDate && 0 === e.minMonth && this.timeScaleArray.push({
           position: o,
           value: n,
-          unit: "year",
+          unit: h,
           year: a,
           month: f.monthMod(i + 1)
         });
 
-        for (var c = n, d = o, g = 0; g < r; g++) {
-          c++, d = l.determineDaysOfYear(c - 1) * s + d, this.timeScaleArray.push({
-            position: d,
-            value: c,
-            unit: "year",
-            year: c,
+        for (var d = n, g = o, u = 0; u < r; u++) {
+          d++, g = l.determineDaysOfYear(d - 1) * s + g, this.timeScaleArray.push({
+            position: g,
+            value: d,
+            unit: h,
+            year: d,
             month: 1
           });
         }
@@ -40522,7 +40791,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             n = t.numberOfMonths,
             o = a,
             l = 0,
-            h = new y(this.ctx),
+            h = new Y(this.ctx),
             c = "month",
             d = 0;
 
@@ -40549,15 +40818,15 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
         for (var x = o + 1, b = l, m = 0, v = 1; m < n; m++, v++) {
           0 === (x = f.monthMod(x)) ? (c = "year", d += 1) : c = "month";
 
-          var w = this._getYear(s, x, d);
+          var y = this._getYear(s, x, d);
 
-          b = h.determineDaysOfMonths(x, w) * r + b;
-          var k = 0 === x ? w : x;
+          b = h.determineDaysOfMonths(x, y) * r + b;
+          var w = 0 === x ? y : x;
           this.timeScaleArray.push({
             position: b,
-            value: k,
+            value: w,
             unit: c,
-            year: w,
+            year: y,
             month: 0 === x ? 1 : x
           }), x++;
         }
@@ -40570,7 +40839,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             a = t.currentYear,
             s = t.hoursWidthOnXAxis,
             r = t.numberOfDays,
-            n = new y(this.ctx),
+            n = new Y(this.ctx),
             o = "day",
             l = e.minDate + 1,
             h = l,
@@ -40616,7 +40885,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             s = t.currentYear,
             r = t.minutesWidthOnXAxis,
             n = t.numberOfHours,
-            o = new y(this.ctx),
+            o = new Y(this.ctx),
             l = "hour",
             h = function h(t, e) {
           return t > o.determineDaysOfMonths(e + 1, s) && (x = 1, e += 1), {
@@ -40627,7 +40896,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             c = function c(t, e) {
           return t > o.determineDaysOfMonths(e + 1, s) ? e += 1 : e;
         },
-            d = 60 - e.minMinute,
+            d = 60 - (e.minMinute + e.minSecond / 60),
             g = d * r,
             u = e.minHour + 1,
             p = u + 1;
@@ -40648,17 +40917,17 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
         for (var m = g, v = 0; v < n; v++) {
           if (l = "hour", p >= 24) p = 0, l = "day", b = h(x += 1, b).month, b = c(x, b);
 
-          var w = this._getYear(s, b, 0);
+          var y = this._getYear(s, b, 0);
 
           m = 0 === p && 0 === v ? d * r : 60 * r + m;
-          var k = 0 === p ? x : p;
+          var w = 0 === p ? x : p;
           this.timeScaleArray.push({
             position: m,
-            value: k,
+            value: w,
             unit: l,
             hour: p,
             day: x,
-            year: w,
+            year: y,
             month: f.monthMod(b)
           }), p++;
         }
@@ -40667,42 +40936,43 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
       key: "generateMinuteScale",
       value: function value(t) {
         var e = t.firstVal,
-            i = t.currentMinute,
-            a = t.currentHour,
-            s = t.currentDate,
-            r = t.currentMonth,
-            n = t.currentYear,
-            o = t.minutesWidthOnXAxis,
+            i = (t.currentSecond, t.currentMinute, t.currentHour),
+            a = t.currentDate,
+            s = t.currentMonth,
+            r = t.currentYear,
+            n = t.minutesWidthOnXAxis,
+            o = t.secondsWidthOnXAxis,
             l = t.numberOfMinutes,
-            h = o - (i - e.minMinute),
-            c = e.minMinute + 1,
-            d = c + 1,
-            g = s,
-            u = r,
-            p = n,
-            x = a;
+            h = "minute",
+            c = (60 - e.minSecond) * o,
+            d = e.minMinute + 1,
+            g = d + 1,
+            u = a,
+            p = s,
+            x = r,
+            b = i;
         this.timeScaleArray.push({
-          position: h,
-          value: c,
-          unit: "minute",
-          day: g,
-          hour: x,
-          minute: d,
-          year: p,
-          month: f.monthMod(u)
+          position: c,
+          value: d,
+          unit: h,
+          day: u,
+          hour: b,
+          minute: g,
+          year: x,
+          month: f.monthMod(p)
         });
 
-        for (var b = h, m = 0; m < l; m++) {
-          d >= 60 && (d = 0, 24 === (x += 1) && (x = 0)), b = o + b, this.timeScaleArray.push({
-            position: b,
-            value: d,
-            unit: "minute",
-            hour: x,
-            minute: d,
-            day: g,
-            year: this._getYear(n, u, 0),
-            month: f.monthMod(u)
-          }), d++;
+        for (var m = c, v = 0; v < l; v++) {
+          g >= 60 && (g = 0, 24 === (b += 1) && (b = 0)), m = n + m, this.timeScaleArray.push({
+            position: m,
+            value: g,
+            unit: h,
+            hour: b,
+            minute: g,
+            day: u,
+            year: this._getYear(r, p, 0),
+            month: f.monthMod(p)
+          }), g++;
         }
       }
     }, {
@@ -40718,7 +40988,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             i = this.w;
         return t.map(function (t) {
           var a = t.value.toString(),
-              s = new y(e.ctx),
+              s = new Y(e.ctx),
               r = e.createRawDateString(t, a),
               n = s.getDate(s.parseDate(r));
 
@@ -40839,7 +41109,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             var x = new mt(this.ctx, e);
             p.push(x.draw(h.series, h.i));
           } else {
-            var b = new Y(this.ctx, e);
+            var b = new X(this.ctx, e);
             p.push(b.draw(h.series, h.i));
           }
 
@@ -40862,7 +41132,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             break;
 
           case "bar":
-            if (a.chart.stacked) p = new mt(this.ctx, e).draw(s.series);else p = new Y(this.ctx, e).draw(s.series);
+            if (a.chart.stacked) p = new mt(this.ctx, e).draw(s.series);else p = new X(this.ctx, e).draw(s.series);
             break;
 
           case "candlestick":
@@ -40995,7 +41265,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             isFinite(e.globals.minX) && isFinite(e.globals.maxX) && !e.globals.isBarHorizontal ? i = this.ctx.timeScale.calculateTimeScaleTicks(e.globals.minX, e.globals.maxX) : e.globals.isBarHorizontal && (i = this.ctx.timeScale.calculateTimeScaleTicks(e.globals.minY, e.globals.maxY)), this.ctx.timeScale.recalcDimensionsBasedOnFormat(i);
           }
 
-          t = new w(this.ctx).getCalculatedRatios();
+          t = new y(this.ctx).getCalculatedRatios();
         }
 
         return t;
@@ -41075,7 +41345,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             o = [this.ctx];
         r && (o = this.ctx.getSyncedCharts()), this.ctx.w.globals.isExecCalled && (o = [this.ctx], this.ctx.w.globals.isExecCalled = !1), o.forEach(function (r) {
           var o = r.w;
-          return o.globals.shouldAnimate = s, a || (o.globals.resized = !0, o.globals.dataChanged = !0, s && r.series.getPreviousPaths()), e && "object" === t(e) && (r.config = new R(e), e = w.extendArrayProps(r.config, e, o), r.w.globals.chartID !== i.ctx.w.globals.chartID && delete e.series, o.config = f.extend(o.config, e), n && (o.globals.lastXAxis = e.xaxis ? f.clone(e.xaxis) : [], o.globals.lastYAxis = e.yaxis ? f.clone(e.yaxis) : [], o.globals.initialConfig = f.extend({}, o.config), o.globals.initialSeries = f.clone(o.config.series))), r.update(e);
+          return o.globals.shouldAnimate = s, a || (o.globals.resized = !0, o.globals.dataChanged = !0, s && r.series.getPreviousPaths()), e && "object" === t(e) && (r.config = new D(e), e = y.extendArrayProps(r.config, e, o), r.w.globals.chartID !== i.ctx.w.globals.chartID && delete e.series, o.config = f.extend(o.config, e), n && (o.globals.lastXAxis = e.xaxis ? f.clone(e.xaxis) : [], o.globals.lastYAxis = e.yaxis ? f.clone(e.yaxis) : [], o.globals.initialConfig = f.extend({}, o.config), o.globals.initialSeries = f.clone(o.config.series))), r.update(e);
         });
       }
     }, {
@@ -41119,7 +41389,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
         if (["min", "max"].forEach(function (i) {
           void 0 !== t.xaxis[i] && (e.config.xaxis[i] = t.xaxis[i], e.globals.lastXAxis[i] = t.xaxis[i]);
         }), t.xaxis.categories && t.xaxis.categories.length && (e.config.xaxis.categories = t.xaxis.categories), e.config.xaxis.convertedCatToNumeric) {
-          var i = new D(t);
+          var i = new R(t);
           t = i.convertCatToNumericXaxis(t, this.ctx);
         }
 
@@ -43440,12 +43710,12 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
                 X = e[6],
                 Y = e[7],
                 F = new SVG.Point(t),
-                D = new SVG.Point(X, Y),
-                R = [];
-            if (0 === T || 0 === z || F.x === D.x && F.y === D.y) return [["C", F.x, F.y, D.x, D.y, D.x, D.y]];
-            i = new SVG.Point((F.x - D.x) / 2, (F.y - D.y) / 2).transform(new SVG.Matrix().rotate(I)), (a = i.x * i.x / (T * T) + i.y * i.y / (z * z)) > 1 && (a = Math.sqrt(a), T *= a, z *= a);
-            s = new SVG.Matrix().rotate(I).scale(1 / T, 1 / z).rotate(-I), F = F.transform(s), D = D.transform(s), r = [D.x - F.x, D.y - F.y], o = r[0] * r[0] + r[1] * r[1], n = Math.sqrt(o), r[0] /= n, r[1] /= n, l = o < 4 ? Math.sqrt(1 - o / 4) : 0, M === E && (l *= -1);
-            h = new SVG.Point((D.x + F.x) / 2 + l * -r[1], (D.y + F.y) / 2 + l * r[0]), c = new SVG.Point(F.x - h.x, F.y - h.y), d = new SVG.Point(D.x - h.x, D.y - h.y), g = Math.acos(c.x / Math.sqrt(c.x * c.x + c.y * c.y)), c.y < 0 && (g *= -1);
+                R = new SVG.Point(X, Y),
+                D = [];
+            if (0 === T || 0 === z || F.x === R.x && F.y === R.y) return [["C", F.x, F.y, R.x, R.y, R.x, R.y]];
+            i = new SVG.Point((F.x - R.x) / 2, (F.y - R.y) / 2).transform(new SVG.Matrix().rotate(I)), (a = i.x * i.x / (T * T) + i.y * i.y / (z * z)) > 1 && (T *= a = Math.sqrt(a), z *= a);
+            s = new SVG.Matrix().rotate(I).scale(1 / T, 1 / z).rotate(-I), F = F.transform(s), R = R.transform(s), r = [R.x - F.x, R.y - F.y], o = r[0] * r[0] + r[1] * r[1], n = Math.sqrt(o), r[0] /= n, r[1] /= n, l = o < 4 ? Math.sqrt(1 - o / 4) : 0, M === E && (l *= -1);
+            h = new SVG.Point((R.x + F.x) / 2 + l * -r[1], (R.y + F.y) / 2 + l * r[0]), c = new SVG.Point(F.x - h.x, F.y - h.y), d = new SVG.Point(R.x - h.x, R.y - h.y), g = Math.acos(c.x / Math.sqrt(c.x * c.x + c.y * c.y)), c.y < 0 && (g *= -1);
             u = Math.acos(d.x / Math.sqrt(d.x * d.x + d.y * d.y)), d.y < 0 && (u *= -1);
             E && g > u && (u += 2 * Math.PI);
             !E && g < u && (u -= 2 * Math.PI);
@@ -43459,10 +43729,10 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
             }
 
             for (k = 1, A = b.length; k < A; k++) {
-              w = b[k - 1][2], S = w.x, C = w.y, w = b[k][0], L = w.x, P = w.y, w = b[k][1], X = w.x, Y = w.y, R.push(["C", S, C, L, P, X, Y]);
+              S = (w = b[k - 1][2]).x, C = w.y, L = (w = b[k][0]).x, P = w.y, X = (w = b[k][1]).x, Y = w.y, D.push(["C", S, C, L, P, X, Y]);
             }
 
-            return R;
+            return D;
           }(this.pos, t))[0];
 
       }
@@ -44095,7 +44365,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
     return a(t, [{
       key: "initModules",
       value: function value() {
-        this.ctx.publicMethods = ["updateOptions", "updateSeries", "appendData", "appendSeries", "toggleSeries", "showSeries", "hideSeries", "setLocale", "resetSeries", "zoomX", "toggleDataPointSelection", "dataURI", "addXaxisAnnotation", "addYaxisAnnotation", "addPointAnnotation", "clearAnnotations", "removeAnnotation", "paper", "destroy"], this.ctx.eventList = ["click", "mousedown", "mousemove", "touchstart", "touchmove", "mouseup", "touchend"], this.ctx.animations = new x(this.ctx), this.ctx.axes = new J(this.ctx), this.ctx.core = new Et(this.ctx.el, this.ctx), this.ctx.config = new R({}), this.ctx.data = new O(this.ctx), this.ctx.grid = new _(this.ctx), this.ctx.graphics = new b(this.ctx), this.ctx.coreUtils = new w(this.ctx), this.ctx.crosshairs = new Q(this.ctx), this.ctx.events = new Z(this.ctx), this.ctx.exports = new V(this.ctx), this.ctx.localization = new $(this.ctx), this.ctx.options = new C(), this.ctx.responsive = new K(this.ctx), this.ctx.series = new E(this.ctx), this.ctx.theme = new tt(this.ctx), this.ctx.formatters = new W(this.ctx), this.ctx.titleSubtitle = new et(this.ctx), this.ctx.legend = new lt(this.ctx), this.ctx.toolbar = new ht(this.ctx), this.ctx.dimensions = new nt(this.ctx), this.ctx.updateHelpers = new Xt(this.ctx), this.ctx.zoomPanSelection = new ct(this.ctx), this.ctx.w.globals.tooltip = new bt(this.ctx);
+        this.ctx.publicMethods = ["updateOptions", "updateSeries", "appendData", "appendSeries", "toggleSeries", "showSeries", "hideSeries", "setLocale", "resetSeries", "zoomX", "toggleDataPointSelection", "dataURI", "addXaxisAnnotation", "addYaxisAnnotation", "addPointAnnotation", "clearAnnotations", "removeAnnotation", "paper", "destroy"], this.ctx.eventList = ["click", "mousedown", "mousemove", "touchstart", "touchmove", "mouseup", "touchend"], this.ctx.animations = new x(this.ctx), this.ctx.axes = new J(this.ctx), this.ctx.core = new Et(this.ctx.el, this.ctx), this.ctx.config = new D({}), this.ctx.data = new O(this.ctx), this.ctx.grid = new _(this.ctx), this.ctx.graphics = new b(this.ctx), this.ctx.coreUtils = new y(this.ctx), this.ctx.crosshairs = new Q(this.ctx), this.ctx.events = new Z(this.ctx), this.ctx.exports = new V(this.ctx), this.ctx.localization = new $(this.ctx), this.ctx.options = new S(), this.ctx.responsive = new K(this.ctx), this.ctx.series = new M(this.ctx), this.ctx.theme = new tt(this.ctx), this.ctx.formatters = new W(this.ctx), this.ctx.titleSubtitle = new et(this.ctx), this.ctx.legend = new lt(this.ctx), this.ctx.toolbar = new ht(this.ctx), this.ctx.dimensions = new nt(this.ctx), this.ctx.updateHelpers = new Xt(this.ctx), this.ctx.zoomPanSelection = new ct(this.ctx), this.ctx.w.globals.tooltip = new bt(this.ctx);
       }
     }]), t;
   }(),
@@ -44138,9 +44408,9 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
       }
     }]), t;
   }(),
-      Dt = function () {
+      Rt = function () {
     function t(i, a) {
-      e(this, t), this.opts = a, this.ctx = this, this.w = new N(a).init(), this.el = i, this.w.globals.cuid = f.randomId(), this.w.globals.chartID = this.w.config.chart.id ? f.escapeString(this.w.config.chart.id) : this.w.globals.cuid, new Yt(this).initModules(), this.create = f.bind(this.create, this), this.windowResizeHandler = this._windowResize.bind(this);
+      e(this, t), this.opts = a, this.ctx = this, this.w = new N(a).init(), this.el = i, this.w.globals.cuid = f.randomId(), this.w.globals.chartID = this.w.config.chart.id ? f.escapeString(this.w.config.chart.id) : this.w.globals.cuid, new Yt(this).initModules(), this.create = f.bind(this.create, this);
     }
 
     return a(t, [{
@@ -44155,7 +44425,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
               chart: t
             }), t.setLocale(t.w.config.chart.defaultLocale);
             var a = t.w.config.chart.events.beforeMount;
-            "function" == typeof a && a(t, t.w), t.events.fireEvent("beforeMount", [t, t.w]), window.addEventListener("resize", t.windowResizeHandler), window.addResizeListener(t.el.parentNode, t._parentResizeCallback.bind(t));
+            "function" == typeof a && a(t, t.w), t.events.fireEvent("beforeMount", [t, t.w]), window.addEventListener("resize", t._windowResizeHandler.bind(t)), window.addResizeListener(t.el.parentNode, t._parentResizeCallback.bind(t));
             var s = t.create(t.w.config.series, {});
             if (!s) return e(t);
             t.mount(s).then(function () {
@@ -44172,19 +44442,19 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
         var i = this.w;
         new Yt(this).initModules();
         var a = this.w.globals;
-        (a.noData = !1, a.animationEnded = !1, this.responsive.checkResponsiveConfig(e), i.config.xaxis.convertedCatToNumeric) && new D(i.config).convertCatToNumericXaxis(i.config, this.ctx);
+        (a.noData = !1, a.animationEnded = !1, this.responsive.checkResponsiveConfig(e), i.config.xaxis.convertedCatToNumeric) && new R(i.config).convertCatToNumericXaxis(i.config, this.ctx);
         if (null === this.el) return a.animationEnded = !0, null;
         if (this.core.setupElements(), "treemap" === i.config.chart.type && (i.config.grid.show = !1, i.config.yaxis[0].show = !1), 0 === a.svgWidth) return a.animationEnded = !0, null;
-        var s = w.checkComboSeries(t);
+        var s = y.checkComboSeries(t);
         a.comboCharts = s.comboCharts, a.comboBarCount = s.comboBarCount;
         var r = t.every(function (t) {
           return t.data && 0 === t.data.length;
         });
-        (0 === t.length || r) && this.series.handleNoData(), this.events.setupEventHandlers(), this.data.parseData(t), this.theme.init(), new T(this).setGlobalMarkerSize(), this.formatters.setLabelFormatters(), this.titleSubtitle.draw(), a.noData && a.collapsedSeries.length !== a.series.length && !i.config.legend.showForSingleSeries || this.legend.init(), this.series.hasAllSeriesEqualX(), a.axisCharts && (this.core.coreCalculations(), "category" !== i.config.xaxis.type && this.formatters.setLabelFormatters()), this.formatters.heatmapLabelFormatters(), this.dimensions.plotCoords();
+        (0 === t.length || r) && this.series.handleNoData(), this.events.setupEventHandlers(), this.data.parseData(t), this.theme.init(), new P(this).setGlobalMarkerSize(), this.formatters.setLabelFormatters(), this.titleSubtitle.draw(), a.noData && a.collapsedSeries.length !== a.series.length && !i.config.legend.showForSingleSeries || this.legend.init(), this.series.hasAllSeriesEqualX(), a.axisCharts && (this.core.coreCalculations(), "category" !== i.config.xaxis.type && this.formatters.setLabelFormatters()), this.formatters.heatmapLabelFormatters(), this.dimensions.plotCoords();
         var n = this.core.xySettings();
         this.grid.createGridMask();
         var o = this.core.plotChartType(t, n),
-            l = new I(this);
+            l = new z(this);
         l.bringForward(), i.config.dataLabels.background.enabled && l.dataLabelsBackground(), this.core.shiftGraphPosition();
         var h = {
           plot: {
@@ -44212,7 +44482,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
           if (null === i.el) return r(new Error("Not enough data to display or target element not found"));
           (null === e || a.globals.allSeriesCollapsed) && i.series.handleNoData(), "treemap" !== a.config.chart.type && i.axes.drawAxis(a.config.chart.type, e.xyRatios), i.grid = new _(i);
           var n = i.grid.drawGrid();
-          i.annotations = new L(i), i.annotations.drawImageAnnos(), i.annotations.drawTextAnnos(), "back" === a.config.grid.position && n && a.globals.dom.elGraphical.add(n.el);
+          i.annotations = new C(i), i.annotations.drawImageAnnos(), i.annotations.drawTextAnnos(), "back" === a.config.grid.position && n && a.globals.dom.elGraphical.add(n.el);
           var o = new G(t.ctx),
               l = new q(t.ctx);
           if (null !== n && (o.xAxisLabelCorrections(n.xAxisTickWidth), l.setYAxisTextAlignments()), "back" === a.config.annotations.position && (a.globals.dom.Paper.add(a.globals.dom.elAnnotations), i.annotations.drawAxesAnnotations()), Array.isArray(e.elGraph)) for (var h = 0; h < e.elGraph.length; h++) {
@@ -44239,7 +44509,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
     }, {
       key: "destroy",
       value: function value() {
-        window.removeEventListener("resize", this.windowResizeHandler), window.removeResizeListener(this.el.parentNode, this._parentResizeCallback.bind(this));
+        window.removeEventListener("resize", this._windowResizeHandler.bind(this)), window.removeResizeListener(this.el.parentNode, this._parentResizeCallback.bind(this));
         var t = this.w.config.chart.id;
         t && Apex._chartInstances.forEach(function (e, i) {
           e.id === f.escapeString(t) && Apex._chartInstances.splice(i, 1);
@@ -44464,6 +44734,12 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
           t.w.globals.resized = !0, t.w.globals.dataChanged = !1, t.ctx.update();
         }, 150);
       }
+    }, {
+      key: "_windowResizeHandler",
+      value: function value() {
+        var t = this.w.config.chart.redrawOnWindowResize;
+        "function" == typeof t && (t = t()), t && this._windowResize();
+      }
     }], [{
       key: "getChartByID",
       value: function value(t) {
@@ -44509,7 +44785,7 @@ var apexcharts_common = createCommonjsModule(function (module, exports) {
     }]), t;
   }();
 
-  module.exports = Dt;
+  module.exports = Rt;
 });
 
 var strings$4 = {
@@ -44523,6 +44799,24 @@ var strings$4 = {
       volumes: 'Допустимые объемы изъятия'
     }
   }
+};
+
+var STYLES$2 = {
+  fillStyle: document.createElement('canvas').getContext('2d').createPattern(L.gmxUtil.getPatternIcon(null, {
+    type: '',
+    opacity: 1,
+    weight: 1,
+    fillOpacity: 1,
+    fillPattern: {
+      style: 'diagonal1',
+      width: 2,
+      step: 16,
+      colors: [parseInt('61E9F1', 16)]
+    },
+    common: true
+  }).canvas, 'repeat'),
+  strokeStyle: '#FF0000',
+  lineWidth: 2
 };
 
 var Plots = /*#__PURE__*/function (_BaseView) {
@@ -44592,6 +44886,15 @@ var Plots = /*#__PURE__*/function (_BaseView) {
   }
 
   _createClass(Plots, [{
+    key: "getStyleHook",
+    value: function getStyleHook(kind, item) {
+      if (kind === 'plots') {
+        return item.id === this._gmx_id ? STYLES$2 : {};
+      } else {
+        return {};
+      }
+    }
+  }, {
     key: "open",
     value: function open(_ref) {
       var _this2 = this;
@@ -44610,6 +44913,7 @@ var Plots = /*#__PURE__*/function (_BaseView) {
           Term = data.Term,
           RentCost = data.RentCost,
           Volumes = data.Volumes;
+      this._gmx_id = gmx_id;
       this._title.innerText = Contract;
       this._forestry.innerText = Forestry;
       var start = SignedAt && new Date(SignedAt);
@@ -44651,6 +44955,13 @@ var Plots = /*#__PURE__*/function (_BaseView) {
         this._chart.updateSeries(series);
       }
     }
+  }, {
+    key: "close",
+    value: function close() {
+      this._gmx_id = null;
+
+      _get(_getPrototypeOf(Plots.prototype), "close", this).call(this);
+    }
   }]);
 
   return Plots;
@@ -44687,6 +44998,11 @@ var Plots$1 = /*#__PURE__*/function (_LayerController) {
     _this._path = path;
     _this._permissions = permissions;
     _this._view = _this._content.add(_this._kind, Plots);
+
+    _this._view.on('close', function () {
+      _this._layer.repaint();
+    });
+
     return _this;
   }
 
@@ -44701,23 +45017,38 @@ var Plots$1 = /*#__PURE__*/function (_LayerController) {
             switch (_context.prev = _context.next) {
               case 0:
                 if (!this._permissions.ForestProjectsView) {
-                  _context.next = 10;
+                  _context.next = 17;
                   break;
                 }
 
                 if (!this.canClick) {
-                  _context.next = 8;
+                  _context.next = 15;
                   break;
                 }
 
                 L.DomEvent.stopPropagation(e);
                 _e$gmx = e.gmx, id = _e$gmx.id, properties = _e$gmx.properties;
-                _context.next = 6;
+
+                if (!(this._gmx_id && this._gmx_id === id)) {
+                  _context.next = 9;
+                  break;
+                }
+
+                this._gmx_id = null;
+
+                this._view.close();
+
+                _context.next = 14;
+                break;
+
+              case 9:
+                this._gmx_id = id;
+                _context.next = 12;
                 return this.httpGet("".concat(this._path, "/Forest/GetPlot"), {
                   PlotID: properties.id
                 });
 
-              case 6:
+              case 12:
                 data = _context.sent;
 
                 if (data) {
@@ -44726,14 +45057,17 @@ var Plots$1 = /*#__PURE__*/function (_LayerController) {
                   }, data));
                 }
 
-              case 8:
-                _context.next = 11;
+              case 14:
+                this._layer.repaint();
+
+              case 15:
+                _context.next = 18;
                 break;
 
-              case 10:
+              case 17:
                 this._notification.error(translate('forbidden.plot.view'));
 
-              case 11:
+              case 18:
               case "end":
                 return _context.stop();
             }
@@ -44788,6 +45122,24 @@ var strings$5 = {
       year: 'Год таксации'
     }
   }
+};
+
+var STYLES$3 = {
+  fillStyle: document.createElement('canvas').getContext('2d').createPattern(L.gmxUtil.getPatternIcon(null, {
+    type: '',
+    opacity: 1,
+    weight: 1,
+    fillOpacity: 1,
+    fillPattern: {
+      style: 'diagonal1',
+      width: 2,
+      step: 16,
+      colors: [parseInt('61E9F1', 16)]
+    },
+    common: true
+  }).canvas, 'repeat'),
+  strokeStyle: '#FFB701',
+  lineWidth: 2
 };
 
 var Info = /*#__PURE__*/function (_View) {
@@ -44867,13 +45219,23 @@ var Info = /*#__PURE__*/function (_View) {
   }
 
   _createClass(Info, [{
+    key: "getStyleHook",
+    value: function getStyleHook(kind, item) {
+      if (kind === 'projects') {
+        return item.id === this._gmx_id ? STYLES$3 : {};
+      } else {
+        return {};
+      }
+    }
+  }, {
     key: "open",
     value: function open(data) {
       var _this2 = this;
 
       _get(_getPrototypeOf(Info.prototype), "open", this).call(this);
 
-      var Addres = data.Addres,
+      var gmx_id = data.gmx_id,
+          Addres = data.Addres,
           ApplicationForm = data.ApplicationForm,
           ApproveDate = data.ApproveDate,
           ApproveName = data.ApproveName,
@@ -44904,6 +45266,7 @@ var Info = /*#__PURE__*/function (_View) {
           Status = data.Status,
           TargetUsage = data.TargetUsage,
           Title = data.Title;
+      this._gmx_id = gmx_id;
       this._title.innerHTML = Title;
       this._forestry.innerHTML = "".concat(Forestry, " ").concat(ForestBlocks);
       var start = AuctionStart && new Date(AuctionStart);
@@ -44934,6 +45297,13 @@ var Info = /*#__PURE__*/function (_View) {
 
         this._chart.updateSeries(series);
       }
+    }
+  }, {
+    key: "close",
+    value: function close() {
+      this._gmx_id = null;
+
+      _get(_getPrototypeOf(Info.prototype), "close", this).call(this);
     }
   }]);
 
@@ -45572,6 +45942,10 @@ var Projects = /*#__PURE__*/function (_LayerController) {
       _this._back();
     });
 
+    _this._info.on('close', function () {
+      _this._layers.projects.repaint();
+    });
+
     var forestryIndex = indexByName(layers.quadrants, 'forestry_id');
     var projectIndex = indexByName(layers.projects, 'id');
     _this._project = _this._content.add('edit-project', Project, {
@@ -45712,7 +46086,7 @@ var Projects = /*#__PURE__*/function (_LayerController) {
             switch (_context4.prev = _context4.next) {
               case 0:
                 if (!this.canClick) {
-                  _context4.next = 16;
+                  _context4.next = 17;
                   break;
                 }
 
@@ -45743,6 +46117,7 @@ var Projects = /*#__PURE__*/function (_LayerController) {
               case 10:
                 _context4.next = 12;
                 return this.view({
+                  gmx_id: id,
                   id: properties.id,
                   forestryID: forestry_id
                 });
@@ -45754,11 +46129,15 @@ var Projects = /*#__PURE__*/function (_LayerController) {
               case 14:
                 _context4.next = 16;
                 return this.view({
+                  gmx_id: id,
                   id: properties.id,
                   forestryID: forestry_id
                 });
 
               case 16:
+                this._layers.projects.repaint();
+
+              case 17:
               case "end":
                 return _context4.stop();
             }
@@ -45816,7 +46195,7 @@ var Projects = /*#__PURE__*/function (_LayerController) {
 
         this._project.open();
 
-        this._layer.repaint();
+        this._layers.quadrants.repaint();
       } else {
         this._notification.error(translate$b('forbidden.project.create'));
       }
@@ -45922,12 +46301,12 @@ var Projects = /*#__PURE__*/function (_LayerController) {
     key: "view",
     value: function () {
       var _view = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(_ref6) {
-        var id, forestryID, data;
+        var gmx_id, id, forestryID, data;
         return regeneratorRuntime.wrap(function _callee7$(_context7) {
           while (1) {
             switch (_context7.prev = _context7.next) {
               case 0:
-                id = _ref6.id, forestryID = _ref6.forestryID;
+                gmx_id = _ref6.gmx_id, id = _ref6.id, forestryID = _ref6.forestryID;
 
                 if (!this._permissions.ForestProjectsView) {
                   _context7.next = 8;
@@ -45943,7 +46322,9 @@ var Projects = /*#__PURE__*/function (_LayerController) {
                 data = _context7.sent;
 
                 if (data) {
-                  this._info.open(data);
+                  this._info.open(_objectSpread2({
+                    gmx_id: gmx_id
+                  }, data));
                 }
 
                 _context7.next = 9;
@@ -46184,18 +46565,17 @@ var strings$6 = {
   }
 };
 
-var STYLES$1 = {
+var STYLES$4 = {
   fillStyle: document.createElement('canvas').getContext('2d').createPattern(L.gmxUtil.getPatternIcon(null, {
     type: '',
-    color: parseInt('FFB801', 16),
     opacity: 1,
     weight: 1,
-    fillOpacity: 0.64,
+    fillOpacity: 1,
     fillPattern: {
       style: 'diagonal1',
-      width: 8,
-      step: 0,
-      colors: [parseInt('FFB801', 16), parseInt('61E9F1', 16)]
+      width: 2,
+      step: 16,
+      colors: [parseInt('61E9F1', 16)]
     },
     common: true
   }).canvas, 'repeat'),
@@ -46304,7 +46684,7 @@ var Quadrants$1 = /*#__PURE__*/function (_BaseView) {
     key: "getStyleHook",
     value: function getStyleHook(kind, item) {
       if (kind === 'quadrants') {
-        return item.id === this._gmx_id ? STYLES$1 : {};
+        return item.id === this._gmx_id ? STYLES$4 : {};
       } else {
         return {};
       }
@@ -47415,20 +47795,18 @@ var strings$9 = {
   }
 };
 
-var STYLES$2 = {
+var STYLES$5 = {
   fillStyle: document.createElement('canvas').getContext('2d').createPattern(L.gmxUtil.getPatternIcon(null, {
     type: '',
-    color: parseInt('FFB801', 16),
     opacity: 1,
     weight: 1,
-    fillOpacity: 0.64,
+    fillOpacity: 1,
     fillPattern: {
       style: 'diagonal1',
-      width: 8,
-      step: 0,
-      colors: [parseInt('FFB801', 16), parseInt('61E9F1', 16)]
+      width: 2,
+      step: 16,
+      colors: [parseInt('61E9F1', 16)]
     },
-    dashArray: [10, 10],
     common: true
   }).canvas, 'repeat'),
   strokeStyle: '#FFB801',
@@ -47449,9 +47827,7 @@ var Stands = /*#__PURE__*/function (_BaseView) {
 
     _this._container.classList.add('scanex-forestry-stand');
 
-    _this._container.classList.add('scrollable');
-
-    _this._container.innerHTML = "\n\t\t<h1 class=\"header1\">".concat(_this.translate('stand.title'), "</h1>\n\t\t<h2 class=\"header2\"></h2>\n\t\t<div class=\"content\">\n\t\t\t<div class=\"stats\"></div>\t\t\t\n\t\t\t<div>\n\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t<div class=\"events scrollable\"></div>\n\t\t\t</div>\n\t\t\t<div class=\"levels\"></div>\t\t\n\t\t</div>");
+    _this._container.innerHTML = "\n\t\t<h1 class=\"header1\">".concat(_this.translate('stand.title'), "</h1>\n\t\t<h2 class=\"header2\"></h2>\n\t\t<div class=\"content\">\n\t\t\t<div class=\"stats\"></div>\t\t\t\n\t\t\t<div>\n\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t<div class=\"events scrollable\"></div>\n\t\t\t</div>\n\t\t\t<div class=\"levels scrollable\"></div>\n\t\t</div>");
     _this._header = _this._container.querySelector('.header2');
     _this._stats = _this._container.querySelector('.stats');
     _this._chart = new apexcharts_common(_this._container.querySelector('.chart'), {
@@ -47537,7 +47913,7 @@ var Stands = /*#__PURE__*/function (_BaseView) {
       this._header.innerText = [Forestry, LocalForestry, Stow, Quadrant, Stand].filter(function (v) {
         return v;
       }).join(', ');
-      this._stats.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">".concat(this.translate('stand.usage'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(ForestUseType, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.year'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(UpdatingYear, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.area'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(this.ha(Square), "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.category'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(LandCategory, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.protected'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(OZU, "</td>                    \n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.slope'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(Exposition, " / ").concat(Steepness, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<!--tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.targetSpecies'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(TargetSpecies, "</td>                    \n\t\t\t\t</tr-->\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.mainSpecies'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(PredominantSpecies, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.age'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(AgeGroup, "</td>                    \n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.klass'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(AgeClass, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.bonitet'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(Bonitet, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.type'), "</td>\n\t\t\t\t\t<td class=\"value\"></td>                    \n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
+      this._stats.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">".concat(this.translate('stand.usage'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(ForestUseType, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.year'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(UpdatingYear, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.area'), ", ").concat(this.translate('units.ha'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(this.ha(Square), "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.category'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(LandCategory, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.protected'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(OZU, "</td>                    \n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.slope'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(Exposition, " / ").concat(Steepness, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<!--tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.targetSpecies'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(TargetSpecies, "</td>                    \n\t\t\t\t</tr-->\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.mainSpecies'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(PredominantSpecies, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.age'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(AgeGroup, "</td>                    \n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.klass'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(AgeClass, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.bonitet'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(Bonitet, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.type'), "</td>\n\t\t\t\t\t<td class=\"value\"></td>                    \n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
 
       var _Stock$reduce = Stock.reduce(function (a, _ref) {
         var stock = _ref.stock,
@@ -47570,7 +47946,7 @@ var Stands = /*#__PURE__*/function (_BaseView) {
               height = _ref2.height,
               marketability_class = _ref2.marketability_class,
               rate = _ref2.rate;
-          return "<tr class=\"storey\">\n\t\t\t\t\t\t<td class=\"text\">".concat(_this2.translate('stand.storey.title'), "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(storey, "</td>\t\t\t\t\t\t\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.species'), "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(abbr, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.rate'), "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(_this2.fmt(rate), "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.gross_volume'), ", ").concat(_this2.translate('units.m'), "<sup>3</sup></td>\n\t\t\t\t\t\t<td class=\"value\">").concat(_this2.m(gross_volume), "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.age'), "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(age, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.basal_area_sum'), ", ").concat(_this2.translate('units.m'), "<sup>2</sup></td>\n\t\t\t\t\t\t<td class=\"value\">").concat(_this2.m(basal_area_sum), "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.dbh'), ", ").concat(_this2.translate('units.cm'), "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(_this2.fmt(dbh), "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.density'), "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(_this2.fmt(density), "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.height'), ", ").concat(_this2.translate('units.m'), "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(_this2.fmt(height), "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.marketability_class'), "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(marketability_class, "</td>\n\t\t\t\t\t</tr>");
+          return "<tr class=\"storey\">\n\t\t\t\t\t\t<td class=\"text\">".concat(_this2.translate('stand.storey.title'), "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(storey, "</td>\t\t\t\t\t\t\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.species'), "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(abbr, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.height'), ", ").concat(_this2.translate('units.m'), "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(_this2.fmt(height), "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.age'), "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(age, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.dbh'), ", ").concat(_this2.translate('units.cm'), "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(_this2.fmt(dbh), "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.density'), "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(_this2.fmt(density), "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.marketability_class'), "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(marketability_class, "</td>\n\t\t\t\t\t</tr>\t\t\t\t\t\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.gross_volume'), ", ").concat(_this2.translate('units.m'), "<sup>3</sup></td>\n\t\t\t\t\t\t<td class=\"value\">").concat(_this2.m(gross_volume), "</td>\n\t\t\t\t\t</tr>");
         }).join(''), "</tbody>\n\t\t\t</table>");
       }
 
@@ -47587,7 +47963,7 @@ var Stands = /*#__PURE__*/function (_BaseView) {
     key: "getStyleHook",
     value: function getStyleHook(kind, item) {
       if (kind === 'stands') {
-        return item.id === this._gmx_id ? STYLES$2 : {};
+        return item.id === this._gmx_id ? STYLES$5 : {};
       } else {
         return {};
       }
@@ -47825,6 +48201,7 @@ var strings$a = {
       add: 'Добавить',
       cancel: 'Остановить',
       cancelled: 'Остановлено',
+      close: 'Закрыть',
       completed: 'Завершено',
       date: 'Дата добавления',
       error: 'Ошибка',
@@ -47841,6 +48218,21 @@ var strings$a = {
       speed: 'Скорость',
       started: 'Старт',
       title: 'Мои данные',
+      tms: {
+        title: 'Добавить слой TMS',
+        name: 'Название',
+        url: 'Адрес',
+        ok: 'Подтвердить',
+        zoom: 'Масштаб',
+        subdomains: 'subdomains',
+        errorTileUrl: 'errorTileUrl',
+        zoomOffset: 'zoomOffset',
+        zoomReverse: 'zoomReverse',
+        detectRetina: 'detectRetina',
+        crossOrigin: 'crossOrigin',
+        anonymous: 'anonymous',
+        useCredentials: 'useCredentials'
+      },
       type: 'Тип данных',
       waiting: 'Ожидание...',
       units: {
@@ -47934,42 +48326,14 @@ var Uploaded = /*#__PURE__*/function (_BaseView) {
   _createClass(Uploaded, [{
     key: "_upload",
     value: function _upload() {
-      var _this2 = this;
-
-      if (!this._files) {
-        this._files = document.createElement('input');
-
-        this._files.setAttribute('type', 'file');
-
-        this._files.setAttribute('multiple', 'true');
-
-        this._files.setAttribute('accept', '.shp,.shx');
-
-        this._files.style.visibility = 'hidden';
-        this._files.style.width = '0px';
-        this._files.style.height = '0px';
-
-        this._container.appendChild(this._files);
-
-        this._files.addEventListener('change', function () {
-          var event = document.createEvent('Event');
-          event.initEvent('upload', false, false);
-          event.detail = _this2._files.files;
-
-          _this2.dispatchEvent(event);
-
-          _this2._container.removeChild(_this2._files);
-
-          _this2._files = null;
-        });
-      }
-
-      this._files.click();
+      var event = document.createEvent('Event');
+      event.initEvent('upload', false, false);
+      this.dispatchEvent(event);
     }
   }, {
     key: "open",
     value: function open(_ref3) {
-      var _this3 = this;
+      var _this2 = this;
 
       var count = _ref3.count,
           layers = _ref3.layers;
@@ -47977,7 +48341,7 @@ var Uploaded = /*#__PURE__*/function (_BaseView) {
       _get(_getPrototypeOf(Uploaded.prototype), "open", this).call(this);
 
       this._content.innerHTML = layers.map(function (item) {
-        return "<tr>\n                <td>\n                    <i class=\"scanex-uploaded-icon box\"></i>\n                </td>\n                ".concat(_this3._columns.map(function (id) {
+        return "<tr>\n                <td>\n                    <i class=\"scanex-uploaded-icon box\"></i>\n                </td>\n                ".concat(_this2._columns.map(function (id) {
           return "<td>".concat(item[id], "</td>");
         }).join(''), "\n            </tr>");
       }).join('');
@@ -48014,223 +48378,329 @@ var Uploaded = /*#__PURE__*/function (_BaseView) {
   return Uploaded;
 }(View);
 
-var T$1 = T;
-T$1.addText('rus', {
-  minimize: 'Свернуть',
-  maximize: 'Показать',
-  close: 'Закрыть'
-});
-T$1.addText('eng', {
-  minimize: 'Minimize',
-  maximize: 'Maximize',
-  close: 'Close'
-});
+var Component = /*#__PURE__*/function (_EventTarget) {
+  _inherits(Component, _EventTarget);
 
-var FloatingPanel = /*#__PURE__*/function (_EventTarget) {
-  _inherits(FloatingPanel, _EventTarget);
+  var _super = _createSuper(Component);
 
-  var _super = _createSuper(FloatingPanel);
-
-  function FloatingPanel(container) {
+  function Component(container, options) {
     var _this;
 
-    var _ref = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
-        _ref$title = _ref.title,
-        title = _ref$title === void 0 ? '' : _ref$title,
-        _ref$id = _ref.id,
-        id = _ref$id === void 0 ? '' : _ref$id,
-        _ref$closable = _ref.closable,
-        closable = _ref$closable === void 0 ? true : _ref$closable,
-        _ref$minimizable = _ref.minimizable,
-        minimizable = _ref$minimizable === void 0 ? true : _ref$minimizable,
-        _ref$left = _ref.left,
-        left = _ref$left === void 0 ? 100 : _ref$left,
-        _ref$top = _ref.top,
-        top = _ref$top === void 0 ? 100 : _ref$top,
-        _ref$modal = _ref.modal,
-        modal = _ref$modal === void 0 ? false : _ref$modal,
-        _ref$header = _ref.header,
-        header = _ref$header === void 0 ? true : _ref$header;
-
-    _classCallCheck(this, FloatingPanel);
+    _classCallCheck(this, Component);
 
     _this = _super.call(this);
-    _this._id = id;
-    _this._left = left;
-    _this._top = top;
     _this._container = container;
-    _this._modal = modal;
+    _this._element = document.createElement('div');
 
-    _this._container.classList.add('noselect');
+    _this._element.classList.add('scanex-component');
 
-    _this._container.classList.add('scanex-floating-panel');
+    _this._container.appendChild(_this._element);
 
-    _this._container.innerHTML = "<div class=\"panel-body\">\n                ".concat(header ? "<div class=\"panel-header\">\n                        <label class=\"panel-header-title\">".concat(title, "</label>\n                        <div class=\"panel-header-buttons\">\n                            ").concat(minimizable ? "<i title=\"".concat(T$1.getText('minimize'), "\" class=\"panel-toggle-button scanex-floating-panel-icon minimize\"></i>") : '', "\n                            ").concat(closable ? "<i title=\"".concat(T$1.getText('close'), "\" class=\"panel-close-button scanex-floating-panel-icon close\"></i>") : '', "\n                        </div>\n                    </div>") : '', "\n                <div class=\"panel-content\"></div>\n                <div class=\"panel-footer\"></div>\n            </div>");
-    _this._body = _this._container.querySelector('.panel-body');
-    _this._content = _this._container.querySelector('.panel-content');
-    _this._footer = _this._container.querySelector('.panel-footer');
-    _this.show = _this.show.bind(_assertThisInitialized(_this));
-    _this.hide = _this.hide.bind(_assertThisInitialized(_this));
-    _this._header = _this._container.querySelector('.panel-header');
-    _this._title = _this._container.querySelector('.panel-header-title');
-    _this.toggle = _this.toggle.bind(_assertThisInitialized(_this));
-    _this._toggleButton = _this._container.querySelector('.panel-toggle-button');
-
-    if (_this._toggleButton) {
-      _this._toggleButton.addEventListener('click', _this.toggle);
-    }
-
-    _this._closeButton = _this._container.querySelector('.panel-close-button');
-
-    if (_this._closeButton) {
-      _this._closeButton.addEventListener('click', _this.hide);
-    }
-
-    _this._savePosition = _this._savePosition.bind(_assertThisInitialized(_this));
-    _this._stopPropagation = _this._stopPropagation.bind(_assertThisInitialized(_this));
-    _this._startMove = _this._startMove.bind(_assertThisInitialized(_this));
-    _this._stopMove = _this._stopMove.bind(_assertThisInitialized(_this));
-    _this._handleMove = _this._handleMove.bind(_assertThisInitialized(_this));
-
-    _this._container.addEventListener('dragstart', _this.preventDefault);
-
-    if (_this._header) {
-      _this._header.addEventListener('mousedown', _this._startMove);
-
-      _this._header.addEventListener('mousemove', _this._handleMove);
-    }
-
-    document.body.addEventListener('mouseup', _this._stopMove);
-
-    _this._container.addEventListener('mousewheel', _this._stopPropagation);
-
-    if (_this._modal) {
-      _this._ovl = document.querySelector('.panel-modal-overlay');
-
-      if (!_this._ovl) {
-        _this._ovl = document.createElement('div');
-        document.body.appendChild(_this._ovl);
-        _this._ovl.className = 'panel-modal-overlay';
-        _this._ovl.style.display = 'none';
-
-        _this._ovl.addEventListener('mousemove', _this._stopPropagation);
-
-        _this._ovl.addEventListener('mousewheel', _this._stopPropagation);
-
-        _this._ovl.addEventListener('click', _this._stopPropagation);
-      }
-
-      _this._container.classList.add('panel-modal');
-    } else {
-      _this._container.classList.add('panel-non-modal');
-    }
+    _this._render(_this._element, options);
 
     return _this;
   }
 
-  _createClass(FloatingPanel, [{
-    key: "_startMove",
-    value: function _startMove(e) {
-      var _this$_container$getB = this._container.getBoundingClientRect(),
-          left = _this$_container$getB.left,
-          top = _this$_container$getB.top;
-
-      this._offset = {
-        x: e.clientX - left,
-        y: e.clientY - top
-      };
+  _createClass(Component, [{
+    key: "destroy",
+    value: function destroy() {
+      this._container.removeChild(this._element);
     }
   }, {
-    key: "_stopMove",
-    value: function _stopMove(e) {
-      this._offset = null;
-
-      this._savePosition();
-    }
-  }, {
-    key: "_handleMove",
-    value: function _handleMove(e) {
-      if (this._offset) {
-        this._container.style.left = "".concat(e.clientX - this._offset.x, "px");
-        this._container.style.top = "".concat(e.clientY - this._offset.y, "px");
-      }
-    }
-  }, {
-    key: "_stopPropagation",
-    value: function _stopPropagation(e) {
+    key: "forwardEvent",
+    value: function forwardEvent(e) {
       e.stopPropagation();
-    }
-  }, {
-    key: "show",
-    value: function show() {
-      if (this._modal) {
-        this._ovl.style.display = 'block';
-      }
-
-      this._body.style.visibility = 'visible';
-      var height = 0;
-
-      if (this._header) {
-        height = this._header.getBoundingClientRect().height;
-      }
-
-      var bodyRect = this._body.getBoundingClientRect();
-
-      this._restorePosition(this._top - Math.round((height + bodyRect.height) / 2), this._left - Math.round(bodyRect.width / 2));
-
       var event = document.createEvent('Event');
-      event.initEvent('show', false, false);
+      event.initEvent(e.type, false, false);
+      event.detail = e.detail;
       this.dispatchEvent(event);
     }
   }, {
-    key: "hide",
-    value: function hide() {
-      if (this._modal) {
-        this._ovl.style.display = 'none';
-      }
+    key: "_render",
+    value: function _render(element, options) {}
+  }]);
 
-      this._body.style.visibility = 'hidden';
-      var event = document.createEvent('Event');
-      event.initEvent('hide', false, false);
-      this.dispatchEvent(event);
+  return Component;
+}(EventTarget);
+
+var DEFAULT_LANGUAGE$1 = 'rus';
+
+var Translations$1 = /*#__PURE__*/function () {
+  function Translations() {
+    _classCallCheck(this, Translations);
+
+    this._hash = {};
+  }
+
+  _createClass(Translations, [{
+    key: "setLanguage",
+    value: function setLanguage(lang) {
+      this._language = lang;
     }
   }, {
-    key: "toggle",
-    value: function toggle() {
-      if (this._content.style.display == 'none') {
-        this._toggleButton.classList.remove('maximize');
+    key: "getLanguage",
+    value: function getLanguage() {
+      return window.language || this._language || DEFAULT_LANGUAGE$1;
+    }
+  }, {
+    key: "addText",
+    value: function addText(lang, tran) {
+      this._hash[lang] = extend(this._hash[lang] || {}, tran);
+      return this;
+    }
+  }, {
+    key: "getText",
+    value: function getText(key) {
+      if (key && typeof key === 'string') {
+        var locale = this._hash[this.getLanguage()];
 
-        this._toggleButton.classList.add('minimize');
+        if (locale) {
+          return key.split('.').reduce(function (a, k) {
+            return a[k];
+          }, locale);
+        }
+      }
 
-        this._content.style.display = 'block';
+      return null;
+    }
+  }]);
+
+  return Translations;
+}();
+
+window.Scanex = window.Scanex || {};
+window.Scanex.Translations = window.Scanex.Translations || {};
+window.Scanex.translations = window.Scanex.translations || new Translations$1();
+var T$1 = window.Scanex.translations;
+
+T$1.addText('rus', {
+  scanex: {
+    components: {
+      dialog: {
+        close: 'Закрыть',
+        maximize: 'Развернуть',
+        minimize: 'Свернуть'
+      }
+    }
+  }
+});
+T$1.addText('eng', {
+  scanex: {
+    components: {
+      dialog: {
+        close: 'Close',
+        maximize: 'Maximize',
+        minimize: 'Minimize'
+      }
+    }
+  }
+});
+var translate$g = T$1.getText.bind(T$1);
+
+var Dialog = /*#__PURE__*/function (_Component) {
+  _inherits(Dialog, _Component);
+
+  var _super = _createSuper(Dialog);
+
+  function Dialog(_ref) {
+    var _this;
+
+    var title = _ref.title,
+        id = _ref.id,
+        _ref$collapsible = _ref.collapsible,
+        collapsible = _ref$collapsible === void 0 ? false : _ref$collapsible,
+        top = _ref.top,
+        left = _ref.left;
+
+    _classCallCheck(this, Dialog);
+
+    _this = _super.call(this, document.body, {
+      id: id,
+      collapsible: collapsible,
+      top: top,
+      left: left
+    });
+
+    if (_this._id) {
+      _this._element.setAttribute('id', _this._id);
+    }
+
+    _this._titleElement.innerText = title;
+    _this._moving = false;
+    _this._offsetX;
+    _this._offsetY;
+
+    _this._header.addEventListener('mousedown', _this._start.bind(_assertThisInitialized(_this)));
+
+    _this._element.addEventListener('mousemove', _this._move.bind(_assertThisInitialized(_this)));
+
+    window.addEventListener('mouseup', _this._stop.bind(_assertThisInitialized(_this)));
+    return _this;
+  }
+
+  _createClass(Dialog, [{
+    key: "_start",
+    value: function _start(e) {
+      e.stopPropagation();
+      var clientX = e.clientX,
+          clientY = e.clientY;
+
+      var _this$_element$getBou = this._element.getBoundingClientRect(),
+          top = _this$_element$getBou.top,
+          left = _this$_element$getBou.left;
+
+      this._offsetX = clientX - left;
+      this._offsetY = clientY - top;
+      this._moving = true;
+    }
+  }, {
+    key: "_stop",
+    value: function _stop() {
+      if (this._moving) {
+        this._moving = false;
+
+        this._savePosition();
+      }
+    }
+  }, {
+    key: "_move",
+    value: function _move(e) {
+      if (this._moving) {
+        e.stopPropagation();
+        var clientX = e.clientX,
+            clientY = e.clientY;
+        this._element.style.left = "".concat(clientX - this._offsetX, "px");
+        this._element.style.top = "".concat(clientY - this._offsetY, "px");
+      }
+    }
+  }, {
+    key: "_toggle",
+    value: function _toggle(e) {
+      e.stopPropagation();
+
+      if (this._btnToggle.classList.contains('minimize')) {
+        this._btnToggle.setAttribute('title', translate$g('scanex.components.dialog.maximize'));
+
+        this._btnToggle.classList.remove('minimize');
+
+        this._btnToggle.classList.add('maximize');
+
+        this._content.classList.add('hidden');
+
+        this._footer.classList.add('hidden');
+
+        var event = document.createEvent('Event');
+        event.initEvent('minimize', false, false);
+        this.dispatchEvent(event);
       } else {
-        this._toggleButton.classList.remove('minimize');
+        this._btnToggle.setAttribute('title', translate$g('scanex.components.dialog.minimize'));
 
-        this._toggleButton.classList.add('maximize');
+        this._btnToggle.classList.remove('maximize');
 
-        this._content.style.display = 'none';
+        this._btnToggle.classList.add('minimize');
+
+        this._content.classList.remove('hidden');
+
+        this._footer.classList.remove('hidden');
+
+        var _event = document.createEvent('Event');
+
+        _event.initEvent('maximize', false, false);
+
+        this.dispatchEvent(_event);
       }
+    }
+  }, {
+    key: "_close",
+    value: function _close(e) {
+      e.stopPropagation();
+      var event = document.createEvent('Event');
+      event.initEvent('close', false, false);
+      this.dispatchEvent(event);
+    }
+  }, {
+    key: "_render",
+    value: function _render(element, _ref2) {
+      var id = _ref2.id,
+          collapsible = _ref2.collapsible,
+          top = _ref2.top,
+          left = _ref2.left;
+      element.classList.add('scanex-component-dialog');
+      this._id = id;
+
+      this._restorePosition(top, left);
+
+      this._header = document.createElement('div');
+
+      this._header.classList.add('header');
+
+      this._titleElement = document.createElement('label');
+
+      this._header.appendChild(this._titleElement);
+
+      var buttons = document.createElement('div');
+      buttons.classList.add('header-buttons');
+
+      if (collapsible) {
+        this._btnToggle = document.createElement('i');
+
+        this._btnToggle.setAttribute('title', translate$g('scanex.components.dialog.minimize'));
+
+        this._btnToggle.classList.add('scanex-component-icon');
+
+        this._btnToggle.classList.add('minimize');
+
+        this._btnToggle.addEventListener('click', this._toggle.bind(this));
+
+        buttons.appendChild(this._btnToggle);
+      }
+
+      var btnClose = document.createElement('i');
+      btnClose.setAttribute('title', translate$g('scanex.components.dialog.close'));
+      btnClose.classList.add('scanex-component-icon');
+      btnClose.classList.add('close');
+      btnClose.addEventListener('click', this._close.bind(this));
+      buttons.appendChild(btnClose);
+
+      this._header.appendChild(buttons);
+
+      element.appendChild(this._header);
+      this._content = document.createElement('div');
+
+      this._content.classList.add('content');
+
+      element.appendChild(this._content);
+      this._footer = document.createElement('div');
+
+      this._footer.classList.add('footer');
+
+      element.appendChild(this._footer);
     }
   }, {
     key: "_restorePosition",
     value: function _restorePosition(top, left) {
       if (typeof this._id === 'string' && this._id != '') {
-        var x = localStorage.getItem("".concat(this._id, ".left")) || left;
-        var y = localStorage.getItem("".concat(this._id, ".top")) || top;
-        this._container.style.left = "".concat(x, "px");
-        this._container.style.top = "".concat(y, "px");
+        var _window$localStorage$ = window.localStorage.getItem(this._id).split(','),
+            _window$localStorage$2 = _slicedToArray(_window$localStorage$, 2),
+            x = _window$localStorage$2[0],
+            y = _window$localStorage$2[1];
+
+        this._element.style.top = "".concat(y || top || Math.round(window.innerHeight / 2), "px");
+        this._element.style.left = "".concat(x || left || Math.round(window.innerWidth / 2), "px");
+      } else {
+        this._element.style.top = "".concat(top || Math.round(window.innerHeight / 2), "px");
+        this._element.style.left = "".concat(left || Math.round(window.innerWidth / 2), "px");
       }
     }
   }, {
     key: "_savePosition",
     value: function _savePosition() {
       if (typeof this._id === 'string' && this._id != '') {
-        var _this$_container$getB2 = this._container.getBoundingClientRect(),
-            top = _this$_container$getB2.top,
-            left = _this$_container$getB2.left;
+        var _this$_element$getBou2 = this._element.getBoundingClientRect(),
+            top = _this$_element$getBou2.top,
+            left = _this$_element$getBou2.left;
 
-        localStorage.setItem("".concat(this._id, ".top"), top);
-        localStorage.setItem("".concat(this._id, ".left"), left);
+        window.localStorage.setItem(this._id, [left, top].join(','));
       }
     }
   }, {
@@ -48239,47 +48709,608 @@ var FloatingPanel = /*#__PURE__*/function (_EventTarget) {
       return this._header;
     }
   }, {
-    key: "body",
+    key: "content",
     get: function get() {
-      return this._body;
+      return this._content;
     }
   }, {
     key: "footer",
     get: function get() {
       return this._footer;
     }
-  }, {
-    key: "content",
-    get: function get() {
-      return this._content;
+  }]);
+
+  return Dialog;
+}(Component);
+
+var Spinner = /*#__PURE__*/function (_Component) {
+  _inherits(Spinner, _Component);
+
+  var _super = _createSuper(Spinner);
+
+  function Spinner(container) {
+    var _this;
+
+    _classCallCheck(this, Spinner);
+
+    _this = _super.call(this, container);
+    _this._value = 0;
+    _this._min = 0;
+    _this._max = 0;
+
+    _this._up.addEventListener('click', _this.increment.bind(_assertThisInitialized(_this)));
+
+    _this._down.addEventListener('click', _this.decrement.bind(_assertThisInitialized(_this)));
+
+    _this._input.addEventListener('change', _this._onChange.bind(_assertThisInitialized(_this)));
+
+    return _this;
+  }
+
+  _createClass(Spinner, [{
+    key: "_onChange",
+    value: function _onChange(e) {
+      e.stopPropagation();
+      this.value = parseInt(this._input.value, 10);
     }
   }, {
-    key: "title",
+    key: "_validate",
+    value: function _validate(value) {
+      return !isNaN(value) && this._min <= value && value <= this._max;
+    }
+  }, {
+    key: "increment",
+    value: function increment(e) {
+      e.stopPropagation();
+      this.value = this._value + 1;
+    }
+  }, {
+    key: "decrement",
+    value: function decrement(e) {
+      e.stopPropagation();
+      this.value = this._value - 1;
+    }
+  }, {
+    key: "_render",
+    value: function _render(element) {
+      element.classList.add('scanex-component-spinner');
+      element.innerHTML = "<input type=\"text\" value=\"0\"/>\n        <div class=\"buttons\">\n            <i class=\"scanex-component-icon spinner-up\"></i>            \n            <i class=\"scanex-component-icon spinner-down\"></i>\n        </div>";
+      this._input = element.querySelector('input');
+      this._up = element.querySelector('.spinner-up');
+      this._down = element.querySelector('.spinner-down');
+    }
+  }, {
+    key: "value",
     get: function get() {
-      return this._title.innerText;
+      return this._value;
     },
-    set: function set(text) {
-      this._title.innerText = text;
+    set: function set(value) {
+      if (this._validate(value)) {
+        this._value = value;
+        var event = document.createEvent('Event');
+        event.initEvent("change", false, false);
+        event.detail = this._value;
+        this.dispatchEvent(event);
+      }
+
+      this._input.value = this._value.toString();
+    }
+  }, {
+    key: "min",
+    get: function get() {
+      return this._min;
+    },
+    set: function set(min) {
+      if (!isNaN(min)) {
+        this._min = min;
+      }
+    }
+  }, {
+    key: "max",
+    get: function get() {
+      return this._max;
+    },
+    set: function set(max) {
+      if (!isNaN(max) && this._min <= max) {
+        this._max = max;
+      }
     }
   }]);
 
-  return FloatingPanel;
-}(EventTarget);
+  return Spinner;
+}(Component);
 
-var translate$g = T.getText.bind(T);
+var Slider1 = /*#__PURE__*/function (_Component) {
+  _inherits(Slider1, _Component);
+
+  var _super = _createSuper(Slider1);
+
+  function Slider1(container, _ref) {
+    var _this;
+
+    var min = _ref.min,
+        max = _ref.max;
+
+    _classCallCheck(this, Slider1);
+
+    _this = _super.call(this, container);
+    _this._delay = 50;
+    _this._tick = null;
+    _this._offset = 0;
+
+    if (!isNaN(min) && !isNaN(max)) {
+      _this._min = min;
+      _this._max = max;
+    } else {
+      throw "min or max not set";
+    }
+
+    _this._rightTick.addEventListener('mousedown', _this._start.bind(_assertThisInitialized(_this), _this._rightTick));
+
+    document.body.addEventListener('mousemove', _this._slide.bind(_assertThisInitialized(_this)));
+    document.body.addEventListener('mouseup', _this._stop.bind(_assertThisInitialized(_this)));
+
+    _this._bar.addEventListener('click', _this._click.bind(_assertThisInitialized(_this)));
+
+    return _this;
+  }
+
+  _createClass(Slider1, [{
+    key: "validate",
+    value: function validate(value) {
+      return !isNaN(value) && this.min <= value && value <= this.max;
+    }
+  }, {
+    key: "_stop",
+    value: function _stop() {
+      if (this._tick !== null) {
+        this._tick = null;
+        this._offset = 0;
+        var event = document.createEvent('Event');
+        event.initEvent('stop', false, false);
+        this.dispatchEvent(event);
+      }
+    }
+  }, {
+    key: "_start",
+    value: function _start(tick, e) {
+      e.stopPropagation();
+      e.preventDefault();
+
+      if (this._tick === null) {
+        this._tick = tick;
+
+        var t = this._tick.getBoundingClientRect();
+
+        this._offset = e.clientX - t.left;
+        var event = document.createEvent('Event');
+        event.initEvent('start', false, false);
+        this.dispatchEvent(event);
+      }
+    }
+  }, {
+    key: "_slide",
+    value: function _slide(e) {
+      var _this2 = this;
+
+      e.stopPropagation();
+      e.preventDefault();
+      var tid = window.setTimeout(function () {
+        window.clearTimeout(tid);
+
+        if (_this2._tick) {
+          var t = _this2._tick.getBoundingClientRect();
+
+          var b = _this2._bar.getBoundingClientRect();
+
+          var x = e.clientX - _this2._offset;
+
+          if (b.left <= x && x + t.width <= b.right) {
+            _this2._range.style.width = "".concat(e.clientX - _this2._offset + t.width - b.left, "px");
+
+            _this2._updateBounds();
+          }
+        }
+      }, this._delay);
+    }
+  }, {
+    key: "_click",
+    value: function _click(e) {
+      if (!this._tick) {
+        e.stopPropagation();
+
+        var b = this._bar.getBoundingClientRect();
+
+        var t = this._rightTick.getBoundingClientRect();
+
+        var halfWidth = Math.round(t.width / 2);
+
+        if (e.clientX < b.left + halfWidth) {
+          this._range.style.width = "".concat(t.width, "px");
+        } else if (e.clientX > b.right - halfWidth) {
+          this._range.style.width = "".concat(b.width, "px");
+        } else {
+          this._range.style.width = "".concat(e.clientX - b.left + halfWidth, "px");
+        }
+
+        this._updateBounds();
+      }
+    }
+  }, {
+    key: "_updateBounds",
+    value: function _updateBounds() {
+      var b = this._bar.getBoundingClientRect();
+
+      var t = this._rightTick.getBoundingClientRect();
+
+      var k = (this.max - this.min) / (b.width - t.width);
+      this._lo = this.min;
+      var hi = t.left - b.left;
+      this._hi = this.min + (this.mode === 'float' ? hi * k : Math.round(hi * k));
+      var event = document.createEvent('Event');
+      event.initEvent('change', false, false);
+      this.dispatchEvent(event);
+    }
+  }, {
+    key: "_render",
+    value: function _render(element) {
+      element.classList.add('scanex-component-slider');
+      element.classList.add('no-select');
+      element.innerHTML = "<div class=\"slider-bar\">\n                <div class=\"slider-range\">\n                    <div class=\"slider-tick slider-tick-right\">\n                        <label></label>\n                        <i></i>\n                    </div>\n                </div>\n            </div>";
+      this._rightLabel = element.querySelector('.slider-tick label');
+
+      this._rightLabel.classList.add('hidden');
+
+      this._bar = element.querySelector('.slider-bar');
+      this._rightTick = element.querySelector('.slider-tick-right');
+      this._range = element.querySelector('.slider-range');
+    }
+  }, {
+    key: "mode",
+    get: function get() {
+      return this._mode;
+    },
+    set: function set(mode) {
+      this._mode = mode;
+    }
+  }, {
+    key: "min",
+    get: function get() {
+      return this._min;
+    }
+  }, {
+    key: "max",
+    get: function get() {
+      return this._max;
+    }
+  }, {
+    key: "lo",
+    get: function get() {
+      return this._min;
+    }
+  }, {
+    key: "hi",
+    get: function get() {
+      return this._hi;
+    },
+    set: function set(hi) {
+      if (this.validate(hi) && isNaN(this.lo) || this.lo <= hi) {
+        this._hi = hi;
+      }
+
+      if (!isNaN(this.lo) && !isNaN(this.hi)) {
+        var b = this._bar.getBoundingClientRect();
+
+        var t = this._rightTick.getBoundingClientRect();
+
+        var k = (b.width - t.width) / (this.max - this.min);
+        this._range.style.width = "".concat(Math.round((this.hi - this.lo) * k) + t.width, "px");
+        var event = document.createEvent('Event');
+        event.initEvent('change', false, false);
+        this.dispatchEvent(event);
+      }
+    }
+  }]);
+
+  return Slider1;
+}(Component);
+
+var Slider2 = /*#__PURE__*/function (_Slider) {
+  _inherits(Slider2, _Slider);
+
+  var _super = _createSuper(Slider2);
+
+  function Slider2(container, _ref) {
+    var _this;
+
+    var min = _ref.min,
+        max = _ref.max;
+
+    _classCallCheck(this, Slider2);
+
+    _this = _super.call(this, container, {
+      min: min,
+      max: max
+    });
+
+    _this._leftTick.addEventListener('mousedown', _this._start.bind(_assertThisInitialized(_this), _this._leftTick));
+
+    return _this;
+  }
+
+  _createClass(Slider2, [{
+    key: "_slide",
+    value: function _slide(e) {
+      var _this2 = this;
+
+      e.stopPropagation();
+      e.preventDefault();
+      var tid = window.setTimeout(function () {
+        window.clearTimeout(tid);
+
+        if (_this2._tick) {
+          var lt = _this2._leftTick.getBoundingClientRect();
+
+          var rt = _this2._rightTick.getBoundingClientRect();
+
+          var w = lt.width + rt.width;
+
+          var b = _this2._bar.getBoundingClientRect();
+
+          var x = e.clientX - _this2._offset;
+
+          if (_this2._tick === _this2._leftTick) {
+            if (x > b.left) {
+              if (x + lt.width < rt.left) {
+                _this2._range.style.left = "".concat(x - b.left, "px");
+                _this2._range.style.width = "".concat(rt.right - x, "px");
+              } else {
+                _this2._range.style.left = "".concat(rt.left - lt.width - b.left, "px");
+                _this2._range.style.width = "".concat(w, "px");
+              }
+            }
+
+            _this2._updateBounds();
+          } else if (_this2._tick === _this2._rightTick) {
+            if (x < b.right - rt.width) {
+              if (lt.right < x) {
+                _this2._range.style.width = "".concat(x - lt.right + w, "px");
+              } else {
+                _this2._range.style.width = "".concat(w, "px");
+              }
+            }
+
+            _this2._updateBounds();
+          }
+        }
+      }, this._delay);
+    }
+  }, {
+    key: "_click",
+    value: function _click(e) {
+      if (!this._tick) {
+        e.stopPropagation(); // const b = this._bar.getBoundingClientRect();
+        // const t = this._rightTick.getBoundingClientRect();
+        // const halfWidth = Math.round (t.width / 2);
+        // if (e.clientX < b.left + halfWidth) {                
+        //     this._range.style.width = `${t.width}px`;
+        // }
+        // else if (e.clientX > b.right - halfWidth) {
+        //     this._range.style.width = `${b.width}px`;
+        // }
+        // else {
+        //     this._range.style.width = `${e.clientX - b.left + halfWidth}px`;                
+        // }        
+        // this._updateBounds();
+      }
+    }
+  }, {
+    key: "_updateUI",
+    value: function _updateUI() {
+      if (!isNaN(this.lo) && !isNaN(this.hi)) {
+        var lt = this._leftTick.getBoundingClientRect();
+
+        var rt = this._rightTick.getBoundingClientRect();
+
+        var w = lt.width + rt.width;
+
+        var b = this._bar.getBoundingClientRect();
+
+        var k = (b.width - w) / (this.max - this.min);
+        this._range.style.left = "".concat(Math.round((this.lo - this.min) * k), "px");
+        this._range.style.width = "".concat(Math.round((this.hi - this.lo) * k) + w, "px");
+        var event = document.createEvent('Event');
+        event.initEvent('change', false, false);
+        this.dispatchEvent(event);
+      }
+    }
+  }, {
+    key: "_updateBounds",
+    value: function _updateBounds() {
+      var b = this._bar.getBoundingClientRect();
+
+      var lt = this._leftTick.getBoundingClientRect();
+
+      var rt = this._rightTick.getBoundingClientRect();
+
+      var w = lt.width + rt.width;
+      var k = (this.max - this.min) / (b.width - w);
+      var lo = lt.left - b.left;
+      this._lo = this.min + (this.mode === 'float' ? lo * k : Math.round(lo * k));
+      var hi = rt.left - b.left - lt.width;
+      this._hi = this.min + (this.mode === 'float' ? hi * k : Math.round(hi * k));
+      var event = document.createEvent('Event');
+      event.initEvent('change', false, false);
+      this.dispatchEvent(event);
+    }
+  }, {
+    key: "_render",
+    value: function _render(element) {
+      _get(_getPrototypeOf(Slider2.prototype), "_render", this).call(this, element);
+
+      element.classList.add('scanex-component-two-tick-slider');
+      this._leftTick = document.createElement('div');
+
+      this._leftTick.classList.add('slider-tick');
+
+      this._leftTick.classList.add('slider-tick-left');
+
+      this._leftLabel = document.createElement('label');
+
+      this._leftTick.appendChild(this._leftLabel);
+
+      this._leftLabel.classList.add('hidden');
+
+      var icn = document.createElement('i');
+
+      this._leftTick.appendChild(icn);
+
+      this._range.insertBefore(this._leftTick, this._rightTick);
+    }
+  }, {
+    key: "lo",
+    get: function get() {
+      return this._lo;
+    },
+    set: function set(lo) {
+      if (this.validate(lo) && (isNaN(this.hi) || lo <= this.hi)) {
+        this._lo = lo;
+      }
+
+      this._updateUI();
+    }
+  }, {
+    key: "hi",
+    get: function get() {
+      return this._hi;
+    },
+    set: function set(hi) {
+      if (this.validate(hi) && (isNaN(this.lo) || this.lo <= hi)) {
+        this._hi = hi;
+      }
+
+      this._updateUI();
+    }
+  }]);
+
+  return Slider2;
+}(Slider1);
+
+var Interval = /*#__PURE__*/function (_Component) {
+  _inherits(Interval, _Component);
+
+  var _super = _createSuper(Interval);
+
+  function Interval(container, _ref) {
+    var _this;
+
+    var min = _ref.min,
+        max = _ref.max,
+        slider = _ref.slider;
+
+    _classCallCheck(this, Interval);
+
+    _this = _super.call(this, container);
+    _this._slider = new slider(_this._sliderElement, {
+      min: min,
+      max: max
+    });
+
+    _this._slider.on('change', _this._onChange.bind(_assertThisInitialized(_this)));
+
+    return _this;
+  }
+
+  _createClass(Interval, [{
+    key: "_onChange",
+    value: function _onChange(e) {
+      this._lo.value = this._slider.lo.toString();
+      this._hi.value = this._slider.hi.toString();
+      var event = document.createEvent('Event');
+      event.initEvent('change', false, false);
+      this.dispatchEvent(event);
+    }
+  }, {
+    key: "_render",
+    value: function _render(element) {
+      element.classList.add('scanex-component-range');
+      element.innerHTML = "<table>\n            <tr>\n                <td>\n                    <input class=\"lo\" type=\"text\" />\n                </td>\n                <td>\n                    <div class=\"slider\"></div>\n                </td>\n                <td>\n                    <input class=\"hi\" type=\"text\" />\n                </td>\n            </tr>\n        </table>";
+      this._lo = element.querySelector('.lo');
+      this._hi = element.querySelector('.hi');
+      this._sliderElement = element.querySelector('.slider');
+    }
+  }, {
+    key: "min",
+    get: function get() {
+      return this._slider.min;
+    },
+    set: function set(min) {
+      this._slider.min = min;
+    }
+  }, {
+    key: "max",
+    get: function get() {
+      return this._slider.max;
+    },
+    set: function set(max) {
+      this._slider.max = max;
+    }
+  }, {
+    key: "lo",
+    get: function get() {
+      return this._slider.lo;
+    },
+    set: function set(lo) {
+      this._slider.lo = lo;
+    }
+  }, {
+    key: "hi",
+    get: function get() {
+      return this._slider.hi;
+    },
+    set: function set(hi) {
+      this._slider.hi = hi;
+    }
+  }]);
+
+  return Interval;
+}(Component);
+
+var translate$h = T.getText.bind(T);
 
 var roundBytes = function roundBytes(s) {
   if (s > 1024 * 1024 * 1024 * 1024 * 1.2) {
-    return "".concat((Math.round(s / (1024 * 1024 * 1024 * 1024) * 100) / 100).toString(), " ").concat(translate$g('uploaded.units.tb'));
+    return "".concat((Math.round(s / (1024 * 1024 * 1024 * 1024) * 100) / 100).toLocaleString('ru-RU', {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1
+    }), " ").concat(translate$h('uploaded.units.tb'));
   } else if (s > 1024 * 1024 * 1024 * 1.2) {
-    return "".concat((Math.round(s / (1024 * 1024 * 1024) * 100) / 100).toString(), " ").concat(translate$g('uploaded.units.gb'));
+    return "".concat((Math.round(s / (1024 * 1024 * 1024) * 100) / 100).toLocaleString('ru-RU', {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1
+    }), " ").concat(translate$h('uploaded.units.gb'));
   } else if (s > 1024 * 1024 * 1.2) {
-    return "".concat((Math.round(s / (1024 * 1024) * 100) / 100).toString(), " ").concat(translate$g('uploaded.units.mb'));
+    return "".concat((Math.round(s / (1024 * 1024) * 100) / 100).toLocaleString('ru-RU', {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1
+    }), " ").concat(translate$h('uploaded.units.mb'));
   } else if (s > 1024 * 1.2) {
-    return "".concat((Math.round(s / 1024 * 100) / 100).toString(), " ").concat(translate$g('uploaded.units.kb'));
+    return "".concat((Math.round(s / 1024 * 100) / 100).toLocaleString('ru-RU', {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1
+    }), " ").concat(translate$h('uploaded.units.kb'));
   } else {
-    return "".concat(Math.round(s).toString(), " ").concat(translate$g('uploaded.units.b'));
+    return "".concat(Math.round(s).toLocaleString('ru-RU', {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1
+    }), " ").concat(translate$h('uploaded.units.b'));
   }
+};
+
+var STATUS = {
+  STARTED: 0,
+  PAUSED: 1,
+  ERROR: 2
 };
 
 var UploadProgress = /*#__PURE__*/function (_EventTarget) {
@@ -48295,44 +49326,47 @@ var UploadProgress = /*#__PURE__*/function (_EventTarget) {
 
   _createClass(UploadProgress, [{
     key: "start",
-    value: function start() {
-      var _this = this;
-
-      this._container = document.createElement('div');
-
-      this._container.classList.add('scanex-forestry-progress');
-
-      document.body.appendChild(this._container);
-      this._panel = new FloatingPanel(this._container, {
-        title: translate$g('uploaded.load'),
-        id: 'uploaded',
-        closable: true,
-        minimizable: false,
-        left: 500,
-        top: 300,
-        modal: false,
-        header: true
-      });
-
-      this._panel.on('hide', this.stop.bind(this));
-
-      this._panel.content.innerHTML = "<ul class=\"files\"></ul>\n            <div class=\"progress\"></div>\n            <div class=\"speed\"></div>";
-      this._panel.footer.innerHTML = "<button></button>";
-      this._btn = this._panel.footer.querySelector('button');
-
-      this._btn.addEventListener('click', function (e) {
-        e.stopPropagation();
-        var event = document.createEvent('Event');
-        event.initEvent(_this._started ? 'pause' : 'resume', false, false);
-
-        _this.dispatchEvent(event);
-      });
-
-      this._files = this._panel.content.querySelector('.files');
-      this._speed = this._panel.content.querySelector('.speed');
-      this._progress = this._panel.content.querySelector('.progress');
-
-      this._panel.show();
+    value: function start() {// this._container = document.createElement('div');        
+      // this._container.classList.add('scanex-forestry-progress');
+      // document.body.appendChild(this._container);    
+      // this._panel = new FloatingPanel(this._container, {
+      //     title: translate('uploaded.load'),
+      //     id: 'uploaded',
+      //     closable: true,
+      //     minimizable: false,
+      //     left: 500,
+      //     top: 300,
+      //     modal: false,
+      //     header: true,
+      // });
+      // this._panel.on('hide', this.stop.bind(this));
+      // this._panel.content.innerHTML = `<ul class="files"></ul>
+      //     <div class="progress"></div>
+      //     <div class="speed"></div>`;
+      // this._panel.footer.innerHTML = `<button></button>`;    
+      // this._btn = this._panel.footer.querySelector('button');
+      // this._btn.addEventListener('click', e => {            
+      //     e.stopPropagation();            
+      //     if (this._status === STATUS.STARTED) {
+      //         let event = document.createEvent('Event');
+      //         event.initEvent('resume', false, false);
+      //         this.dispatchEvent(event);
+      //     }
+      //     else if (this._status === STATUS.PAUSED) {
+      //         let event = document.createEvent('Event');
+      //         event.initEvent('pause', false, false);
+      //         this.dispatchEvent(event);
+      //     }
+      //     else if (this._status === STATUS.ERROR) {
+      //         let event = document.createEvent('Event');
+      //         event.initEvent('stop', false, false);
+      //         this.dispatchEvent(event);
+      //     }                        
+      // });
+      // this._files = this._panel.content.querySelector('.files');
+      // this._speed = this._panel.content.querySelector('.speed');
+      // this._progress = this._panel.content.querySelector('.progress');
+      // this._panel.show();
     }
   }, {
     key: "stop",
@@ -48345,19 +49379,22 @@ var UploadProgress = /*#__PURE__*/function (_EventTarget) {
   }, {
     key: "cancelled",
     value: function cancelled(index) {
-      this._started = false;
-      this._btn.innerText = translate$g('uploaded.resume');
+      this._status = STATUS.PAUSED;
+      this._btn.innerText = translate$h('uploaded.resume');
 
       var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
 
-      row.querySelector('.status').innerText = translate$g('uploaded.cancelled');
+      row.querySelector('.status').innerText = translate$h('uploaded.cancelled');
     }
   }, {
     key: "error",
     value: function error(index) {
+      this._status = STATUS.ERROR;
+
       var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
 
-      row.querySelector('.status').innerText = translate$g('uploaded.error');
+      row.querySelector('.status').innerText = translate$h('uploaded.error');
+      this._btn.innerText = translate$h('uploaded.close');
     }
   }, {
     key: "completed",
@@ -48365,7 +49402,7 @@ var UploadProgress = /*#__PURE__*/function (_EventTarget) {
       var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
 
       row.querySelector('.percent').innerText = percent;
-      row.querySelector('.status').innerText = translate$g('uploaded.completed');
+      row.querySelector('.status').innerText = translate$h('uploaded.completed');
     }
   }, {
     key: "waiting",
@@ -48373,17 +49410,17 @@ var UploadProgress = /*#__PURE__*/function (_EventTarget) {
       var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
 
       row.querySelector('.percent').innerText = percent;
-      row.querySelector('.status').innerText = translate$g('uploaded.waiting');
+      row.querySelector('.status').innerText = translate$h('uploaded.waiting');
     }
   }, {
     key: "started",
     value: function started(index) {
-      this._started = true;
-      this._btn.innerText = translate$g('uploaded.pause');
+      this._status = STATUS.STARTED;
+      this._btn.innerText = translate$h('uploaded.pause');
 
       var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
 
-      row.querySelector('.status').innerText = translate$g('uploaded.started');
+      row.querySelector('.status').innerText = translate$h('uploaded.started');
     }
   }, {
     key: "loading",
@@ -48391,13 +49428,13 @@ var UploadProgress = /*#__PURE__*/function (_EventTarget) {
       var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
 
       row.querySelector('.percent').innerText = percent;
-      row.querySelector('.status').innerText = translate$g('uploaded.loading');
+      row.querySelector('.status').innerText = translate$h('uploaded.loading');
     }
   }, {
     key: "stats",
     value: function stats(speed, size, total) {
-      this._speed.innerText = "".concat(translate$g('uploaded.speed'), ": ").concat(roundBytes(speed), " / ").concat(translate$g('uploaded.units.s'));
-      this._progress.innerText = "".concat(translate$g('uploaded.progress'), ": ").concat(roundBytes(size), " ").concat(translate$g('uploaded.of'), " ").concat(roundBytes(total));
+      this._speed.innerText = "".concat(translate$h('uploaded.speed'), ": ").concat(roundBytes(speed), " / ").concat(translate$h('uploaded.units.s'));
+      this._progress.innerText = "".concat(translate$h('uploaded.progress'), ": ").concat(roundBytes(size), " ").concat(translate$h('uploaded.of'), " ").concat(roundBytes(total));
     }
   }, {
     key: "files",
@@ -48417,7 +49454,66 @@ var UploadProgress = /*#__PURE__*/function (_EventTarget) {
   return UploadProgress;
 }(EventTarget);
 
-var translate$h = T.getText.bind(T);
+var translate$i = T.getText.bind(T);
+
+var TmsView = /*#__PURE__*/function (_Dialog) {
+  _inherits(TmsView, _Dialog);
+
+  var _super = _createSuper(TmsView);
+
+  function TmsView() {
+    var _this;
+
+    _classCallCheck(this, TmsView);
+
+    _this = _super.call(this, {
+      title: translate$i('uploaded.tms.title'),
+      id: 'tms-view'
+    });
+
+    _this._element.classList.add('scanex-forestry-tms-view');
+
+    _this.content.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <tr class=\"name\">\n                <td>".concat(translate$i('uploaded.tms.name'), "</td>\n                <td>\n                    <input type=\"text\" value=\"\">\n                </td>\n            </tr>\n            <tr class=\"url\">\n                <td>").concat(translate$i('uploaded.tms.url'), "</td>\n                <td>\n                    <input type=\"text\" value=\"\">\n                </td>\n            </tr>\n            <tr class=\"zoom\">\n                <td>").concat(translate$i('uploaded.tms.zoom'), "</td>\n                <td><div></div></td>\n            </tr>\n            <tr class=\"subdomains\">\n                <td>").concat(translate$i('uploaded.tms.subdomains'), "</td>\n                <td>\n                    <input type=\"text\" value=\"\">\n                </td>\n            </tr>\n            <tr class=\"error-tile-url\">\n                <td>").concat(translate$i('uploaded.tms.errorTileUrl'), "</label>\n                <td>\n                    <input class=\"value\" type=\"text\" value=\"\">\n                </td>\n            </tr>\n            <tr class=\"zoom-offset\">\n                <td>").concat(translate$i('uploaded.tms.zoomOffset'), "</td>\n                <td><div></div></td>\n            </tr>\n            <tr class=\"zoom-reverse\">\n                <td>").concat(translate$i('uploaded.tms.zoomReverse'), "</td>\n                <td>\n                    <input type=\"checkbox\" value=\"zoomReverse\">\n                </td>            \n            </tr>\n            <tr class=\"detect-retina\">\n                <td>").concat(translate$i('uploaded.tms.detectRetina'), "</td>\n                <td>\n                    <input type=\"checkbox\" value=\"detectRetina\">\n                </td>\n            </tr>\n            <tr class=\"cross-origin\">\n                <td>").concat(translate$i('uploaded.tms.crossOrigin'), "</td>\n                <td>\n                    <input name=\"crossorigin\" type=\"checkbox\" checked value=\"anonymous\">").concat(translate$i('uploaded.tms.anonymous'), "\n                </td>                \n            </tr>\n            <tr class=\"cross-origin\">\n                <td></td>            \n                <td>\n                    <input name=\"crossorigin\" type=\"checkbox\" value=\"use-credentials\" />").concat(translate$i('uploaded.tms.useCredentials'), "\n                </td>                \n            </tr>\n        </table>");
+    _this._name = _this.content.querySelector('.name').querySelector('input');
+    _this._url = _this.content.querySelector('.url').querySelector('input');
+    _this._zoom = new Interval(_this.content.querySelector('.zoom').querySelector('div'), {
+      min: 1,
+      max: 21,
+      slider: Slider2
+    });
+    _this._zoom.lo = 1;
+    _this._zoom.hi = 21;
+    _this._zoomOffset = new Spinner(_this.content.querySelector('.zoom-offset').querySelector('div'));
+    _this._zoomOffset.min = 0;
+    _this._zoomOffset.max = 10;
+    _this._zoomOffset.value = 0;
+    _this.footer.innerHTML = "<button>".concat(translate$i('uploaded.tms.ok'), "</button>");
+    _this._btn = _this.footer.querySelector('button');
+
+    _this._btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var event = document.createEvent('Event');
+      event.initEvent('ok', false, false);
+      event.detail = {
+        minZoom: _this._zoom.lo,
+        maxZoom: _this._zoom.hi,
+        title: _this._name.value,
+        description: '',
+        url: _this._url.value,
+        zoomOffset: _this._zoomOffset.value
+      };
+
+      _this.dispatchEvent(event);
+    });
+
+    return _this;
+  }
+
+  return TmsView;
+}(Dialog);
+
+var translate$j = T.getText.bind(T);
+var TASK_POLLING_DELAY = 3000;
 
 var Uploaded$1 = /*#__PURE__*/function (_Controller) {
   _inherits(Uploaded$1, _Controller);
@@ -48454,7 +49550,24 @@ var Uploaded$1 = /*#__PURE__*/function (_Controller) {
 
     _this._progress.on('resume', _this._resume.bind(_assertThisInitialized(_this)));
 
-    _this._progress.on('pause', _this._pause.bind(_assertThisInitialized(_this)));
+    _this._progress.on('pause', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+      return regeneratorRuntime.wrap(function _callee$(_context) {
+        while (1) {
+          switch (_context.prev = _context.next) {
+            case 0:
+              _context.next = 2;
+              return _this._pause();
+
+            case 2:
+              return _context.abrupt("return", _context.sent);
+
+            case 3:
+            case "end":
+              return _context.stop();
+          }
+        }
+      }, _callee);
+    })));
 
     _this._progress.on('stop', _this._stopSpeedTimer.bind(_assertThisInitialized(_this)));
 
@@ -48463,36 +49576,82 @@ var Uploaded$1 = /*#__PURE__*/function (_Controller) {
     });
 
     _this._view.on('upload', /*#__PURE__*/function () {
-      var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e) {
-        var files;
-        return regeneratorRuntime.wrap(function _callee$(_context) {
+      var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(e) {
+        var tms;
+        return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
-            switch (_context.prev = _context.next) {
+            switch (_context3.prev = _context3.next) {
               case 0:
-                files = e.detail;
+                tms = new TmsView();
+                tms.addEventListener('close', function () {
+                  tms.destroy();
+                  tms = null;
+                });
+                tms.addEventListener('ok', /*#__PURE__*/function () {
+                  var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(e) {
+                    var ok;
+                    return regeneratorRuntime.wrap(function _callee2$(_context2) {
+                      while (1) {
+                        switch (_context2.prev = _context2.next) {
+                          case 0:
+                            tms.destroy();
+                            tms = null;
+                            _context2.next = 4;
+                            return _this._createTmsLayer(e.detail);
 
-                _this._progress.start();
+                          case 4:
+                            ok = _context2.sent;
 
-                _context.next = 4;
-                return _this._createSandbox();
+                            if (!ok) {
+                              _context2.next = 8;
+                              break;
+                            }
 
-              case 4:
-                _this._sandboxId = _context.sent;
-                _this._upfiles = _this._createParts(files);
-                _this._progress.files = _this._upfiles;
+                            _context2.next = 8;
+                            return _this.view();
 
-                _this._startUpload();
+                          case 8:
+                          case "end":
+                            return _context2.stop();
+                        }
+                      }
+                    }, _callee2);
+                  }));
 
-              case 8:
+                  return function (_x2) {
+                    return _ref4.apply(this, arguments);
+                  };
+                }()); // if (!this._files) {
+                //     this._files = document.createElement('input');
+                //     this._files.setAttribute('type', 'file');
+                //     this._files.setAttribute('multiple', 'true');
+                //     this._files.setAttribute('accept', FILE_EXTENSIONS);
+                //     this._files.style.visibility = 'hidden';
+                //     this._files.style.width = '0px';
+                //     this._files.style.height = '0px';
+                //     this._container.appendChild(this._files);
+                //     this._files.addEventListener('change', () => {                    
+                //         this._container.removeChild(this._files);
+                //         this._files = null;
+                //         this._files.click();
+                //         this._progress.start();
+                //         this._sandboxId = await this._createSandbox();
+                //         this._upfiles = this._createParts(files);
+                //         this._progress.files = this._upfiles;
+                //         this._startUpload();
+                //     });
+                // }            
+
+              case 3:
               case "end":
-                return _context.stop();
+                return _context3.stop();
             }
           }
-        }, _callee);
+        }, _callee3);
       }));
 
       return function (_x) {
-        return _ref2.apply(this, arguments);
+        return _ref3.apply(this, arguments);
       };
     }());
 
@@ -48500,41 +49659,44 @@ var Uploaded$1 = /*#__PURE__*/function (_Controller) {
   }
 
   _createClass(Uploaded$1, [{
+    key: "_openFiles",
+    value: function _openFiles() {}
+  }, {
     key: "view",
     value: function () {
-      var _view = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
+      var _view = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
         var data;
-        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+        return regeneratorRuntime.wrap(function _callee4$(_context4) {
           while (1) {
-            switch (_context2.prev = _context2.next) {
+            switch (_context4.prev = _context4.next) {
               case 0:
                 if (!this._permissions.MyData) {
-                  _context2.next = 7;
+                  _context4.next = 7;
                   break;
                 }
 
-                _context2.next = 3;
+                _context4.next = 3;
                 return this._query(this._view.page);
 
               case 3:
-                data = _context2.sent;
+                data = _context4.sent;
 
                 if (data) {
                   this._view.open(data);
                 }
 
-                _context2.next = 8;
+                _context4.next = 8;
                 break;
 
               case 7:
-                this._notification.error(translate$h('forbidden.uploaded'));
+                this._notification.error(translate$j('forbidden.uploaded'));
 
               case 8:
               case "end":
-                return _context2.stop();
+                return _context4.stop();
             }
           }
-        }, _callee2, this);
+        }, _callee4, this);
       }));
 
       function view() {
@@ -48546,35 +49708,36 @@ var Uploaded$1 = /*#__PURE__*/function (_Controller) {
   }, {
     key: "_createSandbox",
     value: function () {
-      var _createSandbox2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
-        var data, sandbox;
-        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+      var _createSandbox2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5() {
+        var _yield$this$httpGet, sandbox;
+
+        return regeneratorRuntime.wrap(function _callee5$(_context5) {
           while (1) {
-            switch (_context3.prev = _context3.next) {
+            switch (_context5.prev = _context5.next) {
               case 0:
-                _context3.next = 2;
+                _context5.next = 2;
                 return this.httpGet("".concat(this._path, "/sandbox/CreateSandbox"));
 
               case 2:
-                data = _context3.sent;
+                _yield$this$httpGet = _context5.sent;
+                sandbox = _yield$this$httpGet.sandbox;
 
-                if (!data) {
-                  _context3.next = 6;
+                if (!sandbox) {
+                  _context5.next = 6;
                   break;
                 }
 
-                sandbox = data.sandbox;
-                return _context3.abrupt("return", sandbox);
+                return _context5.abrupt("return", sandbox);
 
               case 6:
-                return _context3.abrupt("return");
+                return _context5.abrupt("return");
 
               case 7:
               case "end":
-                return _context3.stop();
+                return _context5.stop();
             }
           }
-        }, _callee3, this);
+        }, _callee5, this);
       }));
 
       function _createSandbox() {
@@ -48588,11 +49751,11 @@ var Uploaded$1 = /*#__PURE__*/function (_Controller) {
     value: function _createParts(files) {
       var upfiles = [];
 
-      for (var i = 0; i < files.length; i++) {
-        var partsCount = Math.ceil(files[i].size / this._uploadFileSize);
+      for (var _i = 0; _i < files.length; _i++) {
+        var partsCount = Math.ceil(files[_i].size / this._uploadFileSize);
         var parts = [];
 
-        for (var _i = 0; _i < partsCount - 1; _i++) {
+        for (var j = 0; j < partsCount - 1; ++j) {
           parts.push({
             xhr: null,
             status: 'none',
@@ -48602,7 +49765,7 @@ var Uploaded$1 = /*#__PURE__*/function (_Controller) {
           });
         }
 
-        var lastSize = files[i].size - this._uploadFileSize * (partsCount - 1);
+        var lastSize = files[_i].size - this._uploadFileSize * (partsCount - 1);
         parts.push({
           xhr: null,
           status: 'none',
@@ -48612,10 +49775,10 @@ var Uploaded$1 = /*#__PURE__*/function (_Controller) {
         }); //статус загрузки чанка
 
         var p = {
-          item: files[i],
-          name: files[i].name,
+          item: files[_i],
+          name: files[_i].name,
           parts: parts,
-          totalBytes: files[i].size,
+          totalBytes: files[_i].size,
           status: 'none' //статус загрузки файла
 
         };
@@ -48629,34 +49792,34 @@ var Uploaded$1 = /*#__PURE__*/function (_Controller) {
     value: function _startUpload() {
       this._upfilesStatus = "progress";
 
-      for (var i = 0; i < this._upfiles.length; i++) {
+      for (var _i2 = 0; _i2 < this._upfiles.length; ++_i2) {
         //запускаем 6 потоков
-        if (this._upfiles[i].status === "error") {
-          this._upfiles[i].status = "none";
+        if (this._upfiles[_i2].status === "error") {
+          this._upfiles[_i2].status = "none";
         }
 
         var wait = false;
 
-        for (var i1 = 0; i1 < this._upfiles[i].parts.length; i1++) {
-          if (this._upfiles[i].parts[i1].status === "error") {
-            this._upfiles[i].parts[i1].status = "none"; //отменяем ошибку
+        for (var j = 0; j < this._upfiles[_i2].parts.length; ++j) {
+          if (this._upfiles[_i2].parts[j].status === "error") {
+            this._upfiles[_i2].parts[j].status = "none"; //отменяем ошибку
           }
 
-          if (this._upfiles[i].parts[i1].status === "none") {
+          if (this._upfiles[_i2].parts[j].status === "none") {
             wait = true; //если есть не отосланые чанки
           }
         }
 
-        var p = this._percent(this._upfiles[i]);
+        var p = this._percent(this._upfiles[_i2]);
 
         if (wait) {
-          this._progress.waiting(i, p);
+          this._progress.waiting(_i2, p);
         } else {
-          this._progress.completed(i, p);
+          this._progress.completed(_i2, p);
         }
       }
 
-      for (var _i2 = 0; _i2 < 8; _i2++) {
+      for (var _i3 = 0; _i3 < 8; _i3++) {
         //запускаем 6 потоков
         this._sendNextPart();
       }
@@ -48681,12 +49844,12 @@ var Uploaded$1 = /*#__PURE__*/function (_Controller) {
         return false;
       }
 
-      var _loop = function _loop(i) {
-        var t = _this2._upfiles[i];
+      var _loop = function _loop(_i4) {
+        var t = _this2._upfiles[_i4];
 
-        var _loop2 = function _loop2(i1) {
-          if (t.parts[i1].status === "none") {
-            var startByte = _this2._uploadFileSize * i1;
+        var _loop2 = function _loop2(j) {
+          if (t.parts[j].status === "none") {
+            var startByte = _this2._uploadFileSize * j;
             var countBytes = _this2._uploadFileSize;
 
             if (startByte + countBytes > t.totalBytes) {
@@ -48696,122 +49859,137 @@ var Uploaded$1 = /*#__PURE__*/function (_Controller) {
             if (t.status === "none") {
               t.status = "progress";
 
-              _this2._progress.started(i);
+              _this2._progress.started(_i4);
             }
 
-            t.parts[i1].status = "progress";
+            t.parts[j].status = "progress";
             var chunk = t.item.slice(startByte, startByte + countBytes + 1);
             var chunkFile = new File([chunk], t.name);
             var fd = new FormData();
             fd.append("sandbox", _this2._sandboxId);
             fd.append("startByte", startByte);
             fd.append("file", chunkFile);
-            req = new XMLHttpRequest();
+            var req = new XMLHttpRequest();
             req.open("post", "".concat(_this2._path, "/sandbox/upload"));
-            t.parts[i1].xhr = req;
+            t.parts[j].xhr = req;
+            req.upload.onerror = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6() {
+              return regeneratorRuntime.wrap(function _callee6$(_context6) {
+                while (1) {
+                  switch (_context6.prev = _context6.next) {
+                    case 0:
+                      t.parts[j].status = 'error';
+                      t.parts[j].xhr = null;
+                      t.status = "error";
 
-            req.upload.onerror = function () {
-              t.parts[i1].status = 'error';
-              t.parts[i1].xhr = null;
-              t.status = "error";
+                      _this2._progress.error(_i4);
 
-              _this2._progress.error(i);
+                      _context6.next = 6;
+                      return _this2._errorUpload();
 
-              _this2._errorUpload();
-            };
-
+                    case 6:
+                    case "end":
+                      return _context6.stop();
+                  }
+                }
+              }, _callee6);
+            }));
             var lastSend = 0;
 
-            req.upload.onprogress = function (event) {
-              t.parts[i1].send = event.loaded;
-              t.parts[i1].needSend = event.total;
+            req.upload.onprogress = function (e) {
+              t.parts[j].send = e.loaded;
+              t.parts[j].needSend = e.total;
 
               var p = _this2._percent(t);
 
-              _this2._progress.loading(i, p);
+              _this2._progress.loading(_i4, p);
 
-              _this2._currentSendBytes += event.loaded - lastSend; //подсчёт скорости
+              _this2._currentSendBytes += e.loaded - lastSend; //подсчёт скорости
 
-              lastSend = event.loaded;
+              lastSend = e.loaded;
             };
 
-            req.onload = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
-              var oksum, i3, p, sumFilesOk;
-              return regeneratorRuntime.wrap(function _callee4$(_context4) {
+            req.onload = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7() {
+              var oksum, p, sumFilesOk;
+              return regeneratorRuntime.wrap(function _callee7$(_context7) {
                 while (1) {
-                  switch (_context4.prev = _context4.next) {
+                  switch (_context7.prev = _context7.next) {
                     case 0:
-                      t.parts[i1].xhr = null;
+                      t.parts[j].xhr = null;
 
                       if (!(req.status !== 200)) {
-                        _context4.next = 8;
+                        _context7.next = 9;
                         break;
                       }
 
                       // анализируем HTTP-статус ответа, если статус не 200, то произошла ошибка
-                      t.parts[i1].status = 'error';
+                      t.parts[j].status = 'error';
                       t.status = "error";
 
-                      _this2._progress.error(i);
+                      _this2._progress.error(_i4);
 
-                      _this2._errorUpload();
+                      _context7.next = 7;
+                      return _this2._errorUpload();
 
-                      _context4.next = 23;
+                    case 7:
+                      _context7.next = 25;
                       break;
 
-                    case 8:
+                    case 9:
                       if (!(_this2._upfilesStatus === "error")) {
-                        _context4.next = 13;
+                        _context7.next = 17;
                         break;
                       }
 
                       //если кто-то глюкнул останавливаем всё. Возможно это отмена
-                      t.parts[i1].status = 'error';
+                      t.parts[j].status = 'error';
                       t.status = "error";
 
-                      _this2._progress.error(i);
+                      _this2._progress.error(_i4);
 
-                      return _context4.abrupt("return");
+                      _context7.next = 15;
+                      return _this2._errorUpload();
 
-                    case 13:
+                    case 15:
+                      _context7.next = 25;
+                      break;
+
+                    case 17:
                       // если всё прошло гладко, выводим результат
-                      t.parts[i1].status = 'finish';
-                      oksum = 0;
-
-                      for (i3 = 0; i3 < t.parts.length; i3++) {
-                        if (t.parts[i3].status === "finish") oksum++;
-                      }
+                      t.parts[j].status = 'finish';
+                      oksum = t.parts.reduce(function (a, _ref7) {
+                        var status = _ref7.status;
+                        return status === 'finish' ? a + 1 : a;
+                      }, 0);
 
                       if (oksum === t.parts.length) {
                         t.status = "finish";
                         p = _this2._percent(t);
 
-                        _this2._progress.completed(i, p);
+                        _this2._progress.completed(_i4, p);
                       }
 
                       _this2._sendNextPart(); //проверяем что все файлы отосланы
 
 
-                      sumFilesOk = 0;
-
-                      _this2._upfiles.forEach(function (a) {
-                        if (a.status === "finish") sumFilesOk++;
-                      });
+                      sumFilesOk = _this2._upfiles.reduce(function (a, _ref8) {
+                        var status = _ref8.status;
+                        return status === 'finish' ? a + 1 : a;
+                      }, 0);
 
                       if (!(sumFilesOk === _this2._upfiles.length)) {
-                        _context4.next = 23;
+                        _context7.next = 25;
                         break;
                       }
 
-                      _context4.next = 23;
+                      _context7.next = 25;
                       return _this2._finishUpload();
 
-                    case 23:
+                    case 25:
                     case "end":
-                      return _context4.stop();
+                      return _context7.stop();
                   }
                 }
-              }, _callee4);
+              }, _callee7);
             }));
             req.send(fd);
             return {
@@ -48822,17 +50000,15 @@ var Uploaded$1 = /*#__PURE__*/function (_Controller) {
           }
         };
 
-        for (var i1 = 0; i1 < t.parts.length; i1++) {
-          var _ret2 = _loop2(i1);
+        for (var j = 0; j < t.parts.length; ++j) {
+          var _ret2 = _loop2(j);
 
           if (_typeof(_ret2) === "object") return _ret2.v;
         }
       };
 
-      for (var i = 0; i < this._upfiles.length; i++) {
-        var req;
-
-        var _ret = _loop(i);
+      for (var _i4 = 0; _i4 < this._upfiles.length; ++_i4) {
+        var _ret = _loop(_i4);
 
         if (_typeof(_ret) === "object") return _ret.v;
       }
@@ -48854,9 +50030,9 @@ var Uploaded$1 = /*#__PURE__*/function (_Controller) {
   }, {
     key: "_renewSpeedTimer",
     value: function _renewSpeedTimer() {
-      var _this$_upfiles$reduce = this._upfiles.reduce(function (_ref4, t) {
-        var ready = _ref4.ready,
-            total = _ref4.total;
+      var _this$_upfiles$reduce = this._upfiles.reduce(function (_ref9, t) {
+        var ready = _ref9.ready,
+            total = _ref9.total;
         ready = t.parts.reduce(function (a, tp) {
           switch (tp.status) {
             case 'progress':
@@ -48887,13 +50063,11 @@ var Uploaded$1 = /*#__PURE__*/function (_Controller) {
         this._oldSendBytes.length = 5;
       }
 
-      var sumSend = 0;
+      var sumSend = this._oldSendBytes.reduce(function (a, b) {
+        return a + b;
+      }, 0);
 
-      this._oldSendBytes.forEach(function (a) {
-        return sumSend += a;
-      });
-
-      var s = Math.round(sumSend / this._oldSendBytes.length); //байт в секунду 
+      var s = Math.round(sumSend / this._oldSendBytes.length); //байт в секунду
 
       this._progress.stats(s, ready, total);
 
@@ -48908,87 +50082,168 @@ var Uploaded$1 = /*#__PURE__*/function (_Controller) {
     }
   }, {
     key: "_pause",
-    value: function _pause() {
-      var _this3 = this;
-
-      this._stopSpeedTimer();
-
-      this._upfiles.forEach(function (t, i) {
-        var ok = t.parts.reduce(function (a, tp) {
-          if (tp.status === "progress" && tp.xhr != null) {
-            tp.xhr.abort();
-            tp.status = 'none';
-            a = false;
-          }
-
-          return a;
-        }, true);
-
-        if (!ok) {
-          t.status = "error";
-
-          _this3._progress.cancelled(i);
-
-          _this3._errorUpload();
-        }
-      });
-    }
-  }, {
-    key: "_errorUpload",
-    value: function _errorUpload() {
-      if (this._upfilesStatus !== 'error') {
-        this._stopSpeedTimer();
-
-        this._upfilesStatus = 'error'; // document.getElementById('global_status').textContent = "Error";
-        // document.getElementById("cancel").disabled = true;
-        // document.getElementById("resume").disabled = false;
-        // document.getElementById("send").disabled = false;
-        // document.getElementById("open").disabled = false;
-        // this._progress.stop();            
-
-        this.view();
-      }
-    }
-  }, {
-    key: "_finishUpload",
     value: function () {
-      var _finishUpload2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5() {
-        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+      var _pause2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8() {
+        var ok, _i5, _t;
+
+        return regeneratorRuntime.wrap(function _callee8$(_context8) {
           while (1) {
-            switch (_context5.prev = _context5.next) {
+            switch (_context8.prev = _context8.next) {
               case 0:
-                if (!(this._upfilesStatus === 'finish')) {
-                  _context5.next = 4;
+                this._stopSpeedTimer();
+
+                ok = true;
+                _i5 = 0;
+
+              case 3:
+                if (!(_i5 < this._upfiles.length)) {
+                  _context8.next = 11;
                   break;
                 }
 
-                _context5.next = 3;
-                return this._createLayer(this._sandboxId);
+                _t = this._upfiles[_i5];
+                ok = _t.parts.reduce(function (a, tp) {
+                  if (tp.status === "progress" && tp.xhr != null) {
+                    tp.xhr.abort();
+                    tp.status = 'none';
+                    a = false;
+                  }
 
-              case 3:
-                return _context5.abrupt("return");
+                  return a;
+                }, true);
 
-              case 4:
-                if (this._upfilesStatus === 'progress') {
-                  this._stopSpeedTimer();
-
-                  this._upfilesStatus = 'finish'; // document.getElementById('global_status').textContent = "Finish";
-                  // document.getElementById("cancel").disabled = true;
-                  // document.getElementById("resume").disabled = true;
-                  // document.getElementById("send").disabled = false;
-                  // document.getElementById("open").disabled = false;            
-
-                  this._progress.stop();
-
-                  this.view();
+                if (ok) {
+                  _context8.next = 8;
+                  break;
                 }
+
+                return _context8.abrupt("break", 11);
+
+              case 8:
+                ++_i5;
+                _context8.next = 3;
+                break;
+
+              case 11:
+                if (ok) {
+                  _context8.next = 16;
+                  break;
+                }
+
+                t.status = "error";
+
+                this._progress.cancelled(i);
+
+                _context8.next = 16;
+                return this._errorUpload();
+
+              case 16:
+              case "end":
+                return _context8.stop();
+            }
+          }
+        }, _callee8, this);
+      }));
+
+      function _pause() {
+        return _pause2.apply(this, arguments);
+      }
+
+      return _pause;
+    }()
+  }, {
+    key: "_errorUpload",
+    value: function () {
+      var _errorUpload2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9() {
+        return regeneratorRuntime.wrap(function _callee9$(_context9) {
+          while (1) {
+            switch (_context9.prev = _context9.next) {
+              case 0:
+                if (!(this._upfilesStatus !== 'error')) {
+                  _context9.next = 5;
+                  break;
+                }
+
+                this._stopSpeedTimer();
+
+                this._upfilesStatus = 'error'; // document.getElementById('global_status').textContent = "Error";
+                // document.getElementById("cancel").disabled = true;
+                // document.getElementById("resume").disabled = false;
+                // document.getElementById("send").disabled = false;
+                // document.getElementById("open").disabled = false;
+                // this._progress.stop();
+
+                _context9.next = 5;
+                return this.view();
 
               case 5:
               case "end":
-                return _context5.stop();
+                return _context9.stop();
             }
           }
-        }, _callee5, this);
+        }, _callee9, this);
+      }));
+
+      function _errorUpload() {
+        return _errorUpload2.apply(this, arguments);
+      }
+
+      return _errorUpload;
+    }()
+  }, {
+    key: "_finishUpload",
+    value: function () {
+      var _finishUpload2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10() {
+        var _yield$this$_createLa, TaskID, Completed, Status;
+
+        return regeneratorRuntime.wrap(function _callee10$(_context10) {
+          while (1) {
+            switch (_context10.prev = _context10.next) {
+              case 0:
+                if (!(this._upfilesStatus === 'finish')) {
+                  _context10.next = 2;
+                  break;
+                }
+
+                return _context10.abrupt("return");
+
+              case 2:
+                if (!(this._upfilesStatus === 'progress')) {
+                  _context10.next = 16;
+                  break;
+                }
+
+                this._stopSpeedTimer();
+
+                this._upfilesStatus = 'finish'; // document.getElementById('global_status').textContent = "Finish";
+                // document.getElementById("cancel").disabled = true;
+                // document.getElementById("resume").disabled = true;
+                // document.getElementById("send").disabled = false;
+                // document.getElementById("open").disabled = false;
+
+                this._progress.stop();
+
+                _context10.next = 8;
+                return this._createLayer(this._sandboxId);
+
+              case 8:
+                _yield$this$_createLa = _context10.sent;
+                TaskID = _yield$this$_createLa.TaskID;
+                Completed = _yield$this$_createLa.Completed;
+                Status = _yield$this$_createLa.Status;
+                _context10.next = 14;
+                return this._pollTask(TaskID);
+
+              case 14:
+                _context10.next = 16;
+                return this.view();
+
+              case 16:
+              case "end":
+                return _context10.stop();
+            }
+          }
+        }, _callee10, this);
       }));
 
       function _finishUpload() {
@@ -49000,91 +50255,232 @@ var Uploaded$1 = /*#__PURE__*/function (_Controller) {
   }, {
     key: "_query",
     value: function () {
-      var _query2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(page) {
+      var _query2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11(page) {
         var fd, _yield$this$sendForm, Status, Result;
 
-        return regeneratorRuntime.wrap(function _callee6$(_context6) {
+        return regeneratorRuntime.wrap(function _callee11$(_context11) {
           while (1) {
-            switch (_context6.prev = _context6.next) {
+            switch (_context11.prev = _context11.next) {
               case 0:
                 fd = new FormData();
                 fd.append('query', '');
                 fd.append('orderby', 'datecreate');
                 fd.append('pagesize', this._pageSize.toString());
                 fd.append('page', page.toString());
-                _context6.next = 7;
+                _context11.next = 7;
                 return this.sendForm("".concat(this._path, "/Layer/Search2.ashx?WrapStyle=None"), fd);
 
               case 7:
-                _yield$this$sendForm = _context6.sent;
+                _yield$this$sendForm = _context11.sent;
                 Status = _yield$this$sendForm.Status;
                 Result = _yield$this$sendForm.Result;
 
                 if (!(Status === 'ok')) {
-                  _context6.next = 14;
+                  _context11.next = 14;
                   break;
                 }
 
-                return _context6.abrupt("return", Result);
+                return _context11.abrupt("return", Result);
 
               case 14:
-                return _context6.abrupt("return", false);
+                return _context11.abrupt("return", false);
 
               case 15:
               case "end":
-                return _context6.stop();
+                return _context11.stop();
             }
           }
-        }, _callee6, this);
+        }, _callee11, this);
       }));
 
-      function _query(_x2) {
+      function _query(_x3) {
         return _query2.apply(this, arguments);
       }
 
       return _query;
     }()
   }, {
+    key: "_pollTask",
+    value: function () {
+      var _pollTask2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee13(taskID) {
+        var _this3 = this;
+
+        var id;
+        return regeneratorRuntime.wrap(function _callee13$(_context13) {
+          while (1) {
+            switch (_context13.prev = _context13.next) {
+              case 0:
+                id = window.setInterval( /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee12() {
+                  var data, Status, Result;
+                  return regeneratorRuntime.wrap(function _callee12$(_context12) {
+                    while (1) {
+                      switch (_context12.prev = _context12.next) {
+                        case 0:
+                          _context12.next = 2;
+                          return _this3.httpGet("".concat(_this3._path, "/AsyncTask.ashx"), {
+                            WrapStyle: 'None',
+                            TaskID: taskID
+                          });
+
+                        case 2:
+                          data = _context12.sent;
+
+                          if (!data) {
+                            _context12.next = 15;
+                            break;
+                          }
+
+                          Status = data.Status, Result = data.Result;
+
+                          if (!(Status === 'ok')) {
+                            _context12.next = 11;
+                            break;
+                          }
+
+                          if (!Result.Completed) {
+                            _context12.next = 9;
+                            break;
+                          }
+
+                          window.clearInterval(id);
+                          return _context12.abrupt("return", true);
+
+                        case 9:
+                          _context12.next = 13;
+                          break;
+
+                        case 11:
+                          window.clearInterval(id);
+                          return _context12.abrupt("return", false);
+
+                        case 13:
+                          _context12.next = 17;
+                          break;
+
+                        case 15:
+                          window.clearInterval(id);
+                          return _context12.abrupt("return", false);
+
+                        case 17:
+                        case "end":
+                          return _context12.stop();
+                      }
+                    }
+                  }, _callee12);
+                })), TASK_POLLING_DELAY);
+
+              case 1:
+              case "end":
+                return _context13.stop();
+            }
+          }
+        }, _callee13);
+      }));
+
+      function _pollTask(_x4) {
+        return _pollTask2.apply(this, arguments);
+      }
+
+      return _pollTask;
+    }()
+  }, {
     key: "_createLayer",
     value: function () {
-      var _createLayer2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(sandboxId) {
-        var data;
-        return regeneratorRuntime.wrap(function _callee7$(_context7) {
+      var _createLayer2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee14(sandboxId) {
+        var data, TaskID, Completed, Status;
+        return regeneratorRuntime.wrap(function _callee14$(_context14) {
           while (1) {
-            switch (_context7.prev = _context7.next) {
+            switch (_context14.prev = _context14.next) {
               case 0:
-                _context7.next = 2;
+                _context14.next = 2;
                 return this.httpGet("".concat(this._path, "/Sandbox/CreateLayers"), {
                   sandboxId: sandboxId
                 });
 
               case 2:
-                data = _context7.sent;
+                data = _context14.sent;
 
                 if (!data) {
-                  _context7.next = 7;
+                  _context14.next = 8;
                   break;
                 }
 
-                return _context7.abrupt("return", true);
-
-              case 7:
-                return _context7.abrupt("return", false);
+                TaskID = data.TaskID, Completed = data.Completed, Status = data.Status;
+                return _context14.abrupt("return", data);
 
               case 8:
+                return _context14.abrupt("return", false);
+
+              case 9:
               case "end":
-                return _context7.stop();
+                return _context14.stop();
             }
           }
-        }, _callee7, this);
+        }, _callee14, this);
       }));
 
-      function _createLayer(_x3) {
+      function _createLayer(_x5) {
         return _createLayer2.apply(this, arguments);
       }
 
       return _createLayer;
     }()
+  }, {
+    key: "_createTmsLayer",
+    value: function _createTmsLayer(_ref11) {
+      var _this4 = this;
+
+      var title = _ref11.title,
+          description = _ref11.description,
+          copyright = _ref11.copyright,
+          url = _ref11.url,
+          maxZoom = _ref11.maxZoom;
+      return new Promise(function (resolve) {
+        var fd = new FormData();
+        fd.append('WrapStyle', 'None');
+        fd.append('Title', title);
+        fd.append('Description', description);
+        fd.append('Copyright', copyright);
+        var meta = {
+          'url-template': {
+            Value: url,
+            Type: 'String'
+          },
+          'merc-projection': {
+            Value: 'true',
+            Type: 'String'
+          }
+        };
+
+        if (typeof maxZoom === 'number') {
+          meta.maxZoom = {
+            Value: maxZoom.toString(),
+            Type: 'String'
+          };
+        }
+
+        fd.append('MetaProperties', JSON.stringify(meta));
+
+        _this4.sendForm("".concat(_this4._path, "/VectorLayer/Insert.ashx"), fd).then(function (data) {
+          if (data) {
+            var Status = data.Status,
+                Result = data.Result;
+
+            if (Status === 'ok') {
+              _this4._pollTask(Result.TaskID).then(function () {
+                return resolve(true);
+              }).catch(function () {
+                return resolve(false);
+              });
+            } else {
+              resolve(false);
+            }
+          } else {
+            resolve(false);
+          }
+        });
+      });
+    }
   }]);
 
   return Uploaded$1;
@@ -49119,7 +50515,7 @@ var Warehouses = /*#__PURE__*/function (_LayerController) {
   return Warehouses;
 }(LayerController);
 
-var translate$i = T.getText.bind(T);
+var translate$k = T.getText.bind(T);
 var ALLOWED_LAYERS = ['warehouses', 'roads', 'declarations', 'incidents', 'quadrants', 'stands', 'projects', 'plots', 'fires', 'parks', 'forestries_local', 'forestries', 'regions', 'sentinel', 'landsat'].reverse();
 
 var Map = /*#__PURE__*/function (_EventTarget) {
@@ -49184,6 +50580,10 @@ var Map = /*#__PURE__*/function (_EventTarget) {
     _this._map.addControl(new gmxCenter());
 
     _this._map.addControl(new gmxLocation());
+
+    _this._dateInterval = new DateInterval();
+
+    _this._map.addControl(_this._dateInterval);
 
     _this._content = new Content();
 
@@ -49349,6 +50749,17 @@ var Map = /*#__PURE__*/function (_EventTarget) {
       this._controllers.projects.create();
     }
   }, {
+    key: "showIncidents",
+    value: function showIncidents() {
+      if (this._permissions.ForestIncidents) {
+        this._legend.enableGroup('incidents');
+      }
+
+      if (this._permissions.SatelliteBaseLayersView) {
+        this._legend.enableGroup('rasters');
+      }
+    }
+  }, {
     key: "showUploaded",
     value: function () {
       var _showUploaded = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
@@ -49491,10 +50902,6 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   a[kind] = layer;
                   return a;
                 }, {});
-                this._dateInterval = new DateInterval();
-
-                this._map.addControl(this._dateInterval);
-
                 this._controllers = {}; // attach layer controllers        
 
                 if (this._layers.quadrants && this._permissions.ForestBlocks) {
@@ -49879,7 +51286,7 @@ var Map = /*#__PURE__*/function (_EventTarget) {
                   notification: this._notification
                 });
 
-              case 36:
+              case 34:
               case "end":
                 return _context10.stop();
             }
