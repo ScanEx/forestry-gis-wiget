@@ -46006,25 +46006,28 @@ var Forestry = (function () {
 	      var str2 = this._parseProps(data);
 
 	      this._container.innerHTML = "\n\t\t\t".concat(title, "\n\n\t\t\t<div class=\"inside\">\n\t\t\t\t<div class=\"inside_left\">\n\t\t\t\t\t<div class=\"table1\">\n\t\t\t\t\t\t").concat(str2, "\n\n\t\t\t\t\t\t<div class=\"table1_row\">").concat(this.translate('incident.comment'), "</div>\n\t\t\t\t\t\t\n\t\t\t\t\t\t<textarea class=\"usr-text-area\" ").concat(this._permission.IncidentEdit && curStatus === 2 ? '' : 'disabled', ">").concat(data.Comment || '', "</textarea>\n\t\t\t\t\t\t<div class=\"table1_row \">").concat(this.translate('incident.bpla'), ":</div>\n\n\t\t\t\t\t\t<div class=\"table1_row f-l-start\">\n\t\t\t\t\t\t\t<span>").concat(props.uav_date || '', "</span>\n\t\t\t\t\t\t\t<span>").concat(props.uav_description || '', "</span>\n\t\t\t\t\t\t\t<div class=\"group_buttons\">\n\t\t\t\t\t\t\t\t").concat(this._permission.BplaView && props.uav_raster_id ? "<div class=\"mini-green-but BplaView\">".concat(this.translate('incident.BplaView'), "</div>") : '', "\n\t\t\t\t\t\t\t\t").concat(this._permission.BplaDownload ? "<div class=\"mini-green-but BplaDownload\">".concat(this.translate('incident.BplaDownload'), "</div>") : '', "\n\t\t\t\t\t\t\t\t").concat(this._permission.BplaRemove && props.uav_raster_id ? "<div class=\"mini-green-but BplaRemove\">".concat(this.translate('incident.BplaRemove'), "</div>") : '', "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t").concat(str1, "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"rubka\">\n\t\t\t\t\t<div class=\"right-wrapper-top \">\n\t\t\t\t\t\t").concat(this._buttonsStr, "\n\t\t\t\t\t </div>\n\t\t\t\t\t<hr />\n\t\t\t\t\t <div class=\"right-wrapper-bottom \">\n\t\t\t\t\t\t").concat(this._permission.IncidentAccept && curStatus === 2 ? "<button class=\"IncidentAccept button\">".concat(this.translate('incident.IncidentAccept'), "</button>") : '', "\n\t\t\t\t\t\t").concat(this._permission.IncidentCheck && curStatus === 1 ? "<button class=\"IncidentCheck button\">".concat(this.translate('incident.IncidentCheck'), "</button>") : '', "\n\t\t\t\t\t\t").concat(this._permission.IncidentDecline && (curStatus === 1 || curStatus === 2) ? "<button class=\"IncidentDecline button\">".concat(this.translate('incident.IncidentDecline'), "</button>") : '', "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>");
+	      var rasters = data.Rasters || {};
 
 	      var node = this._container.querySelector('.verRastr');
 
-	      if (node && data.Rasters) {
-	        node.addEventListener('click', function (e) {
-	          e.stopPropagation();
-	          var event = document.createEvent('Event');
-	          event.initEvent('incident:verifyRaster', false, false);
-	          event.detail = data.Rasters.v_gmx_prob;
+	      if (node) {
+	        if (rasters.v_gmx_prob) {
+	          node.addEventListener('click', function (e) {
+	            e.stopPropagation();
+	            var event = document.createEvent('Event');
+	            event.initEvent('incident:verifyRaster', false, false);
+	            event.detail = rasters.v_gmx_prob;
 
-	          _this3.dispatchEvent(event);
-	        });
+	            _this3.dispatchEvent(event);
+	          });
+	        } else {
+	          node.classList.add('hidden');
+	        }
 	      }
 
 	      node = this._container.querySelector('.maskWater');
 
 	      if (node) {
-	        var rasters = data.Rasters || {};
-
 	        if (rasters.v_gmx_fmask_new) {
 	          node.addEventListener('click', function (e) {
 	            e.stopPropagation();
@@ -46042,17 +46045,15 @@ var Forestry = (function () {
 	      node = this._container.querySelector('.vNewId');
 
 	      if (node) {
-	        var _rasters = data.Rasters || {};
-
-	        if (_rasters.v_gmx_rgb_new && _rasters.v_gmx_rgb_arch) {
+	        if (rasters.v_gmx_rgb_new && rasters.v_gmx_rgb_arch) {
 	          node.addEventListener('click', function (e) {
 	            e.stopPropagation();
 	            var event = document.createEvent('Event');
 	            event.initEvent('incident:vNewId', false, false);
 	            event.detail = {
-	              d1: _rasters.v_arch_date ? new Date(Date.parse(_rasters.v_arch_date + '+00:00')) : null,
-	              d2: _rasters.v_new_date ? new Date(Date.parse(_rasters.v_new_date + '+00:00')) : null,
-	              type: _rasters.v_satellite
+	              d1: rasters.v_arch_date ? new Date(Date.parse(rasters.v_arch_date + '+00:00')) : null,
+	              d2: rasters.v_new_date ? new Date(Date.parse(rasters.v_new_date + '+00:00')) : null,
+	              type: rasters.v_satellite
 	            };
 
 	            _this3.dispatchEvent(event);
@@ -69236,15 +69237,11 @@ var Forestry = (function () {
 	          while (1) {
 	            switch (_context4.prev = _context4.next) {
 	              case 0:
-	                _context4.next = 2;
-	                return this._controllers.uploaded.view();
-
-	              case 2:
 	              case "end":
 	                return _context4.stop();
 	            }
 	          }
-	        }, _callee4, this);
+	        }, _callee4);
 	      }));
 
 	      function showUploaded() {
