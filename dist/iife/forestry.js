@@ -23,7 +23,7 @@ var Forestry = (function () {
 	  check(typeof self == 'object' && self) ||
 	  check(typeof commonjsGlobal == 'object' && commonjsGlobal) ||
 	  // eslint-disable-next-line no-new-func
-	  Function('return this')();
+	  (function () { return this; })() || Function('return this')();
 
 	var fails = function (exec) {
 	  try {
@@ -218,7 +218,7 @@ var Forestry = (function () {
 	(module.exports = function (key, value) {
 	  return sharedStore[key] || (sharedStore[key] = value !== undefined ? value : {});
 	})('versions', []).push({
-	  version: '3.6.5',
+	  version: '3.7.0',
 	  mode:  'global',
 	  copyright: '© 2020 Denis Pushkarev (zloirock.ru)'
 	});
@@ -256,11 +256,12 @@ var Forestry = (function () {
 	};
 
 	if (nativeWeakMap) {
-	  var store$1 = new WeakMap$1();
+	  var store$1 = sharedStore.state || (sharedStore.state = new WeakMap$1());
 	  var wmget = store$1.get;
 	  var wmhas = store$1.has;
 	  var wmset = store$1.set;
 	  set = function (it, metadata) {
+	    metadata.facade = it;
 	    wmset.call(store$1, it, metadata);
 	    return metadata;
 	  };
@@ -274,6 +275,7 @@ var Forestry = (function () {
 	  var STATE = sharedKey('state');
 	  hiddenKeys[STATE] = true;
 	  set = function (it, metadata) {
+	    metadata.facade = it;
 	    createNonEnumerableProperty(it, STATE, metadata);
 	    return metadata;
 	  };
@@ -302,9 +304,15 @@ var Forestry = (function () {
 	  var unsafe = options ? !!options.unsafe : false;
 	  var simple = options ? !!options.enumerable : false;
 	  var noTargetGet = options ? !!options.noTargetGet : false;
+	  var state;
 	  if (typeof value == 'function') {
-	    if (typeof key == 'string' && !has(value, 'name')) createNonEnumerableProperty(value, 'name', key);
-	    enforceInternalState(value).source = TEMPLATE.join(typeof key == 'string' ? key : '');
+	    if (typeof key == 'string' && !has(value, 'name')) {
+	      createNonEnumerableProperty(value, 'name', key);
+	    }
+	    state = enforceInternalState(value);
+	    if (!state.source) {
+	      state.source = TEMPLATE.join(typeof key == 'string' ? key : '');
+	    }
 	  }
 	  if (O === global_1) {
 	    if (simple) O[key] = value;
@@ -846,16 +854,23 @@ var Forestry = (function () {
 	  right: createMethod$2(true)
 	};
 
+	var engineIsNode = classofRaw(global_1.process) == 'process';
+
 	var $reduce = arrayReduce.left;
+
+
 
 
 
 	var STRICT_METHOD$2 = arrayMethodIsStrict('reduce');
 	var USES_TO_LENGTH$4 = arrayMethodUsesToLength('reduce', { 1: 0 });
+	// Chrome 80-82 has a critical bug
+	// https://bugs.chromium.org/p/chromium/issues/detail?id=1049982
+	var CHROME_BUG = !engineIsNode && engineV8Version > 79 && engineV8Version < 83;
 
 	// `Array.prototype.reduce` method
 	// https://tc39.github.io/ecma262/#sec-array.prototype.reduce
-	_export({ target: 'Array', proto: true, forced: !STRICT_METHOD$2 || !USES_TO_LENGTH$4 }, {
+	_export({ target: 'Array', proto: true, forced: !STRICT_METHOD$2 || !USES_TO_LENGTH$4 || CHROME_BUG }, {
 	  reduce: function reduce(callbackfn /* , initialValue */) {
 	    return $reduce(this, callbackfn, arguments.length, arguments.length > 1 ? arguments[1] : undefined);
 	  }
@@ -1839,27 +1854,37 @@ var Forestry = (function () {
 	    || iterators[classof(it)];
 	};
 
-	// call something on iterator step with safe closing on error
-	var callWithSafeIterationClosing = function (iterator, fn, value, ENTRIES) {
-	  try {
-	    return ENTRIES ? fn(anObject(value)[0], value[1]) : fn(value);
-	  // 7.4.6 IteratorClose(iterator, completion)
-	  } catch (error) {
-	    var returnMethod = iterator['return'];
-	    if (returnMethod !== undefined) anObject(returnMethod.call(iterator));
-	    throw error;
+	var iteratorClose = function (iterator) {
+	  var returnMethod = iterator['return'];
+	  if (returnMethod !== undefined) {
+	    return anObject(returnMethod.call(iterator)).value;
 	  }
 	};
 
-	var iterate_1 = createCommonjsModule(function (module) {
 	var Result = function (stopped, result) {
 	  this.stopped = stopped;
 	  this.result = result;
 	};
 
-	var iterate = module.exports = function (iterable, fn, that, AS_ENTRIES, IS_ITERATOR) {
-	  var boundFunction = functionBindContext(fn, that, AS_ENTRIES ? 2 : 1);
+	var iterate = function (iterable, unboundFunction, options) {
+	  var that = options && options.that;
+	  var AS_ENTRIES = !!(options && options.AS_ENTRIES);
+	  var IS_ITERATOR = !!(options && options.IS_ITERATOR);
+	  var INTERRUPTED = !!(options && options.INTERRUPTED);
+	  var fn = functionBindContext(unboundFunction, that, 1 + AS_ENTRIES + INTERRUPTED);
 	  var iterator, iterFn, index, length, result, next, step;
+
+	  var stop = function (condition) {
+	    if (iterator) iteratorClose(iterator);
+	    return new Result(true, condition);
+	  };
+
+	  var callFn = function (value) {
+	    if (AS_ENTRIES) {
+	      anObject(value);
+	      return INTERRUPTED ? fn(value[0], value[1], stop) : fn(value[0], value[1]);
+	    } return INTERRUPTED ? fn(value, stop) : fn(value);
+	  };
 
 	  if (IS_ITERATOR) {
 	    iterator = iterable;
@@ -1869,9 +1894,7 @@ var Forestry = (function () {
 	    // optimisation for array iterators
 	    if (isArrayIteratorMethod(iterFn)) {
 	      for (index = 0, length = toLength(iterable.length); length > index; index++) {
-	        result = AS_ENTRIES
-	          ? boundFunction(anObject(step = iterable[index])[0], step[1])
-	          : boundFunction(iterable[index]);
+	        result = callFn(iterable[index]);
 	        if (result && result instanceof Result) return result;
 	      } return new Result(false);
 	    }
@@ -1880,15 +1903,15 @@ var Forestry = (function () {
 
 	  next = iterator.next;
 	  while (!(step = next.call(iterator)).done) {
-	    result = callWithSafeIterationClosing(iterator, boundFunction, step.value, AS_ENTRIES);
+	    try {
+	      result = callFn(step.value);
+	    } catch (error) {
+	      iteratorClose(iterator);
+	      throw error;
+	    }
 	    if (typeof result == 'object' && result && result instanceof Result) return result;
 	  } return new Result(false);
 	};
-
-	iterate.stop = function (result) {
-	  return new Result(true, result);
-	};
-	});
 
 	var ITERATOR$4 = wellKnownSymbol('iterator');
 	var SAFE_CLOSING = false;
@@ -1991,7 +2014,7 @@ var Forestry = (function () {
 	    delete queue[id];
 	  };
 	  // Node.js 0.8-
-	  if (classofRaw(process$1) == 'process') {
+	  if (engineIsNode) {
 	    defer = function (id) {
 	      process$1.nextTick(runner(id));
 	    };
@@ -2013,8 +2036,8 @@ var Forestry = (function () {
 	    global_1.addEventListener &&
 	    typeof postMessage == 'function' &&
 	    !global_1.importScripts &&
-	    !fails(post) &&
-	    location$1.protocol !== 'file:'
+	    location$1 && location$1.protocol !== 'file:' &&
+	    !fails(post)
 	  ) {
 	    defer = post;
 	    global_1.addEventListener('message', listener, false);
@@ -2040,14 +2063,14 @@ var Forestry = (function () {
 	};
 
 	var getOwnPropertyDescriptor$2 = objectGetOwnPropertyDescriptor.f;
-
 	var macrotask = task.set;
 
 
+
 	var MutationObserver$1 = global_1.MutationObserver || global_1.WebKitMutationObserver;
+	var document$2 = global_1.document;
 	var process$2 = global_1.process;
 	var Promise$1 = global_1.Promise;
-	var IS_NODE = classofRaw(process$2) == 'process';
 	// Node.js 11 shows ExperimentalWarning on getting `queueMicrotask`
 	var queueMicrotaskDescriptor = getOwnPropertyDescriptor$2(global_1, 'queueMicrotask');
 	var queueMicrotask = queueMicrotaskDescriptor && queueMicrotaskDescriptor.value;
@@ -2058,7 +2081,7 @@ var Forestry = (function () {
 	if (!queueMicrotask) {
 	  flush = function () {
 	    var parent, fn;
-	    if (IS_NODE && (parent = process$2.domain)) parent.exit();
+	    if (engineIsNode && (parent = process$2.domain)) parent.exit();
 	    while (head) {
 	      fn = head.fn;
 	      head = head.next;
@@ -2073,15 +2096,10 @@ var Forestry = (function () {
 	    if (parent) parent.enter();
 	  };
 
-	  // Node.js
-	  if (IS_NODE) {
-	    notify = function () {
-	      process$2.nextTick(flush);
-	    };
 	  // browsers with MutationObserver, except iOS - https://github.com/zloirock/core-js/issues/339
-	  } else if (MutationObserver$1 && !engineIsIos) {
+	  if (!engineIsIos && !engineIsNode && MutationObserver$1 && document$2) {
 	    toggle = true;
-	    node = document.createTextNode('');
+	    node = document$2.createTextNode('');
 	    new MutationObserver$1(flush).observe(node, { characterData: true });
 	    notify = function () {
 	      node.data = toggle = !toggle;
@@ -2093,6 +2111,11 @@ var Forestry = (function () {
 	    then = promise.then;
 	    notify = function () {
 	      then.call(promise, flush);
+	    };
+	  // Node.js without promises
+	  } else if (engineIsNode) {
+	    notify = function () {
+	      process$2.nextTick(flush);
 	    };
 	  // for other environments - macrotask based on:
 	  // - setImmediate
@@ -2172,6 +2195,7 @@ var Forestry = (function () {
 
 
 
+
 	var SPECIES$5 = wellKnownSymbol('species');
 	var PROMISE = 'Promise';
 	var getInternalState$2 = internalState.get;
@@ -2179,13 +2203,13 @@ var Forestry = (function () {
 	var getInternalPromiseState = internalState.getterFor(PROMISE);
 	var PromiseConstructor = nativePromiseConstructor;
 	var TypeError$1 = global_1.TypeError;
-	var document$2 = global_1.document;
+	var document$3 = global_1.document;
 	var process$3 = global_1.process;
 	var $fetch = getBuiltIn('fetch');
 	var newPromiseCapability$1 = newPromiseCapability.f;
 	var newGenericPromiseCapability = newPromiseCapability$1;
-	var IS_NODE$1 = classofRaw(process$3) == 'process';
-	var DISPATCH_EVENT = !!(document$2 && document$2.createEvent && global_1.dispatchEvent);
+	var DISPATCH_EVENT = !!(document$3 && document$3.createEvent && global_1.dispatchEvent);
+	var NATIVE_REJECTION_EVENT = typeof PromiseRejectionEvent == 'function';
 	var UNHANDLED_REJECTION = 'unhandledrejection';
 	var REJECTION_HANDLED = 'rejectionhandled';
 	var PENDING = 0;
@@ -2203,7 +2227,7 @@ var Forestry = (function () {
 	    // We can't detect it synchronously, so just check versions
 	    if (engineV8Version === 66) return true;
 	    // Unhandled rejections tracking support, NodeJS Promise without it fails @@species test
-	    if (!IS_NODE$1 && typeof PromiseRejectionEvent != 'function') return true;
+	    if (!engineIsNode && !NATIVE_REJECTION_EVENT) return true;
 	  }
 	  // We can't use @@species feature detection in V8 since it causes
 	  // deoptimization and performance degradation
@@ -2229,7 +2253,7 @@ var Forestry = (function () {
 	  return isObject(it) && typeof (then = it.then) == 'function' ? then : false;
 	};
 
-	var notify$1 = function (promise, state, isReject) {
+	var notify$1 = function (state, isReject) {
 	  if (state.notified) return;
 	  state.notified = true;
 	  var chain = state.reactions;
@@ -2248,7 +2272,7 @@ var Forestry = (function () {
 	      try {
 	        if (handler) {
 	          if (!ok) {
-	            if (state.rejection === UNHANDLED) onHandleUnhandled(promise, state);
+	            if (state.rejection === UNHANDLED) onHandleUnhandled(state);
 	            state.rejection = HANDLED;
 	          }
 	          if (handler === true) result = value;
@@ -2273,36 +2297,37 @@ var Forestry = (function () {
 	    }
 	    state.reactions = [];
 	    state.notified = false;
-	    if (isReject && !state.rejection) onUnhandled(promise, state);
+	    if (isReject && !state.rejection) onUnhandled(state);
 	  });
 	};
 
 	var dispatchEvent = function (name, promise, reason) {
 	  var event, handler;
 	  if (DISPATCH_EVENT) {
-	    event = document$2.createEvent('Event');
+	    event = document$3.createEvent('Event');
 	    event.promise = promise;
 	    event.reason = reason;
 	    event.initEvent(name, false, true);
 	    global_1.dispatchEvent(event);
 	  } else event = { promise: promise, reason: reason };
-	  if (handler = global_1['on' + name]) handler(event);
+	  if (!NATIVE_REJECTION_EVENT && (handler = global_1['on' + name])) handler(event);
 	  else if (name === UNHANDLED_REJECTION) hostReportErrors('Unhandled promise rejection', reason);
 	};
 
-	var onUnhandled = function (promise, state) {
+	var onUnhandled = function (state) {
 	  task$1.call(global_1, function () {
+	    var promise = state.facade;
 	    var value = state.value;
 	    var IS_UNHANDLED = isUnhandled(state);
 	    var result;
 	    if (IS_UNHANDLED) {
 	      result = perform(function () {
-	        if (IS_NODE$1) {
+	        if (engineIsNode) {
 	          process$3.emit('unhandledRejection', value, promise);
 	        } else dispatchEvent(UNHANDLED_REJECTION, promise, value);
 	      });
 	      // Browsers should not trigger `rejectionHandled` event if it was handled here, NodeJS - should
-	      state.rejection = IS_NODE$1 || isUnhandled(state) ? UNHANDLED : HANDLED;
+	      state.rejection = engineIsNode || isUnhandled(state) ? UNHANDLED : HANDLED;
 	      if (result.error) throw result.value;
 	    }
 	  });
@@ -2312,55 +2337,56 @@ var Forestry = (function () {
 	  return state.rejection !== HANDLED && !state.parent;
 	};
 
-	var onHandleUnhandled = function (promise, state) {
+	var onHandleUnhandled = function (state) {
 	  task$1.call(global_1, function () {
-	    if (IS_NODE$1) {
+	    var promise = state.facade;
+	    if (engineIsNode) {
 	      process$3.emit('rejectionHandled', promise);
 	    } else dispatchEvent(REJECTION_HANDLED, promise, state.value);
 	  });
 	};
 
-	var bind = function (fn, promise, state, unwrap) {
+	var bind = function (fn, state, unwrap) {
 	  return function (value) {
-	    fn(promise, state, value, unwrap);
+	    fn(state, value, unwrap);
 	  };
 	};
 
-	var internalReject = function (promise, state, value, unwrap) {
+	var internalReject = function (state, value, unwrap) {
 	  if (state.done) return;
 	  state.done = true;
 	  if (unwrap) state = unwrap;
 	  state.value = value;
 	  state.state = REJECTED;
-	  notify$1(promise, state, true);
+	  notify$1(state, true);
 	};
 
-	var internalResolve = function (promise, state, value, unwrap) {
+	var internalResolve = function (state, value, unwrap) {
 	  if (state.done) return;
 	  state.done = true;
 	  if (unwrap) state = unwrap;
 	  try {
-	    if (promise === value) throw TypeError$1("Promise can't be resolved itself");
+	    if (state.facade === value) throw TypeError$1("Promise can't be resolved itself");
 	    var then = isThenable(value);
 	    if (then) {
 	      microtask(function () {
 	        var wrapper = { done: false };
 	        try {
 	          then.call(value,
-	            bind(internalResolve, promise, wrapper, state),
-	            bind(internalReject, promise, wrapper, state)
+	            bind(internalResolve, wrapper, state),
+	            bind(internalReject, wrapper, state)
 	          );
 	        } catch (error) {
-	          internalReject(promise, wrapper, error, state);
+	          internalReject(wrapper, error, state);
 	        }
 	      });
 	    } else {
 	      state.value = value;
 	      state.state = FULFILLED;
-	      notify$1(promise, state, false);
+	      notify$1(state, false);
 	    }
 	  } catch (error) {
-	    internalReject(promise, { done: false }, error, state);
+	    internalReject({ done: false }, error, state);
 	  }
 	};
 
@@ -2373,9 +2399,9 @@ var Forestry = (function () {
 	    Internal.call(this);
 	    var state = getInternalState$2(this);
 	    try {
-	      executor(bind(internalResolve, this, state), bind(internalReject, this, state));
+	      executor(bind(internalResolve, state), bind(internalReject, state));
 	    } catch (error) {
-	      internalReject(this, state, error);
+	      internalReject(state, error);
 	    }
 	  };
 	  // eslint-disable-next-line no-unused-vars
@@ -2399,10 +2425,10 @@ var Forestry = (function () {
 	      var reaction = newPromiseCapability$1(speciesConstructor(this, PromiseConstructor));
 	      reaction.ok = typeof onFulfilled == 'function' ? onFulfilled : true;
 	      reaction.fail = typeof onRejected == 'function' && onRejected;
-	      reaction.domain = IS_NODE$1 ? process$3.domain : undefined;
+	      reaction.domain = engineIsNode ? process$3.domain : undefined;
 	      state.parent = true;
 	      state.reactions.push(reaction);
-	      if (state.state != PENDING) notify$1(this, state, false);
+	      if (state.state != PENDING) notify$1(state, false);
 	      return reaction.promise;
 	    },
 	    // `Promise.prototype.catch` method
@@ -2415,8 +2441,8 @@ var Forestry = (function () {
 	    var promise = new Internal();
 	    var state = getInternalState$2(promise);
 	    this.promise = promise;
-	    this.resolve = bind(internalResolve, promise, state);
-	    this.reject = bind(internalReject, promise, state);
+	    this.resolve = bind(internalResolve, state);
+	    this.reject = bind(internalReject, state);
 	  };
 	  newPromiseCapability.f = newPromiseCapability$1 = function (C) {
 	    return C === PromiseConstructor || C === PromiseWrapper
@@ -2487,7 +2513,7 @@ var Forestry = (function () {
 	      var values = [];
 	      var counter = 0;
 	      var remaining = 1;
-	      iterate_1(iterable, function (promise) {
+	      iterate(iterable, function (promise) {
 	        var index = counter++;
 	        var alreadyCalled = false;
 	        values.push(undefined);
@@ -2512,7 +2538,7 @@ var Forestry = (function () {
 	    var reject = capability.reject;
 	    var result = perform(function () {
 	      var $promiseResolve = aFunction$1(C.resolve);
-	      iterate_1(iterable, function (promise) {
+	      iterate(iterable, function (promise) {
 	        $promiseResolve.call(C, promise).then(capability.resolve, reject);
 	      });
 	    });
@@ -4549,11 +4575,11 @@ var Forestry = (function () {
 	  var regexp = /./;
 	  try {
 	    '/./'[METHOD_NAME](regexp);
-	  } catch (e) {
+	  } catch (error1) {
 	    try {
 	      regexp[MATCH$2] = false;
 	      return '/./'[METHOD_NAME](regexp);
-	    } catch (f) { /* empty */ }
+	    } catch (error2) { /* empty */ }
 	  } return false;
 	};
 
@@ -19292,6 +19318,17 @@ var Forestry = (function () {
 	// https://tc39.github.io/ecma262/#sec-array.prototype-@@unscopables
 	addToUnscopables(FIND_INDEX);
 
+	// call something on iterator step with safe closing on error
+	var callWithSafeIterationClosing = function (iterator, fn, value, ENTRIES) {
+	  try {
+	    return ENTRIES ? fn(anObject(value)[0], value[1]) : fn(value);
+	  // 7.4.6 IteratorClose(iterator, completion)
+	  } catch (error) {
+	    iteratorClose(iterator);
+	    throw error;
+	  }
+	};
+
 	// `Array.from` method implementation
 	// https://tc39.github.io/ecma262/#sec-array.from
 	var arrayFrom = function from(arrayLike /* , mapfn = undefined, thisArg = undefined */) {
@@ -20075,7 +20112,7 @@ var Forestry = (function () {
 	var URLSearchParamsPrototype = URLSearchParamsConstructor.prototype;
 
 	redefineAll(URLSearchParamsPrototype, {
-	  // `URLSearchParams.prototype.appent` method
+	  // `URLSearchParams.prototype.append` method
 	  // https://url.spec.whatwg.org/#dom-urlsearchparams-append
 	  append: function append(name, value) {
 	    validateArgumentsLength(arguments.length, 2);
@@ -21530,7 +21567,7 @@ var Forestry = (function () {
 	if(!toStringTagSupport$1){redefine$1(Object.prototype,'toString',objectToString$1,{unsafe:true});}var nativePromiseConstructor$1=global_1$1.Promise;var SPECIES$4$1=wellKnownSymbol$1('species');var setSpecies$1=function setSpecies(CONSTRUCTOR_NAME){var Constructor=getBuiltIn$1(CONSTRUCTOR_NAME);var defineProperty=objectDefineProperty$1.f;if(descriptors$1&&Constructor&&!Constructor[SPECIES$4$1]){defineProperty(Constructor,SPECIES$4$1,{configurable:true,get:function get(){return this;}});}};var ITERATOR$2$1=wellKnownSymbol$1('iterator');var ArrayPrototype$1$1=Array.prototype;// check on default Array iterator
 	var isArrayIteratorMethod$1=function isArrayIteratorMethod(it){return it!==undefined&&(iterators$1.Array===it||ArrayPrototype$1$1[ITERATOR$2$1]===it);};var ITERATOR$3$1=wellKnownSymbol$1('iterator');var getIteratorMethod$1=function getIteratorMethod(it){if(it!=undefined)return it[ITERATOR$3$1]||it['@@iterator']||iterators$1[classof$1(it)];};// call something on iterator step with safe closing on error
 	var callWithSafeIterationClosing$1=function callWithSafeIterationClosing(iterator,fn,value,ENTRIES){try{return ENTRIES?fn(anObject$1(value)[0],value[1]):fn(value);// 7.4.6 IteratorClose(iterator, completion)
-	}catch(error){var returnMethod=iterator['return'];if(returnMethod!==undefined)anObject$1(returnMethod.call(iterator));throw error;}};var iterate_1$1=createCommonjsModule$1(function(module){var Result=function Result(stopped,result){this.stopped=stopped;this.result=result;};var iterate=module.exports=function(iterable,fn,that,AS_ENTRIES,IS_ITERATOR){var boundFunction=functionBindContext$1(fn,that,AS_ENTRIES?2:1);var iterator,iterFn,index,length,result,next,step;if(IS_ITERATOR){iterator=iterable;}else {iterFn=getIteratorMethod$1(iterable);if(typeof iterFn!='function')throw TypeError('Target is not iterable');// optimisation for array iterators
+	}catch(error){var returnMethod=iterator['return'];if(returnMethod!==undefined)anObject$1(returnMethod.call(iterator));throw error;}};var iterate_1=createCommonjsModule$1(function(module){var Result=function Result(stopped,result){this.stopped=stopped;this.result=result;};var iterate=module.exports=function(iterable,fn,that,AS_ENTRIES,IS_ITERATOR){var boundFunction=functionBindContext$1(fn,that,AS_ENTRIES?2:1);var iterator,iterFn,index,length,result,next,step;if(IS_ITERATOR){iterator=iterable;}else {iterFn=getIteratorMethod$1(iterable);if(typeof iterFn!='function')throw TypeError('Target is not iterable');// optimisation for array iterators
 	if(isArrayIteratorMethod$1(iterFn)){for(index=0,length=toLength$1(iterable.length);length>index;index++){result=AS_ENTRIES?boundFunction(anObject$1(step=iterable[index])[0],step[1]):boundFunction(iterable[index]);if(result&&result instanceof Result)return result;}return new Result(false);}iterator=iterFn.call(iterable);}next=iterator.next;while(!(step=next.call(iterator)).done){result=callWithSafeIterationClosing$1(iterator,boundFunction,step.value,AS_ENTRIES);if(_typeof(result)=='object'&&result&&result instanceof Result)return result;}return new Result(false);};iterate.stop=function(result){return new Result(true,result);};});var ITERATOR$4$1=wellKnownSymbol$1('iterator');var SAFE_CLOSING$1=false;try{var called$1=0;var iteratorWithReturn$1={next:function next(){return {done:!!called$1++};},'return':function _return(){SAFE_CLOSING$1=true;}};iteratorWithReturn$1[ITERATOR$4$1]=function(){return this;};// eslint-disable-next-line no-throw-literal
 	Array.from(iteratorWithReturn$1,function(){throw 2;});}catch(error){/* empty */}var checkCorrectnessOfIteration$1=function checkCorrectnessOfIteration(exec,SKIP_CLOSING){if(!SKIP_CLOSING&&!SAFE_CLOSING$1)return false;var ITERATION_SUPPORT=false;try{var object={};object[ITERATOR$4$1]=function(){return {next:function next(){return {done:ITERATION_SUPPORT=true};}};};exec(object);}catch(error){/* empty */}return ITERATION_SUPPORT;};var engineIsIos$1=/(iphone|ipod|ipad).*applewebkit/i.test(engineUserAgent$1);var location$1$1=global_1$1.location;var set$2$1=global_1$1.setImmediate;var clear$1=global_1$1.clearImmediate;var process$1$1=global_1$1.process;var MessageChannel$1=global_1$1.MessageChannel;var Dispatch$1=global_1$1.Dispatch;var counter$1=0;var queue$1={};var ONREADYSTATECHANGE$1='onreadystatechange';var defer$1,channel$1,port$1;var run$1=function run(id){// eslint-disable-next-line no-prototype-builtins
 	if(queue$1.hasOwnProperty(id)){var fn=queue$1[id];delete queue$1[id];fn();}};var runner$1=function runner(id){return function(){run$1(id);};};var listener$1=function listener(event){run$1(event.data);};var post$1=function post(id){// old engines have not location.origin
@@ -21544,10 +21581,10 @@ var Forestry = (function () {
 	// IE8 has postMessage, but it's sync & typeof its postMessage is 'object'
 	}else if(global_1$1.addEventListener&&typeof postMessage=='function'&&!global_1$1.importScripts&&!fails$1(post$1)&&location$1$1.protocol!=='file:'){defer$1=post$1;global_1$1.addEventListener('message',listener$1,false);// IE8-
 	}else if(ONREADYSTATECHANGE$1 in documentCreateElement$1('script')){defer$1=function defer(id){html$1.appendChild(documentCreateElement$1('script'))[ONREADYSTATECHANGE$1]=function(){html$1.removeChild(this);run$1(id);};};// Rest old browsers
-	}else {defer$1=function defer(id){setTimeout(runner$1(id),0);};}}var task$2={set:set$2$1,clear:clear$1};var getOwnPropertyDescriptor$3$1=objectGetOwnPropertyDescriptor$1.f;var macrotask$1=task$2.set;var MutationObserver$2=global_1$1.MutationObserver||global_1$1.WebKitMutationObserver;var process$2$1=global_1$1.process;var Promise$1$1=global_1$1.Promise;var IS_NODE$2=classofRaw$1(process$2$1)=='process';// Node.js 11 shows ExperimentalWarning on getting `queueMicrotask`
+	}else {defer$1=function defer(id){setTimeout(runner$1(id),0);};}}var task$2={set:set$2$1,clear:clear$1};var getOwnPropertyDescriptor$3$1=objectGetOwnPropertyDescriptor$1.f;var macrotask$1=task$2.set;var MutationObserver$2=global_1$1.MutationObserver||global_1$1.WebKitMutationObserver;var process$2$1=global_1$1.process;var Promise$1$1=global_1$1.Promise;var IS_NODE=classofRaw$1(process$2$1)=='process';// Node.js 11 shows ExperimentalWarning on getting `queueMicrotask`
 	var queueMicrotaskDescriptor$1=getOwnPropertyDescriptor$3$1(global_1$1,'queueMicrotask');var queueMicrotask$1=queueMicrotaskDescriptor$1&&queueMicrotaskDescriptor$1.value;var flush$1,head$1,last$1,notify$2,toggle$1,node$1,promise$1,then$1;// modern engines have queueMicrotask method
-	if(!queueMicrotask$1){flush$1=function flush(){var parent,fn;if(IS_NODE$2&&(parent=process$2$1.domain))parent.exit();while(head$1){fn=head$1.fn;head$1=head$1.next;try{fn();}catch(error){if(head$1)notify$2();else last$1=undefined;throw error;}}last$1=undefined;if(parent)parent.enter();};// Node.js
-	if(IS_NODE$2){notify$2=function notify(){process$2$1.nextTick(flush$1);};// browsers with MutationObserver, except iOS - https://github.com/zloirock/core-js/issues/339
+	if(!queueMicrotask$1){flush$1=function flush(){var parent,fn;if(IS_NODE&&(parent=process$2$1.domain))parent.exit();while(head$1){fn=head$1.fn;head$1=head$1.next;try{fn();}catch(error){if(head$1)notify$2();else last$1=undefined;throw error;}}last$1=undefined;if(parent)parent.enter();};// Node.js
+	if(IS_NODE){notify$2=function notify(){process$2$1.nextTick(flush$1);};// browsers with MutationObserver, except iOS - https://github.com/zloirock/core-js/issues/339
 	}else if(MutationObserver$2&&!engineIsIos$1){toggle$1=true;node$1=document.createTextNode('');new MutationObserver$2(flush$1).observe(node$1,{characterData:true});notify$2=function notify(){node$1.data=toggle$1=!toggle$1;};// environments with maybe non-completely correct, but existent Promise
 	}else if(Promise$1$1&&Promise$1$1.resolve){// Promise.resolve without an argument throws an error in LG WebOS 2
 	promise$1=Promise$1$1.resolve(undefined);then$1=promise$1.then;notify$2=function notify(){then$1.call(promise$1,flush$1);};// for other environments - macrotask based on:
@@ -21558,24 +21595,24 @@ var Forestry = (function () {
 	// - setTimeout
 	}else {notify$2=function notify(){// strange IE + webpack dev server bug - use .call(global)
 	macrotask$1.call(global_1$1,flush$1);};}}var microtask$1=queueMicrotask$1||function(fn){var task={fn:fn,next:undefined};if(last$1)last$1.next=task;if(!head$1){head$1=task;notify$2();}last$1=task;};var PromiseCapability$1=function PromiseCapability(C){var resolve,reject;this.promise=new C(function($$resolve,$$reject){if(resolve!==undefined||reject!==undefined)throw TypeError('Bad Promise constructor');resolve=$$resolve;reject=$$reject;});this.resolve=aFunction$1$1(resolve);this.reject=aFunction$1$1(reject);};// 25.4.1.5 NewPromiseCapability(C)
-	var f$5$1=function f$5(C){return new PromiseCapability$1(C);};var newPromiseCapability$2={f:f$5$1};var promiseResolve$1=function promiseResolve(C,x){anObject$1(C);if(isObject$1(x)&&x.constructor===C)return x;var promiseCapability=newPromiseCapability$2.f(C);var resolve=promiseCapability.resolve;resolve(x);return promiseCapability.promise;};var hostReportErrors$1=function hostReportErrors(a,b){var console=global_1$1.console;if(console&&console.error){arguments.length===1?console.error(a):console.error(a,b);}};var perform$1=function perform(exec){try{return {error:false,value:exec()};}catch(error){return {error:true,value:error};}};var task$1$1=task$2.set;var SPECIES$5$1=wellKnownSymbol$1('species');var PROMISE$1='Promise';var getInternalState$2$1=internalState$1.get;var setInternalState$2$1=internalState$1.set;var getInternalPromiseState$1=internalState$1.getterFor(PROMISE$1);var PromiseConstructor$1=nativePromiseConstructor$1;var TypeError$1$1=global_1$1.TypeError;var document$2$1=global_1$1.document;var process$3$1=global_1$1.process;var $fetch$2=getBuiltIn$1('fetch');var newPromiseCapability$1$1=newPromiseCapability$2.f;var newGenericPromiseCapability$1=newPromiseCapability$1$1;var IS_NODE$1$1=classofRaw$1(process$3$1)=='process';var DISPATCH_EVENT$1=!!(document$2$1&&document$2$1.createEvent&&global_1$1.dispatchEvent);var UNHANDLED_REJECTION$1='unhandledrejection';var REJECTION_HANDLED$1='rejectionhandled';var PENDING$1=0;var FULFILLED$1=1;var REJECTED$1=2;var HANDLED$1=1;var UNHANDLED$1=2;var Internal$1,OwnPromiseCapability$1,PromiseWrapper$1,nativeThen$1;var FORCED$3$1=isForced_1$1(PROMISE$1,function(){var GLOBAL_CORE_JS_PROMISE=inspectSource$1(PromiseConstructor$1)!==String(PromiseConstructor$1);if(!GLOBAL_CORE_JS_PROMISE){// V8 6.6 (Node 10 and Chrome 66) have a bug with resolving custom thenables
+	var f$5$1=function f$5(C){return new PromiseCapability$1(C);};var newPromiseCapability$2={f:f$5$1};var promiseResolve$1=function promiseResolve(C,x){anObject$1(C);if(isObject$1(x)&&x.constructor===C)return x;var promiseCapability=newPromiseCapability$2.f(C);var resolve=promiseCapability.resolve;resolve(x);return promiseCapability.promise;};var hostReportErrors$1=function hostReportErrors(a,b){var console=global_1$1.console;if(console&&console.error){arguments.length===1?console.error(a):console.error(a,b);}};var perform$1=function perform(exec){try{return {error:false,value:exec()};}catch(error){return {error:true,value:error};}};var task$1$1=task$2.set;var SPECIES$5$1=wellKnownSymbol$1('species');var PROMISE$1='Promise';var getInternalState$2$1=internalState$1.get;var setInternalState$2$1=internalState$1.set;var getInternalPromiseState$1=internalState$1.getterFor(PROMISE$1);var PromiseConstructor$1=nativePromiseConstructor$1;var TypeError$1$1=global_1$1.TypeError;var document$2$1=global_1$1.document;var process$3$1=global_1$1.process;var $fetch$2=getBuiltIn$1('fetch');var newPromiseCapability$1$1=newPromiseCapability$2.f;var newGenericPromiseCapability$1=newPromiseCapability$1$1;var IS_NODE$1=classofRaw$1(process$3$1)=='process';var DISPATCH_EVENT$1=!!(document$2$1&&document$2$1.createEvent&&global_1$1.dispatchEvent);var UNHANDLED_REJECTION$1='unhandledrejection';var REJECTION_HANDLED$1='rejectionhandled';var PENDING$1=0;var FULFILLED$1=1;var REJECTED$1=2;var HANDLED$1=1;var UNHANDLED$1=2;var Internal$1,OwnPromiseCapability$1,PromiseWrapper$1,nativeThen$1;var FORCED$3$1=isForced_1$1(PROMISE$1,function(){var GLOBAL_CORE_JS_PROMISE=inspectSource$1(PromiseConstructor$1)!==String(PromiseConstructor$1);if(!GLOBAL_CORE_JS_PROMISE){// V8 6.6 (Node 10 and Chrome 66) have a bug with resolving custom thenables
 	// https://bugs.chromium.org/p/chromium/issues/detail?id=830565
 	// We can't detect it synchronously, so just check versions
 	if(engineV8Version$1===66)return true;// Unhandled rejections tracking support, NodeJS Promise without it fails @@species test
-	if(!IS_NODE$1$1&&typeof PromiseRejectionEvent!='function')return true;}// We can't use @@species feature detection in V8 since it causes
+	if(!IS_NODE$1&&typeof PromiseRejectionEvent!='function')return true;}// We can't use @@species feature detection in V8 since it causes
 	// deoptimization and performance degradation
 	// https://github.com/zloirock/core-js/issues/679
 	if(engineV8Version$1>=51&&/native code/.test(PromiseConstructor$1))return false;// Detect correctness of subclassing with @@species support
 	var promise=PromiseConstructor$1.resolve(1);var FakePromise=function FakePromise(exec){exec(function(){/* empty */},function(){/* empty */});};var constructor=promise.constructor={};constructor[SPECIES$5$1]=FakePromise;return !(promise.then(function(){/* empty */})instanceof FakePromise);});var INCORRECT_ITERATION$2=FORCED$3$1||!checkCorrectnessOfIteration$1(function(iterable){PromiseConstructor$1.all(iterable)['catch'](function(){/* empty */});});// helpers
 	var isThenable$1=function isThenable(it){var then;return isObject$1(it)&&typeof(then=it.then)=='function'?then:false;};var notify$1$1=function notify$1(promise,state,isReject){if(state.notified)return;state.notified=true;var chain=state.reactions;microtask$1(function(){var value=state.value;var ok=state.state==FULFILLED$1;var index=0;// variable length - can't use forEach
 	while(chain.length>index){var reaction=chain[index++];var handler=ok?reaction.ok:reaction.fail;var resolve=reaction.resolve;var reject=reaction.reject;var domain=reaction.domain;var result,then,exited;try{if(handler){if(!ok){if(state.rejection===UNHANDLED$1)onHandleUnhandled$1(promise,state);state.rejection=HANDLED$1;}if(handler===true)result=value;else {if(domain)domain.enter();result=handler(value);// can throw
-	if(domain){domain.exit();exited=true;}}if(result===reaction.promise){reject(TypeError$1$1('Promise-chain cycle'));}else if(then=isThenable$1(result)){then.call(result,resolve,reject);}else resolve(result);}else reject(value);}catch(error){if(domain&&!exited)domain.exit();reject(error);}}state.reactions=[];state.notified=false;if(isReject&&!state.rejection)onUnhandled$1(promise,state);});};var dispatchEvent$1=function dispatchEvent(name,promise,reason){var event,handler;if(DISPATCH_EVENT$1){event=document$2$1.createEvent('Event');event.promise=promise;event.reason=reason;event.initEvent(name,false,true);global_1$1.dispatchEvent(event);}else event={promise:promise,reason:reason};if(handler=global_1$1['on'+name])handler(event);else if(name===UNHANDLED_REJECTION$1)hostReportErrors$1('Unhandled promise rejection',reason);};var onUnhandled$1=function onUnhandled(promise,state){task$1$1.call(global_1$1,function(){var value=state.value;var IS_UNHANDLED=isUnhandled$1(state);var result;if(IS_UNHANDLED){result=perform$1(function(){if(IS_NODE$1$1){process$3$1.emit('unhandledRejection',value,promise);}else dispatchEvent$1(UNHANDLED_REJECTION$1,promise,value);});// Browsers should not trigger `rejectionHandled` event if it was handled here, NodeJS - should
-	state.rejection=IS_NODE$1$1||isUnhandled$1(state)?UNHANDLED$1:HANDLED$1;if(result.error)throw result.value;}});};var isUnhandled$1=function isUnhandled(state){return state.rejection!==HANDLED$1&&!state.parent;};var onHandleUnhandled$1=function onHandleUnhandled(promise,state){task$1$1.call(global_1$1,function(){if(IS_NODE$1$1){process$3$1.emit('rejectionHandled',promise);}else dispatchEvent$1(REJECTION_HANDLED$1,promise,state.value);});};var bind$1=function bind(fn,promise,state,unwrap){return function(value){fn(promise,state,value,unwrap);};};var internalReject$1=function internalReject(promise,state,value,unwrap){if(state.done)return;state.done=true;if(unwrap)state=unwrap;state.value=value;state.state=REJECTED$1;notify$1$1(promise,state,true);};var internalResolve$1=function internalResolve(promise,state,value,unwrap){if(state.done)return;state.done=true;if(unwrap)state=unwrap;try{if(promise===value)throw TypeError$1$1("Promise can't be resolved itself");var then=isThenable$1(value);if(then){microtask$1(function(){var wrapper={done:false};try{then.call(value,bind$1(internalResolve,promise,wrapper,state),bind$1(internalReject$1,promise,wrapper,state));}catch(error){internalReject$1(promise,wrapper,error,state);}});}else {state.value=value;state.state=FULFILLED$1;notify$1$1(promise,state,false);}}catch(error){internalReject$1(promise,{done:false},error,state);}};// constructor polyfill
+	if(domain){domain.exit();exited=true;}}if(result===reaction.promise){reject(TypeError$1$1('Promise-chain cycle'));}else if(then=isThenable$1(result)){then.call(result,resolve,reject);}else resolve(result);}else reject(value);}catch(error){if(domain&&!exited)domain.exit();reject(error);}}state.reactions=[];state.notified=false;if(isReject&&!state.rejection)onUnhandled$1(promise,state);});};var dispatchEvent$1=function dispatchEvent(name,promise,reason){var event,handler;if(DISPATCH_EVENT$1){event=document$2$1.createEvent('Event');event.promise=promise;event.reason=reason;event.initEvent(name,false,true);global_1$1.dispatchEvent(event);}else event={promise:promise,reason:reason};if(handler=global_1$1['on'+name])handler(event);else if(name===UNHANDLED_REJECTION$1)hostReportErrors$1('Unhandled promise rejection',reason);};var onUnhandled$1=function onUnhandled(promise,state){task$1$1.call(global_1$1,function(){var value=state.value;var IS_UNHANDLED=isUnhandled$1(state);var result;if(IS_UNHANDLED){result=perform$1(function(){if(IS_NODE$1){process$3$1.emit('unhandledRejection',value,promise);}else dispatchEvent$1(UNHANDLED_REJECTION$1,promise,value);});// Browsers should not trigger `rejectionHandled` event if it was handled here, NodeJS - should
+	state.rejection=IS_NODE$1||isUnhandled$1(state)?UNHANDLED$1:HANDLED$1;if(result.error)throw result.value;}});};var isUnhandled$1=function isUnhandled(state){return state.rejection!==HANDLED$1&&!state.parent;};var onHandleUnhandled$1=function onHandleUnhandled(promise,state){task$1$1.call(global_1$1,function(){if(IS_NODE$1){process$3$1.emit('rejectionHandled',promise);}else dispatchEvent$1(REJECTION_HANDLED$1,promise,state.value);});};var bind$1=function bind(fn,promise,state,unwrap){return function(value){fn(promise,state,value,unwrap);};};var internalReject$1=function internalReject(promise,state,value,unwrap){if(state.done)return;state.done=true;if(unwrap)state=unwrap;state.value=value;state.state=REJECTED$1;notify$1$1(promise,state,true);};var internalResolve$1=function internalResolve(promise,state,value,unwrap){if(state.done)return;state.done=true;if(unwrap)state=unwrap;try{if(promise===value)throw TypeError$1$1("Promise can't be resolved itself");var then=isThenable$1(value);if(then){microtask$1(function(){var wrapper={done:false};try{then.call(value,bind$1(internalResolve,promise,wrapper,state),bind$1(internalReject$1,promise,wrapper,state));}catch(error){internalReject$1(promise,wrapper,error,state);}});}else {state.value=value;state.state=FULFILLED$1;notify$1$1(promise,state,false);}}catch(error){internalReject$1(promise,{done:false},error,state);}};// constructor polyfill
 	if(FORCED$3$1){// 25.4.3.1 Promise(executor)
 	PromiseConstructor$1=function Promise(executor){anInstance$1(this,PromiseConstructor$1,PROMISE$1);aFunction$1$1(executor);Internal$1.call(this);var state=getInternalState$2$1(this);try{executor(bind$1(internalResolve$1,this,state),bind$1(internalReject$1,this,state));}catch(error){internalReject$1(this,state,error);}};// eslint-disable-next-line no-unused-vars
 	Internal$1=function Promise(executor){setInternalState$2$1(this,{type:PROMISE$1,done:false,notified:false,parent:false,reactions:[],rejection:false,state:PENDING$1,value:undefined});};Internal$1.prototype=redefineAll$1(PromiseConstructor$1.prototype,{// `Promise.prototype.then` method
 	// https://tc39.github.io/ecma262/#sec-promise.prototype.then
-	then:function then(onFulfilled,onRejected){var state=getInternalPromiseState$1(this);var reaction=newPromiseCapability$1$1(speciesConstructor$1(this,PromiseConstructor$1));reaction.ok=typeof onFulfilled=='function'?onFulfilled:true;reaction.fail=typeof onRejected=='function'&&onRejected;reaction.domain=IS_NODE$1$1?process$3$1.domain:undefined;state.parent=true;state.reactions.push(reaction);if(state.state!=PENDING$1)notify$1$1(this,state,false);return reaction.promise;},// `Promise.prototype.catch` method
+	then:function then(onFulfilled,onRejected){var state=getInternalPromiseState$1(this);var reaction=newPromiseCapability$1$1(speciesConstructor$1(this,PromiseConstructor$1));reaction.ok=typeof onFulfilled=='function'?onFulfilled:true;reaction.fail=typeof onRejected=='function'&&onRejected;reaction.domain=IS_NODE$1?process$3$1.domain:undefined;state.parent=true;state.reactions.push(reaction);if(state.state!=PENDING$1)notify$1$1(this,state,false);return reaction.promise;},// `Promise.prototype.catch` method
 	// https://tc39.github.io/ecma262/#sec-promise.prototype.catch
 	'catch':function _catch(onRejected){return this.then(undefined,onRejected);}});OwnPromiseCapability$1=function OwnPromiseCapability(){var promise=new Internal$1();var state=getInternalState$2$1(promise);this.promise=promise;this.resolve=bind$1(internalResolve$1,promise,state);this.reject=bind$1(internalReject$1,promise,state);};newPromiseCapability$2.f=newPromiseCapability$1$1=function newPromiseCapability$1(C){return C===PromiseConstructor$1||C===PromiseWrapper$1?new OwnPromiseCapability$1(C):newGenericPromiseCapability$1(C);};if(typeof nativePromiseConstructor$1=='function'){nativeThen$1=nativePromiseConstructor$1.prototype.then;// wrap native Promise#then for native async functions
 	redefine$1(nativePromiseConstructor$1.prototype,'then',function then(onFulfilled,onRejected){var that=this;return new PromiseConstructor$1(function(resolve,reject){nativeThen$1.call(that,resolve,reject);}).then(onFulfilled,onRejected);// https://github.com/zloirock/core-js/issues/640
@@ -21588,9 +21625,9 @@ var Forestry = (function () {
 	// https://tc39.github.io/ecma262/#sec-promise.resolve
 	resolve:function resolve(x){return promiseResolve$1(this,x);}});_export$1({target:PROMISE$1,stat:true,forced:INCORRECT_ITERATION$2},{// `Promise.all` method
 	// https://tc39.github.io/ecma262/#sec-promise.all
-	all:function all(iterable){var C=this;var capability=newPromiseCapability$1$1(C);var resolve=capability.resolve;var reject=capability.reject;var result=perform$1(function(){var $promiseResolve=aFunction$1$1(C.resolve);var values=[];var counter=0;var remaining=1;iterate_1$1(iterable,function(promise){var index=counter++;var alreadyCalled=false;values.push(undefined);remaining++;$promiseResolve.call(C,promise).then(function(value){if(alreadyCalled)return;alreadyCalled=true;values[index]=value;--remaining||resolve(values);},reject);});--remaining||resolve(values);});if(result.error)reject(result.value);return capability.promise;},// `Promise.race` method
+	all:function all(iterable){var C=this;var capability=newPromiseCapability$1$1(C);var resolve=capability.resolve;var reject=capability.reject;var result=perform$1(function(){var $promiseResolve=aFunction$1$1(C.resolve);var values=[];var counter=0;var remaining=1;iterate_1(iterable,function(promise){var index=counter++;var alreadyCalled=false;values.push(undefined);remaining++;$promiseResolve.call(C,promise).then(function(value){if(alreadyCalled)return;alreadyCalled=true;values[index]=value;--remaining||resolve(values);},reject);});--remaining||resolve(values);});if(result.error)reject(result.value);return capability.promise;},// `Promise.race` method
 	// https://tc39.github.io/ecma262/#sec-promise.race
-	race:function race(iterable){var C=this;var capability=newPromiseCapability$1$1(C);var reject=capability.reject;var result=perform$1(function(){var $promiseResolve=aFunction$1$1(C.resolve);iterate_1$1(iterable,function(promise){$promiseResolve.call(C,promise).then(capability.resolve,reject);});});if(result.error)reject(result.value);return capability.promise;}});var MATCH$3=wellKnownSymbol$1('match');// `IsRegExp` abstract operation
+	race:function race(iterable){var C=this;var capability=newPromiseCapability$1$1(C);var reject=capability.reject;var result=perform$1(function(){var $promiseResolve=aFunction$1$1(C.resolve);iterate_1(iterable,function(promise){$promiseResolve.call(C,promise).then(capability.resolve,reject);});});if(result.error)reject(result.value);return capability.promise;}});var MATCH$3=wellKnownSymbol$1('match');// `IsRegExp` abstract operation
 	// https://tc39.github.io/ecma262/#sec-isregexp
 	var isRegexp$1=function isRegexp(it){var isRegExp;return isObject$1(it)&&((isRegExp=it[MATCH$3])!==undefined?!!isRegExp:classofRaw$1(it)=='RegExp');};// `RegExp.prototype.flags` getter implementation
 	// https://tc39.github.io/ecma262/#sec-get-regexp.prototype.flags
@@ -27960,270 +27997,6 @@ var Forestry = (function () {
 	  return v && v.toLocaleDateString() || '';
 	};
 
-	var copy = function copy(source) {
-	  switch (_typeof(source)) {
-	    case 'number':
-	    case 'string':
-	    case 'function':
-	    default:
-	      return source;
-
-	    case 'object':
-	      if (source === null) {
-	        return null;
-	      } else if (Array.isArray(source)) {
-	        return source.map(function (item) {
-	          return copy(item);
-	        });
-	      } else if (source instanceof Date) {
-	        return source;
-	      } else {
-	        return Object.keys(source).reduce(function (a, k) {
-	          a[k] = copy(source[k]);
-	          return a;
-	        }, {});
-	      }
-
-	  }
-	};
-
-	var extend = function extend(target, source) {
-	  if (target === source) {
-	    return target;
-	  } else {
-	    return Object.keys(source).reduce(function (a, k) {
-	      var value = source[k];
-
-	      if (_typeof(a[k]) === 'object' && k in a) {
-	        a[k] = extend(a[k], value);
-	      } else {
-	        a[k] = copy(value);
-	      }
-
-	      return a;
-	    }, copy(target));
-	  }
-	};
-
-	var DEFAULT_LANGUAGE = 'rus';
-
-	var Translations = /*#__PURE__*/function () {
-	  function Translations() {
-	    _classCallCheck(this, Translations);
-
-	    this._hash = {};
-	  }
-
-	  _createClass(Translations, [{
-	    key: "setLanguage",
-	    value: function setLanguage(lang) {
-	      this._language = lang;
-	    }
-	  }, {
-	    key: "getLanguage",
-	    value: function getLanguage() {
-	      return window.language || this._language || DEFAULT_LANGUAGE;
-	    }
-	  }, {
-	    key: "addText",
-	    value: function addText(lang, tran) {
-	      this._hash[lang] = extend(this._hash[lang] || {}, tran);
-	      return this;
-	    }
-	  }, {
-	    key: "getText",
-	    value: function getText(key) {
-	      if (key && typeof key === 'string') {
-	        var locale = this._hash[this.getLanguage()];
-
-	        if (locale) {
-	          return key.split('.').reduce(function (a, k) {
-	            return a[k];
-	          }, locale);
-	        }
-	      }
-
-	      return null;
-	    }
-	  }]);
-
-	  return Translations;
-	}();
-
-	window.Scanex = window.Scanex || {};
-	window.Scanex.Translations = window.Scanex.Translations || {};
-	window.Scanex.translations = window.Scanex.translations || new Translations();
-	var T = window.Scanex.translations;
-
-	var translate$1 = T.getText.bind(T);
-	T.addText('rus', {
-	  baseLayers: {
-	    title: 'Подложки',
-	    Rostelecom: 'Ростелеком'
-	  }
-	});
-	var iconPrefix = '/assets/images'; //'//maps.kosmosnimki.ru/api/img/baseLayers/';
-
-	var hybrid = leafletSrc.tileLayer('//{s}tilecart.kosmosnimki.ru/kosmohyb/{z}/{x}/{y}.png', {
-	  zIndex: -999999,
-	  maxNativeZoom: 18
-	});
-	var baseLayers = {
-	  sputnik: {
-	    rus: 'Спутник ру',
-	    eng: 'Sputnik RU',
-	    icon: "".concat(iconPrefix, "/lv_map.png"),
-	    layers: [leafletSrc.tileLayer('//tilessputnik.ru/{z}/{x}/{y}.png?sw=1', {
-	      zIndex: -1000000,
-	      maxZoom: 22,
-	      maxNativeZoom: 18,
-	      attribution: '<a href="http://maps.sputnik.ru">Спутник</a> © ' + translate$1('baseLayers.Rostelecom') + ' | © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-	    })]
-	  },
-	  // satellite: {
-	  // 	mapID: '1D30C72D02914C5FB90D1D448159CAB6',
-	  // 	layerID: '63E083C0916F4414A2F6B78242F56CA6', // satellite
-	  // 	type: 'satellite',
-	  // 	rus: 'Снимки',
-	  // 	eng: 'Satellite',
-	  // 	overlayColor: '#ffffff',
-	  // 	icon: `${iconPrefix}/basemap_satellite.png`,
-	  //     layers: []
-	  // },
-	  OSMHybrid: {
-	    rus: 'Гибрид',
-	    eng: 'Hybrid',
-	    overlayColor: '#ffffff',
-	    icon: "".concat(iconPrefix, "/lv_hyb.png"),
-	    layers: []
-	  }
-	};
-	var BaseLayers = leafletSrc.Control.extend({
-	  includes: leafletSrc.Evented.prototype,
-	  options: {
-	    position: 'topright',
-	    apiKey: 'LX3YKLVMUF'
-	  },
-	  onAdd: function onAdd(map) {
-	    var _this = this;
-
-	    this._container = leafletSrc.DomUtil.create('div', 'scanex-baselayers baselayer-map-right ');
-	    this._icon = leafletSrc.DomUtil.create('div', 'map-right', this._container);
-	    leafletSrc.DomUtil.create('div', 'substrates', this._icon);
-	    this._content = leafletSrc.DomUtil.create('div', 'table-baselayers-popup hidden', this._container);
-	    this._content.innerHTML = "<table>\n            <thead>\n                <tr>                    \n                    <td colspan=\"3\">\n                        <label>".concat(translate$1('baseLayers.title'), "</label>\n                    </td>\n                </tr>\n            </thead>            \n            <tbody>\n                <tr class=\"line\">").concat(Object.keys(baseLayers).map(function (k) {
-	      return "<td><img src=\"".concat(baseLayers[k].icon, "\" class=\"baseLayer\" data=\"").concat(k, "\" /></td>");
-	    }).join(''), "</tr>\n             </tbody>\n        </table>");
-	    leafletSrc.DomEvent.on(this._icon, 'click', function (e) {
-	      leafletSrc.DomEvent.stopPropagation(e);
-	      _this._active = !_this._active;
-
-	      _this.showPanel(_this._active);
-
-	      _this.fire('activate', {
-	        active: _this._active
-	      });
-	    });
-
-	    this._content.getElementsByClassName('baseLayer').forEach(function (node) {
-	      var key = node.getAttribute('data');
-	      baseLayers[key].node = node;
-	      leafletSrc.DomEvent.on(node, 'click', function (e) {
-	        leafletSrc.DomEvent.stopPropagation(e);
-	        var visible = !leafletSrc.DomUtil.hasClass(node, 'active');
-
-	        _this.fire('click', {
-	          id: key,
-	          visible: visible
-	        });
-
-	        _this.toggle(key);
-	      }, _this);
-	    }, this);
-
-	    this._getLayers();
-
-	    return this._container;
-	  },
-	  onRemove: function onRemove(map) {},
-	  _getLayers: function _getLayers() {
-	    leafletSrc.gmx.loadLayers([{
-	      apiKey: this.options.apiKey,
-	      mapID: '1D30C72D02914C5FB90D1D448159CAB6',
-	      layerID: '4EE5E84381E94E369784464FD41EED5A',
-	      // satellite
-	      type: 'satellite',
-	      rus: 'Снимки',
-	      eng: 'Satellite',
-	      overlayColor: '#ffffff',
-	      icon: "".concat(iconPrefix, "/lv_hyb.png")
-	    }], {}).then(function (arr) {
-	      var satellite = arr[0];
-	      satellite.options.zIndex = -1000000; // baseLayers.satellite.layers = [satellite];
-
-	      baseLayers.OSMHybrid.layers = [satellite, hybrid];
-	    });
-	  },
-	  unload: function unload() {
-	    var _this2 = this;
-
-	    if (this._activeID) {
-	      var baseLayer = baseLayers[this._activeID];
-
-	      if (baseLayer) {
-	        baseLayer.layers.forEach(function (it) {
-	          _this2._map.removeLayer(it);
-	        });
-	        leafletSrc.DomUtil.removeClass(baseLayer.node, 'active');
-	      }
-
-	      this._activeID = null;
-	    }
-
-	    return this;
-	  },
-	  toggle: function toggle(id) {
-	    var _this3 = this;
-
-	    if (this._activeID !== id) {
-	      var baseLayer = baseLayers[this._activeID];
-
-	      if (this._activeID && baseLayer) {
-	        baseLayer.layers.forEach(function (it) {
-	          _this3._map.removeLayer(it);
-	        });
-	        leafletSrc.DomUtil.removeClass(baseLayer.node, 'active');
-	      }
-
-	      this._activeID = id;
-	      baseLayer = baseLayers[this._activeID];
-
-	      if (baseLayer) {
-	        baseLayer.layers.forEach(function (it) {
-	          if (it._map && it._map !== _this3._map) {
-	            it._map.removeLayer(it);
-	          }
-
-	          _this3._map.addLayer(it);
-	        });
-	      }
-
-	      leafletSrc.DomUtil.addClass(baseLayer.node, 'active');
-	    }
-	  },
-	  showPanel: function showPanel(visible) {
-	    this._active = visible;
-
-	    if (this._active) {
-	      leafletSrc.DomUtil.addClass(this._icon, 'active');
-	      leafletSrc.DomUtil.removeClass(this._content, 'hidden');
-	    } else {
-	      leafletSrc.DomUtil.removeClass(this._icon, 'active');
-	      leafletSrc.DomUtil.addClass(this._content, 'hidden');
-	    }
-	  }
-	});
-
 	leafletSrc.Control.GmxCenter = leafletSrc.Control.extend({
 	  options: {
 	    position: 'center',
@@ -28347,6 +28120,101 @@ var Forestry = (function () {
 	    return this._current;
 	  }
 	});
+
+	var copy = function copy(source) {
+	  switch (_typeof(source)) {
+	    case 'number':
+	    case 'string':
+	    case 'function':
+	    default:
+	      return source;
+
+	    case 'object':
+	      if (source === null) {
+	        return null;
+	      } else if (Array.isArray(source)) {
+	        return source.map(function (item) {
+	          return copy(item);
+	        });
+	      } else if (source instanceof Date) {
+	        return source;
+	      } else {
+	        return Object.keys(source).reduce(function (a, k) {
+	          a[k] = copy(source[k]);
+	          return a;
+	        }, {});
+	      }
+
+	  }
+	};
+
+	var extend = function extend(target, source) {
+	  if (target === source) {
+	    return target;
+	  } else {
+	    return Object.keys(source).reduce(function (a, k) {
+	      var value = source[k];
+
+	      if (_typeof(a[k]) === 'object' && k in a) {
+	        a[k] = extend(a[k], value);
+	      } else {
+	        a[k] = copy(value);
+	      }
+
+	      return a;
+	    }, copy(target));
+	  }
+	};
+
+	var DEFAULT_LANGUAGE = 'rus';
+
+	var Translations = /*#__PURE__*/function () {
+	  function Translations() {
+	    _classCallCheck(this, Translations);
+
+	    this._hash = {};
+	  }
+
+	  _createClass(Translations, [{
+	    key: "setLanguage",
+	    value: function setLanguage(lang) {
+	      this._language = lang;
+	    }
+	  }, {
+	    key: "getLanguage",
+	    value: function getLanguage() {
+	      return window.language || this._language || DEFAULT_LANGUAGE;
+	    }
+	  }, {
+	    key: "addText",
+	    value: function addText(lang, tran) {
+	      this._hash[lang] = extend(this._hash[lang] || {}, tran);
+	      return this;
+	    }
+	  }, {
+	    key: "getText",
+	    value: function getText(key) {
+	      if (key && typeof key === 'string') {
+	        var locale = this._hash[this.getLanguage()];
+
+	        if (locale) {
+	          return key.split('.').reduce(function (a, k) {
+	            return a[k];
+	          }, locale);
+	        }
+	      }
+
+	      return null;
+	    }
+	  }]);
+
+	  return Translations;
+	}();
+
+	window.Scanex = window.Scanex || {};
+	window.Scanex.Translations = window.Scanex.Translations || {};
+	window.Scanex.translations = window.Scanex.translations || new Translations();
+	var T = window.Scanex.translations;
 
 	var tzm = new Date().getTimezoneOffset() * 60000,
 	    getUTCTimeString = function getUTCTimeString(time) {
@@ -35690,7 +35558,7 @@ var Forestry = (function () {
 
 	L.gmx.timeline = links;
 
-	var translate$2 = T.getText.bind(T);
+	var translate$1 = T.getText.bind(T);
 	T.addText('rus', {
 	  DateInterval: {
 	    onlyChecked: 'Только отмеченные',
@@ -35717,7 +35585,7 @@ var Forestry = (function () {
 	    this.options = _objectSpread2(_objectSpread2({}, this.options), options);
 	  },
 	  onAdd: function onAdd(map) {
-	    var _this = this;
+	    var _this2 = this;
 
 	    this._map = map;
 	    this._container = leafletSrc.DomUtil.create('div', 'scanex-date-interval');
@@ -35726,20 +35594,20 @@ var Forestry = (function () {
 	    this._tabs = leafletSrc.DomUtil.create('div', 'buttons', this._container);
 	    this._timelineNode = leafletSrc.DomUtil.create('div', 'timeline', this._container);
 	    this._icon = leafletSrc.DomUtil.create('div', 'icon', this._container);
-	    this._icon.innerHTML = translate$2('DateInterval.title');
+	    this._icon.innerHTML = translate$1('DateInterval.title');
 	    this._topCont = leafletSrc.DomUtil.create('div', 'top', this._container);
 	    this._onlyCheckedNode = leafletSrc.DomUtil.create('input', '', this._topCont);
 	    this._onlyCheckedNode.type = 'checkbox';
 	    this._onlyCheckedNode.checked = true;
 	    leafletSrc.DomEvent.on(this._onlyCheckedNode, 'click', this._onlyChecked, this);
 	    this._onlyCheckedLabel = leafletSrc.DomUtil.create('label', '', this._topCont);
-	    this._onlyCheckedLabel.innerHTML = translate$2('DateInterval.onlyChecked');
+	    this._onlyCheckedLabel.innerHTML = translate$1('DateInterval.onlyChecked');
 	    this._onlyOneNode = leafletSrc.DomUtil.create('input', '', this._topCont);
 	    this._onlyOneNode.type = 'checkbox';
 	    this._onlyOneNode.checked = true;
 	    leafletSrc.DomEvent.on(this._onlyOneNode, 'click', this._onlyOne, this);
 	    this._onlyOneLabel = leafletSrc.DomUtil.create('label', '', this._topCont);
-	    this._onlyOneLabel.innerHTML = translate$2('DateInterval.onlyOne');
+	    this._onlyOneLabel.innerHTML = translate$1('DateInterval.onlyOne');
 	    this._timeline = new links.Timeline(this._timelineNode, {
 	      locale: 'ru',
 	      width: '100%',
@@ -35763,7 +35631,7 @@ var Forestry = (function () {
 	    // .on(this._timelineNode, 'keyup', this._keydown, this);
 
 	    var chkZoom = function chkZoom() {
-	      _this.toggle(map.getZoom() >= _this.options.minZoom);
+	      _this2.toggle(map.getZoom() >= _this2.options.minZoom);
 	    };
 
 	    map.on('zoomend', chkZoom, this);
@@ -35794,40 +35662,56 @@ var Forestry = (function () {
 	      this.options.onlyOne = checked;
 
 	      if (checked) {
-	        var arr = Object.keys(layer._showDates);
+	        layer._showDates = {};
 
-	        this._toggleData(true, Number(arr[0]) || null);
+	        var utm = this._getLastUtm();
+
+	        if (utm) {
+	          layer._showDates[utm] = true;
+	        }
+
+	        this._refreshTimeLine();
+
+	        layer.repaint();
 	      }
 	    }
 	  },
 	  _onlyChecked: function _onlyChecked(e) {
 	    leafletSrc.DomEvent.stopPropagation(e);
 	    var checked = e.target.checked;
+	    this.options.onlyChecked = checked;
 
 	    if (checked) {
 	      this._onlyOneNode.disabled = false;
 	      this._onlyOneNode.checked = true;
-	      var tm = this._timeline;
+	      this.options.onlyOne = true;
 
-	      if (tm.data.length) {
-	        var key = tm.data[tm.data.length - 1].start.getTime() / 1000;
+	      var utm = this._getLastUtm();
+
+	      if (utm) {
 	        var layer = this._layers[this._activeTab];
 
 	        if (layer) {
 	          layer._showDates = {};
-	          layer._showDates[key] = true;
+	          layer._showDates[utm] = true;
 
 	          this._refreshTimeLine();
 
+	          layer.repaint();
 	          return;
 	        }
 	      }
 	    } else {
 	      this._onlyOneNode.disabled = true;
 	      this._onlyOneNode.checked = false;
+	      this.options.onlyOne = false;
 	    }
 
 	    this._toggleData(checked);
+	  },
+	  _getLastUtm: function _getLastUtm() {
+	    var data = this._timeline.data;
+	    return data.length ? data[data.length - 1].start.getTime() / 1000 : null;
 	  },
 	  _refreshTimeLine: function _refreshTimeLine() {
 	    var layer = this._layers[this._activeTab];
@@ -35843,14 +35727,13 @@ var Forestry = (function () {
 	          it.className = '';
 	        }
 	      });
-	      tm.redraw(); // layer.repaint();
+	      tm.redraw();
 	    }
 	  },
 	  _toggleData: function _toggleData(checked, utm) {
 	    var layer = this._layers[this._activeTab];
 
 	    if (layer) {
-	      // console.log('onlyChecked', checked, layer._showDates, this._timeline);
 	      var tm = this._timeline;
 	      tm.data.forEach(function (it, ind) {
 	        var key = it.start.getTime() / 1000;
@@ -35867,6 +35750,30 @@ var Forestry = (function () {
 	      layer.repaint();
 	    }
 	  },
+	  setVisibleChartRange: function setVisibleChartRange(d1, d2) {
+	    this._timeline.setVisibleChartRange(d1, d2);
+	  },
+	  setActives: function setActives(arr) {
+	    var layer = this._layers[this._activeTab];
+
+	    if (layer) {
+	      this._onlyOneNode.disabled = false;
+	      this._onlyOneNode.checked = false;
+	      this.options.onlyOne = false;
+	      this._onlyCheckedNode.checked = true;
+	      this.options.onlyChecked = true;
+	      layer._showDates = {};
+	      arr.forEach(function (date) {
+	        var utm = _DAY * Math.floor(date.getTime() / 1000 / _DAY);
+
+	        layer._showDates[utm] = true;
+	      });
+
+	      this._refreshTimeLine();
+
+	      this._reSetDateInterval();
+	    }
+	  },
 	  _toggleActive: function _toggleActive(node, utm) {
 	    var classList = node.classList;
 	    var layer = this._layers[this._activeTab];
@@ -35879,7 +35786,7 @@ var Forestry = (function () {
 	      layer._showDates[utm] = true;
 	    }
 
-	    this._timeline.redraw();
+	    this._refreshTimeLine();
 
 	    layer.repaint();
 	  },
@@ -35935,6 +35842,7 @@ var Forestry = (function () {
 	    }
 	  },
 	  _addObserver: function _addObserver(layer) {
+
 	    var tm = this._timeline;
 	    layer._gmx.rawProperties.maxShownPeriod = null;
 	    layer.options.minZoom = this.options.minZoom;
@@ -35994,6 +35902,7 @@ var Forestry = (function () {
 
 
 	        tm.setData(data); // Перерисовка таймлайна
+	        // _this._refreshTimeLine();
 	      }
 	    });
 	    layer._observer = observer;
@@ -36025,6 +35934,8 @@ var Forestry = (function () {
 	    if (flag) {
 	      this._timelineNode.classList.remove('hidden');
 
+	      this._topCont.classList.remove('hidden');
+
 	      this._tabs.classList.remove('hidden');
 
 	      this._icon.classList.add('hidden');
@@ -36034,6 +35945,8 @@ var Forestry = (function () {
 	      }
 	    } else {
 	      this._timelineNode.classList.add('hidden');
+
+	      this._topCont.classList.add('hidden');
 
 	      this._tabs.classList.add('hidden');
 
@@ -36079,7 +35992,7 @@ var Forestry = (function () {
 	    this._chkTabs();
 	  },
 	  addLayer: function addLayer(layer) {
-	    var _this2 = this;
+	    var _this3 = this;
 
 	    var _layer$getGmxProperti2 = layer.getGmxProperties(),
 	        LayerID = _layer$getGmxProperti2.LayerID,
@@ -36092,7 +36005,7 @@ var Forestry = (function () {
 	      leafletSrc.DomEvent.on(tab, 'click', function (e) {
 	        leafletSrc.DomEvent.stopPropagation(e);
 
-	        _this2.setTab(LayerID);
+	        _this3.setTab(LayerID);
 	      }, this);
 	      layer._tabNode = tab;
 	      this.setTab(LayerID);
@@ -36762,7 +36675,7 @@ var Forestry = (function () {
 	    }
 	  },
 	  enable: function enable(id) {
-	    var container = this._container.querySelector("[data-id=".concat(id, "]"));
+	    var container = this._container.querySelector("[data-id=\"".concat(id, "\"]"));
 
 	    if (container) {
 	      var btn = container.querySelector('.toggle');
@@ -36774,7 +36687,7 @@ var Forestry = (function () {
 	    }
 	  },
 	  disable: function disable(id) {
-	    var container = this._container.querySelector("[data-id=".concat(id, "]"));
+	    var container = this._container.querySelector("[data-id=\"".concat(id, "\"]"));
 
 	    if (container) {
 	      var btn = container.querySelector('.toggle');
@@ -36786,7 +36699,7 @@ var Forestry = (function () {
 	    }
 	  },
 	  state: function state(id) {
-	    var container = this._container.querySelector("[data-id=".concat(id, "]"));
+	    var container = this._container.querySelector("[data-id=\"".concat(id, "\"]"));
 
 	    if (container) {
 	      var btn = container.querySelector('.toggle');
@@ -36796,7 +36709,7 @@ var Forestry = (function () {
 	    }
 	  },
 	  toggle: function toggle(id) {
-	    var container = this._container.querySelector("[data-id=".concat(id, "]"));
+	    var container = this._container.querySelector("[data-id=\"".concat(id, "\"]"));
 
 	    if (container) {
 	      var btn = container.querySelector('.toggle');
@@ -36860,7 +36773,7 @@ var Forestry = (function () {
 	    return children;
 	  },
 	  enableGroup: function enableGroup(id) {
-	    var container = this._container.querySelector(".group[data-id=".concat(id, "]"));
+	    var container = this._container.querySelector(".group[data-id=\"".concat(id, "\"]"));
 
 	    if (container) {
 	      var btn = container.querySelector('.header').querySelector('.toggle');
@@ -36886,7 +36799,7 @@ var Forestry = (function () {
 	    }
 	  },
 	  disableGroup: function disableGroup(id) {
-	    var container = this._container.querySelector(".group[data-id=".concat(id, "]"));
+	    var container = this._container.querySelector(".group[data-id=\"".concat(id, "\"]"));
 
 	    if (container) {
 	      var btn = container.querySelector('.header').querySelector('.toggle');
@@ -36939,6 +36852,164 @@ var Forestry = (function () {
 	    return container;
 	  },
 	  onRemove: function onRemove() {}
+	});
+
+	var Control = leafletSrc.Control.extend({
+	  includes: leafletSrc.Evented.prototype,
+	  options: {
+	    position: 'topright',
+	    apiKey: '',
+	    add: false
+	  },
+	  onAdd: function onAdd(map) {
+	    var _this = this;
+
+	    this._layers = {};
+	    this._current = null;
+	    this._visible = false;
+	    this._container = leafletSrc.DomUtil.create('div', 'scanex-baselayers');
+	    this._content = leafletSrc.DomUtil.create('div', 'content', this._container);
+	    this._icon = leafletSrc.DomUtil.create('i', 'scanex-baselayers-icon icon', this._container);
+	    leafletSrc.DomEvent.on(this._icon, 'click', function (e) {
+	      leafletSrc.DomEvent.stopPropagation(e);
+
+	      if (_this._visible) {
+	        _this.hide();
+	      } else {
+	        _this.show();
+	      }
+	    }, this);
+	    this.hide();
+
+	    if (this.options.add) {
+	      var addContainer = leafletSrc.DomUtil.create('div', 'baselayer-add', this._content);
+	      leafletSrc.DomUtil.create('i', 'scanex-baselayers-icon add', addContainer);
+	      leafletSrc.DomEvent.on(addContainer, 'click', function (e) {
+	        leafletSrc.DomEvent.stopPropagation(e);
+
+	        _this.fire('add');
+	      }, this);
+	    }
+
+	    return this._container;
+	  },
+	  addItem: function addItem(_ref) {
+	    var _this2 = this;
+
+	    var title = _ref.title,
+	        id = _ref.id,
+	        urlTemplate = _ref.urlTemplate,
+	        iconUrl = _ref.iconUrl,
+	        _ref$minZoom = _ref.minZoom,
+	        minZoom = _ref$minZoom === void 0 ? 1 : _ref$minZoom,
+	        _ref$maxZoom = _ref.maxZoom,
+	        maxZoom = _ref$maxZoom === void 0 ? 21 : _ref$maxZoom,
+	        _ref$removable = _ref.removable,
+	        removable = _ref$removable === void 0 ? false : _ref$removable,
+	        _ref$userLayer = _ref.userLayer,
+	        userLayer = _ref$userLayer === void 0 ? false : _ref$userLayer;
+
+	    if (id && !this._layers[id]) {
+	      this._layers[id] = leafletSrc.tileLayer(urlTemplate, {
+	        minZoom: minZoom,
+	        maxZoom: maxZoom,
+	        zIndex: -1000000
+	      });
+	      var layerContainer = document.createElement('div');
+	      layerContainer.setAttribute('data-id', id);
+	      leafletSrc.DomUtil.addClass(layerContainer, 'baselayer');
+
+	      if (userLayer) {
+	        leafletSrc.DomUtil.addClass(layerContainer, 'user-baselayer');
+	      }
+
+	      var el = this._content.querySelector('.baselayer');
+
+	      if (el) {
+	        this._content.insertBefore(layerContainer, el);
+	      } else {
+	        this._content.appendChild(layerContainer);
+	      }
+
+	      var img = leafletSrc.DomUtil.create('img', '', layerContainer);
+	      leafletSrc.DomUtil.addClass(img, 'baselayer-icon');
+
+	      if (userLayer) {
+	        leafletSrc.DomUtil.addClass(img, 'user-baselayer-icon');
+	      }
+
+	      img.src = iconUrl;
+	      leafletSrc.DomEvent.on(layerContainer, 'click', function (e) {
+	        leafletSrc.DomEvent.stopPropagation(e);
+
+	        _this2.select(id);
+	      }, this);
+	      var label = leafletSrc.DomUtil.create('label', 'baselayer-title', layerContainer);
+	      label.innerText = title;
+
+	      if (removable) {
+	        var btnRemove = leafletSrc.DomUtil.create('i', 'scanex-baselayers-icon close', layerContainer);
+	        leafletSrc.DomEvent.on(btnRemove, 'click', function (e) {
+	          leafletSrc.DomEvent.stopPropagation(e);
+
+	          _this2.removeItem(id);
+	        }, this);
+	      }
+	    }
+	  },
+	  select: function select(id) {
+	    if (this._current !== id && this._layers[id]) {
+	      var el = this._current && this._content.querySelector("[data-id=\"".concat(this._current, "\"]"));
+
+	      if (el) {
+	        leafletSrc.DomUtil.removeClass(el, 'current');
+
+	        this._map.removeLayer(this._layers[id]);
+
+	        this._map.invalidateSize();
+	      }
+
+	      this._current = id;
+	      el = this._content.querySelector("[data-id=\"".concat(id, "\"]"));
+	      leafletSrc.DomUtil.addClass(el, 'current');
+
+	      this._map.addLayer(this._layers[id]);
+	    }
+	  },
+	  removeItem: function removeItem(id) {
+	    if (id && this._layers[id]) {
+	      this._map.removeLayer(this._layers[id]);
+
+	      var el = this._content.querySelector("[data-id=\"".concat(id, "\"]"));
+
+	      leafletSrc.DomUtil.remove(el);
+	      delete this._layers[id];
+
+	      if (this._current === id) {
+	        var f = Object.keys(this._layers)[0];
+
+	        if (f) {
+	          this.select(f);
+	        }
+	      }
+
+	      this.fire('remove', {
+	        layerID: id
+	      });
+	    }
+	  },
+	  show: function show() {
+	    this._visible = true;
+	    leafletSrc.DomUtil.addClass(this._icon, 'active');
+	    leafletSrc.DomUtil.removeClass(this._content, 'hidden');
+	    this.fire('show');
+	  },
+	  hide: function hide() {
+	    this._visible = false;
+	    leafletSrc.DomUtil.removeClass(this._icon, 'active');
+	    leafletSrc.DomUtil.addClass(this._content, 'hidden');
+	    this.fire('hide');
+	  }
 	});
 
 	var s = {
@@ -37034,7 +37105,8 @@ var Forestry = (function () {
 	Object.keys(s).forEach(function (lang) {
 	  return T.addText(lang, s[lang]);
 	});
-	var translate$3 = T.getText.bind(T);
+	var translate$2 = T.getText.bind(T);
+	var TASK_POLLING_DELAY = 3000;
 
 	var Controller = /*#__PURE__*/function (_EventTarget) {
 	  _inherits(Controller, _EventTarget);
@@ -37067,37 +37139,37 @@ var Forestry = (function () {
 	          return response.json();
 
 	        case 401:
-	          this._notification.error(translate$3('error.unauthorized'));
+	          this._notification.error(translate$2('error.unauthorized'));
 
 	          return;
 
 	        case 403:
-	          this._notification.error(translate$3('error.forbidden'));
+	          this._notification.error(translate$2('error.forbidden'));
 
 	          return;
 
 	        case 404:
-	          this._notification.error(translate$3('error.notfound'));
+	          this._notification.error(translate$2('error.notfound'));
 
 	          return;
 
 	        case 500:
-	          this._notification.error(translate$3('error.server'));
+	          this._notification.error(translate$2('error.server'));
 
 	          return;
 
 	        case 502:
-	          this._notification.error(translate$3('error.gateway'));
+	          this._notification.error(translate$2('error.gateway'));
 
 	          return;
 
 	        case 503:
-	          this._notification.error(translate$3('error.unavailable'));
+	          this._notification.error(translate$2('error.unavailable'));
 
 	          return;
 
 	        default:
-	          this._notification.error(translate$3('error.other'));
+	          this._notification.error(translate$2('error.other'));
 
 	          return;
 	      }
@@ -37129,23 +37201,17 @@ var Forestry = (function () {
 	      });
 	    }
 	  }, {
-	    key: "httpGet",
-	    value: function httpGet(url) {
+	    key: "postData",
+	    value: function postData(url, fd) {
 	      var _this3 = this;
 
-	      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 	      return new Promise(function (resolve) {
 	        _this3._loading.open();
 
-	        var args = Object.keys(options);
-	        fetch("".concat(args.length > 0 ? "".concat(url, "?").concat(args.map(function (k) {
-	          return "".concat(k, "=").concat(options[k]);
-	        }).join('&')) : url), {
-	          method: 'GET',
+	        fetch(url, {
+	          method: 'POST',
 	          credentials: 'include',
-	          headers: {
-	            'Content-Type': 'application/json'
-	          }
+	          body: fd
 	        }).then(_this3._status.bind(_this3)).then(function (data) {
 	          _this3._loading.close();
 
@@ -37158,20 +37224,23 @@ var Forestry = (function () {
 	      });
 	    }
 	  }, {
-	    key: "sendForm",
-	    value: function sendForm(url, fd) {
+	    key: "httpGet",
+	    value: function httpGet(url) {
 	      var _this4 = this;
 
+	      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 	      return new Promise(function (resolve) {
 	        _this4._loading.open();
 
-	        fetch(url, {
-	          method: 'POST',
+	        var args = Object.keys(options);
+	        fetch("".concat(args.length > 0 ? "".concat(url, "?").concat(args.map(function (k) {
+	          return "".concat(k, "=").concat(options[k]);
+	        }).join('&')) : url), {
+	          method: 'GET',
 	          credentials: 'include',
 	          headers: {
-	            'Content-Type': 'application/x-www-form-urlencoded'
-	          },
-	          body: fd
+	            'Content-Type': 'application/json'
+	          }
 	        }).then(_this4._status.bind(_this4)).then(function (data) {
 	          _this4._loading.close();
 
@@ -37181,6 +37250,75 @@ var Forestry = (function () {
 
 	          resolve();
 	        });
+	      });
+	    }
+	  }, {
+	    key: "sendForm",
+	    value: function sendForm(url, fd) {
+	      var _this5 = this;
+
+	      return new Promise(function (resolve) {
+	        _this5._loading.open();
+
+	        fetch(url, {
+	          method: 'POST',
+	          credentials: 'include',
+	          headers: {
+	            'Content-Type': 'application/x-www-form-urlencoded'
+	          },
+	          body: fd
+	        }).then(_this5._status.bind(_this5)).then(function (data) {
+	          _this5._loading.close();
+
+	          resolve(data);
+	        }).catch(function (e) {
+	          _this5._loading.close();
+
+	          resolve();
+	        });
+	      });
+	    }
+	  }, {
+	    key: "poll",
+	    value: function poll(taskID) {
+	      var _this6 = this;
+
+	      return new Promise(function (resolve, reject) {
+	        var id = window.setInterval( /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+	          return regeneratorRuntime.wrap(function _callee$(_context) {
+	            while (1) {
+	              switch (_context.prev = _context.next) {
+	                case 0:
+	                  _this6.httpGet("".concat(_this6._path, "/AsyncTask.ashx"), {
+	                    WrapStyle: 'None',
+	                    TaskID: taskID
+	                  }).then(function (data) {
+	                    if (data) {
+	                      var Status = data.Status,
+	                          Result = data.Result;
+
+	                      if (Status === 'ok') {
+	                        if (Result.Completed) {
+	                          window.clearInterval(id);
+	                          resolve();
+	                        }
+	                      }
+	                    } else {
+	                      window.clearInterval(id);
+	                      reject();
+	                    }
+	                  }).catch(function () {
+	                    window.clearInterval(id);
+	                    reject();
+	                  });
+
+	                case 1:
+	                case "end":
+	                  return _context.stop();
+	              }
+	            }
+	          }, _callee);
+	        })), TASK_POLLING_DELAY);
 	      });
 	    }
 	  }, {
@@ -37204,65 +37342,65 @@ var Forestry = (function () {
 
 	  var _super2 = _createSuper(LayerController);
 
-	  function LayerController(_ref2) {
-	    var _this5;
+	  function LayerController(_ref3) {
+	    var _this7;
 
-	    var kind = _ref2.kind,
-	        map = _ref2.map,
-	        content = _ref2.content,
-	        notification = _ref2.notification,
-	        loading = _ref2.loading,
-	        layer = _ref2.layer,
-	        legend = _ref2.legend;
+	    var kind = _ref3.kind,
+	        map = _ref3.map,
+	        content = _ref3.content,
+	        notification = _ref3.notification,
+	        loading = _ref3.loading,
+	        layer = _ref3.layer,
+	        legend = _ref3.legend;
 
 	    _classCallCheck(this, LayerController);
 
-	    _this5 = _super2.call(this, {
+	    _this7 = _super2.call(this, {
 	      map: map,
 	      content: content,
 	      notification: notification,
 	      loading: loading
 	    });
-	    _this5._kind = kind;
-	    _this5._layer = layer;
-	    _this5._legend = legend;
+	    _this7._kind = kind;
+	    _this7._layer = layer;
+	    _this7._legend = legend;
 
-	    _this5._layer.on('click', _this5._click, _assertThisInitialized(_this5));
+	    _this7._layer.on('click', _this7._click, _assertThisInitialized(_this7));
 
-	    _this5._layer.setStyleHook(function (item) {
-	      var c = _this5._content.getCurrent();
+	    _this7._layer.setStyleHook(function (item) {
+	      var c = _this7._content.getCurrent();
 
 	      if (c) {
-	        return c.getStyleHook(_this5._kind, item);
+	        return c.getStyleHook(_this7._kind, item);
 	      } else {
 	        return {};
 	      }
 	    });
 
-	    _this5._layer.setFilter(function (item) {
-	      var c = _this5._content.getCurrent();
+	    _this7._layer.setFilter(function (item) {
+	      var c = _this7._content.getCurrent();
 
 	      if (c) {
-	        return c.getFilter(_this5._kind, item);
+	        return c.getFilter(_this7._kind, item);
 	      } else {
 	        return true;
 	      }
 	    });
 
-	    _this5._legend.addComponent(_this5._kind, translate$3("legend.".concat(_this5._kind)));
+	    _this7._legend.addComponent(_this7._kind, translate$2("legend.".concat(_this7._kind)));
 
-	    _this5._legend.on('click', _this5._toggle, _assertThisInitialized(_this5));
+	    _this7._legend.on('click', _this7._toggle, _assertThisInitialized(_this7));
 
-	    return _this5;
+	    return _this7;
 	  }
 
 	  _createClass(LayerController, [{
 	    key: "_click",
 	    value: function () {
-	      var _click2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e) {
-	        return regeneratorRuntime.wrap(function _callee$(_context) {
+	      var _click2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(e) {
+	        return regeneratorRuntime.wrap(function _callee2$(_context2) {
 	          while (1) {
-	            switch (_context.prev = _context.next) {
+	            switch (_context2.prev = _context2.next) {
 	              case 0:
 	                if (this.canClick) {
 	                  L.DomEvent.stopPropagation(e);
@@ -37270,10 +37408,10 @@ var Forestry = (function () {
 
 	              case 1:
 	              case "end":
-	                return _context.stop();
+	                return _context2.stop();
 	            }
 	          }
-	        }, _callee, this);
+	        }, _callee2, this);
 	      }));
 
 	      function _click(_x) {
@@ -37301,7 +37439,1436 @@ var Forestry = (function () {
 	  return LayerController;
 	}(Controller);
 
+	var Component = /*#__PURE__*/function (_EventTarget) {
+	  _inherits(Component, _EventTarget);
+
+	  var _super = _createSuper(Component);
+
+	  function Component(container, options) {
+	    var _this;
+
+	    _classCallCheck(this, Component);
+
+	    _this = _super.call(this);
+	    _this._container = container;
+	    _this._element = document.createElement('div');
+
+	    _this._element.classList.add('scanex-component');
+
+	    _this._container.appendChild(_this._element);
+
+	    _this._render(_this._element, options);
+
+	    return _this;
+	  }
+
+	  _createClass(Component, [{
+	    key: "destroy",
+	    value: function destroy() {
+	      this._container.removeChild(this._element);
+	    }
+	  }, {
+	    key: "forwardEvent",
+	    value: function forwardEvent(e) {
+	      e.stopPropagation();
+	      var event = document.createEvent('Event');
+	      event.initEvent(e.type, false, false);
+	      event.detail = e.detail;
+	      this.dispatchEvent(event);
+	    }
+	  }, {
+	    key: "_render",
+	    value: function _render(element, options) {}
+	  }]);
+
+	  return Component;
+	}(EventTarget);
+
+	var DEFAULT_LANGUAGE$1 = 'rus';
+
+	var Translations$1 = /*#__PURE__*/function () {
+	  function Translations() {
+	    _classCallCheck(this, Translations);
+
+	    this._hash = {};
+	  }
+
+	  _createClass(Translations, [{
+	    key: "setLanguage",
+	    value: function setLanguage(lang) {
+	      this._language = lang;
+	    }
+	  }, {
+	    key: "getLanguage",
+	    value: function getLanguage() {
+	      return window.language || this._language || DEFAULT_LANGUAGE$1;
+	    }
+	  }, {
+	    key: "addText",
+	    value: function addText(lang, tran) {
+	      this._hash[lang] = extend(this._hash[lang] || {}, tran);
+	      return this;
+	    }
+	  }, {
+	    key: "getText",
+	    value: function getText(key) {
+	      if (key && typeof key === 'string') {
+	        var locale = this._hash[this.getLanguage()];
+
+	        if (locale) {
+	          return key.split('.').reduce(function (a, k) {
+	            return a[k];
+	          }, locale);
+	        }
+	      }
+
+	      return null;
+	    }
+	  }]);
+
+	  return Translations;
+	}();
+
+	window.Scanex = window.Scanex || {};
+	window.Scanex.Translations = window.Scanex.Translations || {};
+	window.Scanex.translations = window.Scanex.translations || new Translations$1();
+	var T$1 = window.Scanex.translations;
+
+	T$1.addText('rus', {
+	  scanex: {
+	    components: {
+	      dialog: {
+	        close: 'Закрыть',
+	        maximize: 'Развернуть',
+	        minimize: 'Свернуть'
+	      }
+	    }
+	  }
+	});
+	T$1.addText('eng', {
+	  scanex: {
+	    components: {
+	      dialog: {
+	        close: 'Close',
+	        maximize: 'Maximize',
+	        minimize: 'Minimize'
+	      }
+	    }
+	  }
+	});
+	var translate$3 = T$1.getText.bind(T$1);
+
+	var Dialog = /*#__PURE__*/function (_Component) {
+	  _inherits(Dialog, _Component);
+
+	  var _super = _createSuper(Dialog);
+
+	  function Dialog(_ref) {
+	    var _this;
+
+	    var title = _ref.title,
+	        id = _ref.id,
+	        _ref$collapsible = _ref.collapsible,
+	        collapsible = _ref$collapsible === void 0 ? false : _ref$collapsible,
+	        top = _ref.top,
+	        left = _ref.left;
+
+	    _classCallCheck(this, Dialog);
+
+	    _this = _super.call(this, document.body, {
+	      id: id,
+	      collapsible: collapsible,
+	      top: top,
+	      left: left
+	    });
+
+	    if (_this._id) {
+	      _this._element.setAttribute('id', _this._id);
+	    }
+
+	    _this._titleElement.innerText = title;
+	    _this._moving = false;
+	    _this._offsetX;
+	    _this._offsetY;
+
+	    _this._header.addEventListener('mousedown', _this._start.bind(_assertThisInitialized(_this)));
+
+	    _this._element.addEventListener('mousemove', _this._move.bind(_assertThisInitialized(_this)));
+
+	    window.addEventListener('mouseup', _this._stop.bind(_assertThisInitialized(_this)));
+	    return _this;
+	  }
+
+	  _createClass(Dialog, [{
+	    key: "_start",
+	    value: function _start(e) {
+	      e.stopPropagation();
+	      var clientX = e.clientX,
+	          clientY = e.clientY;
+
+	      var _this$_element$getBou = this._element.getBoundingClientRect(),
+	          top = _this$_element$getBou.top,
+	          left = _this$_element$getBou.left;
+
+	      this._offsetX = clientX - left;
+	      this._offsetY = clientY - top;
+	      this._moving = true;
+	    }
+	  }, {
+	    key: "_stop",
+	    value: function _stop() {
+	      if (this._moving) {
+	        this._moving = false;
+
+	        this._savePosition();
+	      }
+	    }
+	  }, {
+	    key: "_move",
+	    value: function _move(e) {
+	      if (this._moving) {
+	        e.stopPropagation();
+	        var clientX = e.clientX,
+	            clientY = e.clientY;
+	        this._element.style.left = "".concat(clientX - this._offsetX, "px");
+	        this._element.style.top = "".concat(clientY - this._offsetY, "px");
+	      }
+	    }
+	  }, {
+	    key: "_toggle",
+	    value: function _toggle(e) {
+	      e.stopPropagation();
+
+	      if (this._btnToggle.classList.contains('minimize')) {
+	        this._btnToggle.setAttribute('title', translate$3('scanex.components.dialog.maximize'));
+
+	        this._btnToggle.classList.remove('minimize');
+
+	        this._btnToggle.classList.add('maximize');
+
+	        this._content.classList.add('hidden');
+
+	        this._footer.classList.add('hidden');
+
+	        var event = document.createEvent('Event');
+	        event.initEvent('minimize', false, false);
+	        this.dispatchEvent(event);
+	      } else {
+	        this._btnToggle.setAttribute('title', translate$3('scanex.components.dialog.minimize'));
+
+	        this._btnToggle.classList.remove('maximize');
+
+	        this._btnToggle.classList.add('minimize');
+
+	        this._content.classList.remove('hidden');
+
+	        this._footer.classList.remove('hidden');
+
+	        var _event = document.createEvent('Event');
+
+	        _event.initEvent('maximize', false, false);
+
+	        this.dispatchEvent(_event);
+	      }
+	    }
+	  }, {
+	    key: "_close",
+	    value: function _close(e) {
+	      e.stopPropagation();
+	      var event = document.createEvent('Event');
+	      event.initEvent('close', false, false);
+	      this.dispatchEvent(event);
+	    }
+	  }, {
+	    key: "_render",
+	    value: function _render(element, _ref2) {
+	      var id = _ref2.id,
+	          collapsible = _ref2.collapsible,
+	          top = _ref2.top,
+	          left = _ref2.left;
+	      element.classList.add('scanex-component-dialog');
+	      this._id = id;
+
+	      this._restorePosition(top, left);
+
+	      this._header = document.createElement('div');
+
+	      this._header.classList.add('header');
+
+	      this._titleElement = document.createElement('label');
+
+	      this._header.appendChild(this._titleElement);
+
+	      var buttons = document.createElement('div');
+	      buttons.classList.add('header-buttons');
+
+	      if (collapsible) {
+	        this._btnToggle = document.createElement('i');
+
+	        this._btnToggle.setAttribute('title', translate$3('scanex.components.dialog.minimize'));
+
+	        this._btnToggle.classList.add('scanex-component-icon');
+
+	        this._btnToggle.classList.add('minimize');
+
+	        this._btnToggle.addEventListener('click', this._toggle.bind(this));
+
+	        buttons.appendChild(this._btnToggle);
+	      }
+
+	      var btnClose = document.createElement('i');
+	      btnClose.setAttribute('title', translate$3('scanex.components.dialog.close'));
+	      btnClose.classList.add('scanex-component-icon');
+	      btnClose.classList.add('close');
+	      btnClose.addEventListener('click', this._close.bind(this));
+	      buttons.appendChild(btnClose);
+
+	      this._header.appendChild(buttons);
+
+	      element.appendChild(this._header);
+	      this._content = document.createElement('div');
+
+	      this._content.classList.add('content');
+
+	      element.appendChild(this._content);
+	      this._footer = document.createElement('div');
+
+	      this._footer.classList.add('footer');
+
+	      element.appendChild(this._footer);
+	    }
+	  }, {
+	    key: "_restorePosition",
+	    value: function _restorePosition(top, left) {
+	      if (typeof this._id === 'string' && this._id != '') {
+	        var pos = window.localStorage.getItem("".concat(this._id, ".position"));
+
+	        var _ref3 = pos && pos.split(',') || [0, 0],
+	            _ref4 = _slicedToArray(_ref3, 2),
+	            x = _ref4[0],
+	            y = _ref4[1];
+
+	        this._element.style.top = "".concat(y || top || Math.round(window.innerHeight / 2), "px");
+	        this._element.style.left = "".concat(x || left || Math.round(window.innerWidth / 2), "px");
+	      } else {
+	        this._element.style.top = "".concat(top || Math.round(window.innerHeight / 2), "px");
+	        this._element.style.left = "".concat(left || Math.round(window.innerWidth / 2), "px");
+	      }
+	    }
+	  }, {
+	    key: "_savePosition",
+	    value: function _savePosition() {
+	      if (typeof this._id === 'string' && this._id != '') {
+	        var _this$_element$getBou2 = this._element.getBoundingClientRect(),
+	            top = _this$_element$getBou2.top,
+	            left = _this$_element$getBou2.left;
+
+	        window.localStorage.setItem("".concat(this._id, ".position"), [left, top].join(','));
+	      }
+	    }
+	  }, {
+	    key: "header",
+	    get: function get() {
+	      return this._header;
+	    }
+	  }, {
+	    key: "content",
+	    get: function get() {
+	      return this._content;
+	    }
+	  }, {
+	    key: "footer",
+	    get: function get() {
+	      return this._footer;
+	    }
+	  }]);
+
+	  return Dialog;
+	}(Component);
+
+	var Spinner = /*#__PURE__*/function (_Component) {
+	  _inherits(Spinner, _Component);
+
+	  var _super = _createSuper(Spinner);
+
+	  function Spinner(container) {
+	    var _this;
+
+	    _classCallCheck(this, Spinner);
+
+	    _this = _super.call(this, container);
+	    _this._value = 0;
+	    _this._min = 0;
+	    _this._max = 0;
+
+	    _this._up.addEventListener('click', _this.increment.bind(_assertThisInitialized(_this)));
+
+	    _this._down.addEventListener('click', _this.decrement.bind(_assertThisInitialized(_this)));
+
+	    _this._input.addEventListener('change', _this._onChange.bind(_assertThisInitialized(_this)));
+
+	    return _this;
+	  }
+
+	  _createClass(Spinner, [{
+	    key: "_onChange",
+	    value: function _onChange(e) {
+	      e.stopPropagation();
+	      this.value = parseInt(this._input.value, 10);
+	    }
+	  }, {
+	    key: "_validate",
+	    value: function _validate(value) {
+	      return !isNaN(value) && this._min <= value && value <= this._max;
+	    }
+	  }, {
+	    key: "increment",
+	    value: function increment(e) {
+	      e.stopPropagation();
+	      this.value = this._value + 1;
+	    }
+	  }, {
+	    key: "decrement",
+	    value: function decrement(e) {
+	      e.stopPropagation();
+	      this.value = this._value - 1;
+	    }
+	  }, {
+	    key: "_render",
+	    value: function _render(element) {
+	      element.classList.add('scanex-component-spinner');
+	      element.innerHTML = "<input type=\"text\" value=\"0\"/>\n        <div class=\"buttons\">\n            <i class=\"scanex-component-icon spinner-up\"></i>            \n            <i class=\"scanex-component-icon spinner-down\"></i>\n        </div>";
+	      this._input = element.querySelector('input');
+	      this._up = element.querySelector('.spinner-up');
+	      this._down = element.querySelector('.spinner-down');
+	    }
+	  }, {
+	    key: "value",
+	    get: function get() {
+	      return this._value;
+	    },
+	    set: function set(value) {
+	      if (this._validate(value)) {
+	        this._value = value;
+	        var event = document.createEvent('Event');
+	        event.initEvent("change", false, false);
+	        event.detail = this._value;
+	        this.dispatchEvent(event);
+	      }
+
+	      this._input.value = this._value.toString();
+	    }
+	  }, {
+	    key: "min",
+	    get: function get() {
+	      return this._min;
+	    },
+	    set: function set(min) {
+	      if (!isNaN(min)) {
+	        this._min = min;
+	      }
+	    }
+	  }, {
+	    key: "max",
+	    get: function get() {
+	      return this._max;
+	    },
+	    set: function set(max) {
+	      if (!isNaN(max) && this._min <= max) {
+	        this._max = max;
+	      }
+	    }
+	  }]);
+
+	  return Spinner;
+	}(Component);
+
+	var Slider1 = /*#__PURE__*/function (_Component) {
+	  _inherits(Slider1, _Component);
+
+	  var _super = _createSuper(Slider1);
+
+	  function Slider1(container, _ref) {
+	    var _this;
+
+	    var min = _ref.min,
+	        max = _ref.max;
+
+	    _classCallCheck(this, Slider1);
+
+	    _this = _super.call(this, container);
+	    _this._delay = 50;
+	    _this._tick = null;
+	    _this._offset = 0;
+
+	    if (!isNaN(min) && !isNaN(max)) {
+	      _this._min = min;
+	      _this._max = max;
+	    } else {
+	      throw "min or max not set";
+	    }
+
+	    _this._rightTick.addEventListener('mousedown', _this._start.bind(_assertThisInitialized(_this), _this._rightTick));
+
+	    document.body.addEventListener('mousemove', _this._slide.bind(_assertThisInitialized(_this)));
+	    document.body.addEventListener('mouseup', _this._stop.bind(_assertThisInitialized(_this)));
+
+	    _this._bar.addEventListener('click', _this._click.bind(_assertThisInitialized(_this)));
+
+	    return _this;
+	  }
+
+	  _createClass(Slider1, [{
+	    key: "validate",
+	    value: function validate(value) {
+	      return !isNaN(value) && this.min <= value && value <= this.max;
+	    }
+	  }, {
+	    key: "_stop",
+	    value: function _stop() {
+	      if (this._tick !== null) {
+	        this._tick = null;
+	        this._offset = 0;
+	        var event = document.createEvent('Event');
+	        event.initEvent('stop', false, false);
+	        this.dispatchEvent(event);
+	      }
+	    }
+	  }, {
+	    key: "_start",
+	    value: function _start(tick, e) {
+	      e.stopPropagation();
+	      e.preventDefault();
+
+	      if (this._tick === null) {
+	        this._tick = tick;
+
+	        var t = this._tick.getBoundingClientRect();
+
+	        this._offset = e.clientX - t.left;
+	        var event = document.createEvent('Event');
+	        event.initEvent('start', false, false);
+	        this.dispatchEvent(event);
+	      }
+	    }
+	  }, {
+	    key: "_slide",
+	    value: function _slide(e) {
+	      var _this2 = this;
+
+	      e.stopPropagation();
+	      e.preventDefault();
+	      var tid = window.setTimeout(function () {
+	        window.clearTimeout(tid);
+
+	        if (_this2._tick) {
+	          var t = _this2._tick.getBoundingClientRect();
+
+	          var b = _this2._bar.getBoundingClientRect();
+
+	          var x = e.clientX - _this2._offset;
+
+	          if (b.left <= x && x + t.width <= b.right) {
+	            _this2._range.style.width = "".concat(e.clientX - _this2._offset + t.width - b.left, "px");
+
+	            _this2._updateBounds();
+	          }
+	        }
+	      }, this._delay);
+	    }
+	  }, {
+	    key: "_click",
+	    value: function _click(e) {
+	      if (!this._tick) {
+	        e.stopPropagation();
+
+	        var b = this._bar.getBoundingClientRect();
+
+	        var t = this._rightTick.getBoundingClientRect();
+
+	        var halfWidth = Math.round(t.width / 2);
+
+	        if (e.clientX < b.left + halfWidth) {
+	          this._range.style.width = "".concat(t.width, "px");
+	        } else if (e.clientX > b.right - halfWidth) {
+	          this._range.style.width = "".concat(b.width, "px");
+	        } else {
+	          this._range.style.width = "".concat(e.clientX - b.left + halfWidth, "px");
+	        }
+
+	        this._updateBounds();
+	      }
+	    }
+	  }, {
+	    key: "_updateBounds",
+	    value: function _updateBounds() {
+	      var b = this._bar.getBoundingClientRect();
+
+	      var t = this._rightTick.getBoundingClientRect();
+
+	      var k = (this.max - this.min) / (b.width - t.width);
+	      this._lo = this.min;
+	      var hi = t.left - b.left;
+	      this._hi = this.min + (this.mode === 'float' ? hi * k : Math.round(hi * k));
+	      var event = document.createEvent('Event');
+	      event.initEvent('change', false, false);
+	      this.dispatchEvent(event);
+	    }
+	  }, {
+	    key: "_render",
+	    value: function _render(element) {
+	      element.classList.add('scanex-component-slider');
+	      element.classList.add('no-select');
+	      element.innerHTML = "<div class=\"slider-bar\">\n                <div class=\"slider-range\">\n                    <div class=\"slider-tick slider-tick-right\">\n                        <label></label>\n                        <i></i>\n                    </div>\n                </div>\n            </div>";
+	      this._rightLabel = element.querySelector('.slider-tick label');
+
+	      this._rightLabel.classList.add('hidden');
+
+	      this._bar = element.querySelector('.slider-bar');
+	      this._rightTick = element.querySelector('.slider-tick-right');
+	      this._range = element.querySelector('.slider-range');
+	    }
+	  }, {
+	    key: "mode",
+	    get: function get() {
+	      return this._mode;
+	    },
+	    set: function set(mode) {
+	      this._mode = mode;
+	    }
+	  }, {
+	    key: "min",
+	    get: function get() {
+	      return this._min;
+	    }
+	  }, {
+	    key: "max",
+	    get: function get() {
+	      return this._max;
+	    }
+	  }, {
+	    key: "lo",
+	    get: function get() {
+	      return this._min;
+	    }
+	  }, {
+	    key: "hi",
+	    get: function get() {
+	      return this._hi;
+	    },
+	    set: function set(hi) {
+	      if (this.validate(hi) && isNaN(this.lo) || this.lo <= hi) {
+	        this._hi = hi;
+	      }
+
+	      if (!isNaN(this.lo) && !isNaN(this.hi)) {
+	        var b = this._bar.getBoundingClientRect();
+
+	        var t = this._rightTick.getBoundingClientRect();
+
+	        var k = (b.width - t.width) / (this.max - this.min);
+	        this._range.style.width = "".concat(Math.round((this.hi - this.lo) * k) + t.width, "px");
+	        var event = document.createEvent('Event');
+	        event.initEvent('change', false, false);
+	        this.dispatchEvent(event);
+	      }
+	    }
+	  }]);
+
+	  return Slider1;
+	}(Component);
+
+	var Slider2 = /*#__PURE__*/function (_Slider) {
+	  _inherits(Slider2, _Slider);
+
+	  var _super = _createSuper(Slider2);
+
+	  function Slider2(container, _ref) {
+	    var _this;
+
+	    var min = _ref.min,
+	        max = _ref.max;
+
+	    _classCallCheck(this, Slider2);
+
+	    _this = _super.call(this, container, {
+	      min: min,
+	      max: max
+	    });
+
+	    _this._leftTick.addEventListener('mousedown', _this._start.bind(_assertThisInitialized(_this), _this._leftTick));
+
+	    return _this;
+	  }
+
+	  _createClass(Slider2, [{
+	    key: "_slide",
+	    value: function _slide(e) {
+	      var _this2 = this;
+
+	      e.stopPropagation();
+	      e.preventDefault();
+	      var tid = window.setTimeout(function () {
+	        window.clearTimeout(tid);
+
+	        if (_this2._tick) {
+	          var lt = _this2._leftTick.getBoundingClientRect();
+
+	          var rt = _this2._rightTick.getBoundingClientRect();
+
+	          var w = lt.width + rt.width;
+
+	          var b = _this2._bar.getBoundingClientRect();
+
+	          var x = e.clientX - _this2._offset;
+
+	          if (_this2._tick === _this2._leftTick) {
+	            if (x > b.left) {
+	              if (x + lt.width < rt.left) {
+	                _this2._range.style.left = "".concat(x - b.left, "px");
+	                _this2._range.style.width = "".concat(rt.right - x, "px");
+	              } else {
+	                _this2._range.style.left = "".concat(rt.left - lt.width - b.left, "px");
+	                _this2._range.style.width = "".concat(w, "px");
+	              }
+	            }
+
+	            _this2._updateBounds();
+	          } else if (_this2._tick === _this2._rightTick) {
+	            if (x < b.right - rt.width) {
+	              if (lt.right < x) {
+	                _this2._range.style.width = "".concat(x - lt.right + w, "px");
+	              } else {
+	                _this2._range.style.width = "".concat(w, "px");
+	              }
+	            }
+
+	            _this2._updateBounds();
+	          }
+	        }
+	      }, this._delay);
+	    }
+	  }, {
+	    key: "_click",
+	    value: function _click(e) {
+	      if (!this._tick) {
+	        e.stopPropagation(); // const b = this._bar.getBoundingClientRect();
+	        // const t = this._rightTick.getBoundingClientRect();
+	        // const halfWidth = Math.round (t.width / 2);
+	        // if (e.clientX < b.left + halfWidth) {                
+	        //     this._range.style.width = `${t.width}px`;
+	        // }
+	        // else if (e.clientX > b.right - halfWidth) {
+	        //     this._range.style.width = `${b.width}px`;
+	        // }
+	        // else {
+	        //     this._range.style.width = `${e.clientX - b.left + halfWidth}px`;                
+	        // }        
+	        // this._updateBounds();
+	      }
+	    }
+	  }, {
+	    key: "_updateUI",
+	    value: function _updateUI() {
+	      if (!isNaN(this.lo) && !isNaN(this.hi)) {
+	        var lt = this._leftTick.getBoundingClientRect();
+
+	        var rt = this._rightTick.getBoundingClientRect();
+
+	        var w = lt.width + rt.width;
+
+	        var b = this._bar.getBoundingClientRect();
+
+	        var k = (b.width - w) / (this.max - this.min);
+	        this._range.style.left = "".concat(Math.round((this.lo - this.min) * k), "px");
+	        this._range.style.width = "".concat(Math.round((this.hi - this.lo) * k) + w, "px");
+	        var event = document.createEvent('Event');
+	        event.initEvent('change', false, false);
+	        this.dispatchEvent(event);
+	      }
+	    }
+	  }, {
+	    key: "_updateBounds",
+	    value: function _updateBounds() {
+	      var b = this._bar.getBoundingClientRect();
+
+	      var lt = this._leftTick.getBoundingClientRect();
+
+	      var rt = this._rightTick.getBoundingClientRect();
+
+	      var w = lt.width + rt.width;
+	      var k = (this.max - this.min) / (b.width - w);
+	      var lo = lt.left - b.left;
+	      this._lo = this.min + (this.mode === 'float' ? lo * k : Math.round(lo * k));
+	      var hi = rt.left - b.left - lt.width;
+	      this._hi = this.min + (this.mode === 'float' ? hi * k : Math.round(hi * k));
+	      var event = document.createEvent('Event');
+	      event.initEvent('change', false, false);
+	      this.dispatchEvent(event);
+	    }
+	  }, {
+	    key: "_render",
+	    value: function _render(element) {
+	      _get(_getPrototypeOf(Slider2.prototype), "_render", this).call(this, element);
+
+	      element.classList.add('scanex-component-two-tick-slider');
+	      this._leftTick = document.createElement('div');
+
+	      this._leftTick.classList.add('slider-tick');
+
+	      this._leftTick.classList.add('slider-tick-left');
+
+	      this._leftLabel = document.createElement('label');
+
+	      this._leftTick.appendChild(this._leftLabel);
+
+	      this._leftLabel.classList.add('hidden');
+
+	      var icn = document.createElement('i');
+
+	      this._leftTick.appendChild(icn);
+
+	      this._range.insertBefore(this._leftTick, this._rightTick);
+	    }
+	  }, {
+	    key: "lo",
+	    get: function get() {
+	      return this._lo;
+	    },
+	    set: function set(lo) {
+	      if (this.validate(lo) && (isNaN(this.hi) || lo <= this.hi)) {
+	        this._lo = lo;
+	      }
+
+	      this._updateUI();
+	    }
+	  }, {
+	    key: "hi",
+	    get: function get() {
+	      return this._hi;
+	    },
+	    set: function set(hi) {
+	      if (this.validate(hi) && (isNaN(this.lo) || this.lo <= hi)) {
+	        this._hi = hi;
+	      }
+
+	      this._updateUI();
+	    }
+	  }]);
+
+	  return Slider2;
+	}(Slider1);
+
+	var Interval = /*#__PURE__*/function (_Component) {
+	  _inherits(Interval, _Component);
+
+	  var _super = _createSuper(Interval);
+
+	  function Interval(container, _ref) {
+	    var _this;
+
+	    var min = _ref.min,
+	        max = _ref.max,
+	        slider = _ref.slider;
+
+	    _classCallCheck(this, Interval);
+
+	    _this = _super.call(this, container);
+	    _this._slider = new slider(_this._sliderElement, {
+	      min: min,
+	      max: max
+	    });
+
+	    _this._slider.on('change', _this._onChange.bind(_assertThisInitialized(_this)));
+
+	    return _this;
+	  }
+
+	  _createClass(Interval, [{
+	    key: "_onChange",
+	    value: function _onChange(e) {
+	      this._lo.value = this._slider.lo.toString();
+	      this._hi.value = this._slider.hi.toString();
+	      var event = document.createEvent('Event');
+	      event.initEvent('change', false, false);
+	      this.dispatchEvent(event);
+	    }
+	  }, {
+	    key: "_render",
+	    value: function _render(element) {
+	      element.classList.add('scanex-component-range');
+	      element.innerHTML = "<table>\n            <tr>\n                <td>\n                    <input class=\"lo\" type=\"text\" />\n                </td>\n                <td>\n                    <div class=\"slider\"></div>\n                </td>\n                <td>\n                    <input class=\"hi\" type=\"text\" />\n                </td>\n            </tr>\n        </table>";
+	      this._lo = element.querySelector('.lo');
+	      this._hi = element.querySelector('.hi');
+	      this._sliderElement = element.querySelector('.slider');
+	    }
+	  }, {
+	    key: "min",
+	    get: function get() {
+	      return this._slider.min;
+	    },
+	    set: function set(min) {
+	      this._slider.min = min;
+	    }
+	  }, {
+	    key: "max",
+	    get: function get() {
+	      return this._slider.max;
+	    },
+	    set: function set(max) {
+	      this._slider.max = max;
+	    }
+	  }, {
+	    key: "lo",
+	    get: function get() {
+	      return this._slider.lo;
+	    },
+	    set: function set(lo) {
+	      this._slider.lo = lo;
+	    }
+	  }, {
+	    key: "hi",
+	    get: function get() {
+	      return this._slider.hi;
+	    },
+	    set: function set(hi) {
+	      this._slider.hi = hi;
+	    }
+	  }]);
+
+	  return Interval;
+	}(Component);
+
+	var strings = {
+	  rus: {
+	    baselayers: {
+	      title: 'Добавить подложку',
+	      name: 'Название',
+	      url: 'Адрес',
+	      ok: 'Создать',
+	      cancel: 'Отмена',
+	      zoom: 'Масштаб',
+	      map: 'Карта',
+	      satellite: 'Спутник'
+	    }
+	  }
+	};
+
+	Object.keys(strings).forEach(function (lang) {
+	  return T.addText(lang, strings[lang]);
+	});
 	var translate$4 = T.getText.bind(T);
+
+	var View = /*#__PURE__*/function (_Dialog) {
+	  _inherits(View, _Dialog);
+
+	  var _super = _createSuper(View);
+
+	  function View() {
+	    var _this;
+
+	    _classCallCheck(this, View);
+
+	    _this = _super.call(this, {
+	      title: translate$4('baselayers.title'),
+	      id: 'baselayers-view'
+	    });
+
+	    _this._element.classList.add('scanex-forestry-baselayers-view');
+
+	    _this.content.innerHTML = "\n        <div class=\"name\">\n            <div class=\"label\">".concat(translate$4('baselayers.name'), "</div>        \n            <input type=\"text\" value=\"\">        \n        </div>\n        <div class=\"url\">\n            <div class=\"label\">").concat(translate$4('baselayers.url'), "</div>        \n            <input type=\"text\" value=\"\">        \n        </div>\n        <div class=\"zoom\">\n            <div class=\"label\">").concat(translate$4('baselayers.zoom'), "</div>\n            <div></div>\n        </div>");
+	    _this._name = _this.content.querySelector('.name').querySelector('input');
+	    _this._url = _this.content.querySelector('.url').querySelector('input');
+	    _this._zoom = new Interval(_this.content.querySelector('.zoom').querySelector('div'), {
+	      min: 1,
+	      max: 21,
+	      slider: Slider2
+	    });
+	    _this._zoom.lo = 1;
+	    _this._zoom.hi = 21;
+	    _this.footer.innerHTML = "<button class=\"ok\">".concat(translate$4('baselayers.ok'), "</button>\n        <button class=\"cancel\">").concat(translate$4('baselayers.cancel'), "</button>");
+
+	    var btnOk = _this.footer.querySelector('.ok');
+
+	    btnOk.addEventListener('click', function (e) {
+	      e.stopPropagation();
+	      localStorage.removeItem("".concat(_this._id, ".data"));
+	      var event = document.createEvent('Event');
+	      event.initEvent('ok', false, false);
+	      event.detail = {
+	        minZoom: _this._zoom.lo,
+	        maxZoom: _this._zoom.hi,
+	        title: _this._name.value,
+	        url: _this._url.value
+	      };
+
+	      _this.dispatchEvent(event);
+	    });
+
+	    var btnCancel = _this.footer.querySelector('.cancel');
+
+	    btnCancel.addEventListener('click', function (e) {
+	      e.stopPropagation();
+	      localStorage.removeItem("".concat(_this._id, ".data"));
+	      var event = document.createEvent('Event');
+	      event.initEvent('close', false, false);
+
+	      _this.dispatchEvent(event);
+	    });
+
+	    _this._restore();
+
+	    return _this;
+	  }
+
+	  _createClass(View, [{
+	    key: "_save",
+	    value: function _save() {
+	      var data = {
+	        minZoom: this._zoom.lo,
+	        maxZoom: this._zoom.hi,
+	        title: this._name.value,
+	        url: this._url.value
+	      };
+	      localStorage.setItem("".concat(this._id, ".data"), JSON.stringify(data));
+	    }
+	  }, {
+	    key: "_restore",
+	    value: function _restore() {
+	      var data = localStorage.getItem("".concat(this._id, ".data"));
+
+	      if (data) {
+	        var _JSON$parse = JSON.parse(data),
+	            minZoom = _JSON$parse.minZoom,
+	            maxZoom = _JSON$parse.maxZoom,
+	            title = _JSON$parse.title,
+	            url = _JSON$parse.url;
+
+	        this._zoom.lo = minZoom;
+	        this._zoom.hi = maxZoom;
+	        this._name.value = title;
+	        this._url.value = url;
+	      }
+	    }
+	  }, {
+	    key: "_close",
+	    value: function _close(e) {
+	      e.stopPropagation();
+
+	      this._save();
+
+	      var event = document.createEvent('Event');
+	      event.initEvent('close', false, false);
+	      this.dispatchEvent(event);
+	    }
+	  }]);
+
+	  return View;
+	}(Dialog);
+
+	var translate$5 = T.getText.bind(T);
+
+	var BaseLayers = /*#__PURE__*/function (_Controller) {
+	  _inherits(BaseLayers, _Controller);
+
+	  var _super = _createSuper(BaseLayers);
+
+	  function BaseLayers(_ref) {
+	    var _this;
+
+	    var map = _ref.map,
+	        content = _ref.content,
+	        notification = _ref.notification,
+	        path = _ref.path,
+	        loading = _ref.loading,
+	        apiKey = _ref.apiKey,
+	        permissions = _ref.permissions;
+
+	    _classCallCheck(this, BaseLayers);
+
+	    _this = _super.call(this, {
+	      map: map,
+	      content: content,
+	      notification: notification,
+	      loading: loading
+	    });
+	    _this._path = path;
+	    _this._control = new Control({
+	      apiKey: apiKey,
+	      add: permissions.AddBaseLayer
+	    });
+
+	    _this._map.addControl(_this._control);
+
+	    _this._view = null;
+
+	    _this._control.on('add', function () {
+	      if (!_this._view) {
+	        _this._view = new View();
+
+	        _this._view.on('close', function (e) {
+	          _this._view.destroy();
+
+	          _this._view = null;
+	        });
+
+	        _this._view.on('cancel', function (e) {
+	          _this._view.destroy();
+
+	          _this._view = null;
+	        });
+
+	        _this._view.on('ok', /*#__PURE__*/function () {
+	          var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e) {
+	            var ok;
+	            return regeneratorRuntime.wrap(function _callee$(_context) {
+	              while (1) {
+	                switch (_context.prev = _context.next) {
+	                  case 0:
+	                    _this._view.destroy();
+
+	                    _this._view = null;
+	                    _context.next = 4;
+	                    return _this._createLayer(e.detail);
+
+	                  case 4:
+	                    ok = _context.sent;
+
+	                    if (!ok) {
+	                      _context.next = 8;
+	                      break;
+	                    }
+
+	                    _context.next = 8;
+	                    return _this.load();
+
+	                  case 8:
+	                  case "end":
+	                    return _context.stop();
+	                }
+	              }
+	            }, _callee);
+	          }));
+
+	          return function (_x) {
+	            return _ref2.apply(this, arguments);
+	          };
+	        }());
+	      }
+	    });
+
+	    _this._control.on('show', function () {
+	      var event = document.createEvent('Event');
+	      event.initEvent('show', false, false);
+
+	      _this.dispatchEvent(event);
+	    });
+
+	    _this._control.on('remove', /*#__PURE__*/function () {
+	      var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(e) {
+	        var layerID;
+	        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+	          while (1) {
+	            switch (_context2.prev = _context2.next) {
+	              case 0:
+	                layerID = e.layerID;
+	                _context2.next = 3;
+	                return _this._deleteLayer(layerID);
+
+	              case 3:
+	              case "end":
+	                return _context2.stop();
+	            }
+	          }
+	        }, _callee2);
+	      }));
+
+	      return function (_x2) {
+	        return _ref3.apply(this, arguments);
+	      };
+	    }(), _assertThisInitialized(_this));
+
+	    _this._control.addItem({
+	      title: translate$5('baselayers.satellite'),
+	      id: 'satellite',
+	      iconUrl: 'images/hybrid.png',
+	      urlTemplate: "https://maps.kosmosnimki.ru/TileSender.ashx?ModeKey=tile&ftc=osm&z={z}&x={x}&y={y}&srs=3857&sw=1&LayerName=4EE5E84381E94E369784464FD41EED5A&key=".concat(apiKey)
+	    });
+
+	    _this._control.addItem({
+	      title: translate$5('baselayers.map'),
+	      id: 'map',
+	      iconUrl: 'images/map.png',
+	      urlTemplate: '//tilessputnik.ru/{z}/{x}/{y}.png?sw=1'
+	    });
+
+	    return _this;
+	  }
+
+	  _createClass(BaseLayers, [{
+	    key: "select",
+	    value: function select(id) {
+	      this._control.select(id);
+	    }
+	  }, {
+	    key: "hide",
+	    value: function hide() {
+	      this._control.hide();
+	    }
+	  }, {
+	    key: "show",
+	    value: function show() {
+	      this._control.show();
+	    }
+	  }, {
+	    key: "load",
+	    value: function () {
+	      var _load = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
+	        var _this2 = this;
+
+	        var layers;
+	        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+	          while (1) {
+	            switch (_context3.prev = _context3.next) {
+	              case 0:
+	                _context3.next = 2;
+	                return this._query();
+
+	              case 2:
+	                layers = _context3.sent;
+
+	                if (Array.isArray(layers)) {
+	                  layers.forEach(function (_ref4) {
+	                    var title = _ref4.title,
+	                        layerID = _ref4.layerID,
+	                        minZoom = _ref4.minZoom,
+	                        maxZoom = _ref4.maxZoom,
+	                        urlTemplate = _ref4.urlTemplate;
+
+	                    _this2._control.addItem({
+	                      title: title,
+	                      id: layerID,
+	                      iconUrl: 'images/base.png',
+	                      minZoom: minZoom,
+	                      maxZoom: maxZoom,
+	                      urlTemplate: urlTemplate,
+	                      userLayer: true,
+	                      removable: true
+	                    });
+	                  });
+	                }
+
+	              case 4:
+	              case "end":
+	                return _context3.stop();
+	            }
+	          }
+	        }, _callee3, this);
+	      }));
+
+	      function load() {
+	        return _load.apply(this, arguments);
+	      }
+
+	      return load;
+	    }()
+	  }, {
+	    key: "_query",
+	    value: function () {
+	      var _query2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
+	        var _yield$this$httpGet, Status, Result, count, layers;
+
+	        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+	          while (1) {
+	            switch (_context4.prev = _context4.next) {
+	              case 0:
+	                _context4.next = 2;
+	                return this.httpGet("".concat(this._path, "/Layer/Search2.ashx"), {
+	                  WrapStyle: 'None',
+	                  query: '',
+	                  orderby: 'datecreate desc',
+	                  page: 0,
+	                  pageSize: 1000,
+	                  SendMetadata: true
+	                });
+
+	              case 2:
+	                _yield$this$httpGet = _context4.sent;
+	                Status = _yield$this$httpGet.Status;
+	                Result = _yield$this$httpGet.Result;
+
+	                if (!(Status === 'ok')) {
+	                  _context4.next = 10;
+	                  break;
+	                }
+
+	                count = Result.count, layers = Result.layers;
+	                return _context4.abrupt("return", layers.filter(function (_ref5) {
+	                  var isBaseLayer = _ref5.MetaProperties.isBaseLayer;
+	                  return isBaseLayer && isBaseLayer.Value;
+	                }).map(function (_ref6) {
+	                  var title = _ref6.title,
+	                      LayerID = _ref6.LayerID,
+	                      _ref6$MetaProperties = _ref6.MetaProperties,
+	                      minZoom = _ref6$MetaProperties.minZoom,
+	                      maxZoom = _ref6$MetaProperties.maxZoom,
+	                      urlTemplate = _ref6$MetaProperties.urlTemplate;
+	                  return {
+	                    title: title,
+	                    layerID: LayerID,
+	                    minZoom: minZoom.Value,
+	                    maxZoom: maxZoom.Value,
+	                    urlTemplate: urlTemplate.Value
+	                  };
+	                }));
+
+	              case 10:
+	                return _context4.abrupt("return", false);
+
+	              case 11:
+	              case "end":
+	                return _context4.stop();
+	            }
+	          }
+	        }, _callee4, this);
+	      }));
+
+	      function _query() {
+	        return _query2.apply(this, arguments);
+	      }
+
+	      return _query;
+	    }()
+	  }, {
+	    key: "_createLayer",
+	    value: function _createLayer(_ref7) {
+	      var _this3 = this;
+
+	      var title = _ref7.title,
+	          url = _ref7.url,
+	          minZoom = _ref7.minZoom,
+	          maxZoom = _ref7.maxZoom,
+	          _ref7$description = _ref7.description,
+	          description = _ref7$description === void 0 ? '' : _ref7$description,
+	          _ref7$copyright = _ref7.copyright,
+	          copyright = _ref7$copyright === void 0 ? '' : _ref7$copyright,
+	          _ref7$subdomains = _ref7.subdomains,
+	          subdomains = _ref7$subdomains === void 0 ? 'abc' : _ref7$subdomains,
+	          _ref7$errorTileUrl = _ref7.errorTileUrl,
+	          errorTileUrl = _ref7$errorTileUrl === void 0 ? '' : _ref7$errorTileUrl,
+	          _ref7$zoomOffset = _ref7.zoomOffset,
+	          zoomOffset = _ref7$zoomOffset === void 0 ? 0 : _ref7$zoomOffset,
+	          _ref7$zoomReverse = _ref7.zoomReverse,
+	          zoomReverse = _ref7$zoomReverse === void 0 ? false : _ref7$zoomReverse,
+	          _ref7$tileReverse = _ref7.tileReverse,
+	          tileReverse = _ref7$tileReverse === void 0 ? false : _ref7$tileReverse,
+	          _ref7$detectRetina = _ref7.detectRetina,
+	          detectRetina = _ref7$detectRetina === void 0 ? false : _ref7$detectRetina,
+	          _ref7$crossOrigin = _ref7.crossOrigin,
+	          crossOrigin = _ref7$crossOrigin === void 0 ? 'anonymous' : _ref7$crossOrigin;
+	      return new Promise(function (resolve) {
+	        var fd = new FormData();
+	        fd.append('WrapStyle', 'None');
+	        fd.append('Title', title || '');
+	        fd.append('Description', description);
+	        fd.append('Copyright', copyright);
+	        fd.append('SourceType', 'Virtual');
+	        fd.append('ContentID', 'TMS');
+	        var meta = {
+	          urlTemplate: {
+	            Value: url,
+	            Type: 'String'
+	          },
+	          subdomains: {
+	            Value: subdomains,
+	            Type: 'String'
+	          },
+	          errorTileUrl: {
+	            Value: errorTileUrl,
+	            Type: 'String'
+	          },
+	          crossOrigin: {
+	            Value: crossOrigin,
+	            Type: 'String'
+	          },
+	          minZoom: {
+	            Value: minZoom,
+	            Type: 'Number'
+	          },
+	          maxZoom: {
+	            Value: maxZoom,
+	            Type: 'Number'
+	          },
+	          zoomOffset: {
+	            Value: zoomOffset,
+	            Type: 'Number'
+	          },
+	          tileReverse: {
+	            Value: tileReverse ? 'true' : 'false',
+	            Type: 'String'
+	          },
+	          zoomReverse: {
+	            Value: zoomReverse ? 'true' : 'false',
+	            Type: 'String'
+	          },
+	          detectRetina: {
+	            Value: detectRetina ? 'true' : 'false',
+	            Type: 'String'
+	          },
+	          isBaseLayer: {
+	            Value: 'true',
+	            Type: 'String'
+	          }
+	        };
+	        fd.append('MetaProperties', JSON.stringify(meta));
+
+	        _this3.postData("".concat(_this3._path, "/VectorLayer/Insert.ashx"), fd).then(function (data) {
+	          if (data) {
+	            var Status = data.Status,
+	                Result = data.Result;
+
+	            if (Status === 'ok') {
+	              _this3.poll(Result.TaskID).then(function () {
+	                return resolve(true);
+	              }).catch(function () {
+	                return resolve(false);
+	              });
+	            } else {
+	              resolve(false);
+	            }
+	          } else {
+	            resolve(false);
+	          }
+	        });
+	      });
+	    }
+	  }, {
+	    key: "_deleteLayer",
+	    value: function _deleteLayer(id) {
+	      var _this4 = this;
+
+	      return new Promise(function (resolve) {
+	        _this4.httpGet("".concat(_this4._path, "/Layer/Delete.ashx?WrapStyle=None&LayerID=").concat(id)).then(function (data) {
+	          if (data) {
+	            var Status = data.Status;
+
+	            if (Status === 'ok') {
+	              resolve(true);
+	            } else {
+	              resolve(false);
+	            }
+	          } else {
+	            resolve(false);
+	          }
+	        });
+	      });
+	    }
+	  }]);
+
+	  return BaseLayers;
+	}(Controller);
+
+	var translate$6 = T.getText.bind(T);
 
 	var Borders = /*#__PURE__*/function (_Controller) {
 	  _inherits(Borders, _Controller);
@@ -37332,18 +38899,18 @@ var Forestry = (function () {
 
 	    _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
 
-	    var p = _this._legend.addGroup('borders', translate$4("legend.borders"));
+	    var p = _this._legend.addGroup('borders', translate$6("legend.borders"));
 
 	    if (_this._layers.regions) {
-	      _this._legend.addComponent('regions', translate$4('legend.regions'), p);
+	      _this._legend.addComponent('regions', translate$6('legend.regions'), p);
 	    }
 
 	    if (_this._layers.forestries) {
-	      _this._legend.addComponent('forestries', translate$4('legend.forestries'), p);
+	      _this._legend.addComponent('forestries', translate$6('legend.forestries'), p);
 	    }
 
 	    if (_this._layers.forestries_local) {
-	      _this._legend.addComponent('forestries_local', translate$4('legend.forestries_local'), p);
+	      _this._legend.addComponent('forestries_local', translate$6('legend.forestries_local'), p);
 	    }
 
 	    return _this;
@@ -37369,7 +38936,7 @@ var Forestry = (function () {
 	  return Borders;
 	}(Controller);
 
-	var View = /*#__PURE__*/function (_EventTarget) {
+	var View$1 = /*#__PURE__*/function (_EventTarget) {
 	  _inherits(View, _EventTarget);
 
 	  var _super = _createSuper(View);
@@ -37493,7 +39060,7 @@ var Forestry = (function () {
 	  return View;
 	}(EventTarget);
 
-	var strings = {
+	var strings$1 = {
 	  rus: {
 	    declaration: {
 	      title: 'Лесная декларация №',
@@ -37550,7 +39117,7 @@ var Forestry = (function () {
 
 	    _classCallCheck(this, Declaration);
 
-	    _this = _super.call(this, container, strings);
+	    _this = _super.call(this, container, strings$1);
 
 	    _this._container.classList.add('scanex-forestry-declaration');
 
@@ -37632,7 +39199,7 @@ var Forestry = (function () {
 	  }]);
 
 	  return Declaration;
-	}(View);
+	}(View$1);
 
 	var Declarations = /*#__PURE__*/function (_LayerController) {
 	  _inherits(Declarations, _LayerController);
@@ -37739,7 +39306,7 @@ var Forestry = (function () {
 	  return Declarations;
 	}(LayerController);
 
-	var strings$1 = {
+	var strings$2 = {
 	  rus: {
 	    hotspot: {
 	      title: 'Приблизьте карту для загрузки на таймлайн',
@@ -37764,7 +39331,7 @@ var Forestry = (function () {
 	  function Fires(container) {
 	    _classCallCheck(this, Fires);
 
-	    return _super.call(this, container, strings$1);
+	    return _super.call(this, container, strings$2);
 	  }
 
 	  _createClass(Fires, [{
@@ -37777,9 +39344,9 @@ var Forestry = (function () {
 	  }]);
 
 	  return Fires;
-	}(View);
+	}(View$1);
 
-	var translate$5 = T.getText.bind(T);
+	var translate$7 = T.getText.bind(T);
 	var hotSpotLayerID = '9DC30891452449DD8D551D0AA62FFF54';
 
 	var Fires$1 = /*#__PURE__*/function (_EventTarget) {
@@ -37809,7 +39376,7 @@ var Forestry = (function () {
 	    _this._dateInterval = dateInterval;
 	    _this._permissions = permissions;
 
-	    _this._legend.addComponent('fires', translate$5('legend.fires'));
+	    _this._legend.addComponent('fires', translate$7('legend.fires'));
 
 	    _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
 
@@ -44289,7 +45856,7 @@ var Forestry = (function () {
 	  });
 	});
 
-	var strings$2 = {
+	var strings$3 = {
 	  rus: {
 	    incident: {
 	      title: 'Рубка',
@@ -44312,6 +45879,8 @@ var Forestry = (function () {
 	      Probability: 'Процент вероятности инцидента',
 	      Intensity: 'Интесивность',
 	      date: 'Дата обнаружения',
+	      vNewId: 'ID снимка обнаружения',
+	      vNewIdButton: 'Включить',
 	      dateInspect: 'Дата обследования',
 	      areaAll: 'Площадь повреждения всего (Га)',
 	      areaArenda: 'Площадь повреждения на арендованной территории (Га)',
@@ -44356,7 +45925,7 @@ var Forestry = (function () {
 
 	    _classCallCheck(this, Incidents);
 
-	    _this = _super.call(this, container, strings$2);
+	    _this = _super.call(this, container, strings$3);
 	    _this._path = path;
 	    _this._layer = layer;
 	    _this._permission = permissions;
@@ -44391,7 +45960,8 @@ var Forestry = (function () {
 	  }, {
 	    key: "_parseProps",
 	    value: function _parseProps(props) {
-	      return "\n\t\t\t<div class=\"table1_row\">".concat(this.translate('incident.status'), " <span>").concat(props.Status, "</span></div>\n\t\t\t<div class=\"table1_row\">").concat(this.translate('incident.Expert'), " <span>").concat(props.Expert || '', "</span></div>\n\t\t\t<div class=\"table1_row\">").concat(this.translate('incident.CheckingExpert'), " <span>").concat(props.CheckingExpert || '', "</span></div>\n\t\t\t<div class=\"table1_row\">").concat(this.translate('incident.Probability'), " <span>").concat(this.fmt(Math.floor(10000 * (props.Probability || 0)) / 100), " %</span></div>\n\t\t\t<div class=\"table1_row\">").concat(this.translate('incident.Intensity'), " <span>").concat(props.Intensity || 0, "</span></div>\n\t\t\t<div class=\"table1_row\">").concat(this.translate('incident.date'), " <span>").concat(this._formatDate(props.Detected), "</span></div>\n\t\t\t<div class=\"table1_row\">").concat(this.translate('incident.areaAll'), " <span>").concat(this.ha(props.Area || 0), "</span></div>\n\t\t\t<div class=\"table1_row\">").concat(this.translate('incident.dateCheck'), " <input class=\"span-gray dateCheck\" type=\"text\" placeholder=\"\" value=").concat(this._formatDate(props.CheckDate), "></div>\n\t\t");
+	      var rasters = props.Rasters || {};
+	      return "\n\t\t\t<div class=\"table1_row\">".concat(this.translate('incident.status'), " <span>").concat(props.Status, "</span></div>\n\t\t\t<div class=\"table1_row\">").concat(this.translate('incident.Expert'), " <span>").concat(props.Expert || '', "</span></div>\n\t\t\t<div class=\"table1_row\">").concat(this.translate('incident.CheckingExpert'), " <span>").concat(props.CheckingExpert || '', "</span></div>\n\t\t\t<div class=\"table1_row\">").concat(this.translate('incident.Probability'), " <span>").concat(this.fmt(Math.floor(10000 * (props.Probability || 0)) / 100), " %</span></div>\n\t\t\t<div class=\"table1_row\">").concat(this.translate('incident.Intensity'), " <span>").concat(props.Intensity || 0, "</span></div>\n\t\t\t<div class=\"table1_row\">").concat(this.translate('incident.date'), " <span>").concat(this._formatDate(props.Detected), "</span></div>\n\t\t\t<div class=\"table1_row\">").concat(this.translate('incident.vNewId'), " <span>").concat(rasters.v_new_id || '', "</span>").concat(this._permission.IncidentRastersView && rasters.v_new_id ? "<div class=\"mini-green-but vNewId\">".concat(this.translate('incident.vNewIdButton'), "</div>") : '', "</div>\n\t\t\t<div class=\"table1_row\">").concat(this.translate('incident.areaAll'), " <span>").concat(this.ha(props.Area || 0), "</span></div>\n\t\t\t<div class=\"table1_row\">").concat(this.translate('incident.dateCheck'), " <input class=\"span-gray dateCheck\" type=\"text\" placeholder=\"\" value=").concat(this._formatDate(props.CheckDate), "></div>\n\t\t");
 	    }
 	  }, {
 	    key: "open",
@@ -44441,15 +46011,57 @@ var Forestry = (function () {
 
 	      var node = this._container.querySelector('.verRastr');
 
-	      if (node) {
+	      if (node && data.Rasters) {
 	        node.addEventListener('click', function (e) {
 	          e.stopPropagation();
 	          var event = document.createEvent('Event');
 	          event.initEvent('incident:verifyRaster', false, false);
-	          event.detail = _this3._rastId;
+	          event.detail = data.Rasters.v_gmx_prob;
 
 	          _this3.dispatchEvent(event);
 	        });
+	      }
+
+	      node = this._container.querySelector('.maskWater');
+
+	      if (node) {
+	        var rasters = data.Rasters || {};
+
+	        if (rasters.v_gmx_fmask_new) {
+	          node.addEventListener('click', function (e) {
+	            e.stopPropagation();
+	            var event = document.createEvent('Event');
+	            event.initEvent('incident:fmaskRaster', false, false);
+	            event.detail = rasters.v_gmx_fmask_new;
+
+	            _this3.dispatchEvent(event);
+	          });
+	        } else {
+	          node.classList.add('hidden');
+	        }
+	      }
+
+	      node = this._container.querySelector('.vNewId');
+
+	      if (node) {
+	        var _rasters = data.Rasters || {};
+
+	        if (_rasters.v_gmx_rgb_new && _rasters.v_gmx_rgb_arch) {
+	          node.addEventListener('click', function (e) {
+	            e.stopPropagation();
+	            var event = document.createEvent('Event');
+	            event.initEvent('incident:vNewId', false, false);
+	            event.detail = {
+	              d1: _rasters.v_arch_date ? new Date(Date.parse(_rasters.v_arch_date + '+00:00')) : null,
+	              d2: _rasters.v_new_date ? new Date(Date.parse(_rasters.v_new_date + '+00:00')) : null,
+	              type: _rasters.v_satellite
+	            };
+
+	            _this3.dispatchEvent(event);
+	          });
+	        } else {
+	          node.classList.add('hidden');
+	        }
 	      }
 
 	      node = this._container.querySelector('.download');
@@ -44693,7 +46305,7 @@ var Forestry = (function () {
 	  }]);
 
 	  return Incidents;
-	}(View);
+	}(View$1);
 
 	var colors = [['#fdb9ff', '#ff55b0', '#7e2e4d', '#ffffff'], ['#fdb9ff', '#ff55b0', '#7e2e4d', '#d9004c'], ['#97a8ff', '#3d50fe', '#4c547d', '#4805ff'], ['#ffa743', '#ff7b00', '#f1cfa6', '#ef4e09']];
 	var CUR_STYLES = colors.map(function (line) {
@@ -44718,7 +46330,9 @@ var Forestry = (function () {
 	  });
 	});
 
-	var translate$6 = T.getText.bind(T);
+	var translate$8 = T.getText.bind(T);
+
+	var _DAY$1 = 60 * 60 * 24 * 1000;
 
 	var Incidents$1 = /*#__PURE__*/function (_Controller) {
 	  _inherits(Incidents$1, _Controller);
@@ -44784,35 +46398,35 @@ var Forestry = (function () {
 
 	    _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
 
-	    var p = _this._legend.addGroup(_this._kind, translate$6('legend.incidents'));
+	    var p = _this._legend.addGroup(_this._kind, translate$8('legend.incidents'));
 
-	    _this._legend.addComponent('cut-unconfirmed', translate$6('legend.cut.unconfirmed'), p);
+	    _this._legend.addComponent('cut-unconfirmed', translate$8('legend.cut.unconfirmed'), p);
 
-	    _this._legend.addComponent('cut-working', translate$6('legend.cut.working'), p);
+	    _this._legend.addComponent('cut-working', translate$8('legend.cut.working'), p);
 
-	    _this._legend.addComponent('cut-faux', translate$6('legend.cut.faux'), p);
+	    _this._legend.addComponent('cut-faux', translate$8('legend.cut.faux'), p);
 
-	    _this._legend.addComponent('cut-confirmed', translate$6('legend.cut.confirmed'), p); // this._legend.addComponent('windthrow-unconfirmed', translate('legend.windthrow.unconfirmed'), p);
+	    _this._legend.addComponent('cut-confirmed', translate$8('legend.cut.confirmed'), p); // this._legend.addComponent('windthrow-unconfirmed', translate('legend.windthrow.unconfirmed'), p);
 	    // this._legend.addComponent('windthrow-working', translate('legend.windthrow.working'), p);
 	    // this._legend.addComponent('windthrow-faux', translate('legend.windthrow.faux'), p);
 	    // this._legend.addComponent('windthrow-confirmed', translate('legend.windthrow.confirmed'), p);
 
 
-	    _this._legend.addComponent('disease-unconfirmed', translate$6('legend.disease.unconfirmed'), p);
+	    _this._legend.addComponent('disease-unconfirmed', translate$8('legend.disease.unconfirmed'), p);
 
-	    _this._legend.addComponent('disease-working', translate$6('legend.disease.working'), p);
+	    _this._legend.addComponent('disease-working', translate$8('legend.disease.working'), p);
 
-	    _this._legend.addComponent('disease-faux', translate$6('legend.disease.faux'), p);
+	    _this._legend.addComponent('disease-faux', translate$8('legend.disease.faux'), p);
 
-	    _this._legend.addComponent('disease-confirmed', translate$6('legend.disease.confirmed'), p);
+	    _this._legend.addComponent('disease-confirmed', translate$8('legend.disease.confirmed'), p);
 
-	    _this._legend.addComponent('burn-unconfirmed', translate$6('legend.burn.unconfirmed'), p);
+	    _this._legend.addComponent('burn-unconfirmed', translate$8('legend.burn.unconfirmed'), p);
 
-	    _this._legend.addComponent('burn-working', translate$6('legend.burn.working'), p);
+	    _this._legend.addComponent('burn-working', translate$8('legend.burn.working'), p);
 
-	    _this._legend.addComponent('burn-faux', translate$6('legend.burn.faux'), p);
+	    _this._legend.addComponent('burn-faux', translate$8('legend.burn.faux'), p);
 
-	    _this._legend.addComponent('burn-confirmed', translate$6('legend.burn.confirmed'), p);
+	    _this._legend.addComponent('burn-confirmed', translate$8('legend.burn.confirmed'), p);
 
 	    _this._view = _this._content.add(_this._kind, Incidents, {
 	      permissions: _this._permissions
@@ -44832,6 +46446,24 @@ var Forestry = (function () {
 	      }
 
 	      _this._toggleRasterLayer(rastr);
+	    }).on('incident:fmaskRaster', function (e) {
+	      var rastr = _this._layer.fmaskRaster;
+
+	      if (!rastr) {
+	        rastr = _this._layer.fmaskRaster = L.tileLayer(_this._rasterPrefix + e.detail, {});
+	      }
+
+	      _this._toggleRasterLayer(rastr);
+	    }).on('incident:vNewId', function (e) {
+	      var detail = e.detail || {};
+
+	      _this._legend.enable(detail.type || 'landsat');
+
+	      if (detail.d1 && detail.d2) {
+	        _this._dateInterval.setVisibleChartRange(new Date(detail.d1.getTime() - _DAY$1), new Date(detail.d2.getTime() + _DAY$1));
+
+	        _this._dateInterval.setActives([detail.d1, detail.d2]);
+	      }
 	    }).on('incident:bplaRaster', function (e) {
 	      var rastr = _this._layer.bplaRaster;
 
@@ -44887,9 +46519,21 @@ var Forestry = (function () {
 	        }
 	      }
 
+	      if (_this._layer.fmaskRaster) {
+	        if (_this._layer.fmaskRaster._map) {
+	          map.removeLayer(_this._layer.fmaskRaster);
+	        }
+	      }
+
 	      if (_this._layer.bplaRaster && _this._layer.bplaRaster._map) {
 	        map.removeLayer(_this._layer.bplaRaster);
 	      }
+
+	      _this._gmx_id = null;
+	      delete _this._layer.verifyRaster;
+	      delete _this._layer.fmaskRaster;
+
+	      _this._layer.repaint();
 	    });
 
 	    _this.StatusList = {};
@@ -45050,13 +46694,13 @@ var Forestry = (function () {
 	                data = _context3.sent;
 
 	                if (data) {
-	                  this._gmx_id = id;
-
 	                  this._view.open(_objectSpread2({
-	                    gmx_id: this._gmx_id,
+	                    gmx_id: id,
 	                    statusList: this.StatusList,
 	                    properties: properties
 	                  }, data));
+
+	                  this._gmx_id = id;
 	                }
 
 	                this._layer.repaint();
@@ -45322,7 +46966,7 @@ var Forestry = (function () {
 	  return Loading;
 	}(EventTarget);
 
-	var translate$7 = T.getText.bind(T);
+	var translate$9 = T.getText.bind(T);
 	var NOTIFY_DELAY = 3000;
 
 	var Notification = /*#__PURE__*/function (_EventTarget) {
@@ -45350,7 +46994,7 @@ var Forestry = (function () {
 	      var container = document.createElement('div');
 	      container.classList.add('scanex-forestry-notify');
 	      document.body.appendChild(container);
-	      container.innerHTML = "<div class=\"notify notify-red\">\n            <div class=\"close\"></div>\n            <span class=\"title\">".concat(translate$7('alert.error'), "</span>\n            <span class=\"message\">").concat(text, "</span>\n        </div>");
+	      container.innerHTML = "<div class=\"notify notify-red\">\n            <div class=\"close\"></div>\n            <span class=\"title\">".concat(translate$9('alert.error'), "</span>\n            <span class=\"message\">").concat(text, "</span>\n        </div>");
 	      var btnClose = container.querySelector('.close');
 	      btnClose.addEventListener('click', function (e) {
 	        e.stopPropagation();
@@ -45363,7 +47007,7 @@ var Forestry = (function () {
 	      var container = document.createElement('div');
 	      container.classList.add('scanex-forestry-notify');
 	      document.body.appendChild(container);
-	      container.innerHTML = "<div class=\"notify notify-orange\">\n            <div class=\"close\"></div>\n            <span class=\"title\">".concat(translate$7('alert.warn'), "</span>\n            <span class=\"message\">").concat(text, "</span>\n        </div>");
+	      container.innerHTML = "<div class=\"notify notify-orange\">\n            <div class=\"close\"></div>\n            <span class=\"title\">".concat(translate$9('alert.warn'), "</span>\n            <span class=\"message\">").concat(text, "</span>\n        </div>");
 	      var btnClose = container.querySelector('.close');
 	      btnClose.addEventListener('click', function (e) {
 	        e.stopPropagation();
@@ -45377,7 +47021,7 @@ var Forestry = (function () {
 	      var container = document.createElement('div');
 	      container.classList.add('scanex-forestry-notify');
 	      document.body.appendChild(container);
-	      container.innerHTML = "<div class=\"notify notify-green\">\n            <div class=\"close\"></div>\n            <span class=\"title\">".concat(translate$7('alert.info'), "</span>\n            <span class=\"message\">").concat(text, "</span>\n        </div>");
+	      container.innerHTML = "<div class=\"notify notify-green\">\n            <div class=\"close\"></div>\n            <span class=\"title\">".concat(translate$9('alert.info'), "</span>\n            <span class=\"message\">").concat(text, "</span>\n        </div>");
 	      var btnClose = container.querySelector('.close');
 	      btnClose.addEventListener('click', function (e) {
 	        e.stopPropagation();
@@ -45390,7 +47034,7 @@ var Forestry = (function () {
 	  return Notification;
 	}(EventTarget);
 
-	var strings$3 = {
+	var strings$4 = {
 	  rus: {
 	    park: {
 	      title: 'ООПТ',
@@ -45431,7 +47075,7 @@ var Forestry = (function () {
 
 	    _classCallCheck(this, Parks);
 
-	    _this = _super.call(this, container, strings$3);
+	    _this = _super.call(this, container, strings$4);
 
 	    _this._container.classList.add('scanex-forestry-naturalpark');
 
@@ -45473,7 +47117,7 @@ var Forestry = (function () {
 	  }]);
 
 	  return Parks;
-	}(View);
+	}(View$1);
 
 	var Parks$1 = /*#__PURE__*/function (_LayerController) {
 	  _inherits(Parks$1, _LayerController);
@@ -47978,6 +49622,7 @@ var Forestry = (function () {
 	              offsetX: 0,
 	              offsetY: 0,
 	              startAngle: 0,
+	              endAngle: 360,
 	              expandOnClick: !0,
 	              dataLabels: {
 	                offset: 0,
@@ -48790,10 +50435,10 @@ var Forestry = (function () {
 	            c = void 0 === s.fill.gradient.opacityFrom ? e : Array.isArray(s.fill.gradient.opacityFrom) ? s.fill.gradient.opacityFrom[i] : s.fill.gradient.opacityFrom;
 	        h.indexOf("rgba") > -1 && (c = f.getOpacityFromRGBA(h));
 	        var d = void 0 === s.fill.gradient.opacityTo ? e : Array.isArray(s.fill.gradient.opacityTo) ? s.fill.gradient.opacityTo[i] : s.fill.gradient.opacityTo;
-	        if (void 0 === s.fill.gradient.gradientToColors || 0 === s.fill.gradient.gradientToColors.length) a = "dark" === s.fill.gradient.shade ? o.shadeColor(-1 * parseFloat(s.fill.gradient.shadeIntensity), t.indexOf("rgb") > -1 ? f.rgb2hex(t) : t) : o.shadeColor(parseFloat(s.fill.gradient.shadeIntensity), t.indexOf("rgb") > -1 ? f.rgb2hex(t) : t);else {
+	        if (void 0 === s.fill.gradient.gradientToColors || 0 === s.fill.gradient.gradientToColors.length) a = "dark" === s.fill.gradient.shade ? o.shadeColor(-1 * parseFloat(s.fill.gradient.shadeIntensity), t.indexOf("rgb") > -1 ? f.rgb2hex(t) : t) : o.shadeColor(parseFloat(s.fill.gradient.shadeIntensity), t.indexOf("rgb") > -1 ? f.rgb2hex(t) : t);else if (s.fill.gradient.gradientToColors[r.seriesNumber]) {
 	          var g = s.fill.gradient.gradientToColors[r.seriesNumber];
 	          a = g, g.indexOf("rgba") > -1 && (d = f.getOpacityFromRGBA(g));
-	        }
+	        } else a = t;
 
 	        if (s.fill.gradient.inverseColors) {
 	          var u = h;
@@ -54050,17 +55695,17 @@ var Forestry = (function () {
 	        a.skipLastTimelinelabel = !1, a.skipFirstTimelinelabel = !1;
 
 	        var o = i.config.yaxis[0].opposite && i.globals.isBarHorizontal,
-	            l = function l(t, o) {
+	            l = function l(t, s) {
 	          (function (t) {
 	            return -1 !== a.collapsedSeriesIndices.indexOf(t);
-	          })(o) || ("datetime" !== r && e.dCtx.gridPad.left < n / 2 - e.dCtx.yAxisWidthLeft && !a.rotateXLabels && !s.xaxis.labels.trim && (e.dCtx.xPadLeft = n / 2 + 1), function (t) {
+	          })(s) || function (t) {
 	            if (e.dCtx.timescaleLabels && e.dCtx.timescaleLabels.length) {
 	              var s = e.dCtx.timescaleLabels[0],
 	                  o = e.dCtx.timescaleLabels[e.dCtx.timescaleLabels.length - 1].position + n / 1.75 - e.dCtx.yAxisWidthRight,
 	                  l = s.position - n / 1.75 + e.dCtx.yAxisWidthLeft;
 	              o > a.svgWidth - a.translateX && (a.skipLastTimelinelabel = !0), l < 0 && (a.skipFirstTimelinelabel = !0);
 	            } else "datetime" === r ? e.dCtx.gridPad.right < n && !a.rotateXLabels && (a.skipLastTimelinelabel = !0) : "datetime" !== r && e.dCtx.gridPad.right < n / 2 - e.dCtx.yAxisWidthRight && !a.rotateXLabels && ("between" !== i.config.xaxis.tickPlacement || i.globals.isBarHorizontal) && (e.dCtx.xPadRight = n / 2 + 1);
-	          }());
+	          }();
 	        };
 
 	        s.yaxis.forEach(function (t, i) {
@@ -54538,7 +56183,7 @@ var Forestry = (function () {
 	          }), (c || d) && L.classList.add("apexcharts-inactive-legend"), e.config.legend.onItemClick.toggleDataSeries || L.classList.add("apexcharts-no-click");
 	        }
 
-	        "treemap" !== e.config.chart.type && "heatmap" !== e.config.chart.type && !this.isBarsDistributed && e.config.legend.onItemClick.toggleDataSeries && e.globals.dom.elWrap.addEventListener("click", t.onLegendClick, !0), e.config.legend.onItemHover.highlightDataSeries && (e.globals.dom.elWrap.addEventListener("mousemove", t.onLegendHovered, !0), e.globals.dom.elWrap.addEventListener("mouseout", t.onLegendHovered, !0));
+	        e.globals.dom.elWrap.addEventListener("click", t.onLegendClick, !0), e.config.legend.onItemHover.highlightDataSeries && (e.globals.dom.elWrap.addEventListener("mousemove", t.onLegendHovered, !0), e.globals.dom.elWrap.addEventListener("mouseout", t.onLegendHovered, !0));
 	      }
 	    }, {
 	      key: "setLegendWrapXY",
@@ -54595,13 +56240,15 @@ var Forestry = (function () {
 	    }, {
 	      key: "onLegendClick",
 	      value: function value(t) {
+	        var e = this.w;
+
 	        if (t.target.classList.contains("apexcharts-legend-text") || t.target.classList.contains("apexcharts-legend-marker")) {
-	          var e = parseInt(t.target.getAttribute("rel"), 10) - 1,
-	              i = "true" === t.target.getAttribute("data:collapsed"),
-	              a = this.w.config.chart.events.legendClick;
-	          "function" == typeof a && a(this.ctx, e, this.w), this.ctx.events.fireEvent("legendClick", [this.ctx, e, this.w]);
-	          var s = this.w.config.legend.markers.onClick;
-	          "function" == typeof s && t.target.classList.contains("apexcharts-legend-marker") && (s(this.ctx, e, this.w), this.ctx.events.fireEvent("legendMarkerClick", [this.ctx, e, this.w])), this.legendHelpers.toggleDataSeries(e, i);
+	          var i = parseInt(t.target.getAttribute("rel"), 10) - 1,
+	              a = "true" === t.target.getAttribute("data:collapsed"),
+	              s = this.w.config.chart.events.legendClick;
+	          "function" == typeof s && s(this.ctx, i, this.w), this.ctx.events.fireEvent("legendClick", [this.ctx, i, this.w]);
+	          var r = this.w.config.legend.markers.onClick;
+	          "function" == typeof r && t.target.classList.contains("apexcharts-legend-marker") && (r(this.ctx, i, this.w), this.ctx.events.fireEvent("legendMarkerClick", [this.ctx, i, this.w])), "treemap" !== e.config.chart.type && "heatmap" !== e.config.chart.type && !this.isBarsDistributed && e.config.legend.onItemClick.toggleDataSeries && this.legendHelpers.toggleDataSeries(i, a);
 	        }
 	      }
 	    }]), t;
@@ -55490,67 +57137,70 @@ var Forestry = (function () {
 	            a = t.i,
 	            s = t.j,
 	            r = t.values,
-	            n = t.ttItems,
-	            o = t.shared,
-	            l = t.e,
-	            h = this.w,
-	            c = r.xVal,
-	            d = r.zVal,
-	            g = r.xAxisTTVal,
-	            u = "",
-	            f = h.globals.colors[a];
-	        null !== s && h.config.plotOptions.bar.distributed && (f = h.globals.colors[s]);
+	            o = t.ttItems,
+	            l = t.shared,
+	            h = t.e,
+	            c = this.w,
+	            d = r.xVal,
+	            g = r.zVal,
+	            u = r.xAxisTTVal,
+	            f = "",
+	            p = c.globals.colors[a];
+	        null !== s && c.config.plotOptions.bar.distributed && (p = c.globals.colors[s]);
 
-	        for (var p = function p(t, r) {
-	          var p = i.getFormatters(a);
-	          u = i.getSeriesName({
-	            fn: p.yLbTitleFormatter,
+	        for (var x = function x(t, r) {
+	          var x = i.getFormatters(a);
+	          f = i.getSeriesName({
+	            fn: x.yLbTitleFormatter,
 	            index: a,
 	            seriesIndex: a,
 	            j: s
-	          }), "treemap" === h.config.chart.type && (u = p.yLbTitleFormatter(String(h.config.series[a].data[s].x), {
-	            series: h.globals.series,
+	          }), "treemap" === c.config.chart.type && (f = x.yLbTitleFormatter(String(c.config.series[a].data[s].x), {
+	            series: c.globals.series,
 	            seriesIndex: a,
 	            dataPointIndex: s,
-	            w: h
+	            w: c
 	          }));
-	          var x = h.config.tooltip.inverseOrder ? r : t;
+	          var b = c.config.tooltip.inverseOrder ? r : t;
 
-	          if (h.globals.axisCharts) {
-	            var b = function b(t) {
-	              return p.yLbFormatter(h.globals.series[t][s], {
-	                series: h.globals.series,
+	          if (c.globals.axisCharts) {
+	            var m = function m(t) {
+	              return x.yLbFormatter(c.globals.series[t][s], {
+	                series: c.globals.series,
 	                seriesIndex: t,
 	                dataPointIndex: s,
-	                w: h
+	                w: c
 	              });
 	            };
 
-	            o ? (p = i.getFormatters(x), u = i.getSeriesName({
-	              fn: p.yLbTitleFormatter,
-	              index: x,
+	            l ? (x = i.getFormatters(b), f = i.getSeriesName({
+	              fn: x.yLbTitleFormatter,
+	              index: b,
 	              seriesIndex: a,
 	              j: s
-	            }), f = h.globals.colors[x], e = b(x)) : (l && l.target && l.target.getAttribute("fill") && (f = l.target.getAttribute("fill")), e = b(a));
+	            }), p = c.globals.colors[b], e = m(b)) : (h && h.target && h.target.getAttribute("fill") && (p = h.target.getAttribute("fill")), e = m(a));
 	          }
 
-	          null === s && (e = p.yLbFormatter(h.globals.series[a], h)), i.DOMHandling({
+	          null === s && (e = x.yLbFormatter(c.globals.series[a], n(n({}, c), {}, {
+	            seriesIndex: a,
+	            dataPointIndex: a
+	          }))), i.DOMHandling({
 	            i: a,
-	            t: x,
+	            t: b,
 	            j: s,
-	            ttItems: n,
+	            ttItems: o,
 	            values: {
 	              val: e,
-	              xVal: c,
-	              xAxisTTVal: g,
-	              zVal: d
+	              xVal: d,
+	              xAxisTTVal: u,
+	              zVal: g
 	            },
-	            seriesName: u,
-	            shared: o,
-	            pColor: f
+	            seriesName: f,
+	            shared: l,
+	            pColor: p
 	          });
-	        }, x = 0, b = h.globals.series.length - 1; x < h.globals.series.length; x++, b--) {
-	          p(x, b);
+	        }, b = 0, m = c.globals.series.length - 1; b < c.globals.series.length; b++, m--) {
+	          x(b, m);
 	        }
 	      }
 	    }, {
@@ -57243,7 +58893,7 @@ var Forestry = (function () {
 	    function t(i) {
 	      e(this, t), this.ctx = i, this.w = i.w;
 	      var a = this.w;
-	      this.chartType = this.w.config.chart.type, this.initialAnim = this.w.config.chart.animations.enabled, this.dynamicAnim = this.initialAnim && this.w.config.chart.animations.dynamicAnimation.enabled, this.animBeginArr = [0], this.animDur = 0, this.donutDataLabels = this.w.config.plotOptions.pie.donut.labels, this.lineColorArr = void 0 !== a.globals.stroke.colors ? a.globals.stroke.colors : a.globals.colors, this.defaultSize = Math.min(a.globals.gridWidth, a.globals.gridHeight), this.centerY = this.defaultSize / 2, this.centerX = a.globals.gridWidth / 2, this.fullAngle = 360, a.globals.radialSize = this.defaultSize / 2.05 - a.config.stroke.width - (a.config.chart.sparkline.enabled ? 0 : a.config.chart.dropShadow.blur), this.donutSize = a.globals.radialSize * parseInt(a.config.plotOptions.pie.donut.size, 10) / 100, this.maxY = 0, this.sliceLabels = [], this.sliceSizes = [], this.prevSectorAngleArr = [];
+	      this.chartType = this.w.config.chart.type, this.initialAnim = this.w.config.chart.animations.enabled, this.dynamicAnim = this.initialAnim && this.w.config.chart.animations.dynamicAnimation.enabled, this.animBeginArr = [0], this.animDur = 0, this.donutDataLabels = this.w.config.plotOptions.pie.donut.labels, this.lineColorArr = void 0 !== a.globals.stroke.colors ? a.globals.stroke.colors : a.globals.colors, this.defaultSize = Math.min(a.globals.gridWidth, a.globals.gridHeight), this.centerY = this.defaultSize / 2, this.centerX = a.globals.gridWidth / 2, "radialBar" === a.config.chart.type ? this.fullAngle = 360 : this.fullAngle = Math.abs(a.config.plotOptions.pie.endAngle - a.config.plotOptions.pie.startAngle), this.initialAngle = a.config.plotOptions.pie.startAngle % this.fullAngle, a.globals.radialSize = this.defaultSize / 2.05 - a.config.stroke.width - (a.config.chart.sparkline.enabled ? 0 : a.config.chart.dropShadow.blur), this.donutSize = a.globals.radialSize * parseInt(a.config.plotOptions.pie.donut.size, 10) / 100, this.maxY = 0, this.sliceLabels = [], this.sliceSizes = [], this.prevSectorAngleArr = [];
 	    }
 
 	    return a(t, [{
@@ -57327,109 +58977,108 @@ var Forestry = (function () {
 	            n = s.group({
 	          class: "apexcharts-slices"
 	        }),
-	            o = i.config.plotOptions.pie.startAngle % this.fullAngle,
-	            l = o,
-	            h = o,
-	            c = o,
-	            d = o;
+	            o = this.initialAngle,
+	            l = this.initialAngle,
+	            h = this.initialAngle,
+	            c = this.initialAngle;
 	        this.strokeWidth = i.config.stroke.show ? i.config.stroke.width : 0;
 
-	        for (var g = 0; g < t.length; g++) {
-	          var u = s.group({
+	        for (var d = 0; d < t.length; d++) {
+	          var g = s.group({
 	            class: "apexcharts-series apexcharts-pie-series",
-	            seriesName: f.escapeString(i.globals.seriesNames[g]),
-	            rel: g + 1,
-	            "data:realIndex": g
+	            seriesName: f.escapeString(i.globals.seriesNames[d]),
+	            rel: d + 1,
+	            "data:realIndex": d
 	          });
-	          n.add(u), h = d, c = (l = c) + t[g], d = h + this.prevSectorAngleArr[g];
-	          var x = c < l ? this.fullAngle + c - l : c - l,
-	              m = r.fillPath({
-	            seriesNumber: g,
-	            size: this.sliceSizes[g],
-	            value: e[g]
+	          n.add(g), l = c, h = (o = h) + t[d], c = l + this.prevSectorAngleArr[d];
+	          var u = h < o ? this.fullAngle + h - o : h - o,
+	              x = r.fillPath({
+	            seriesNumber: d,
+	            size: this.sliceSizes[d],
+	            value: e[d]
 	          }),
-	              v = this.getChangedPath(h, d),
-	              y = s.drawPath({
-	            d: v,
-	            stroke: Array.isArray(this.lineColorArr) ? this.lineColorArr[g] : this.lineColorArr,
+	              m = this.getChangedPath(l, c),
+	              v = s.drawPath({
+	            d: m,
+	            stroke: Array.isArray(this.lineColorArr) ? this.lineColorArr[d] : this.lineColorArr,
 	            strokeWidth: 0,
-	            fill: m,
+	            fill: x,
 	            fillOpacity: i.config.fill.opacity,
-	            classes: "apexcharts-pie-area apexcharts-".concat(this.chartType.toLowerCase(), "-slice-").concat(g)
+	            classes: "apexcharts-pie-area apexcharts-".concat(this.chartType.toLowerCase(), "-slice-").concat(d)
 	          });
 
-	          if (y.attr({
+	          if (v.attr({
 	            index: 0,
-	            j: g
+	            j: d
 	          }), i.config.chart.dropShadow.enabled) {
-	            var w = i.config.chart.dropShadow;
-	            a.dropShadow(y, w, g);
+	            var y = i.config.chart.dropShadow;
+	            a.dropShadow(v, y, d);
 	          }
 
-	          this.addListeners(y, this.donutDataLabels), b.setAttrs(y.node, {
-	            "data:angle": x,
-	            "data:startAngle": l,
+	          this.addListeners(v, this.donutDataLabels), b.setAttrs(v.node, {
+	            "data:angle": u,
+	            "data:startAngle": o,
 	            "data:strokeWidth": this.strokeWidth,
-	            "data:value": e[g]
+	            "data:value": e[d]
 	          });
-	          var k = {
+	          var w = {
 	            x: 0,
 	            y: 0
 	          };
-	          "pie" === this.chartType || "polarArea" === this.chartType ? k = f.polarToCartesian(this.centerX, this.centerY, i.globals.radialSize / 1.25 + i.config.plotOptions.pie.dataLabels.offset, (l + x / 2) % this.fullAngle) : "donut" === this.chartType && (k = f.polarToCartesian(this.centerX, this.centerY, (i.globals.radialSize + this.donutSize) / 2 + i.config.plotOptions.pie.dataLabels.offset, (l + x / 2) % this.fullAngle)), u.add(y);
-	          var A = 0;
+	          "pie" === this.chartType || "polarArea" === this.chartType ? w = f.polarToCartesian(this.centerX, this.centerY, i.globals.radialSize / 1.25 + i.config.plotOptions.pie.dataLabels.offset, (o + u / 2) % this.fullAngle) : "donut" === this.chartType && (w = f.polarToCartesian(this.centerX, this.centerY, (i.globals.radialSize + this.donutSize) / 2 + i.config.plotOptions.pie.dataLabels.offset, (o + u / 2) % this.fullAngle)), g.add(v);
+	          var k = 0;
 
-	          if (!this.initialAnim || i.globals.resized || i.globals.dataChanged ? this.animBeginArr.push(0) : (0 === (A = x / this.fullAngle * i.config.chart.animations.speed) && (A = 1), this.animDur = A + this.animDur, this.animBeginArr.push(this.animDur)), this.dynamicAnim && i.globals.dataChanged ? this.animatePaths(y, {
-	            size: this.sliceSizes[g],
-	            endAngle: c,
-	            startAngle: l,
-	            prevStartAngle: h,
-	            prevEndAngle: d,
+	          if (!this.initialAnim || i.globals.resized || i.globals.dataChanged ? this.animBeginArr.push(0) : (0 === (k = u / this.fullAngle * i.config.chart.animations.speed) && (k = 1), this.animDur = k + this.animDur, this.animBeginArr.push(this.animDur)), this.dynamicAnim && i.globals.dataChanged ? this.animatePaths(v, {
+	            size: this.sliceSizes[d],
+	            endAngle: h,
+	            startAngle: o,
+	            prevStartAngle: l,
+	            prevEndAngle: c,
 	            animateStartingPos: !0,
-	            i: g,
+	            i: d,
 	            animBeginArr: this.animBeginArr,
 	            shouldSetPrevPaths: !0,
 	            dur: i.config.chart.animations.dynamicAnimation.speed
-	          }) : this.animatePaths(y, {
-	            size: this.sliceSizes[g],
-	            endAngle: c,
-	            startAngle: l,
-	            i: g,
+	          }) : this.animatePaths(v, {
+	            size: this.sliceSizes[d],
+	            endAngle: h,
+	            startAngle: o,
+	            i: d,
 	            totalItems: t.length - 1,
 	            animBeginArr: this.animBeginArr,
-	            dur: A
-	          }), i.config.plotOptions.pie.expandOnClick && "polarArea" !== this.chartType && y.click(this.pieClicked.bind(this, g)), i.config.dataLabels.enabled) {
-	            var S = k.x,
-	                C = k.y,
-	                P = 100 * x / this.fullAngle + "%";
+	            dur: k
+	          }), i.config.plotOptions.pie.expandOnClick && "polarArea" !== this.chartType && v.click(this.pieClicked.bind(this, d)), i.config.dataLabels.enabled) {
+	            var A = w.x,
+	                S = w.y,
+	                C = 100 * u / this.fullAngle + "%";
 
-	            if (0 !== x && i.config.plotOptions.pie.dataLabels.minAngleToShowLabel < t[g]) {
-	              var T = i.config.dataLabels.formatter;
-	              void 0 !== T && (P = T(i.globals.seriesPercent[g][0], {
-	                seriesIndex: g,
+	            if (0 !== u && i.config.plotOptions.pie.dataLabels.minAngleToShowLabel < t[d]) {
+	              var P = i.config.dataLabels.formatter;
+	              void 0 !== P && (C = P(i.globals.seriesPercent[d][0], {
+	                seriesIndex: d,
 	                w: i
 	              }));
-	              var z = i.globals.dataLabels.style.colors[g],
-	                  I = s.group({
+	              var T = i.globals.dataLabels.style.colors[d],
+	                  z = s.group({
 	                class: "apexcharts-datalabels"
 	              }),
-	                  M = s.drawText({
-	                x: S,
-	                y: C,
-	                text: P,
+	                  I = s.drawText({
+	                x: A,
+	                y: S,
+	                text: C,
 	                textAnchor: "middle",
 	                fontSize: i.config.dataLabels.style.fontSize,
 	                fontFamily: i.config.dataLabels.style.fontFamily,
 	                fontWeight: i.config.dataLabels.style.fontWeight,
-	                foreColor: z
+	                foreColor: T
 	              });
 
-	              if (I.add(M), i.config.dataLabels.dropShadow.enabled) {
-	                var E = i.config.dataLabels.dropShadow;
-	                a.dropShadow(M, E);
+	              if (z.add(I), i.config.dataLabels.dropShadow.enabled) {
+	                var M = i.config.dataLabels.dropShadow;
+	                a.dropShadow(I, M);
 	              }
 
-	              M.node.classList.add("apexcharts-pie-label"), i.config.chart.animations.animate && !1 === i.globals.resized && (M.node.classList.add("apexcharts-pie-label-delay"), M.node.style.animationDelay = i.config.chart.animations.speed / 940 + "s"), this.sliceLabels.push(I);
+	              I.node.classList.add("apexcharts-pie-label"), i.config.chart.animations.animate && !1 === i.globals.resized && (I.node.classList.add("apexcharts-pie-label-delay"), I.node.style.animationDelay = i.config.chart.animations.speed / 940 + "s"), this.sliceLabels.push(z);
 	            }
 	          }
 	        }
@@ -59664,7 +61313,7 @@ var Forestry = (function () {
 	            i = 0,
 	            a = t.config.chart.sparkline.enabled ? 1 : 15;
 	        a += t.config.grid.padding.bottom, "top" !== t.config.legend.position && "bottom" !== t.config.legend.position || !t.config.legend.show || t.config.legend.floating || (i = new lt(this.ctx).legendHelpers.getLegendBBox().clwh + 10);
-	        var s = t.globals.dom.baseEl.querySelector(".apexcharts-radialbar"),
+	        var s = t.globals.dom.baseEl.querySelector(".apexcharts-radialbar, .apexcharts-pie"),
 	            r = 2.05 * t.globals.radialSize;
 
 	        if (s && !t.config.chart.sparkline.enabled) {
@@ -62864,7 +64513,7 @@ var Forestry = (function () {
 	  }(),
 	      Rt = function () {
 	    function t(i, a) {
-	      e(this, t), this.opts = a, this.ctx = this, this.w = new N(a).init(), this.el = i, this.w.globals.cuid = f.randomId(), this.w.globals.chartID = this.w.config.chart.id ? f.escapeString(this.w.config.chart.id) : this.w.globals.cuid, new Yt(this).initModules(), this.create = f.bind(this.create, this);
+	      e(this, t), this.opts = a, this.ctx = this, this.w = new N(a).init(), this.el = i, this.w.globals.cuid = f.randomId(), this.w.globals.chartID = this.w.config.chart.id ? f.escapeString(this.w.config.chart.id) : this.w.globals.cuid, new Yt(this).initModules(), this.create = f.bind(this.create, this), this.windowResizeHandler = this._windowResizeHandler.bind(this);
 	    }
 
 	    return a(t, [{
@@ -62879,7 +64528,7 @@ var Forestry = (function () {
 	              chart: t
 	            }), t.setLocale(t.w.config.chart.defaultLocale);
 	            var a = t.w.config.chart.events.beforeMount;
-	            "function" == typeof a && a(t, t.w), t.events.fireEvent("beforeMount", [t, t.w]), window.addEventListener("resize", t._windowResizeHandler.bind(t)), window.addResizeListener(t.el.parentNode, t._parentResizeCallback.bind(t));
+	            "function" == typeof a && a(t, t.w), t.events.fireEvent("beforeMount", [t, t.w]), window.addEventListener("resize", t.windowResizeHandler), window.addResizeListener(t.el.parentNode, t._parentResizeCallback.bind(t));
 	            var s = t.create(t.w.config.series, {});
 	            if (!s) return e(t);
 	            t.mount(s).then(function () {
@@ -62963,7 +64612,7 @@ var Forestry = (function () {
 	    }, {
 	      key: "destroy",
 	      value: function value() {
-	        window.removeEventListener("resize", this._windowResizeHandler.bind(this)), window.removeResizeListener(this.el.parentNode, this._parentResizeCallback.bind(this));
+	        window.removeEventListener("resize", this.windowResizeHandler), window.removeResizeListener(this.el.parentNode, this._parentResizeCallback.bind(this));
 	        var t = this.w.config.chart.id;
 	        t && Apex._chartInstances.forEach(function (e, i) {
 	          e.id === f.escapeString(t) && Apex._chartInstances.splice(i, 1);
@@ -63242,7 +64891,7 @@ var Forestry = (function () {
 	  module.exports = Rt;
 	});
 
-	var strings$4 = {
+	var strings$5 = {
 	  rus: {
 	    plot: {
 	      title: 'Лесной участок №',
@@ -63283,7 +64932,7 @@ var Forestry = (function () {
 
 	    _classCallCheck(this, Plots);
 
-	    _this = _super.call(this, container, strings$4);
+	    _this = _super.call(this, container, strings$5);
 
 	    _this._container.classList.add('scanex-forestry-view-plot');
 
@@ -63419,7 +65068,7 @@ var Forestry = (function () {
 	  }]);
 
 	  return Plots;
-	}(View);
+	}(View$1);
 
 	var Plots$1 = /*#__PURE__*/function (_LayerController) {
 	  _inherits(Plots$1, _LayerController);
@@ -63540,7 +65189,7 @@ var Forestry = (function () {
 	  return Plots$1;
 	}(LayerController);
 
-	var strings$5 = {
+	var strings$6 = {
 	  rus: {
 	    info: {
 	      approve: 'Дата принятия решения о проведении аукциона',
@@ -63606,7 +65255,7 @@ var Forestry = (function () {
 
 	    _classCallCheck(this, Info);
 
-	    _this = _super.call(this, container, strings$5);
+	    _this = _super.call(this, container, strings$6);
 
 	    _this._container.classList.add('scanex-forestry-view-project');
 
@@ -63762,9 +65411,9 @@ var Forestry = (function () {
 	  }]);
 
 	  return Info;
-	}(View);
+	}(View$1);
 
-	var translate$8 = T.getText.bind(T);
+	var translate$a = T.getText.bind(T);
 
 	var Quadrants = /*#__PURE__*/function (_EventTarget) {
 	  _inherits(Quadrants, _EventTarget);
@@ -63791,7 +65440,7 @@ var Forestry = (function () {
 	      var _this2 = this;
 
 	      this._items = Array.isArray(items) && items || [];
-	      this._container.innerHTML = this._items.length ? "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th>".concat(translate$8('project.localForestry'), " / ").concat(translate$8('project.tract'), "</th>                    \n                    <th>").concat(translate$8('project.quadrants'), "</th>\n                    <th>").concat(translate$8('project.year'), "</th>                    \n                </tr>\n            </thead>\n        </table>\n        <div class=\"scrollable\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody>").concat(this._items.map(function (_ref) {
+	      this._container.innerHTML = this._items.length ? "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th>".concat(translate$a('project.localForestry'), " / ").concat(translate$a('project.tract'), "</th>                    \n                    <th>").concat(translate$a('project.quadrants'), "</th>\n                    <th>").concat(translate$a('project.year'), "</th>                    \n                </tr>\n            </thead>\n        </table>\n        <div class=\"scrollable\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody>").concat(this._items.map(function (_ref) {
 	        var local_forestry = _ref.local_forestry,
 	            stow = _ref.stow,
 	            num = _ref.num,
@@ -63867,7 +65516,7 @@ var Forestry = (function () {
 	  return Quadrants;
 	}(EventTarget);
 
-	var translate$9 = T.getText.bind(T);
+	var translate$b = T.getText.bind(T);
 
 	var SpeciesTable = /*#__PURE__*/function (_EventTarget) {
 	  _inherits(SpeciesTable, _EventTarget);
@@ -63905,14 +65554,14 @@ var Forestry = (function () {
 	            total_stock_deal = _ref.total_stock_deal;
 	        return "<tr class=\"type\">\n                <td class=\"text\">".concat(species, "</td>\n                <td class=\"value\">").concat(m(permitted_stock), "</td>\n                <td class=\"value\">").concat(m(permitted_stock_deal), "</td>\n                <td class=\"value\">").concat(m(probable_stock), "</td>\n                <td class=\"value\">").concat(m(probable_stock_deal), "</td>\n                <td class=\"value\">").concat(m(total_stock), "</td>\n                <td class=\"value\">").concat(m(total_stock_deal), "</td>\n            </tr>");
 	      }).join('');
-	      this._container.innerHTML = rows ? "<div class=\"title\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>                 \n                        <tr>\n                            <td class=\"text\">".concat(translate$9('project.species'), "</td>\n                            <td class=\"text\" colspan=\"3\">").concat(translate$9('project.stock.label'), ", ").concat(translate$9('units.m'), "<sup>3</sup></td>\n                        </tr>\n                        <tr>\n                            <td></td>\n                            <td class=\"text\">").concat(translate$9('project.stock.permitted'), "</td>                        \n                            <td class=\"text\">").concat(translate$9('project.stock.probable'), "</td>\n                            <td class=\"text\">").concat(translate$9('project.stock.total'), "</td>\n                        </tr>\n                    </tbody>\t\t\t\t\t\t\n                </table>\n            </div>\n            <div class=\"content scrollable\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>").concat(rows, "</tbody>\n                </table>\n            </div>") : '';
+	      this._container.innerHTML = rows ? "<div class=\"title\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>                 \n                        <tr>\n                            <td class=\"text\">".concat(translate$b('project.species'), "</td>\n                            <td class=\"text\" colspan=\"3\">").concat(translate$b('project.stock.label'), ", ").concat(translate$b('units.m'), "<sup>3</sup></td>\n                        </tr>\n                        <tr>\n                            <td></td>\n                            <td class=\"text\">").concat(translate$b('project.stock.permitted'), "</td>                        \n                            <td class=\"text\">").concat(translate$b('project.stock.probable'), "</td>\n                            <td class=\"text\">").concat(translate$b('project.stock.total'), "</td>\n                        </tr>\n                    </tbody>\t\t\t\t\t\t\n                </table>\n            </div>\n            <div class=\"content scrollable\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>").concat(rows, "</tbody>\n                </table>\n            </div>") : '';
 	    }
 	  }]);
 
 	  return SpeciesTable;
 	}(EventTarget);
 
-	var translate$a = T.getText.bind(T);
+	var translate$c = T.getText.bind(T);
 
 	var Species = /*#__PURE__*/function () {
 	  function Species(container) {
@@ -63922,7 +65571,7 @@ var Forestry = (function () {
 
 	    this._species = [];
 	    this._container = container;
-	    this._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<thead class=\"menu\">\n\t\t\t\t<tr>\n\t\t\t\t\t<th colspan=\"3\">\n\t\t\t\t\t\t<button class=\"stock active\">".concat(translate$a('project.stock.table'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"permitted\">").concat(translate$a('project.stock.permitted'), "</button>\n\t\t\t\t\t</th>\t\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"probable\">").concat(translate$a('project.stock.probable'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"total\">").concat(translate$a('project.stock.total'), "</button>\n\t\t\t\t\t</th>\t\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td colspan=\"3\">\n\t\t\t\t\t\t<div class=\"table\"></div>\n\t\t\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t\t</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
+	    this._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<thead class=\"menu\">\n\t\t\t\t<tr>\n\t\t\t\t\t<th colspan=\"3\">\n\t\t\t\t\t\t<button class=\"stock active\">".concat(translate$c('project.stock.table'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"permitted\">").concat(translate$c('project.stock.permitted'), "</button>\n\t\t\t\t\t</th>\t\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"probable\">").concat(translate$c('project.stock.probable'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"total\">").concat(translate$c('project.stock.total'), "</button>\n\t\t\t\t\t</th>\t\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td colspan=\"3\">\n\t\t\t\t\t\t<div class=\"table\"></div>\n\t\t\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t\t</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
 	    this._buttons = this._container.querySelectorAll('button');
 
 	    var btnStock = this._container.querySelector('.stock');
@@ -63977,11 +65626,11 @@ var Forestry = (function () {
 	    };
 
 	    var fmt_labels = function fmt_labels(val, opts) {
-	      return "".concat(m(parseFloat(opts.w.globals.series[opts.seriesIndex])), " ").concat(translate$a('units.m3'));
+	      return "".concat(m(parseFloat(opts.w.globals.series[opts.seriesIndex])), " ").concat(translate$c('units.m3'));
 	    };
 
 	    var fmt_value = function fmt_value(val) {
-	      return "".concat(m(parseFloat(val)), " ").concat(translate$a('units.m3'));
+	      return "".concat(m(parseFloat(val)), " ").concat(translate$c('units.m3'));
 	    };
 
 	    var fmt_total = function fmt_total(w) {
@@ -64023,7 +65672,7 @@ var Forestry = (function () {
 	              total: {
 	                show: true,
 	                formatter: fmt_total,
-	                label: translate$a('project.stock.all'),
+	                label: translate$c('project.stock.all'),
 	                fontSize: '12px',
 	                fontWeight: 600
 	              }
@@ -64163,7 +65812,7 @@ var Forestry = (function () {
 
 	    _classCallCheck(this, Project);
 
-	    _this = _super.call(this, container, strings$5);
+	    _this = _super.call(this, container, strings$6);
 	    _this._layer = layer;
 	    _this._forestryIndex = forestryIndex;
 	    _this._projectIndex = projectIndex;
@@ -64342,9 +65991,9 @@ var Forestry = (function () {
 	  }]);
 
 	  return Project;
-	}(View);
+	}(View$1);
 
-	var translate$b = T.getText.bind(T);
+	var translate$d = T.getText.bind(T);
 
 	var indexByName = function indexByName(layer, name) {
 	  var _layer$getGmxProperti = layer.getGmxProperties(),
@@ -64651,7 +66300,7 @@ var Forestry = (function () {
 
 	        this._layers.quadrants.repaint();
 	      } else {
-	        this._notification.error(translate$b('forbidden.project.create'));
+	        this._notification.error(translate$d('forbidden.project.create'));
 	      }
 	    } // draft
 
@@ -64726,7 +66375,7 @@ var Forestry = (function () {
 	                return _context6.abrupt("return", true);
 
 	              case 23:
-	                this._notification.warn(translate$b('quadrant.invalid'));
+	                this._notification.warn(translate$d('quadrant.invalid'));
 
 	                return _context6.abrupt("return", false);
 
@@ -64735,7 +66384,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 27:
-	                this._notification.error(translate$b('forbidden.project.edit'));
+	                this._notification.error(translate$d('forbidden.project.edit'));
 
 	              case 28:
 	              case "end":
@@ -64785,7 +66434,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 8:
-	                this._notification.error(translate$b('forbidden.project.edit'));
+	                this._notification.error(translate$d('forbidden.project.edit'));
 
 	              case 9:
 	              case "end":
@@ -64914,7 +66563,7 @@ var Forestry = (function () {
 	                      species: ForestStat
 	                    };
 	                  } else {
-	                    this._notification.warn(translate$b('quadrant.invalid'));
+	                    this._notification.warn(translate$d('quadrant.invalid'));
 	                  }
 
 	                  this._project.open(this._valid);
@@ -64975,7 +66624,7 @@ var Forestry = (function () {
 	                      species: ForestStat
 	                    };
 	                  } else {
-	                    this._notification.warn(translate$b('quadrant.invalid'));
+	                    this._notification.warn(translate$d('quadrant.invalid'));
 	                  }
 
 	                  this._project.open(this._valid);
@@ -65002,7 +66651,7 @@ var Forestry = (function () {
 	  return Projects;
 	}(LayerController);
 
-	var strings$6 = {
+	var strings$7 = {
 	  rus: {
 	    quadrant: {
 	      stock: {
@@ -65047,7 +66696,7 @@ var Forestry = (function () {
 
 	    _classCallCheck(this, Quadrants);
 
-	    _this = _super.call(this, container, strings$6);
+	    _this = _super.call(this, container, strings$7);
 
 	    _this._container.classList.add('scanex-forestry-quadrant');
 
@@ -65158,9 +66807,9 @@ var Forestry = (function () {
 	  }]);
 
 	  return Quadrants;
-	}(View);
+	}(View$1);
 
-	var translate$c = T.getText.bind(T);
+	var translate$e = T.getText.bind(T);
 
 	var Quadrants$2 = /*#__PURE__*/function (_LayerController) {
 	  _inherits(Quadrants, _LayerController);
@@ -65300,7 +66949,7 @@ var Forestry = (function () {
 	                  } else {
 	                    this._view.close();
 
-	                    this._notification.warn(translate$c('warn.notavailable'));
+	                    this._notification.warn(translate$e('warn.notavailable'));
 	                  }
 	                } else {
 	                  this._view.close();
@@ -65328,7 +66977,7 @@ var Forestry = (function () {
 	  return Quadrants;
 	}(LayerController);
 
-	var translate$d = T.getText.bind(T);
+	var translate$f = T.getText.bind(T);
 
 	var RasterCatalog = /*#__PURE__*/function () {
 	  function RasterCatalog(_ref) {
@@ -65352,7 +67001,7 @@ var Forestry = (function () {
 	    if (ids.some(function (id) {
 	      return _this._layers[id];
 	    })) {
-	      var p = this._legend.addGroup('rasters', translate$d('legend.rasters'));
+	      var p = this._legend.addGroup('rasters', translate$f('legend.rasters'));
 
 	      ids.forEach(function (kind) {
 	        var layer = _this._layers[kind];
@@ -65360,7 +67009,7 @@ var Forestry = (function () {
 	        if (layer) {
 	          layer.setZIndexOffset(zIndexOffset);
 
-	          _this._legend.addComponent(kind, translate$d("legend.".concat(kind)), p);
+	          _this._legend.addComponent(kind, translate$f("legend.".concat(kind)), p);
 	        }
 	      });
 
@@ -65392,7 +67041,7 @@ var Forestry = (function () {
 	  return RasterCatalog;
 	}();
 
-	var strings$7 = {
+	var strings$8 = {
 	  rus: {
 	    report: {
 	      title: 'Сводная аналитика',
@@ -65435,7 +67084,7 @@ var Forestry = (function () {
 
 	    _classCallCheck(this, Reports);
 
-	    _this = _super.call(this, container, strings$7);
+	    _this = _super.call(this, container, strings$8);
 
 	    _this._container.classList.add('scanex-forestry-analytics');
 
@@ -65745,7 +67394,7 @@ var Forestry = (function () {
 	  }]);
 
 	  return Reports;
-	}(View);
+	}(View$1);
 
 	var Reports$1 = /*#__PURE__*/function (_Controller) {
 	  _inherits(Reports$1, _Controller);
@@ -65872,7 +67521,7 @@ var Forestry = (function () {
 	  return Reports$1;
 	}(Controller);
 
-	var strings$8 = {
+	var strings$9 = {
 	  rus: {
 	    request: {
 	      id: '#',
@@ -65899,7 +67548,7 @@ var Forestry = (function () {
 
 	    _classCallCheck(this, Requests);
 
-	    _this = _super.call(this, container, strings$8);
+	    _this = _super.call(this, container, strings$9);
 
 	    _this._container.classList.add('scanex-forestry-requests');
 
@@ -66002,7 +67651,7 @@ var Forestry = (function () {
 	  }]);
 
 	  return Requests;
-	}(View);
+	}(View$1);
 
 	var Requests$1 = /*#__PURE__*/function (_Controller) {
 	  _inherits(Requests$1, _Controller);
@@ -66212,7 +67861,7 @@ var Forestry = (function () {
 	  return Roads;
 	}(LayerController);
 
-	var strings$9 = {
+	var strings$a = {
 	  rus: {
 	    stand: {
 	      title: 'Выдел',
@@ -66277,7 +67926,7 @@ var Forestry = (function () {
 
 	    _classCallCheck(this, Stands);
 
-	    _this = _super.call(this, container, strings$9);
+	    _this = _super.call(this, container, strings$a);
 
 	    _this._container.classList.add('scanex-forestry-stand');
 
@@ -66432,9 +68081,9 @@ var Forestry = (function () {
 	  }]);
 
 	  return Stands;
-	}(View);
+	}(View$1);
 
-	var translate$e = T.getText.bind(T);
+	var translate$g = T.getText.bind(T);
 
 	var Stands$1 = /*#__PURE__*/function (_LayerController) {
 	  _inherits(Stands$1, _LayerController);
@@ -66527,7 +68176,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 18:
-	                this._notification.warn(translate$e('warn.notavailable'));
+	                this._notification.warn(translate$g('warn.notavailable'));
 
 	              case 19:
 	              case "end":
@@ -66562,7 +68211,7 @@ var Forestry = (function () {
 	  isInteger: isInteger
 	});
 
-	var translate$f = T.getText.bind(T);
+	var translate$h = T.getText.bind(T);
 	T.addText('rus', {
 	  pager: {
 	    previous: 'Предыдущая',
@@ -66582,7 +68231,7 @@ var Forestry = (function () {
 
 	    _this = _super.call(this);
 	    _this._container = container;
-	    _this._container.innerHTML = "<table class=\"scanex-forestry-pager\" cellpadding=\"0\" cellspacing=\"0\">\n            <tr>\n                <td>\n                    <button class=\"first\">1</button>\n                </td>                \n                <td>\n                    <button class=\"previous\">".concat(translate$f('pager.previous'), "</button>\n                </td>\n                <td>\n                    <input type=\"text\" value=\"\" />\n                </td>\n                <td>\n                    <button class=\"next\">").concat(translate$f('pager.next'), "</button>\n                </td>                \n                <td>\n                    <button class=\"last\"></button>\n                </td>\n            </tr>\n        </table>");
+	    _this._container.innerHTML = "<table class=\"scanex-forestry-pager\" cellpadding=\"0\" cellspacing=\"0\">\n            <tr>\n                <td>\n                    <button class=\"first\">1</button>\n                </td>                \n                <td>\n                    <button class=\"previous\">".concat(translate$h('pager.previous'), "</button>\n                </td>\n                <td>\n                    <input type=\"text\" value=\"\" />\n                </td>\n                <td>\n                    <button class=\"next\">").concat(translate$h('pager.next'), "</button>\n                </td>                \n                <td>\n                    <button class=\"last\"></button>\n                </td>\n            </tr>\n        </table>");
 
 	    _this._container.querySelector('.first').addEventListener('click', function (e) {
 	      e.stopPropagation();
@@ -66649,7 +68298,7 @@ var Forestry = (function () {
 	  return Pager;
 	}(EventTarget);
 
-	var strings$a = {
+	var strings$b = {
 	  rus: {
 	    uploaded: {
 	      add: 'Добавить',
@@ -66682,6 +68331,7 @@ var Forestry = (function () {
 	        errorTileUrl: 'errorTileUrl',
 	        zoomOffset: 'zoomOffset',
 	        zoomReverse: 'zoomReverse',
+	        tileReverse: 'tileReverse',
 	        detectRetina: 'detectRetina',
 	        crossOrigin: 'crossOrigin',
 	        anonymous: 'anonymous',
@@ -66710,18 +68360,19 @@ var Forestry = (function () {
 	    var _this;
 
 	    var _ref$columns = _ref.columns,
-	        columns = _ref$columns === void 0 ? ['type', 'date', 'name'] : _ref$columns,
+	        columns = _ref$columns === void 0 ? ['type', 'date', 'title'] : _ref$columns,
 	        _ref$types = _ref.types,
 	        types = _ref$types === void 0 ? ['shp', 'geojson'] : _ref$types,
 	        pageSize = _ref.pageSize;
 
 	    _classCallCheck(this, Uploaded);
 
-	    _this = _super.call(this, container, strings$a);
+	    _this = _super.call(this, container, strings$b);
 	    _this._columns = columns;
 	    _this._types = types;
 	    _this._pageSize = pageSize;
 	    _this._page = 0;
+	    _this._selected = {};
 
 	    _this._container.classList.add('scanex-forestry-uploaded');
 
@@ -66729,7 +68380,7 @@ var Forestry = (function () {
 	      return "<option value=\"".concat(id, "\">").concat(id, "</option>");
 	    }).join(''), "</select>\n                    </td>\n                    <td>\n                        <div class=\"date\">\n                            <input class=\"datepicker\" type=\"text\" placeholder=\"").concat(_this.translate('uploaded.date'), "\" value=\"\" />\n                            <i class=\"scanex-uploaded-icon calendar\"></i>\n                        </div>\n                    </td>\n                </tr>\n            </table>\n        </div>\n        <div class=\"data\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <thead>\n                    <tr><th></th>").concat(_this._columns.map(function (id) {
 	      return "<th>".concat(_this.translate("uploaded.".concat(id)), "</th>");
-	    }).join(''), "</tr>\n                </thead>\n                <tbody class=\"content\"></tbody>\n            </table>\n        </div>\n        <div class=\"footer\">\n            <div class=\"pages\"></div>\n            <button class=\"add\">").concat(_this.translate("uploaded.add"), "</button>\n            <button class=\"remove\">").concat(_this.translate("uploaded.remove"), "</button>\n        </div>");
+	    }).join(''), "</tr>\n                </thead>\n                <tbody class=\"content\"></tbody>\n            </table>\n        </div>\n        <div class=\"footer\">\n            <div class=\"pages\"></div>\n            <button class=\"add\">").concat(_this.translate("uploaded.add"), "</button>\n        </div>");
 	    _this._date = new pikaday({
 	      field: _this._container.querySelector('.datepicker'),
 	      format: 'DD.MM.YYYY',
@@ -66764,27 +68415,19 @@ var Forestry = (function () {
 
 	    _this._pager.pages = 1;
 
-	    _this._container.querySelector('.add').addEventListener('click', function (e) {
+	    var btnAdd = _this._container.querySelector('.add');
+
+	    btnAdd.addEventListener('click', function (e) {
 	      e.stopPropagation();
+	      var event = document.createEvent('Event');
+	      event.initEvent('upload', false, false);
 
-	      _this._upload();
+	      _this.dispatchEvent(event);
 	    });
-
-	    _this._container.querySelector('.remove').addEventListener('click', function (e) {
-	      e.stopPropagation();
-	    });
-
 	    return _this;
 	  }
 
 	  _createClass(Uploaded, [{
-	    key: "_upload",
-	    value: function _upload() {
-	      var event = document.createEvent('Event');
-	      event.initEvent('upload', false, false);
-	      this.dispatchEvent(event);
-	    }
-	  }, {
 	    key: "open",
 	    value: function open(_ref3) {
 	      var _this2 = this;
@@ -66794,29 +68437,52 @@ var Forestry = (function () {
 
 	      _get(_getPrototypeOf(Uploaded.prototype), "open", this).call(this);
 
-	      this._content.innerHTML = layers.map(function (item) {
-	        return "<tr>\n                <td>\n                    <i class=\"scanex-uploaded-icon box\"></i>\n                </td>\n                ".concat(_this2._columns.map(function (id) {
+	      this._content.innerHTML = layers.filter(function (_ref4) {
+	        var isBaseLayer = _ref4.MetaProperties.isBaseLayer;
+	        return !isBaseLayer;
+	      }).map(function (item) {
+	        return "<tr>\n                <td>\n                    <i class=\"scanex-uploaded-icon box".concat(_this2._selected[item.LayerID] && 'active' || '', "\"></i>\n                </td>\n                ").concat(_this2._columns.map(function (id) {
 	          return "<td>".concat(item[id], "</td>");
-	        }).join(''), "\n            </tr>");
+	        }).join(''), "\n                <td>\n                    <i class=\"scanex-uploaded-icon remove\"></i>\n                </td>\n            </tr>");
 	      }).join('');
 
-	      var boxes = this._content.querySelectorAll('i');
+	      var rows = this._content.querySelectorAll('tr');
 
 	      var _loop = function _loop(i) {
-	        var box = boxes[i];
-	        box.addEventListener('click', function (e) {
+	        var row = rows[i];
+	        var layer = layers[i];
+	        var LayerID = layer.LayerID;
+	        var btnSelect = row.querySelector('.box');
+	        btnSelect.addEventListener('click', function (e) {
 	          e.stopPropagation();
-	          var active = !box.classList.contains('active');
+	          var active = !btnSelect.classList.contains('active');
 
 	          if (active) {
-	            box.classList.add('active');
+	            btnSelect.classList.add('active');
+	            _this2._selected[LayerID] = layer;
 	          } else {
-	            box.classList.remove('active');
+	            btnSelect.classList.remove('active');
+	            delete _this2._selected[LayerID];
 	          }
+
+	          var event = document.createEvent('Event');
+	          event.initEvent('select', false, false);
+	          event.detail = _this2._selected;
+
+	          _this2.dispatchEvent(event);
+	        });
+	        var btnRemove = row.querySelector('.remove');
+	        btnRemove.addEventListener('click', function (e) {
+	          e.stopPropagation();
+	          var event = document.createEvent('Event');
+	          event.initEvent('remove', false, false);
+	          event.detail = LayerID;
+
+	          _this2.dispatchEvent(event);
 	        });
 	      };
 
-	      for (var i = 0; i < boxes.length; ++i) {
+	      for (var i = 0; i < rows.length; ++i) {
 	        _loop(i);
 	      }
 
@@ -66830,1083 +68496,7 @@ var Forestry = (function () {
 	  }]);
 
 	  return Uploaded;
-	}(View);
-
-	var Component = /*#__PURE__*/function (_EventTarget) {
-	  _inherits(Component, _EventTarget);
-
-	  var _super = _createSuper(Component);
-
-	  function Component(container, options) {
-	    var _this;
-
-	    _classCallCheck(this, Component);
-
-	    _this = _super.call(this);
-	    _this._container = container;
-	    _this._element = document.createElement('div');
-
-	    _this._element.classList.add('scanex-component');
-
-	    _this._container.appendChild(_this._element);
-
-	    _this._render(_this._element, options);
-
-	    return _this;
-	  }
-
-	  _createClass(Component, [{
-	    key: "destroy",
-	    value: function destroy() {
-	      this._container.removeChild(this._element);
-	    }
-	  }, {
-	    key: "forwardEvent",
-	    value: function forwardEvent(e) {
-	      e.stopPropagation();
-	      var event = document.createEvent('Event');
-	      event.initEvent(e.type, false, false);
-	      event.detail = e.detail;
-	      this.dispatchEvent(event);
-	    }
-	  }, {
-	    key: "_render",
-	    value: function _render(element, options) {}
-	  }]);
-
-	  return Component;
-	}(EventTarget);
-
-	var DEFAULT_LANGUAGE$1 = 'rus';
-
-	var Translations$1 = /*#__PURE__*/function () {
-	  function Translations() {
-	    _classCallCheck(this, Translations);
-
-	    this._hash = {};
-	  }
-
-	  _createClass(Translations, [{
-	    key: "setLanguage",
-	    value: function setLanguage(lang) {
-	      this._language = lang;
-	    }
-	  }, {
-	    key: "getLanguage",
-	    value: function getLanguage() {
-	      return window.language || this._language || DEFAULT_LANGUAGE$1;
-	    }
-	  }, {
-	    key: "addText",
-	    value: function addText(lang, tran) {
-	      this._hash[lang] = extend(this._hash[lang] || {}, tran);
-	      return this;
-	    }
-	  }, {
-	    key: "getText",
-	    value: function getText(key) {
-	      if (key && typeof key === 'string') {
-	        var locale = this._hash[this.getLanguage()];
-
-	        if (locale) {
-	          return key.split('.').reduce(function (a, k) {
-	            return a[k];
-	          }, locale);
-	        }
-	      }
-
-	      return null;
-	    }
-	  }]);
-
-	  return Translations;
-	}();
-
-	window.Scanex = window.Scanex || {};
-	window.Scanex.Translations = window.Scanex.Translations || {};
-	window.Scanex.translations = window.Scanex.translations || new Translations$1();
-	var T$1 = window.Scanex.translations;
-
-	T$1.addText('rus', {
-	  scanex: {
-	    components: {
-	      dialog: {
-	        close: 'Закрыть',
-	        maximize: 'Развернуть',
-	        minimize: 'Свернуть'
-	      }
-	    }
-	  }
-	});
-	T$1.addText('eng', {
-	  scanex: {
-	    components: {
-	      dialog: {
-	        close: 'Close',
-	        maximize: 'Maximize',
-	        minimize: 'Minimize'
-	      }
-	    }
-	  }
-	});
-	var translate$g = T$1.getText.bind(T$1);
-
-	var Dialog = /*#__PURE__*/function (_Component) {
-	  _inherits(Dialog, _Component);
-
-	  var _super = _createSuper(Dialog);
-
-	  function Dialog(_ref) {
-	    var _this;
-
-	    var title = _ref.title,
-	        id = _ref.id,
-	        _ref$collapsible = _ref.collapsible,
-	        collapsible = _ref$collapsible === void 0 ? false : _ref$collapsible,
-	        top = _ref.top,
-	        left = _ref.left;
-
-	    _classCallCheck(this, Dialog);
-
-	    _this = _super.call(this, document.body, {
-	      id: id,
-	      collapsible: collapsible,
-	      top: top,
-	      left: left
-	    });
-
-	    if (_this._id) {
-	      _this._element.setAttribute('id', _this._id);
-	    }
-
-	    _this._titleElement.innerText = title;
-	    _this._moving = false;
-	    _this._offsetX;
-	    _this._offsetY;
-
-	    _this._header.addEventListener('mousedown', _this._start.bind(_assertThisInitialized(_this)));
-
-	    _this._element.addEventListener('mousemove', _this._move.bind(_assertThisInitialized(_this)));
-
-	    window.addEventListener('mouseup', _this._stop.bind(_assertThisInitialized(_this)));
-	    return _this;
-	  }
-
-	  _createClass(Dialog, [{
-	    key: "_start",
-	    value: function _start(e) {
-	      e.stopPropagation();
-	      var clientX = e.clientX,
-	          clientY = e.clientY;
-
-	      var _this$_element$getBou = this._element.getBoundingClientRect(),
-	          top = _this$_element$getBou.top,
-	          left = _this$_element$getBou.left;
-
-	      this._offsetX = clientX - left;
-	      this._offsetY = clientY - top;
-	      this._moving = true;
-	    }
-	  }, {
-	    key: "_stop",
-	    value: function _stop() {
-	      if (this._moving) {
-	        this._moving = false;
-
-	        this._savePosition();
-	      }
-	    }
-	  }, {
-	    key: "_move",
-	    value: function _move(e) {
-	      if (this._moving) {
-	        e.stopPropagation();
-	        var clientX = e.clientX,
-	            clientY = e.clientY;
-	        this._element.style.left = "".concat(clientX - this._offsetX, "px");
-	        this._element.style.top = "".concat(clientY - this._offsetY, "px");
-	      }
-	    }
-	  }, {
-	    key: "_toggle",
-	    value: function _toggle(e) {
-	      e.stopPropagation();
-
-	      if (this._btnToggle.classList.contains('minimize')) {
-	        this._btnToggle.setAttribute('title', translate$g('scanex.components.dialog.maximize'));
-
-	        this._btnToggle.classList.remove('minimize');
-
-	        this._btnToggle.classList.add('maximize');
-
-	        this._content.classList.add('hidden');
-
-	        this._footer.classList.add('hidden');
-
-	        var event = document.createEvent('Event');
-	        event.initEvent('minimize', false, false);
-	        this.dispatchEvent(event);
-	      } else {
-	        this._btnToggle.setAttribute('title', translate$g('scanex.components.dialog.minimize'));
-
-	        this._btnToggle.classList.remove('maximize');
-
-	        this._btnToggle.classList.add('minimize');
-
-	        this._content.classList.remove('hidden');
-
-	        this._footer.classList.remove('hidden');
-
-	        var _event = document.createEvent('Event');
-
-	        _event.initEvent('maximize', false, false);
-
-	        this.dispatchEvent(_event);
-	      }
-	    }
-	  }, {
-	    key: "_close",
-	    value: function _close(e) {
-	      e.stopPropagation();
-	      var event = document.createEvent('Event');
-	      event.initEvent('close', false, false);
-	      this.dispatchEvent(event);
-	    }
-	  }, {
-	    key: "_render",
-	    value: function _render(element, _ref2) {
-	      var id = _ref2.id,
-	          collapsible = _ref2.collapsible,
-	          top = _ref2.top,
-	          left = _ref2.left;
-	      element.classList.add('scanex-component-dialog');
-	      this._id = id;
-
-	      this._restorePosition(top, left);
-
-	      this._header = document.createElement('div');
-
-	      this._header.classList.add('header');
-
-	      this._titleElement = document.createElement('label');
-
-	      this._header.appendChild(this._titleElement);
-
-	      var buttons = document.createElement('div');
-	      buttons.classList.add('header-buttons');
-
-	      if (collapsible) {
-	        this._btnToggle = document.createElement('i');
-
-	        this._btnToggle.setAttribute('title', translate$g('scanex.components.dialog.minimize'));
-
-	        this._btnToggle.classList.add('scanex-component-icon');
-
-	        this._btnToggle.classList.add('minimize');
-
-	        this._btnToggle.addEventListener('click', this._toggle.bind(this));
-
-	        buttons.appendChild(this._btnToggle);
-	      }
-
-	      var btnClose = document.createElement('i');
-	      btnClose.setAttribute('title', translate$g('scanex.components.dialog.close'));
-	      btnClose.classList.add('scanex-component-icon');
-	      btnClose.classList.add('close');
-	      btnClose.addEventListener('click', this._close.bind(this));
-	      buttons.appendChild(btnClose);
-
-	      this._header.appendChild(buttons);
-
-	      element.appendChild(this._header);
-	      this._content = document.createElement('div');
-
-	      this._content.classList.add('content');
-
-	      element.appendChild(this._content);
-	      this._footer = document.createElement('div');
-
-	      this._footer.classList.add('footer');
-
-	      element.appendChild(this._footer);
-	    }
-	  }, {
-	    key: "_restorePosition",
-	    value: function _restorePosition(top, left) {
-	      if (typeof this._id === 'string' && this._id != '') {
-	        var _window$localStorage$ = window.localStorage.getItem(this._id).split(','),
-	            _window$localStorage$2 = _slicedToArray(_window$localStorage$, 2),
-	            x = _window$localStorage$2[0],
-	            y = _window$localStorage$2[1];
-
-	        this._element.style.top = "".concat(y || top || Math.round(window.innerHeight / 2), "px");
-	        this._element.style.left = "".concat(x || left || Math.round(window.innerWidth / 2), "px");
-	      } else {
-	        this._element.style.top = "".concat(top || Math.round(window.innerHeight / 2), "px");
-	        this._element.style.left = "".concat(left || Math.round(window.innerWidth / 2), "px");
-	      }
-	    }
-	  }, {
-	    key: "_savePosition",
-	    value: function _savePosition() {
-	      if (typeof this._id === 'string' && this._id != '') {
-	        var _this$_element$getBou2 = this._element.getBoundingClientRect(),
-	            top = _this$_element$getBou2.top,
-	            left = _this$_element$getBou2.left;
-
-	        window.localStorage.setItem(this._id, [left, top].join(','));
-	      }
-	    }
-	  }, {
-	    key: "header",
-	    get: function get() {
-	      return this._header;
-	    }
-	  }, {
-	    key: "content",
-	    get: function get() {
-	      return this._content;
-	    }
-	  }, {
-	    key: "footer",
-	    get: function get() {
-	      return this._footer;
-	    }
-	  }]);
-
-	  return Dialog;
-	}(Component);
-
-	var Spinner = /*#__PURE__*/function (_Component) {
-	  _inherits(Spinner, _Component);
-
-	  var _super = _createSuper(Spinner);
-
-	  function Spinner(container) {
-	    var _this;
-
-	    _classCallCheck(this, Spinner);
-
-	    _this = _super.call(this, container);
-	    _this._value = 0;
-	    _this._min = 0;
-	    _this._max = 0;
-
-	    _this._up.addEventListener('click', _this.increment.bind(_assertThisInitialized(_this)));
-
-	    _this._down.addEventListener('click', _this.decrement.bind(_assertThisInitialized(_this)));
-
-	    _this._input.addEventListener('change', _this._onChange.bind(_assertThisInitialized(_this)));
-
-	    return _this;
-	  }
-
-	  _createClass(Spinner, [{
-	    key: "_onChange",
-	    value: function _onChange(e) {
-	      e.stopPropagation();
-	      this.value = parseInt(this._input.value, 10);
-	    }
-	  }, {
-	    key: "_validate",
-	    value: function _validate(value) {
-	      return !isNaN(value) && this._min <= value && value <= this._max;
-	    }
-	  }, {
-	    key: "increment",
-	    value: function increment(e) {
-	      e.stopPropagation();
-	      this.value = this._value + 1;
-	    }
-	  }, {
-	    key: "decrement",
-	    value: function decrement(e) {
-	      e.stopPropagation();
-	      this.value = this._value - 1;
-	    }
-	  }, {
-	    key: "_render",
-	    value: function _render(element) {
-	      element.classList.add('scanex-component-spinner');
-	      element.innerHTML = "<input type=\"text\" value=\"0\"/>\n        <div class=\"buttons\">\n            <i class=\"scanex-component-icon spinner-up\"></i>            \n            <i class=\"scanex-component-icon spinner-down\"></i>\n        </div>";
-	      this._input = element.querySelector('input');
-	      this._up = element.querySelector('.spinner-up');
-	      this._down = element.querySelector('.spinner-down');
-	    }
-	  }, {
-	    key: "value",
-	    get: function get() {
-	      return this._value;
-	    },
-	    set: function set(value) {
-	      if (this._validate(value)) {
-	        this._value = value;
-	        var event = document.createEvent('Event');
-	        event.initEvent("change", false, false);
-	        event.detail = this._value;
-	        this.dispatchEvent(event);
-	      }
-
-	      this._input.value = this._value.toString();
-	    }
-	  }, {
-	    key: "min",
-	    get: function get() {
-	      return this._min;
-	    },
-	    set: function set(min) {
-	      if (!isNaN(min)) {
-	        this._min = min;
-	      }
-	    }
-	  }, {
-	    key: "max",
-	    get: function get() {
-	      return this._max;
-	    },
-	    set: function set(max) {
-	      if (!isNaN(max) && this._min <= max) {
-	        this._max = max;
-	      }
-	    }
-	  }]);
-
-	  return Spinner;
-	}(Component);
-
-	var Slider1 = /*#__PURE__*/function (_Component) {
-	  _inherits(Slider1, _Component);
-
-	  var _super = _createSuper(Slider1);
-
-	  function Slider1(container, _ref) {
-	    var _this;
-
-	    var min = _ref.min,
-	        max = _ref.max;
-
-	    _classCallCheck(this, Slider1);
-
-	    _this = _super.call(this, container);
-	    _this._delay = 50;
-	    _this._tick = null;
-	    _this._offset = 0;
-
-	    if (!isNaN(min) && !isNaN(max)) {
-	      _this._min = min;
-	      _this._max = max;
-	    } else {
-	      throw "min or max not set";
-	    }
-
-	    _this._rightTick.addEventListener('mousedown', _this._start.bind(_assertThisInitialized(_this), _this._rightTick));
-
-	    document.body.addEventListener('mousemove', _this._slide.bind(_assertThisInitialized(_this)));
-	    document.body.addEventListener('mouseup', _this._stop.bind(_assertThisInitialized(_this)));
-
-	    _this._bar.addEventListener('click', _this._click.bind(_assertThisInitialized(_this)));
-
-	    return _this;
-	  }
-
-	  _createClass(Slider1, [{
-	    key: "validate",
-	    value: function validate(value) {
-	      return !isNaN(value) && this.min <= value && value <= this.max;
-	    }
-	  }, {
-	    key: "_stop",
-	    value: function _stop() {
-	      if (this._tick !== null) {
-	        this._tick = null;
-	        this._offset = 0;
-	        var event = document.createEvent('Event');
-	        event.initEvent('stop', false, false);
-	        this.dispatchEvent(event);
-	      }
-	    }
-	  }, {
-	    key: "_start",
-	    value: function _start(tick, e) {
-	      e.stopPropagation();
-	      e.preventDefault();
-
-	      if (this._tick === null) {
-	        this._tick = tick;
-
-	        var t = this._tick.getBoundingClientRect();
-
-	        this._offset = e.clientX - t.left;
-	        var event = document.createEvent('Event');
-	        event.initEvent('start', false, false);
-	        this.dispatchEvent(event);
-	      }
-	    }
-	  }, {
-	    key: "_slide",
-	    value: function _slide(e) {
-	      var _this2 = this;
-
-	      e.stopPropagation();
-	      e.preventDefault();
-	      var tid = window.setTimeout(function () {
-	        window.clearTimeout(tid);
-
-	        if (_this2._tick) {
-	          var t = _this2._tick.getBoundingClientRect();
-
-	          var b = _this2._bar.getBoundingClientRect();
-
-	          var x = e.clientX - _this2._offset;
-
-	          if (b.left <= x && x + t.width <= b.right) {
-	            _this2._range.style.width = "".concat(e.clientX - _this2._offset + t.width - b.left, "px");
-
-	            _this2._updateBounds();
-	          }
-	        }
-	      }, this._delay);
-	    }
-	  }, {
-	    key: "_click",
-	    value: function _click(e) {
-	      if (!this._tick) {
-	        e.stopPropagation();
-
-	        var b = this._bar.getBoundingClientRect();
-
-	        var t = this._rightTick.getBoundingClientRect();
-
-	        var halfWidth = Math.round(t.width / 2);
-
-	        if (e.clientX < b.left + halfWidth) {
-	          this._range.style.width = "".concat(t.width, "px");
-	        } else if (e.clientX > b.right - halfWidth) {
-	          this._range.style.width = "".concat(b.width, "px");
-	        } else {
-	          this._range.style.width = "".concat(e.clientX - b.left + halfWidth, "px");
-	        }
-
-	        this._updateBounds();
-	      }
-	    }
-	  }, {
-	    key: "_updateBounds",
-	    value: function _updateBounds() {
-	      var b = this._bar.getBoundingClientRect();
-
-	      var t = this._rightTick.getBoundingClientRect();
-
-	      var k = (this.max - this.min) / (b.width - t.width);
-	      this._lo = this.min;
-	      var hi = t.left - b.left;
-	      this._hi = this.min + (this.mode === 'float' ? hi * k : Math.round(hi * k));
-	      var event = document.createEvent('Event');
-	      event.initEvent('change', false, false);
-	      this.dispatchEvent(event);
-	    }
-	  }, {
-	    key: "_render",
-	    value: function _render(element) {
-	      element.classList.add('scanex-component-slider');
-	      element.classList.add('no-select');
-	      element.innerHTML = "<div class=\"slider-bar\">\n                <div class=\"slider-range\">\n                    <div class=\"slider-tick slider-tick-right\">\n                        <label></label>\n                        <i></i>\n                    </div>\n                </div>\n            </div>";
-	      this._rightLabel = element.querySelector('.slider-tick label');
-
-	      this._rightLabel.classList.add('hidden');
-
-	      this._bar = element.querySelector('.slider-bar');
-	      this._rightTick = element.querySelector('.slider-tick-right');
-	      this._range = element.querySelector('.slider-range');
-	    }
-	  }, {
-	    key: "mode",
-	    get: function get() {
-	      return this._mode;
-	    },
-	    set: function set(mode) {
-	      this._mode = mode;
-	    }
-	  }, {
-	    key: "min",
-	    get: function get() {
-	      return this._min;
-	    }
-	  }, {
-	    key: "max",
-	    get: function get() {
-	      return this._max;
-	    }
-	  }, {
-	    key: "lo",
-	    get: function get() {
-	      return this._min;
-	    }
-	  }, {
-	    key: "hi",
-	    get: function get() {
-	      return this._hi;
-	    },
-	    set: function set(hi) {
-	      if (this.validate(hi) && isNaN(this.lo) || this.lo <= hi) {
-	        this._hi = hi;
-	      }
-
-	      if (!isNaN(this.lo) && !isNaN(this.hi)) {
-	        var b = this._bar.getBoundingClientRect();
-
-	        var t = this._rightTick.getBoundingClientRect();
-
-	        var k = (b.width - t.width) / (this.max - this.min);
-	        this._range.style.width = "".concat(Math.round((this.hi - this.lo) * k) + t.width, "px");
-	        var event = document.createEvent('Event');
-	        event.initEvent('change', false, false);
-	        this.dispatchEvent(event);
-	      }
-	    }
-	  }]);
-
-	  return Slider1;
-	}(Component);
-
-	var Slider2 = /*#__PURE__*/function (_Slider) {
-	  _inherits(Slider2, _Slider);
-
-	  var _super = _createSuper(Slider2);
-
-	  function Slider2(container, _ref) {
-	    var _this;
-
-	    var min = _ref.min,
-	        max = _ref.max;
-
-	    _classCallCheck(this, Slider2);
-
-	    _this = _super.call(this, container, {
-	      min: min,
-	      max: max
-	    });
-
-	    _this._leftTick.addEventListener('mousedown', _this._start.bind(_assertThisInitialized(_this), _this._leftTick));
-
-	    return _this;
-	  }
-
-	  _createClass(Slider2, [{
-	    key: "_slide",
-	    value: function _slide(e) {
-	      var _this2 = this;
-
-	      e.stopPropagation();
-	      e.preventDefault();
-	      var tid = window.setTimeout(function () {
-	        window.clearTimeout(tid);
-
-	        if (_this2._tick) {
-	          var lt = _this2._leftTick.getBoundingClientRect();
-
-	          var rt = _this2._rightTick.getBoundingClientRect();
-
-	          var w = lt.width + rt.width;
-
-	          var b = _this2._bar.getBoundingClientRect();
-
-	          var x = e.clientX - _this2._offset;
-
-	          if (_this2._tick === _this2._leftTick) {
-	            if (x > b.left) {
-	              if (x + lt.width < rt.left) {
-	                _this2._range.style.left = "".concat(x - b.left, "px");
-	                _this2._range.style.width = "".concat(rt.right - x, "px");
-	              } else {
-	                _this2._range.style.left = "".concat(rt.left - lt.width - b.left, "px");
-	                _this2._range.style.width = "".concat(w, "px");
-	              }
-	            }
-
-	            _this2._updateBounds();
-	          } else if (_this2._tick === _this2._rightTick) {
-	            if (x < b.right - rt.width) {
-	              if (lt.right < x) {
-	                _this2._range.style.width = "".concat(x - lt.right + w, "px");
-	              } else {
-	                _this2._range.style.width = "".concat(w, "px");
-	              }
-	            }
-
-	            _this2._updateBounds();
-	          }
-	        }
-	      }, this._delay);
-	    }
-	  }, {
-	    key: "_click",
-	    value: function _click(e) {
-	      if (!this._tick) {
-	        e.stopPropagation(); // const b = this._bar.getBoundingClientRect();
-	        // const t = this._rightTick.getBoundingClientRect();
-	        // const halfWidth = Math.round (t.width / 2);
-	        // if (e.clientX < b.left + halfWidth) {                
-	        //     this._range.style.width = `${t.width}px`;
-	        // }
-	        // else if (e.clientX > b.right - halfWidth) {
-	        //     this._range.style.width = `${b.width}px`;
-	        // }
-	        // else {
-	        //     this._range.style.width = `${e.clientX - b.left + halfWidth}px`;                
-	        // }        
-	        // this._updateBounds();
-	      }
-	    }
-	  }, {
-	    key: "_updateUI",
-	    value: function _updateUI() {
-	      if (!isNaN(this.lo) && !isNaN(this.hi)) {
-	        var lt = this._leftTick.getBoundingClientRect();
-
-	        var rt = this._rightTick.getBoundingClientRect();
-
-	        var w = lt.width + rt.width;
-
-	        var b = this._bar.getBoundingClientRect();
-
-	        var k = (b.width - w) / (this.max - this.min);
-	        this._range.style.left = "".concat(Math.round((this.lo - this.min) * k), "px");
-	        this._range.style.width = "".concat(Math.round((this.hi - this.lo) * k) + w, "px");
-	        var event = document.createEvent('Event');
-	        event.initEvent('change', false, false);
-	        this.dispatchEvent(event);
-	      }
-	    }
-	  }, {
-	    key: "_updateBounds",
-	    value: function _updateBounds() {
-	      var b = this._bar.getBoundingClientRect();
-
-	      var lt = this._leftTick.getBoundingClientRect();
-
-	      var rt = this._rightTick.getBoundingClientRect();
-
-	      var w = lt.width + rt.width;
-	      var k = (this.max - this.min) / (b.width - w);
-	      var lo = lt.left - b.left;
-	      this._lo = this.min + (this.mode === 'float' ? lo * k : Math.round(lo * k));
-	      var hi = rt.left - b.left - lt.width;
-	      this._hi = this.min + (this.mode === 'float' ? hi * k : Math.round(hi * k));
-	      var event = document.createEvent('Event');
-	      event.initEvent('change', false, false);
-	      this.dispatchEvent(event);
-	    }
-	  }, {
-	    key: "_render",
-	    value: function _render(element) {
-	      _get(_getPrototypeOf(Slider2.prototype), "_render", this).call(this, element);
-
-	      element.classList.add('scanex-component-two-tick-slider');
-	      this._leftTick = document.createElement('div');
-
-	      this._leftTick.classList.add('slider-tick');
-
-	      this._leftTick.classList.add('slider-tick-left');
-
-	      this._leftLabel = document.createElement('label');
-
-	      this._leftTick.appendChild(this._leftLabel);
-
-	      this._leftLabel.classList.add('hidden');
-
-	      var icn = document.createElement('i');
-
-	      this._leftTick.appendChild(icn);
-
-	      this._range.insertBefore(this._leftTick, this._rightTick);
-	    }
-	  }, {
-	    key: "lo",
-	    get: function get() {
-	      return this._lo;
-	    },
-	    set: function set(lo) {
-	      if (this.validate(lo) && (isNaN(this.hi) || lo <= this.hi)) {
-	        this._lo = lo;
-	      }
-
-	      this._updateUI();
-	    }
-	  }, {
-	    key: "hi",
-	    get: function get() {
-	      return this._hi;
-	    },
-	    set: function set(hi) {
-	      if (this.validate(hi) && (isNaN(this.lo) || this.lo <= hi)) {
-	        this._hi = hi;
-	      }
-
-	      this._updateUI();
-	    }
-	  }]);
-
-	  return Slider2;
-	}(Slider1);
-
-	var Interval = /*#__PURE__*/function (_Component) {
-	  _inherits(Interval, _Component);
-
-	  var _super = _createSuper(Interval);
-
-	  function Interval(container, _ref) {
-	    var _this;
-
-	    var min = _ref.min,
-	        max = _ref.max,
-	        slider = _ref.slider;
-
-	    _classCallCheck(this, Interval);
-
-	    _this = _super.call(this, container);
-	    _this._slider = new slider(_this._sliderElement, {
-	      min: min,
-	      max: max
-	    });
-
-	    _this._slider.on('change', _this._onChange.bind(_assertThisInitialized(_this)));
-
-	    return _this;
-	  }
-
-	  _createClass(Interval, [{
-	    key: "_onChange",
-	    value: function _onChange(e) {
-	      this._lo.value = this._slider.lo.toString();
-	      this._hi.value = this._slider.hi.toString();
-	      var event = document.createEvent('Event');
-	      event.initEvent('change', false, false);
-	      this.dispatchEvent(event);
-	    }
-	  }, {
-	    key: "_render",
-	    value: function _render(element) {
-	      element.classList.add('scanex-component-range');
-	      element.innerHTML = "<table>\n            <tr>\n                <td>\n                    <input class=\"lo\" type=\"text\" />\n                </td>\n                <td>\n                    <div class=\"slider\"></div>\n                </td>\n                <td>\n                    <input class=\"hi\" type=\"text\" />\n                </td>\n            </tr>\n        </table>";
-	      this._lo = element.querySelector('.lo');
-	      this._hi = element.querySelector('.hi');
-	      this._sliderElement = element.querySelector('.slider');
-	    }
-	  }, {
-	    key: "min",
-	    get: function get() {
-	      return this._slider.min;
-	    },
-	    set: function set(min) {
-	      this._slider.min = min;
-	    }
-	  }, {
-	    key: "max",
-	    get: function get() {
-	      return this._slider.max;
-	    },
-	    set: function set(max) {
-	      this._slider.max = max;
-	    }
-	  }, {
-	    key: "lo",
-	    get: function get() {
-	      return this._slider.lo;
-	    },
-	    set: function set(lo) {
-	      this._slider.lo = lo;
-	    }
-	  }, {
-	    key: "hi",
-	    get: function get() {
-	      return this._slider.hi;
-	    },
-	    set: function set(hi) {
-	      this._slider.hi = hi;
-	    }
-	  }]);
-
-	  return Interval;
-	}(Component);
-
-	var translate$h = T.getText.bind(T);
-
-	var roundBytes = function roundBytes(s) {
-	  if (s > 1024 * 1024 * 1024 * 1024 * 1.2) {
-	    return "".concat((Math.round(s / (1024 * 1024 * 1024 * 1024) * 100) / 100).toLocaleString('ru-RU', {
-	      minimumFractionDigits: 1,
-	      maximumFractionDigits: 1
-	    }), " ").concat(translate$h('uploaded.units.tb'));
-	  } else if (s > 1024 * 1024 * 1024 * 1.2) {
-	    return "".concat((Math.round(s / (1024 * 1024 * 1024) * 100) / 100).toLocaleString('ru-RU', {
-	      minimumFractionDigits: 1,
-	      maximumFractionDigits: 1
-	    }), " ").concat(translate$h('uploaded.units.gb'));
-	  } else if (s > 1024 * 1024 * 1.2) {
-	    return "".concat((Math.round(s / (1024 * 1024) * 100) / 100).toLocaleString('ru-RU', {
-	      minimumFractionDigits: 1,
-	      maximumFractionDigits: 1
-	    }), " ").concat(translate$h('uploaded.units.mb'));
-	  } else if (s > 1024 * 1.2) {
-	    return "".concat((Math.round(s / 1024 * 100) / 100).toLocaleString('ru-RU', {
-	      minimumFractionDigits: 1,
-	      maximumFractionDigits: 1
-	    }), " ").concat(translate$h('uploaded.units.kb'));
-	  } else {
-	    return "".concat(Math.round(s).toLocaleString('ru-RU', {
-	      minimumFractionDigits: 1,
-	      maximumFractionDigits: 1
-	    }), " ").concat(translate$h('uploaded.units.b'));
-	  }
-	};
-
-	var STATUS = {
-	  STARTED: 0,
-	  PAUSED: 1,
-	  ERROR: 2
-	};
-
-	var UploadProgress = /*#__PURE__*/function (_EventTarget) {
-	  _inherits(UploadProgress, _EventTarget);
-
-	  var _super = _createSuper(UploadProgress);
-
-	  function UploadProgress() {
-	    _classCallCheck(this, UploadProgress);
-
-	    return _super.call(this);
-	  }
-
-	  _createClass(UploadProgress, [{
-	    key: "start",
-	    value: function start() {// this._container = document.createElement('div');        
-	      // this._container.classList.add('scanex-forestry-progress');
-	      // document.body.appendChild(this._container);    
-	      // this._panel = new FloatingPanel(this._container, {
-	      //     title: translate('uploaded.load'),
-	      //     id: 'uploaded',
-	      //     closable: true,
-	      //     minimizable: false,
-	      //     left: 500,
-	      //     top: 300,
-	      //     modal: false,
-	      //     header: true,
-	      // });
-	      // this._panel.on('hide', this.stop.bind(this));
-	      // this._panel.content.innerHTML = `<ul class="files"></ul>
-	      //     <div class="progress"></div>
-	      //     <div class="speed"></div>`;
-	      // this._panel.footer.innerHTML = `<button></button>`;    
-	      // this._btn = this._panel.footer.querySelector('button');
-	      // this._btn.addEventListener('click', e => {            
-	      //     e.stopPropagation();            
-	      //     if (this._status === STATUS.STARTED) {
-	      //         let event = document.createEvent('Event');
-	      //         event.initEvent('resume', false, false);
-	      //         this.dispatchEvent(event);
-	      //     }
-	      //     else if (this._status === STATUS.PAUSED) {
-	      //         let event = document.createEvent('Event');
-	      //         event.initEvent('pause', false, false);
-	      //         this.dispatchEvent(event);
-	      //     }
-	      //     else if (this._status === STATUS.ERROR) {
-	      //         let event = document.createEvent('Event');
-	      //         event.initEvent('stop', false, false);
-	      //         this.dispatchEvent(event);
-	      //     }                        
-	      // });
-	      // this._files = this._panel.content.querySelector('.files');
-	      // this._speed = this._panel.content.querySelector('.speed');
-	      // this._progress = this._panel.content.querySelector('.progress');
-	      // this._panel.show();
-	    }
-	  }, {
-	    key: "stop",
-	    value: function stop() {
-	      document.body.removeChild(this._container);
-	      var event = document.createEvent('Event');
-	      event.initEvent('stop', false, false);
-	      this.dispatchEvent(event);
-	    }
-	  }, {
-	    key: "cancelled",
-	    value: function cancelled(index) {
-	      this._status = STATUS.PAUSED;
-	      this._btn.innerText = translate$h('uploaded.resume');
-
-	      var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
-
-	      row.querySelector('.status').innerText = translate$h('uploaded.cancelled');
-	    }
-	  }, {
-	    key: "error",
-	    value: function error(index) {
-	      this._status = STATUS.ERROR;
-
-	      var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
-
-	      row.querySelector('.status').innerText = translate$h('uploaded.error');
-	      this._btn.innerText = translate$h('uploaded.close');
-	    }
-	  }, {
-	    key: "completed",
-	    value: function completed(index, percent) {
-	      var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
-
-	      row.querySelector('.percent').innerText = percent;
-	      row.querySelector('.status').innerText = translate$h('uploaded.completed');
-	    }
-	  }, {
-	    key: "waiting",
-	    value: function waiting(index, percent) {
-	      var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
-
-	      row.querySelector('.percent').innerText = percent;
-	      row.querySelector('.status').innerText = translate$h('uploaded.waiting');
-	    }
-	  }, {
-	    key: "started",
-	    value: function started(index) {
-	      this._status = STATUS.STARTED;
-	      this._btn.innerText = translate$h('uploaded.pause');
-
-	      var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
-
-	      row.querySelector('.status').innerText = translate$h('uploaded.started');
-	    }
-	  }, {
-	    key: "loading",
-	    value: function loading(index, percent) {
-	      var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
-
-	      row.querySelector('.percent').innerText = percent;
-	      row.querySelector('.status').innerText = translate$h('uploaded.loading');
-	    }
-	  }, {
-	    key: "stats",
-	    value: function stats(speed, size, total) {
-	      this._speed.innerText = "".concat(translate$h('uploaded.speed'), ": ").concat(roundBytes(speed), " / ").concat(translate$h('uploaded.units.s'));
-	      this._progress.innerText = "".concat(translate$h('uploaded.progress'), ": ").concat(roundBytes(size), " ").concat(translate$h('uploaded.of'), " ").concat(roundBytes(total));
-	    }
-	  }, {
-	    key: "files",
-	    set: function set(files) {
-	      this._files.innerHTML = files.map(function (_ref, i) {
-	        var name = _ref.name;
-	        return "<li data-id=\"".concat(i, "\">\n                <label class=\"name\">").concat(name, "</label>\n                <label class=\"percent\"></label>\n                <label class=\"status\"></label>\n            </li>");
-	      }).join('');
-	    }
-	  }, {
-	    key: "speed",
-	    set: function set(speed) {
-	      this._speed.innerText = speed;
-	    }
-	  }]);
-
-	  return UploadProgress;
-	}(EventTarget);
+	}(View$1);
 
 	var translate$i = T.getText.bind(T);
 
@@ -67927,7 +68517,7 @@ var Forestry = (function () {
 
 	    _this._element.classList.add('scanex-forestry-tms-view');
 
-	    _this.content.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <tr class=\"name\">\n                <td>".concat(translate$i('uploaded.tms.name'), "</td>\n                <td>\n                    <input type=\"text\" value=\"\">\n                </td>\n            </tr>\n            <tr class=\"url\">\n                <td>").concat(translate$i('uploaded.tms.url'), "</td>\n                <td>\n                    <input type=\"text\" value=\"\">\n                </td>\n            </tr>\n            <tr class=\"zoom\">\n                <td>").concat(translate$i('uploaded.tms.zoom'), "</td>\n                <td><div></div></td>\n            </tr>\n            <tr class=\"subdomains\">\n                <td>").concat(translate$i('uploaded.tms.subdomains'), "</td>\n                <td>\n                    <input type=\"text\" value=\"\">\n                </td>\n            </tr>\n            <tr class=\"error-tile-url\">\n                <td>").concat(translate$i('uploaded.tms.errorTileUrl'), "</label>\n                <td>\n                    <input class=\"value\" type=\"text\" value=\"\">\n                </td>\n            </tr>\n            <tr class=\"zoom-offset\">\n                <td>").concat(translate$i('uploaded.tms.zoomOffset'), "</td>\n                <td><div></div></td>\n            </tr>\n            <tr class=\"zoom-reverse\">\n                <td>").concat(translate$i('uploaded.tms.zoomReverse'), "</td>\n                <td>\n                    <input type=\"checkbox\" value=\"zoomReverse\">\n                </td>            \n            </tr>\n            <tr class=\"detect-retina\">\n                <td>").concat(translate$i('uploaded.tms.detectRetina'), "</td>\n                <td>\n                    <input type=\"checkbox\" value=\"detectRetina\">\n                </td>\n            </tr>\n            <tr class=\"cross-origin\">\n                <td>").concat(translate$i('uploaded.tms.crossOrigin'), "</td>\n                <td>\n                    <input name=\"crossorigin\" type=\"checkbox\" checked value=\"anonymous\">").concat(translate$i('uploaded.tms.anonymous'), "\n                </td>                \n            </tr>\n            <tr class=\"cross-origin\">\n                <td></td>            \n                <td>\n                    <input name=\"crossorigin\" type=\"checkbox\" value=\"use-credentials\" />").concat(translate$i('uploaded.tms.useCredentials'), "\n                </td>                \n            </tr>\n        </table>");
+	    _this.content.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <tr class=\"name\">\n                <td>".concat(translate$i('uploaded.tms.name'), "</td>\n                <td>\n                    <input type=\"text\" value=\"\">\n                </td>\n            </tr>\n            <tr class=\"url\">\n                <td>").concat(translate$i('uploaded.tms.url'), "</td>\n                <td>\n                    <input type=\"text\" value=\"\">\n                </td>\n            </tr>\n            <tr class=\"zoom\">\n                <td>").concat(translate$i('uploaded.tms.zoom'), "</td>\n                <td><div></div></td>\n            </tr>\n            <tr class=\"subdomains\">\n                <td>").concat(translate$i('uploaded.tms.subdomains'), "</td>\n                <td>\n                    <input type=\"text\" value=\"abc\">\n                </td>\n            </tr>\n            <tr class=\"error-tile-url\">\n                <td>").concat(translate$i('uploaded.tms.errorTileUrl'), "</label>\n                <td>\n                    <input class=\"value\" type=\"text\" value=\"\">\n                </td>\n            </tr>\n            <tr class=\"zoom-offset\">\n                <td>").concat(translate$i('uploaded.tms.zoomOffset'), "</td>\n                <td><div></div></td>\n            </tr>\n            <tr class=\"tile-reverse\">\n                <td>").concat(translate$i('uploaded.tms.tileReverse'), "</td>\n                <td>\n                    <input type=\"checkbox\" value=\"tileReverse\">\n                </td>            \n            </tr>\n            <tr class=\"zoom-reverse\">\n                <td>").concat(translate$i('uploaded.tms.zoomReverse'), "</td>\n                <td>\n                    <input type=\"checkbox\" value=\"zoomReverse\">\n                </td>            \n            </tr>\n            <tr class=\"detect-retina\">\n                <td>").concat(translate$i('uploaded.tms.detectRetina'), "</td>\n                <td>\n                    <input type=\"checkbox\" value=\"detectRetina\">\n                </td>\n            </tr>\n            <tr class=\"use-credentials\">\n                <td>").concat(translate$i('uploaded.tms.useCredentials'), "</td>\n                <td>                    \n                    <input type=\"checkbox\" value=\"useCredentials\">\n                </td>\n            </tr>            \n        </table>");
 	    _this._name = _this.content.querySelector('.name').querySelector('input');
 	    _this._url = _this.content.querySelector('.url').querySelector('input');
 	    _this._zoom = new Interval(_this.content.querySelector('.zoom').querySelector('div'), {
@@ -67937,10 +68527,16 @@ var Forestry = (function () {
 	    });
 	    _this._zoom.lo = 1;
 	    _this._zoom.hi = 21;
+	    _this._subdomains = _this.content.querySelector('.subdomains').querySelector('input');
+	    _this._errorTileUrl = _this.content.querySelector('.error-tile-url').querySelector('input');
 	    _this._zoomOffset = new Spinner(_this.content.querySelector('.zoom-offset').querySelector('div'));
 	    _this._zoomOffset.min = 0;
 	    _this._zoomOffset.max = 10;
 	    _this._zoomOffset.value = 0;
+	    _this._zoomReverse = _this.content.querySelector('.zoom-reverse').querySelector('input');
+	    _this._tileReverse = _this.content.querySelector('.tile-reverse').querySelector('input');
+	    _this._detectRetina = _this.content.querySelector('.detect-retina').querySelector('input');
+	    _this._useCredentials = _this.content.querySelector('.use-credentials').querySelector('input');
 	    _this.footer.innerHTML = "<button>".concat(translate$i('uploaded.tms.ok'), "</button>");
 	    _this._btn = _this.footer.querySelector('button');
 
@@ -67954,7 +68550,14 @@ var Forestry = (function () {
 	        title: _this._name.value,
 	        description: '',
 	        url: _this._url.value,
-	        zoomOffset: _this._zoomOffset.value
+	        subdomains: _this._subdomains.value,
+	        errorTileUrl: _this._errorTileUrl.value,
+	        zoomOffset: _this._zoomOffset.value,
+	        tileReverse: _this._tileReverse.checked,
+	        zoomReverse: _this._zoomReverse.checked,
+	        detectRetina: _this._detectRetina.checked,
+	        tms: true,
+	        crossOrigin: _this._useCredentials.checked && 'use-credentials' || 'anonymous'
 	      };
 
 	      _this.dispatchEvent(event);
@@ -67967,7 +68570,6 @@ var Forestry = (function () {
 	}(Dialog);
 
 	var translate$j = T.getText.bind(T);
-	var TASK_POLLING_DELAY = 3000;
 
 	var Uploaded$1 = /*#__PURE__*/function (_Controller) {
 	  _inherits(Uploaded$1, _Controller);
@@ -67984,9 +68586,8 @@ var Forestry = (function () {
 	        path = _ref.path,
 	        permissions = _ref.permissions,
 	        _ref$pageSize = _ref.pageSize,
-	        pageSize = _ref$pageSize === void 0 ? 4 : _ref$pageSize,
-	        _ref$uploadFileSize = _ref.uploadFileSize,
-	        uploadFileSize = _ref$uploadFileSize === void 0 ? 1024 : _ref$uploadFileSize;
+	        pageSize = _ref$pageSize === void 0 ? 1000 : _ref$pageSize,
+	        _ref$uploadFileSize = _ref.uploadFileSize;
 
 	    _classCallCheck(this, Uploaded$1);
 
@@ -67997,37 +68598,38 @@ var Forestry = (function () {
 	      loading: loading
 	    });
 	    _this._path = path;
-	    _this._pageSize = pageSize;
 	    _this._permissions = permissions;
-	    _this._uploadFileSize = uploadFileSize;
-	    _this._progress = new UploadProgress();
-
-	    _this._progress.on('resume', _this._resume.bind(_assertThisInitialized(_this)));
-
-	    _this._progress.on('pause', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
-	      return regeneratorRuntime.wrap(function _callee$(_context) {
-	        while (1) {
-	          switch (_context.prev = _context.next) {
-	            case 0:
-	              _context.next = 2;
-	              return _this._pause();
-
-	            case 2:
-	              return _context.abrupt("return", _context.sent);
-
-	            case 3:
-	            case "end":
-	              return _context.stop();
-	          }
-	        }
-	      }, _callee);
-	    })));
-
-	    _this._progress.on('stop', _this._stopSpeedTimer.bind(_assertThisInitialized(_this)));
-
+	    _this._pageSize = pageSize;
+	    _this._layers = {};
 	    _this._view = _this._content.add('uploaded', Uploaded, {
 	      pageSize: _this._pageSize
 	    });
+
+	    _this._view.on('remove', /*#__PURE__*/function () {
+	      var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e) {
+	        return regeneratorRuntime.wrap(function _callee$(_context) {
+	          while (1) {
+	            switch (_context.prev = _context.next) {
+	              case 0:
+	                _context.next = 2;
+	                return _this._deleteLayer(e.detail);
+
+	              case 2:
+	                _context.next = 4;
+	                return _this.view();
+
+	              case 4:
+	              case "end":
+	                return _context.stop();
+	            }
+	          }
+	        }, _callee);
+	      }));
+
+	      return function (_x) {
+	        return _ref2.apply(this, arguments);
+	      };
+	    }());
 
 	    _this._view.on('upload', /*#__PURE__*/function () {
 	      var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(e) {
@@ -68072,29 +68674,10 @@ var Forestry = (function () {
 	                    }, _callee2);
 	                  }));
 
-	                  return function (_x2) {
+	                  return function (_x3) {
 	                    return _ref4.apply(this, arguments);
 	                  };
-	                }()); // if (!this._files) {
-	                //     this._files = document.createElement('input');
-	                //     this._files.setAttribute('type', 'file');
-	                //     this._files.setAttribute('multiple', 'true');
-	                //     this._files.setAttribute('accept', FILE_EXTENSIONS);
-	                //     this._files.style.visibility = 'hidden';
-	                //     this._files.style.width = '0px';
-	                //     this._files.style.height = '0px';
-	                //     this._container.appendChild(this._files);
-	                //     this._files.addEventListener('change', () => {                    
-	                //         this._container.removeChild(this._files);
-	                //         this._files = null;
-	                //         this._files.click();
-	                //         this._progress.start();
-	                //         this._sandboxId = await this._createSandbox();
-	                //         this._upfiles = this._createParts(files);
-	                //         this._progress.files = this._upfiles;
-	                //         this._startUpload();
-	                //     });
-	                // }            
+	                }());
 
 	              case 3:
 	              case "end":
@@ -68104,17 +68687,55 @@ var Forestry = (function () {
 	        }, _callee3);
 	      }));
 
-	      return function (_x) {
+	      return function (_x2) {
 	        return _ref3.apply(this, arguments);
 	      };
 	    }());
+
+	    _this._view.on('select', function (e) {
+	      Object.keys(_this._layers).forEach(function (id) {
+	        _this._map.removeLayer(_this._layers[id]);
+	      });
+	      var layers = e.detail;
+	      Object.keys(layers).forEach(function (id) {
+	        var MetaProperties = layers[id].MetaProperties;
+	        var urlTemplate = MetaProperties.urlTemplate.Value;
+	        var minZoom = parseInt(MetaProperties.minZoom.Value, 10);
+	        var maxZoom = parseInt(MetaProperties.maxZoom.Value, 10);
+	        var subdomains = MetaProperties.subdomains.Value;
+	        var errorTileUrl = MetaProperties.errorTileUrl.Value;
+	        var zoomOffset = parseInt(MetaProperties.zoomOffset.Value, 10);
+	        var zoomReverse = MetaProperties.zoomReverse.Value.toLowerCase() === 'true';
+	        var tileReverse = MetaProperties.tileReverse.Value.toLowerCase() === 'true';
+	        var detectRetina = MetaProperties.detectRetina.Value.toLowerCase() === 'true';
+	        var crossOrigin = MetaProperties.crossOrigin.Value;
+	        var layer = leafletSrc.tileLayer(urlTemplate, {
+	          minZoom: minZoom,
+	          maxZoom: maxZoom,
+	          subdomains: subdomains,
+	          errorTileUrl: errorTileUrl,
+	          zoomOffset: zoomOffset,
+	          tms: tileReverse,
+	          zoomReverse: zoomReverse,
+	          detectRetina: detectRetina,
+	          crossOrigin: crossOrigin
+	        });
+
+	        _this._map.addLayer(layer);
+
+	        _this._layers[id] = layer;
+	      });
+	    });
 
 	    return _this;
 	  }
 
 	  _createClass(Uploaded$1, [{
-	    key: "_openFiles",
-	    value: function _openFiles() {}
+	    key: "_toggle",
+	    value: function _toggle(e) {
+	      var id = e.id,
+	          visible = e.visible;
+	    }
 	  }, {
 	    key: "view",
 	    value: function () {
@@ -68160,33 +68781,41 @@ var Forestry = (function () {
 	      return view;
 	    }()
 	  }, {
-	    key: "_createSandbox",
+	    key: "_query",
 	    value: function () {
-	      var _createSandbox2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5() {
-	        var _yield$this$httpGet, sandbox;
+	      var _query2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(page) {
+	        var _yield$this$httpGet, Status, Result;
 
 	        return regeneratorRuntime.wrap(function _callee5$(_context5) {
 	          while (1) {
 	            switch (_context5.prev = _context5.next) {
 	              case 0:
 	                _context5.next = 2;
-	                return this.httpGet("".concat(this._path, "/sandbox/CreateSandbox"));
+	                return this.httpGet("".concat(this._path, "/Layer/Search2.ashx"), {
+	                  WrapStyle: 'None',
+	                  query: '',
+	                  orderby: 'datecreate desc',
+	                  page: 0,
+	                  pageSize: this._pageSize.toString(),
+	                  SendMetadata: true
+	                });
 
 	              case 2:
 	                _yield$this$httpGet = _context5.sent;
-	                sandbox = _yield$this$httpGet.sandbox;
+	                Status = _yield$this$httpGet.Status;
+	                Result = _yield$this$httpGet.Result;
 
-	                if (!sandbox) {
-	                  _context5.next = 6;
+	                if (!(Status === 'ok')) {
+	                  _context5.next = 9;
 	                  break;
 	                }
 
-	                return _context5.abrupt("return", sandbox);
+	                return _context5.abrupt("return", Result);
 
-	              case 6:
-	                return _context5.abrupt("return");
+	              case 9:
+	                return _context5.abrupt("return", false);
 
-	              case 7:
+	              case 10:
 	              case "end":
 	                return _context5.stop();
 	            }
@@ -68194,734 +68823,125 @@ var Forestry = (function () {
 	        }, _callee5, this);
 	      }));
 
-	      function _createSandbox() {
-	        return _createSandbox2.apply(this, arguments);
-	      }
-
-	      return _createSandbox;
-	    }()
-	  }, {
-	    key: "_createParts",
-	    value: function _createParts(files) {
-	      var upfiles = [];
-
-	      for (var _i = 0; _i < files.length; _i++) {
-	        var partsCount = Math.ceil(files[_i].size / this._uploadFileSize);
-	        var parts = [];
-
-	        for (var j = 0; j < partsCount - 1; ++j) {
-	          parts.push({
-	            xhr: null,
-	            status: 'none',
-	            size: this._uploadFileSize,
-	            send: 0,
-	            needSend: this._uploadFileSize
-	          });
-	        }
-
-	        var lastSize = files[_i].size - this._uploadFileSize * (partsCount - 1);
-	        parts.push({
-	          xhr: null,
-	          status: 'none',
-	          size: lastSize,
-	          send: 0,
-	          needSend: lastSize
-	        }); //статус загрузки чанка
-
-	        var p = {
-	          item: files[_i],
-	          name: files[_i].name,
-	          parts: parts,
-	          totalBytes: files[_i].size,
-	          status: 'none' //статус загрузки файла
-
-	        };
-	        upfiles.push(p);
-	      }
-
-	      return upfiles;
-	    }
-	  }, {
-	    key: "_startUpload",
-	    value: function _startUpload() {
-	      this._upfilesStatus = "progress";
-
-	      for (var _i2 = 0; _i2 < this._upfiles.length; ++_i2) {
-	        //запускаем 6 потоков
-	        if (this._upfiles[_i2].status === "error") {
-	          this._upfiles[_i2].status = "none";
-	        }
-
-	        var wait = false;
-
-	        for (var j = 0; j < this._upfiles[_i2].parts.length; ++j) {
-	          if (this._upfiles[_i2].parts[j].status === "error") {
-	            this._upfiles[_i2].parts[j].status = "none"; //отменяем ошибку
-	          }
-
-	          if (this._upfiles[_i2].parts[j].status === "none") {
-	            wait = true; //если есть не отосланые чанки
-	          }
-	        }
-
-	        var p = this._percent(this._upfiles[_i2]);
-
-	        if (wait) {
-	          this._progress.waiting(_i2, p);
-	        } else {
-	          this._progress.completed(_i2, p);
-	        }
-	      }
-
-	      for (var _i3 = 0; _i3 < 8; _i3++) {
-	        //запускаем 6 потоков
-	        this._sendNextPart();
-	      }
-
-	      this._stopSpeedTimer();
-
-	      this._speedTimer = setInterval(this._renewSpeedTimer.bind(this), 1000);
-	    }
-	  }, {
-	    key: "_percent",
-	    value: function _percent(t) {
-	      return Math.round(t.parts.reduce(function (a, p) {
-	        return a + p.size / t.totalBytes * (p.send / p.needSend);
-	      }, 0) * 100);
-	    }
-	  }, {
-	    key: "_sendNextPart",
-	    value: function _sendNextPart() {
-	      var _this2 = this;
-
-	      if (this._upfilesStatus === 'error') {
-	        return false;
-	      }
-
-	      var _loop = function _loop(_i4) {
-	        var t = _this2._upfiles[_i4];
-
-	        var _loop2 = function _loop2(j) {
-	          if (t.parts[j].status === "none") {
-	            var startByte = _this2._uploadFileSize * j;
-	            var countBytes = _this2._uploadFileSize;
-
-	            if (startByte + countBytes > t.totalBytes) {
-	              countBytes = t.totalBytes - startByte;
-	            }
-
-	            if (t.status === "none") {
-	              t.status = "progress";
-
-	              _this2._progress.started(_i4);
-	            }
-
-	            t.parts[j].status = "progress";
-	            var chunk = t.item.slice(startByte, startByte + countBytes + 1);
-	            var chunkFile = new File([chunk], t.name);
-	            var fd = new FormData();
-	            fd.append("sandbox", _this2._sandboxId);
-	            fd.append("startByte", startByte);
-	            fd.append("file", chunkFile);
-	            var req = new XMLHttpRequest();
-	            req.open("post", "".concat(_this2._path, "/sandbox/upload"));
-	            t.parts[j].xhr = req;
-	            req.upload.onerror = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6() {
-	              return regeneratorRuntime.wrap(function _callee6$(_context6) {
-	                while (1) {
-	                  switch (_context6.prev = _context6.next) {
-	                    case 0:
-	                      t.parts[j].status = 'error';
-	                      t.parts[j].xhr = null;
-	                      t.status = "error";
-
-	                      _this2._progress.error(_i4);
-
-	                      _context6.next = 6;
-	                      return _this2._errorUpload();
-
-	                    case 6:
-	                    case "end":
-	                      return _context6.stop();
-	                  }
-	                }
-	              }, _callee6);
-	            }));
-	            var lastSend = 0;
-
-	            req.upload.onprogress = function (e) {
-	              t.parts[j].send = e.loaded;
-	              t.parts[j].needSend = e.total;
-
-	              var p = _this2._percent(t);
-
-	              _this2._progress.loading(_i4, p);
-
-	              _this2._currentSendBytes += e.loaded - lastSend; //подсчёт скорости
-
-	              lastSend = e.loaded;
-	            };
-
-	            req.onload = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7() {
-	              var oksum, p, sumFilesOk;
-	              return regeneratorRuntime.wrap(function _callee7$(_context7) {
-	                while (1) {
-	                  switch (_context7.prev = _context7.next) {
-	                    case 0:
-	                      t.parts[j].xhr = null;
-
-	                      if (!(req.status !== 200)) {
-	                        _context7.next = 9;
-	                        break;
-	                      }
-
-	                      // анализируем HTTP-статус ответа, если статус не 200, то произошла ошибка
-	                      t.parts[j].status = 'error';
-	                      t.status = "error";
-
-	                      _this2._progress.error(_i4);
-
-	                      _context7.next = 7;
-	                      return _this2._errorUpload();
-
-	                    case 7:
-	                      _context7.next = 25;
-	                      break;
-
-	                    case 9:
-	                      if (!(_this2._upfilesStatus === "error")) {
-	                        _context7.next = 17;
-	                        break;
-	                      }
-
-	                      //если кто-то глюкнул останавливаем всё. Возможно это отмена
-	                      t.parts[j].status = 'error';
-	                      t.status = "error";
-
-	                      _this2._progress.error(_i4);
-
-	                      _context7.next = 15;
-	                      return _this2._errorUpload();
-
-	                    case 15:
-	                      _context7.next = 25;
-	                      break;
-
-	                    case 17:
-	                      // если всё прошло гладко, выводим результат
-	                      t.parts[j].status = 'finish';
-	                      oksum = t.parts.reduce(function (a, _ref7) {
-	                        var status = _ref7.status;
-	                        return status === 'finish' ? a + 1 : a;
-	                      }, 0);
-
-	                      if (oksum === t.parts.length) {
-	                        t.status = "finish";
-	                        p = _this2._percent(t);
-
-	                        _this2._progress.completed(_i4, p);
-	                      }
-
-	                      _this2._sendNextPart(); //проверяем что все файлы отосланы
-
-
-	                      sumFilesOk = _this2._upfiles.reduce(function (a, _ref8) {
-	                        var status = _ref8.status;
-	                        return status === 'finish' ? a + 1 : a;
-	                      }, 0);
-
-	                      if (!(sumFilesOk === _this2._upfiles.length)) {
-	                        _context7.next = 25;
-	                        break;
-	                      }
-
-	                      _context7.next = 25;
-	                      return _this2._finishUpload();
-
-	                    case 25:
-	                    case "end":
-	                      return _context7.stop();
-	                  }
-	                }
-	              }, _callee7);
-	            }));
-	            req.send(fd);
-	            return {
-	              v: {
-	                v: true
-	              }
-	            };
-	          }
-	        };
-
-	        for (var j = 0; j < t.parts.length; ++j) {
-	          var _ret2 = _loop2(j);
-
-	          if (_typeof(_ret2) === "object") return _ret2.v;
-	        }
-	      };
-
-	      for (var _i4 = 0; _i4 < this._upfiles.length; ++_i4) {
-	        var _ret = _loop(_i4);
-
-	        if (_typeof(_ret) === "object") return _ret.v;
-	      }
-
-	      return false;
-	    }
-	  }, {
-	    key: "_stopSpeedTimer",
-	    value: function _stopSpeedTimer() {
-	      if (this._speedTimer != null) {
-	        clearInterval(this._speedTimer);
-	      }
-
-	      this._speedTimer = null;
-	      this._progress.speed = '';
-	      this._oldSendBytes = [];
-	      this._currentSendBytes = 0;
-	    }
-	  }, {
-	    key: "_renewSpeedTimer",
-	    value: function _renewSpeedTimer() {
-	      var _this$_upfiles$reduce = this._upfiles.reduce(function (_ref9, t) {
-	        var ready = _ref9.ready,
-	            total = _ref9.total;
-	        ready = t.parts.reduce(function (a, tp) {
-	          switch (tp.status) {
-	            case 'progress':
-	              return a + tp.size * (tp.send / tp.needSend);
-
-	            case 'finish':
-	              return a + tp.size;
-
-	            default:
-	              return a;
-	          }
-	        }, ready);
-	        return {
-	          ready: ready,
-	          total: total + t.totalBytes
-	        };
-	      }, {
-	        ready: 0,
-	        total: 0
-	      }),
-	          ready = _this$_upfiles$reduce.ready,
-	          total = _this$_upfiles$reduce.total; //история скорости
-
-
-	      this._oldSendBytes.unshift(this._currentSendBytes);
-
-	      if (this._oldSendBytes.length > 5) {
-	        this._oldSendBytes.length = 5;
-	      }
-
-	      var sumSend = this._oldSendBytes.reduce(function (a, b) {
-	        return a + b;
-	      }, 0);
-
-	      var s = Math.round(sumSend / this._oldSendBytes.length); //байт в секунду
-
-	      this._progress.stats(s, ready, total);
-
-	      this._currentSendBytes = 0;
-	    }
-	  }, {
-	    key: "_resume",
-	    value: function _resume() {
-	      if (this._upfilesStatus === "error") {
-	        this._startUpload();
-	      }
-	    }
-	  }, {
-	    key: "_pause",
-	    value: function () {
-	      var _pause2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8() {
-	        var ok, _i5, _t;
-
-	        return regeneratorRuntime.wrap(function _callee8$(_context8) {
-	          while (1) {
-	            switch (_context8.prev = _context8.next) {
-	              case 0:
-	                this._stopSpeedTimer();
-
-	                ok = true;
-	                _i5 = 0;
-
-	              case 3:
-	                if (!(_i5 < this._upfiles.length)) {
-	                  _context8.next = 11;
-	                  break;
-	                }
-
-	                _t = this._upfiles[_i5];
-	                ok = _t.parts.reduce(function (a, tp) {
-	                  if (tp.status === "progress" && tp.xhr != null) {
-	                    tp.xhr.abort();
-	                    tp.status = 'none';
-	                    a = false;
-	                  }
-
-	                  return a;
-	                }, true);
-
-	                if (ok) {
-	                  _context8.next = 8;
-	                  break;
-	                }
-
-	                return _context8.abrupt("break", 11);
-
-	              case 8:
-	                ++_i5;
-	                _context8.next = 3;
-	                break;
-
-	              case 11:
-	                if (ok) {
-	                  _context8.next = 16;
-	                  break;
-	                }
-
-	                t.status = "error";
-
-	                this._progress.cancelled(i);
-
-	                _context8.next = 16;
-	                return this._errorUpload();
-
-	              case 16:
-	              case "end":
-	                return _context8.stop();
-	            }
-	          }
-	        }, _callee8, this);
-	      }));
-
-	      function _pause() {
-	        return _pause2.apply(this, arguments);
-	      }
-
-	      return _pause;
-	    }()
-	  }, {
-	    key: "_errorUpload",
-	    value: function () {
-	      var _errorUpload2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9() {
-	        return regeneratorRuntime.wrap(function _callee9$(_context9) {
-	          while (1) {
-	            switch (_context9.prev = _context9.next) {
-	              case 0:
-	                if (!(this._upfilesStatus !== 'error')) {
-	                  _context9.next = 5;
-	                  break;
-	                }
-
-	                this._stopSpeedTimer();
-
-	                this._upfilesStatus = 'error'; // document.getElementById('global_status').textContent = "Error";
-	                // document.getElementById("cancel").disabled = true;
-	                // document.getElementById("resume").disabled = false;
-	                // document.getElementById("send").disabled = false;
-	                // document.getElementById("open").disabled = false;
-	                // this._progress.stop();
-
-	                _context9.next = 5;
-	                return this.view();
-
-	              case 5:
-	              case "end":
-	                return _context9.stop();
-	            }
-	          }
-	        }, _callee9, this);
-	      }));
-
-	      function _errorUpload() {
-	        return _errorUpload2.apply(this, arguments);
-	      }
-
-	      return _errorUpload;
-	    }()
-	  }, {
-	    key: "_finishUpload",
-	    value: function () {
-	      var _finishUpload2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10() {
-	        var _yield$this$_createLa, TaskID, Completed, Status;
-
-	        return regeneratorRuntime.wrap(function _callee10$(_context10) {
-	          while (1) {
-	            switch (_context10.prev = _context10.next) {
-	              case 0:
-	                if (!(this._upfilesStatus === 'finish')) {
-	                  _context10.next = 2;
-	                  break;
-	                }
-
-	                return _context10.abrupt("return");
-
-	              case 2:
-	                if (!(this._upfilesStatus === 'progress')) {
-	                  _context10.next = 16;
-	                  break;
-	                }
-
-	                this._stopSpeedTimer();
-
-	                this._upfilesStatus = 'finish'; // document.getElementById('global_status').textContent = "Finish";
-	                // document.getElementById("cancel").disabled = true;
-	                // document.getElementById("resume").disabled = true;
-	                // document.getElementById("send").disabled = false;
-	                // document.getElementById("open").disabled = false;
-
-	                this._progress.stop();
-
-	                _context10.next = 8;
-	                return this._createLayer(this._sandboxId);
-
-	              case 8:
-	                _yield$this$_createLa = _context10.sent;
-	                TaskID = _yield$this$_createLa.TaskID;
-	                Completed = _yield$this$_createLa.Completed;
-	                Status = _yield$this$_createLa.Status;
-	                _context10.next = 14;
-	                return this._pollTask(TaskID);
-
-	              case 14:
-	                _context10.next = 16;
-	                return this.view();
-
-	              case 16:
-	              case "end":
-	                return _context10.stop();
-	            }
-	          }
-	        }, _callee10, this);
-	      }));
-
-	      function _finishUpload() {
-	        return _finishUpload2.apply(this, arguments);
-	      }
-
-	      return _finishUpload;
-	    }()
-	  }, {
-	    key: "_query",
-	    value: function () {
-	      var _query2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11(page) {
-	        var fd, _yield$this$sendForm, Status, Result;
-
-	        return regeneratorRuntime.wrap(function _callee11$(_context11) {
-	          while (1) {
-	            switch (_context11.prev = _context11.next) {
-	              case 0:
-	                fd = new FormData();
-	                fd.append('query', '');
-	                fd.append('orderby', 'datecreate');
-	                fd.append('pagesize', this._pageSize.toString());
-	                fd.append('page', page.toString());
-	                _context11.next = 7;
-	                return this.sendForm("".concat(this._path, "/Layer/Search2.ashx?WrapStyle=None"), fd);
-
-	              case 7:
-	                _yield$this$sendForm = _context11.sent;
-	                Status = _yield$this$sendForm.Status;
-	                Result = _yield$this$sendForm.Result;
-
-	                if (!(Status === 'ok')) {
-	                  _context11.next = 14;
-	                  break;
-	                }
-
-	                return _context11.abrupt("return", Result);
-
-	              case 14:
-	                return _context11.abrupt("return", false);
-
-	              case 15:
-	              case "end":
-	                return _context11.stop();
-	            }
-	          }
-	        }, _callee11, this);
-	      }));
-
-	      function _query(_x3) {
+	      function _query(_x4) {
 	        return _query2.apply(this, arguments);
 	      }
 
 	      return _query;
 	    }()
 	  }, {
-	    key: "_pollTask",
-	    value: function () {
-	      var _pollTask2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee13(taskID) {
-	        var _this3 = this;
+	    key: "_deleteLayer",
+	    value: function _deleteLayer(id) {
+	      var _this2 = this;
 
-	        var id;
-	        return regeneratorRuntime.wrap(function _callee13$(_context13) {
-	          while (1) {
-	            switch (_context13.prev = _context13.next) {
-	              case 0:
-	                id = window.setInterval( /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee12() {
-	                  var data, Status, Result;
-	                  return regeneratorRuntime.wrap(function _callee12$(_context12) {
-	                    while (1) {
-	                      switch (_context12.prev = _context12.next) {
-	                        case 0:
-	                          _context12.next = 2;
-	                          return _this3.httpGet("".concat(_this3._path, "/AsyncTask.ashx"), {
-	                            WrapStyle: 'None',
-	                            TaskID: taskID
-	                          });
-
-	                        case 2:
-	                          data = _context12.sent;
-
-	                          if (!data) {
-	                            _context12.next = 15;
-	                            break;
-	                          }
-
-	                          Status = data.Status, Result = data.Result;
-
-	                          if (!(Status === 'ok')) {
-	                            _context12.next = 11;
-	                            break;
-	                          }
-
-	                          if (!Result.Completed) {
-	                            _context12.next = 9;
-	                            break;
-	                          }
-
-	                          window.clearInterval(id);
-	                          return _context12.abrupt("return", true);
-
-	                        case 9:
-	                          _context12.next = 13;
-	                          break;
-
-	                        case 11:
-	                          window.clearInterval(id);
-	                          return _context12.abrupt("return", false);
-
-	                        case 13:
-	                          _context12.next = 17;
-	                          break;
-
-	                        case 15:
-	                          window.clearInterval(id);
-	                          return _context12.abrupt("return", false);
-
-	                        case 17:
-	                        case "end":
-	                          return _context12.stop();
-	                      }
-	                    }
-	                  }, _callee12);
-	                })), TASK_POLLING_DELAY);
-
-	              case 1:
-	              case "end":
-	                return _context13.stop();
-	            }
-	          }
-	        }, _callee13);
-	      }));
-
-	      function _pollTask(_x4) {
-	        return _pollTask2.apply(this, arguments);
-	      }
-
-	      return _pollTask;
-	    }()
-	  }, {
-	    key: "_createLayer",
-	    value: function () {
-	      var _createLayer2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee14(sandboxId) {
-	        var data, TaskID, Completed, Status;
-	        return regeneratorRuntime.wrap(function _callee14$(_context14) {
-	          while (1) {
-	            switch (_context14.prev = _context14.next) {
-	              case 0:
-	                _context14.next = 2;
-	                return this.httpGet("".concat(this._path, "/Sandbox/CreateLayers"), {
-	                  sandboxId: sandboxId
-	                });
-
-	              case 2:
-	                data = _context14.sent;
-
-	                if (!data) {
-	                  _context14.next = 8;
-	                  break;
-	                }
-
-	                TaskID = data.TaskID, Completed = data.Completed, Status = data.Status;
-	                return _context14.abrupt("return", data);
-
-	              case 8:
-	                return _context14.abrupt("return", false);
-
-	              case 9:
-	              case "end":
-	                return _context14.stop();
-	            }
-	          }
-	        }, _callee14, this);
-	      }));
-
-	      function _createLayer(_x5) {
-	        return _createLayer2.apply(this, arguments);
-	      }
-
-	      return _createLayer;
-	    }()
-	  }, {
-	    key: "_createTmsLayer",
-	    value: function _createTmsLayer(_ref11) {
-	      var _this4 = this;
-
-	      var title = _ref11.title,
-	          description = _ref11.description,
-	          copyright = _ref11.copyright,
-	          url = _ref11.url,
-	          maxZoom = _ref11.maxZoom;
 	      return new Promise(function (resolve) {
-	        var fd = new FormData();
-	        fd.append('WrapStyle', 'None');
-	        fd.append('Title', title);
-	        fd.append('Description', description);
-	        fd.append('Copyright', copyright);
-	        var meta = {
-	          'url-template': {
-	            Value: url,
-	            Type: 'String'
-	          },
-	          'merc-projection': {
-	            Value: 'true',
-	            Type: 'String'
-	          }
-	        };
-
-	        if (typeof maxZoom === 'number') {
-	          meta.maxZoom = {
-	            Value: maxZoom.toString(),
-	            Type: 'String'
-	          };
-	        }
-
-	        fd.append('MetaProperties', JSON.stringify(meta));
-
-	        _this4.sendForm("".concat(_this4._path, "/VectorLayer/Insert.ashx"), fd).then(function (data) {
+	        _this2.httpGet("".concat(_this2._path, "/Layer/Delete.ashx?WrapStyle=None&LayerID=").concat(id)).then(function (data) {
 	          if (data) {
 	            var Status = data.Status,
 	                Result = data.Result;
 
 	            if (Status === 'ok') {
-	              _this4._pollTask(Result.TaskID).then(function () {
+	              _this2.poll(Result.TaskID).then(function () {
+	                return resolve(true);
+	              }).catch(function () {
+	                return resolve(false);
+	              });
+	            } else {
+	              resolve(false);
+	            }
+	          } else {
+	            resolve(false);
+	          }
+	        });
+	      });
+	    }
+	  }, {
+	    key: "_createTmsLayer",
+	    value: function _createTmsLayer(_ref5) {
+	      var _this3 = this;
+
+	      var title = _ref5.title,
+	          description = _ref5.description,
+	          copyright = _ref5.copyright,
+	          url = _ref5.url,
+	          subdomains = _ref5.subdomains,
+	          errorTileUrl = _ref5.errorTileUrl,
+	          tms = _ref5.tms,
+	          minZoom = _ref5.minZoom,
+	          maxZoom = _ref5.maxZoom,
+	          zoomOffset = _ref5.zoomOffset,
+	          zoomReverse = _ref5.zoomReverse,
+	          tileReverse = _ref5.tileReverse,
+	          detectRetina = _ref5.detectRetina,
+	          crossOrigin = _ref5.crossOrigin;
+	      return new Promise(function (resolve) {
+	        var fd = new FormData();
+	        fd.append('WrapStyle', 'None');
+	        fd.append('Title', title || '');
+	        fd.append('Description', description || '');
+	        fd.append('Copyright', copyright || '');
+	        fd.append('SourceType', 'Virtual');
+	        fd.append('ContentID', tms && 'TMS' || '');
+
+	        var meta = _defineProperty({
+	          urlTemplate: {
+	            Value: url,
+	            Type: 'String'
+	          },
+	          subdomains: {
+	            Value: subdomains,
+	            Type: 'String'
+	          },
+	          errorTileUrl: {
+	            Value: errorTileUrl,
+	            Type: 'String'
+	          },
+	          crossOrigin: {
+	            Value: crossOrigin,
+	            Type: 'String'
+	          },
+	          tms: {
+	            Value: tms && 'true' || 'false',
+	            Type: 'String'
+	          },
+	          minZoom: {
+	            Value: minZoom.toString(),
+	            Type: 'String'
+	          },
+	          maxZoom: {
+	            Value: maxZoom.toString(),
+	            Type: 'String'
+	          },
+	          zoomOffset: {
+	            Value: zoomOffset.toString(),
+	            Type: 'String'
+	          },
+	          tileReverse: {
+	            Value: tileReverse && 'true' || 'false',
+	            Type: 'String'
+	          },
+	          zoomReverse: {
+	            Value: zoomReverse && 'true' || 'false',
+	            Type: 'String'
+	          },
+	          detectRetina: {
+	            Value: detectRetina && 'true' || 'false',
+	            Type: 'String'
+	          }
+	        }, "crossOrigin", {
+	          Value: crossOrigin,
+	          Type: 'String'
+	        });
+
+	        fd.append('MetaProperties', JSON.stringify(meta));
+
+	        _this3.postData("".concat(_this3._path, "/VectorLayer/Insert.ashx"), fd).then(function (data) {
+	          if (data) {
+	            var Status = data.Status,
+	                Result = data.Result;
+
+	            if (Status === 'ok') {
+	              _this3.poll(Result.TaskID).then(function () {
 	                return resolve(true);
 	              }).catch(function () {
 	                return resolve(false);
@@ -69127,13 +69147,12 @@ var Forestry = (function () {
 	          while (1) {
 	            switch (_context.prev = _context.next) {
 	              case 0:
-	                this._legend.showPanel(false);
+	                this._legend.showPanel(false); // this._baselayers.showPanel(false);
 
-	                this._baselayers.showPanel(false);
 
 	                this._content.close();
 
-	              case 3:
+	              case 2:
 	              case "end":
 	                return _context.stop();
 	            }
@@ -69221,11 +69240,15 @@ var Forestry = (function () {
 	          while (1) {
 	            switch (_context4.prev = _context4.next) {
 	              case 0:
+	                _context4.next = 2;
+	                return this._controllers.uploaded.view();
+
+	              case 2:
 	              case "end":
 	                return _context4.stop();
 	            }
 	          }
-	        }, _callee4);
+	        }, _callee4, this);
 	      }));
 
 	      function showUploaded() {
@@ -69240,7 +69263,7 @@ var Forestry = (function () {
 	      var _load = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10() {
 	        var _this3 = this;
 
-	        var mapId;
+	        var mapId, apk;
 	        return regeneratorRuntime.wrap(function _callee10$(_context10) {
 	          while (1) {
 	            switch (_context10.prev = _context10.next) {
@@ -69272,25 +69295,44 @@ var Forestry = (function () {
 	                  }
 	                });
 
-	                this._zoom = new Zoom();
-	                this._baselayers = new BaseLayers({
-	                  apiKey: this._apiKey
-	                });
+	                this._controllers = {};
+	                this._zoom = new Zoom(); // this._baselayers = new Widgets.BaseLayers({apiKey: this._apiKey});  
+
+	                _context10.next = 10;
+	                return leafletSrc.gmx.gmxSessionManager.requestSessionKey('maps.kosmosnimki.ru', this._apiKey);
+
+	              case 10:
+	                apk = _context10.sent;
 	                this._legend = new Legend();
 
-	                this._baselayers.on('activate', function () {
+	                this._legend.addTo(this._map);
+
+	                this._zoom.addTo(this._map); // this._baselayers.addTo(this._map);        
+
+
+	                this._controllers.baseLayers = new BaseLayers({
+	                  map: this._map,
+	                  apiKey: apk,
+	                  content: this._content,
+	                  path: this._gmxPath,
+	                  notification: this._notification,
+	                  loading: this._loading,
+	                  permissions: this._permissions
+	                });
+
+	                this._controllers.baseLayers.on('show', function () {
 	                  _this3._legend.showPanel(false);
 	                });
 
 	                this._legend.on('activate', function () {
-	                  _this3._baselayers.showPanel(false);
+	                  _this3._controllers.baseLayers.hide();
 	                });
 
-	                this._legend.addTo(this._map);
+	                _context10.next = 19;
+	                return this._controllers.baseLayers.load();
 
-	                this._zoom.addTo(this._map);
-
-	                this._baselayers.addTo(this._map);
+	              case 19:
+	                this._controllers.baseLayers.select('map');
 
 	                this._layers = this._gmxMap.layers // clear map
 	                .map(function (layer) {
@@ -69355,8 +69397,7 @@ var Forestry = (function () {
 	                      kind = _ref3.kind;
 	                  a[kind] = layer;
 	                  return a;
-	                }, {});
-	                this._controllers = {}; // attach layer controllers        
+	                }, {}); // attach layer controllers        
 
 	                if (this._layers.quadrants && this._permissions.ForestBlocks) {
 	                  this._controllers.quadrants = new Quadrants$2({
@@ -69427,9 +69468,7 @@ var Forestry = (function () {
 	                  });
 	                }
 
-	                if (this._layers.fires && this._permissions.ForestFires) {
-	                  this._map.addLayer(this._layers.fires);
-
+	                if (this._permissions.ForestFires || this._permissions.ForestFiresTimeLine) {
 	                  this._controllers.fires = new Fires$1({
 	                    map: this._map,
 	                    layers: this._layers,
@@ -69708,12 +69747,13 @@ var Forestry = (function () {
 
 	                if (this._permissions.MyData) {
 	                  this._controllers.uploaded = new Uploaded$1({
+	                    map: this._map,
 	                    path: this._gmxPath,
 	                    content: this._content,
 	                    notification: this._notification,
 	                    loading: this._loading,
 	                    permissions: this._permissions
-	                  });
+	                  }); // await this._controllers.uploaded.load();
 	                }
 
 	                if (this._permissions.SatelliteBaseLayersView) {
@@ -69726,9 +69766,8 @@ var Forestry = (function () {
 	                    legend: this._legend,
 	                    dateInterval: this._dateInterval
 	                  });
-	                }
+	                } // this._baselayers.toggle('sputnik');
 
-	                this._baselayers.toggle('sputnik');
 
 	                this._legend.showPanel(true); // attach legend controller
 
@@ -69740,7 +69779,7 @@ var Forestry = (function () {
 	                  notification: this._notification
 	                });
 
-	              case 34:
+	              case 38:
 	              case "end":
 	                return _context10.stop();
 	            }
