@@ -38589,14 +38589,14 @@ var Forestry = (function () {
 	    _this._control.addItem({
 	      title: translate$5('baselayers.satellite'),
 	      id: 'satellite',
-	      iconUrl: 'images/hybrid.png',
+	      iconUrl: 'assets/images/hybrid.png',
 	      urlTemplate: "https://maps.kosmosnimki.ru/TileSender.ashx?ModeKey=tile&ftc=osm&z={z}&x={x}&y={y}&srs=3857&sw=1&LayerName=4EE5E84381E94E369784464FD41EED5A&key=".concat(apiKey)
 	    });
 
 	    _this._control.addItem({
 	      title: translate$5('baselayers.map'),
 	      id: 'map',
-	      iconUrl: 'images/map.png',
+	      iconUrl: 'assets/images/map.png',
 	      urlTemplate: '//tilessputnik.ru/{z}/{x}/{y}.png?sw=1'
 	    });
 
@@ -38646,7 +38646,7 @@ var Forestry = (function () {
 	                    _this2._control.addItem({
 	                      title: title,
 	                      id: layerID,
-	                      iconUrl: 'images/base.png',
+	                      iconUrl: 'assets/images/base.png',
 	                      minZoom: minZoom,
 	                      maxZoom: maxZoom,
 	                      urlTemplate: urlTemplate,
