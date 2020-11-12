@@ -36964,9 +36964,7 @@ var Forestry = (function () {
 	      if (el) {
 	        leafletSrc.DomUtil.removeClass(el, 'current');
 
-	        this._map.removeLayer(this._layers[id]);
-
-	        this._map.invalidateSize();
+	        this._map.removeLayer(this._layers[this._current]);
 	      }
 
 	      this._current = id;
@@ -46367,9 +46365,7 @@ var Forestry = (function () {
 	    _this._layer.on('click', _this._click, _assertThisInitialized(_this));
 
 	    _this._rasterPrefix = '/gis/TileSender.ashx?ModeKey=tile&ftc=osm&z={z}&x={x}&y={y}&srs=3857&LayerName=';
-	    _this._legend = legend;
-
-	    _this._map.addLayer(_this._layer);
+	    _this._legend = legend; // this._map.addLayer(this._layer);
 
 	    _this._layer.setFilter(_this.getFilter.bind(_assertThisInitialized(_this)));
 
