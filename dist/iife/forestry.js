@@ -37012,7 +37012,12 @@ var Forestry = (function () {
 	    var _this3 = this;
 
 	    Object.keys(this._layers).forEach(function (id) {
-	      _this3.removeItem(id);
+	      _this3._map.removeLayer(_this3._layers[id]);
+
+	      var el = _this3._content.querySelector("[data-id=\"".concat(id, "\"]"));
+
+	      leafletSrc.DomUtil.remove(el);
+	      delete _this3._layers[id];
 	    });
 	  }
 	});
@@ -69251,11 +69256,15 @@ var Forestry = (function () {
 	          while (1) {
 	            switch (_context4.prev = _context4.next) {
 	              case 0:
+	                _context4.next = 2;
+	                return this._controllers.uploaded.view();
+
+	              case 2:
 	              case "end":
 	                return _context4.stop();
 	            }
 	          }
-	        }, _callee4);
+	        }, _callee4, this);
 	      }));
 
 	      function showUploaded() {
