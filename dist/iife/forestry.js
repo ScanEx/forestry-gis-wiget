@@ -38376,7 +38376,9 @@ var Forestry = (function () {
 
 	    _this = _super.call(this, {
 	      title: translate$4('baselayers.title'),
-	      id: 'baselayers-view'
+	      id: 'baselayers-view',
+	      top: 50,
+	      left: 450
 	    });
 
 	    _this._element.classList.add('scanex-forestry-baselayers-view');
