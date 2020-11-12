@@ -69006,7 +69006,7 @@ var Forestry = (function () {
 	}(LayerController);
 
 	var translate$k = T.getText.bind(T);
-	var ALLOWED_LAYERS = ['warehouses', 'roads', 'declarations', 'incidents', 'quadrants', 'stands', 'projects', 'plots', 'fires', 'parks', 'forestries_local', 'forestries', 'regions', 'sentinel', 'landsat'].reverse();
+	var ALLOWED_LAYERS = ['warehouses', 'roads', 'declarations', 'incidents', 'incidents_temporal', 'quadrants', 'stands', 'projects', 'plots', 'fires', 'parks', 'forestries_local', 'forestries', 'regions', 'sentinel', 'landsat'].reverse();
 
 	var Map = /*#__PURE__*/function (_EventTarget) {
 	  _inherits(Map, _EventTarget);
@@ -69729,10 +69729,29 @@ var Forestry = (function () {
 	                }
 
 	                if (this._layers.incidents && this._permissions.ForestIncidents) {
-	                  this._layers.incidents.verifyRaster = this._gmxMap.layersByID['5728425F25B04F73871EDF47CC8EFBC0'];
 	                  this._controllers.incidents = new Incidents$1({
 	                    map: this._map,
 	                    layer: this._layers.incidents,
+	                    legend: this._legend,
+	                    content: this._content,
+	                    path: this._monPath,
+	                    permissions: this._permissions,
+	                    dateInterval: this._dateInterval,
+	                    notification: this._notification,
+	                    loading: this._loading
+	                  });
+
+	                  this._controllers.incidents.on('incident:docs', function (e) {
+	                    var event = document.createEvent('Event');
+	                    event.initEvent('incident:docs', false, false);
+	                    event.detail = e.detail;
+
+	                    _this3.dispatchEvent(event);
+	                  });
+	                } else if (this._layers.incidents_temporal && this._permissions.ForestIncidentsTimeLine) {
+	                  this._controllers.incidents = new Incidents$1({
+	                    map: this._map,
+	                    layer: this._layers.incidents_temporal,
 	                    legend: this._legend,
 	                    content: this._content,
 	                    path: this._monPath,
