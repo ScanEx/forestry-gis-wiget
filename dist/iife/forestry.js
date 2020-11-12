@@ -37012,7 +37012,7 @@ var Forestry = (function () {
 	    var _this3 = this;
 
 	    Object.keys(this._layers).forEach(function (id) {
-	      _this3._removeItem(id);
+	      _this3.removeItem(id);
 	    });
 	  }
 	});
