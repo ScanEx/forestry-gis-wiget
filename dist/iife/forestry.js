@@ -37007,6 +37007,13 @@ var Forestry = (function () {
 	    leafletSrc.DomUtil.removeClass(this._icon, 'active');
 	    leafletSrc.DomUtil.addClass(this._content, 'hidden');
 	    this.fire('hide');
+	  },
+	  clear: function clear() {
+	    var _this3 = this;
+
+	    Object.keys(this._layers).forEach(function (id) {
+	      _this3._removeItem(id);
+	    });
 	  }
 	});
 
@@ -38670,6 +38677,11 @@ var Forestry = (function () {
 
 	      return load;
 	    }()
+	  }, {
+	    key: "unload",
+	    value: function unload() {
+	      this._control.clear();
+	    }
 	  }, {
 	    key: "_query",
 	    value: function () {
@@ -69789,7 +69801,7 @@ var Forestry = (function () {
 	  }, {
 	    key: "unload",
 	    value: function unload() {
-	      this._baselayers.unload();
+	      this._controllers.baseLayers.unload();
 	    }
 	  }]);
 
