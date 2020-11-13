@@ -36826,8 +36826,8 @@ var Forestry = (function () {
 	    var container = this._container.querySelector(".group[data-id=\"".concat(id, "\"]"));
 
 	    if (container) {
-	      var btn = container.querySelector('.header').querySelector('.toggle');
-	      leafletSrc.DomUtil.addClass(btn, 'toggle-active');
+	      // const btn = container.querySelector('.header').querySelector('.toggle');
+	      // L.DomUtil.addClass(btn, 'toggle-active');
 	      var children = container.querySelector('.children');
 
 	      var _iterator2 = _createForOfIteratorHelper(children.querySelectorAll('.component')),
@@ -36852,8 +36852,8 @@ var Forestry = (function () {
 	    var container = this._container.querySelector(".group[data-id=\"".concat(id, "\"]"));
 
 	    if (container) {
-	      var btn = container.querySelector('.header').querySelector('.toggle');
-	      leafletSrc.DomUtil.removeClass(btn, 'toggle-active');
+	      // const btn = container.querySelector('.header').querySelector('.toggle');
+	      // L.DomUtil.removeClass(btn, 'toggle-active');
 	      var children = container.querySelector('.children');
 
 	      var _iterator3 = _createForOfIteratorHelper(children.querySelectorAll('.component')),
@@ -38458,7 +38458,7 @@ var Forestry = (function () {
 
 	    btnOk.addEventListener('click', function (e) {
 	      e.stopPropagation();
-	      localStorage.removeItem("".concat(_this._id, ".data"));
+	      window.localStorage.removeItem("".concat(_this._id, ".data"));
 	      var event = document.createEvent('Event');
 	      event.initEvent('ok', false, false);
 	      event.detail = {
@@ -38475,7 +38475,7 @@ var Forestry = (function () {
 
 	    btnCancel.addEventListener('click', function (e) {
 	      e.stopPropagation();
-	      localStorage.removeItem("".concat(_this._id, ".data"));
+	      window.localStorage.removeItem("".concat(_this._id, ".data"));
 	      var event = document.createEvent('Event');
 	      event.initEvent('close', false, false);
 
@@ -38496,12 +38496,12 @@ var Forestry = (function () {
 	        title: this._name.value,
 	        url: this._url.value
 	      };
-	      localStorage.setItem("".concat(this._id, ".data"), JSON.stringify(data));
+	      window.localStorage.setItem("".concat(this._id, ".data"), JSON.stringify(data));
 	    }
 	  }, {
 	    key: "_restore",
 	    value: function _restore() {
-	      var data = localStorage.getItem("".concat(this._id, ".data"));
+	      var data = window.localStorage.getItem("".concat(this._id, ".data"));
 
 	      if (data) {
 	        var _JSON$parse = JSON.parse(data),
@@ -38656,7 +38656,7 @@ var Forestry = (function () {
 
 	    _this._control.on('select', function (e) {
 	      var current = e.current;
-	      localStorage.setItem('forestry.baselayer', current);
+	      window.localStorage.setItem('forestry.baselayer', current);
 	    }, _assertThisInitialized(_this));
 
 	    _this._control.addItem({
@@ -46940,6 +46940,61 @@ var Forestry = (function () {
 	          return false;
 	      }
 	    }
+	  }, {
+	    key: "showIncident",
+	    value: function () {
+	      var _showIncident = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(id) {
+	        var data, Geometry, GmxID, g, b, c;
+	        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+	          while (1) {
+	            switch (_context4.prev = _context4.next) {
+	              case 0:
+	                _context4.next = 2;
+	                return this.httpGet("".concat(this._path, "/Monitoring/GetIncident"), {
+	                  IncidentID: id,
+	                  NeedGeometry: true
+	                });
+
+	              case 2:
+	                data = _context4.sent;
+
+	                if (data) {
+	                  this._legend.enableGroup('incidents');
+
+	                  Geometry = data.Geometry, GmxID = data.GmxID;
+
+	                  if (Geometry && GmxID) {
+	                    g = L.geoJSON(Geometry);
+	                    b = g.getBounds();
+	                    c = b.getCenter();
+
+	                    this._map.setView(c, 15);
+
+	                    this._view.open(_objectSpread2({
+	                      gmx_id: GmxID,
+	                      statusList: this.StatusList
+	                    }, data));
+
+	                    this._gmx_id = GmxID;
+
+	                    this._layer.repaint();
+	                  }
+	                }
+
+	              case 4:
+	              case "end":
+	                return _context4.stop();
+	            }
+	          }
+	        }, _callee4, this);
+	      }));
+
+	      function showIncident(_x3) {
+	        return _showIncident.apply(this, arguments);
+	      }
+
+	      return showIncident;
+	    }()
 	  }]);
 
 	  return Incidents$1;
@@ -47180,7 +47235,7 @@ var Forestry = (function () {
 	          YEAR_ = properties.YEAR_,
 	          PROV_NL = properties.PROV_NL,
 	          AREA_DOC = properties.AREA_DOC;
-	      this._container.innerHTML = "<h1>".concat(this.translate('park.title'), ": ").concat(NAME_R, "</h1>\n\t\t\t<table cellspacing=\"0\" cellpadding=\"0\">\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('park.name'), "</td>\n\t\t\t\t\t<td class=\"name value\">").concat(NAME_R, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('park.type'), "</td>\n\t\t\t\t\t<td class=\"type value\">").concat(TYPE_NL, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('park.year'), "</td>\n\t\t\t\t\t<td class=\"year value\">").concat(YEAR_, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('park.prov'), "</td>\n\t\t\t\t\t<td class=\"prov value\">").concat(PROV_NL, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('park.area'), ", ").concat(this.translate('units.m'), "<sup>2</sup></td>\n\t\t\t\t\t<td class=\"area value\">").concat(this.m(AREA_DOC), "</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
+	      this._container.innerHTML = "<h1>".concat(this.translate('park.title'), ": ").concat(NAME_R, "</h1>\n\t\t\t<table cellspacing=\"0\" cellpadding=\"0\">\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('park.name'), "</td>\n\t\t\t\t\t<td class=\"name value\">").concat(NAME_R, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('park.type'), "</td>\n\t\t\t\t\t<td class=\"type value\">").concat(TYPE_NL, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('park.year'), "</td>\n\t\t\t\t\t<td class=\"year value\">").concat(YEAR_, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('park.prov'), "</td>\n\t\t\t\t\t<td class=\"prov value\">").concat(PROV_NL, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('park.area'), ", ").concat(this.translate('units.ha'), "</td>\n\t\t\t\t\t<td class=\"area value\">").concat(this.m(AREA_DOC), "</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
 	    }
 	  }, {
 	    key: "close",
@@ -69290,15 +69345,15 @@ var Forestry = (function () {
 	      }
 	    }
 	  }, {
-	    key: "showUploaded",
+	    key: "showIncident",
 	    value: function () {
-	      var _showUploaded = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
+	      var _showIncident = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(id) {
 	        return regeneratorRuntime.wrap(function _callee3$(_context3) {
 	          while (1) {
 	            switch (_context3.prev = _context3.next) {
 	              case 0:
 	                _context3.next = 2;
-	                return this._controllers.uploaded.view();
+	                return this._controllers.incidents.showIncident(id);
 
 	              case 2:
 	              case "end":
@@ -69306,6 +69361,31 @@ var Forestry = (function () {
 	            }
 	          }
 	        }, _callee3, this);
+	      }));
+
+	      function showIncident(_x) {
+	        return _showIncident.apply(this, arguments);
+	      }
+
+	      return showIncident;
+	    }()
+	  }, {
+	    key: "showUploaded",
+	    value: function () {
+	      var _showUploaded = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
+	        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+	          while (1) {
+	            switch (_context4.prev = _context4.next) {
+	              case 0:
+	                _context4.next = 2;
+	                return this._controllers.uploaded.view();
+
+	              case 2:
+	              case "end":
+	                return _context4.stop();
+	            }
+	          }
+	        }, _callee4, this);
 	      }));
 
 	      function showUploaded() {
@@ -69317,17 +69397,17 @@ var Forestry = (function () {
 	  }, {
 	    key: "load",
 	    value: function () {
-	      var _load = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9() {
+	      var _load = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10() {
 	        var _this3 = this;
 
 	        var mapId, apk, currentBaseLayer;
-	        return regeneratorRuntime.wrap(function _callee9$(_context9) {
+	        return regeneratorRuntime.wrap(function _callee10$(_context10) {
 	          while (1) {
-	            switch (_context9.prev = _context9.next) {
+	            switch (_context10.prev = _context10.next) {
 	              case 0:
 	                window.SELF = this;
 	                mapId = 'default';
-	                _context9.next = 4;
+	                _context10.next = 4;
 	                return leafletSrc.gmx.loadMap(mapId, {
 	                  leafletMap: this._map,
 	                  hostName: '/',
@@ -69343,7 +69423,7 @@ var Forestry = (function () {
 	                });
 
 	              case 4:
-	                this._gmxMap = _context9.sent;
+	                this._gmxMap = _context10.sent;
 
 	                this._map.on('zoomend', function (e) {
 	                  if (_this3._grid) {
@@ -69353,11 +69433,11 @@ var Forestry = (function () {
 
 	                this._controllers = {};
 	                this._zoom = new Zoom();
-	                _context9.next = 10;
+	                _context10.next = 10;
 	                return leafletSrc.gmx.gmxSessionManager.requestSessionKey('maps.kosmosnimki.ru', this._apiKey);
 
 	              case 10:
-	                apk = _context9.sent;
+	                apk = _context10.sent;
 	                this._legend = new Legend();
 
 	                this._legend.addTo(this._map);
@@ -69382,7 +69462,7 @@ var Forestry = (function () {
 	                  _this3._controllers.baseLayers.hide();
 	                });
 
-	                _context9.next = 19;
+	                _context10.next = 19;
 	                return this._controllers.baseLayers.load();
 
 	              case 19:
@@ -69472,15 +69552,15 @@ var Forestry = (function () {
 	                  });
 
 	                  this._controllers.quadrants.on('quadrant:toggle', /*#__PURE__*/function () {
-	                    var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(e) {
+	                    var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(e) {
 	                      var _e$detail, gmx_id, forestryID;
 
-	                      return regeneratorRuntime.wrap(function _callee4$(_context4) {
+	                      return regeneratorRuntime.wrap(function _callee5$(_context5) {
 	                        while (1) {
-	                          switch (_context4.prev = _context4.next) {
+	                          switch (_context5.prev = _context5.next) {
 	                            case 0:
 	                              _e$detail = e.detail, gmx_id = _e$detail.gmx_id, forestryID = _e$detail.forestryID;
-	                              _context4.next = 3;
+	                              _context5.next = 3;
 	                              return _this3._controllers.projects.toggleQuadrant({
 	                                gmx_id: gmx_id,
 	                                forestryID: forestryID
@@ -69491,13 +69571,13 @@ var Forestry = (function () {
 
 	                            case 4:
 	                            case "end":
-	                              return _context4.stop();
+	                              return _context5.stop();
 	                          }
 	                        }
-	                      }, _callee4);
+	                      }, _callee5);
 	                    }));
 
-	                    return function (_x) {
+	                    return function (_x2) {
 	                      return _ref4.apply(this, arguments);
 	                    };
 	                  }());
@@ -69568,11 +69648,11 @@ var Forestry = (function () {
 	                  });
 
 	                  this._controllers.projects.on('create', /*#__PURE__*/function () {
-	                    var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(e) {
+	                    var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(e) {
 	                      var event;
-	                      return regeneratorRuntime.wrap(function _callee5$(_context5) {
+	                      return regeneratorRuntime.wrap(function _callee6$(_context6) {
 	                        while (1) {
-	                          switch (_context5.prev = _context5.next) {
+	                          switch (_context6.prev = _context6.next) {
 	                            case 0:
 	                              event = document.createEvent('Event');
 	                              event.initEvent('request:create', false, false);
@@ -69582,31 +69662,31 @@ var Forestry = (function () {
 
 	                            case 4:
 	                            case "end":
-	                              return _context5.stop();
+	                              return _context6.stop();
 	                          }
 	                        }
-	                      }, _callee5);
+	                      }, _callee6);
 	                    }));
 
-	                    return function (_x2) {
+	                    return function (_x3) {
 	                      return _ref5.apply(this, arguments);
 	                    };
 	                  }());
 
-	                  this._controllers.projects.on('back', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6() {
-	                    return regeneratorRuntime.wrap(function _callee6$(_context6) {
+	                  this._controllers.projects.on('back', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7() {
+	                    return regeneratorRuntime.wrap(function _callee7$(_context7) {
 	                      while (1) {
-	                        switch (_context6.prev = _context6.next) {
+	                        switch (_context7.prev = _context7.next) {
 	                          case 0:
-	                            _context6.next = 2;
+	                            _context7.next = 2;
 	                            return _this3.showRequests();
 
 	                          case 2:
 	                          case "end":
-	                            return _context6.stop();
+	                            return _context7.stop();
 	                        }
 	                      }
-	                    }, _callee6);
+	                    }, _callee7);
 	                  })));
 	                }
 
@@ -69636,15 +69716,15 @@ var Forestry = (function () {
 	                  });
 
 	                  this._controllers.requests.on('view', /*#__PURE__*/function () {
-	                    var _ref7 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(e) {
+	                    var _ref7 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(e) {
 	                      var _e$detail2, id, forestryID, _this3$_layers$projec, LayerID, c, z;
 
-	                      return regeneratorRuntime.wrap(function _callee7$(_context7) {
+	                      return regeneratorRuntime.wrap(function _callee8$(_context8) {
 	                        while (1) {
-	                          switch (_context7.prev = _context7.next) {
+	                          switch (_context8.prev = _context8.next) {
 	                            case 0:
 	                              _e$detail2 = e.detail, id = _e$detail2.id, forestryID = _e$detail2.forestryID;
-	                              _context7.next = 3;
+	                              _context8.next = 3;
 	                              return _this3._controllers.projects.view({
 	                                id: id,
 	                                forestryID: forestryID
@@ -69652,58 +69732,6 @@ var Forestry = (function () {
 
 	                            case 3:
 	                              _this3$_layers$projec = _this3._layers.projects.getGmxProperties(), LayerID = _this3$_layers$projec.LayerID;
-	                              _context7.prev = 4;
-	                              _context7.next = 7;
-	                              return getObjectCenter(_this3._gmxPath, LayerID, id);
-
-	                            case 7:
-	                              c = _context7.sent;
-	                              z = 10;
-
-	                              _this3._map.setView(c, z);
-
-	                              _context7.next = 15;
-	                              break;
-
-	                            case 12:
-	                              _context7.prev = 12;
-	                              _context7.t0 = _context7["catch"](4);
-	                              console.log(_context7.t0);
-
-	                            case 15:
-	                            case "end":
-	                              return _context7.stop();
-	                          }
-	                        }
-	                      }, _callee7, null, [[4, 12]]);
-	                    }));
-
-	                    return function (_x3) {
-	                      return _ref7.apply(this, arguments);
-	                    };
-	                  }());
-
-	                  this._controllers.requests.on('create', function () {
-	                    _this3._controllers.projects.create();
-	                  });
-
-	                  this._controllers.requests.on('edit', /*#__PURE__*/function () {
-	                    var _ref8 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(e) {
-	                      var _e$detail3, id, forestryID, _this3$_layers$projec2, LayerID, c, z;
-
-	                      return regeneratorRuntime.wrap(function _callee8$(_context8) {
-	                        while (1) {
-	                          switch (_context8.prev = _context8.next) {
-	                            case 0:
-	                              _e$detail3 = e.detail, id = _e$detail3.id, forestryID = _e$detail3.forestryID;
-	                              _context8.next = 3;
-	                              return _this3._controllers.projects.edit({
-	                                id: id,
-	                                forestryID: forestryID
-	                              });
-
-	                            case 3:
-	                              _this3$_layers$projec2 = _this3._layers.projects.getGmxProperties(), LayerID = _this3$_layers$projec2.LayerID;
 	                              _context8.prev = 4;
 	                              _context8.next = 7;
 	                              return getObjectCenter(_this3._gmxPath, LayerID, id);
@@ -69731,6 +69759,58 @@ var Forestry = (function () {
 	                    }));
 
 	                    return function (_x4) {
+	                      return _ref7.apply(this, arguments);
+	                    };
+	                  }());
+
+	                  this._controllers.requests.on('create', function () {
+	                    _this3._controllers.projects.create();
+	                  });
+
+	                  this._controllers.requests.on('edit', /*#__PURE__*/function () {
+	                    var _ref8 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9(e) {
+	                      var _e$detail3, id, forestryID, _this3$_layers$projec2, LayerID, c, z;
+
+	                      return regeneratorRuntime.wrap(function _callee9$(_context9) {
+	                        while (1) {
+	                          switch (_context9.prev = _context9.next) {
+	                            case 0:
+	                              _e$detail3 = e.detail, id = _e$detail3.id, forestryID = _e$detail3.forestryID;
+	                              _context9.next = 3;
+	                              return _this3._controllers.projects.edit({
+	                                id: id,
+	                                forestryID: forestryID
+	                              });
+
+	                            case 3:
+	                              _this3$_layers$projec2 = _this3._layers.projects.getGmxProperties(), LayerID = _this3$_layers$projec2.LayerID;
+	                              _context9.prev = 4;
+	                              _context9.next = 7;
+	                              return getObjectCenter(_this3._gmxPath, LayerID, id);
+
+	                            case 7:
+	                              c = _context9.sent;
+	                              z = 10;
+
+	                              _this3._map.setView(c, z);
+
+	                              _context9.next = 15;
+	                              break;
+
+	                            case 12:
+	                              _context9.prev = 12;
+	                              _context9.t0 = _context9["catch"](4);
+	                              console.log(_context9.t0);
+
+	                            case 15:
+	                            case "end":
+	                              return _context9.stop();
+	                          }
+	                        }
+	                      }, _callee9, null, [[4, 12]]);
+	                    }));
+
+	                    return function (_x5) {
 	                      return _ref8.apply(this, arguments);
 	                    };
 	                  }());
@@ -69857,10 +69937,10 @@ var Forestry = (function () {
 
 	              case 38:
 	              case "end":
-	                return _context9.stop();
+	                return _context10.stop();
 	            }
 	          }
-	        }, _callee9, this);
+	        }, _callee10, this);
 	      }));
 
 	      function load() {
