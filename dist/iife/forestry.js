@@ -68647,7 +68647,7 @@ var Forestry = (function () {
 
 	    _this._element.classList.add('scanex-forestry-tms-view');
 
-	    _this.content.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <tr class=\"name\">\n                <td>".concat(translate$i('uploaded.tms.name'), "</td>\n                <td>\n                    <input type=\"text\" value=\"\">\n                </td>\n            </tr>\n            <tr class=\"url\">\n                <td>").concat(translate$i('uploaded.tms.url'), "</td>\n                <td>\n                    <input type=\"text\" value=\"\">\n                </td>\n            </tr>\n            <tr class=\"zoom\">\n                <td>").concat(translate$i('uploaded.tms.zoom'), "</td>\n                <td><div></div></td>\n            </tr>\n            <tr class=\"subdomains\">\n                <td>").concat(translate$i('uploaded.tms.subdomains'), "</td>\n                <td>\n                    <input type=\"text\" value=\"abc\">\n                </td>\n            </tr>\n            <tr class=\"error-tile-url\">\n                <td>").concat(translate$i('uploaded.tms.errorTileUrl'), "</label>\n                <td>\n                    <input class=\"value\" type=\"text\" value=\"\">\n                </td>\n            </tr>\n            <tr class=\"zoom-offset\">\n                <td>").concat(translate$i('uploaded.tms.zoomOffset'), "</td>\n                <td><div></div></td>\n            </tr>\n            <tr class=\"tile-reverse\">\n                <td>").concat(translate$i('uploaded.tms.tileReverse'), "</td>\n                <td>\n                    <input type=\"checkbox\" value=\"tileReverse\">\n                </td>            \n            </tr>\n            <tr class=\"zoom-reverse\">\n                <td>").concat(translate$i('uploaded.tms.zoomReverse'), "</td>\n                <td>\n                    <input type=\"checkbox\" value=\"zoomReverse\">\n                </td>            \n            </tr>\n            <tr class=\"detect-retina\">\n                <td>").concat(translate$i('uploaded.tms.detectRetina'), "</td>\n                <td>\n                    <input type=\"checkbox\" value=\"detectRetina\">\n                </td>\n            </tr>\n            <tr class=\"use-credentials\">\n                <td>").concat(translate$i('uploaded.tms.useCredentials'), "</td>\n                <td>                    \n                    <input type=\"checkbox\" value=\"useCredentials\">\n                </td>\n            </tr>            \n        </table>");
+	    _this.content.innerHTML = "<div class=\"name\">\n                <label>".concat(translate$i('uploaded.tms.name'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"url\">\n                <label>").concat(translate$i('uploaded.tms.url'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"zoom\">\n                <label>").concat(translate$i('uploaded.tms.zoom'), "</label>\n                <div></div>\n            </div>\n            <div class=\"subdomains\">\n                <label>").concat(translate$i('uploaded.tms.subdomains'), "</label>              \n                <input type=\"text\" value=\"abc\">                \n            </div>\n            <div class=\"error-tile-url\">\n                <label>").concat(translate$i('uploaded.tms.errorTileUrl'), "</label>\n                <input class=\"value\" type=\"text\" value=\"\">                \n            </div>\n            <div class=\"zoom-offset\">\n                <label>").concat(translate$i('uploaded.tms.zoomOffset'), "</label>\n                <div></div>\n            </div>\n            <div class=\"tile-reverse\">\n                <label>").concat(translate$i('uploaded.tms.tileReverse'), "</label>                \n                <input type=\"checkbox\" value=\"tileReverse\">                \n            </div>\n            <div class=\"zoom-reverse\">\n                <label>").concat(translate$i('uploaded.tms.zoomReverse'), "</label>                \n                <input type=\"checkbox\" value=\"zoomReverse\">                \n            </div>\n            <div class=\"detect-retina\">\n                <label>").concat(translate$i('uploaded.tms.detectRetina'), "</label>                \n                <input type=\"checkbox\" value=\"detectRetina\">                \n            </div>\n            <div class=\"use-credentials\">\n                <label>").concat(translate$i('uploaded.tms.useCredentials'), "</label>            \n                <input type=\"checkbox\" value=\"useCredentials\">                \n            </div>");
 	    _this._name = _this.content.querySelector('.name').querySelector('input');
 	    _this._url = _this.content.querySelector('.url').querySelector('input');
 	    _this._zoom = new Interval(_this.content.querySelector('.zoom').querySelector('div'), {
@@ -68971,11 +68971,19 @@ var Forestry = (function () {
 	                Result = data.Result;
 
 	            if (Status === 'ok') {
-	              _this2.poll(Result.TaskID).then(function () {
-	                return resolve(true);
-	              }).catch(function () {
-	                return resolve(false);
-	              });
+	              var TaskID = Result.TaskID;
+
+	              if (TaskID) {
+	                _this2.poll(Result.TaskID).then(function () {
+	                  return resolve(true);
+	                }).catch(function () {
+	                  return resolve(false);
+	                });
+	              } else if (Result === 'deleted') {
+	                resolve(true);
+	              } else {
+	                resolve(false);
+	              }
 	            } else {
 	              resolve(false);
 	            }
@@ -69169,13 +69177,7 @@ var Forestry = (function () {
 
 	    _this._createCorners();
 
-	    _this._setOrigin(center, zoom); // this._map.on('click', async e =>  {
-	    //     L.DomEvent.stopPropagation(e);
-	    //     if (!e.gmx && e.originalEvent.target.tagName !== 'g') {
-	    //         await this.showMain();
-	    //     }
-	    // }, this);
-
+	    _this._setOrigin(center, zoom);
 
 	    _this._map.addControl(leafletSrc.control.attribution({
 	      position: 'bottomleft'
@@ -69377,15 +69379,11 @@ var Forestry = (function () {
 	          while (1) {
 	            switch (_context4.prev = _context4.next) {
 	              case 0:
-	                _context4.next = 2;
-	                return this._controllers.uploaded.view();
-
-	              case 2:
 	              case "end":
 	                return _context4.stop();
 	            }
 	          }
-	        }, _callee4, this);
+	        }, _callee4);
 	      }));
 
 	      function showUploaded() {
