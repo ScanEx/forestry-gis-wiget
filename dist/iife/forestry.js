@@ -876,11 +876,251 @@ var Forestry = (function () {
 	  }
 	});
 
+	var aPossiblePrototype = function (it) {
+	  if (!isObject(it) && it !== null) {
+	    throw TypeError("Can't set " + String(it) + ' as a prototype');
+	  } return it;
+	};
+
+	// `Object.setPrototypeOf` method
+	// https://tc39.github.io/ecma262/#sec-object.setprototypeof
+	// Works with __proto__ only. Old v8 can't work with null proto objects.
+	/* eslint-disable no-proto */
+	var objectSetPrototypeOf = Object.setPrototypeOf || ('__proto__' in {} ? function () {
+	  var CORRECT_SETTER = false;
+	  var test = {};
+	  var setter;
+	  try {
+	    setter = Object.getOwnPropertyDescriptor(Object.prototype, '__proto__').set;
+	    setter.call(test, []);
+	    CORRECT_SETTER = test instanceof Array;
+	  } catch (error) { /* empty */ }
+	  return function setPrototypeOf(O, proto) {
+	    anObject(O);
+	    aPossiblePrototype(proto);
+	    if (CORRECT_SETTER) setter.call(O, proto);
+	    else O.__proto__ = proto;
+	    return O;
+	  };
+	}() : undefined);
+
+	// makes subclassing work correct for wrapped built-ins
+	var inheritIfRequired = function ($this, dummy, Wrapper) {
+	  var NewTarget, NewTargetPrototype;
+	  if (
+	    // it can work only with native `setPrototypeOf`
+	    objectSetPrototypeOf &&
+	    // we haven't completely correct pre-ES6 way for getting `new.target`, so use this
+	    typeof (NewTarget = dummy.constructor) == 'function' &&
+	    NewTarget !== Wrapper &&
+	    isObject(NewTargetPrototype = NewTarget.prototype) &&
+	    NewTargetPrototype !== Wrapper.prototype
+	  ) objectSetPrototypeOf($this, NewTargetPrototype);
+	  return $this;
+	};
+
 	// `Object.keys` method
 	// https://tc39.github.io/ecma262/#sec-object.keys
 	var objectKeys = Object.keys || function keys(O) {
 	  return objectKeysInternal(O, enumBugKeys);
 	};
+
+	// `Object.defineProperties` method
+	// https://tc39.github.io/ecma262/#sec-object.defineproperties
+	var objectDefineProperties = descriptors ? Object.defineProperties : function defineProperties(O, Properties) {
+	  anObject(O);
+	  var keys = objectKeys(Properties);
+	  var length = keys.length;
+	  var index = 0;
+	  var key;
+	  while (length > index) objectDefineProperty.f(O, key = keys[index++], Properties[key]);
+	  return O;
+	};
+
+	var html = getBuiltIn('document', 'documentElement');
+
+	var GT = '>';
+	var LT = '<';
+	var PROTOTYPE = 'prototype';
+	var SCRIPT = 'script';
+	var IE_PROTO = sharedKey('IE_PROTO');
+
+	var EmptyConstructor = function () { /* empty */ };
+
+	var scriptTag = function (content) {
+	  return LT + SCRIPT + GT + content + LT + '/' + SCRIPT + GT;
+	};
+
+	// Create object with fake `null` prototype: use ActiveX Object with cleared prototype
+	var NullProtoObjectViaActiveX = function (activeXDocument) {
+	  activeXDocument.write(scriptTag(''));
+	  activeXDocument.close();
+	  var temp = activeXDocument.parentWindow.Object;
+	  activeXDocument = null; // avoid memory leak
+	  return temp;
+	};
+
+	// Create object with fake `null` prototype: use iframe Object with cleared prototype
+	var NullProtoObjectViaIFrame = function () {
+	  // Thrash, waste and sodomy: IE GC bug
+	  var iframe = documentCreateElement('iframe');
+	  var JS = 'java' + SCRIPT + ':';
+	  var iframeDocument;
+	  iframe.style.display = 'none';
+	  html.appendChild(iframe);
+	  // https://github.com/zloirock/core-js/issues/475
+	  iframe.src = String(JS);
+	  iframeDocument = iframe.contentWindow.document;
+	  iframeDocument.open();
+	  iframeDocument.write(scriptTag('document.F=Object'));
+	  iframeDocument.close();
+	  return iframeDocument.F;
+	};
+
+	// Check for document.domain and active x support
+	// No need to use active x approach when document.domain is not set
+	// see https://github.com/es-shims/es5-shim/issues/150
+	// variation of https://github.com/kitcambridge/es5-shim/commit/4f738ac066346
+	// avoid IE GC bug
+	var activeXDocument;
+	var NullProtoObject = function () {
+	  try {
+	    /* global ActiveXObject */
+	    activeXDocument = document.domain && new ActiveXObject('htmlfile');
+	  } catch (error) { /* ignore */ }
+	  NullProtoObject = activeXDocument ? NullProtoObjectViaActiveX(activeXDocument) : NullProtoObjectViaIFrame();
+	  var length = enumBugKeys.length;
+	  while (length--) delete NullProtoObject[PROTOTYPE][enumBugKeys[length]];
+	  return NullProtoObject();
+	};
+
+	hiddenKeys[IE_PROTO] = true;
+
+	// `Object.create` method
+	// https://tc39.github.io/ecma262/#sec-object.create
+	var objectCreate = Object.create || function create(O, Properties) {
+	  var result;
+	  if (O !== null) {
+	    EmptyConstructor[PROTOTYPE] = anObject(O);
+	    result = new EmptyConstructor();
+	    EmptyConstructor[PROTOTYPE] = null;
+	    // add "__proto__" for Object.getPrototypeOf polyfill
+	    result[IE_PROTO] = O;
+	  } else result = NullProtoObject();
+	  return Properties === undefined ? result : objectDefineProperties(result, Properties);
+	};
+
+	// a string of all valid unicode whitespaces
+	// eslint-disable-next-line max-len
+	var whitespaces = '\u0009\u000A\u000B\u000C\u000D\u0020\u00A0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u3000\u2028\u2029\uFEFF';
+
+	var whitespace = '[' + whitespaces + ']';
+	var ltrim = RegExp('^' + whitespace + whitespace + '*');
+	var rtrim = RegExp(whitespace + whitespace + '*$');
+
+	// `String.prototype.{ trim, trimStart, trimEnd, trimLeft, trimRight }` methods implementation
+	var createMethod$3 = function (TYPE) {
+	  return function ($this) {
+	    var string = String(requireObjectCoercible($this));
+	    if (TYPE & 1) string = string.replace(ltrim, '');
+	    if (TYPE & 2) string = string.replace(rtrim, '');
+	    return string;
+	  };
+	};
+
+	var stringTrim = {
+	  // `String.prototype.{ trimLeft, trimStart }` methods
+	  // https://tc39.github.io/ecma262/#sec-string.prototype.trimstart
+	  start: createMethod$3(1),
+	  // `String.prototype.{ trimRight, trimEnd }` methods
+	  // https://tc39.github.io/ecma262/#sec-string.prototype.trimend
+	  end: createMethod$3(2),
+	  // `String.prototype.trim` method
+	  // https://tc39.github.io/ecma262/#sec-string.prototype.trim
+	  trim: createMethod$3(3)
+	};
+
+	var getOwnPropertyNames = objectGetOwnPropertyNames.f;
+	var getOwnPropertyDescriptor$2 = objectGetOwnPropertyDescriptor.f;
+	var defineProperty$1 = objectDefineProperty.f;
+	var trim = stringTrim.trim;
+
+	var NUMBER = 'Number';
+	var NativeNumber = global_1[NUMBER];
+	var NumberPrototype = NativeNumber.prototype;
+
+	// Opera ~12 has broken Object#toString
+	var BROKEN_CLASSOF = classofRaw(objectCreate(NumberPrototype)) == NUMBER;
+
+	// `ToNumber` abstract operation
+	// https://tc39.github.io/ecma262/#sec-tonumber
+	var toNumber = function (argument) {
+	  var it = toPrimitive(argument, false);
+	  var first, third, radix, maxCode, digits, length, index, code;
+	  if (typeof it == 'string' && it.length > 2) {
+	    it = trim(it);
+	    first = it.charCodeAt(0);
+	    if (first === 43 || first === 45) {
+	      third = it.charCodeAt(2);
+	      if (third === 88 || third === 120) return NaN; // Number('+0x1') should be NaN, old V8 fix
+	    } else if (first === 48) {
+	      switch (it.charCodeAt(1)) {
+	        case 66: case 98: radix = 2; maxCode = 49; break; // fast equal of /^0b[01]+$/i
+	        case 79: case 111: radix = 8; maxCode = 55; break; // fast equal of /^0o[0-7]+$/i
+	        default: return +it;
+	      }
+	      digits = it.slice(2);
+	      length = digits.length;
+	      for (index = 0; index < length; index++) {
+	        code = digits.charCodeAt(index);
+	        // parseInt parses a string to a first unavailable symbol
+	        // but ToNumber should return NaN if a string contains unavailable symbols
+	        if (code < 48 || code > maxCode) return NaN;
+	      } return parseInt(digits, radix);
+	    }
+	  } return +it;
+	};
+
+	// `Number` constructor
+	// https://tc39.github.io/ecma262/#sec-number-constructor
+	if (isForced_1(NUMBER, !NativeNumber(' 0o1') || !NativeNumber('0b1') || NativeNumber('+0x1'))) {
+	  var NumberWrapper = function Number(value) {
+	    var it = arguments.length < 1 ? 0 : value;
+	    var dummy = this;
+	    return dummy instanceof NumberWrapper
+	      // check on 1..constructor(foo) case
+	      && (BROKEN_CLASSOF ? fails(function () { NumberPrototype.valueOf.call(dummy); }) : classofRaw(dummy) != NUMBER)
+	        ? inheritIfRequired(new NativeNumber(toNumber(it)), dummy, NumberWrapper) : toNumber(it);
+	  };
+	  for (var keys$1 = descriptors ? getOwnPropertyNames(NativeNumber) : (
+	    // ES3:
+	    'MAX_VALUE,MIN_VALUE,NaN,NEGATIVE_INFINITY,POSITIVE_INFINITY,' +
+	    // ES2015 (in case, if modules with ES2015 Number statics required before):
+	    'EPSILON,isFinite,isInteger,isNaN,isSafeInteger,MAX_SAFE_INTEGER,' +
+	    'MIN_SAFE_INTEGER,parseFloat,parseInt,isInteger'
+	  ).split(','), j = 0, key; keys$1.length > j; j++) {
+	    if (has(NativeNumber, key = keys$1[j]) && !has(NumberWrapper, key)) {
+	      defineProperty$1(NumberWrapper, key, getOwnPropertyDescriptor$2(NativeNumber, key));
+	    }
+	  }
+	  NumberWrapper.prototype = NumberPrototype;
+	  NumberPrototype.constructor = NumberWrapper;
+	  redefine(global_1, NUMBER, NumberWrapper);
+	}
+
+	var floor$1 = Math.floor;
+
+	// `Number.isInteger` method implementation
+	// https://tc39.github.io/ecma262/#sec-number.isinteger
+	var isInteger = function isInteger(it) {
+	  return !isObject(it) && isFinite(it) && floor$1(it) === it;
+	};
+
+	// `Number.isInteger` method
+	// https://tc39.github.io/ecma262/#sec-number.isinteger
+	_export({ target: 'Number', stat: true }, {
+	  isInteger: isInteger
+	});
 
 	var FAILS_ON_PRIMITIVES = fails(function () { objectKeys(1); });
 
@@ -1015,91 +1255,6 @@ var Forestry = (function () {
 	  }
 	}
 
-	// `Object.defineProperties` method
-	// https://tc39.github.io/ecma262/#sec-object.defineproperties
-	var objectDefineProperties = descriptors ? Object.defineProperties : function defineProperties(O, Properties) {
-	  anObject(O);
-	  var keys = objectKeys(Properties);
-	  var length = keys.length;
-	  var index = 0;
-	  var key;
-	  while (length > index) objectDefineProperty.f(O, key = keys[index++], Properties[key]);
-	  return O;
-	};
-
-	var html = getBuiltIn('document', 'documentElement');
-
-	var GT = '>';
-	var LT = '<';
-	var PROTOTYPE = 'prototype';
-	var SCRIPT = 'script';
-	var IE_PROTO = sharedKey('IE_PROTO');
-
-	var EmptyConstructor = function () { /* empty */ };
-
-	var scriptTag = function (content) {
-	  return LT + SCRIPT + GT + content + LT + '/' + SCRIPT + GT;
-	};
-
-	// Create object with fake `null` prototype: use ActiveX Object with cleared prototype
-	var NullProtoObjectViaActiveX = function (activeXDocument) {
-	  activeXDocument.write(scriptTag(''));
-	  activeXDocument.close();
-	  var temp = activeXDocument.parentWindow.Object;
-	  activeXDocument = null; // avoid memory leak
-	  return temp;
-	};
-
-	// Create object with fake `null` prototype: use iframe Object with cleared prototype
-	var NullProtoObjectViaIFrame = function () {
-	  // Thrash, waste and sodomy: IE GC bug
-	  var iframe = documentCreateElement('iframe');
-	  var JS = 'java' + SCRIPT + ':';
-	  var iframeDocument;
-	  iframe.style.display = 'none';
-	  html.appendChild(iframe);
-	  // https://github.com/zloirock/core-js/issues/475
-	  iframe.src = String(JS);
-	  iframeDocument = iframe.contentWindow.document;
-	  iframeDocument.open();
-	  iframeDocument.write(scriptTag('document.F=Object'));
-	  iframeDocument.close();
-	  return iframeDocument.F;
-	};
-
-	// Check for document.domain and active x support
-	// No need to use active x approach when document.domain is not set
-	// see https://github.com/es-shims/es5-shim/issues/150
-	// variation of https://github.com/kitcambridge/es5-shim/commit/4f738ac066346
-	// avoid IE GC bug
-	var activeXDocument;
-	var NullProtoObject = function () {
-	  try {
-	    /* global ActiveXObject */
-	    activeXDocument = document.domain && new ActiveXObject('htmlfile');
-	  } catch (error) { /* ignore */ }
-	  NullProtoObject = activeXDocument ? NullProtoObjectViaActiveX(activeXDocument) : NullProtoObjectViaIFrame();
-	  var length = enumBugKeys.length;
-	  while (length--) delete NullProtoObject[PROTOTYPE][enumBugKeys[length]];
-	  return NullProtoObject();
-	};
-
-	hiddenKeys[IE_PROTO] = true;
-
-	// `Object.create` method
-	// https://tc39.github.io/ecma262/#sec-object.create
-	var objectCreate = Object.create || function create(O, Properties) {
-	  var result;
-	  if (O !== null) {
-	    EmptyConstructor[PROTOTYPE] = anObject(O);
-	    result = new EmptyConstructor();
-	    EmptyConstructor[PROTOTYPE] = null;
-	    // add "__proto__" for Object.getPrototypeOf polyfill
-	    result[IE_PROTO] = O;
-	  } else result = NullProtoObject();
-	  return Properties === undefined ? result : objectDefineProperties(result, Properties);
-	};
-
 	var nativeGetOwnPropertyNames = objectGetOwnPropertyNames.f;
 
 	var toString$1 = {}.toString;
@@ -1132,16 +1287,16 @@ var Forestry = (function () {
 		f: f$6
 	};
 
-	var defineProperty$1 = objectDefineProperty.f;
+	var defineProperty$2 = objectDefineProperty.f;
 
 	var defineWellKnownSymbol = function (NAME) {
 	  var Symbol = path.Symbol || (path.Symbol = {});
-	  if (!has(Symbol, NAME)) defineProperty$1(Symbol, NAME, {
+	  if (!has(Symbol, NAME)) defineProperty$2(Symbol, NAME, {
 	    value: wellKnownSymbolWrapped.f(NAME)
 	  });
 	};
 
-	var defineProperty$2 = objectDefineProperty.f;
+	var defineProperty$3 = objectDefineProperty.f;
 
 
 
@@ -1149,7 +1304,7 @@ var Forestry = (function () {
 
 	var setToStringTag = function (it, TAG, STATIC) {
 	  if (it && !has(it = STATIC ? it : it.prototype, TO_STRING_TAG$2)) {
-	    defineProperty$2(it, TO_STRING_TAG$2, { configurable: true, value: TAG });
+	    defineProperty$3(it, TO_STRING_TAG$2, { configurable: true, value: TAG });
 	  }
 	};
 
@@ -1429,7 +1584,7 @@ var Forestry = (function () {
 
 	hiddenKeys[HIDDEN] = true;
 
-	var defineProperty$3 = objectDefineProperty.f;
+	var defineProperty$4 = objectDefineProperty.f;
 
 
 	var NativeSymbol = global_1.Symbol;
@@ -1456,7 +1611,7 @@ var Forestry = (function () {
 	  var symbolToString = symbolPrototype.toString;
 	  var native = String(NativeSymbol('test')) == 'Symbol(test)';
 	  var regexp = /^Symbol\((.*)\)[^)]+$/;
-	  defineProperty$3(symbolPrototype, 'description', {
+	  defineProperty$4(symbolPrototype, 'description', {
 	    configurable: true,
 	    get: function description() {
 	      var symbol = isObject(this) ? this.valueOf() : this;
@@ -1568,34 +1723,6 @@ var Forestry = (function () {
 	  iterators[TO_STRING_TAG] = returnThis$1;
 	  return IteratorConstructor;
 	};
-
-	var aPossiblePrototype = function (it) {
-	  if (!isObject(it) && it !== null) {
-	    throw TypeError("Can't set " + String(it) + ' as a prototype');
-	  } return it;
-	};
-
-	// `Object.setPrototypeOf` method
-	// https://tc39.github.io/ecma262/#sec-object.setprototypeof
-	// Works with __proto__ only. Old v8 can't work with null proto objects.
-	/* eslint-disable no-proto */
-	var objectSetPrototypeOf = Object.setPrototypeOf || ('__proto__' in {} ? function () {
-	  var CORRECT_SETTER = false;
-	  var test = {};
-	  var setter;
-	  try {
-	    setter = Object.getOwnPropertyDescriptor(Object.prototype, '__proto__').set;
-	    setter.call(test, []);
-	    CORRECT_SETTER = test instanceof Array;
-	  } catch (error) { /* empty */ }
-	  return function setPrototypeOf(O, proto) {
-	    anObject(O);
-	    aPossiblePrototype(proto);
-	    if (CORRECT_SETTER) setter.call(O, proto);
-	    else O.__proto__ = proto;
-	    return O;
-	  };
-	}() : undefined);
 
 	var IteratorPrototype$2 = iteratorsCore.IteratorPrototype;
 	var BUGGY_SAFARI_ITERATORS$1 = iteratorsCore.BUGGY_SAFARI_ITERATORS;
@@ -1765,7 +1892,7 @@ var Forestry = (function () {
 	  }
 	});
 
-	var defineProperty$4 = objectDefineProperty.f;
+	var defineProperty$5 = objectDefineProperty.f;
 
 	var FunctionPrototype = Function.prototype;
 	var FunctionPrototypeToString = FunctionPrototype.toString;
@@ -1775,7 +1902,7 @@ var Forestry = (function () {
 	// Function instances `.name` property
 	// https://tc39.github.io/ecma262/#sec-function-instances-name
 	if (descriptors && !(NAME in FunctionPrototype)) {
-	  defineProperty$4(FunctionPrototype, NAME, {
+	  defineProperty$5(FunctionPrototype, NAME, {
 	    configurable: true,
 	    get: function () {
 	      try {
@@ -2062,7 +2189,7 @@ var Forestry = (function () {
 	  clear: clear
 	};
 
-	var getOwnPropertyDescriptor$2 = objectGetOwnPropertyDescriptor.f;
+	var getOwnPropertyDescriptor$3 = objectGetOwnPropertyDescriptor.f;
 	var macrotask = task.set;
 
 
@@ -2072,7 +2199,7 @@ var Forestry = (function () {
 	var process$2 = global_1.process;
 	var Promise$1 = global_1.Promise;
 	// Node.js 11 shows ExperimentalWarning on getting `queueMicrotask`
-	var queueMicrotaskDescriptor = getOwnPropertyDescriptor$2(global_1, 'queueMicrotask');
+	var queueMicrotaskDescriptor = getOwnPropertyDescriptor$3(global_1, 'queueMicrotask');
 	var queueMicrotask = queueMicrotaskDescriptor && queueMicrotaskDescriptor.value;
 
 	var flush, head, last, notify, toggle, node, promise, then;
@@ -2548,7 +2675,7 @@ var Forestry = (function () {
 	});
 
 	// `String.prototype.{ codePointAt, at }` methods implementation
-	var createMethod$3 = function (CONVERT_TO_STRING) {
+	var createMethod$4 = function (CONVERT_TO_STRING) {
 	  return function ($this, pos) {
 	    var S = String(requireObjectCoercible($this));
 	    var position = toInteger(pos);
@@ -2566,10 +2693,10 @@ var Forestry = (function () {
 	var stringMultibyte = {
 	  // `String.prototype.codePointAt` method
 	  // https://tc39.github.io/ecma262/#sec-string.prototype.codepointat
-	  codeAt: createMethod$3(false),
+	  codeAt: createMethod$4(false),
 	  // `String.prototype.at` method
 	  // https://github.com/mathiasbynens/String.prototype.at
-	  charAt: createMethod$3(true)
+	  charAt: createMethod$4(true)
 	};
 
 	var charAt = stringMultibyte.charAt;
@@ -3911,7 +4038,7 @@ var Forestry = (function () {
 	var Infinity$1 = 1 / 0;
 	var abs = Math.abs;
 	var pow = Math.pow;
-	var floor$1 = Math.floor;
+	var floor$2 = Math.floor;
 	var log = Math.log;
 	var LN2 = Math.LN2;
 
@@ -3931,7 +4058,7 @@ var Forestry = (function () {
 	    mantissa = number != number ? 1 : 0;
 	    exponent = eMax;
 	  } else {
-	    exponent = floor$1(log(number) / LN2);
+	    exponent = floor$2(log(number) / LN2);
 	    if (number * (c = pow(2, -exponent)) < 1) {
 	      exponent--;
 	      c *= 2;
@@ -3995,8 +4122,8 @@ var Forestry = (function () {
 	  unpack: unpack
 	};
 
-	var getOwnPropertyNames = objectGetOwnPropertyNames.f;
-	var defineProperty$5 = objectDefineProperty.f;
+	var getOwnPropertyNames$1 = objectGetOwnPropertyNames.f;
+	var defineProperty$6 = objectDefineProperty.f;
 
 
 
@@ -4043,7 +4170,7 @@ var Forestry = (function () {
 	};
 
 	var addGetter = function (Constructor, key) {
-	  defineProperty$5(Constructor[PROTOTYPE$2], key, { get: function () { return getInternalState$4(this)[key]; } });
+	  defineProperty$6(Constructor[PROTOTYPE$2], key, { get: function () { return getInternalState$4(this)[key]; } });
 	};
 
 	var get$1 = function (view, count, index, isLittleEndian) {
@@ -4172,9 +4299,9 @@ var Forestry = (function () {
 	      return new NativeArrayBuffer(toIndex(length));
 	    };
 	    var ArrayBufferPrototype = $ArrayBuffer[PROTOTYPE$2] = NativeArrayBuffer[PROTOTYPE$2];
-	    for (var keys$1 = getOwnPropertyNames(NativeArrayBuffer), j = 0, key; keys$1.length > j;) {
-	      if (!((key = keys$1[j++]) in $ArrayBuffer)) {
-	        createNonEnumerableProperty($ArrayBuffer, key, NativeArrayBuffer[key]);
+	    for (var keys$2 = getOwnPropertyNames$1(NativeArrayBuffer), j$1 = 0, key$1; keys$2.length > j$1;) {
+	      if (!((key$1 = keys$2[j$1++]) in $ArrayBuffer)) {
+	        createNonEnumerableProperty($ArrayBuffer, key$1, NativeArrayBuffer[key$1]);
 	      }
 	    }
 	    ArrayBufferPrototype.constructor = $ArrayBuffer;
@@ -4237,128 +4364,15 @@ var Forestry = (function () {
 	});
 
 	var ceil$1 = Math.ceil;
-	var floor$2 = Math.floor;
+	var floor$3 = Math.floor;
 
 	// `Math.trunc` method
 	// https://tc39.github.io/ecma262/#sec-math.trunc
 	_export({ target: 'Math', stat: true }, {
 	  trunc: function trunc(it) {
-	    return (it > 0 ? floor$2 : ceil$1)(it);
+	    return (it > 0 ? floor$3 : ceil$1)(it);
 	  }
 	});
-
-	// makes subclassing work correct for wrapped built-ins
-	var inheritIfRequired = function ($this, dummy, Wrapper) {
-	  var NewTarget, NewTargetPrototype;
-	  if (
-	    // it can work only with native `setPrototypeOf`
-	    objectSetPrototypeOf &&
-	    // we haven't completely correct pre-ES6 way for getting `new.target`, so use this
-	    typeof (NewTarget = dummy.constructor) == 'function' &&
-	    NewTarget !== Wrapper &&
-	    isObject(NewTargetPrototype = NewTarget.prototype) &&
-	    NewTargetPrototype !== Wrapper.prototype
-	  ) objectSetPrototypeOf($this, NewTargetPrototype);
-	  return $this;
-	};
-
-	// a string of all valid unicode whitespaces
-	// eslint-disable-next-line max-len
-	var whitespaces = '\u0009\u000A\u000B\u000C\u000D\u0020\u00A0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u3000\u2028\u2029\uFEFF';
-
-	var whitespace = '[' + whitespaces + ']';
-	var ltrim = RegExp('^' + whitespace + whitespace + '*');
-	var rtrim = RegExp(whitespace + whitespace + '*$');
-
-	// `String.prototype.{ trim, trimStart, trimEnd, trimLeft, trimRight }` methods implementation
-	var createMethod$4 = function (TYPE) {
-	  return function ($this) {
-	    var string = String(requireObjectCoercible($this));
-	    if (TYPE & 1) string = string.replace(ltrim, '');
-	    if (TYPE & 2) string = string.replace(rtrim, '');
-	    return string;
-	  };
-	};
-
-	var stringTrim = {
-	  // `String.prototype.{ trimLeft, trimStart }` methods
-	  // https://tc39.github.io/ecma262/#sec-string.prototype.trimstart
-	  start: createMethod$4(1),
-	  // `String.prototype.{ trimRight, trimEnd }` methods
-	  // https://tc39.github.io/ecma262/#sec-string.prototype.trimend
-	  end: createMethod$4(2),
-	  // `String.prototype.trim` method
-	  // https://tc39.github.io/ecma262/#sec-string.prototype.trim
-	  trim: createMethod$4(3)
-	};
-
-	var getOwnPropertyNames$1 = objectGetOwnPropertyNames.f;
-	var getOwnPropertyDescriptor$3 = objectGetOwnPropertyDescriptor.f;
-	var defineProperty$6 = objectDefineProperty.f;
-	var trim = stringTrim.trim;
-
-	var NUMBER = 'Number';
-	var NativeNumber = global_1[NUMBER];
-	var NumberPrototype = NativeNumber.prototype;
-
-	// Opera ~12 has broken Object#toString
-	var BROKEN_CLASSOF = classofRaw(objectCreate(NumberPrototype)) == NUMBER;
-
-	// `ToNumber` abstract operation
-	// https://tc39.github.io/ecma262/#sec-tonumber
-	var toNumber = function (argument) {
-	  var it = toPrimitive(argument, false);
-	  var first, third, radix, maxCode, digits, length, index, code;
-	  if (typeof it == 'string' && it.length > 2) {
-	    it = trim(it);
-	    first = it.charCodeAt(0);
-	    if (first === 43 || first === 45) {
-	      third = it.charCodeAt(2);
-	      if (third === 88 || third === 120) return NaN; // Number('+0x1') should be NaN, old V8 fix
-	    } else if (first === 48) {
-	      switch (it.charCodeAt(1)) {
-	        case 66: case 98: radix = 2; maxCode = 49; break; // fast equal of /^0b[01]+$/i
-	        case 79: case 111: radix = 8; maxCode = 55; break; // fast equal of /^0o[0-7]+$/i
-	        default: return +it;
-	      }
-	      digits = it.slice(2);
-	      length = digits.length;
-	      for (index = 0; index < length; index++) {
-	        code = digits.charCodeAt(index);
-	        // parseInt parses a string to a first unavailable symbol
-	        // but ToNumber should return NaN if a string contains unavailable symbols
-	        if (code < 48 || code > maxCode) return NaN;
-	      } return parseInt(digits, radix);
-	    }
-	  } return +it;
-	};
-
-	// `Number` constructor
-	// https://tc39.github.io/ecma262/#sec-number-constructor
-	if (isForced_1(NUMBER, !NativeNumber(' 0o1') || !NativeNumber('0b1') || NativeNumber('+0x1'))) {
-	  var NumberWrapper = function Number(value) {
-	    var it = arguments.length < 1 ? 0 : value;
-	    var dummy = this;
-	    return dummy instanceof NumberWrapper
-	      // check on 1..constructor(foo) case
-	      && (BROKEN_CLASSOF ? fails(function () { NumberPrototype.valueOf.call(dummy); }) : classofRaw(dummy) != NUMBER)
-	        ? inheritIfRequired(new NativeNumber(toNumber(it)), dummy, NumberWrapper) : toNumber(it);
-	  };
-	  for (var keys$2 = descriptors ? getOwnPropertyNames$1(NativeNumber) : (
-	    // ES3:
-	    'MAX_VALUE,MIN_VALUE,NaN,NEGATIVE_INFINITY,POSITIVE_INFINITY,' +
-	    // ES2015 (in case, if modules with ES2015 Number statics required before):
-	    'EPSILON,isFinite,isInteger,isNaN,isSafeInteger,MAX_SAFE_INTEGER,' +
-	    'MIN_SAFE_INTEGER,parseFloat,parseInt,isInteger'
-	  ).split(','), j$1 = 0, key$1; keys$2.length > j$1; j$1++) {
-	    if (has(NativeNumber, key$1 = keys$2[j$1]) && !has(NumberWrapper, key$1)) {
-	      defineProperty$6(NumberWrapper, key$1, getOwnPropertyDescriptor$3(NativeNumber, key$1));
-	    }
-	  }
-	  NumberWrapper.prototype = NumberPrototype;
-	  NumberPrototype.constructor = NumberWrapper;
-	  redefine(global_1, NUMBER, NumberWrapper);
-	}
 
 	var MATCH = wellKnownSymbol('match');
 
@@ -4746,7 +4760,7 @@ var Forestry = (function () {
 
 	var max$3 = Math.max;
 	var min$3 = Math.min;
-	var floor$3 = Math.floor;
+	var floor$4 = Math.floor;
 	var SUBSTITUTION_SYMBOLS = /\$([$&'`]|\d\d?|<[^>]*>)/g;
 	var SUBSTITUTION_SYMBOLS_NO_NAMED = /\$([$&'`]|\d\d?)/g;
 
@@ -4858,7 +4872,7 @@ var Forestry = (function () {
 	          var n = +ch;
 	          if (n === 0) return match;
 	          if (n > m) {
-	            var f = floor$3(n / 10);
+	            var f = floor$4(n / 10);
 	            if (f === 0) return match;
 	            if (f <= m) return captures[f - 1] === undefined ? ch.charAt(1) : captures[f - 1] + ch.charAt(1);
 	            return match;
@@ -5709,14 +5723,14 @@ var Forestry = (function () {
 
 	var aTypedArray$g = arrayBufferViewCore.aTypedArray;
 	var exportTypedArrayMethod$g = arrayBufferViewCore.exportTypedArrayMethod;
-	var floor$4 = Math.floor;
+	var floor$5 = Math.floor;
 
 	// `%TypedArray%.prototype.reverse` method
 	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.reverse
 	exportTypedArrayMethod$g('reverse', function reverse() {
 	  var that = this;
 	  var length = aTypedArray$g(that).length;
-	  var middle = floor$4(length / 2);
+	  var middle = floor$5(length / 2);
 	  var index = 0;
 	  var value;
 	  while (index < middle) {
@@ -19432,7 +19446,7 @@ var Forestry = (function () {
 	};
 
 	var nativeToFixed = 1.0.toFixed;
-	var floor$5 = Math.floor;
+	var floor$6 = Math.floor;
 
 	var pow$1 = function (x, n, acc) {
 	  return n === 0 ? acc : n % 2 === 1 ? pow$1(x, n - 1, acc * x) : pow$1(x * x, n / 2, acc);
@@ -19479,7 +19493,7 @@ var Forestry = (function () {
 	      while (++index < 6) {
 	        c2 += n * data[index];
 	        data[index] = c2 % 1e7;
-	        c2 = floor$5(c2 / 1e7);
+	        c2 = floor$6(c2 / 1e7);
 	      }
 	    };
 
@@ -19488,7 +19502,7 @@ var Forestry = (function () {
 	      var c = 0;
 	      while (--index >= 0) {
 	        c += data[index];
-	        data[index] = floor$5(c / n);
+	        data[index] = floor$6(c / n);
 	        c = (c % n) * 1e7;
 	      }
 	    };
@@ -19788,7 +19802,7 @@ var Forestry = (function () {
 	var regexSeparators = /[.\u3002\uFF0E\uFF61]/g; // RFC 3490 separators
 	var OVERFLOW_ERROR = 'Overflow: input needs wider integers to process';
 	var baseMinusTMin = base - tMin;
-	var floor$6 = Math.floor;
+	var floor$7 = Math.floor;
 	var stringFromCharCode = String.fromCharCode;
 
 	/**
@@ -19837,12 +19851,12 @@ var Forestry = (function () {
 	 */
 	var adapt = function (delta, numPoints, firstTime) {
 	  var k = 0;
-	  delta = firstTime ? floor$6(delta / damp) : delta >> 1;
-	  delta += floor$6(delta / numPoints);
+	  delta = firstTime ? floor$7(delta / damp) : delta >> 1;
+	  delta += floor$7(delta / numPoints);
 	  for (; delta > baseMinusTMin * tMax >> 1; k += base) {
-	    delta = floor$6(delta / baseMinusTMin);
+	    delta = floor$7(delta / baseMinusTMin);
 	  }
-	  return floor$6(k + (baseMinusTMin + 1) * delta / (delta + skew));
+	  return floor$7(k + (baseMinusTMin + 1) * delta / (delta + skew));
 	};
 
 	/**
@@ -19894,7 +19908,7 @@ var Forestry = (function () {
 
 	    // Increase `delta` enough to advance the decoder's <n,i> state to <m,0>, but guard against overflow.
 	    var handledCPCountPlusOne = handledCPCount + 1;
-	    if (m - n > floor$6((maxInt - delta) / handledCPCountPlusOne)) {
+	    if (m - n > floor$7((maxInt - delta) / handledCPCountPlusOne)) {
 	      throw RangeError(OVERFLOW_ERROR);
 	    }
 
@@ -19915,7 +19929,7 @@ var Forestry = (function () {
 	          var qMinusT = q - t;
 	          var baseMinusT = base - t;
 	          output.push(stringFromCharCode(digitToBasic(t + qMinusT % baseMinusT)));
-	          q = floor$6(qMinusT / baseMinusT);
+	          q = floor$7(qMinusT / baseMinusT);
 	        }
 
 	        output.push(stringFromCharCode(digitToBasic(q)));
@@ -20319,7 +20333,7 @@ var Forestry = (function () {
 	var getInternalSearchParamsState = web_urlSearchParams.getState;
 	var setInternalState$7 = internalState.set;
 	var getInternalURLState = internalState.getterFor('URL');
-	var floor$7 = Math.floor;
+	var floor$8 = Math.floor;
 	var pow$2 = Math.pow;
 
 	var INVALID_AUTHORITY = 'Invalid authority';
@@ -20517,7 +20531,7 @@ var Forestry = (function () {
 	    result = [];
 	    for (index = 0; index < 4; index++) {
 	      result.unshift(host % 256);
-	      host = floor$7(host / 256);
+	      host = floor$8(host / 256);
 	    } return result.join('.');
 	  // ipv6
 	  } else if (typeof host == 'object') {
@@ -21336,9 +21350,9 @@ var Forestry = (function () {
 	// https://tc39.github.io/ecma262/#sec-object.defineproperty
 	var f$2$1=descriptors$1?nativeDefineProperty$2:function defineProperty(O,P,Attributes){anObject$1(O);P=toPrimitive$1(P,true);anObject$1(Attributes);if(ie8DomDefine$1)try{return nativeDefineProperty$2(O,P,Attributes);}catch(error){/* empty */}if('get'in Attributes||'set'in Attributes)throw TypeError('Accessors not supported');if('value'in Attributes)O[P]=Attributes.value;return O;};var objectDefineProperty$1={f:f$2$1};var createNonEnumerableProperty$1=descriptors$1?function(object,key,value){return objectDefineProperty$1.f(object,key,createPropertyDescriptor$1(1,value));}:function(object,key,value){object[key]=value;return object;};var setGlobal$1=function setGlobal(key,value){try{createNonEnumerableProperty$1(global_1$1,key,value);}catch(error){global_1$1[key]=value;}return value;};var SHARED$1='__core-js_shared__';var store$2=global_1$1[SHARED$1]||setGlobal$1(SHARED$1,{});var sharedStore$1=store$2;var functionToString$1=Function.toString;// this helper broken in `3.4.1-3.4.4`, so we can't use `shared` helper
 	if(typeof sharedStore$1.inspectSource!='function'){sharedStore$1.inspectSource=function(it){return functionToString$1.call(it);};}var inspectSource$1=sharedStore$1.inspectSource;var WeakMap$2=global_1$1.WeakMap;var nativeWeakMap$1=typeof WeakMap$2==='function'&&/native code/.test(inspectSource$1(WeakMap$2));var isPure$1=false;var shared$1=createCommonjsModule$1(function(module){(module.exports=function(key,value){return sharedStore$1[key]||(sharedStore$1[key]=value!==undefined?value:{});})('versions',[]).push({version:'3.6.5',mode:'global',copyright:'© 2020 Denis Pushkarev (zloirock.ru)'});});var id$1=0;var postfix$1=Math.random();var uid$1=function uid(key){return 'Symbol('+String(key===undefined?'':key)+')_'+(++id$1+postfix$1).toString(36);};var keys$4=shared$1('keys');var sharedKey$1=function sharedKey(key){return keys$4[key]||(keys$4[key]=uid$1(key));};var hiddenKeys$2={};var WeakMap$1$1=global_1$1.WeakMap;var set$3,get$2,has$1$1;var enforce$1=function enforce(it){return has$1$1(it)?get$2(it):set$3(it,{});};var getterFor$1=function getterFor(TYPE){return function(it){var state;if(!isObject$1(it)||(state=get$2(it)).type!==TYPE){throw TypeError('Incompatible receiver, '+TYPE+' required');}return state;};};if(nativeWeakMap$1){var store$1$1=new WeakMap$1$1();var wmget$1=store$1$1.get;var wmhas$1=store$1$1.has;var wmset$1=store$1$1.set;set$3=function set(it,metadata){wmset$1.call(store$1$1,it,metadata);return metadata;};get$2=function get(it){return wmget$1.call(store$1$1,it)||{};};has$1$1=function has$1(it){return wmhas$1.call(store$1$1,it);};}else {var STATE$1=sharedKey$1('state');hiddenKeys$2[STATE$1]=true;set$3=function set(it,metadata){createNonEnumerableProperty$1(it,STATE$1,metadata);return metadata;};get$2=function get(it){return has$2(it,STATE$1)?it[STATE$1]:{};};has$1$1=function has$1(it){return has$2(it,STATE$1);};}var internalState$1={set:set$3,get:get$2,has:has$1$1,enforce:enforce$1,getterFor:getterFor$1};var redefine$1=createCommonjsModule$1(function(module){var getInternalState=internalState$1.get;var enforceInternalState=internalState$1.enforce;var TEMPLATE=String(String).split('String');(module.exports=function(O,key,value,options){var unsafe=options?!!options.unsafe:false;var simple=options?!!options.enumerable:false;var noTargetGet=options?!!options.noTargetGet:false;if(typeof value=='function'){if(typeof key=='string'&&!has$2(value,'name'))createNonEnumerableProperty$1(value,'name',key);enforceInternalState(value).source=TEMPLATE.join(typeof key=='string'?key:'');}if(O===global_1$1){if(simple)O[key]=value;else setGlobal$1(key,value);return;}else if(!unsafe){delete O[key];}else if(!noTargetGet&&O[key]){simple=true;}if(simple)O[key]=value;else createNonEnumerableProperty$1(O,key,value);// add fake Function#toString for correct work wrapped methods / constructors with methods like LoDash isNative
-	})(Function.prototype,'toString',function toString(){return typeof this=='function'&&getInternalState(this).source||inspectSource$1(this);});});var path$1=global_1$1;var aFunction$2=function aFunction(variable){return typeof variable=='function'?variable:undefined;};var getBuiltIn$1=function getBuiltIn(namespace,method){return arguments.length<2?aFunction$2(path$1[namespace])||aFunction$2(global_1$1[namespace]):path$1[namespace]&&path$1[namespace][method]||global_1$1[namespace]&&global_1$1[namespace][method];};var ceil$2=Math.ceil;var floor$8=Math.floor;// `ToInteger` abstract operation
+	})(Function.prototype,'toString',function toString(){return typeof this=='function'&&getInternalState(this).source||inspectSource$1(this);});});var path$1=global_1$1;var aFunction$2=function aFunction(variable){return typeof variable=='function'?variable:undefined;};var getBuiltIn$1=function getBuiltIn(namespace,method){return arguments.length<2?aFunction$2(path$1[namespace])||aFunction$2(global_1$1[namespace]):path$1[namespace]&&path$1[namespace][method]||global_1$1[namespace]&&global_1$1[namespace][method];};var ceil$2=Math.ceil;var floor$9=Math.floor;// `ToInteger` abstract operation
 	// https://tc39.github.io/ecma262/#sec-tointeger
-	var toInteger$1=function toInteger(argument){return isNaN(argument=+argument)?0:(argument>0?floor$8:ceil$2)(argument);};var min$7=Math.min;// `ToLength` abstract operation
+	var toInteger$1=function toInteger(argument){return isNaN(argument=+argument)?0:(argument>0?floor$9:ceil$2)(argument);};var min$7=Math.min;// `ToLength` abstract operation
 	// https://tc39.github.io/ecma262/#sec-tolength
 	var toLength$1=function toLength(argument){return argument>0?min$7(toInteger$1(argument),0x1FFFFFFFFFFFFF):0;// 2 ** 53 - 1 == 9007199254740991
 	};var max$4=Math.max;var min$1$1=Math.min;// Helper for a popular repeating case of the spec:
@@ -39121,8 +39135,8 @@ var Forestry = (function () {
 	    }
 	  }, {
 	    key: "chartFormatDataLabels",
-	    value: function chartFormatDataLabels(val, opts) {
-	      return "".concat(this.m(parseFloat(opts.w.globals.series[opts.seriesIndex])), " ").concat(this.translate('units.m3'));
+	    value: function chartFormatDataLabels(val) {
+	      return "".concat(this.m(parseFloat(val)), " ").concat(this.translate('units.m3'));
 	    }
 	  }, {
 	    key: "chartFormatTotal",
@@ -65071,6 +65085,14 @@ var Forestry = (function () {
 	    _this._forestry = _this._container.querySelector('.forestry');
 	    _this._stats = _this._container.querySelector('.stats');
 	    _this._chart = new apexcharts_common(_this._container.querySelector('.chart'), {
+	      tooltip: {
+	        x: {
+	          formatter: _this.chartFormatDataLabels.bind(_assertThisInitialized(_this))
+	        },
+	        y: {
+	          formatter: _this.chartFormatDataLabels.bind(_assertThisInitialized(_this))
+	        }
+	      },
 	      chart: {
 	        type: 'donut',
 	        width: '450px',
@@ -65404,6 +65426,14 @@ var Forestry = (function () {
 	    _this._forestry = _this._container.querySelector('.forestry');
 	    _this._stats = _this._container.querySelector('.stats');
 	    _this._chart = new apexcharts_common(_this._container.querySelector('.chart'), {
+	      tooltip: {
+	        x: {
+	          formatter: _this.chartFormatDataLabels.bind(_assertThisInitialized(_this))
+	        },
+	        y: {
+	          formatter: _this.chartFormatDataLabels.bind(_assertThisInitialized(_this))
+	        }
+	      },
 	      chart: {
 	        type: 'donut',
 	        width: '450px',
@@ -65755,8 +65785,8 @@ var Forestry = (function () {
 	      }
 	    };
 
-	    var fmt_labels = function fmt_labels(val, opts) {
-	      return "".concat(m(parseFloat(opts.w.globals.series[opts.seriesIndex])), " ").concat(translate$c('units.m3'));
+	    var fmt_labels = function fmt_labels(val) {
+	      return "".concat(m(parseFloat(val)), " ").concat(translate$c('units.m3'));
 	    };
 
 	    var fmt_value = function fmt_value(val) {
@@ -65770,14 +65800,21 @@ var Forestry = (function () {
 	    };
 
 	    this._chart = new apexcharts_common(this._container.querySelector('.chart'), {
+	      tooltip: {
+	        x: {
+	          formatter: fmt_labels
+	        },
+	        y: {
+	          formatter: fmt_labels
+	        }
+	      },
 	      chart: {
 	        type: 'donut',
 	        width: '700px',
 	        height: '160px'
 	      },
 	      dataLabels: {
-	        enabled: false,
-	        formatter: fmt_labels
+	        enabled: false
 	      },
 	      labels: [],
 	      series: [],
@@ -65790,10 +65827,14 @@ var Forestry = (function () {
 	      },
 	      plotOptions: {
 	        pie: {
+	          expandOnClick: false,
 	          donut: {
 	            size: '85%',
 	            labels: {
 	              show: true,
+	              name: {
+	                show: true
+	              },
 	              value: {
 	                show: true,
 	                formatter: fmt_value,
@@ -66833,6 +66874,14 @@ var Forestry = (function () {
 	    _this._container.innerHTML = "<h1 class=\"title\">".concat(_this.translate('quadrant.title'), "</h1>\n\t\t<h2 class=\"forestry\"></h2>\n\t\t<div class=\"stock\">").concat(_this.translate('quadrant.stock.label'), "</div>\n\t\t<div class=\"about\">").concat(_this.translate('quadrant.about'), "</div>\n\t\t<div class=\"chart\"></div>");
 	    _this._forestry = _this._container.querySelector('.forestry');
 	    _this._chart = new apexcharts_common(_this._container.querySelector('.chart'), {
+	      tooltip: {
+	        x: {
+	          formatter: _this.chartFormatDataLabels.bind(_assertThisInitialized(_this))
+	        },
+	        y: {
+	          formatter: _this.chartFormatDataLabels.bind(_assertThisInitialized(_this))
+	        }
+	      },
 	      chart: {
 	        type: 'donut',
 	        width: '500px',
@@ -68064,6 +68113,14 @@ var Forestry = (function () {
 	    _this._header = _this._container.querySelector('.header2');
 	    _this._stats = _this._container.querySelector('.stats');
 	    _this._chart = new apexcharts_common(_this._container.querySelector('.chart'), {
+	      tooltip: {
+	        x: {
+	          formatter: _this.chartFormatDataLabels.bind(_assertThisInitialized(_this))
+	        },
+	        y: {
+	          formatter: _this.chartFormatDataLabels.bind(_assertThisInitialized(_this))
+	        }
+	      },
 	      chart: {
 	        type: 'donut',
 	        height: '180px',
@@ -68326,20 +68383,6 @@ var Forestry = (function () {
 
 	  return Stands$1;
 	}(LayerController);
-
-	var floor$9 = Math.floor;
-
-	// `Number.isInteger` method implementation
-	// https://tc39.github.io/ecma262/#sec-number.isinteger
-	var isInteger = function isInteger(it) {
-	  return !isObject(it) && isFinite(it) && floor$9(it) === it;
-	};
-
-	// `Number.isInteger` method
-	// https://tc39.github.io/ecma262/#sec-number.isinteger
-	_export({ target: 'Number', stat: true }, {
-	  isInteger: isInteger
-	});
 
 	var translate$h = T.getText.bind(T);
 	T.addText('rus', {
@@ -69393,19 +69436,35 @@ var Forestry = (function () {
 	      return showUploaded;
 	    }()
 	  }, {
+	    key: "_moveLeft",
+	    value: function _moveLeft(offset) {
+	      var c = this._container.querySelector('.leaflet-top.leaflet-right');
+
+	      if (Number.isInteger(offset) && c) {
+	        c.style.right = "".concat(offset, "px");
+	      }
+	    }
+	  }, {
 	    key: "load",
 	    value: function () {
 	      var _load = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10() {
 	        var _this3 = this;
 
-	        var mapId, apk, currentBaseLayer;
+	        var _ref2,
+	            rightOffset,
+	            mapId,
+	            apk,
+	            currentBaseLayer,
+	            _args10 = arguments;
+
 	        return regeneratorRuntime.wrap(function _callee10$(_context10) {
 	          while (1) {
 	            switch (_context10.prev = _context10.next) {
 	              case 0:
+	                _ref2 = _args10.length > 0 && _args10[0] !== undefined ? _args10[0] : {}, rightOffset = _ref2.rightOffset;
 	                window.SELF = this;
 	                mapId = 'default';
-	                _context10.next = 4;
+	                _context10.next = 5;
 	                return leafletSrc.gmx.loadMap(mapId, {
 	                  leafletMap: this._map,
 	                  hostName: '/',
@@ -69420,7 +69479,7 @@ var Forestry = (function () {
 	                  }
 	                });
 
-	              case 4:
+	              case 5:
 	                this._gmxMap = _context10.sent;
 
 	                this._map.on('zoomend', function (e) {
@@ -69431,10 +69490,10 @@ var Forestry = (function () {
 
 	                this._controllers = {};
 	                this._zoom = new Zoom();
-	                _context10.next = 10;
+	                _context10.next = 11;
 	                return leafletSrc.gmx.gmxSessionManager.requestSessionKey('maps.kosmosnimki.ru', this._apiKey);
 
-	              case 10:
+	              case 11:
 	                apk = _context10.sent;
 	                this._legend = new Legend();
 
@@ -69460,10 +69519,10 @@ var Forestry = (function () {
 	                  _this3._controllers.baseLayers.hide();
 	                });
 
-	                _context10.next = 19;
+	                _context10.next = 20;
 	                return this._controllers.baseLayers.load();
 
-	              case 19:
+	              case 20:
 	                currentBaseLayer = window.localStorage.getItem('forestry.baselayer');
 
 	                if (currentBaseLayer) {
@@ -69503,12 +69562,12 @@ var Forestry = (function () {
 	                    index: ALLOWED_LAYERS.indexOf(kind.Value)
 	                  };
 	                }) // set z-index & options
-	                .map(function (_ref2) {
-	                  var layer = _ref2.layer,
-	                      kind = _ref2.kind,
-	                      index = _ref2.index,
-	                      isRaster = _ref2.isRaster,
-	                      temporal = _ref2.temporal;
+	                .map(function (_ref3) {
+	                  var layer = _ref3.layer,
+	                      kind = _ref3.kind,
+	                      index = _ref3.index,
+	                      isRaster = _ref3.isRaster,
+	                      temporal = _ref3.temporal;
 
 	                  if (typeof layer.disablePopup === 'function') {
 	                    layer.disablePopup();
@@ -69530,9 +69589,9 @@ var Forestry = (function () {
 	                    kind: kind
 	                  };
 	                }) // create layers cache
-	                .reduce(function (a, _ref3) {
-	                  var layer = _ref3.layer,
-	                      kind = _ref3.kind;
+	                .reduce(function (a, _ref4) {
+	                  var layer = _ref4.layer,
+	                      kind = _ref4.kind;
 	                  a[kind] = layer;
 	                  return a;
 	                }, {}); // attach layer controllers        
@@ -69550,7 +69609,7 @@ var Forestry = (function () {
 	                  });
 
 	                  this._controllers.quadrants.on('quadrant:toggle', /*#__PURE__*/function () {
-	                    var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(e) {
+	                    var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(e) {
 	                      var _e$detail, gmx_id, forestryID;
 
 	                      return regeneratorRuntime.wrap(function _callee5$(_context5) {
@@ -69576,7 +69635,7 @@ var Forestry = (function () {
 	                    }));
 
 	                    return function (_x2) {
-	                      return _ref4.apply(this, arguments);
+	                      return _ref5.apply(this, arguments);
 	                    };
 	                  }());
 	                }
@@ -69646,7 +69705,7 @@ var Forestry = (function () {
 	                  });
 
 	                  this._controllers.projects.on('create', /*#__PURE__*/function () {
-	                    var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(e) {
+	                    var _ref6 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(e) {
 	                      var event;
 	                      return regeneratorRuntime.wrap(function _callee6$(_context6) {
 	                        while (1) {
@@ -69667,7 +69726,7 @@ var Forestry = (function () {
 	                    }));
 
 	                    return function (_x3) {
-	                      return _ref5.apply(this, arguments);
+	                      return _ref6.apply(this, arguments);
 	                    };
 	                  }());
 
@@ -69714,7 +69773,7 @@ var Forestry = (function () {
 	                  });
 
 	                  this._controllers.requests.on('view', /*#__PURE__*/function () {
-	                    var _ref7 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(e) {
+	                    var _ref8 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(e) {
 	                      var _e$detail2, id, forestryID, _this3$_layers$projec, LayerID, c, z;
 
 	                      return regeneratorRuntime.wrap(function _callee8$(_context8) {
@@ -69757,7 +69816,7 @@ var Forestry = (function () {
 	                    }));
 
 	                    return function (_x4) {
-	                      return _ref7.apply(this, arguments);
+	                      return _ref8.apply(this, arguments);
 	                    };
 	                  }());
 
@@ -69766,7 +69825,7 @@ var Forestry = (function () {
 	                  });
 
 	                  this._controllers.requests.on('edit', /*#__PURE__*/function () {
-	                    var _ref8 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9(e) {
+	                    var _ref9 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9(e) {
 	                      var _e$detail3, id, forestryID, _this3$_layers$projec2, LayerID, c, z;
 
 	                      return regeneratorRuntime.wrap(function _callee9$(_context9) {
@@ -69809,7 +69868,7 @@ var Forestry = (function () {
 	                    }));
 
 	                    return function (_x5) {
-	                      return _ref8.apply(this, arguments);
+	                      return _ref9.apply(this, arguments);
 	                    };
 	                  }());
 	                }
@@ -69933,7 +69992,9 @@ var Forestry = (function () {
 	                  notification: this._notification
 	                });
 
-	              case 38:
+	                this._moveLeft(rightOffset);
+
+	              case 40:
 	              case "end":
 	                return _context10.stop();
 	            }
