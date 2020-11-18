@@ -28011,6 +28011,15 @@ var Forestry = (function () {
 	  return v && v.toLocaleDateString() || '';
 	};
 
+	var delay = function delay(timeout) {
+	  return new Promise(function (resolve) {
+	    var id = window.setInterval(function () {
+	      window.clearInterval(id);
+	      resolve();
+	    }, timeout);
+	  });
+	};
+
 	leafletSrc.Control.GmxCenter = leafletSrc.Control.extend({
 	  options: {
 	    position: 'center',
@@ -36668,25 +36677,26 @@ var Forestry = (function () {
 	      leafletSrc.DomEvent.stopPropagation(e);
 	      _this._active = !_this._active;
 
-	      _this.showPanel(_this._active);
-
-	      _this.fire('activate', {
-	        active: _this._active
-	      });
+	      if (_this._active) {
+	        _this.show();
+	      } else {
+	        _this.hide();
+	      }
 	    });
 	    return this._container;
 	  },
 	  onRemove: function onRemove(map) {},
-	  showPanel: function showPanel(visible) {
-	    this._active = visible;
-
-	    if (this._active) {
-	      leafletSrc.DomUtil.addClass(this._icon, 'active');
-	      leafletSrc.DomUtil.removeClass(this._panel, 'hidden');
-	    } else {
-	      leafletSrc.DomUtil.removeClass(this._icon, 'active');
-	      leafletSrc.DomUtil.addClass(this._panel, 'hidden');
-	    }
+	  show: function show() {
+	    this._active = true;
+	    leafletSrc.DomUtil.addClass(this._icon, 'active');
+	    leafletSrc.DomUtil.removeClass(this._panel, 'hidden');
+	    this.fire('show');
+	  },
+	  hide: function hide() {
+	    this._active = false;
+	    leafletSrc.DomUtil.removeClass(this._icon, 'active');
+	    leafletSrc.DomUtil.addClass(this._panel, 'hidden');
+	    this.fire('hide');
 	  },
 	  enable: function enable(id) {
 	    var container = this._container.querySelector("[data-id=\"".concat(id, "\"]"));
@@ -36947,8 +36957,9 @@ var Forestry = (function () {
 
 	    if (this.options.add) {
 	      var addContainer = leafletSrc.DomUtil.create('div', 'baselayer-add', this._content);
-	      leafletSrc.DomUtil.create('i', 'scanex-baselayers-icon add', addContainer);
-	      leafletSrc.DomEvent.on(addContainer, 'click', function (e) {
+	      var contentContainer = leafletSrc.DomUtil.create('div', 'baselayer-content', addContainer);
+	      leafletSrc.DomUtil.create('i', 'scanex-baselayers-icon add', contentContainer);
+	      leafletSrc.DomEvent.on(contentContainer, 'click', function (e) {
 	        leafletSrc.DomEvent.stopPropagation(e);
 
 	        _this.fire('add');
@@ -36995,7 +37006,8 @@ var Forestry = (function () {
 	        this._content.appendChild(layerContainer);
 	      }
 
-	      var img = leafletSrc.DomUtil.create('img', '', layerContainer);
+	      var contentContainer = leafletSrc.DomUtil.create('div', 'baselayer-content', layerContainer);
+	      var img = leafletSrc.DomUtil.create('img', '', contentContainer);
 	      leafletSrc.DomUtil.addClass(img, 'baselayer-icon');
 
 	      if (userLayer) {
@@ -37008,11 +37020,11 @@ var Forestry = (function () {
 
 	        _this2.select(id);
 	      }, this);
-	      var label = leafletSrc.DomUtil.create('label', 'baselayer-title', layerContainer);
+	      var label = leafletSrc.DomUtil.create('label', 'baselayer-title', contentContainer);
 	      label.innerText = title;
 
 	      if (removable) {
-	        var btnRemove = leafletSrc.DomUtil.create('i', 'scanex-baselayers-icon close', layerContainer);
+	        var btnRemove = leafletSrc.DomUtil.create('i', 'scanex-baselayers-icon close', contentContainer);
 	        leafletSrc.DomEvent.on(btnRemove, 'click', function (e) {
 	          leafletSrc.DomEvent.stopPropagation(e);
 
@@ -37022,24 +37034,49 @@ var Forestry = (function () {
 	    }
 	  },
 	  select: function select(id) {
-	    if (this._current !== id && this._layers[id]) {
-	      var el = this._current && this._content.querySelector("[data-id=\"".concat(this._current, "\"]"));
+	    if (this._layers[id]) {
+	      if (this._current !== id) {
+	        var el = this._current && this._content.querySelector("[data-id=\"".concat(this._current, "\"]"));
 
-	      if (el) {
-	        leafletSrc.DomUtil.removeClass(el, 'current');
+	        if (el) {
+	          leafletSrc.DomUtil.removeClass(el, 'current');
 
-	        this._map.removeLayer(this._layers[this._current]);
+	          this._map.removeLayer(this._layers[this._current]);
+	        }
+
+	        this._current = id;
+	        el = this._content.querySelector("[data-id=\"".concat(id, "\"]"));
+	        leafletSrc.DomUtil.addClass(el, 'current');
+
+	        this._map.addLayer(this._layers[id]);
+
+	        this.fire('select', {
+	          current: this._current
+	        });
 	      }
+	    } else {
+	      var ks = Object.keys(this._layers);
+	      var f = ks.length > 0 && ks[ks.length - 1];
 
-	      this._current = id;
-	      el = this._content.querySelector("[data-id=\"".concat(id, "\"]"));
-	      leafletSrc.DomUtil.addClass(el, 'current');
+	      if (f) {
+	        var _el = this._current && this._content.querySelector("[data-id=\"".concat(this._current, "\"]"));
 
-	      this._map.addLayer(this._layers[id]);
+	        if (_el) {
+	          leafletSrc.DomUtil.removeClass(_el, 'current');
 
-	      this.fire('select', {
-	        current: this._current
-	      });
+	          this._map.removeLayer(this._layers[this._current]);
+	        }
+
+	        this._current = f;
+	        _el = this._content.querySelector("[data-id=\"".concat(f, "\"]"));
+	        leafletSrc.DomUtil.addClass(_el, 'current');
+
+	        this._map.addLayer(this._layers[this._current]);
+
+	        this.fire('select', {
+	          current: this._current
+	        });
+	      }
 	    }
 	  },
 	  removeItem: function removeItem(id) {
@@ -37050,15 +37087,7 @@ var Forestry = (function () {
 
 	      leafletSrc.DomUtil.remove(el);
 	      delete this._layers[id];
-
-	      if (this._current === id) {
-	        var f = Object.keys(this._layers)[0];
-
-	        if (f) {
-	          this.select(f);
-	        }
-	      }
-
+	      this.select(id);
 	      this.fire('remove', {
 	        layerID: id
 	      });
@@ -37138,6 +37167,8 @@ var Forestry = (function () {
 	      quadrants: 'Лесохозяйственные кварталы',
 	      stands: 'Выделы',
 	      parks: 'ООПТ',
+	      parks_federal: 'Федеральные ООПТ',
+	      parks_regional: 'Региональные ООПТ',
 	      fires: 'Пожары',
 	      declarations: 'Декларации',
 	      incidents: 'Космический мониторинг',
@@ -38677,7 +38708,7 @@ var Forestry = (function () {
 	      title: translate$5('baselayers.satellite'),
 	      id: 'satellite',
 	      iconUrl: 'assets/images/hybrid.png',
-	      urlTemplate: "https://maps.kosmosnimki.ru/TileSender.ashx?ModeKey=tile&ftc=osm&z={z}&x={x}&y={y}&srs=3857&sw=1&LayerName=4EE5E84381E94E369784464FD41EED5A&key=".concat(apiKey)
+	      urlTemplate: "https://maps.kosmosnimki.ru/TileSender.ashx?ModeKey=tile&ftc=osm&z={z}&x={x}&y={y}&srs=3857&sw=1&LayerName=4DAFD64550674E7EB3BFC0ACBAF66422&key=".concat(apiKey)
 	    });
 
 	    _this._control.addItem({
@@ -38865,6 +38896,10 @@ var Forestry = (function () {
 	        fd.append('SourceType', 'Virtual');
 	        fd.append('ContentID', 'TMS');
 	        var meta = {
+	          'url-template': {
+	            Value: url,
+	            Type: 'String'
+	          },
 	          urlTemplate: {
 	            Value: url,
 	            Type: 'String'
@@ -39269,6 +39304,24 @@ var Forestry = (function () {
 	          return "<tr>\n                            <td class=\"text\">".concat(_this2.translate('declaration.total_square'), ", ").concat(_this2.translate('units.ha'), "</td>\n                            <td class=\"value amount\">").concat(_this2.ha(total_square), "</td>\n                        </tr>\n                        <tr>\n                            <td class=\"text\">").concat(_this2.translate('declaration.felling_form'), "</td>\n                            <td class=\"value amount\">").concat(felling_form || '', "</td>\n                        </tr>\n                        <tr>\n                            <td class=\"text\">").concat(_this2.translate('declaration.felling_type'), "</td>\n                            <td class=\"value amount\">").concat(felling_type || '', "</td>\n                        </tr>\n                        <tr>\n                            <td class=\"text\">").concat(_this2.translate('declaration.farm'), "</td>\n                            <td class=\"value amount\">").concat(farm || '', "</td>\n                        </tr>\n                        <tr>\n                            <td class=\"text\">").concat(_this2.translate('declaration.species'), "</td>\n                            <td class=\"value amount\">").concat(species || '', "</td>\n                        </tr>                        \n                        <tr>\n                            <td class=\"text\">").concat(_this2.translate('declaration.stock'), ", ").concat(_this2.translate('units.m'), "<sup>3</sup></td>\n                            <td class=\"value amount\">").concat(_this2.m(stock), "</td>\n                        </tr>");
 	        }).join('') : '');
 	      }).join('') : '', "              \n            </tbody>\n        </table>");
+
+	      var node = this._container.querySelector('.open-doc');
+
+	      if (node) {
+	        if (data.Documents.length) {
+	          node.parentNode.classList.remove('hidden');
+	          node.addEventListener('click', function (e) {
+	            e.stopPropagation();
+	            var event = document.createEvent('Event');
+	            event.initEvent('declaration:GetPlotDocument', false, false);
+	            event.detail = data.Documents[0];
+
+	            _this2.dispatchEvent(event);
+	          });
+	        } else {
+	          node.parentNode.classList.add('hidden');
+	        }
+	      }
 	    }
 	  }, {
 	    key: "getStyleHook",
@@ -39325,6 +39378,8 @@ var Forestry = (function () {
 	      _this._gmx_id = null;
 
 	      _this._layer.repaint();
+	    }).on('declaration:GetPlotDocument', function (e) {
+	      window.location = "".concat(_this._path, "/Forest/GetPlotDocument?DocumentID=").concat(e.detail);
 	    });
 
 	    return _this;
@@ -47125,53 +47180,68 @@ var Forestry = (function () {
 	  }
 
 	  _createClass(Notification, [{
-	    key: "delay",
-	    value: function delay(container) {
-	      var id = setInterval(function () {
-	        clearInterval(id);
-	        document.body.removeChild(container);
-	      }, NOTIFY_DELAY);
+	    key: "_remove",
+	    value: function _remove(el, container) {
+	      if (el.parentNode === container) {
+	        container.removeChild(el);
+	      }
 	    }
 	  }, {
 	    key: "error",
 	    value: function error(text) {
-	      var container = document.createElement('div');
-	      container.classList.add('scanex-forestry-notify');
-	      document.body.appendChild(container);
-	      container.innerHTML = "<div class=\"notify notify-red\">\n            <div class=\"close\"></div>\n            <span class=\"title\">".concat(translate$9('alert.error'), "</span>\n            <span class=\"message\">").concat(text, "</span>\n        </div>");
-	      var btnClose = container.querySelector('.close');
+	      var _this = this;
+
+	      var el = document.createElement('div');
+	      el.classList.add('scanex-forestry-notify');
+	      el.innerHTML = "<div class=\"notify notify-red\">\n            <div class=\"scanex-notify-icon close\"></div>\n            <span class=\"title\">".concat(translate$9('alert.error'), "</span>\n            <span class=\"message\">").concat(text, "</span>\n        </div>");
+	      var container = document.body;
+	      container.appendChild(el);
+	      var btnClose = el.querySelector('.close');
 	      btnClose.addEventListener('click', function (e) {
 	        e.stopPropagation();
-	        document.body.removeChild(container);
+
+	        _this._remove(el, container);
 	      });
 	    }
 	  }, {
 	    key: "warn",
 	    value: function warn(text) {
-	      var container = document.createElement('div');
-	      container.classList.add('scanex-forestry-notify');
-	      document.body.appendChild(container);
-	      container.innerHTML = "<div class=\"notify notify-orange\">\n            <div class=\"close\"></div>\n            <span class=\"title\">".concat(translate$9('alert.warn'), "</span>\n            <span class=\"message\">").concat(text, "</span>\n        </div>");
-	      var btnClose = container.querySelector('.close');
+	      var _this2 = this;
+
+	      var el = document.createElement('div');
+	      el.classList.add('scanex-forestry-notify');
+	      el.innerHTML = "<div class=\"notify notify-orange\">\n            <div class=\"scanex-notify-icon close\"></div>\n            <span class=\"title\">".concat(translate$9('alert.warn'), "</span>\n            <span class=\"message\">").concat(text, "</span>\n        </div>");
+	      var container = document.body;
+	      container.appendChild(el);
+	      var btnClose = el.querySelector('.close');
 	      btnClose.addEventListener('click', function (e) {
 	        e.stopPropagation();
-	        document.body.removeChild(container);
+
+	        _this2._remove(el, container);
 	      });
-	      this.delay(container);
+	      delay(NOTIFY_DELAY).then(function () {
+	        return _this2._remove(el, container);
+	      });
 	    }
 	  }, {
 	    key: "info",
 	    value: function info(text) {
-	      var container = document.createElement('div');
-	      container.classList.add('scanex-forestry-notify');
-	      document.body.appendChild(container);
-	      container.innerHTML = "<div class=\"notify notify-green\">\n            <div class=\"close\"></div>\n            <span class=\"title\">".concat(translate$9('alert.info'), "</span>\n            <span class=\"message\">").concat(text, "</span>\n        </div>");
-	      var btnClose = container.querySelector('.close');
+	      var _this3 = this;
+
+	      var el = document.createElement('div');
+	      el.classList.add('scanex-forestry-notify');
+	      el.innerHTML = "<div class=\"notify notify-green\">\n            <div class=\"scanex-notify-icon close\"></div>\n            <span class=\"title\">".concat(translate$9('alert.info'), "</span>\n            <span class=\"message\">").concat(text, "</span>\n        </div>");
+	      var container = document.body;
+	      container.appendChild(el);
+	      var btnClose = el.querySelector('.close');
 	      btnClose.addEventListener('click', function (e) {
 	        e.stopPropagation();
-	        document.body.removeChild(container);
+
+	        _this3._remove(el, container);
 	      });
-	      this.delay(container);
+	      delay(NOTIFY_DELAY).then(function () {
+	        return _this3._remove(el, container);
+	      });
 	    }
 	  }]);
 
@@ -47263,8 +47333,10 @@ var Forestry = (function () {
 	  return Parks;
 	}(View$1);
 
-	var Parks$1 = /*#__PURE__*/function (_LayerController) {
-	  _inherits(Parks$1, _LayerController);
+	var translate$a = T.getText.bind(T);
+
+	var Parks$1 = /*#__PURE__*/function (_Controller) {
+	  _inherits(Parks$1, _Controller);
 
 	  var _super = _createSuper(Parks$1);
 
@@ -47276,19 +47348,62 @@ var Forestry = (function () {
 	        notification = _ref.notification,
 	        loading = _ref.loading,
 	        layer = _ref.layer,
-	        legend = _ref.legend;
+	        legend = _ref.legend,
+	        permissions = _ref.permissions;
 
 	    _classCallCheck(this, Parks$1);
 
 	    _this = _super.call(this, {
-	      kind: 'parks',
 	      map: map,
 	      content: content,
 	      notification: notification,
-	      loading: loading,
-	      layer: layer,
-	      legend: legend
+	      loading: loading
 	    });
+	    _this._layer = layer;
+	    _this._legend = legend;
+	    _this._permissions = permissions;
+
+	    if (_this._permissions.FederalSPNA || _this._permissions.RegionalSPNA) {
+	      _this._cache = {};
+
+	      var _this$_layer$getGmxPr = _this._layer.getGmxProperties(),
+	          attributes = _this$_layer$getGmxPr.attributes;
+
+	      _this._tid = attributes.indexOf('oopt_type_id');
+
+	      if (_this._tid >= 0) {
+	        _this._tid += 1;
+	      }
+
+	      if (_this._permissions.FederalSPNA) {
+	        _this._legend.addComponent('parks-federal', translate$a("legend.parks_federal"));
+	      }
+
+	      if (_this._permissions.RegionalSPNA) {
+	        _this._legend.addComponent('parks-regional', translate$a("legend.parks_regional"));
+	      }
+
+	      _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
+
+	      _this._layer.setFilter(_this.getFilter.bind(_assertThisInitialized(_this)));
+	    } else {
+	      _this._legend.addComponent('parks', translate$a("legend.parks"));
+	    }
+
+	    _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
+
+	    _this._layer.on('click', _this._click, _assertThisInitialized(_this));
+
+	    _this._layer.setStyleHook(function (item) {
+	      var c = _this._content.getCurrent();
+
+	      if (c) {
+	        return c.getStyleHook('parks', item);
+	      } else {
+	        return {};
+	      }
+	    });
+
 	    _this._view = _this._content.add('parks', Parks);
 
 	    _this._view.on('close', function () {
@@ -47299,6 +47414,60 @@ var Forestry = (function () {
 	  }
 
 	  _createClass(Parks$1, [{
+	    key: "getFilter",
+	    value: function getFilter(_ref2) {
+	      var properties = _ref2.properties;
+	      var t = properties[this._tid];
+
+	      switch (t) {
+	        case 1:
+	          return this._cache['parks-federal'];
+
+	        case 2:
+	          return this._cache['parks-regional'];
+
+	        default:
+	          return false;
+	      }
+	    }
+	  }, {
+	    key: "_toggle",
+	    value: function _toggle(e) {
+	      var id = e.id,
+	          visible = e.visible;
+
+	      switch (id) {
+	        case 'parks-federal':
+	        case 'parks-regional':
+	          if (visible) {
+	            this._cache[id] = true;
+	          } else {
+	            delete this._cache[id];
+	          }
+
+	          if (visible) {
+	            this._map.addLayer(this._layer);
+	          } else if (Object.keys(this._cache).length === 0) {
+	            this._map.removeLayer(this._layer);
+	          }
+
+	          this._layer.repaint();
+
+	          break;
+
+	        case 'parks':
+	          if (visible) {
+	            this._map.addLayer(this._layer);
+	          } else {
+	            this._map.removeLayer(this._layer);
+	          }
+
+	          this._layer.repaint();
+
+	          break;
+	      }
+	    }
+	  }, {
 	    key: "_click",
 	    value: function () {
 	      var _click2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e) {
@@ -47345,7 +47514,7 @@ var Forestry = (function () {
 	  }]);
 
 	  return Parks$1;
-	}(LayerController);
+	}(Controller);
 
 	var log$3 = Math.log;
 	var LOG10E = Math.LOG10E;
@@ -65043,6 +65212,7 @@ var Forestry = (function () {
 	      lessee: 'Арендатор',
 	      term: 'Срок договора аренды',
 	      cost: 'Стоимость договора аренды',
+	      doc: 'Документы к договору аренды',
 	      volumes: 'Допустимые объемы изъятия'
 	    }
 	  }
@@ -65187,7 +65357,25 @@ var Forestry = (function () {
 	            rent_cost = _ref2.rent_cost,
 	            value = _ref2.value;
 	        return "<tr>\n                            <td class=\"text\">".concat(farm, "</td>\n                            <td class=\"value\">").concat(_this2.m(value), "</td>\n                        </tr>");
-	      }).join('') : '', "\n            </tbody>\n        </table>");
+	      }).join('') : '', "\n            </tbody>\n        </table>\n\t\t<div>\n\t\t\t<i class=\"scanex-view-plot-icon doc\"></i>\n\t\t\t<button class=\"open-doc\">").concat(this.translate('plot.doc'), "</button>\n\t\t</div>");
+
+	      var node = this._container.querySelector('.open-doc');
+
+	      if (node) {
+	        if (data.Documents.length) {
+	          node.parentNode.classList.remove('hidden');
+	          node.addEventListener('click', function (e) {
+	            e.stopPropagation();
+	            var event = document.createEvent('Event');
+	            event.initEvent('plot:GetPlotDocument', false, false);
+	            event.detail = data.Documents[0];
+
+	            _this2.dispatchEvent(event);
+	          });
+	        } else {
+	          node.parentNode.classList.add('hidden');
+	        }
+	      }
 
 	      if (Array.isArray(Volumes)) {
 	        var _Volumes$reduce = Volumes.reduce(function (a, _ref3) {
@@ -65256,6 +65444,8 @@ var Forestry = (function () {
 
 	    _this._view.on('close', function () {
 	      _this._layer.repaint();
+	    }).on('plot:GetPlotDocument', function (e) {
+	      window.location = "".concat(_this._path, "/Forest/GetPlotDocument?DocumentID=").concat(e.detail);
 	    });
 
 	    return _this;
@@ -65573,7 +65763,7 @@ var Forestry = (function () {
 	  return Info;
 	}(View$1);
 
-	var translate$a = T.getText.bind(T);
+	var translate$b = T.getText.bind(T);
 
 	var Quadrants = /*#__PURE__*/function (_EventTarget) {
 	  _inherits(Quadrants, _EventTarget);
@@ -65600,7 +65790,7 @@ var Forestry = (function () {
 	      var _this2 = this;
 
 	      this._items = Array.isArray(items) && items || [];
-	      this._container.innerHTML = this._items.length ? "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th>".concat(translate$a('project.localForestry'), " / ").concat(translate$a('project.tract'), "</th>                    \n                    <th>").concat(translate$a('project.quadrants'), "</th>\n                    <th>").concat(translate$a('project.year'), "</th>                    \n                </tr>\n            </thead>\n        </table>\n        <div class=\"scrollable\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody>").concat(this._items.map(function (_ref) {
+	      this._container.innerHTML = this._items.length ? "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th>".concat(translate$b('project.localForestry'), " / ").concat(translate$b('project.tract'), "</th>                    \n                    <th>").concat(translate$b('project.quadrants'), "</th>\n                    <th>").concat(translate$b('project.year'), "</th>                    \n                </tr>\n            </thead>\n        </table>\n        <div class=\"scrollable\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody>").concat(this._items.map(function (_ref) {
 	        var local_forestry = _ref.local_forestry,
 	            stow = _ref.stow,
 	            num = _ref.num,
@@ -65676,7 +65866,7 @@ var Forestry = (function () {
 	  return Quadrants;
 	}(EventTarget);
 
-	var translate$b = T.getText.bind(T);
+	var translate$c = T.getText.bind(T);
 
 	var SpeciesTable = /*#__PURE__*/function (_EventTarget) {
 	  _inherits(SpeciesTable, _EventTarget);
@@ -65714,14 +65904,14 @@ var Forestry = (function () {
 	            total_stock_deal = _ref.total_stock_deal;
 	        return "<tr class=\"type\">\n                <td class=\"text\">".concat(species, "</td>\n                <td class=\"value\">").concat(m(permitted_stock), "</td>\n                <td class=\"value\">").concat(m(permitted_stock_deal), "</td>\n                <td class=\"value\">").concat(m(probable_stock), "</td>\n                <td class=\"value\">").concat(m(probable_stock_deal), "</td>\n                <td class=\"value\">").concat(m(total_stock), "</td>\n                <td class=\"value\">").concat(m(total_stock_deal), "</td>\n            </tr>");
 	      }).join('');
-	      this._container.innerHTML = rows ? "<div class=\"title\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>                 \n                        <tr>\n                            <td class=\"text\">".concat(translate$b('project.species'), "</td>\n                            <td class=\"text\" colspan=\"3\">").concat(translate$b('project.stock.label'), ", ").concat(translate$b('units.m'), "<sup>3</sup></td>\n                        </tr>\n                        <tr>\n                            <td></td>\n                            <td class=\"text\">").concat(translate$b('project.stock.permitted'), "</td>                        \n                            <td class=\"text\">").concat(translate$b('project.stock.probable'), "</td>\n                            <td class=\"text\">").concat(translate$b('project.stock.total'), "</td>\n                        </tr>\n                    </tbody>\t\t\t\t\t\t\n                </table>\n            </div>\n            <div class=\"content scrollable\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>").concat(rows, "</tbody>\n                </table>\n            </div>") : '';
+	      this._container.innerHTML = rows ? "<div class=\"title\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>                 \n                        <tr>\n                            <td class=\"text\">".concat(translate$c('project.species'), "</td>\n                            <td class=\"text\" colspan=\"3\">").concat(translate$c('project.stock.label'), ", ").concat(translate$c('units.m'), "<sup>3</sup></td>\n                        </tr>\n                        <tr>\n                            <td></td>\n                            <td class=\"text\">").concat(translate$c('project.stock.permitted'), "</td>                        \n                            <td class=\"text\">").concat(translate$c('project.stock.probable'), "</td>\n                            <td class=\"text\">").concat(translate$c('project.stock.total'), "</td>\n                        </tr>\n                    </tbody>\t\t\t\t\t\t\n                </table>\n            </div>\n            <div class=\"content scrollable\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>").concat(rows, "</tbody>\n                </table>\n            </div>") : '';
 	    }
 	  }]);
 
 	  return SpeciesTable;
 	}(EventTarget);
 
-	var translate$c = T.getText.bind(T);
+	var translate$d = T.getText.bind(T);
 
 	var Species = /*#__PURE__*/function () {
 	  function Species(container) {
@@ -65731,7 +65921,7 @@ var Forestry = (function () {
 
 	    this._species = [];
 	    this._container = container;
-	    this._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<thead class=\"menu\">\n\t\t\t\t<tr>\n\t\t\t\t\t<th colspan=\"3\">\n\t\t\t\t\t\t<button class=\"stock active\">".concat(translate$c('project.stock.table'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"permitted\">").concat(translate$c('project.stock.permitted'), "</button>\n\t\t\t\t\t</th>\t\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"probable\">").concat(translate$c('project.stock.probable'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"total\">").concat(translate$c('project.stock.total'), "</button>\n\t\t\t\t\t</th>\t\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td colspan=\"3\">\n\t\t\t\t\t\t<div class=\"table\"></div>\n\t\t\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t\t</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
+	    this._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<thead class=\"menu\">\n\t\t\t\t<tr>\n\t\t\t\t\t<th colspan=\"3\">\n\t\t\t\t\t\t<button class=\"stock active\">".concat(translate$d('project.stock.table'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"permitted\">").concat(translate$d('project.stock.permitted'), "</button>\n\t\t\t\t\t</th>\t\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"probable\">").concat(translate$d('project.stock.probable'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"total\">").concat(translate$d('project.stock.total'), "</button>\n\t\t\t\t\t</th>\t\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td colspan=\"3\">\n\t\t\t\t\t\t<div class=\"table\"></div>\n\t\t\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t\t</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
 	    this._buttons = this._container.querySelectorAll('button');
 
 	    var btnStock = this._container.querySelector('.stock');
@@ -65786,11 +65976,11 @@ var Forestry = (function () {
 	    };
 
 	    var fmt_labels = function fmt_labels(val) {
-	      return "".concat(m(parseFloat(val)), " ").concat(translate$c('units.m3'));
+	      return "".concat(m(parseFloat(val)), " ").concat(translate$d('units.m3'));
 	    };
 
 	    var fmt_value = function fmt_value(val) {
-	      return "".concat(m(parseFloat(val)), " ").concat(translate$c('units.m3'));
+	      return "".concat(m(parseFloat(val)), " ").concat(translate$d('units.m3'));
 	    };
 
 	    var fmt_total = function fmt_total(w) {
@@ -65843,7 +66033,7 @@ var Forestry = (function () {
 	              total: {
 	                show: true,
 	                formatter: fmt_total,
-	                label: translate$c('project.stock.all'),
+	                label: translate$d('project.stock.all'),
 	                fontSize: '12px',
 	                fontWeight: 600
 	              }
@@ -66002,10 +66192,9 @@ var Forestry = (function () {
 
 	      _this.dispatchEvent(event);
 	    });
+	    _this._btnSave = _this._container.querySelector('.save');
 
-	    var btnSave = _this._container.querySelector('.save');
-
-	    btnSave.addEventListener('click', function (e) {
+	    _this._btnSave.addEventListener('click', function (e) {
 	      e.stopPropagation();
 	      var event = document.createEvent('Event');
 	      event.initEvent('save', false, false);
@@ -66022,9 +66211,9 @@ var Forestry = (function () {
 	      _this.dispatchEvent(event);
 	    });
 
-	    var btnRequest = _this._container.querySelector('.request');
+	    _this._btnRequest = _this._container.querySelector('.request');
 
-	    btnRequest.addEventListener('click', function (e) {
+	    _this._btnRequest.addEventListener('click', function (e) {
 	      e.stopPropagation();
 	      var event = document.createEvent('Event');
 	      event.initEvent('create', false, false);
@@ -66040,6 +66229,7 @@ var Forestry = (function () {
 
 	      _this.dispatchEvent(event);
 	    });
+
 	    _this._quadrants = new Quadrants(_this._container.querySelector('.quadrants'));
 
 	    _this._quadrants.on('item:click', function (e) {
@@ -66065,6 +66255,21 @@ var Forestry = (function () {
 	      this._species.items = [];
 	      this._forestryID = null;
 	      this._id = null;
+	      this.disableSave();
+	    }
+	  }, {
+	    key: "disableSave",
+	    value: function disableSave() {
+	      this._btnSave.setAttribute('disabled', "");
+
+	      this._btnRequest.setAttribute('disabled', "");
+	    }
+	  }, {
+	    key: "enableSave",
+	    value: function enableSave() {
+	      this._btnSave.removeAttribute('disabled');
+
+	      this._btnRequest.removeAttribute('disabled');
 	    }
 	  }, {
 	    key: "toggle",
@@ -66084,8 +66289,7 @@ var Forestry = (function () {
 	  }, {
 	    key: "remove",
 	    value: function remove(gmx_id) {
-	      var ids = this.quadrants.slice();
-	      return ids.filter(function (id) {
+	      return this.quadrants.slice().filter(function (id) {
 	        return id !== gmx_id;
 	      });
 	    }
@@ -66143,6 +66347,17 @@ var Forestry = (function () {
 	      this._forestryID = forestryID;
 	      this._quadrants.items = quadrants;
 	      this._species.items = species;
+
+	      this._checkQuadrants();
+	    }
+	  }, {
+	    key: "_checkQuadrants",
+	    value: function _checkQuadrants() {
+	      if (this._quadrants.items.length === 0) {
+	        this.disableSave();
+	      } else {
+	        this.enableSave();
+	      }
 	    }
 	  }, {
 	    key: "close",
@@ -66164,7 +66379,7 @@ var Forestry = (function () {
 	  return Project;
 	}(View$1);
 
-	var translate$d = T.getText.bind(T);
+	var translate$e = T.getText.bind(T);
 
 	var indexByName = function indexByName(layer, name) {
 	  var _layer$getGmxProperti = layer.getGmxProperties(),
@@ -66337,6 +66552,10 @@ var Forestry = (function () {
 	      };
 	    }());
 
+	    _this._project.on('close', function () {
+	      _this._layers.quadrants.repaint();
+	    });
+
 	    return _this;
 	  }
 
@@ -66471,7 +66690,7 @@ var Forestry = (function () {
 
 	        this._layers.quadrants.repaint();
 	      } else {
-	        this._notification.error(translate$d('forbidden.project.create'));
+	        this._notification.error(translate$e('forbidden.project.create'));
 	      }
 	    } // draft
 
@@ -66546,7 +66765,7 @@ var Forestry = (function () {
 	                return _context6.abrupt("return", true);
 
 	              case 23:
-	                this._notification.warn(translate$d('quadrant.invalid'));
+	                this._notification.warn(translate$e('quadrant.invalid'));
 
 	                return _context6.abrupt("return", false);
 
@@ -66555,7 +66774,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 27:
-	                this._notification.error(translate$d('forbidden.project.edit'));
+	                this._notification.error(translate$e('forbidden.project.edit'));
 
 	              case 28:
 	              case "end":
@@ -66605,7 +66824,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 8:
-	                this._notification.error(translate$d('forbidden.project.edit'));
+	                this._notification.error(translate$e('forbidden.project.edit'));
 
 	              case 9:
 	              case "end":
@@ -66708,20 +66927,22 @@ var Forestry = (function () {
 	                ids = this._project.remove(gmx_id);
 
 	                if (!(ids.length === 0)) {
-	                  _context10.next = 6;
+	                  _context10.next = 7;
 	                  break;
 	                }
 
 	                this._project.clear();
 
-	                _context10.next = 10;
+	                this._layers.quadrants.repaint();
+
+	                _context10.next = 11;
 	                break;
 
-	              case 6:
-	                _context10.next = 8;
+	              case 7:
+	                _context10.next = 9;
 	                return this._validate(ids);
 
-	              case 8:
+	              case 9:
 	                data = _context10.sent;
 
 	                if (data) {
@@ -66734,7 +66955,7 @@ var Forestry = (function () {
 	                      species: ForestStat
 	                    };
 	                  } else {
-	                    this._notification.warn(translate$d('quadrant.invalid'));
+	                    this._notification.warn(translate$e('quadrant.invalid'));
 	                  }
 
 	                  this._project.open(this._valid);
@@ -66742,7 +66963,7 @@ var Forestry = (function () {
 	                  this._layers.quadrants.repaint();
 	                }
 
-	              case 10:
+	              case 11:
 	              case "end":
 	                return _context10.stop();
 	            }
@@ -66769,20 +66990,22 @@ var Forestry = (function () {
 	                ids = this._project.toggle(gmx_id);
 
 	                if (!(ids.length === 0)) {
-	                  _context11.next = 6;
+	                  _context11.next = 7;
 	                  break;
 	                }
 
 	                this._project.clear();
 
-	                _context11.next = 10;
+	                this._layers.quadrants.repaint();
+
+	                _context11.next = 11;
 	                break;
 
-	              case 6:
-	                _context11.next = 8;
+	              case 7:
+	                _context11.next = 9;
 	                return this._validate(ids);
 
-	              case 8:
+	              case 9:
 	                data = _context11.sent;
 
 	                if (data) {
@@ -66795,7 +67018,7 @@ var Forestry = (function () {
 	                      species: ForestStat
 	                    };
 	                  } else {
-	                    this._notification.warn(translate$d('quadrant.invalid'));
+	                    this._notification.warn(translate$e('quadrant.invalid'));
 	                  }
 
 	                  this._project.open(this._valid);
@@ -66803,7 +67026,7 @@ var Forestry = (function () {
 	                  this._layers.quadrants.repaint();
 	                }
 
-	              case 10:
+	              case 11:
 	              case "end":
 	                return _context11.stop();
 	            }
@@ -66988,7 +67211,7 @@ var Forestry = (function () {
 	  return Quadrants;
 	}(View$1);
 
-	var translate$e = T.getText.bind(T);
+	var translate$f = T.getText.bind(T);
 
 	var Quadrants$2 = /*#__PURE__*/function (_LayerController) {
 	  _inherits(Quadrants, _LayerController);
@@ -67128,7 +67351,7 @@ var Forestry = (function () {
 	                  } else {
 	                    this._view.close();
 
-	                    this._notification.warn(translate$e('warn.notavailable'));
+	                    this._notification.warn(translate$f('warn.notavailable'));
 	                  }
 	                } else {
 	                  this._view.close();
@@ -67156,7 +67379,7 @@ var Forestry = (function () {
 	  return Quadrants;
 	}(LayerController);
 
-	var translate$f = T.getText.bind(T);
+	var translate$g = T.getText.bind(T);
 
 	var RasterCatalog = /*#__PURE__*/function () {
 	  function RasterCatalog(_ref) {
@@ -67180,7 +67403,7 @@ var Forestry = (function () {
 	    if (ids.some(function (id) {
 	      return _this._layers[id];
 	    })) {
-	      var p = this._legend.addGroup('rasters', translate$f('legend.rasters'));
+	      var p = this._legend.addGroup('rasters', translate$g('legend.rasters'));
 
 	      ids.forEach(function (kind) {
 	        var layer = _this._layers[kind];
@@ -67188,7 +67411,7 @@ var Forestry = (function () {
 	        if (layer) {
 	          layer.setZIndexOffset(zIndexOffset);
 
-	          _this._legend.addComponent(kind, translate$f("legend.".concat(kind)), p);
+	          _this._legend.addComponent(kind, translate$g("legend.".concat(kind)), p);
 	        }
 	      });
 
@@ -68057,6 +68280,7 @@ var Forestry = (function () {
 	      bonitet: 'Бонитет',
 	      type: 'Тип леса',
 	      percentage: 'Процент выполнения',
+	      volume: 'Запас выдела на 1 га',
 	      storey: {
 	        title: 'Ярус',
 	        age: 'Возраст, лет',
@@ -68109,7 +68333,7 @@ var Forestry = (function () {
 
 	    _this._container.classList.add('scanex-forestry-stand');
 
-	    _this._container.innerHTML = "\n\t\t<h1 class=\"header1\">".concat(_this.translate('stand.title'), "</h1>\n\t\t<h2 class=\"header2\"></h2>\n\t\t<div class=\"content\">\n\t\t\t<div class=\"stats\"></div>\t\t\t\n\t\t\t<div>\n\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t<div class=\"events scrollable\"></div>\n\t\t\t</div>\n\t\t\t<div class=\"levels scrollable\"></div>\n\t\t</div>");
+	    _this._container.innerHTML = "\n\t\t<h1 class=\"header1\">".concat(_this.translate('stand.title'), "</h1>\n\t\t<h2 class=\"header2\"></h2>\n\t\t<div class=\"content scrollable\">\n\t\t\t<div class=\"stats\"></div>\t\t\t\n\t\t\t<div>\n\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t<div class=\"events scrollable\"></div>\n\t\t\t</div>\n\t\t\t<div class=\"levels scrollable\"></div>\n\t\t</div>");
 	    _this._header = _this._container.querySelector('.header2');
 	    _this._stats = _this._container.querySelector('.stats');
 	    _this._chart = new apexcharts_common(_this._container.querySelector('.chart'), {
@@ -68123,7 +68347,7 @@ var Forestry = (function () {
 	      },
 	      chart: {
 	        type: 'donut',
-	        height: '180px',
+	        // height: '180px',
 	        width: '500px',
 	        fontFamily: 'Open Sans'
 	      },
@@ -68134,7 +68358,7 @@ var Forestry = (function () {
 	      },
 	      legend: {
 	        position: 'right',
-	        // width: '150px',
+	        // height: '180px',
 	        fontSize: '12px',
 	        formatter: _this.chartFormatLegend.bind(_assertThisInitialized(_this)),
 	        horizontalAlign: 'right'
@@ -68203,11 +68427,15 @@ var Forestry = (function () {
 	      this._header.innerText = [Forestry, LocalForestry, Stow, Quadrant, Stand].filter(function (v) {
 	        return v;
 	      }).join(', ');
-	      this._stats.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">".concat(this.translate('stand.usage'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(ForestUseType, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.year'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(UpdatingYear, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.area'), ", ").concat(this.translate('units.ha'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(this.ha(Square), "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.category'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(LandCategory, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.protected'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(OZU, "</td>                    \n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.slope'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(Exposition, " / ").concat(Steepness, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<!--tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.targetSpecies'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(TargetSpecies, "</td>                    \n\t\t\t\t</tr-->\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.mainSpecies'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(PredominantSpecies, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.age'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(AgeGroup, "</td>                    \n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.klass'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(AgeClass, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.bonitet'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(Bonitet, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.type'), "</td>\n\t\t\t\t\t<td class=\"value\"></td>                    \n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
+	      var volume = Array.isArray(StoreyAggInfo) && StoreyAggInfo.reduce(function (a, _ref) {
+	        var gross_volume = _ref.gross_volume;
+	        return a + gross_volume;
+	      }, 0) || 0;
+	      this._stats.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">".concat(this.translate('stand.usage'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(ForestUseType, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.year'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(UpdatingYear, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.area'), ", ").concat(this.translate('units.ha'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(this.ha(Square), "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.category'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(LandCategory, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.protected'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(OZU, "</td>                    \n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.slope'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(Exposition, " / ").concat(Steepness, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<!--tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.targetSpecies'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(TargetSpecies, "</td>                    \n\t\t\t\t</tr-->\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.mainSpecies'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(PredominantSpecies, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.age'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(AgeGroup, "</td>                    \n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.klass'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(AgeClass, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.bonitet'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(Bonitet, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.type'), "</td>\n\t\t\t\t\t<td class=\"value\"></td>                    \n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.volume'), ", ").concat(this.translate('units.m'), "<sup>3</sup></td>\n\t\t\t\t\t<td class=\"value\">").concat(volume, "</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
 
-	      var _Stock$reduce = Stock.reduce(function (a, _ref) {
-	        var stock = _ref.stock,
-	            species = _ref.species;
+	      var _Stock$reduce = Stock.reduce(function (a, _ref2) {
+	        var stock = _ref2.stock,
+	            species = _ref2.species;
 	        a.labels.push(species);
 	        a.series.push(stock);
 	        return a;
@@ -68225,26 +68453,26 @@ var Forestry = (function () {
 	      this._chart.updateSeries(series);
 
 	      if (Array.isArray(StoreyAggInfo)) {
-	        this._levels.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t\t<tbody>".concat(StoreyAggInfo.map(function (_ref2) {
-	          var storey = _ref2.storey,
-	              abbr = _ref2.abbr,
-	              age = _ref2.age,
-	              basal_area_sum = _ref2.basal_area_sum,
-	              dbh = _ref2.dbh,
-	              density = _ref2.density,
-	              gross_volume = _ref2.gross_volume,
-	              height = _ref2.height,
-	              marketability_class = _ref2.marketability_class,
-	              rate = _ref2.rate;
+	        this._levels.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t\t<tbody>".concat(StoreyAggInfo.map(function (_ref3) {
+	          var storey = _ref3.storey,
+	              abbr = _ref3.abbr,
+	              age = _ref3.age,
+	              basal_area_sum = _ref3.basal_area_sum,
+	              dbh = _ref3.dbh,
+	              density = _ref3.density,
+	              gross_volume = _ref3.gross_volume,
+	              height = _ref3.height,
+	              marketability_class = _ref3.marketability_class,
+	              rate = _ref3.rate;
 	          return "<tr class=\"storey\">\n\t\t\t\t\t\t<td class=\"text\">".concat(_this2.translate('stand.storey.title'), "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(storey, "</td>\t\t\t\t\t\t\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.species'), "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(abbr, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.height'), ", ").concat(_this2.translate('units.m'), "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(_this2.fmt(height), "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.age'), "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(age, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.dbh'), ", ").concat(_this2.translate('units.cm'), "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(_this2.fmt(dbh), "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.density'), "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(_this2.fmt(density), "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.marketability_class'), "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(marketability_class, "</td>\n\t\t\t\t\t</tr>\t\t\t\t\t\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.gross_volume'), ", ").concat(_this2.translate('units.m'), "<sup>3</sup></td>\n\t\t\t\t\t\t<td class=\"value\">").concat(_this2.m(gross_volume), "</td>\n\t\t\t\t\t</tr>");
 	        }).join(''), "</tbody>\n\t\t\t</table>");
 	      }
 
 	      if (Array.isArray(Events)) {
-	        this._events.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t\t<tbody>".concat(Events.map(function (_ref3) {
-	          var name = _ref3.name,
-	              activity = _ref3.activity,
-	              fillingpercent = _ref3.fillingpercent;
+	        this._events.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t\t<tbody>".concat(Events.map(function (_ref4) {
+	          var name = _ref4.name,
+	              activity = _ref4.activity,
+	              fillingpercent = _ref4.fillingpercent;
 	          return "<tr>\n\t\t\t\t\t\t<td class=\"text\">".concat(name, "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(activity, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.percentage'), "</td>\n\t\t\t\t\t\t<td class=\"value percentage\">").concat(_this2.fmt(fillingpercent)).concat(_this2.translate('units.pc'), "</td>\n\t\t\t\t\t</tr>");
 	        }).join(''), "</tbody>\n\t\t\t</table>");
 	      }
@@ -68270,7 +68498,7 @@ var Forestry = (function () {
 	  return Stands;
 	}(View$1);
 
-	var translate$g = T.getText.bind(T);
+	var translate$h = T.getText.bind(T);
 
 	var Stands$1 = /*#__PURE__*/function (_LayerController) {
 	  _inherits(Stands$1, _LayerController);
@@ -68363,7 +68591,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 18:
-	                this._notification.warn(translate$g('warn.notavailable'));
+	                this._notification.warn(translate$h('warn.notavailable'));
 
 	              case 19:
 	              case "end":
@@ -68384,7 +68612,7 @@ var Forestry = (function () {
 	  return Stands$1;
 	}(LayerController);
 
-	var translate$h = T.getText.bind(T);
+	var translate$i = T.getText.bind(T);
 	T.addText('rus', {
 	  pager: {
 	    previous: 'Предыдущая',
@@ -68404,7 +68632,7 @@ var Forestry = (function () {
 
 	    _this = _super.call(this);
 	    _this._container = container;
-	    _this._container.innerHTML = "<table class=\"scanex-forestry-pager\" cellpadding=\"0\" cellspacing=\"0\">\n            <tr>\n                <td>\n                    <button class=\"first\">1</button>\n                </td>                \n                <td>\n                    <button class=\"previous\">".concat(translate$h('pager.previous'), "</button>\n                </td>\n                <td>\n                    <input type=\"text\" value=\"\" />\n                </td>\n                <td>\n                    <button class=\"next\">").concat(translate$h('pager.next'), "</button>\n                </td>                \n                <td>\n                    <button class=\"last\"></button>\n                </td>\n            </tr>\n        </table>");
+	    _this._container.innerHTML = "<table class=\"scanex-forestry-pager\" cellpadding=\"0\" cellspacing=\"0\">\n            <tr>\n                <td>\n                    <button class=\"first\">1</button>\n                </td>                \n                <td>\n                    <button class=\"previous\">".concat(translate$i('pager.previous'), "</button>\n                </td>\n                <td>\n                    <input type=\"text\" value=\"\" />\n                </td>\n                <td>\n                    <button class=\"next\">").concat(translate$i('pager.next'), "</button>\n                </td>                \n                <td>\n                    <button class=\"last\"></button>\n                </td>\n            </tr>\n        </table>");
 
 	    _this._container.querySelector('.first').addEventListener('click', function (e) {
 	      e.stopPropagation();
@@ -68671,7 +68899,7 @@ var Forestry = (function () {
 	  return Uploaded;
 	}(View$1);
 
-	var translate$i = T.getText.bind(T);
+	var translate$j = T.getText.bind(T);
 
 	var TmsView = /*#__PURE__*/function (_Dialog) {
 	  _inherits(TmsView, _Dialog);
@@ -68684,13 +68912,13 @@ var Forestry = (function () {
 	    _classCallCheck(this, TmsView);
 
 	    _this = _super.call(this, {
-	      title: translate$i('uploaded.tms.title'),
+	      title: translate$j('uploaded.tms.title'),
 	      id: 'tms-view'
 	    });
 
 	    _this._element.classList.add('scanex-forestry-tms-view');
 
-	    _this.content.innerHTML = "<div class=\"name\">\n                <label>".concat(translate$i('uploaded.tms.name'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"url\">\n                <label>").concat(translate$i('uploaded.tms.url'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"zoom\">\n                <label>").concat(translate$i('uploaded.tms.zoom'), "</label>\n                <div></div>\n            </div>\n            <div class=\"subdomains\">\n                <label>").concat(translate$i('uploaded.tms.subdomains'), "</label>              \n                <input type=\"text\" value=\"abc\">                \n            </div>\n            <div class=\"error-tile-url\">\n                <label>").concat(translate$i('uploaded.tms.errorTileUrl'), "</label>\n                <input class=\"value\" type=\"text\" value=\"\">                \n            </div>\n            <div class=\"zoom-offset\">\n                <label>").concat(translate$i('uploaded.tms.zoomOffset'), "</label>\n                <div></div>\n            </div>\n            <div class=\"tile-reverse\">\n                <label>").concat(translate$i('uploaded.tms.tileReverse'), "</label>                \n                <input type=\"checkbox\" value=\"tileReverse\">                \n            </div>\n            <div class=\"zoom-reverse\">\n                <label>").concat(translate$i('uploaded.tms.zoomReverse'), "</label>                \n                <input type=\"checkbox\" value=\"zoomReverse\">                \n            </div>\n            <div class=\"detect-retina\">\n                <label>").concat(translate$i('uploaded.tms.detectRetina'), "</label>                \n                <input type=\"checkbox\" value=\"detectRetina\">                \n            </div>\n            <div class=\"use-credentials\">\n                <label>").concat(translate$i('uploaded.tms.useCredentials'), "</label>            \n                <input type=\"checkbox\" value=\"useCredentials\">                \n            </div>");
+	    _this.content.innerHTML = "<div class=\"name\">\n                <label>".concat(translate$j('uploaded.tms.name'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"url\">\n                <label>").concat(translate$j('uploaded.tms.url'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"zoom\">\n                <label>").concat(translate$j('uploaded.tms.zoom'), "</label>\n                <div></div>\n            </div>\n            <div class=\"subdomains\">\n                <label>").concat(translate$j('uploaded.tms.subdomains'), "</label>              \n                <input type=\"text\" value=\"abc\">                \n            </div>\n            <div class=\"error-tile-url\">\n                <label>").concat(translate$j('uploaded.tms.errorTileUrl'), "</label>\n                <input class=\"value\" type=\"text\" value=\"\">                \n            </div>\n            <div class=\"zoom-offset\">\n                <label>").concat(translate$j('uploaded.tms.zoomOffset'), "</label>\n                <div></div>\n            </div>\n            <div class=\"tile-reverse\">\n                <label>").concat(translate$j('uploaded.tms.tileReverse'), "</label>                \n                <input type=\"checkbox\" value=\"tileReverse\">                \n            </div>\n            <div class=\"zoom-reverse\">\n                <label>").concat(translate$j('uploaded.tms.zoomReverse'), "</label>                \n                <input type=\"checkbox\" value=\"zoomReverse\">                \n            </div>\n            <div class=\"detect-retina\">\n                <label>").concat(translate$j('uploaded.tms.detectRetina'), "</label>                \n                <input type=\"checkbox\" value=\"detectRetina\">                \n            </div>\n            <div class=\"use-credentials\">\n                <label>").concat(translate$j('uploaded.tms.useCredentials'), "</label>            \n                <input type=\"checkbox\" value=\"useCredentials\">                \n            </div>");
 	    _this._name = _this.content.querySelector('.name').querySelector('input');
 	    _this._url = _this.content.querySelector('.url').querySelector('input');
 	    _this._zoom = new Interval(_this.content.querySelector('.zoom').querySelector('div'), {
@@ -68710,7 +68938,7 @@ var Forestry = (function () {
 	    _this._tileReverse = _this.content.querySelector('.tile-reverse').querySelector('input');
 	    _this._detectRetina = _this.content.querySelector('.detect-retina').querySelector('input');
 	    _this._useCredentials = _this.content.querySelector('.use-credentials').querySelector('input');
-	    _this.footer.innerHTML = "<button>".concat(translate$i('uploaded.tms.ok'), "</button>");
+	    _this.footer.innerHTML = "<button>".concat(translate$j('uploaded.tms.ok'), "</button>");
 	    _this._btn = _this.footer.querySelector('button');
 
 	    _this._btn.addEventListener('click', function (e) {
@@ -68742,7 +68970,7 @@ var Forestry = (function () {
 	  return TmsView;
 	}(Dialog);
 
-	var translate$j = T.getText.bind(T);
+	var translate$k = T.getText.bind(T);
 
 	var Uploaded$1 = /*#__PURE__*/function (_Controller) {
 	  _inherits(Uploaded$1, _Controller);
@@ -68937,7 +69165,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 7:
-	                this._notification.error(translate$j('forbidden.uploaded'));
+	                this._notification.error(translate$k('forbidden.uploaded'));
 
 	              case 8:
 	              case "end":
@@ -69170,7 +69398,7 @@ var Forestry = (function () {
 	  return Warehouses;
 	}(LayerController);
 
-	var translate$k = T.getText.bind(T);
+	var translate$l = T.getText.bind(T);
 	var ALLOWED_LAYERS = ['warehouses', 'roads', 'declarations', 'incidents', 'incidents_temporal', 'quadrants', 'stands', 'projects', 'plots', 'fires', 'parks', 'forestries_local', 'forestries', 'regions', 'sentinel', 'landsat'].reverse();
 
 	var Map = /*#__PURE__*/function (_EventTarget) {
@@ -69317,9 +69545,7 @@ var Forestry = (function () {
 	  }, {
 	    key: "showMain",
 	    value: function showMain() {
-	      this._legend.showPanel(true);
-
-	      this._controllers.baseLayers.hide();
+	      this._legend.show();
 
 	      this._content.close();
 	    }
@@ -69461,7 +69687,9 @@ var Forestry = (function () {
 	          while (1) {
 	            switch (_context10.prev = _context10.next) {
 	              case 0:
-	                _ref2 = _args10.length > 0 && _args10[0] !== undefined ? _args10[0] : {}, rightOffset = _ref2.rightOffset;
+	                _ref2 = _args10.length > 0 && _args10[0] !== undefined ? _args10[0] : {
+	                  rightOffset: 10
+	                }, rightOffset = _ref2.rightOffset;
 	                window.SELF = this;
 	                mapId = 'default';
 	                _context10.next = 5;
@@ -69512,10 +69740,10 @@ var Forestry = (function () {
 	                });
 
 	                this._controllers.baseLayers.on('show', function () {
-	                  _this3._legend.showPanel(false);
+	                  _this3._legend.hide();
 	                });
 
-	                this._legend.on('activate', function () {
+	                this._legend.on('show', function () {
 	                  _this3._controllers.baseLayers.hide();
 	                });
 
