@@ -22867,12 +22867,12 @@ var Forestry = (function () {
 	gmx.minZoomRasters=prop.RCMinZoomForRasters||1;// мин. zoom для растров
 	gmx.minZoomQuicklooks=gmx.minZoomRasters;// по умолчанию minZoom для квиклуков и КР равны
 	var type=prop.type||'Vector';if(prop.Temporal){type+='Temporal';}gmx.layerType=type;// VectorTemporal Vector
-	gmx.items={};L.extend(gmx,L.gmxUtil.getTileAttributes(prop));if(gmx.dataManager){gmx.dataManager.setOptions(prop);}if('ZIndexField'in prop){if(prop.ZIndexField in gmx.tileAttributeIndexes){gmx.zIndexField=gmx.tileAttributeIndexes[prop.ZIndexField];// sort field index
-	}}if(this._objectsReorder){this._objectsReorder.initialize();}// if ('clusters' in prop) {
+	gmx.items={};L.extend(gmx,L.gmxUtil.getTileAttributes(prop));if(gmx.dataManager){gmx.dataManager.setOptions(prop);}if(this._objectsReorder){this._objectsReorder.initialize();}// if ('clusters' in prop) {
 	// gmx.clusters = prop.clusters;
 	// }
 	gmx.filter=prop.filter;// for dataSource attr
-	gmx.dateBegin=prop.dateBegin;gmx.dateEnd=prop.dateEnd;gmx.dataSource=prop.dataSource;if('MetaProperties'in gmx.rawProperties){var meta=gmx.rawProperties.MetaProperties;if('srs'in meta){// проекция слоя
+	gmx.dateBegin=prop.dateBegin;gmx.dateEnd=prop.dateEnd;gmx.dataSource=prop.dataSource;if('MetaProperties'in gmx.rawProperties){var meta=gmx.rawProperties.MetaProperties;if('zIndexField'in meta&&meta.zIndexField.Value){// поле сортировки слоя
+	prop.ZIndexField=meta.zIndexField.Value;}if('srs'in meta){// проекция слоя
 	gmx.srs=meta.srs.Value||'';}if('parentLayer'in meta){// фильтр слоя		// todo удалить после изменений вов вьювере
 	gmx.dataSource=meta.parentLayer.Value||'';}if('filter'in meta){// фильтр слоя
 	gmx.filter=meta.filter.Value||'';}if('dateBegin'in meta){// фильтр для мультивременного слоя
@@ -22885,7 +22885,8 @@ var Forestry = (function () {
 	gmx.gmxProxy=meta.gmxProxy.Value.toLowerCase()==='true'?L.gmx.gmxProxy:meta.gmxProxy.Value;}if('multiFilters'in meta){// проверка всех фильтров для обьектов слоя
 	gmx.multiFilters=meta.multiFilters.Value==='1'?true:false;}if('isGeneralized'in meta){// Set generalization
 	this.options.isGeneralized=meta.isGeneralized.Value!=='false';}if('isFlatten'in meta){// Set flatten geometry
-	this.options.isFlatten=meta.isFlatten.Value!=='false';}}if(prop.Temporal){// Clear generalization flag for Temporal layers
+	this.options.isFlatten=meta.isFlatten.Value!=='false';}}if('ZIndexField'in prop){if(prop.ZIndexField in gmx.tileAttributeIndexes){gmx.zIndexField=gmx.tileAttributeIndexes[prop.ZIndexField];// sort field index
+	}}if(prop.Temporal){// Clear generalization flag for Temporal layers
 	this.options.isGeneralized=false;}if(prop.IsRasterCatalog){gmx.IsRasterCatalog=prop.IsRasterCatalog;var layerLink=gmx.tileAttributeIndexes.GMX_RasterCatalogID;if(layerLink){var endPoint=this.options.gmxEndPoints?this.options.gmxEndPoints.tileProps:'/TileSender.ashx';gmx.rasterBGfunc=function(x,y,z,item,srs){var properties=item.properties,url=L.gmxUtil.protocol+'//'+gmx.hostName+endPoint+'?ModeKey=tile&ftc=osm'+'&x='+x+'&y='+y+'&z='+z;if(srs||gmx.srs){url+='&srs='+(srs||gmx.srs);}if(gmx.crossOrigin){url+='&cross='+gmx.crossOrigin;}url+='&LayerName='+properties[layerLink];if(gmx.sessionKey){url+='&key='+encodeURIComponent(gmx.sessionKey);}if(L.gmx._sw&&item.v){url+='&sw='+L.gmx._sw+'&v='+item.v;}return url;};}}if(prop.Quicklook){var quicklookParams;//раньше это была просто строка с шаблоном квиклука, а теперь стало JSON'ом
 	if(prop.Quicklook[0]==='{'){quicklookParams=JSON.parse(prop.Quicklook);}else {quicklookParams={minZoom:gmx.minZoomRasters,template:prop.Quicklook};}if('X1'in quicklookParams){gmx.quicklookX1=quicklookParams.X1;}if('Y1'in quicklookParams){gmx.quicklookY1=quicklookParams.Y1;}if('X2'in quicklookParams){gmx.quicklookX2=quicklookParams.X2;}if('Y2'in quicklookParams){gmx.quicklookY2=quicklookParams.Y2;}if('X3'in quicklookParams){gmx.quicklookX3=quicklookParams.X3;}if('Y3'in quicklookParams){gmx.quicklookY3=quicklookParams.Y3;}if('X4'in quicklookParams){gmx.quicklookX4=quicklookParams.X4;}if('Y4'in quicklookParams){gmx.quicklookY4=quicklookParams.Y4;}var template=gmx.Quicklook=quicklookParams.template;if('minZoom'in quicklookParams){gmx.minZoomQuicklooks=quicklookParams.minZoom;}gmx.quicklookBGfunc=function(item){var url=template,reg=/\[([^\]]+)\]/,matches=reg.exec(url);while(matches&&matches.length>1){url=url.replace(matches[0],item.properties[gmx.tileAttributeIndexes[matches[1]]]);matches=reg.exec(url);}//if (gmx.srs) { url += (url.indexOf('?') === -1 ? '?' : '&') + 'srs=' + gmx.srs; }
 	return url;};gmx.imageQuicklookProcessingHook=L.gmx.gmxImageTransform;}this.options.attribution=prop.Copyright||'';},_updateShiftY:function _updateShiftY(zoom){var gmx=this._gmx;gmx.currentZoom=zoom;gmx.tileSize=gmxAPIutils.tileSizes[zoom];gmx.mInPixel=this.options.tileSize/gmx.tileSize;},__drawTile:function __drawTile(ev){var coords=ev.coords,zKey=this._tileCoordsToKey(coords),tileElem=this._tiles[zKey];if(!tileElem){return;}var myLayer=this,zoom=this._tileZoom,gmx=this._gmx;// if (tileElem.observer) {
@@ -28009,15 +28010,6 @@ var Forestry = (function () {
 
 	var date = function date(v) {
 	  return v && v.toLocaleDateString() || '';
-	};
-
-	var delay = function delay(timeout) {
-	  return new Promise(function (resolve) {
-	    var id = window.setInterval(function () {
-	      window.clearInterval(id);
-	      resolve();
-	    }, timeout);
-	  });
 	};
 
 	leafletSrc.Control.GmxCenter = leafletSrc.Control.extend({
@@ -36973,6 +36965,8 @@ var Forestry = (function () {
 
 	    var title = _ref.title,
 	        id = _ref.id,
+	        type = _ref.type,
+	        props = _ref.props,
 	        urlTemplate = _ref.urlTemplate,
 	        iconUrl = _ref.iconUrl,
 	        _ref$minZoom = _ref.minZoom,
@@ -36985,11 +36979,21 @@ var Forestry = (function () {
 	        userLayer = _ref$userLayer === void 0 ? false : _ref$userLayer;
 
 	    if (id && !this._layers[id]) {
-	      this._layers[id] = leafletSrc.tileLayer(urlTemplate, {
-	        minZoom: minZoom,
-	        maxZoom: maxZoom,
-	        zIndex: -1000000
-	      });
+	      if (type === 'Raster') {
+	        this._layers[id] = leafletSrc.gmx.createLayer({
+	          properties: props
+	        }, {
+	          layerID: props.name,
+	          apiKey: this.options.apiKey
+	        });
+	      } else {
+	        this._layers[id] = leafletSrc.tileLayer(urlTemplate, {
+	          minZoom: minZoom,
+	          maxZoom: maxZoom,
+	          zIndex: -1000000
+	        });
+	      }
+
 	      var layerContainer = document.createElement('div');
 	      layerContainer.setAttribute('data-id', id);
 	      leafletSrc.DomUtil.addClass(layerContainer, 'baselayer');
@@ -37216,6 +37220,7 @@ var Forestry = (function () {
 	});
 	var translate$2 = T.getText.bind(T);
 	var TASK_POLLING_DELAY = 3000;
+	var NOTIFY_TIMEOUT = 5000;
 
 	var Controller = /*#__PURE__*/function (_EventTarget) {
 	  _inherits(Controller, _EventTarget);
@@ -37248,37 +37253,37 @@ var Forestry = (function () {
 	          return response.json();
 
 	        case 401:
-	          this._notification.error(translate$2('error.unauthorized'));
+	          this._notification.error(translate$2('error.unauthorized'), NOTIFY_TIMEOUT);
 
 	          return;
 
 	        case 403:
-	          this._notification.error(translate$2('error.forbidden'));
+	          this._notification.error(translate$2('error.forbidden'), NOTIFY_TIMEOUT);
 
 	          return;
 
 	        case 404:
-	          this._notification.error(translate$2('error.notfound'));
+	          this._notification.error(translate$2('error.notfound'), NOTIFY_TIMEOUT);
 
 	          return;
 
 	        case 500:
-	          this._notification.error(translate$2('error.server'));
+	          this._notification.error(translate$2('error.server'), NOTIFY_TIMEOUT);
 
 	          return;
 
 	        case 502:
-	          this._notification.error(translate$2('error.gateway'));
+	          this._notification.error(translate$2('error.gateway'), NOTIFY_TIMEOUT);
 
 	          return;
 
 	        case 503:
-	          this._notification.error(translate$2('error.unavailable'));
+	          this._notification.error(translate$2('error.unavailable'), NOTIFY_TIMEOUT);
 
 	          return;
 
 	        default:
-	          this._notification.error(translate$2('error.other'));
+	          this._notification.error(translate$2('error.other'), NOTIFY_TIMEOUT);
 
 	          return;
 	      }
@@ -37559,12 +37564,11 @@ var Forestry = (function () {
 	    _classCallCheck(this, Component);
 
 	    _this = _super.call(this);
-	    _this._container = container;
 	    _this._element = document.createElement('div');
 
 	    _this._element.classList.add('scanex-component');
 
-	    _this._container.appendChild(_this._element);
+	    container.appendChild(_this._element);
 
 	    _this._render(_this._element, options);
 
@@ -37574,7 +37578,7 @@ var Forestry = (function () {
 	  _createClass(Component, [{
 	    key: "destroy",
 	    value: function destroy() {
-	      this._container.removeChild(this._element);
+	      this._element.remove();
 	    }
 	  }, {
 	    key: "forwardEvent",
@@ -37679,6 +37683,8 @@ var Forestry = (function () {
 	        id = _ref.id,
 	        _ref$collapsible = _ref.collapsible,
 	        collapsible = _ref$collapsible === void 0 ? false : _ref$collapsible,
+	        _ref$modal = _ref.modal,
+	        modal = _ref$modal === void 0 ? false : _ref$modal,
 	        top = _ref.top,
 	        left = _ref.left;
 
@@ -37687,24 +37693,28 @@ var Forestry = (function () {
 	    _this = _super.call(this, document.body, {
 	      id: id,
 	      collapsible: collapsible,
+	      modal: modal,
 	      top: top,
 	      left: left
 	    });
+	    _this._titleElement.innerText = title;
 
-	    if (_this._id) {
-	      _this._element.setAttribute('id', _this._id);
+	    if (!modal) {
+	      if (_this._id) {
+	        _this._element.setAttribute('id', _this._id);
+	      }
+
+	      _this._moving = false;
+	      _this._offsetX;
+	      _this._offsetY;
+
+	      _this._header.addEventListener('mousedown', _this._start.bind(_assertThisInitialized(_this)));
+
+	      _this._element.addEventListener('mousemove', _this._move.bind(_assertThisInitialized(_this)));
+
+	      window.addEventListener('mouseup', _this._stop.bind(_assertThisInitialized(_this)));
 	    }
 
-	    _this._titleElement.innerText = title;
-	    _this._moving = false;
-	    _this._offsetX;
-	    _this._offsetY;
-
-	    _this._header.addEventListener('mousedown', _this._start.bind(_assertThisInitialized(_this)));
-
-	    _this._element.addEventListener('mousemove', _this._move.bind(_assertThisInitialized(_this)));
-
-	    window.addEventListener('mouseup', _this._stop.bind(_assertThisInitialized(_this)));
 	    return _this;
 	  }
 
@@ -37729,7 +37739,7 @@ var Forestry = (function () {
 	      if (this._moving) {
 	        this._moving = false;
 
-	        this._savePosition();
+	        this._savePosition(this._element);
 	      }
 	    }
 	  }, {
@@ -37789,17 +37799,38 @@ var Forestry = (function () {
 	      this.dispatchEvent(event);
 	    }
 	  }, {
+	    key: "destroy",
+	    value: function destroy() {
+	      if (this._overlay) {
+	        this._overlay.remove();
+	      }
+
+	      _get(_getPrototypeOf(Dialog.prototype), "destroy", this).call(this);
+	    }
+	  }, {
 	    key: "_render",
 	    value: function _render(element, _ref2) {
 	      var id = _ref2.id,
 	          collapsible = _ref2.collapsible,
+	          modal = _ref2.modal,
 	          top = _ref2.top,
 	          left = _ref2.left;
+
+	      if (modal) {
+	        this._overlay = document.createElement('div');
+
+	        this._overlay.classList.add('scanex-dialog-overlay');
+
+	        this._overlay.addEventListener('click', function (e) {
+	          return e.stopPropagation();
+	        });
+
+	        document.body.appendChild(this._overlay);
+	      } else {
+	        this._id = id;
+	      }
+
 	      element.classList.add('scanex-component-dialog');
-	      this._id = id;
-
-	      this._restorePosition(top, left);
-
 	      this._header = document.createElement('div');
 
 	      this._header.classList.add('header');
@@ -37811,7 +37842,7 @@ var Forestry = (function () {
 	      var buttons = document.createElement('div');
 	      buttons.classList.add('header-buttons');
 
-	      if (collapsible) {
+	      if (collapsible && !modal) {
 	        this._btnToggle = document.createElement('i');
 
 	        this._btnToggle.setAttribute('title', translate$3('scanex.components.dialog.minimize'));
@@ -37845,10 +37876,12 @@ var Forestry = (function () {
 	      this._footer.classList.add('footer');
 
 	      element.appendChild(this._footer);
+
+	      this._restorePosition(element, top, left);
 	    }
 	  }, {
 	    key: "_restorePosition",
-	    value: function _restorePosition(top, left) {
+	    value: function _restorePosition(el, top, left) {
 	      if (typeof this._id === 'string' && this._id != '') {
 	        var pos = window.localStorage.getItem("".concat(this._id, ".position"));
 
@@ -37857,20 +37890,21 @@ var Forestry = (function () {
 	            x = _ref4[0],
 	            y = _ref4[1];
 
-	        this._element.style.top = "".concat(y || top || Math.round(window.innerHeight / 2), "px");
-	        this._element.style.left = "".concat(x || left || Math.round(window.innerWidth / 2), "px");
+	        el.style.top = "".concat(y || top || Math.round(window.innerHeight / 2), "px");
+	        el.style.left = "".concat(x || left || Math.round(window.innerWidth / 2), "px");
 	      } else {
-	        this._element.style.top = "".concat(top || Math.round(window.innerHeight / 2), "px");
-	        this._element.style.left = "".concat(left || Math.round(window.innerWidth / 2), "px");
+	        var r = el.getBoundingClientRect();
+	        el.style.top = "".concat(top || Math.round(window.innerHeight / 2 - r.height), "px");
+	        el.style.left = "".concat(left || Math.round(window.innerWidth / 2 - r.width), "px");
 	      }
 	    }
 	  }, {
 	    key: "_savePosition",
-	    value: function _savePosition() {
+	    value: function _savePosition(el) {
 	      if (typeof this._id === 'string' && this._id != '') {
-	        var _this$_element$getBou2 = this._element.getBoundingClientRect(),
-	            top = _this$_element$getBou2.top,
-	            left = _this$_element$getBou2.left;
+	        var _el$getBoundingClient = el.getBoundingClientRect(),
+	            top = _el$getBoundingClient.top,
+	            left = _el$getBoundingClient.left;
 
 	        window.localStorage.setItem("".concat(this._id, ".position"), [left, top].join(','));
 	      }
@@ -37893,6 +37927,91 @@ var Forestry = (function () {
 	  }]);
 
 	  return Dialog;
+	}(Component);
+
+	var translate$4 = T$1.getText.bind(T$1);
+	T$1.addText('rus', {
+	  pager: {
+	    previous: 'Предыдущая',
+	    next: 'Следующая'
+	  }
+	});
+
+	var Pager = /*#__PURE__*/function (_Component) {
+	  _inherits(Pager, _Component);
+
+	  var _super = _createSuper(Pager);
+
+	  function Pager(container) {
+	    _classCallCheck(this, Pager);
+
+	    return _super.call(this, container);
+	  }
+
+	  _createClass(Pager, [{
+	    key: "_render",
+	    value: function _render(element) {
+	      var _this = this;
+
+	      element.classList.add('scanex-component-pager');
+	      element.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <tr>\n                <td>\n                    <button class=\"first\">1</button>\n                </td>                \n                <td>\n                    <button class=\"previous\">".concat(translate$4('pager.previous'), "</button>\n                </td>\n                <td>\n                    <input type=\"text\" value=\"\" />\n                </td>\n                <td>\n                    <button class=\"next\">").concat(translate$4('pager.next'), "</button>\n                </td>                \n                <td>\n                    <button class=\"last\"></button>\n                </td>\n            </tr>\n        </table>");
+	      element.querySelector('.first').addEventListener('click', function (e) {
+	        e.stopPropagation();
+	        _this.page = 1;
+	      });
+	      element.querySelector('.previous').addEventListener('click', function (e) {
+	        e.stopPropagation();
+	        _this.page -= 1;
+	      });
+	      element.querySelector('.next').addEventListener('click', function (e) {
+	        e.stopPropagation();
+	        _this.page += 1;
+	      });
+	      element.querySelector('.last').addEventListener('click', function (e) {
+	        e.stopPropagation();
+	        _this.page = _this.pages;
+	      });
+	      this._current = element.querySelector('input');
+
+	      this._current.addEventListener('change', function (e) {
+	        e.stopPropagation();
+	        _this.page = parseInt(_this._current.value, 10);
+	      });
+
+	      this._last = element.querySelector('.last');
+	      this._pages = 1;
+	      this.page = 1;
+	    }
+	  }, {
+	    key: "page",
+	    get: function get() {
+	      return this._page;
+	    },
+	    set: function set(page) {
+	      if (Number.isInteger(page) && 1 <= page && page <= this.pages) {
+	        this._page = page;
+	        this._current.value = this._page;
+	        var event = document.createEvent('Event');
+	        event.initEvent('change', false, false);
+	        this.dispatchEvent(event);
+	      } else {
+	        this._current.value = this._page;
+	      }
+	    }
+	  }, {
+	    key: "pages",
+	    get: function get() {
+	      return this._pages;
+	    },
+	    set: function set(pages) {
+	      if (Number.isInteger(pages) && 1 <= this.page && this.page <= pages) {
+	        this._pages = pages;
+	        this._last.innerText = pages;
+	      }
+	    }
+	  }]);
+
+	  return Pager;
 	}(Component);
 
 	var Spinner = /*#__PURE__*/function (_Component) {
@@ -38466,7 +38585,7 @@ var Forestry = (function () {
 	Object.keys(strings).forEach(function (lang) {
 	  return T.addText(lang, strings[lang]);
 	});
-	var translate$4 = T.getText.bind(T);
+	var translate$5 = T.getText.bind(T);
 
 	var View = /*#__PURE__*/function (_Dialog) {
 	  _inherits(View, _Dialog);
@@ -38479,15 +38598,15 @@ var Forestry = (function () {
 	    _classCallCheck(this, View);
 
 	    _this = _super.call(this, {
-	      title: translate$4('baselayers.title'),
-	      id: 'forestry.baselayers-view',
+	      title: translate$5('baselayers.title'),
 	      top: 50,
-	      left: 450
+	      left: 450,
+	      modal: true
 	    });
 
 	    _this._element.classList.add('scanex-forestry-baselayers-view');
 
-	    _this.content.innerHTML = "\n        <div class=\"name\">\n            <div class=\"label\">".concat(translate$4('baselayers.name'), "</div>        \n            <input type=\"text\" value=\"\">        \n        </div>\n        <div class=\"url\">\n            <div class=\"label\">").concat(translate$4('baselayers.url'), "</div>        \n            <input type=\"text\" value=\"\">        \n        </div>\n        <div class=\"zoom\">\n            <div class=\"label\">").concat(translate$4('baselayers.zoom'), "</div>\n            <div></div>\n        </div>");
+	    _this.content.innerHTML = "\n        <div class=\"name\">\n            <div class=\"label\">".concat(translate$5('baselayers.name'), "</div>        \n            <input type=\"text\" value=\"\">        \n        </div>\n        <div class=\"url\">\n            <div class=\"label\">").concat(translate$5('baselayers.url'), "</div>        \n            <input type=\"text\" value=\"\">        \n        </div>\n        <div class=\"zoom\">\n            <div class=\"label\">").concat(translate$5('baselayers.zoom'), "</div>\n            <div></div>\n        </div>");
 	    _this._name = _this.content.querySelector('.name').querySelector('input');
 	    _this._url = _this.content.querySelector('.url').querySelector('input');
 	    _this._zoom = new Interval(_this.content.querySelector('.zoom').querySelector('div'), {
@@ -38497,7 +38616,7 @@ var Forestry = (function () {
 	    });
 	    _this._zoom.lo = 1;
 	    _this._zoom.hi = 21;
-	    _this.footer.innerHTML = "<button class=\"ok\">".concat(translate$4('baselayers.ok'), "</button>\n        <button class=\"cancel\">").concat(translate$4('baselayers.cancel'), "</button>");
+	    _this.footer.innerHTML = "<button class=\"ok\">".concat(translate$5('baselayers.ok'), "</button>\n        <button class=\"cancel\">").concat(translate$5('baselayers.cancel'), "</button>");
 
 	    var btnOk = _this.footer.querySelector('.ok');
 
@@ -38577,7 +38696,7 @@ var Forestry = (function () {
 	  return View;
 	}(Dialog);
 
-	var translate$5 = T.getText.bind(T);
+	var translate$6 = T.getText.bind(T);
 
 	var BaseLayers = /*#__PURE__*/function (_Controller) {
 	  _inherits(BaseLayers, _Controller);
@@ -38705,14 +38824,23 @@ var Forestry = (function () {
 	    }, _assertThisInitialized(_this));
 
 	    _this._control.addItem({
-	      title: translate$5('baselayers.satellite'),
+	      title: translate$6('baselayers.satellite'),
 	      id: 'satellite',
+	      type: 'Raster',
 	      iconUrl: 'assets/images/hybrid.png',
-	      urlTemplate: "https://maps.kosmosnimki.ru/TileSender.ashx?ModeKey=tile&ftc=osm&z={z}&x={x}&y={y}&srs=3857&sw=1&LayerName=4DAFD64550674E7EB3BFC0ACBAF66422&key=".concat(apiKey)
+	      props: {
+	        type: 'Raster',
+	        name: '4EE5E84381E94E369784464FD41EED5A',
+	        sessionKey: apiKey,
+	        styles: [{
+	          MinZoom: 0,
+	          MaxZoom: 20
+	        }]
+	      }
 	    });
 
 	    _this._control.addItem({
-	      title: translate$5('baselayers.map'),
+	      title: translate$6('baselayers.map'),
 	      id: 'map',
 	      iconUrl: 'assets/images/map.png',
 	      urlTemplate: '//tilessputnik.ru/{z}/{x}/{y}.png?sw=1'
@@ -38993,7 +39121,7 @@ var Forestry = (function () {
 	  return BaseLayers;
 	}(Controller);
 
-	var translate$6 = T.getText.bind(T);
+	var translate$7 = T.getText.bind(T);
 
 	var Borders = /*#__PURE__*/function (_Controller) {
 	  _inherits(Borders, _Controller);
@@ -39024,18 +39152,18 @@ var Forestry = (function () {
 
 	    _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
 
-	    var p = _this._legend.addGroup('borders', translate$6("legend.borders"));
+	    var p = _this._legend.addGroup('borders', translate$7("legend.borders"));
 
 	    if (_this._layers.regions) {
-	      _this._legend.addComponent('regions', translate$6('legend.regions'), p);
+	      _this._legend.addComponent('regions', translate$7('legend.regions'), p);
 	    }
 
 	    if (_this._layers.forestries) {
-	      _this._legend.addComponent('forestries', translate$6('legend.forestries'), p);
+	      _this._legend.addComponent('forestries', translate$7('legend.forestries'), p);
 	    }
 
 	    if (_this._layers.forestries_local) {
-	      _this._legend.addComponent('forestries_local', translate$6('legend.forestries_local'), p);
+	      _this._legend.addComponent('forestries_local', translate$7('legend.forestries_local'), p);
 	    }
 
 	    return _this;
@@ -39491,7 +39619,7 @@ var Forestry = (function () {
 	  return Fires;
 	}(View$1);
 
-	var translate$7 = T.getText.bind(T);
+	var translate$8 = T.getText.bind(T);
 	var hotSpotLayerID = '9DC30891452449DD8D551D0AA62FFF54';
 
 	var Fires$1 = /*#__PURE__*/function (_EventTarget) {
@@ -39521,7 +39649,7 @@ var Forestry = (function () {
 	    _this._dateInterval = dateInterval;
 	    _this._permissions = permissions;
 
-	    _this._legend.addComponent('fires', translate$7('legend.fires'));
+	    _this._legend.addComponent('fires', translate$8('legend.fires'));
 
 	    _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
 
@@ -46476,7 +46604,7 @@ var Forestry = (function () {
 	  });
 	});
 
-	var translate$8 = T.getText.bind(T);
+	var translate$9 = T.getText.bind(T);
 
 	var _DAY$1 = 60 * 60 * 24 * 1000;
 
@@ -46542,35 +46670,35 @@ var Forestry = (function () {
 
 	    _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
 
-	    var p = _this._legend.addGroup(_this._kind, translate$8('legend.incidents'));
+	    var p = _this._legend.addGroup(_this._kind, translate$9('legend.incidents'));
 
-	    _this._legend.addComponent('cut-unconfirmed', translate$8('legend.cut.unconfirmed'), p);
+	    _this._legend.addComponent('cut-unconfirmed', translate$9('legend.cut.unconfirmed'), p);
 
-	    _this._legend.addComponent('cut-working', translate$8('legend.cut.working'), p);
+	    _this._legend.addComponent('cut-working', translate$9('legend.cut.working'), p);
 
-	    _this._legend.addComponent('cut-faux', translate$8('legend.cut.faux'), p);
+	    _this._legend.addComponent('cut-faux', translate$9('legend.cut.faux'), p);
 
-	    _this._legend.addComponent('cut-confirmed', translate$8('legend.cut.confirmed'), p); // this._legend.addComponent('windthrow-unconfirmed', translate('legend.windthrow.unconfirmed'), p);
+	    _this._legend.addComponent('cut-confirmed', translate$9('legend.cut.confirmed'), p); // this._legend.addComponent('windthrow-unconfirmed', translate('legend.windthrow.unconfirmed'), p);
 	    // this._legend.addComponent('windthrow-working', translate('legend.windthrow.working'), p);
 	    // this._legend.addComponent('windthrow-faux', translate('legend.windthrow.faux'), p);
 	    // this._legend.addComponent('windthrow-confirmed', translate('legend.windthrow.confirmed'), p);
 
 
-	    _this._legend.addComponent('disease-unconfirmed', translate$8('legend.disease.unconfirmed'), p);
+	    _this._legend.addComponent('disease-unconfirmed', translate$9('legend.disease.unconfirmed'), p);
 
-	    _this._legend.addComponent('disease-working', translate$8('legend.disease.working'), p);
+	    _this._legend.addComponent('disease-working', translate$9('legend.disease.working'), p);
 
-	    _this._legend.addComponent('disease-faux', translate$8('legend.disease.faux'), p);
+	    _this._legend.addComponent('disease-faux', translate$9('legend.disease.faux'), p);
 
-	    _this._legend.addComponent('disease-confirmed', translate$8('legend.disease.confirmed'), p);
+	    _this._legend.addComponent('disease-confirmed', translate$9('legend.disease.confirmed'), p);
 
-	    _this._legend.addComponent('burn-unconfirmed', translate$8('legend.burn.unconfirmed'), p);
+	    _this._legend.addComponent('burn-unconfirmed', translate$9('legend.burn.unconfirmed'), p);
 
-	    _this._legend.addComponent('burn-working', translate$8('legend.burn.working'), p);
+	    _this._legend.addComponent('burn-working', translate$9('legend.burn.working'), p);
 
-	    _this._legend.addComponent('burn-faux', translate$8('legend.burn.faux'), p);
+	    _this._legend.addComponent('burn-faux', translate$9('legend.burn.faux'), p);
 
-	    _this._legend.addComponent('burn-confirmed', translate$8('legend.burn.confirmed'), p);
+	    _this._legend.addComponent('burn-confirmed', translate$9('legend.burn.confirmed'), p);
 
 	    _this._view = _this._content.add(_this._kind, Incidents, {
 	      permissions: _this._permissions
@@ -47165,88 +47293,7 @@ var Forestry = (function () {
 	  return Loading;
 	}(EventTarget);
 
-	var translate$9 = T.getText.bind(T);
-	var NOTIFY_DELAY = 3000;
-
-	var Notification = /*#__PURE__*/function (_EventTarget) {
-	  _inherits(Notification, _EventTarget);
-
-	  var _super = _createSuper(Notification);
-
-	  function Notification() {
-	    _classCallCheck(this, Notification);
-
-	    return _super.call(this);
-	  }
-
-	  _createClass(Notification, [{
-	    key: "_remove",
-	    value: function _remove(el, container) {
-	      if (el.parentNode === container) {
-	        container.removeChild(el);
-	      }
-	    }
-	  }, {
-	    key: "error",
-	    value: function error(text) {
-	      var _this = this;
-
-	      var el = document.createElement('div');
-	      el.classList.add('scanex-forestry-notify');
-	      el.innerHTML = "<div class=\"notify notify-red\">\n            <div class=\"scanex-notify-icon close\"></div>\n            <span class=\"title\">".concat(translate$9('alert.error'), "</span>\n            <span class=\"message\">").concat(text, "</span>\n        </div>");
-	      var container = document.body;
-	      container.appendChild(el);
-	      var btnClose = el.querySelector('.close');
-	      btnClose.addEventListener('click', function (e) {
-	        e.stopPropagation();
-
-	        _this._remove(el, container);
-	      });
-	    }
-	  }, {
-	    key: "warn",
-	    value: function warn(text) {
-	      var _this2 = this;
-
-	      var el = document.createElement('div');
-	      el.classList.add('scanex-forestry-notify');
-	      el.innerHTML = "<div class=\"notify notify-orange\">\n            <div class=\"scanex-notify-icon close\"></div>\n            <span class=\"title\">".concat(translate$9('alert.warn'), "</span>\n            <span class=\"message\">").concat(text, "</span>\n        </div>");
-	      var container = document.body;
-	      container.appendChild(el);
-	      var btnClose = el.querySelector('.close');
-	      btnClose.addEventListener('click', function (e) {
-	        e.stopPropagation();
-
-	        _this2._remove(el, container);
-	      });
-	      delay(NOTIFY_DELAY).then(function () {
-	        return _this2._remove(el, container);
-	      });
-	    }
-	  }, {
-	    key: "info",
-	    value: function info(text) {
-	      var _this3 = this;
-
-	      var el = document.createElement('div');
-	      el.classList.add('scanex-forestry-notify');
-	      el.innerHTML = "<div class=\"notify notify-green\">\n            <div class=\"scanex-notify-icon close\"></div>\n            <span class=\"title\">".concat(translate$9('alert.info'), "</span>\n            <span class=\"message\">").concat(text, "</span>\n        </div>");
-	      var container = document.body;
-	      container.appendChild(el);
-	      var btnClose = el.querySelector('.close');
-	      btnClose.addEventListener('click', function (e) {
-	        e.stopPropagation();
-
-	        _this3._remove(el, container);
-	      });
-	      delay(NOTIFY_DELAY).then(function () {
-	        return _this3._remove(el, container);
-	      });
-	    }
-	  }]);
-
-	  return Notification;
-	}(EventTarget);
+	var translate$a = T.getText.bind(T);
 
 	var strings$4 = {
 	  rus: {
@@ -47333,7 +47380,7 @@ var Forestry = (function () {
 	  return Parks;
 	}(View$1);
 
-	var translate$a = T.getText.bind(T);
+	var translate$b = T.getText.bind(T);
 
 	var Parks$1 = /*#__PURE__*/function (_Controller) {
 	  _inherits(Parks$1, _Controller);
@@ -47376,18 +47423,18 @@ var Forestry = (function () {
 	      }
 
 	      if (_this._permissions.FederalSPNA) {
-	        _this._legend.addComponent('parks-federal', translate$a("legend.parks_federal"));
+	        _this._legend.addComponent('parks-federal', translate$b("legend.parks_federal"));
 	      }
 
 	      if (_this._permissions.RegionalSPNA) {
-	        _this._legend.addComponent('parks-regional', translate$a("legend.parks_regional"));
+	        _this._legend.addComponent('parks-regional', translate$b("legend.parks_regional"));
 	      }
 
 	      _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
 
 	      _this._layer.setFilter(_this.getFilter.bind(_assertThisInitialized(_this)));
 	    } else {
-	      _this._legend.addComponent('parks', translate$a("legend.parks"));
+	      _this._legend.addComponent('parks', translate$b("legend.parks"));
 	    }
 
 	    _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
@@ -65510,7 +65557,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 17:
-	                this._notification.error(translate('forbidden.plot.view'));
+	                this._notification.error(translate('forbidden.plot.view'), NOTIFY_TIMEOUT);
 
 	              case 18:
 	              case "end":
@@ -65557,7 +65604,9 @@ var Forestry = (function () {
 	        total: 'Таксация',
 	        table: 'Данные о запасах',
 	        label: 'Запас',
-	        all: 'Весь'
+	        all: 'Весь',
+	        general: 'Всего',
+	        deal: 'Деловая'
 	      },
 	      title: {
 	        create: 'Создание проекта лесного участка',
@@ -65763,7 +65812,7 @@ var Forestry = (function () {
 	  return Info;
 	}(View$1);
 
-	var translate$b = T.getText.bind(T);
+	var translate$c = T.getText.bind(T);
 
 	var Quadrants = /*#__PURE__*/function (_EventTarget) {
 	  _inherits(Quadrants, _EventTarget);
@@ -65790,7 +65839,7 @@ var Forestry = (function () {
 	      var _this2 = this;
 
 	      this._items = Array.isArray(items) && items || [];
-	      this._container.innerHTML = this._items.length ? "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th>".concat(translate$b('project.localForestry'), " / ").concat(translate$b('project.tract'), "</th>                    \n                    <th>").concat(translate$b('project.quadrants'), "</th>\n                    <th>").concat(translate$b('project.year'), "</th>                    \n                </tr>\n            </thead>\n        </table>\n        <div class=\"scrollable\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody>").concat(this._items.map(function (_ref) {
+	      this._container.innerHTML = this._items.length ? "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th>".concat(translate$c('project.localForestry'), " / ").concat(translate$c('project.tract'), "</th>                    \n                    <th>").concat(translate$c('project.quadrants'), "</th>\n                    <th>").concat(translate$c('project.year'), "</th>                    \n                </tr>\n            </thead>\n        </table>\n        <div class=\"scrollable\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody>").concat(this._items.map(function (_ref) {
 	        var local_forestry = _ref.local_forestry,
 	            stow = _ref.stow,
 	            num = _ref.num,
@@ -65866,7 +65915,7 @@ var Forestry = (function () {
 	  return Quadrants;
 	}(EventTarget);
 
-	var translate$c = T.getText.bind(T);
+	var translate$d = T.getText.bind(T);
 
 	var SpeciesTable = /*#__PURE__*/function (_EventTarget) {
 	  _inherits(SpeciesTable, _EventTarget);
@@ -65904,14 +65953,14 @@ var Forestry = (function () {
 	            total_stock_deal = _ref.total_stock_deal;
 	        return "<tr class=\"type\">\n                <td class=\"text\">".concat(species, "</td>\n                <td class=\"value\">").concat(m(permitted_stock), "</td>\n                <td class=\"value\">").concat(m(permitted_stock_deal), "</td>\n                <td class=\"value\">").concat(m(probable_stock), "</td>\n                <td class=\"value\">").concat(m(probable_stock_deal), "</td>\n                <td class=\"value\">").concat(m(total_stock), "</td>\n                <td class=\"value\">").concat(m(total_stock_deal), "</td>\n            </tr>");
 	      }).join('');
-	      this._container.innerHTML = rows ? "<div class=\"title\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>                 \n                        <tr>\n                            <td class=\"text\">".concat(translate$c('project.species'), "</td>\n                            <td class=\"text\" colspan=\"3\">").concat(translate$c('project.stock.label'), ", ").concat(translate$c('units.m'), "<sup>3</sup></td>\n                        </tr>\n                        <tr>\n                            <td></td>\n                            <td class=\"text\">").concat(translate$c('project.stock.permitted'), "</td>                        \n                            <td class=\"text\">").concat(translate$c('project.stock.probable'), "</td>\n                            <td class=\"text\">").concat(translate$c('project.stock.total'), "</td>\n                        </tr>\n                    </tbody>\t\t\t\t\t\t\n                </table>\n            </div>\n            <div class=\"content scrollable\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>").concat(rows, "</tbody>\n                </table>\n            </div>") : '';
+	      this._container.innerHTML = rows ? "<div class=\"title\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>                 \n                        <tr>\n                            <td class=\"text\">".concat(translate$d('project.species'), "</td>\n                            <td class=\"text\" colspan=\"6\">").concat(translate$d('project.stock.label'), ", ").concat(translate$d('units.m'), "<sup>3</sup></td>\n                        </tr>\n                        <tr>\n                            <td></td>\n                            <td class=\"text text-top\" colspan=\"2\">").concat(translate$d('project.stock.permitted'), "</td>                        \n                            <td class=\"text text-top\" colspan=\"2\">").concat(translate$d('project.stock.probable'), "</td>\n                            <td class=\"text text-top\" colspan=\"2\">").concat(translate$d('project.stock.total'), "</td>\n                        </tr>\n                        <tr>\n                            <td></td>\n                            <td class=\"text text-bottom\">").concat(translate$d('project.stock.general'), "</td>\n                            <td class=\"text text-bottom\">").concat(translate$d('project.stock.deal'), "</td>\n                            <td class=\"text text-bottom\">").concat(translate$d('project.stock.general'), "</td>\n                            <td class=\"text text-bottom\">").concat(translate$d('project.stock.deal'), "</td>\n                            <td class=\"text text-bottom\">").concat(translate$d('project.stock.general'), "</td>\n                            <td class=\"text text-bottom\">").concat(translate$d('project.stock.deal'), "</td>\n                        </tr>\n                    </tbody>\t\t\t\t\t\t\n                </table>\n            </div>\n            <div class=\"content scrollable\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>").concat(rows, "</tbody>\n                </table>\n            </div>") : '';
 	    }
 	  }]);
 
 	  return SpeciesTable;
 	}(EventTarget);
 
-	var translate$d = T.getText.bind(T);
+	var translate$e = T.getText.bind(T);
 
 	var Species = /*#__PURE__*/function () {
 	  function Species(container) {
@@ -65921,7 +65970,7 @@ var Forestry = (function () {
 
 	    this._species = [];
 	    this._container = container;
-	    this._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<thead class=\"menu\">\n\t\t\t\t<tr>\n\t\t\t\t\t<th colspan=\"3\">\n\t\t\t\t\t\t<button class=\"stock active\">".concat(translate$d('project.stock.table'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"permitted\">").concat(translate$d('project.stock.permitted'), "</button>\n\t\t\t\t\t</th>\t\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"probable\">").concat(translate$d('project.stock.probable'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"total\">").concat(translate$d('project.stock.total'), "</button>\n\t\t\t\t\t</th>\t\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td colspan=\"3\">\n\t\t\t\t\t\t<div class=\"table\"></div>\n\t\t\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t\t</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
+	    this._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<thead class=\"menu\">\n\t\t\t\t<tr>\n\t\t\t\t\t<th colspan=\"3\">\n\t\t\t\t\t\t<button class=\"stock active\">".concat(translate$e('project.stock.table'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"permitted\">").concat(translate$e('project.stock.permitted'), "</button>\n\t\t\t\t\t</th>\t\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"probable\">").concat(translate$e('project.stock.probable'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"total\">").concat(translate$e('project.stock.total'), "</button>\n\t\t\t\t\t</th>\t\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td colspan=\"3\">\n\t\t\t\t\t\t<div class=\"table\"></div>\n\t\t\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t\t</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
 	    this._buttons = this._container.querySelectorAll('button');
 
 	    var btnStock = this._container.querySelector('.stock');
@@ -65976,11 +66025,11 @@ var Forestry = (function () {
 	    };
 
 	    var fmt_labels = function fmt_labels(val) {
-	      return "".concat(m(parseFloat(val)), " ").concat(translate$d('units.m3'));
+	      return "".concat(m(parseFloat(val)), " ").concat(translate$e('units.m3'));
 	    };
 
 	    var fmt_value = function fmt_value(val) {
-	      return "".concat(m(parseFloat(val)), " ").concat(translate$d('units.m3'));
+	      return "".concat(m(parseFloat(val)), " ").concat(translate$e('units.m3'));
 	    };
 
 	    var fmt_total = function fmt_total(w) {
@@ -66033,7 +66082,7 @@ var Forestry = (function () {
 	              total: {
 	                show: true,
 	                formatter: fmt_total,
-	                label: translate$d('project.stock.all'),
+	                label: translate$e('project.stock.all'),
 	                fontSize: '12px',
 	                fontWeight: 600
 	              }
@@ -66379,7 +66428,7 @@ var Forestry = (function () {
 	  return Project;
 	}(View$1);
 
-	var translate$e = T.getText.bind(T);
+	var translate$f = T.getText.bind(T);
 
 	var indexByName = function indexByName(layer, name) {
 	  var _layer$getGmxProperti = layer.getGmxProperties(),
@@ -66690,7 +66739,7 @@ var Forestry = (function () {
 
 	        this._layers.quadrants.repaint();
 	      } else {
-	        this._notification.error(translate$e('forbidden.project.create'));
+	        this._notification.error(translate$f('forbidden.project.create'), NOTIFY_TIMEOUT);
 	      }
 	    } // draft
 
@@ -66765,7 +66814,7 @@ var Forestry = (function () {
 	                return _context6.abrupt("return", true);
 
 	              case 23:
-	                this._notification.warn(translate$e('quadrant.invalid'));
+	                this._notification.warn(translate$f('quadrant.invalid'), NOTIFY_TIMEOUT);
 
 	                return _context6.abrupt("return", false);
 
@@ -66774,7 +66823,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 27:
-	                this._notification.error(translate$e('forbidden.project.edit'));
+	                this._notification.error(translate$f('forbidden.project.edit'), NOTIFY_TIMEOUT);
 
 	              case 28:
 	              case "end":
@@ -66824,7 +66873,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 8:
-	                this._notification.error(translate$e('forbidden.project.edit'));
+	                this._notification.error(translate$f('forbidden.project.edit'), NOTIFY_TIMEOUT);
 
 	              case 9:
 	              case "end":
@@ -66955,7 +67004,7 @@ var Forestry = (function () {
 	                      species: ForestStat
 	                    };
 	                  } else {
-	                    this._notification.warn(translate$e('quadrant.invalid'));
+	                    this._notification.warn(translate$f('quadrant.invalid'), NOTIFY_TIMEOUT);
 	                  }
 
 	                  this._project.open(this._valid);
@@ -67018,7 +67067,7 @@ var Forestry = (function () {
 	                      species: ForestStat
 	                    };
 	                  } else {
-	                    this._notification.warn(translate$e('quadrant.invalid'));
+	                    this._notification.warn(translate$f('quadrant.invalid'), NOTIFY_TIMEOUT);
 	                  }
 
 	                  this._project.open(this._valid);
@@ -67211,7 +67260,7 @@ var Forestry = (function () {
 	  return Quadrants;
 	}(View$1);
 
-	var translate$f = T.getText.bind(T);
+	var translate$g = T.getText.bind(T);
 
 	var Quadrants$2 = /*#__PURE__*/function (_LayerController) {
 	  _inherits(Quadrants, _LayerController);
@@ -67351,7 +67400,7 @@ var Forestry = (function () {
 	                  } else {
 	                    this._view.close();
 
-	                    this._notification.warn(translate$f('warn.notavailable'));
+	                    this._notification.warn(translate$g('warn.notavailable'), NOTIFY_TIMEOUT);
 	                  }
 	                } else {
 	                  this._view.close();
@@ -67379,7 +67428,7 @@ var Forestry = (function () {
 	  return Quadrants;
 	}(LayerController);
 
-	var translate$g = T.getText.bind(T);
+	var translate$h = T.getText.bind(T);
 
 	var RasterCatalog = /*#__PURE__*/function () {
 	  function RasterCatalog(_ref) {
@@ -67403,7 +67452,7 @@ var Forestry = (function () {
 	    if (ids.some(function (id) {
 	      return _this._layers[id];
 	    })) {
-	      var p = this._legend.addGroup('rasters', translate$g('legend.rasters'));
+	      var p = this._legend.addGroup('rasters', translate$h('legend.rasters'));
 
 	      ids.forEach(function (kind) {
 	        var layer = _this._layers[kind];
@@ -67411,7 +67460,7 @@ var Forestry = (function () {
 	        if (layer) {
 	          layer.setZIndexOffset(zIndexOffset);
 
-	          _this._legend.addComponent(kind, translate$g("legend.".concat(kind)), p);
+	          _this._legend.addComponent(kind, translate$h("legend.".concat(kind)), p);
 	        }
 	      });
 
@@ -67864,7 +67913,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 9:
-	                this._notification.error(translate('forbidden.analytics'));
+	                this._notification.error(translate('forbidden.analytics'), NOTIFY_TIMEOUT);
 
 	              case 10:
 	              case "end":
@@ -68174,7 +68223,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 7:
-	                this._notification.error(translate('forbidden.requests'));
+	                this._notification.error(translate('forbidden.requests'), NOTIFY_TIMEOUT);
 
 	              case 8:
 	              case "end":
@@ -68213,7 +68262,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 5:
-	                this._notification.error(translate('forbidden.project.remove'));
+	                this._notification.error(translate('forbidden.project.remove'), NOTIFY_TIMEOUT);
 
 	              case 6:
 	              case "end":
@@ -68498,7 +68547,7 @@ var Forestry = (function () {
 	  return Stands;
 	}(View$1);
 
-	var translate$h = T.getText.bind(T);
+	var translate$i = T.getText.bind(T);
 
 	var Stands$1 = /*#__PURE__*/function (_LayerController) {
 	  _inherits(Stands$1, _LayerController);
@@ -68591,7 +68640,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 18:
-	                this._notification.warn(translate$h('warn.notavailable'));
+	                this._notification.warn(translate$i('warn.notavailable'), NOTIFY_TIMEOUT);
 
 	              case 19:
 	              case "end":
@@ -68611,93 +68660,6 @@ var Forestry = (function () {
 
 	  return Stands$1;
 	}(LayerController);
-
-	var translate$i = T.getText.bind(T);
-	T.addText('rus', {
-	  pager: {
-	    previous: 'Предыдущая',
-	    next: 'Следующая'
-	  }
-	});
-
-	var Pager = /*#__PURE__*/function (_EventTarget) {
-	  _inherits(Pager, _EventTarget);
-
-	  var _super = _createSuper(Pager);
-
-	  function Pager(container) {
-	    var _this;
-
-	    _classCallCheck(this, Pager);
-
-	    _this = _super.call(this);
-	    _this._container = container;
-	    _this._container.innerHTML = "<table class=\"scanex-forestry-pager\" cellpadding=\"0\" cellspacing=\"0\">\n            <tr>\n                <td>\n                    <button class=\"first\">1</button>\n                </td>                \n                <td>\n                    <button class=\"previous\">".concat(translate$i('pager.previous'), "</button>\n                </td>\n                <td>\n                    <input type=\"text\" value=\"\" />\n                </td>\n                <td>\n                    <button class=\"next\">").concat(translate$i('pager.next'), "</button>\n                </td>                \n                <td>\n                    <button class=\"last\"></button>\n                </td>\n            </tr>\n        </table>");
-
-	    _this._container.querySelector('.first').addEventListener('click', function (e) {
-	      e.stopPropagation();
-	      _this.page = 1;
-	    });
-
-	    _this._container.querySelector('.previous').addEventListener('click', function (e) {
-	      e.stopPropagation();
-	      _this.page -= 1;
-	    });
-
-	    _this._container.querySelector('.next').addEventListener('click', function (e) {
-	      e.stopPropagation();
-	      _this.page += 1;
-	    });
-
-	    _this._container.querySelector('.last').addEventListener('click', function (e) {
-	      e.stopPropagation();
-	      _this.page = _this.pages;
-	    });
-
-	    _this._current = _this._container.querySelector('input');
-
-	    _this._current.addEventListener('change', function (e) {
-	      e.stopPropagation();
-	      _this.page = parseInt(_this._current.value, 10);
-	    });
-
-	    _this._last = _this._container.querySelector('.last');
-	    _this._pages = 1;
-	    _this.page = 1;
-	    return _this;
-	  }
-
-	  _createClass(Pager, [{
-	    key: "page",
-	    get: function get() {
-	      return this._page;
-	    },
-	    set: function set(page) {
-	      if (Number.isInteger(page) && 1 <= page && page <= this.pages) {
-	        this._page = page;
-	        this._current.value = this._page;
-	        var event = document.createEvent('Event');
-	        event.initEvent('change', false, false);
-	        this.dispatchEvent(event);
-	      } else {
-	        this._current.value = this._page;
-	      }
-	    }
-	  }, {
-	    key: "pages",
-	    get: function get() {
-	      return this._pages;
-	    },
-	    set: function set(pages) {
-	      if (Number.isInteger(pages) && 1 <= this.page && this.page <= pages) {
-	        this._pages = pages;
-	        this._last.innerText = pages;
-	      }
-	    }
-	  }]);
-
-	  return Pager;
-	}(EventTarget);
 
 	var strings$b = {
 	  rus: {
@@ -68728,6 +68690,7 @@ var Forestry = (function () {
 	        url: 'Адрес',
 	        ok: 'Подтвердить',
 	        zoom: 'Масштаб',
+	        advanced: 'Расширенные настройки',
 	        subdomains: 'subdomains',
 	        errorTileUrl: 'errorTileUrl',
 	        zoomOffset: 'zoomOffset',
@@ -68913,12 +68876,14 @@ var Forestry = (function () {
 
 	    _this = _super.call(this, {
 	      title: translate$j('uploaded.tms.title'),
-	      id: 'tms-view'
+	      modal: true,
+	      top: 200,
+	      left: 400
 	    });
 
 	    _this._element.classList.add('scanex-forestry-tms-view');
 
-	    _this.content.innerHTML = "<div class=\"name\">\n                <label>".concat(translate$j('uploaded.tms.name'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"url\">\n                <label>").concat(translate$j('uploaded.tms.url'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"zoom\">\n                <label>").concat(translate$j('uploaded.tms.zoom'), "</label>\n                <div></div>\n            </div>\n            <div class=\"subdomains\">\n                <label>").concat(translate$j('uploaded.tms.subdomains'), "</label>              \n                <input type=\"text\" value=\"abc\">                \n            </div>\n            <div class=\"error-tile-url\">\n                <label>").concat(translate$j('uploaded.tms.errorTileUrl'), "</label>\n                <input class=\"value\" type=\"text\" value=\"\">                \n            </div>\n            <div class=\"zoom-offset\">\n                <label>").concat(translate$j('uploaded.tms.zoomOffset'), "</label>\n                <div></div>\n            </div>\n            <div class=\"tile-reverse\">\n                <label>").concat(translate$j('uploaded.tms.tileReverse'), "</label>                \n                <input type=\"checkbox\" value=\"tileReverse\">                \n            </div>\n            <div class=\"zoom-reverse\">\n                <label>").concat(translate$j('uploaded.tms.zoomReverse'), "</label>                \n                <input type=\"checkbox\" value=\"zoomReverse\">                \n            </div>\n            <div class=\"detect-retina\">\n                <label>").concat(translate$j('uploaded.tms.detectRetina'), "</label>                \n                <input type=\"checkbox\" value=\"detectRetina\">                \n            </div>\n            <div class=\"use-credentials\">\n                <label>").concat(translate$j('uploaded.tms.useCredentials'), "</label>            \n                <input type=\"checkbox\" value=\"useCredentials\">                \n            </div>");
+	    _this.content.innerHTML = "<div class=\"name\">\n                <label>".concat(translate$j('uploaded.tms.name'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"url\">\n                <label>").concat(translate$j('uploaded.tms.url'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"zoom\">\n                <label>").concat(translate$j('uploaded.tms.zoom'), "</label>\n                <div></div>\n            </div>\n            <div class=\"advanced-button\">\n                <label>").concat(translate$j('uploaded.tms.advanced'), "</label>\n                <i class=\"scanex-uploaded-icon down\"></i>\n            </div>\n            <div class=\"advanced-content hidden\">\n                <div class=\"subdomains\">\n                    <label>").concat(translate$j('uploaded.tms.subdomains'), "</label>              \n                    <input type=\"text\" value=\"abc\">                \n                </div>\n                <div class=\"error-tile-url\">\n                    <label>").concat(translate$j('uploaded.tms.errorTileUrl'), "</label>\n                    <input class=\"value\" type=\"text\" value=\"\">                \n                </div>\n                <div class=\"zoom-offset\">\n                    <label>").concat(translate$j('uploaded.tms.zoomOffset'), "</label>\n                    <div></div>\n                </div>\n                <div class=\"tile-reverse\">\n                    <label>").concat(translate$j('uploaded.tms.tileReverse'), "</label>                \n                    <input type=\"checkbox\" value=\"tileReverse\">                \n                </div>\n                <div class=\"zoom-reverse\">\n                    <label>").concat(translate$j('uploaded.tms.zoomReverse'), "</label>                \n                    <input type=\"checkbox\" value=\"zoomReverse\">                \n                </div>\n                <div class=\"detect-retina\">\n                    <label>").concat(translate$j('uploaded.tms.detectRetina'), "</label>                \n                    <input type=\"checkbox\" value=\"detectRetina\">                \n                </div>\n                <div class=\"use-credentials\">\n                    <label>").concat(translate$j('uploaded.tms.useCredentials'), "</label>            \n                    <input type=\"checkbox\" value=\"useCredentials\">                \n                </div>\n            </div>");
 	    _this._name = _this.content.querySelector('.name').querySelector('input');
 	    _this._url = _this.content.querySelector('.url').querySelector('input');
 	    _this._zoom = new Interval(_this.content.querySelector('.zoom').querySelector('div'), {
@@ -68928,6 +68893,26 @@ var Forestry = (function () {
 	    });
 	    _this._zoom.lo = 1;
 	    _this._zoom.hi = 21;
+
+	    var btnAdvanced = _this.content.querySelector('.advanced-button');
+
+	    var icoAdvanced = btnAdvanced.querySelector('.scanex-uploaded-icon');
+
+	    var adv = _this.content.querySelector('.advanced-content');
+
+	    btnAdvanced.addEventListener('click', function (e) {
+	      e.stopPropagation();
+
+	      if (adv.classList.contains('hidden')) {
+	        adv.classList.remove('hidden');
+	        icoAdvanced.classList.remove('down');
+	        icoAdvanced.classList.add('up');
+	      } else {
+	        adv.classList.add('hidden');
+	        icoAdvanced.classList.remove('up');
+	        icoAdvanced.classList.add('down');
+	      }
+	    });
 	    _this._subdomains = _this.content.querySelector('.subdomains').querySelector('input');
 	    _this._errorTileUrl = _this.content.querySelector('.error-tile-url').querySelector('input');
 	    _this._zoomOffset = new Spinner(_this.content.querySelector('.zoom-offset').querySelector('div'));
@@ -69165,7 +69150,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 7:
-	                this._notification.error(translate$k('forbidden.uploaded'));
+	                this._notification.error(translate$k('forbidden.uploaded'), NOTIFY_TIMEOUT);
 
 	              case 8:
 	              case "end":
@@ -69398,7 +69383,2716 @@ var Forestry = (function () {
 	  return Warehouses;
 	}(LayerController);
 
-	var translate$l = T.getText.bind(T);
+	var commonjsGlobal$2 = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof commonjsGlobal !== 'undefined' ? commonjsGlobal : typeof self !== 'undefined' ? self : {};
+
+	function createCommonjsModule$2(fn, module) {
+	  return module = {
+	    exports: {}
+	  }, fn(module, module.exports), module.exports;
+	}
+
+	var check$2 = function check(it) {
+	  return it && it.Math == Math && it;
+	}; // https://github.com/zloirock/core-js/issues/86#issuecomment-115759028
+
+
+	var global_1$2 = // eslint-disable-next-line no-undef
+	check$2((typeof globalThis === "undefined" ? "undefined" : _typeof(globalThis)) == 'object' && globalThis) || check$2((typeof window === "undefined" ? "undefined" : _typeof(window)) == 'object' && window) || check$2((typeof self === "undefined" ? "undefined" : _typeof(self)) == 'object' && self) || check$2(_typeof(commonjsGlobal$2) == 'object' && commonjsGlobal$2) || // eslint-disable-next-line no-new-func
+	function () {
+	  return this;
+	}() || Function('return this')();
+
+	var fails$2 = function fails(exec) {
+	  try {
+	    return !!exec();
+	  } catch (error) {
+	    return true;
+	  }
+	}; // Thank's IE8 for his funny defineProperty
+
+
+	var descriptors$2 = !fails$2(function () {
+	  return Object.defineProperty({}, 1, {
+	    get: function get() {
+	      return 7;
+	    }
+	  })[1] != 7;
+	});
+	var nativePropertyIsEnumerable$3 = {}.propertyIsEnumerable;
+	var getOwnPropertyDescriptor$5 = Object.getOwnPropertyDescriptor; // Nashorn ~ JDK8 bug
+
+	var NASHORN_BUG$2 = getOwnPropertyDescriptor$5 && !nativePropertyIsEnumerable$3.call({
+	  1: 2
+	}, 1); // `Object.prototype.propertyIsEnumerable` method implementation
+	// https://tc39.github.io/ecma262/#sec-object.prototype.propertyisenumerable
+
+	var f$9 = NASHORN_BUG$2 ? function propertyIsEnumerable(V) {
+	  var descriptor = getOwnPropertyDescriptor$5(this, V);
+	  return !!descriptor && descriptor.enumerable;
+	} : nativePropertyIsEnumerable$3;
+	var objectPropertyIsEnumerable$2 = {
+	  f: f$9
+	};
+
+	var createPropertyDescriptor$2 = function createPropertyDescriptor(bitmap, value) {
+	  return {
+	    enumerable: !(bitmap & 1),
+	    configurable: !(bitmap & 2),
+	    writable: !(bitmap & 4),
+	    value: value
+	  };
+	};
+
+	var toString$3 = {}.toString;
+
+	var classofRaw$2 = function classofRaw(it) {
+	  return toString$3.call(it).slice(8, -1);
+	};
+
+	var split$2 = ''.split; // fallback for non-array-like ES3 and non-enumerable old V8 strings
+
+	var indexedObject$2 = fails$2(function () {
+	  // throws an error in rhino, see https://github.com/mozilla/rhino/issues/346
+	  // eslint-disable-next-line no-prototype-builtins
+	  return !Object('z').propertyIsEnumerable(0);
+	}) ? function (it) {
+	  return classofRaw$2(it) == 'String' ? split$2.call(it, '') : Object(it);
+	} : Object; // `RequireObjectCoercible` abstract operation
+	// https://tc39.github.io/ecma262/#sec-requireobjectcoercible
+
+	var requireObjectCoercible$2 = function requireObjectCoercible(it) {
+	  if (it == undefined) throw TypeError("Can't call method on " + it);
+	  return it;
+	}; // toObject with fallback for non-array-like ES3 strings
+
+
+	var toIndexedObject$2 = function toIndexedObject(it) {
+	  return indexedObject$2(requireObjectCoercible$2(it));
+	};
+
+	var isObject$2 = function isObject(it) {
+	  return _typeof(it) === 'object' ? it !== null : typeof it === 'function';
+	}; // `ToPrimitive` abstract operation
+	// https://tc39.github.io/ecma262/#sec-toprimitive
+	// instead of the ES6 spec version, we didn't implement @@toPrimitive case
+	// and the second argument - flag - preferred type is a string
+
+
+	var toPrimitive$2 = function toPrimitive(input, PREFERRED_STRING) {
+	  if (!isObject$2(input)) return input;
+	  var fn, val;
+	  if (PREFERRED_STRING && typeof (fn = input.toString) == 'function' && !isObject$2(val = fn.call(input))) return val;
+	  if (typeof (fn = input.valueOf) == 'function' && !isObject$2(val = fn.call(input))) return val;
+	  if (!PREFERRED_STRING && typeof (fn = input.toString) == 'function' && !isObject$2(val = fn.call(input))) return val;
+	  throw TypeError("Can't convert object to primitive value");
+	};
+
+	var hasOwnProperty$2 = {}.hasOwnProperty;
+
+	var has$3 = function has(it, key) {
+	  return hasOwnProperty$2.call(it, key);
+	};
+
+	var document$1$2 = global_1$2.document; // typeof document.createElement is 'object' in old IE
+
+	var EXISTS$2 = isObject$2(document$1$2) && isObject$2(document$1$2.createElement);
+
+	var documentCreateElement$2 = function documentCreateElement(it) {
+	  return EXISTS$2 ? document$1$2.createElement(it) : {};
+	}; // Thank's IE8 for his funny defineProperty
+
+
+	var ie8DomDefine$2 = !descriptors$2 && !fails$2(function () {
+	  return Object.defineProperty(documentCreateElement$2('div'), 'a', {
+	    get: function get() {
+	      return 7;
+	    }
+	  }).a != 7;
+	});
+	var nativeGetOwnPropertyDescriptor$4 = Object.getOwnPropertyDescriptor; // `Object.getOwnPropertyDescriptor` method
+	// https://tc39.github.io/ecma262/#sec-object.getownpropertydescriptor
+
+	var f$1$2 = descriptors$2 ? nativeGetOwnPropertyDescriptor$4 : function getOwnPropertyDescriptor(O, P) {
+	  O = toIndexedObject$2(O);
+	  P = toPrimitive$2(P, true);
+	  if (ie8DomDefine$2) try {
+	    return nativeGetOwnPropertyDescriptor$4(O, P);
+	  } catch (error) {
+	    /* empty */
+	  }
+	  if (has$3(O, P)) return createPropertyDescriptor$2(!objectPropertyIsEnumerable$2.f.call(O, P), O[P]);
+	};
+	var objectGetOwnPropertyDescriptor$2 = {
+	  f: f$1$2
+	};
+
+	var anObject$2 = function anObject(it) {
+	  if (!isObject$2(it)) {
+	    throw TypeError(String(it) + ' is not an object');
+	  }
+
+	  return it;
+	};
+
+	var nativeDefineProperty$3 = Object.defineProperty; // `Object.defineProperty` method
+	// https://tc39.github.io/ecma262/#sec-object.defineproperty
+
+	var f$2$2 = descriptors$2 ? nativeDefineProperty$3 : function defineProperty(O, P, Attributes) {
+	  anObject$2(O);
+	  P = toPrimitive$2(P, true);
+	  anObject$2(Attributes);
+	  if (ie8DomDefine$2) try {
+	    return nativeDefineProperty$3(O, P, Attributes);
+	  } catch (error) {
+	    /* empty */
+	  }
+	  if ('get' in Attributes || 'set' in Attributes) throw TypeError('Accessors not supported');
+	  if ('value' in Attributes) O[P] = Attributes.value;
+	  return O;
+	};
+	var objectDefineProperty$2 = {
+	  f: f$2$2
+	};
+	var createNonEnumerableProperty$2 = descriptors$2 ? function (object, key, value) {
+	  return objectDefineProperty$2.f(object, key, createPropertyDescriptor$2(1, value));
+	} : function (object, key, value) {
+	  object[key] = value;
+	  return object;
+	};
+
+	var setGlobal$2 = function setGlobal(key, value) {
+	  try {
+	    createNonEnumerableProperty$2(global_1$2, key, value);
+	  } catch (error) {
+	    global_1$2[key] = value;
+	  }
+
+	  return value;
+	};
+
+	var SHARED$2 = '__core-js_shared__';
+	var store$3 = global_1$2[SHARED$2] || setGlobal$2(SHARED$2, {});
+	var sharedStore$2 = store$3;
+	var functionToString$2 = Function.toString; // this helper broken in `3.4.1-3.4.4`, so we can't use `shared` helper
+
+	if (typeof sharedStore$2.inspectSource != 'function') {
+	  sharedStore$2.inspectSource = function (it) {
+	    return functionToString$2.call(it);
+	  };
+	}
+
+	var inspectSource$2 = sharedStore$2.inspectSource;
+	var WeakMap$3 = global_1$2.WeakMap;
+	var nativeWeakMap$2 = typeof WeakMap$3 === 'function' && /native code/.test(inspectSource$2(WeakMap$3));
+	var shared$2 = createCommonjsModule$2(function (module) {
+	  (module.exports = function (key, value) {
+	    return sharedStore$2[key] || (sharedStore$2[key] = value !== undefined ? value : {});
+	  })('versions', []).push({
+	    version: '3.7.0',
+	    mode: 'global',
+	    copyright: '© 2020 Denis Pushkarev (zloirock.ru)'
+	  });
+	});
+	var id$2 = 0;
+	var postfix$2 = Math.random();
+
+	var uid$2 = function uid(key) {
+	  return 'Symbol(' + String(key === undefined ? '' : key) + ')_' + (++id$2 + postfix$2).toString(36);
+	};
+
+	var keys$5 = shared$2('keys');
+
+	var sharedKey$2 = function sharedKey(key) {
+	  return keys$5[key] || (keys$5[key] = uid$2(key));
+	};
+
+	var hiddenKeys$3 = {};
+	var WeakMap$1$2 = global_1$2.WeakMap;
+	var set$4, get$3, has$1$2;
+
+	var enforce$2 = function enforce(it) {
+	  return has$1$2(it) ? get$3(it) : set$4(it, {});
+	};
+
+	var getterFor$2 = function getterFor(TYPE) {
+	  return function (it) {
+	    var state;
+
+	    if (!isObject$2(it) || (state = get$3(it)).type !== TYPE) {
+	      throw TypeError('Incompatible receiver, ' + TYPE + ' required');
+	    }
+
+	    return state;
+	  };
+	};
+
+	if (nativeWeakMap$2) {
+	  var store$1$2 = sharedStore$2.state || (sharedStore$2.state = new WeakMap$1$2());
+	  var wmget$2 = store$1$2.get;
+	  var wmhas$2 = store$1$2.has;
+	  var wmset$2 = store$1$2.set;
+
+	  set$4 = function set(it, metadata) {
+	    metadata.facade = it;
+	    wmset$2.call(store$1$2, it, metadata);
+	    return metadata;
+	  };
+
+	  get$3 = function get(it) {
+	    return wmget$2.call(store$1$2, it) || {};
+	  };
+
+	  has$1$2 = function has$1(it) {
+	    return wmhas$2.call(store$1$2, it);
+	  };
+	} else {
+	  var STATE$2 = sharedKey$2('state');
+	  hiddenKeys$3[STATE$2] = true;
+
+	  set$4 = function set(it, metadata) {
+	    metadata.facade = it;
+	    createNonEnumerableProperty$2(it, STATE$2, metadata);
+	    return metadata;
+	  };
+
+	  get$3 = function get(it) {
+	    return has$3(it, STATE$2) ? it[STATE$2] : {};
+	  };
+
+	  has$1$2 = function has$1(it) {
+	    return has$3(it, STATE$2);
+	  };
+	}
+
+	var internalState$2 = {
+	  set: set$4,
+	  get: get$3,
+	  has: has$1$2,
+	  enforce: enforce$2,
+	  getterFor: getterFor$2
+	};
+	var redefine$2 = createCommonjsModule$2(function (module) {
+	  var getInternalState = internalState$2.get;
+	  var enforceInternalState = internalState$2.enforce;
+	  var TEMPLATE = String(String).split('String');
+	  (module.exports = function (O, key, value, options) {
+	    var unsafe = options ? !!options.unsafe : false;
+	    var simple = options ? !!options.enumerable : false;
+	    var noTargetGet = options ? !!options.noTargetGet : false;
+	    var state;
+
+	    if (typeof value == 'function') {
+	      if (typeof key == 'string' && !has$3(value, 'name')) {
+	        createNonEnumerableProperty$2(value, 'name', key);
+	      }
+
+	      state = enforceInternalState(value);
+
+	      if (!state.source) {
+	        state.source = TEMPLATE.join(typeof key == 'string' ? key : '');
+	      }
+	    }
+
+	    if (O === global_1$2) {
+	      if (simple) O[key] = value;else setGlobal$2(key, value);
+	      return;
+	    } else if (!unsafe) {
+	      delete O[key];
+	    } else if (!noTargetGet && O[key]) {
+	      simple = true;
+	    }
+
+	    if (simple) O[key] = value;else createNonEnumerableProperty$2(O, key, value); // add fake Function#toString for correct work wrapped methods / constructors with methods like LoDash isNative
+	  })(Function.prototype, 'toString', function toString() {
+	    return typeof this == 'function' && getInternalState(this).source || inspectSource$2(this);
+	  });
+	});
+	var path$2 = global_1$2;
+
+	var aFunction$3 = function aFunction(variable) {
+	  return typeof variable == 'function' ? variable : undefined;
+	};
+
+	var getBuiltIn$2 = function getBuiltIn(namespace, method) {
+	  return arguments.length < 2 ? aFunction$3(path$2[namespace]) || aFunction$3(global_1$2[namespace]) : path$2[namespace] && path$2[namespace][method] || global_1$2[namespace] && global_1$2[namespace][method];
+	};
+
+	var ceil$3 = Math.ceil;
+	var floor$a = Math.floor; // `ToInteger` abstract operation
+	// https://tc39.github.io/ecma262/#sec-tointeger
+
+	var toInteger$2 = function toInteger(argument) {
+	  return isNaN(argument = +argument) ? 0 : (argument > 0 ? floor$a : ceil$3)(argument);
+	};
+
+	var min$8 = Math.min; // `ToLength` abstract operation
+	// https://tc39.github.io/ecma262/#sec-tolength
+
+	var toLength$2 = function toLength(argument) {
+	  return argument > 0 ? min$8(toInteger$2(argument), 0x1FFFFFFFFFFFFF) : 0; // 2 ** 53 - 1 == 9007199254740991
+	};
+
+	var max$5 = Math.max;
+	var min$1$2 = Math.min; // Helper for a popular repeating case of the spec:
+	// Let integer be ? ToInteger(index).
+	// If integer < 0, let result be max((length + integer), 0); else let result be min(integer, length).
+
+	var toAbsoluteIndex$2 = function toAbsoluteIndex(index, length) {
+	  var integer = toInteger$2(index);
+	  return integer < 0 ? max$5(integer + length, 0) : min$1$2(integer, length);
+	}; // `Array.prototype.{ indexOf, includes }` methods implementation
+
+
+	var createMethod$6 = function createMethod(IS_INCLUDES) {
+	  return function ($this, el, fromIndex) {
+	    var O = toIndexedObject$2($this);
+	    var length = toLength$2(O.length);
+	    var index = toAbsoluteIndex$2(fromIndex, length);
+	    var value; // Array#includes uses SameValueZero equality algorithm
+	    // eslint-disable-next-line no-self-compare
+
+	    if (IS_INCLUDES && el != el) while (length > index) {
+	      value = O[index++]; // eslint-disable-next-line no-self-compare
+
+	      if (value != value) return true; // Array#indexOf ignores holes, Array#includes - not
+	    } else for (; length > index; index++) {
+	      if ((IS_INCLUDES || index in O) && O[index] === el) return IS_INCLUDES || index || 0;
+	    }
+	    return !IS_INCLUDES && -1;
+	  };
+	};
+
+	var arrayIncludes$2 = {
+	  // `Array.prototype.includes` method
+	  // https://tc39.github.io/ecma262/#sec-array.prototype.includes
+	  includes: createMethod$6(true),
+	  // `Array.prototype.indexOf` method
+	  // https://tc39.github.io/ecma262/#sec-array.prototype.indexof
+	  indexOf: createMethod$6(false)
+	};
+	var indexOf$2 = arrayIncludes$2.indexOf;
+
+	var objectKeysInternal$2 = function objectKeysInternal(object, names) {
+	  var O = toIndexedObject$2(object);
+	  var i = 0;
+	  var result = [];
+	  var key;
+
+	  for (key in O) {
+	    !has$3(hiddenKeys$3, key) && has$3(O, key) && result.push(key);
+	  } // Don't enum bug & hidden keys
+
+
+	  while (names.length > i) {
+	    if (has$3(O, key = names[i++])) {
+	      ~indexOf$2(result, key) || result.push(key);
+	    }
+	  }
+
+	  return result;
+	}; // IE8- don't enum bug keys
+
+
+	var enumBugKeys$2 = ['constructor', 'hasOwnProperty', 'isPrototypeOf', 'propertyIsEnumerable', 'toLocaleString', 'toString', 'valueOf'];
+	var hiddenKeys$1$2 = enumBugKeys$2.concat('length', 'prototype'); // `Object.getOwnPropertyNames` method
+	// https://tc39.github.io/ecma262/#sec-object.getownpropertynames
+
+	var f$3$2 = Object.getOwnPropertyNames || function getOwnPropertyNames(O) {
+	  return objectKeysInternal$2(O, hiddenKeys$1$2);
+	};
+
+	var objectGetOwnPropertyNames$2 = {
+	  f: f$3$2
+	};
+	var f$4$2 = Object.getOwnPropertySymbols;
+	var objectGetOwnPropertySymbols$2 = {
+	  f: f$4$2
+	}; // all object keys, includes non-enumerable and symbols
+
+	var ownKeys$3 = getBuiltIn$2('Reflect', 'ownKeys') || function ownKeys(it) {
+	  var keys = objectGetOwnPropertyNames$2.f(anObject$2(it));
+	  var getOwnPropertySymbols = objectGetOwnPropertySymbols$2.f;
+	  return getOwnPropertySymbols ? keys.concat(getOwnPropertySymbols(it)) : keys;
+	};
+
+	var copyConstructorProperties$2 = function copyConstructorProperties(target, source) {
+	  var keys = ownKeys$3(source);
+	  var defineProperty = objectDefineProperty$2.f;
+	  var getOwnPropertyDescriptor = objectGetOwnPropertyDescriptor$2.f;
+
+	  for (var i = 0; i < keys.length; i++) {
+	    var key = keys[i];
+	    if (!has$3(target, key)) defineProperty(target, key, getOwnPropertyDescriptor(source, key));
+	  }
+	};
+
+	var replacement$2 = /#|\.prototype\./;
+
+	var isForced$2 = function isForced(feature, detection) {
+	  var value = data$2[normalize$2(feature)];
+	  return value == POLYFILL$2 ? true : value == NATIVE$2 ? false : typeof detection == 'function' ? fails$2(detection) : !!detection;
+	};
+
+	var normalize$2 = isForced$2.normalize = function (string) {
+	  return String(string).replace(replacement$2, '.').toLowerCase();
+	};
+
+	var data$2 = isForced$2.data = {};
+	var NATIVE$2 = isForced$2.NATIVE = 'N';
+	var POLYFILL$2 = isForced$2.POLYFILL = 'P';
+	var isForced_1$2 = isForced$2;
+	var getOwnPropertyDescriptor$1$2 = objectGetOwnPropertyDescriptor$2.f;
+	/*
+	  options.target      - name of the target object
+	  options.global      - target is the global object
+	  options.stat        - export as static methods of target
+	  options.proto       - export as prototype methods of target
+	  options.real        - real prototype method for the `pure` version
+	  options.forced      - export even if the native feature is available
+	  options.bind        - bind methods to the target, required for the `pure` version
+	  options.wrap        - wrap constructors to preventing global pollution, required for the `pure` version
+	  options.unsafe      - use the simple assignment of property instead of delete + defineProperty
+	  options.sham        - add a flag to not completely full polyfills
+	  options.enumerable  - export as enumerable property
+	  options.noTargetGet - prevent calling a getter on target
+	*/
+
+	var _export$2 = function _export(options, source) {
+	  var TARGET = options.target;
+	  var GLOBAL = options.global;
+	  var STATIC = options.stat;
+	  var FORCED, target, key, targetProperty, sourceProperty, descriptor;
+
+	  if (GLOBAL) {
+	    target = global_1$2;
+	  } else if (STATIC) {
+	    target = global_1$2[TARGET] || setGlobal$2(TARGET, {});
+	  } else {
+	    target = (global_1$2[TARGET] || {}).prototype;
+	  }
+
+	  if (target) for (key in source) {
+	    sourceProperty = source[key];
+
+	    if (options.noTargetGet) {
+	      descriptor = getOwnPropertyDescriptor$1$2(target, key);
+	      targetProperty = descriptor && descriptor.value;
+	    } else targetProperty = target[key];
+
+	    FORCED = isForced_1$2(GLOBAL ? key : TARGET + (STATIC ? '.' : '#') + key, options.forced); // contained in target
+
+	    if (!FORCED && targetProperty !== undefined) {
+	      if (_typeof(sourceProperty) === _typeof(targetProperty)) continue;
+	      copyConstructorProperties$2(sourceProperty, targetProperty);
+	    } // add a flag to not completely full polyfills
+
+
+	    if (options.sham || targetProperty && targetProperty.sham) {
+	      createNonEnumerableProperty$2(sourceProperty, 'sham', true);
+	    } // extend global
+
+
+	    redefine$2(target, key, sourceProperty, options);
+	  }
+	}; // `IsArray` abstract operation
+	// https://tc39.github.io/ecma262/#sec-isarray
+
+
+	var isArray$2 = Array.isArray || function isArray(arg) {
+	  return classofRaw$2(arg) == 'Array';
+	}; // `ToObject` abstract operation
+	// https://tc39.github.io/ecma262/#sec-toobject
+
+
+	var toObject$2 = function toObject(argument) {
+	  return Object(requireObjectCoercible$2(argument));
+	};
+
+	var createProperty$2 = function createProperty(object, key, value) {
+	  var propertyKey = toPrimitive$2(key);
+	  if (propertyKey in object) objectDefineProperty$2.f(object, propertyKey, createPropertyDescriptor$2(0, value));else object[propertyKey] = value;
+	};
+
+	var nativeSymbol$2 = !!Object.getOwnPropertySymbols && !fails$2(function () {
+	  // Chrome 38 Symbol has incorrect toString conversion
+	  // eslint-disable-next-line no-undef
+	  return !String(Symbol());
+	});
+	var useSymbolAsUid$2 = nativeSymbol$2 // eslint-disable-next-line no-undef
+	&& !Symbol.sham // eslint-disable-next-line no-undef
+	&& _typeof(Symbol.iterator) == 'symbol';
+	var WellKnownSymbolsStore$3 = shared$2('wks');
+	var Symbol$1$2 = global_1$2.Symbol;
+	var createWellKnownSymbol$2 = useSymbolAsUid$2 ? Symbol$1$2 : Symbol$1$2 && Symbol$1$2.withoutSetter || uid$2;
+
+	var wellKnownSymbol$2 = function wellKnownSymbol(name) {
+	  if (!has$3(WellKnownSymbolsStore$3, name)) {
+	    if (nativeSymbol$2 && has$3(Symbol$1$2, name)) WellKnownSymbolsStore$3[name] = Symbol$1$2[name];else WellKnownSymbolsStore$3[name] = createWellKnownSymbol$2('Symbol.' + name);
+	  }
+
+	  return WellKnownSymbolsStore$3[name];
+	};
+
+	var SPECIES$8 = wellKnownSymbol$2('species'); // `ArraySpeciesCreate` abstract operation
+	// https://tc39.github.io/ecma262/#sec-arrayspeciescreate
+
+	var arraySpeciesCreate$2 = function arraySpeciesCreate(originalArray, length) {
+	  var C;
+
+	  if (isArray$2(originalArray)) {
+	    C = originalArray.constructor; // cross-realm fallback
+
+	    if (typeof C == 'function' && (C === Array || isArray$2(C.prototype))) C = undefined;else if (isObject$2(C)) {
+	      C = C[SPECIES$8];
+	      if (C === null) C = undefined;
+	    }
+	  }
+
+	  return new (C === undefined ? Array : C)(length === 0 ? 0 : length);
+	};
+
+	var engineUserAgent$2 = getBuiltIn$2('navigator', 'userAgent') || '';
+	var process$5 = global_1$2.process;
+	var versions$2 = process$5 && process$5.versions;
+	var v8$2 = versions$2 && versions$2.v8;
+	var match$2, version$2;
+
+	if (v8$2) {
+	  match$2 = v8$2.split('.');
+	  version$2 = match$2[0] + match$2[1];
+	} else if (engineUserAgent$2) {
+	  match$2 = engineUserAgent$2.match(/Edge\/(\d+)/);
+
+	  if (!match$2 || match$2[1] >= 74) {
+	    match$2 = engineUserAgent$2.match(/Chrome\/(\d+)/);
+	    if (match$2) version$2 = match$2[1];
+	  }
+	}
+
+	var engineV8Version$2 = version$2 && +version$2;
+	var SPECIES$1$2 = wellKnownSymbol$2('species');
+
+	var arrayMethodHasSpeciesSupport$2 = function arrayMethodHasSpeciesSupport(METHOD_NAME) {
+	  // We can't use this feature detection in V8 since it causes
+	  // deoptimization and serious performance degradation
+	  // https://github.com/zloirock/core-js/issues/677
+	  return engineV8Version$2 >= 51 || !fails$2(function () {
+	    var array = [];
+	    var constructor = array.constructor = {};
+
+	    constructor[SPECIES$1$2] = function () {
+	      return {
+	        foo: 1
+	      };
+	    };
+
+	    return array[METHOD_NAME](Boolean).foo !== 1;
+	  });
+	};
+
+	var IS_CONCAT_SPREADABLE$2 = wellKnownSymbol$2('isConcatSpreadable');
+	var MAX_SAFE_INTEGER$3 = 0x1FFFFFFFFFFFFF;
+	var MAXIMUM_ALLOWED_INDEX_EXCEEDED$2 = 'Maximum allowed index exceeded'; // We can't use this feature detection in V8 since it causes
+	// deoptimization and serious performance degradation
+	// https://github.com/zloirock/core-js/issues/679
+
+	var IS_CONCAT_SPREADABLE_SUPPORT$2 = engineV8Version$2 >= 51 || !fails$2(function () {
+	  var array = [];
+	  array[IS_CONCAT_SPREADABLE$2] = false;
+	  return array.concat()[0] !== array;
+	});
+	var SPECIES_SUPPORT$2 = arrayMethodHasSpeciesSupport$2('concat');
+
+	var isConcatSpreadable$2 = function isConcatSpreadable(O) {
+	  if (!isObject$2(O)) return false;
+	  var spreadable = O[IS_CONCAT_SPREADABLE$2];
+	  return spreadable !== undefined ? !!spreadable : isArray$2(O);
+	};
+
+	var FORCED$b = !IS_CONCAT_SPREADABLE_SUPPORT$2 || !SPECIES_SUPPORT$2; // `Array.prototype.concat` method
+	// https://tc39.github.io/ecma262/#sec-array.prototype.concat
+	// with adding support of @@isConcatSpreadable and @@species
+
+	_export$2({
+	  target: 'Array',
+	  proto: true,
+	  forced: FORCED$b
+	}, {
+	  concat: function concat(arg) {
+	    // eslint-disable-line no-unused-vars
+	    var O = toObject$2(this);
+	    var A = arraySpeciesCreate$2(O, 0);
+	    var n = 0;
+	    var i, k, length, len, E;
+
+	    for (i = -1, length = arguments.length; i < length; i++) {
+	      E = i === -1 ? O : arguments[i];
+
+	      if (isConcatSpreadable$2(E)) {
+	        len = toLength$2(E.length);
+	        if (n + len > MAX_SAFE_INTEGER$3) throw TypeError(MAXIMUM_ALLOWED_INDEX_EXCEEDED$2);
+
+	        for (k = 0; k < len; k++, n++) {
+	          if (k in E) createProperty$2(A, n, E[k]);
+	        }
+	      } else {
+	        if (n >= MAX_SAFE_INTEGER$3) throw TypeError(MAXIMUM_ALLOWED_INDEX_EXCEEDED$2);
+	        createProperty$2(A, n++, E);
+	      }
+	    }
+
+	    A.length = n;
+	    return A;
+	  }
+	});
+
+	var TO_STRING_TAG$6 = wellKnownSymbol$2('toStringTag');
+	var test$3 = {};
+	test$3[TO_STRING_TAG$6] = 'z';
+	var toStringTagSupport$2 = String(test$3) === '[object z]';
+	var TO_STRING_TAG$1$2 = wellKnownSymbol$2('toStringTag'); // ES3 wrong here
+
+	var CORRECT_ARGUMENTS$2 = classofRaw$2(function () {
+	  return arguments;
+	}()) == 'Arguments'; // fallback for IE11 Script Access Denied error
+
+	var tryGet$2 = function tryGet(it, key) {
+	  try {
+	    return it[key];
+	  } catch (error) {
+	    /* empty */
+	  }
+	}; // getting tag from ES6+ `Object.prototype.toString`
+
+
+	var classof$2 = toStringTagSupport$2 ? classofRaw$2 : function (it) {
+	  var O, tag, result;
+	  return it === undefined ? 'Undefined' : it === null ? 'Null' // @@toStringTag case
+	  : typeof (tag = tryGet$2(O = Object(it), TO_STRING_TAG$1$2)) == 'string' ? tag // builtinTag case
+	  : CORRECT_ARGUMENTS$2 ? classofRaw$2(O) // ES3 arguments fallback
+	  : (result = classofRaw$2(O)) == 'Object' && typeof O.callee == 'function' ? 'Arguments' : result;
+	}; // `Object.prototype.toString` method implementation
+	// https://tc39.github.io/ecma262/#sec-object.prototype.tostring
+
+	var objectToString$2 = toStringTagSupport$2 ? {}.toString : function toString() {
+	  return '[object ' + classof$2(this) + ']';
+	}; // `Object.prototype.toString` method
+	// https://tc39.github.io/ecma262/#sec-object.prototype.tostring
+
+	if (!toStringTagSupport$2) {
+	  redefine$2(Object.prototype, 'toString', objectToString$2, {
+	    unsafe: true
+	  });
+	}
+
+	var nativePromiseConstructor$2 = global_1$2.Promise;
+
+	var redefineAll$2 = function redefineAll(target, src, options) {
+	  for (var key in src) {
+	    redefine$2(target, key, src[key], options);
+	  }
+
+	  return target;
+	};
+
+	var defineProperty$b = objectDefineProperty$2.f;
+	var TO_STRING_TAG$2$2 = wellKnownSymbol$2('toStringTag');
+
+	var setToStringTag$2 = function setToStringTag(it, TAG, STATIC) {
+	  if (it && !has$3(it = STATIC ? it : it.prototype, TO_STRING_TAG$2$2)) {
+	    defineProperty$b(it, TO_STRING_TAG$2$2, {
+	      configurable: true,
+	      value: TAG
+	    });
+	  }
+	};
+
+	var SPECIES$2$2 = wellKnownSymbol$2('species');
+
+	var setSpecies$2 = function setSpecies(CONSTRUCTOR_NAME) {
+	  var Constructor = getBuiltIn$2(CONSTRUCTOR_NAME);
+	  var defineProperty = objectDefineProperty$2.f;
+
+	  if (descriptors$2 && Constructor && !Constructor[SPECIES$2$2]) {
+	    defineProperty(Constructor, SPECIES$2$2, {
+	      configurable: true,
+	      get: function get() {
+	        return this;
+	      }
+	    });
+	  }
+	};
+
+	var aFunction$1$2 = function aFunction$1(it) {
+	  if (typeof it != 'function') {
+	    throw TypeError(String(it) + ' is not a function');
+	  }
+
+	  return it;
+	};
+
+	var anInstance$2 = function anInstance(it, Constructor, name) {
+	  if (!(it instanceof Constructor)) {
+	    throw TypeError('Incorrect ' + (name ? name + ' ' : '') + 'invocation');
+	  }
+
+	  return it;
+	};
+
+	var iterators$2 = {};
+	var ITERATOR$a = wellKnownSymbol$2('iterator');
+	var ArrayPrototype$3 = Array.prototype; // check on default Array iterator
+
+	var isArrayIteratorMethod$2 = function isArrayIteratorMethod(it) {
+	  return it !== undefined && (iterators$2.Array === it || ArrayPrototype$3[ITERATOR$a] === it);
+	}; // optional / simple context binding
+
+
+	var functionBindContext$2 = function functionBindContext(fn, that, length) {
+	  aFunction$1$2(fn);
+	  if (that === undefined) return fn;
+
+	  switch (length) {
+	    case 0:
+	      return function () {
+	        return fn.call(that);
+	      };
+
+	    case 1:
+	      return function (a) {
+	        return fn.call(that, a);
+	      };
+
+	    case 2:
+	      return function (a, b) {
+	        return fn.call(that, a, b);
+	      };
+
+	    case 3:
+	      return function (a, b, c) {
+	        return fn.call(that, a, b, c);
+	      };
+	  }
+
+	  return function ()
+	  /* ...args */
+	  {
+	    return fn.apply(that, arguments);
+	  };
+	};
+
+	var ITERATOR$1$2 = wellKnownSymbol$2('iterator');
+
+	var getIteratorMethod$2 = function getIteratorMethod(it) {
+	  if (it != undefined) return it[ITERATOR$1$2] || it['@@iterator'] || iterators$2[classof$2(it)];
+	};
+
+	var iteratorClose$1 = function iteratorClose(iterator) {
+	  var returnMethod = iterator['return'];
+
+	  if (returnMethod !== undefined) {
+	    return anObject$2(returnMethod.call(iterator)).value;
+	  }
+	};
+
+	var Result$1 = function Result(stopped, result) {
+	  this.stopped = stopped;
+	  this.result = result;
+	};
+
+	var iterate$1 = function iterate(iterable, unboundFunction, options) {
+	  var that = options && options.that;
+	  var AS_ENTRIES = !!(options && options.AS_ENTRIES);
+	  var IS_ITERATOR = !!(options && options.IS_ITERATOR);
+	  var INTERRUPTED = !!(options && options.INTERRUPTED);
+	  var fn = functionBindContext$2(unboundFunction, that, 1 + AS_ENTRIES + INTERRUPTED);
+	  var iterator, iterFn, index, length, result, next, step;
+
+	  var stop = function stop(condition) {
+	    if (iterator) iteratorClose$1(iterator);
+	    return new Result$1(true, condition);
+	  };
+
+	  var callFn = function callFn(value) {
+	    if (AS_ENTRIES) {
+	      anObject$2(value);
+	      return INTERRUPTED ? fn(value[0], value[1], stop) : fn(value[0], value[1]);
+	    }
+
+	    return INTERRUPTED ? fn(value, stop) : fn(value);
+	  };
+
+	  if (IS_ITERATOR) {
+	    iterator = iterable;
+	  } else {
+	    iterFn = getIteratorMethod$2(iterable);
+	    if (typeof iterFn != 'function') throw TypeError('Target is not iterable'); // optimisation for array iterators
+
+	    if (isArrayIteratorMethod$2(iterFn)) {
+	      for (index = 0, length = toLength$2(iterable.length); length > index; index++) {
+	        result = callFn(iterable[index]);
+	        if (result && result instanceof Result$1) return result;
+	      }
+
+	      return new Result$1(false);
+	    }
+
+	    iterator = iterFn.call(iterable);
+	  }
+
+	  next = iterator.next;
+
+	  while (!(step = next.call(iterator)).done) {
+	    try {
+	      result = callFn(step.value);
+	    } catch (error) {
+	      iteratorClose$1(iterator);
+	      throw error;
+	    }
+
+	    if (_typeof(result) == 'object' && result && result instanceof Result$1) return result;
+	  }
+
+	  return new Result$1(false);
+	};
+
+	var ITERATOR$2$2 = wellKnownSymbol$2('iterator');
+	var SAFE_CLOSING$2 = false;
+
+	try {
+	  var called$2 = 0;
+	  var iteratorWithReturn$2 = {
+	    next: function next() {
+	      return {
+	        done: !!called$2++
+	      };
+	    },
+	    'return': function _return() {
+	      SAFE_CLOSING$2 = true;
+	    }
+	  };
+
+	  iteratorWithReturn$2[ITERATOR$2$2] = function () {
+	    return this;
+	  }; // eslint-disable-next-line no-throw-literal
+
+
+	  Array.from(iteratorWithReturn$2, function () {
+	    throw 2;
+	  });
+	} catch (error) {
+	  /* empty */
+	}
+
+	var checkCorrectnessOfIteration$2 = function checkCorrectnessOfIteration(exec, SKIP_CLOSING) {
+	  if (!SKIP_CLOSING && !SAFE_CLOSING$2) return false;
+	  var ITERATION_SUPPORT = false;
+
+	  try {
+	    var object = {};
+
+	    object[ITERATOR$2$2] = function () {
+	      return {
+	        next: function next() {
+	          return {
+	            done: ITERATION_SUPPORT = true
+	          };
+	        }
+	      };
+	    };
+
+	    exec(object);
+	  } catch (error) {
+	    /* empty */
+	  }
+
+	  return ITERATION_SUPPORT;
+	};
+
+	var SPECIES$3$2 = wellKnownSymbol$2('species'); // `SpeciesConstructor` abstract operation
+	// https://tc39.github.io/ecma262/#sec-speciesconstructor
+
+	var speciesConstructor$2 = function speciesConstructor(O, defaultConstructor) {
+	  var C = anObject$2(O).constructor;
+	  var S;
+	  return C === undefined || (S = anObject$2(C)[SPECIES$3$2]) == undefined ? defaultConstructor : aFunction$1$2(S);
+	};
+
+	var html$2 = getBuiltIn$2('document', 'documentElement');
+	var engineIsIos$2 = /(iphone|ipod|ipad).*applewebkit/i.test(engineUserAgent$2);
+	var engineIsNode$1 = classofRaw$2(global_1$2.process) == 'process';
+	var location$2 = global_1$2.location;
+	var set$1$2 = global_1$2.setImmediate;
+	var clear$2 = global_1$2.clearImmediate;
+	var process$1$2 = global_1$2.process;
+	var MessageChannel$2 = global_1$2.MessageChannel;
+	var Dispatch$2 = global_1$2.Dispatch;
+	var counter$2 = 0;
+	var queue$2 = {};
+	var ONREADYSTATECHANGE$2 = 'onreadystatechange';
+	var defer$2, channel$2, port$2;
+
+	var run$2 = function run(id) {
+	  // eslint-disable-next-line no-prototype-builtins
+	  if (queue$2.hasOwnProperty(id)) {
+	    var fn = queue$2[id];
+	    delete queue$2[id];
+	    fn();
+	  }
+	};
+
+	var runner$2 = function runner(id) {
+	  return function () {
+	    run$2(id);
+	  };
+	};
+
+	var listener$2 = function listener(event) {
+	  run$2(event.data);
+	};
+
+	var post$2 = function post(id) {
+	  // old engines have not location.origin
+	  global_1$2.postMessage(id + '', location$2.protocol + '//' + location$2.host);
+	}; // Node.js 0.9+ & IE10+ has setImmediate, otherwise:
+
+
+	if (!set$1$2 || !clear$2) {
+	  set$1$2 = function setImmediate(fn) {
+	    var args = [];
+	    var i = 1;
+
+	    while (arguments.length > i) {
+	      args.push(arguments[i++]);
+	    }
+
+	    queue$2[++counter$2] = function () {
+	      // eslint-disable-next-line no-new-func
+	      (typeof fn == 'function' ? fn : Function(fn)).apply(undefined, args);
+	    };
+
+	    defer$2(counter$2);
+	    return counter$2;
+	  };
+
+	  clear$2 = function clearImmediate(id) {
+	    delete queue$2[id];
+	  }; // Node.js 0.8-
+
+
+	  if (engineIsNode$1) {
+	    defer$2 = function defer(id) {
+	      process$1$2.nextTick(runner$2(id));
+	    }; // Sphere (JS game engine) Dispatch API
+
+	  } else if (Dispatch$2 && Dispatch$2.now) {
+	    defer$2 = function defer(id) {
+	      Dispatch$2.now(runner$2(id));
+	    }; // Browsers with MessageChannel, includes WebWorkers
+	    // except iOS - https://github.com/zloirock/core-js/issues/624
+
+	  } else if (MessageChannel$2 && !engineIsIos$2) {
+	    channel$2 = new MessageChannel$2();
+	    port$2 = channel$2.port2;
+	    channel$2.port1.onmessage = listener$2;
+	    defer$2 = functionBindContext$2(port$2.postMessage, port$2, 1); // Browsers with postMessage, skip WebWorkers
+	    // IE8 has postMessage, but it's sync & typeof its postMessage is 'object'
+	  } else if (global_1$2.addEventListener && typeof postMessage == 'function' && !global_1$2.importScripts && location$2 && location$2.protocol !== 'file:' && !fails$2(post$2)) {
+	    defer$2 = post$2;
+	    global_1$2.addEventListener('message', listener$2, false); // IE8-
+	  } else if (ONREADYSTATECHANGE$2 in documentCreateElement$2('script')) {
+	    defer$2 = function defer(id) {
+	      html$2.appendChild(documentCreateElement$2('script'))[ONREADYSTATECHANGE$2] = function () {
+	        html$2.removeChild(this);
+	        run$2(id);
+	      };
+	    }; // Rest old browsers
+
+	  } else {
+	    defer$2 = function defer(id) {
+	      setTimeout(runner$2(id), 0);
+	    };
+	  }
+	}
+
+	var task$3 = {
+	  set: set$1$2,
+	  clear: clear$2
+	};
+	var getOwnPropertyDescriptor$2$2 = objectGetOwnPropertyDescriptor$2.f;
+	var macrotask$2 = task$3.set;
+	var MutationObserver$3 = global_1$2.MutationObserver || global_1$2.WebKitMutationObserver;
+	var document$2$2 = global_1$2.document;
+	var process$2$2 = global_1$2.process;
+	var Promise$1$2 = global_1$2.Promise; // Node.js 11 shows ExperimentalWarning on getting `queueMicrotask`
+
+	var queueMicrotaskDescriptor$2 = getOwnPropertyDescriptor$2$2(global_1$2, 'queueMicrotask');
+	var queueMicrotask$2 = queueMicrotaskDescriptor$2 && queueMicrotaskDescriptor$2.value;
+	var flush$2, head$2, last$2, notify$3, toggle$2, node$2, promise$2, then$2; // modern engines have queueMicrotask method
+
+	if (!queueMicrotask$2) {
+	  flush$2 = function flush() {
+	    var parent, fn;
+	    if (engineIsNode$1 && (parent = process$2$2.domain)) parent.exit();
+
+	    while (head$2) {
+	      fn = head$2.fn;
+	      head$2 = head$2.next;
+
+	      try {
+	        fn();
+	      } catch (error) {
+	        if (head$2) notify$3();else last$2 = undefined;
+	        throw error;
+	      }
+	    }
+
+	    last$2 = undefined;
+	    if (parent) parent.enter();
+	  }; // browsers with MutationObserver, except iOS - https://github.com/zloirock/core-js/issues/339
+
+
+	  if (!engineIsIos$2 && !engineIsNode$1 && MutationObserver$3 && document$2$2) {
+	    toggle$2 = true;
+	    node$2 = document$2$2.createTextNode('');
+	    new MutationObserver$3(flush$2).observe(node$2, {
+	      characterData: true
+	    });
+
+	    notify$3 = function notify() {
+	      node$2.data = toggle$2 = !toggle$2;
+	    }; // environments with maybe non-completely correct, but existent Promise
+
+	  } else if (Promise$1$2 && Promise$1$2.resolve) {
+	    // Promise.resolve without an argument throws an error in LG WebOS 2
+	    promise$2 = Promise$1$2.resolve(undefined);
+	    then$2 = promise$2.then;
+
+	    notify$3 = function notify() {
+	      then$2.call(promise$2, flush$2);
+	    }; // Node.js without promises
+
+	  } else if (engineIsNode$1) {
+	    notify$3 = function notify() {
+	      process$2$2.nextTick(flush$2);
+	    }; // for other environments - macrotask based on:
+	    // - setImmediate
+	    // - MessageChannel
+	    // - window.postMessag
+	    // - onreadystatechange
+	    // - setTimeout
+
+	  } else {
+	    notify$3 = function notify() {
+	      // strange IE + webpack dev server bug - use .call(global)
+	      macrotask$2.call(global_1$2, flush$2);
+	    };
+	  }
+	}
+
+	var microtask$2 = queueMicrotask$2 || function (fn) {
+	  var task = {
+	    fn: fn,
+	    next: undefined
+	  };
+	  if (last$2) last$2.next = task;
+
+	  if (!head$2) {
+	    head$2 = task;
+	    notify$3();
+	  }
+
+	  last$2 = task;
+	};
+
+	var PromiseCapability$2 = function PromiseCapability(C) {
+	  var resolve, reject;
+	  this.promise = new C(function ($$resolve, $$reject) {
+	    if (resolve !== undefined || reject !== undefined) throw TypeError('Bad Promise constructor');
+	    resolve = $$resolve;
+	    reject = $$reject;
+	  });
+	  this.resolve = aFunction$1$2(resolve);
+	  this.reject = aFunction$1$2(reject);
+	}; // 25.4.1.5 NewPromiseCapability(C)
+
+
+	var f$5$2 = function f$5(C) {
+	  return new PromiseCapability$2(C);
+	};
+
+	var newPromiseCapability$3 = {
+	  f: f$5$2
+	};
+
+	var promiseResolve$2 = function promiseResolve(C, x) {
+	  anObject$2(C);
+	  if (isObject$2(x) && x.constructor === C) return x;
+	  var promiseCapability = newPromiseCapability$3.f(C);
+	  var resolve = promiseCapability.resolve;
+	  resolve(x);
+	  return promiseCapability.promise;
+	};
+
+	var hostReportErrors$2 = function hostReportErrors(a, b) {
+	  var console = global_1$2.console;
+
+	  if (console && console.error) {
+	    arguments.length === 1 ? console.error(a) : console.error(a, b);
+	  }
+	};
+
+	var perform$2 = function perform(exec) {
+	  try {
+	    return {
+	      error: false,
+	      value: exec()
+	    };
+	  } catch (error) {
+	    return {
+	      error: true,
+	      value: error
+	    };
+	  }
+	};
+
+	var task$1$2 = task$3.set;
+	var SPECIES$4$2 = wellKnownSymbol$2('species');
+	var PROMISE$2 = 'Promise';
+	var getInternalState$6 = internalState$2.get;
+	var setInternalState$9 = internalState$2.set;
+	var getInternalPromiseState$2 = internalState$2.getterFor(PROMISE$2);
+	var PromiseConstructor$2 = nativePromiseConstructor$2;
+	var TypeError$1$2 = global_1$2.TypeError;
+	var document$3$1 = global_1$2.document;
+	var process$3$2 = global_1$2.process;
+	var $fetch$3 = getBuiltIn$2('fetch');
+	var newPromiseCapability$1$2 = newPromiseCapability$3.f;
+	var newGenericPromiseCapability$2 = newPromiseCapability$1$2;
+	var DISPATCH_EVENT$2 = !!(document$3$1 && document$3$1.createEvent && global_1$2.dispatchEvent);
+	var NATIVE_REJECTION_EVENT$1 = typeof PromiseRejectionEvent == 'function';
+	var UNHANDLED_REJECTION$2 = 'unhandledrejection';
+	var REJECTION_HANDLED$2 = 'rejectionhandled';
+	var PENDING$2 = 0;
+	var FULFILLED$2 = 1;
+	var REJECTED$2 = 2;
+	var HANDLED$2 = 1;
+	var UNHANDLED$2 = 2;
+	var Internal$2, OwnPromiseCapability$2, PromiseWrapper$2, nativeThen$2;
+	var FORCED$1$2 = isForced_1$2(PROMISE$2, function () {
+	  var GLOBAL_CORE_JS_PROMISE = inspectSource$2(PromiseConstructor$2) !== String(PromiseConstructor$2);
+
+	  if (!GLOBAL_CORE_JS_PROMISE) {
+	    // V8 6.6 (Node 10 and Chrome 66) have a bug with resolving custom thenables
+	    // https://bugs.chromium.org/p/chromium/issues/detail?id=830565
+	    // We can't detect it synchronously, so just check versions
+	    if (engineV8Version$2 === 66) return true; // Unhandled rejections tracking support, NodeJS Promise without it fails @@species test
+
+	    if (!engineIsNode$1 && !NATIVE_REJECTION_EVENT$1) return true;
+	  } // We can't use @@species feature detection in V8 since it causes
+	  // deoptimization and performance degradation
+	  // https://github.com/zloirock/core-js/issues/679
+
+
+	  if (engineV8Version$2 >= 51 && /native code/.test(PromiseConstructor$2)) return false; // Detect correctness of subclassing with @@species support
+
+	  var promise = PromiseConstructor$2.resolve(1);
+
+	  var FakePromise = function FakePromise(exec) {
+	    exec(function () {
+	      /* empty */
+	    }, function () {
+	      /* empty */
+	    });
+	  };
+
+	  var constructor = promise.constructor = {};
+	  constructor[SPECIES$4$2] = FakePromise;
+	  return !(promise.then(function () {
+	    /* empty */
+	  }) instanceof FakePromise);
+	});
+	var INCORRECT_ITERATION$3 = FORCED$1$2 || !checkCorrectnessOfIteration$2(function (iterable) {
+	  PromiseConstructor$2.all(iterable)['catch'](function () {
+	    /* empty */
+	  });
+	}); // helpers
+
+	var isThenable$2 = function isThenable(it) {
+	  var then;
+	  return isObject$2(it) && typeof (then = it.then) == 'function' ? then : false;
+	};
+
+	var notify$1$2 = function notify$1(state, isReject) {
+	  if (state.notified) return;
+	  state.notified = true;
+	  var chain = state.reactions;
+	  microtask$2(function () {
+	    var value = state.value;
+	    var ok = state.state == FULFILLED$2;
+	    var index = 0; // variable length - can't use forEach
+
+	    while (chain.length > index) {
+	      var reaction = chain[index++];
+	      var handler = ok ? reaction.ok : reaction.fail;
+	      var resolve = reaction.resolve;
+	      var reject = reaction.reject;
+	      var domain = reaction.domain;
+	      var result, then, exited;
+
+	      try {
+	        if (handler) {
+	          if (!ok) {
+	            if (state.rejection === UNHANDLED$2) onHandleUnhandled$2(state);
+	            state.rejection = HANDLED$2;
+	          }
+
+	          if (handler === true) result = value;else {
+	            if (domain) domain.enter();
+	            result = handler(value); // can throw
+
+	            if (domain) {
+	              domain.exit();
+	              exited = true;
+	            }
+	          }
+
+	          if (result === reaction.promise) {
+	            reject(TypeError$1$2('Promise-chain cycle'));
+	          } else if (then = isThenable$2(result)) {
+	            then.call(result, resolve, reject);
+	          } else resolve(result);
+	        } else reject(value);
+	      } catch (error) {
+	        if (domain && !exited) domain.exit();
+	        reject(error);
+	      }
+	    }
+
+	    state.reactions = [];
+	    state.notified = false;
+	    if (isReject && !state.rejection) onUnhandled$2(state);
+	  });
+	};
+
+	var dispatchEvent$2 = function dispatchEvent(name, promise, reason) {
+	  var event, handler;
+
+	  if (DISPATCH_EVENT$2) {
+	    event = document$3$1.createEvent('Event');
+	    event.promise = promise;
+	    event.reason = reason;
+	    event.initEvent(name, false, true);
+	    global_1$2.dispatchEvent(event);
+	  } else event = {
+	    promise: promise,
+	    reason: reason
+	  };
+
+	  if (!NATIVE_REJECTION_EVENT$1 && (handler = global_1$2['on' + name])) handler(event);else if (name === UNHANDLED_REJECTION$2) hostReportErrors$2('Unhandled promise rejection', reason);
+	};
+
+	var onUnhandled$2 = function onUnhandled(state) {
+	  task$1$2.call(global_1$2, function () {
+	    var promise = state.facade;
+	    var value = state.value;
+	    var IS_UNHANDLED = isUnhandled$2(state);
+	    var result;
+
+	    if (IS_UNHANDLED) {
+	      result = perform$2(function () {
+	        if (engineIsNode$1) {
+	          process$3$2.emit('unhandledRejection', value, promise);
+	        } else dispatchEvent$2(UNHANDLED_REJECTION$2, promise, value);
+	      }); // Browsers should not trigger `rejectionHandled` event if it was handled here, NodeJS - should
+
+	      state.rejection = engineIsNode$1 || isUnhandled$2(state) ? UNHANDLED$2 : HANDLED$2;
+	      if (result.error) throw result.value;
+	    }
+	  });
+	};
+
+	var isUnhandled$2 = function isUnhandled(state) {
+	  return state.rejection !== HANDLED$2 && !state.parent;
+	};
+
+	var onHandleUnhandled$2 = function onHandleUnhandled(state) {
+	  task$1$2.call(global_1$2, function () {
+	    var promise = state.facade;
+
+	    if (engineIsNode$1) {
+	      process$3$2.emit('rejectionHandled', promise);
+	    } else dispatchEvent$2(REJECTION_HANDLED$2, promise, state.value);
+	  });
+	};
+
+	var bind$2 = function bind(fn, state, unwrap) {
+	  return function (value) {
+	    fn(state, value, unwrap);
+	  };
+	};
+
+	var internalReject$2 = function internalReject(state, value, unwrap) {
+	  if (state.done) return;
+	  state.done = true;
+	  if (unwrap) state = unwrap;
+	  state.value = value;
+	  state.state = REJECTED$2;
+	  notify$1$2(state, true);
+	};
+
+	var internalResolve$2 = function internalResolve(state, value, unwrap) {
+	  if (state.done) return;
+	  state.done = true;
+	  if (unwrap) state = unwrap;
+
+	  try {
+	    if (state.facade === value) throw TypeError$1$2("Promise can't be resolved itself");
+	    var then = isThenable$2(value);
+
+	    if (then) {
+	      microtask$2(function () {
+	        var wrapper = {
+	          done: false
+	        };
+
+	        try {
+	          then.call(value, bind$2(internalResolve, wrapper, state), bind$2(internalReject$2, wrapper, state));
+	        } catch (error) {
+	          internalReject$2(wrapper, error, state);
+	        }
+	      });
+	    } else {
+	      state.value = value;
+	      state.state = FULFILLED$2;
+	      notify$1$2(state, false);
+	    }
+	  } catch (error) {
+	    internalReject$2({
+	      done: false
+	    }, error, state);
+	  }
+	}; // constructor polyfill
+
+
+	if (FORCED$1$2) {
+	  // 25.4.3.1 Promise(executor)
+	  PromiseConstructor$2 = function Promise(executor) {
+	    anInstance$2(this, PromiseConstructor$2, PROMISE$2);
+	    aFunction$1$2(executor);
+	    Internal$2.call(this);
+	    var state = getInternalState$6(this);
+
+	    try {
+	      executor(bind$2(internalResolve$2, state), bind$2(internalReject$2, state));
+	    } catch (error) {
+	      internalReject$2(state, error);
+	    }
+	  }; // eslint-disable-next-line no-unused-vars
+
+
+	  Internal$2 = function Promise(executor) {
+	    setInternalState$9(this, {
+	      type: PROMISE$2,
+	      done: false,
+	      notified: false,
+	      parent: false,
+	      reactions: [],
+	      rejection: false,
+	      state: PENDING$2,
+	      value: undefined
+	    });
+	  };
+
+	  Internal$2.prototype = redefineAll$2(PromiseConstructor$2.prototype, {
+	    // `Promise.prototype.then` method
+	    // https://tc39.github.io/ecma262/#sec-promise.prototype.then
+	    then: function then(onFulfilled, onRejected) {
+	      var state = getInternalPromiseState$2(this);
+	      var reaction = newPromiseCapability$1$2(speciesConstructor$2(this, PromiseConstructor$2));
+	      reaction.ok = typeof onFulfilled == 'function' ? onFulfilled : true;
+	      reaction.fail = typeof onRejected == 'function' && onRejected;
+	      reaction.domain = engineIsNode$1 ? process$3$2.domain : undefined;
+	      state.parent = true;
+	      state.reactions.push(reaction);
+	      if (state.state != PENDING$2) notify$1$2(state, false);
+	      return reaction.promise;
+	    },
+	    // `Promise.prototype.catch` method
+	    // https://tc39.github.io/ecma262/#sec-promise.prototype.catch
+	    'catch': function _catch(onRejected) {
+	      return this.then(undefined, onRejected);
+	    }
+	  });
+
+	  OwnPromiseCapability$2 = function OwnPromiseCapability() {
+	    var promise = new Internal$2();
+	    var state = getInternalState$6(promise);
+	    this.promise = promise;
+	    this.resolve = bind$2(internalResolve$2, state);
+	    this.reject = bind$2(internalReject$2, state);
+	  };
+
+	  newPromiseCapability$3.f = newPromiseCapability$1$2 = function newPromiseCapability$1(C) {
+	    return C === PromiseConstructor$2 || C === PromiseWrapper$2 ? new OwnPromiseCapability$2(C) : newGenericPromiseCapability$2(C);
+	  };
+
+	  if (typeof nativePromiseConstructor$2 == 'function') {
+	    nativeThen$2 = nativePromiseConstructor$2.prototype.then; // wrap native Promise#then for native async functions
+
+	    redefine$2(nativePromiseConstructor$2.prototype, 'then', function then(onFulfilled, onRejected) {
+	      var that = this;
+	      return new PromiseConstructor$2(function (resolve, reject) {
+	        nativeThen$2.call(that, resolve, reject);
+	      }).then(onFulfilled, onRejected); // https://github.com/zloirock/core-js/issues/640
+	    }, {
+	      unsafe: true
+	    }); // wrap fetch result
+
+	    if (typeof $fetch$3 == 'function') _export$2({
+	      global: true,
+	      enumerable: true,
+	      forced: true
+	    }, {
+	      // eslint-disable-next-line no-unused-vars
+	      fetch: function fetch(input
+	      /* , init */
+	      ) {
+	        return promiseResolve$2(PromiseConstructor$2, $fetch$3.apply(global_1$2, arguments));
+	      }
+	    });
+	  }
+	}
+
+	_export$2({
+	  global: true,
+	  wrap: true,
+	  forced: FORCED$1$2
+	}, {
+	  Promise: PromiseConstructor$2
+	});
+
+	setToStringTag$2(PromiseConstructor$2, PROMISE$2, false);
+	setSpecies$2(PROMISE$2);
+	PromiseWrapper$2 = getBuiltIn$2(PROMISE$2); // statics
+
+	_export$2({
+	  target: PROMISE$2,
+	  stat: true,
+	  forced: FORCED$1$2
+	}, {
+	  // `Promise.reject` method
+	  // https://tc39.github.io/ecma262/#sec-promise.reject
+	  reject: function reject(r) {
+	    var capability = newPromiseCapability$1$2(this);
+	    capability.reject.call(undefined, r);
+	    return capability.promise;
+	  }
+	});
+
+	_export$2({
+	  target: PROMISE$2,
+	  stat: true,
+	  forced: FORCED$1$2
+	}, {
+	  // `Promise.resolve` method
+	  // https://tc39.github.io/ecma262/#sec-promise.resolve
+	  resolve: function resolve(x) {
+	    return promiseResolve$2(this, x);
+	  }
+	});
+
+	_export$2({
+	  target: PROMISE$2,
+	  stat: true,
+	  forced: INCORRECT_ITERATION$3
+	}, {
+	  // `Promise.all` method
+	  // https://tc39.github.io/ecma262/#sec-promise.all
+	  all: function all(iterable) {
+	    var C = this;
+	    var capability = newPromiseCapability$1$2(C);
+	    var resolve = capability.resolve;
+	    var reject = capability.reject;
+	    var result = perform$2(function () {
+	      var $promiseResolve = aFunction$1$2(C.resolve);
+	      var values = [];
+	      var counter = 0;
+	      var remaining = 1;
+	      iterate$1(iterable, function (promise) {
+	        var index = counter++;
+	        var alreadyCalled = false;
+	        values.push(undefined);
+	        remaining++;
+	        $promiseResolve.call(C, promise).then(function (value) {
+	          if (alreadyCalled) return;
+	          alreadyCalled = true;
+	          values[index] = value;
+	          --remaining || resolve(values);
+	        }, reject);
+	      });
+	      --remaining || resolve(values);
+	    });
+	    if (result.error) reject(result.value);
+	    return capability.promise;
+	  },
+	  // `Promise.race` method
+	  // https://tc39.github.io/ecma262/#sec-promise.race
+	  race: function race(iterable) {
+	    var C = this;
+	    var capability = newPromiseCapability$1$2(C);
+	    var reject = capability.reject;
+	    var result = perform$2(function () {
+	      var $promiseResolve = aFunction$1$2(C.resolve);
+	      iterate$1(iterable, function (promise) {
+	        $promiseResolve.call(C, promise).then(capability.resolve, reject);
+	      });
+	    });
+	    if (result.error) reject(result.value);
+	    return capability.promise;
+	  }
+	});
+
+	function _typeof$2(obj) {
+	  "@babel/helpers - typeof";
+
+	  if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
+	    _typeof$2 = function _typeof(obj) {
+	      return typeof obj;
+	    };
+	  } else {
+	    _typeof$2 = function _typeof(obj) {
+	      return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+	    };
+	  }
+
+	  return _typeof$2(obj);
+	}
+
+	function _classCallCheck$1(instance, Constructor) {
+	  if (!(instance instanceof Constructor)) {
+	    throw new TypeError("Cannot call a class as a function");
+	  }
+	}
+
+	function _defineProperties$1(target, props) {
+	  for (var i = 0; i < props.length; i++) {
+	    var descriptor = props[i];
+	    descriptor.enumerable = descriptor.enumerable || false;
+	    descriptor.configurable = true;
+	    if ("value" in descriptor) descriptor.writable = true;
+	    Object.defineProperty(target, descriptor.key, descriptor);
+	  }
+	}
+
+	function _createClass$1(Constructor, protoProps, staticProps) {
+	  if (protoProps) _defineProperties$1(Constructor.prototype, protoProps);
+	  if (staticProps) _defineProperties$1(Constructor, staticProps);
+	  return Constructor;
+	}
+
+	function _inherits$1(subClass, superClass) {
+	  if (typeof superClass !== "function" && superClass !== null) {
+	    throw new TypeError("Super expression must either be null or a function");
+	  }
+
+	  subClass.prototype = Object.create(superClass && superClass.prototype, {
+	    constructor: {
+	      value: subClass,
+	      writable: true,
+	      configurable: true
+	    }
+	  });
+	  if (superClass) _setPrototypeOf$1(subClass, superClass);
+	}
+
+	function _getPrototypeOf$1(o) {
+	  _getPrototypeOf$1 = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) {
+	    return o.__proto__ || Object.getPrototypeOf(o);
+	  };
+	  return _getPrototypeOf$1(o);
+	}
+
+	function _setPrototypeOf$1(o, p) {
+	  _setPrototypeOf$1 = Object.setPrototypeOf || function _setPrototypeOf(o, p) {
+	    o.__proto__ = p;
+	    return o;
+	  };
+
+	  return _setPrototypeOf$1(o, p);
+	}
+
+	function _isNativeReflectConstruct$1() {
+	  if (typeof Reflect === "undefined" || !Reflect.construct) return false;
+	  if (Reflect.construct.sham) return false;
+	  if (typeof Proxy === "function") return true;
+
+	  try {
+	    Date.prototype.toString.call(Reflect.construct(Date, [], function () {}));
+	    return true;
+	  } catch (e) {
+	    return false;
+	  }
+	}
+
+	function _assertThisInitialized$1(self) {
+	  if (self === void 0) {
+	    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+	  }
+
+	  return self;
+	}
+
+	function _possibleConstructorReturn$1(self, call) {
+	  if (call && (_typeof(call) === "object" || typeof call === "function")) {
+	    return call;
+	  }
+
+	  return _assertThisInitialized$1(self);
+	}
+
+	function _createSuper$1(Derived) {
+	  var hasNativeReflectConstruct = _isNativeReflectConstruct$1();
+
+	  return function _createSuperInternal() {
+	    var Super = _getPrototypeOf$1(Derived),
+	        result;
+
+	    if (hasNativeReflectConstruct) {
+	      var NewTarget = _getPrototypeOf$1(this).constructor;
+
+	      result = Reflect.construct(Super, arguments, NewTarget);
+	    } else {
+	      result = Super.apply(this, arguments);
+	    }
+
+	    return _possibleConstructorReturn$1(this, result);
+	  };
+	}
+
+	var defineProperty$1$2 = Object.defineProperty;
+	var cache$2 = {};
+
+	var thrower$2 = function thrower(it) {
+	  throw it;
+	};
+
+	var arrayMethodUsesToLength$2 = function arrayMethodUsesToLength(METHOD_NAME, options) {
+	  if (has$3(cache$2, METHOD_NAME)) return cache$2[METHOD_NAME];
+	  if (!options) options = {};
+	  var method = [][METHOD_NAME];
+	  var ACCESSORS = has$3(options, 'ACCESSORS') ? options.ACCESSORS : false;
+	  var argument0 = has$3(options, 0) ? options[0] : thrower$2;
+	  var argument1 = has$3(options, 1) ? options[1] : undefined;
+	  return cache$2[METHOD_NAME] = !!method && !fails$2(function () {
+	    if (ACCESSORS && !descriptors$2) return true;
+	    var O = {
+	      length: -1
+	    };
+	    if (ACCESSORS) defineProperty$1$2(O, 1, {
+	      enumerable: true,
+	      get: thrower$2
+	    });else O[1] = 1;
+	    method.call(O, argument0, argument1);
+	  });
+	};
+
+	var HAS_SPECIES_SUPPORT$5 = arrayMethodHasSpeciesSupport$2('splice');
+	var USES_TO_LENGTH$e = arrayMethodUsesToLength$2('splice', {
+	  ACCESSORS: true,
+	  0: 0,
+	  1: 2
+	});
+	var max$1$2 = Math.max;
+	var min$2$2 = Math.min;
+	var MAX_SAFE_INTEGER$1$2 = 0x1FFFFFFFFFFFFF;
+	var MAXIMUM_ALLOWED_LENGTH_EXCEEDED$2 = 'Maximum allowed length exceeded'; // `Array.prototype.splice` method
+	// https://tc39.github.io/ecma262/#sec-array.prototype.splice
+	// with adding support of @@species
+
+	_export$2({
+	  target: 'Array',
+	  proto: true,
+	  forced: !HAS_SPECIES_SUPPORT$5 || !USES_TO_LENGTH$e
+	}, {
+	  splice: function splice(start, deleteCount
+	  /* , ...items */
+	  ) {
+	    var O = toObject$2(this);
+	    var len = toLength$2(O.length);
+	    var actualStart = toAbsoluteIndex$2(start, len);
+	    var argumentsLength = arguments.length;
+	    var insertCount, actualDeleteCount, A, k, from, to;
+
+	    if (argumentsLength === 0) {
+	      insertCount = actualDeleteCount = 0;
+	    } else if (argumentsLength === 1) {
+	      insertCount = 0;
+	      actualDeleteCount = len - actualStart;
+	    } else {
+	      insertCount = argumentsLength - 2;
+	      actualDeleteCount = min$2$2(max$1$2(toInteger$2(deleteCount), 0), len - actualStart);
+	    }
+
+	    if (len + insertCount - actualDeleteCount > MAX_SAFE_INTEGER$1$2) {
+	      throw TypeError(MAXIMUM_ALLOWED_LENGTH_EXCEEDED$2);
+	    }
+
+	    A = arraySpeciesCreate$2(O, actualDeleteCount);
+
+	    for (k = 0; k < actualDeleteCount; k++) {
+	      from = actualStart + k;
+	      if (from in O) createProperty$2(A, k, O[from]);
+	    }
+
+	    A.length = actualDeleteCount;
+
+	    if (insertCount < actualDeleteCount) {
+	      for (k = actualStart; k < len - actualDeleteCount; k++) {
+	        from = k + actualDeleteCount;
+	        to = k + insertCount;
+	        if (from in O) O[to] = O[from];else delete O[to];
+	      }
+
+	      for (k = len; k > len - actualDeleteCount + insertCount; k--) {
+	        delete O[k - 1];
+	      }
+	    } else if (insertCount > actualDeleteCount) {
+	      for (k = len - actualDeleteCount; k > actualStart; k--) {
+	        from = k + actualDeleteCount - 1;
+	        to = k + insertCount - 1;
+	        if (from in O) O[to] = O[from];else delete O[to];
+	      }
+	    }
+
+	    for (k = 0; k < insertCount; k++) {
+	      O[k + actualStart] = arguments[k + 2];
+	    }
+
+	    O.length = len - actualDeleteCount + insertCount;
+	    return A;
+	  }
+	});
+
+	var EventTarget$1 = /*#__PURE__*/function () {
+	  function EventTarget() {
+	    _classCallCheck$1(this, EventTarget);
+
+	    this.listeners = {};
+	  }
+
+	  _createClass$1(EventTarget, [{
+	    key: "addEventListener",
+	    value: function addEventListener(type, callback) {
+	      if (!(type in this.listeners)) {
+	        this.listeners[type] = [];
+	      }
+
+	      this.listeners[type].push(callback);
+	    }
+	  }, {
+	    key: "on",
+	    value: function on(type, callback) {
+	      this.addEventListener(type, callback);
+	      return this;
+	    }
+	  }, {
+	    key: "removeEventListener",
+	    value: function removeEventListener(type, callback) {
+	      if (!(type in this.listeners)) {
+	        return;
+	      }
+
+	      var stack = this.listeners[type];
+
+	      for (var i = 0, l = stack.length; i < l; i++) {
+	        if (stack[i] === callback) {
+	          stack.splice(i, 1);
+	          return this.removeEventListener(type, callback);
+	        }
+	      }
+	    }
+	  }, {
+	    key: "off",
+	    value: function off(type, callback) {
+	      this.removeEventListener(type, callback);
+	      return this;
+	    }
+	  }, {
+	    key: "dispatchEvent",
+	    value: function dispatchEvent(event) {
+	      if (!(event.type in this.listeners)) {
+	        return;
+	      }
+
+	      var stack = this.listeners[event.type];
+	      Object.defineProperty(event, 'target', {
+	        enumerable: false,
+	        configurable: false,
+	        writable: false,
+	        value: this
+	      });
+
+	      for (var i = 0, l = stack.length; i < l; i++) {
+	        stack[i].call(this, event);
+	      }
+	    }
+	  }]);
+
+	  return EventTarget;
+	}(); // `Array.prototype.{ reduce, reduceRight }` methods implementation
+
+
+	var createMethod$1$2 = function createMethod$1(IS_RIGHT) {
+	  return function (that, callbackfn, argumentsLength, memo) {
+	    aFunction$1$2(callbackfn);
+	    var O = toObject$2(that);
+	    var self = indexedObject$2(O);
+	    var length = toLength$2(O.length);
+	    var index = IS_RIGHT ? length - 1 : 0;
+	    var i = IS_RIGHT ? -1 : 1;
+	    if (argumentsLength < 2) while (true) {
+	      if (index in self) {
+	        memo = self[index];
+	        index += i;
+	        break;
+	      }
+
+	      index += i;
+
+	      if (IS_RIGHT ? index < 0 : length <= index) {
+	        throw TypeError('Reduce of empty array with no initial value');
+	      }
+	    }
+
+	    for (; IS_RIGHT ? index >= 0 : length > index; index += i) {
+	      if (index in self) {
+	        memo = callbackfn(memo, self[index], index, O);
+	      }
+	    }
+
+	    return memo;
+	  };
+	};
+
+	var arrayReduce$2 = {
+	  // `Array.prototype.reduce` method
+	  // https://tc39.github.io/ecma262/#sec-array.prototype.reduce
+	  left: createMethod$1$2(false),
+	  // `Array.prototype.reduceRight` method
+	  // https://tc39.github.io/ecma262/#sec-array.prototype.reduceright
+	  right: createMethod$1$2(true)
+	};
+
+	var arrayMethodIsStrict$2 = function arrayMethodIsStrict(METHOD_NAME, argument) {
+	  var method = [][METHOD_NAME];
+	  return !!method && fails$2(function () {
+	    // eslint-disable-next-line no-useless-call,no-throw-literal
+	    method.call(null, argument || function () {
+	      throw 1;
+	    }, 1);
+	  });
+	};
+
+	var $reduce$3 = arrayReduce$2.left;
+	var STRICT_METHOD$8 = arrayMethodIsStrict$2('reduce');
+	var USES_TO_LENGTH$1$2 = arrayMethodUsesToLength$2('reduce', {
+	  1: 0
+	}); // Chrome 80-82 has a critical bug
+	// https://bugs.chromium.org/p/chromium/issues/detail?id=1049982
+
+	var CHROME_BUG$1 = !engineIsNode$1 && engineV8Version$2 > 79 && engineV8Version$2 < 83; // `Array.prototype.reduce` method
+	// https://tc39.github.io/ecma262/#sec-array.prototype.reduce
+
+	_export$2({
+	  target: 'Array',
+	  proto: true,
+	  forced: !STRICT_METHOD$8 || !USES_TO_LENGTH$1$2 || CHROME_BUG$1
+	}, {
+	  reduce: function reduce(callbackfn
+	  /* , initialValue */
+	  ) {
+	    return $reduce$3(this, callbackfn, arguments.length, arguments.length > 1 ? arguments[1] : undefined);
+	  }
+	}); // `RegExp.prototype.flags` getter implementation
+	// https://tc39.github.io/ecma262/#sec-get-regexp.prototype.flags
+
+
+	var regexpFlags$2 = function regexpFlags() {
+	  var that = anObject$2(this);
+	  var result = '';
+	  if (that.global) result += 'g';
+	  if (that.ignoreCase) result += 'i';
+	  if (that.multiline) result += 'm';
+	  if (that.dotAll) result += 's';
+	  if (that.unicode) result += 'u';
+	  if (that.sticky) result += 'y';
+	  return result;
+	}; // babel-minify transpiles RegExp('a', 'y') -> /a/y and it causes SyntaxError,
+	// so we use an intermediate function.
+
+
+	function RE$2(s, f) {
+	  return RegExp(s, f);
+	}
+
+	var UNSUPPORTED_Y$5 = fails$2(function () {
+	  // babel-minify transpiles RegExp('a', 'y') -> /a/y and it causes SyntaxError
+	  var re = RE$2('a', 'y');
+	  re.lastIndex = 2;
+	  return re.exec('abcd') != null;
+	});
+	var BROKEN_CARET$2 = fails$2(function () {
+	  // https://bugzilla.mozilla.org/show_bug.cgi?id=773687
+	  var re = RE$2('^r', 'gy');
+	  re.lastIndex = 2;
+	  return re.exec('str') != null;
+	});
+	var regexpStickyHelpers$2 = {
+	  UNSUPPORTED_Y: UNSUPPORTED_Y$5,
+	  BROKEN_CARET: BROKEN_CARET$2
+	};
+	var nativeExec$2 = RegExp.prototype.exec; // This always refers to the native implementation, because the
+	// String#replace polyfill uses ./fix-regexp-well-known-symbol-logic.js,
+	// which loads this file before patching the method.
+
+	var nativeReplace$2 = String.prototype.replace;
+	var patchedExec$2 = nativeExec$2;
+
+	var UPDATES_LAST_INDEX_WRONG$2 = function () {
+	  var re1 = /a/;
+	  var re2 = /b*/g;
+	  nativeExec$2.call(re1, 'a');
+	  nativeExec$2.call(re2, 'a');
+	  return re1.lastIndex !== 0 || re2.lastIndex !== 0;
+	}();
+
+	var UNSUPPORTED_Y$1$2 = regexpStickyHelpers$2.UNSUPPORTED_Y || regexpStickyHelpers$2.BROKEN_CARET; // nonparticipating capturing group, copied from es5-shim's String#split patch.
+
+	var NPCG_INCLUDED$2 = /()??/.exec('')[1] !== undefined;
+	var PATCH$2 = UPDATES_LAST_INDEX_WRONG$2 || NPCG_INCLUDED$2 || UNSUPPORTED_Y$1$2;
+
+	if (PATCH$2) {
+	  patchedExec$2 = function exec(str) {
+	    var re = this;
+	    var lastIndex, reCopy, match, i;
+	    var sticky = UNSUPPORTED_Y$1$2 && re.sticky;
+	    var flags = regexpFlags$2.call(re);
+	    var source = re.source;
+	    var charsAdded = 0;
+	    var strCopy = str;
+
+	    if (sticky) {
+	      flags = flags.replace('y', '');
+
+	      if (flags.indexOf('g') === -1) {
+	        flags += 'g';
+	      }
+
+	      strCopy = String(str).slice(re.lastIndex); // Support anchored sticky behavior.
+
+	      if (re.lastIndex > 0 && (!re.multiline || re.multiline && str[re.lastIndex - 1] !== '\n')) {
+	        source = '(?: ' + source + ')';
+	        strCopy = ' ' + strCopy;
+	        charsAdded++;
+	      } // ^(? + rx + ) is needed, in combination with some str slicing, to
+	      // simulate the 'y' flag.
+
+
+	      reCopy = new RegExp('^(?:' + source + ')', flags);
+	    }
+
+	    if (NPCG_INCLUDED$2) {
+	      reCopy = new RegExp('^' + source + '$(?!\\s)', flags);
+	    }
+
+	    if (UPDATES_LAST_INDEX_WRONG$2) lastIndex = re.lastIndex;
+	    match = nativeExec$2.call(sticky ? reCopy : re, strCopy);
+
+	    if (sticky) {
+	      if (match) {
+	        match.input = match.input.slice(charsAdded);
+	        match[0] = match[0].slice(charsAdded);
+	        match.index = re.lastIndex;
+	        re.lastIndex += match[0].length;
+	      } else re.lastIndex = 0;
+	    } else if (UPDATES_LAST_INDEX_WRONG$2 && match) {
+	      re.lastIndex = re.global ? match.index + match[0].length : lastIndex;
+	    }
+
+	    if (NPCG_INCLUDED$2 && match && match.length > 1) {
+	      // Fix browsers whose `exec` methods don't consistently return `undefined`
+	      // for NPCG, like IE8. NOTE: This doesn' work for /(.?)?/
+	      nativeReplace$2.call(match[0], reCopy, function () {
+	        for (i = 1; i < arguments.length - 2; i++) {
+	          if (arguments[i] === undefined) match[i] = undefined;
+	        }
+	      });
+	    }
+
+	    return match;
+	  };
+	}
+
+	var regexpExec$2 = patchedExec$2;
+
+	_export$2({
+	  target: 'RegExp',
+	  proto: true,
+	  forced: /./.exec !== regexpExec$2
+	}, {
+	  exec: regexpExec$2
+	}); // TODO: Remove from `core-js@4` since it's moved to entry points
+
+
+	var SPECIES$5$2 = wellKnownSymbol$2('species');
+	var REPLACE_SUPPORTS_NAMED_GROUPS$2 = !fails$2(function () {
+	  // #replace needs built-in support for named groups.
+	  // #match works fine because it just return the exec results, even if it has
+	  // a "grops" property.
+	  var re = /./;
+
+	  re.exec = function () {
+	    var result = [];
+	    result.groups = {
+	      a: '7'
+	    };
+	    return result;
+	  };
+
+	  return ''.replace(re, '$<a>') !== '7';
+	}); // IE <= 11 replaces $0 with the whole match, as if it was $&
+	// https://stackoverflow.com/questions/6024666/getting-ie-to-replace-a-regex-with-the-literal-string-0
+
+	var REPLACE_KEEPS_$0$2 = function () {
+	  return 'a'.replace(/./, '$0') === '$0';
+	}();
+
+	var REPLACE$2 = wellKnownSymbol$2('replace'); // Safari <= 13.0.3(?) substitutes nth capture where n>m with an empty string
+
+	var REGEXP_REPLACE_SUBSTITUTES_UNDEFINED_CAPTURE$2 = function () {
+	  if (/./[REPLACE$2]) {
+	    return /./[REPLACE$2]('a', '$0') === '';
+	  }
+
+	  return false;
+	}(); // Chrome 51 has a buggy "split" implementation when RegExp#exec !== nativeExec
+	// Weex JS has frozen built-in prototypes, so use try / catch wrapper
+
+
+	var SPLIT_WORKS_WITH_OVERWRITTEN_EXEC$2 = !fails$2(function () {
+	  var re = /(?:)/;
+	  var originalExec = re.exec;
+
+	  re.exec = function () {
+	    return originalExec.apply(this, arguments);
+	  };
+
+	  var result = 'ab'.split(re);
+	  return result.length !== 2 || result[0] !== 'a' || result[1] !== 'b';
+	});
+
+	var fixRegexpWellKnownSymbolLogic$2 = function fixRegexpWellKnownSymbolLogic(KEY, length, exec, sham) {
+	  var SYMBOL = wellKnownSymbol$2(KEY);
+	  var DELEGATES_TO_SYMBOL = !fails$2(function () {
+	    // String methods call symbol-named RegEp methods
+	    var O = {};
+
+	    O[SYMBOL] = function () {
+	      return 7;
+	    };
+
+	    return ''[KEY](O) != 7;
+	  });
+	  var DELEGATES_TO_EXEC = DELEGATES_TO_SYMBOL && !fails$2(function () {
+	    // Symbol-named RegExp methods call .exec
+	    var execCalled = false;
+	    var re = /a/;
+
+	    if (KEY === 'split') {
+	      // We can't use real regex here since it causes deoptimization
+	      // and serious performance degradation in V8
+	      // https://github.com/zloirock/core-js/issues/306
+	      re = {}; // RegExp[@@split] doesn't call the regex's exec method, but first creates
+	      // a new one. We need to return the patched regex when creating the new one.
+
+	      re.constructor = {};
+
+	      re.constructor[SPECIES$5$2] = function () {
+	        return re;
+	      };
+
+	      re.flags = '';
+	      re[SYMBOL] = /./[SYMBOL];
+	    }
+
+	    re.exec = function () {
+	      execCalled = true;
+	      return null;
+	    };
+
+	    re[SYMBOL]('');
+	    return !execCalled;
+	  });
+
+	  if (!DELEGATES_TO_SYMBOL || !DELEGATES_TO_EXEC || KEY === 'replace' && !(REPLACE_SUPPORTS_NAMED_GROUPS$2 && REPLACE_KEEPS_$0$2 && !REGEXP_REPLACE_SUBSTITUTES_UNDEFINED_CAPTURE$2) || KEY === 'split' && !SPLIT_WORKS_WITH_OVERWRITTEN_EXEC$2) {
+	    var nativeRegExpMethod = /./[SYMBOL];
+	    var methods = exec(SYMBOL, ''[KEY], function (nativeMethod, regexp, str, arg2, forceStringMethod) {
+	      if (regexp.exec === regexpExec$2) {
+	        if (DELEGATES_TO_SYMBOL && !forceStringMethod) {
+	          // The native String method already delegates to @@method (this
+	          // polyfilled function), leasing to infinite recursion.
+	          // We avoid it by directly calling the native @@method method.
+	          return {
+	            done: true,
+	            value: nativeRegExpMethod.call(regexp, str, arg2)
+	          };
+	        }
+
+	        return {
+	          done: true,
+	          value: nativeMethod.call(str, regexp, arg2)
+	        };
+	      }
+
+	      return {
+	        done: false
+	      };
+	    }, {
+	      REPLACE_KEEPS_$0: REPLACE_KEEPS_$0$2,
+	      REGEXP_REPLACE_SUBSTITUTES_UNDEFINED_CAPTURE: REGEXP_REPLACE_SUBSTITUTES_UNDEFINED_CAPTURE$2
+	    });
+	    var stringMethod = methods[0];
+	    var regexMethod = methods[1];
+	    redefine$2(String.prototype, KEY, stringMethod);
+	    redefine$2(RegExp.prototype, SYMBOL, length == 2 // 21.2.5.8 RegExp.prototype[@@replace](string, replaceValue)
+	    // 21.2.5.11 RegExp.prototype[@@split](string, limit)
+	    ? function (string, arg) {
+	      return regexMethod.call(string, this, arg);
+	    } // 21.2.5.6 RegExp.prototype[@@match](string)
+	    // 21.2.5.9 RegExp.prototype[@@search](string)
+	    : function (string) {
+	      return regexMethod.call(string, this);
+	    });
+	  }
+
+	  if (sham) createNonEnumerableProperty$2(RegExp.prototype[SYMBOL], 'sham', true);
+	};
+
+	var MATCH$4 = wellKnownSymbol$2('match'); // `IsRegExp` abstract operation
+	// https://tc39.github.io/ecma262/#sec-isregexp
+
+	var isRegexp$2 = function isRegexp(it) {
+	  var isRegExp;
+	  return isObject$2(it) && ((isRegExp = it[MATCH$4]) !== undefined ? !!isRegExp : classofRaw$2(it) == 'RegExp');
+	}; // `String.prototype.{ codePointAt, at }` methods implementation
+
+
+	var createMethod$2$2 = function createMethod$2(CONVERT_TO_STRING) {
+	  return function ($this, pos) {
+	    var S = String(requireObjectCoercible$2($this));
+	    var position = toInteger$2(pos);
+	    var size = S.length;
+	    var first, second;
+	    if (position < 0 || position >= size) return CONVERT_TO_STRING ? '' : undefined;
+	    first = S.charCodeAt(position);
+	    return first < 0xD800 || first > 0xDBFF || position + 1 === size || (second = S.charCodeAt(position + 1)) < 0xDC00 || second > 0xDFFF ? CONVERT_TO_STRING ? S.charAt(position) : first : CONVERT_TO_STRING ? S.slice(position, position + 2) : (first - 0xD800 << 10) + (second - 0xDC00) + 0x10000;
+	  };
+	};
+
+	var stringMultibyte$2 = {
+	  // `String.prototype.codePointAt` method
+	  // https://tc39.github.io/ecma262/#sec-string.prototype.codepointat
+	  codeAt: createMethod$2$2(false),
+	  // `String.prototype.at` method
+	  // https://github.com/mathiasbynens/String.prototype.at
+	  charAt: createMethod$2$2(true)
+	};
+	var charAt$3 = stringMultibyte$2.charAt; // `AdvanceStringIndex` abstract operation
+	// https://tc39.github.io/ecma262/#sec-advancestringindex
+
+	var advanceStringIndex$2 = function advanceStringIndex(S, index, unicode) {
+	  return index + (unicode ? charAt$3(S, index).length : 1);
+	}; // `RegExpExec` abstract operation
+	// https://tc39.github.io/ecma262/#sec-regexpexec
+
+
+	var regexpExecAbstract$2 = function regexpExecAbstract(R, S) {
+	  var exec = R.exec;
+
+	  if (typeof exec === 'function') {
+	    var result = exec.call(R, S);
+
+	    if (_typeof(result) !== 'object') {
+	      throw TypeError('RegExp exec method returned something other than an Object or null');
+	    }
+
+	    return result;
+	  }
+
+	  if (classofRaw$2(R) !== 'RegExp') {
+	    throw TypeError('RegExp#exec called on incompatible receiver');
+	  }
+
+	  return regexpExec$2.call(R, S);
+	};
+
+	var arrayPush$2 = [].push;
+	var min$3$2 = Math.min;
+	var MAX_UINT32$2 = 0xFFFFFFFF; // babel-minify transpiles RegExp('x', 'y') -> /x/y and it causes SyntaxError
+
+	var SUPPORTS_Y$2 = !fails$2(function () {
+	  return !RegExp(MAX_UINT32$2, 'y');
+	}); // @@split logic
+
+	fixRegexpWellKnownSymbolLogic$2('split', 2, function (SPLIT, nativeSplit, maybeCallNative) {
+	  var internalSplit;
+
+	  if ('abbc'.split(/(b)*/)[1] == 'c' || 'test'.split(/(?:)/, -1).length != 4 || 'ab'.split(/(?:ab)*/).length != 2 || '.'.split(/(.?)(.?)/).length != 4 || '.'.split(/()()/).length > 1 || ''.split(/.?/).length) {
+	    // based on es5-shim implementation, need to rework it
+	    internalSplit = function internalSplit(separator, limit) {
+	      var string = String(requireObjectCoercible$2(this));
+	      var lim = limit === undefined ? MAX_UINT32$2 : limit >>> 0;
+	      if (lim === 0) return [];
+	      if (separator === undefined) return [string]; // If `separator` is not a regex, use native split
+
+	      if (!isRegexp$2(separator)) {
+	        return nativeSplit.call(string, separator, lim);
+	      }
+
+	      var output = [];
+	      var flags = (separator.ignoreCase ? 'i' : '') + (separator.multiline ? 'm' : '') + (separator.unicode ? 'u' : '') + (separator.sticky ? 'y' : '');
+	      var lastLastIndex = 0; // Make `global` and avoid `lastIndex` issues by working with a copy
+
+	      var separatorCopy = new RegExp(separator.source, flags + 'g');
+	      var match, lastIndex, lastLength;
+
+	      while (match = regexpExec$2.call(separatorCopy, string)) {
+	        lastIndex = separatorCopy.lastIndex;
+
+	        if (lastIndex > lastLastIndex) {
+	          output.push(string.slice(lastLastIndex, match.index));
+	          if (match.length > 1 && match.index < string.length) arrayPush$2.apply(output, match.slice(1));
+	          lastLength = match[0].length;
+	          lastLastIndex = lastIndex;
+	          if (output.length >= lim) break;
+	        }
+
+	        if (separatorCopy.lastIndex === match.index) separatorCopy.lastIndex++; // Avoid an infinite loop
+	      }
+
+	      if (lastLastIndex === string.length) {
+	        if (lastLength || !separatorCopy.test('')) output.push('');
+	      } else output.push(string.slice(lastLastIndex));
+
+	      return output.length > lim ? output.slice(0, lim) : output;
+	    }; // Chakra, V8
+
+	  } else if ('0'.split(undefined, 0).length) {
+	    internalSplit = function internalSplit(separator, limit) {
+	      return separator === undefined && limit === 0 ? [] : nativeSplit.call(this, separator, limit);
+	    };
+	  } else internalSplit = nativeSplit;
+
+	  return [// `String.prototype.split` method
+	  // https://tc39.github.io/ecma262/#sec-string.prototype.split
+	  function split(separator, limit) {
+	    var O = requireObjectCoercible$2(this);
+	    var splitter = separator == undefined ? undefined : separator[SPLIT];
+	    return splitter !== undefined ? splitter.call(separator, O, limit) : internalSplit.call(String(O), separator, limit);
+	  }, // `RegExp.prototype[@@split]` method
+	  // https://tc39.github.io/ecma262/#sec-regexp.prototype-@@split
+	  //
+	  // NOTE: This cannot be properly polyfilled in engines that don't support
+	  // the 'y' flag.
+	  function (regexp, limit) {
+	    var res = maybeCallNative(internalSplit, regexp, this, limit, internalSplit !== nativeSplit);
+	    if (res.done) return res.value;
+	    var rx = anObject$2(regexp);
+	    var S = String(this);
+	    var C = speciesConstructor$2(rx, RegExp);
+	    var unicodeMatching = rx.unicode;
+	    var flags = (rx.ignoreCase ? 'i' : '') + (rx.multiline ? 'm' : '') + (rx.unicode ? 'u' : '') + (SUPPORTS_Y$2 ? 'y' : 'g'); // ^(? + rx + ) is needed, in combination with some S slicing, to
+	    // simulate the 'y' flag.
+
+	    var splitter = new C(SUPPORTS_Y$2 ? rx : '^(?:' + rx.source + ')', flags);
+	    var lim = limit === undefined ? MAX_UINT32$2 : limit >>> 0;
+	    if (lim === 0) return [];
+	    if (S.length === 0) return regexpExecAbstract$2(splitter, S) === null ? [S] : [];
+	    var p = 0;
+	    var q = 0;
+	    var A = [];
+
+	    while (q < S.length) {
+	      splitter.lastIndex = SUPPORTS_Y$2 ? q : 0;
+	      var z = regexpExecAbstract$2(splitter, SUPPORTS_Y$2 ? S : S.slice(q));
+	      var e;
+
+	      if (z === null || (e = min$3$2(toLength$2(splitter.lastIndex + (SUPPORTS_Y$2 ? 0 : q)), S.length)) === p) {
+	        q = advanceStringIndex$2(S, q, unicodeMatching);
+	      } else {
+	        A.push(S.slice(p, q));
+	        if (A.length === lim) return A;
+
+	        for (var i = 1; i <= z.length - 1; i++) {
+	          A.push(z[i]);
+	          if (A.length === lim) return A;
+	        }
+
+	        q = p = e;
+	      }
+	    }
+
+	    A.push(S.slice(p));
+	    return A;
+	  }];
+	}, !SUPPORTS_Y$2);
+	var push$2 = [].push; // `Array.prototype.{ forEach, map, filter, some, every, find, findIndex }` methods implementation
+
+	var createMethod$3$2 = function createMethod$3(TYPE) {
+	  var IS_MAP = TYPE == 1;
+	  var IS_FILTER = TYPE == 2;
+	  var IS_SOME = TYPE == 3;
+	  var IS_EVERY = TYPE == 4;
+	  var IS_FIND_INDEX = TYPE == 6;
+	  var NO_HOLES = TYPE == 5 || IS_FIND_INDEX;
+	  return function ($this, callbackfn, that, specificCreate) {
+	    var O = toObject$2($this);
+	    var self = indexedObject$2(O);
+	    var boundFunction = functionBindContext$2(callbackfn, that, 3);
+	    var length = toLength$2(self.length);
+	    var index = 0;
+	    var create = specificCreate || arraySpeciesCreate$2;
+	    var target = IS_MAP ? create($this, length) : IS_FILTER ? create($this, 0) : undefined;
+	    var value, result;
+
+	    for (; length > index; index++) {
+	      if (NO_HOLES || index in self) {
+	        value = self[index];
+	        result = boundFunction(value, index, O);
+
+	        if (TYPE) {
+	          if (IS_MAP) target[index] = result; // map
+	          else if (result) switch (TYPE) {
+	              case 3:
+	                return true;
+	              // some
+
+	              case 5:
+	                return value;
+	              // find
+
+	              case 6:
+	                return index;
+	              // findIndex
+
+	              case 2:
+	                push$2.call(target, value);
+	              // filter
+	            } else if (IS_EVERY) return false; // every
+	        }
+	      }
+	    }
+
+	    return IS_FIND_INDEX ? -1 : IS_SOME || IS_EVERY ? IS_EVERY : target;
+	  };
+	};
+
+	var arrayIteration$2 = {
+	  // `Array.prototype.forEach` method
+	  // https://tc39.github.io/ecma262/#sec-array.prototype.foreach
+	  forEach: createMethod$3$2(0),
+	  // `Array.prototype.map` method
+	  // https://tc39.github.io/ecma262/#sec-array.prototype.map
+	  map: createMethod$3$2(1),
+	  // `Array.prototype.filter` method
+	  // https://tc39.github.io/ecma262/#sec-array.prototype.filter
+	  filter: createMethod$3$2(2),
+	  // `Array.prototype.some` method
+	  // https://tc39.github.io/ecma262/#sec-array.prototype.some
+	  some: createMethod$3$2(3),
+	  // `Array.prototype.every` method
+	  // https://tc39.github.io/ecma262/#sec-array.prototype.every
+	  every: createMethod$3$2(4),
+	  // `Array.prototype.find` method
+	  // https://tc39.github.io/ecma262/#sec-array.prototype.find
+	  find: createMethod$3$2(5),
+	  // `Array.prototype.findIndex` method
+	  // https://tc39.github.io/ecma262/#sec-array.prototype.findIndex
+	  findIndex: createMethod$3$2(6)
+	};
+	var $map$3 = arrayIteration$2.map;
+	var HAS_SPECIES_SUPPORT$1$2 = arrayMethodHasSpeciesSupport$2('map'); // FF49- issue
+
+	var USES_TO_LENGTH$2$2 = arrayMethodUsesToLength$2('map'); // `Array.prototype.map` method
+	// https://tc39.github.io/ecma262/#sec-array.prototype.map
+	// with adding support of @@species
+
+	_export$2({
+	  target: 'Array',
+	  proto: true,
+	  forced: !HAS_SPECIES_SUPPORT$1$2 || !USES_TO_LENGTH$2$2
+	}, {
+	  map: function map(callbackfn
+	  /* , thisArg */
+	  ) {
+	    return $map$3(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+	  }
+	}); // `Object.keys` method
+	// https://tc39.github.io/ecma262/#sec-object.keys
+
+
+	var objectKeys$2 = Object.keys || function keys(O) {
+	  return objectKeysInternal$2(O, enumBugKeys$2);
+	};
+
+	var FAILS_ON_PRIMITIVES$6 = fails$2(function () {
+	  objectKeys$2(1);
+	}); // `Object.keys` method
+	// https://tc39.github.io/ecma262/#sec-object.keys
+
+	_export$2({
+	  target: 'Object',
+	  stat: true,
+	  forced: FAILS_ON_PRIMITIVES$6
+	}, {
+	  keys: function keys(it) {
+	    return objectKeys$2(toObject$2(it));
+	  }
+	});
+
+	var copy$1 = function copy(source) {
+	  switch (_typeof$2(source)) {
+	    case 'number':
+	    case 'string':
+	    case 'function':
+	    default:
+	      return source;
+
+	    case 'object':
+	      if (source === null) {
+	        return null;
+	      } else if (Array.isArray(source)) {
+	        return source.map(function (item) {
+	          return copy(item);
+	        });
+	      } else if (source instanceof Date) {
+	        return source;
+	      } else {
+	        return Object.keys(source).reduce(function (a, k) {
+	          a[k] = copy(source[k]);
+	          return a;
+	        }, {});
+	      }
+
+	  }
+	};
+
+	var extend$1 = function extend(target, source) {
+	  if (target === source) {
+	    return target;
+	  } else {
+	    return Object.keys(source).reduce(function (a, k) {
+	      var value = source[k];
+
+	      if (_typeof$2(a[k]) === 'object' && k in a) {
+	        a[k] = extend(a[k], value);
+	      } else {
+	        a[k] = copy$1(value);
+	      }
+
+	      return a;
+	    }, copy$1(target));
+	  }
+	};
+
+	var DEFAULT_LANGUAGE$2 = 'rus';
+
+	var Translations$2 = /*#__PURE__*/function () {
+	  function Translations() {
+	    _classCallCheck$1(this, Translations);
+
+	    this._hash = {};
+	  }
+
+	  _createClass$1(Translations, [{
+	    key: "setLanguage",
+	    value: function setLanguage(lang) {
+	      this._language = lang;
+	    }
+	  }, {
+	    key: "getLanguage",
+	    value: function getLanguage() {
+	      return window.language || this._language || DEFAULT_LANGUAGE$2;
+	    }
+	  }, {
+	    key: "addText",
+	    value: function addText(lang, tran) {
+	      this._hash[lang] = extend$1(this._hash[lang] || {}, tran);
+	      return this;
+	    }
+	  }, {
+	    key: "getText",
+	    value: function getText(key) {
+	      if (key && typeof key === 'string') {
+	        var locale = this._hash[this.getLanguage()];
+
+	        if (locale) {
+	          return key.split('.').reduce(function (a, k) {
+	            return a[k];
+	          }, locale);
+	        }
+	      }
+
+	      return null;
+	    }
+	  }]);
+
+	  return Translations;
+	}();
+
+	window.Scanex = window.Scanex || {};
+	window.Scanex.Translations = window.Scanex.Translations || {};
+	window.Scanex.translations = window.Scanex.translations || new Translations$2();
+	var T$2 = window.Scanex.translations;
+	T$2.addText('rus', {
+	  notify: {
+	    error: 'Ошибка!',
+	    warn: 'Внимание!',
+	    info: 'Информация'
+	  }
+	});
+	var translate$l = T$2.getText.bind(T$2);
+
+	var delay = function delay(timeout) {
+	  return new Promise(function (resolve) {
+	    var id = window.setInterval(function () {
+	      window.clearInterval(id);
+	      resolve();
+	    }, timeout);
+	  });
+	};
+
+	var Notification = /*#__PURE__*/function (_EventTarget) {
+	  _inherits$1(Notification, _EventTarget);
+
+	  var _super = _createSuper$1(Notification);
+
+	  function Notification() {
+	    var _this;
+
+	    _classCallCheck$1(this, Notification);
+
+	    _this = _super.call(this);
+	    _this._container = document.createElement('div');
+
+	    _this._container.classList.add('scanex-notify-container');
+
+	    document.body.appendChild(_this._container);
+	    return _this;
+	  }
+
+	  _createClass$1(Notification, [{
+	    key: "_remove",
+	    value: function _remove(el) {
+	      el.classList.add('closing');
+	      delay(1000).then(function () {
+	        el.remove();
+	        el = null;
+	      });
+	    }
+	  }, {
+	    key: "error",
+	    value: function error(text) {
+	      var _this2 = this;
+
+	      var timeout = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+	      var el = document.createElement('div');
+	      el.classList.add('scanex-notify');
+	      el.classList.add('noselect');
+	      el.classList.add('notify-red');
+	      el.classList.add('opening');
+	      el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-notify-icon notify-error\"></i>\n                </td>            \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$l('notify.error'), "</label>                \n                    <div class=\"message\">").concat(text, "</div>\n                </td>\n                <td>            \n                    <i class=\"scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
+
+	      this._container.appendChild(el);
+
+	      var btnClose = el.querySelector('.notify-close');
+	      btnClose.addEventListener('click', function (e) {
+	        e.stopPropagation();
+
+	        _this2._remove(el);
+	      });
+
+	      if (timeout) {
+	        delay(timeout).then(function () {
+	          return _this2._remove(el);
+	        });
+	      }
+	    }
+	  }, {
+	    key: "warn",
+	    value: function warn(text) {
+	      var _this3 = this;
+
+	      var timeout = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+	      var el = document.createElement('div');
+	      el.classList.add('scanex-notify');
+	      el.classList.add('noselect');
+	      el.classList.add('notify-orange');
+	      el.classList.add('opening');
+	      el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-notify-icon notify-warn\"></i>\n                </td>    \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$l('notify.warn'), "</label>\n                    <div class=\"message\">").concat(text, "</div>    \n                </td>            \n                <td>\n                    <i class=\"scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
+
+	      this._container.appendChild(el);
+
+	      var btnClose = el.querySelector('.notify-close');
+	      btnClose.addEventListener('click', function (e) {
+	        e.stopPropagation();
+
+	        _this3._remove(el);
+	      });
+
+	      if (timeout) {
+	        delay(timeout).then(function () {
+	          return _this3._remove(el);
+	        });
+	      }
+	    }
+	  }, {
+	    key: "info",
+	    value: function info(text) {
+	      var _this4 = this;
+
+	      var timeout = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+	      var el = document.createElement('div');
+	      el.classList.add('scanex-notify');
+	      el.classList.add('noselect');
+	      el.classList.add('notify-green');
+	      el.classList.add('opening');
+	      el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-notify-icon notify-info\"></i>\n                </td>            \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$l('notify.info'), "</label>                    \n                    <div class=\"message\">").concat(text, "</div>    \n                </td>                                \n                <td>\n                    <i class=\"scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
+
+	      this._container.appendChild(el);
+
+	      var btnClose = el.querySelector('.notify-close');
+	      btnClose.addEventListener('click', function (e) {
+	        e.stopPropagation();
+
+	        _this4._remove(el);
+	      });
+
+	      if (timeout) {
+	        delay(timeout).then(function () {
+	          return _this4._remove(el);
+	        });
+	      }
+	    }
+	  }]);
+
+	  return Notification;
+	}(EventTarget$1);
+
+	var notify_1 = Notification;
+
+	var translate$m = T.getText.bind(T);
 	var ALLOWED_LAYERS = ['warehouses', 'roads', 'declarations', 'incidents', 'incidents_temporal', 'quadrants', 'stands', 'projects', 'plots', 'fires', 'parks', 'forestries_local', 'forestries', 'regions', 'sentinel', 'landsat'].reverse();
 
 	var Map = /*#__PURE__*/function (_EventTarget) {
@@ -69466,7 +72160,7 @@ var Forestry = (function () {
 
 	    _this._content.addTo(_this._map);
 
-	    _this._notification = new Notification();
+	    _this._notification = new notify_1();
 	    _this._loading = new Loading();
 
 	    _this._loading.on('start', function () {
@@ -69731,7 +72425,7 @@ var Forestry = (function () {
 
 	                this._controllers.baseLayers = new BaseLayers({
 	                  map: this._map,
-	                  apiKey: apk,
+	                  apiKey: encodeURIComponent(apk),
 	                  content: this._content,
 	                  path: this._gmxPath,
 	                  notification: this._notification,
@@ -69782,6 +72476,7 @@ var Forestry = (function () {
 	                      Temporal = _layer$getGmxProperti2.Temporal,
 	                      kind = _layer$getGmxProperti2.MetaProperties.kind;
 
+	                  layer.on('mouseover', function () {});
 	                  return {
 	                    layer: layer,
 	                    kind: kind.Value,
