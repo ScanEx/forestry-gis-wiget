@@ -72425,7 +72425,7 @@ var Forestry = (function () {
 
 	                this._controllers.baseLayers = new BaseLayers({
 	                  map: this._map,
-	                  apiKey: encodeURIComponent(apk),
+	                  apiKey: apk,
 	                  content: this._content,
 	                  path: this._gmxPath,
 	                  notification: this._notification,
