@@ -73321,15 +73321,11 @@ var Forestry = (function () {
 	          while (1) {
 	            switch (_context4.prev = _context4.next) {
 	              case 0:
-	                _context4.next = 2;
-	                return this._controllers.uploaded.view();
-
-	              case 2:
 	              case "end":
 	                return _context4.stop();
 	            }
 	          }
-	        }, _callee4, this);
+	        }, _callee4);
 	      }));
 
 	      function showUploaded() {
