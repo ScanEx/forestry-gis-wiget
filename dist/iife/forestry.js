@@ -36920,6 +36920,19 @@ var Forestry = (function () {
 	  onRemove: function onRemove() {}
 	});
 
+	var Place = leafletSrc.Control.extend({
+	  options: {
+	    position: 'topright'
+	  },
+	  onAdd: function onAdd(map) {
+	    var container = leafletSrc.DomUtil.create('div', 'scanex-forestry-place');
+	    leafletSrc.DomEvent.disableScrollPropagation(container);
+	    leafletSrc.DomEvent.disableClickPropagation(container);
+	    return container;
+	  },
+	  onRemove: function onRemove() {}
+	});
+
 	var Control = leafletSrc.Control.extend({
 	  includes: leafletSrc.Evented.prototype,
 	  options: {
@@ -65771,9 +65784,10 @@ var Forestry = (function () {
 	      this._gmx_id = gmx_id;
 	      this._title.innerHTML = Title;
 	      this._forestry.innerHTML = "".concat(Forestry, " ").concat(ForestBlocks);
+	      var approveDate = ApproveDate && new Date(ApproveDate);
 	      var start = AuctionStart && new Date(AuctionStart);
 	      var end = AuctionEnd && new Date(AuctionEnd);
-	      this._stats.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <tbody>\n                <tr>\n                    <td class=\"text\">".concat(this.translate('info.approve'), "</td>\n                    <td class=\"value\">").concat(ApproveDate || '', "</td>\n                </tr>\n                <tr>\n                    <td class=\"text\">").concat(this.translate('info.status'), "</td>\n                    <td class=\"value\">").concat(Status || '', "</td>\n                </tr>\n                <tr>\n                    <td class=\"text\">").concat(this.translate('info.period'), "</td>\n                    <td class=\"value\">").concat(start && end ? "".concat(this.date(start), " - ").concat(this.date(end)) : '', "</td>\n                </tr>\n                <tr>\n                    <td class=\"text\">").concat(this.translate('info.cost'), "</td>\n                    <td class=\"value\">").concat(this.rub(RentCost), "</td>\n                </tr>                \n                <tr>\n                    <td class=\"separator\" colspan=\"2\">").concat(this.translate('info.available'), ", ").concat(this.translate('units.m'), "<sup>3</sup></td>\n                </tr>\n                ").concat(Array.isArray(ForestAvailable) ? ForestAvailable.map(function (_ref) {
+	      this._stats.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <tbody>\n                <tr>\n                    <td class=\"text\">".concat(this.translate('info.approve'), "</td>\n                    <td class=\"value\">").concat(approveDate && this.date(approveDate) || '', "</td>\n                </tr>\n                <tr>\n                    <td class=\"text\">").concat(this.translate('info.status'), "</td>\n                    <td class=\"value\">").concat(Status || '', "</td>\n                </tr>\n                <tr>\n                    <td class=\"text\">").concat(this.translate('info.period'), "</td>\n                    <td class=\"value\">").concat(start && end ? "".concat(this.date(start), " - ").concat(this.date(end)) : '', "</td>\n                </tr>\n                <tr>\n                    <td class=\"text\">").concat(this.translate('info.cost'), "</td>\n                    <td class=\"value\">").concat(this.rub(RentCost), "</td>\n                </tr>                \n                <tr>\n                    <td class=\"separator\" colspan=\"2\">").concat(this.translate('info.available'), ", ").concat(this.translate('units.m'), "<sup>3</sup></td>\n                </tr>\n                ").concat(Array.isArray(ForestAvailable) ? ForestAvailable.map(function (_ref) {
 	        var species = _ref.species,
 	            value = _ref.value;
 	        return "<tr>\n                            <td class=\"text\">".concat(species, "</td>\n                            <td class=\"value\">").concat(_this2.m(value), "</td>\n                        </tr>");
@@ -66062,6 +66076,7 @@ var Forestry = (function () {
 	        // width: '200px',
 	        fontSize: '12px',
 	        // offsetY: -10,
+	        horizontalAlign: 'left',
 	        formatter: fmt_legend
 	      },
 	      plotOptions: {
@@ -68673,7 +68688,11 @@ var Forestry = (function () {
 	      close: 'Закрыть',
 	      completed: 'Завершено',
 	      date: 'Дата добавления',
-	      error: 'Ошибка',
+	      error: {
+	        file: 'Ошибка',
+	        insert: 'Ошибка при добавлении слоя',
+	        remove: 'Ошибка при удалении слоя'
+	      },
 	      load: 'Загрузка',
 	      loading: 'Загружается...',
 	      name: 'Наименование',
@@ -68710,6 +68729,11 @@ var Forestry = (function () {
 	        crossOrigin: 'crossOrigin',
 	        anonymous: 'anonymous',
 	        useCredentials: 'useCredentials'
+	      },
+	      vector: {
+	        title: 'Добавить векторный слой',
+	        name: 'Название',
+	        ok: 'Подтвердить'
 	      },
 	      type: 'Тип данных',
 	      waiting: 'Ожидание...',
@@ -68856,7 +68880,7 @@ var Forestry = (function () {
 	        var isBaseLayer = _ref4.MetaProperties.isBaseLayer;
 	        return !isBaseLayer;
 	      }).map(function (item) {
-	        return "<tr>\n                <td>\n                    <i class=\"scanex-uploaded-icon box".concat(_this2._selected[item.LayerID] && 'active' || '', "\"></i>\n                </td>\n                ").concat(_this2._columns.map(function (id) {
+	        return "<tr>\n                <td>\n                    <i class=\"scanex-uploaded-icon box".concat(_this2._selected[item.LayerID] && ' active' || '', "\"></i>\n                </td>\n                ").concat(_this2._columns.map(function (id) {
 	          return "<td>".concat(item[id], "</td>");
 	        }).join(''), "\n                <td>\n                    <i class=\"scanex-uploaded-icon remove\"></i>\n                </td>\n            </tr>");
 	      }).join('');
@@ -68882,7 +68906,22 @@ var Forestry = (function () {
 
 	          var event = document.createEvent('Event');
 	          event.initEvent('select', false, false);
-	          event.detail = _this2._selected;
+	          event.detail = {
+	            selected: _this2._selected
+	          };
+
+	          _this2.dispatchEvent(event);
+	        });
+	        row.addEventListener('click', function (e) {
+	          e.stopPropagation();
+	          btnSelect.classList.add('active');
+	          _this2._selected[LayerID] = layer;
+	          var event = document.createEvent('Event');
+	          event.initEvent('select', false, false);
+	          event.detail = {
+	            selected: _this2._selected,
+	            layerID: LayerID
+	          };
 
 	          _this2.dispatchEvent(event);
 	        });
@@ -69089,11 +69128,9 @@ var Forestry = (function () {
 
 	          _this.dispatchEvent(_event);
 	        } else if (_this._status === STATUS.ERROR) {
-	          var _event2 = document.createEvent('Event');
+	          _this._panel.destroy();
 
-	          _event2.initEvent('stop', false, false);
-
-	          _this.dispatchEvent(_event2);
+	          _this._panel = null;
 	        }
 	      });
 
@@ -69128,7 +69165,7 @@ var Forestry = (function () {
 
 	      var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
 
-	      row.querySelector('.status').innerText = translate$k('uploaded.error');
+	      row.querySelector('.status').innerText = translate$k('uploaded.error.file');
 	      this._btn.innerText = translate$k('uploaded.close');
 	    }
 	  }, {
@@ -69189,7 +69226,53 @@ var Forestry = (function () {
 	  return UploadProgress;
 	}(EventTarget);
 
-	var FILE_EXTENSIONS = ['.tif', '.tiff', '.tfw', '.xml', '.jpg', '.jgw', '.png', '.pgw', '.jp2', '.j2w', '.geojson', '.shp', '.dbf', '.prj', '.sbn', '.sbx', '.shx', '.tab', '.dat', '.id', '.map', '.mif', '.mid', '.csv', '.gpx', '.kml', '.kmz', '.sxf', '.sqlite', '.geojson', '.gdbtable'].join(',');
+	var translate$l = T.getText.bind(T);
+
+	var LayerProperties = /*#__PURE__*/function (_Dialog) {
+	  _inherits(LayerProperties, _Dialog);
+
+	  var _super = _createSuper(LayerProperties);
+
+	  function LayerProperties() {
+	    var _this;
+
+	    _classCallCheck(this, LayerProperties);
+
+	    _this = _super.call(this, {
+	      title: translate$l('uploaded.vector.title'),
+	      modal: true,
+	      top: 200,
+	      left: 400
+	    });
+
+	    _this._element.classList.add('scanex-forestry-vector-layer-properties');
+
+	    _this.content.innerHTML = "<div class=\"name\">\n            <label>".concat(translate$l('uploaded.vector.name'), "</label>\n            <input type=\"text\" value=\"\">\n        </div>");
+	    _this._name = _this.content.querySelector('.name').querySelector('input');
+	    _this.footer.innerHTML = "<button>".concat(translate$l('uploaded.vector.ok'), "</button>");
+	    _this._btn = _this.footer.querySelector('button');
+
+	    _this._btn.addEventListener('click', function (e) {
+	      e.stopPropagation();
+	      var event = document.createEvent('Event');
+	      event.initEvent('ok', false, false);
+	      event.detail = {
+	        title: _this._name.value
+	      };
+
+	      _this.dispatchEvent(event);
+	    });
+
+	    return _this;
+	  }
+
+	  return LayerProperties;
+	}(Dialog);
+
+	var FILE_EXTENSIONS = {
+	  vector: ['.geojson', '.shp', '.dbf', '.prj', '.sbn', '.sbx', '.shx', '.dat', '.mif', '.mid', '.csv', '.gpx', '.kml', '.kmz', '.sxf', '.sqlite', '.geojson', '.gdbtable'].join(','),
+	  raster: ['.tif', '.tiff', '.tfw', '.xml', '.jpg', '.jgw', '.png', '.pgw', '.jp2', '.j2w'].join(',')
+	};
 
 	var FileUploader = /*#__PURE__*/function (_Controller) {
 	  _inherits(FileUploader, _Controller);
@@ -69244,131 +69327,76 @@ var Forestry = (function () {
 
 	    _this._progress.on('stop', _this._stopSpeedTimer.bind(_assertThisInitialized(_this)));
 
+	    _this._layerProperties = {};
 	    return _this;
 	  }
 
 	  _createClass(FileUploader, [{
 	    key: "upload",
-	    value: function upload() {
+	    value: function upload(type) {
 	      var _this2 = this;
 
-	      if (!this._files) {
-	        this._files = document.createElement('input');
+	      var dlg = new LayerProperties();
+	      dlg.on('ok', function (e) {
+	        var title = e.detail.title;
+	        dlg.destroy();
+	        dlg = null;
 
-	        this._files.setAttribute('type', 'file');
+	        if (!_this2._files) {
+	          _this2._files = document.createElement('input');
 
-	        this._files.setAttribute('multiple', 'true');
+	          _this2._files.setAttribute('type', 'file');
 
-	        this._files.setAttribute('accept', FILE_EXTENSIONS); // this._files.style.visibility = 'hidden';
+	          _this2._files.setAttribute('multiple', 'true');
+
+	          _this2._files.setAttribute('accept', FILE_EXTENSIONS[type]); // this._files.style.visibility = 'hidden';
 
 
-	        this._files.style.width = '0px';
-	        this._files.style.height = '0px';
-	        document.body.appendChild(this._files);
+	          _this2._files.style.width = '0px';
+	          _this2._files.style.height = '0px';
+	          document.body.appendChild(_this2._files);
 
-	        this._files.addEventListener('change', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
-	          return regeneratorRuntime.wrap(function _callee2$(_context2) {
-	            while (1) {
-	              switch (_context2.prev = _context2.next) {
-	                case 0:
-	                  _this2._progress.start();
+	          _this2._files.addEventListener('change', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
+	            var sandbox;
+	            return regeneratorRuntime.wrap(function _callee2$(_context2) {
+	              while (1) {
+	                switch (_context2.prev = _context2.next) {
+	                  case 0:
+	                    _this2._progress.start();
 
-	                  _context2.next = 3;
-	                  return _this2._createSandbox();
+	                    _context2.next = 3;
+	                    return _this2._createSandbox();
 
-	                case 3:
-	                  _this2._sandboxId = _context2.sent;
-	                  _this2._upfiles = _this2._createParts(_this2._files.files);
-	                  _this2._progress.files = _this2._upfiles;
-	                  document.body.removeChild(_this2._files);
-	                  _this2._files = null;
+	                  case 3:
+	                    sandbox = _context2.sent;
+	                    _this2._upfiles = _this2._createParts(_this2._files.files);
+	                    _this2._progress.files = _this2._upfiles;
+	                    document.body.removeChild(_this2._files);
+	                    _this2._files = null;
+	                    _this2._layerProperties = {
+	                      type: type,
+	                      title: title,
+	                      sandbox: sandbox
+	                    };
 
-	                  _this2._startUpload();
+	                    _this2._startUpload();
 
-	                case 9:
-	                case "end":
-	                  return _context2.stop();
-	              }
-	            }
-	          }, _callee2);
-	        })));
-	      }
-
-	      this._files.click();
-	    }
-	  }, {
-	    key: "_createLayer",
-	    value: function () {
-	      var _createLayer2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(sandboxId) {
-	        var data;
-	        return regeneratorRuntime.wrap(function _callee3$(_context3) {
-	          while (1) {
-	            switch (_context3.prev = _context3.next) {
-	              case 0:
-	                _context3.next = 2;
-	                return this.httpGet("".concat(this._path, "/Sandbox/CreateLayers"), {
-	                  sandboxId: sandboxId
-	                });
-
-	              case 2:
-	                data = _context3.sent;
-	                return _context3.abrupt("return", data || false);
-
-	              case 4:
-	              case "end":
-	                return _context3.stop();
-	            }
-	          }
-	        }, _callee3, this);
-	      }));
-
-	      function _createLayer(_x) {
-	        return _createLayer2.apply(this, arguments);
-	      }
-
-	      return _createLayer;
-	    }()
-	  }, {
-	    key: "_createSandbox",
-	    value: function () {
-	      var _createSandbox2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
-	        var _yield$this$httpGet, sandbox;
-
-	        return regeneratorRuntime.wrap(function _callee4$(_context4) {
-	          while (1) {
-	            switch (_context4.prev = _context4.next) {
-	              case 0:
-	                _context4.next = 2;
-	                return this.httpGet("".concat(this._path, "/sandbox/CreateSandbox"));
-
-	              case 2:
-	                _yield$this$httpGet = _context4.sent;
-	                sandbox = _yield$this$httpGet.sandbox;
-
-	                if (!sandbox) {
-	                  _context4.next = 6;
-	                  break;
+	                  case 10:
+	                  case "end":
+	                    return _context2.stop();
 	                }
+	              }
+	            }, _callee2);
+	          })));
+	        }
 
-	                return _context4.abrupt("return", sandbox);
-
-	              case 6:
-	                return _context4.abrupt("return");
-
-	              case 7:
-	              case "end":
-	                return _context4.stop();
-	            }
-	          }
-	        }, _callee4, this);
-	      }));
-
-	      function _createSandbox() {
-	        return _createSandbox2.apply(this, arguments);
-	      }
-
-	      return _createSandbox;
-	    }()
+	        _this2._files.click();
+	      });
+	      dlg.on('close', function () {
+	        dlg.destroy();
+	        dlg = null;
+	      });
+	    }
 	  }, {
 	    key: "_createParts",
 	    value: function _createParts(files) {
@@ -69467,6 +69495,8 @@ var Forestry = (function () {
 	        return false;
 	      }
 
+	      var sandbox = this._layerProperties.sandbox;
+
 	      var _loop = function _loop(_i4) {
 	        var t = _this3._upfiles[_i4];
 
@@ -69489,16 +69519,16 @@ var Forestry = (function () {
 	            var chunk = t.item.slice(startByte, startByte + countBytes + 1);
 	            var chunkFile = new File([chunk], t.name);
 	            var fd = new FormData();
-	            fd.append("sandbox", _this3._sandboxId);
+	            fd.append("sandbox", sandbox);
 	            fd.append("startByte", startByte);
 	            fd.append("file", chunkFile);
 	            var req = new XMLHttpRequest();
 	            req.open("post", "".concat(_this3._path, "/sandbox/upload"));
 	            t.parts[j].xhr = req;
-	            req.upload.onerror = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5() {
-	              return regeneratorRuntime.wrap(function _callee5$(_context5) {
+	            req.upload.onerror = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
+	              return regeneratorRuntime.wrap(function _callee3$(_context3) {
 	                while (1) {
-	                  switch (_context5.prev = _context5.next) {
+	                  switch (_context3.prev = _context3.next) {
 	                    case 0:
 	                      t.parts[j].status = 'error';
 	                      t.parts[j].xhr = null;
@@ -69506,15 +69536,15 @@ var Forestry = (function () {
 
 	                      _this3._progress.error(_i4);
 
-	                      _context5.next = 6;
+	                      _context3.next = 6;
 	                      return _this3._errorUpload();
 
 	                    case 6:
 	                    case "end":
-	                      return _context5.stop();
+	                      return _context3.stop();
 	                  }
 	                }
-	              }, _callee5);
+	              }, _callee3);
 	            }));
 	            var lastSend = 0;
 
@@ -69531,16 +69561,16 @@ var Forestry = (function () {
 	              lastSend = e.loaded;
 	            };
 
-	            req.onload = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6() {
+	            req.onload = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
 	              var oksum, p, sumFilesOk;
-	              return regeneratorRuntime.wrap(function _callee6$(_context6) {
+	              return regeneratorRuntime.wrap(function _callee4$(_context4) {
 	                while (1) {
-	                  switch (_context6.prev = _context6.next) {
+	                  switch (_context4.prev = _context4.next) {
 	                    case 0:
 	                      t.parts[j].xhr = null;
 
 	                      if (!(req.status !== 200)) {
-	                        _context6.next = 9;
+	                        _context4.next = 9;
 	                        break;
 	                      }
 
@@ -69550,16 +69580,16 @@ var Forestry = (function () {
 
 	                      _this3._progress.error(_i4);
 
-	                      _context6.next = 7;
+	                      _context4.next = 7;
 	                      return _this3._errorUpload();
 
 	                    case 7:
-	                      _context6.next = 25;
+	                      _context4.next = 25;
 	                      break;
 
 	                    case 9:
 	                      if (!(_this3._upfilesStatus === "error")) {
-	                        _context6.next = 17;
+	                        _context4.next = 17;
 	                        break;
 	                      }
 
@@ -69569,11 +69599,11 @@ var Forestry = (function () {
 
 	                      _this3._progress.error(_i4);
 
-	                      _context6.next = 15;
+	                      _context4.next = 15;
 	                      return _this3._errorUpload();
 
 	                    case 15:
-	                      _context6.next = 25;
+	                      _context4.next = 25;
 	                      break;
 
 	                    case 17:
@@ -69600,19 +69630,19 @@ var Forestry = (function () {
 	                      }, 0);
 
 	                      if (!(sumFilesOk === _this3._upfiles.length)) {
-	                        _context6.next = 25;
+	                        _context4.next = 25;
 	                        break;
 	                      }
 
-	                      _context6.next = 25;
+	                      _context4.next = 25;
 	                      return _this3._finishUpload();
 
 	                    case 25:
 	                    case "end":
-	                      return _context6.stop();
+	                      return _context4.stop();
 	                  }
 	                }
-	              }, _callee6);
+	              }, _callee4);
 	            }));
 	            req.send(fd);
 	            return {
@@ -69706,12 +69736,12 @@ var Forestry = (function () {
 	  }, {
 	    key: "_pause",
 	    value: function () {
-	      var _pause2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7() {
+	      var _pause2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5() {
 	        var ok, _i5, _t;
 
-	        return regeneratorRuntime.wrap(function _callee7$(_context7) {
+	        return regeneratorRuntime.wrap(function _callee5$(_context5) {
 	          while (1) {
-	            switch (_context7.prev = _context7.next) {
+	            switch (_context5.prev = _context5.next) {
 	              case 0:
 	                this._stopSpeedTimer();
 
@@ -69720,7 +69750,7 @@ var Forestry = (function () {
 
 	              case 3:
 	                if (!(_i5 < this._upfiles.length)) {
-	                  _context7.next = 11;
+	                  _context5.next = 11;
 	                  break;
 	                }
 
@@ -69736,20 +69766,20 @@ var Forestry = (function () {
 	                }, true);
 
 	                if (ok) {
-	                  _context7.next = 8;
+	                  _context5.next = 8;
 	                  break;
 	                }
 
-	                return _context7.abrupt("break", 11);
+	                return _context5.abrupt("break", 11);
 
 	              case 8:
 	                ++_i5;
-	                _context7.next = 3;
+	                _context5.next = 3;
 	                break;
 
 	              case 11:
 	                if (ok) {
-	                  _context7.next = 16;
+	                  _context5.next = 16;
 	                  break;
 	                }
 
@@ -69757,15 +69787,15 @@ var Forestry = (function () {
 
 	                this._progress.cancelled(i);
 
-	                _context7.next = 16;
+	                _context5.next = 16;
 	                return this._errorUpload();
 
 	              case 16:
 	              case "end":
-	                return _context7.stop();
+	                return _context5.stop();
 	            }
 	          }
-	        }, _callee7, this);
+	        }, _callee5, this);
 	      }));
 
 	      function _pause() {
@@ -69777,11 +69807,11 @@ var Forestry = (function () {
 	  }, {
 	    key: "_errorUpload",
 	    value: function () {
-	      var _errorUpload2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8() {
+	      var _errorUpload2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6() {
 	        var event;
-	        return regeneratorRuntime.wrap(function _callee8$(_context8) {
+	        return regeneratorRuntime.wrap(function _callee6$(_context6) {
 	          while (1) {
-	            switch (_context8.prev = _context8.next) {
+	            switch (_context6.prev = _context6.next) {
 	              case 0:
 	                if (this._upfilesStatus !== 'error') {
 	                  this._stopSpeedTimer();
@@ -69795,15 +69825,16 @@ var Forestry = (function () {
 
 	                  event = document.createEvent('Event');
 	                  event.initEvent('error', false, false);
+	                  this._layerProperties = {};
 	                  this.dispatchEvent(event);
 	                }
 
 	              case 1:
 	              case "end":
-	                return _context8.stop();
+	                return _context6.stop();
 	            }
 	          }
-	        }, _callee8, this);
+	        }, _callee6, this);
 	      }));
 
 	      function _errorUpload() {
@@ -69815,23 +69846,23 @@ var Forestry = (function () {
 	  }, {
 	    key: "_finishUpload",
 	    value: function () {
-	      var _finishUpload2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9() {
-	        var _yield$this$_createLa, TaskID, Completed, Status, event;
+	      var _finishUpload2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7() {
+	        var _this$_layerPropertie, type, title, sandbox, _yield$this$_createVe, TaskID, event, _yield$this$_createRa, _TaskID, _event;
 
-	        return regeneratorRuntime.wrap(function _callee9$(_context9) {
+	        return regeneratorRuntime.wrap(function _callee7$(_context7) {
 	          while (1) {
-	            switch (_context9.prev = _context9.next) {
+	            switch (_context7.prev = _context7.next) {
 	              case 0:
 	                if (!(this._upfilesStatus === 'finish')) {
-	                  _context9.next = 2;
+	                  _context7.next = 2;
 	                  break;
 	                }
 
-	                return _context9.abrupt("return");
+	                return _context7.abrupt("return");
 
 	              case 2:
 	                if (!(this._upfilesStatus === 'progress')) {
-	                  _context9.next = 17;
+	                  _context7.next = 29;
 	                  break;
 	                }
 
@@ -69845,28 +69876,57 @@ var Forestry = (function () {
 
 	                this._progress.stop();
 
-	                _context9.next = 8;
-	                return this._createLayer(this._sandboxId);
+	                _this$_layerPropertie = this._layerProperties, type = _this$_layerPropertie.type, title = _this$_layerPropertie.title, sandbox = _this$_layerPropertie.sandbox;
 
-	              case 8:
-	                _yield$this$_createLa = _context9.sent;
-	                TaskID = _yield$this$_createLa.TaskID;
-	                Completed = _yield$this$_createLa.Completed;
-	                Status = _yield$this$_createLa.Status;
-	                _context9.next = 14;
+	                if (!(type === 'vector')) {
+	                  _context7.next = 19;
+	                  break;
+	                }
+
+	                _context7.next = 10;
+	                return this._createVectorLayer(sandbox, title);
+
+	              case 10:
+	                _yield$this$_createVe = _context7.sent;
+	                TaskID = _yield$this$_createVe.Result.TaskID;
+	                _context7.next = 14;
 	                return this.poll(TaskID);
 
 	              case 14:
 	                event = document.createEvent('Event');
 	                event.initEvent('finished', false, false);
 	                this.dispatchEvent(event);
+	                _context7.next = 29;
+	                break;
 
-	              case 17:
+	              case 19:
+	                if (!(type === 'raster')) {
+	                  _context7.next = 29;
+	                  break;
+	                }
+
+	                _context7.next = 22;
+	                return this._createRasterLayer(sandbox, title);
+
+	              case 22:
+	                _yield$this$_createRa = _context7.sent;
+	                _TaskID = _yield$this$_createRa.Result.TaskID;
+	                _context7.next = 26;
+	                return this.poll(_TaskID);
+
+	              case 26:
+	                _event = document.createEvent('Event');
+
+	                _event.initEvent('finished', false, false);
+
+	                this.dispatchEvent(_event);
+
+	              case 29:
 	              case "end":
-	                return _context9.stop();
+	                return _context7.stop();
 	            }
 	          }
-	        }, _callee9, this);
+	        }, _callee7, this);
 	      }));
 
 	      function _finishUpload() {
@@ -69875,12 +69935,121 @@ var Forestry = (function () {
 
 	      return _finishUpload;
 	    }()
+	  }, {
+	    key: "_createSandbox",
+	    value: function () {
+	      var _createSandbox2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8() {
+	        var _yield$this$httpGet, sandbox;
+
+	        return regeneratorRuntime.wrap(function _callee8$(_context8) {
+	          while (1) {
+	            switch (_context8.prev = _context8.next) {
+	              case 0:
+	                _context8.next = 2;
+	                return this.httpGet("".concat(this._path, "/sandbox/CreateSandbox"));
+
+	              case 2:
+	                _yield$this$httpGet = _context8.sent;
+	                sandbox = _yield$this$httpGet.sandbox;
+
+	                if (!sandbox) {
+	                  _context8.next = 6;
+	                  break;
+	                }
+
+	                return _context8.abrupt("return", sandbox);
+
+	              case 6:
+	                return _context8.abrupt("return");
+
+	              case 7:
+	              case "end":
+	                return _context8.stop();
+	            }
+	          }
+	        }, _callee8, this);
+	      }));
+
+	      function _createSandbox() {
+	        return _createSandbox2.apply(this, arguments);
+	      }
+
+	      return _createSandbox;
+	    }()
+	  }, {
+	    key: "_createVectorLayer",
+	    value: function () {
+	      var _createVectorLayer2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9(sandboxId, title) {
+	        var fd, data;
+	        return regeneratorRuntime.wrap(function _callee9$(_context9) {
+	          while (1) {
+	            switch (_context9.prev = _context9.next) {
+	              case 0:
+	                fd = new FormData();
+	                fd.append('SourceType', 'sandbox');
+	                fd.append('SandboxId', sandboxId);
+	                fd.append('title', title);
+	                _context9.next = 6;
+	                return this.postData("".concat(this._path, "/VectorLayer/Insert.ashx"), fd);
+
+	              case 6:
+	                data = _context9.sent;
+	                return _context9.abrupt("return", data || false);
+
+	              case 8:
+	              case "end":
+	                return _context9.stop();
+	            }
+	          }
+	        }, _callee9, this);
+	      }));
+
+	      function _createVectorLayer(_x, _x2) {
+	        return _createVectorLayer2.apply(this, arguments);
+	      }
+
+	      return _createVectorLayer;
+	    }()
+	  }, {
+	    key: "_createRasterLayer",
+	    value: function () {
+	      var _createRasterLayer2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(sandboxId, title) {
+	        var fd, data;
+	        return regeneratorRuntime.wrap(function _callee10$(_context10) {
+	          while (1) {
+	            switch (_context10.prev = _context10.next) {
+	              case 0:
+	                fd = new FormData();
+	                fd.append('SourceType', 'sandbox');
+	                fd.append('SandboxId', sandboxId);
+	                fd.append('title', title);
+	                _context10.next = 6;
+	                return this.postData("".concat(this._path, "/RasterLayer/Insert.ashx"), fd);
+
+	              case 6:
+	                data = _context10.sent;
+	                return _context10.abrupt("return", data || false);
+
+	              case 8:
+	              case "end":
+	                return _context10.stop();
+	            }
+	          }
+	        }, _callee10, this);
+	      }));
+
+	      function _createRasterLayer(_x3, _x4) {
+	        return _createRasterLayer2.apply(this, arguments);
+	      }
+
+	      return _createRasterLayer;
+	    }()
 	  }]);
 
 	  return FileUploader;
 	}(Controller);
 
-	var translate$l = T.getText.bind(T);
+	var translate$m = T.getText.bind(T);
 
 	var Uploaded$1 = /*#__PURE__*/function (_Controller) {
 	  _inherits(Uploaded$1, _Controller);
@@ -69923,21 +70092,27 @@ var Forestry = (function () {
 	      uploadFileSize: uploadFileSize
 	    });
 
-	    _this._fileUploader.on('finished', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
-	      return regeneratorRuntime.wrap(function _callee$(_context) {
-	        while (1) {
-	          switch (_context.prev = _context.next) {
-	            case 0:
-	              _context.next = 2;
-	              return _this.view();
+	    _this._fileUploader.on('finished', /*#__PURE__*/function () {
+	      var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e) {
+	        return regeneratorRuntime.wrap(function _callee$(_context) {
+	          while (1) {
+	            switch (_context.prev = _context.next) {
+	              case 0:
+	                _context.next = 2;
+	                return _this.view();
 
-	            case 2:
-	            case "end":
-	              return _context.stop();
+	              case 2:
+	              case "end":
+	                return _context.stop();
+	            }
 	          }
-	        }
-	      }, _callee);
-	    })));
+	        }, _callee);
+	      }));
+
+	      return function (_x) {
+	        return _ref2.apply(this, arguments);
+	      };
+	    }());
 
 	    _this._fileUploader.on('error', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
 	      return regeneratorRuntime.wrap(function _callee2$(_context2) {
@@ -69961,18 +70136,38 @@ var Forestry = (function () {
 
 	    _this._view.on('remove', /*#__PURE__*/function () {
 	      var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(e) {
+	        var layerID, ok, layer;
 	        return regeneratorRuntime.wrap(function _callee3$(_context3) {
 	          while (1) {
 	            switch (_context3.prev = _context3.next) {
 	              case 0:
-	                _context3.next = 2;
-	                return _this._deleteLayer(e.detail);
+	                layerID = e.detail;
 
-	              case 2:
+	                if (!layerID) {
+	                  _context3.next = 8;
+	                  break;
+	                }
+
 	                _context3.next = 4;
-	                return _this.view();
+	                return _this._deleteLayer(layerID);
 
 	              case 4:
+	                ok = _context3.sent;
+
+	                if (ok) {
+	                  layer = _this._layers[layerID];
+
+	                  if (layer) {
+	                    _this._map.removeLayer(layer);
+	                  }
+	                } else {
+	                  _this._notification.error(translate$m('uploaded.error.remove'), NOTIFY_TIMEOUT);
+	                }
+
+	                _context3.next = 8;
+	                return _this.view();
+
+	              case 8:
 	              case "end":
 	                return _context3.stop();
 	            }
@@ -69980,7 +70175,7 @@ var Forestry = (function () {
 	        }, _callee3);
 	      }));
 
-	      return function (_x) {
+	      return function (_x2) {
 	        return _ref4.apply(this, arguments);
 	      };
 	    }());
@@ -70031,12 +70226,14 @@ var Forestry = (function () {
 	                      }, _callee4);
 	                    }));
 
-	                    return function (_x3) {
+	                    return function (_x4) {
 	                      return _ref6.apply(this, arguments);
 	                    };
 	                  }());
 	                } else if (id === 'vector') {
-	                  _this._fileUploader.upload();
+	                  _this._fileUploader.upload(id);
+	                } else if (id === 'raster') {
+	                  _this._fileUploader.upload(id);
 	                }
 
 	              case 2:
@@ -70047,7 +70244,7 @@ var Forestry = (function () {
 	        }, _callee5);
 	      }));
 
-	      return function (_x2) {
+	      return function (_x3) {
 	        return _ref5.apply(this, arguments);
 	      };
 	    }());
@@ -70055,14 +70252,32 @@ var Forestry = (function () {
 	    _this._view.on('select', function (e) {
 	      Object.keys(_this._layers).forEach(function (id) {
 	        _this._map.removeLayer(_this._layers[id]);
-	      });
-	      var layers = e.detail;
-	      Object.keys(layers).forEach(function (id) {
-	        var _layers$id = layers[id],
-	            type = _layers$id.type,
-	            MetaProperties = _layers$id.MetaProperties;
 
-	        if (type === 'Vector') ; else if (type === 'Virtual') {
+	        delete _this._layers[id];
+	      });
+	      var _e$detail = e.detail,
+	          selected = _e$detail.selected,
+	          layerID = _e$detail.layerID;
+	      Object.keys(selected).forEach(function (id) {
+	        var item = selected[id];
+	        var type = item.type;
+
+	        if (type === 'Vector') {
+	          var coordinates = item.border.coordinates;
+
+	          var _layer = leafletSrc.geoJSON({
+	            type: 'Feature',
+	            geometry: {
+	              type: 'Polygon',
+	              coordinates: coordinates
+	            }
+	          });
+
+	          _this._layers[id] = _layer;
+
+	          _this._map.addLayer(_layer);
+	        } else if (type === 'Virtual') {
+	          var MetaProperties = item.MetaProperties;
 	          var urlTemplate = MetaProperties.urlTemplate.Value;
 	          var minZoom = parseInt(MetaProperties.minZoom.Value, 10);
 	          var maxZoom = parseInt(MetaProperties.maxZoom.Value, 10);
@@ -70073,7 +70288,8 @@ var Forestry = (function () {
 	          var tileReverse = MetaProperties.tileReverse.Value.toLowerCase() === 'true';
 	          var detectRetina = MetaProperties.detectRetina.Value.toLowerCase() === 'true';
 	          var crossOrigin = MetaProperties.crossOrigin.Value;
-	          var layer = leafletSrc.tileLayer(urlTemplate, {
+
+	          var _layer2 = leafletSrc.tileLayer(urlTemplate, {
 	            minZoom: minZoom,
 	            maxZoom: maxZoom,
 	            subdomains: subdomains,
@@ -70085,11 +70301,20 @@ var Forestry = (function () {
 	            crossOrigin: crossOrigin
 	          });
 
-	          _this._map.addLayer(layer);
+	          _this._layers[id] = _layer2;
 
-	          _this._layers[id] = layer;
+	          _this._map.addLayer(_layer2);
 	        }
 	      });
+	      var layer = layerID && _this._layers[layerID];
+
+	      if (layer) {
+	        var bounds = layer.getBounds();
+
+	        _this._map.fitBounds(bounds);
+
+	        _this._map.invalidateSize();
+	      }
 	    });
 
 	    return _this;
@@ -70129,7 +70354,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 7:
-	                this._notification.error(translate$l('forbidden.uploaded'), NOTIFY_TIMEOUT);
+	                this._notification.error(translate$m('forbidden.uploaded'), NOTIFY_TIMEOUT);
 
 	              case 8:
 	              case "end":
@@ -70162,7 +70387,9 @@ var Forestry = (function () {
 	                  orderby: 'datecreate desc',
 	                  page: 0,
 	                  pageSize: this._pageSize.toString(),
-	                  SendMetadata: true
+	                  SendMetadata: true,
+	                  properties: 'border',
+	                  srs: 'epsg:4326'
 	                });
 
 	              case 2:
@@ -70188,7 +70415,7 @@ var Forestry = (function () {
 	        }, _callee7, this);
 	      }));
 
-	      function _query(_x4) {
+	      function _query(_x5) {
 	        return _query2.apply(this, arguments);
 	      }
 
@@ -72941,7 +73168,7 @@ var Forestry = (function () {
 	    info: 'Информация'
 	  }
 	});
-	var translate$m = T$2.getText.bind(T$2);
+	var translate$n = T$2.getText.bind(T$2);
 
 	var delay = function delay(timeout) {
 	  return new Promise(function (resolve) {
@@ -72991,7 +73218,7 @@ var Forestry = (function () {
 	      el.classList.add('noselect');
 	      el.classList.add('notify-red');
 	      el.classList.add('opening');
-	      el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-notify-icon notify-error\"></i>\n                </td>            \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$m('notify.error'), "</label>                \n                    <div class=\"message\">").concat(text, "</div>\n                </td>\n                <td>            \n                    <i class=\"scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
+	      el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-notify-icon notify-error\"></i>\n                </td>            \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$n('notify.error'), "</label>                \n                    <div class=\"message\">").concat(text, "</div>\n                </td>\n                <td>            \n                    <i class=\"scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
 
 	      this._container.appendChild(el);
 
@@ -73019,7 +73246,7 @@ var Forestry = (function () {
 	      el.classList.add('noselect');
 	      el.classList.add('notify-orange');
 	      el.classList.add('opening');
-	      el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-notify-icon notify-warn\"></i>\n                </td>    \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$m('notify.warn'), "</label>\n                    <div class=\"message\">").concat(text, "</div>    \n                </td>            \n                <td>\n                    <i class=\"scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
+	      el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-notify-icon notify-warn\"></i>\n                </td>    \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$n('notify.warn'), "</label>\n                    <div class=\"message\">").concat(text, "</div>    \n                </td>            \n                <td>\n                    <i class=\"scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
 
 	      this._container.appendChild(el);
 
@@ -73047,7 +73274,7 @@ var Forestry = (function () {
 	      el.classList.add('noselect');
 	      el.classList.add('notify-green');
 	      el.classList.add('opening');
-	      el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-notify-icon notify-info\"></i>\n                </td>            \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$m('notify.info'), "</label>                    \n                    <div class=\"message\">").concat(text, "</div>    \n                </td>                                \n                <td>\n                    <i class=\"scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
+	      el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-notify-icon notify-info\"></i>\n                </td>            \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$n('notify.info'), "</label>                    \n                    <div class=\"message\">").concat(text, "</div>    \n                </td>                                \n                <td>\n                    <i class=\"scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
 
 	      this._container.appendChild(el);
 
@@ -73071,7 +73298,7 @@ var Forestry = (function () {
 
 	var notify_1 = Notification;
 
-	var translate$n = T.getText.bind(T);
+	var translate$o = T.getText.bind(T);
 	var ALLOWED_LAYERS = ['warehouses', 'roads', 'declarations', 'incidents_temporal', 'quadrants', 'stands', 'projects', 'plots', 'fires', 'parks', 'forestries_local', 'forestries', 'regions', 'sentinel', 'landsat'].reverse();
 
 	var Map = /*#__PURE__*/function (_EventTarget) {
@@ -73122,6 +73349,10 @@ var Forestry = (function () {
 	    _this._createCorners();
 
 	    _this._setOrigin(center, zoom);
+
+	    _this._place = new Place();
+
+	    _this._place.addTo(_this._map);
 
 	    _this._map.addControl(leafletSrc.control.attribution({
 	      position: 'bottomleft'
@@ -73230,10 +73461,22 @@ var Forestry = (function () {
 	          while (1) {
 	            switch (_context.prev = _context.next) {
 	              case 0:
-	                _context.next = 2;
+	                if (!this._controllers.reports) {
+	                  _context.next = 5;
+	                  break;
+	                }
+
+	                _context.next = 3;
 	                return this._controllers.reports.view();
 
-	              case 2:
+	              case 3:
+	                _context.next = 6;
+	                break;
+
+	              case 5:
+	                this._notification.error(translate$o('forbidden.analytics'), NOTIFY_TIMEOUT);
+
+	              case 6:
 	              case "end":
 	                return _context.stop();
 	            }
@@ -73255,10 +73498,22 @@ var Forestry = (function () {
 	          while (1) {
 	            switch (_context2.prev = _context2.next) {
 	              case 0:
-	                _context2.next = 2;
+	                if (!this._controllers.requests) {
+	                  _context2.next = 5;
+	                  break;
+	                }
+
+	                _context2.next = 3;
 	                return this._controllers.requests.view();
 
-	              case 2:
+	              case 3:
+	                _context2.next = 6;
+	                break;
+
+	              case 5:
+	                this._notification.error(translate$o('forbidden.requests'), NOTIFY_TIMEOUT);
+
+	              case 6:
 	              case "end":
 	                return _context2.stop();
 	            }
@@ -73275,12 +73530,16 @@ var Forestry = (function () {
 	  }, {
 	    key: "createRequest",
 	    value: function createRequest() {
-	      this._controllers.projects.create();
+	      if (this._controllers.projects) {
+	        this._controllers.projects.create();
+	      } else {
+	        this._notification.error(translate$o('forbidden.project.create'), NOTIFY_TIMEOUT);
+	      }
 	    }
 	  }, {
 	    key: "showIncidents",
 	    value: function showIncidents() {
-	      if (this._permissions.ForestIncidents) {
+	      if (this._permissions.ForestIncidents || this._permissions.ForestIncidentsTimeLine) {
 	        this._legend.enableGroup('incidents');
 	      }
 
@@ -73296,10 +73555,22 @@ var Forestry = (function () {
 	          while (1) {
 	            switch (_context3.prev = _context3.next) {
 	              case 0:
-	                _context3.next = 2;
+	                if (!this._controllers.incidents) {
+	                  _context3.next = 5;
+	                  break;
+	                }
+
+	                _context3.next = 3;
 	                return this._controllers.incidents.showIncident(id);
 
-	              case 2:
+	              case 3:
+	                _context3.next = 6;
+	                break;
+
+	              case 5:
+	                this._notification.error(translate$o('forbidden.incident'), NOTIFY_TIMEOUT);
+
+	              case 6:
 	              case "end":
 	                return _context3.stop();
 	            }
@@ -73321,11 +73592,16 @@ var Forestry = (function () {
 	          while (1) {
 	            switch (_context4.prev = _context4.next) {
 	              case 0:
+	                if (this._controllers.uploaded) ; else {
+	                  this._notification.error(translate$o('forbidden.uploaded'), NOTIFY_TIMEOUT);
+	                }
+
+	              case 1:
 	              case "end":
 	                return _context4.stop();
 	            }
 	          }
-	        }, _callee4);
+	        }, _callee4, this);
 	      }));
 
 	      function showUploaded() {
@@ -73894,6 +74170,11 @@ var Forestry = (function () {
 	    key: "unload",
 	    value: function unload() {
 	      this._controllers.baseLayers.unload();
+	    }
+	  }, {
+	    key: "cornerTopRight",
+	    get: function get() {
+	      return this._place && this._place.getContainer();
 	    }
 	  }]);
 
