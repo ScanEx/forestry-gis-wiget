@@ -48,6 +48,11 @@
 		```js
 		async createRequest();
 		```
+  * Свойства:
+	* получить ссылку на правый верхний контейнер элементов управления
+		```js
+		cornerTopRight;
+		```
   * События:
   	* создать заявку - ``request:create``
   	* инцидент - связанные документы - ``incident:docs``
@@ -74,6 +79,8 @@
 			
 			// загрузка карты
 			await map.load();
+
+			map.cornerTopRight.innerHTML = '<div>Some Content</div>';
 		}
 		catch(e) {
 			alert(e.toString());
