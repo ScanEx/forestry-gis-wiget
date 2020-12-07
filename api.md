@@ -13,7 +13,7 @@
   * Методы:
     * асинхронная загрузка карты
 		```js
-		async load ({rightOffset});
+		async load ({rightOffset?});
 		```
 		* rightOffset - отступ элементов управления в пикселях справа
 	* выгрузка карты

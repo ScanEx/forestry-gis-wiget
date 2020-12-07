@@ -37261,10 +37261,10 @@ var Forestry = (function () {
 
 	  _createClass(Controller, [{
 	    key: "_status",
-	    value: function _status(response) {
+	    value: function _status(format, response) {
 	      switch (response.status) {
 	        case 200:
-	          return response.json();
+	          return format === 'json' ? response.json() : response.text();
 
 	        case 401:
 	          this._notification.error(translate$2('error.unauthorized'), NOTIFY_TIMEOUT);
@@ -37307,6 +37307,7 @@ var Forestry = (function () {
 	    value: function httpPost(url, options) {
 	      var _this2 = this;
 
+	      var format = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'json';
 	      return new Promise(function (resolve) {
 	        _this2._loading.open();
 
@@ -37317,7 +37318,7 @@ var Forestry = (function () {
 	            'Content-Type': 'application/json'
 	          },
 	          body: JSON.stringify(options)
-	        }).then(_this2._status.bind(_this2)).then(function (data) {
+	        }).then(_this2._status.bind(_this2, format)).then(function (data) {
 	          _this2._loading.close();
 
 	          resolve(data);
@@ -37333,6 +37334,7 @@ var Forestry = (function () {
 	    value: function postData(url, fd) {
 	      var _this3 = this;
 
+	      var format = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'json';
 	      return new Promise(function (resolve) {
 	        _this3._loading.open();
 
@@ -37340,7 +37342,7 @@ var Forestry = (function () {
 	          method: 'POST',
 	          credentials: 'include',
 	          body: fd
-	        }).then(_this3._status.bind(_this3)).then(function (data) {
+	        }).then(_this3._status.bind(_this3, format)).then(function (data) {
 	          _this3._loading.close();
 
 	          resolve(data);
@@ -37357,6 +37359,7 @@ var Forestry = (function () {
 	      var _this4 = this;
 
 	      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+	      var format = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'json';
 	      return new Promise(function (resolve) {
 	        _this4._loading.open();
 
@@ -37369,7 +37372,7 @@ var Forestry = (function () {
 	          headers: {
 	            'Content-Type': 'application/json'
 	          }
-	        }).then(_this4._status.bind(_this4)).then(function (data) {
+	        }).then(_this4._status.bind(_this4, format)).then(function (data) {
 	          _this4._loading.close();
 
 	          resolve(data);
@@ -37385,6 +37388,7 @@ var Forestry = (function () {
 	    value: function sendForm(url, fd) {
 	      var _this5 = this;
 
+	      var format = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'json';
 	      return new Promise(function (resolve) {
 	        _this5._loading.open();
 
@@ -37395,7 +37399,7 @@ var Forestry = (function () {
 	            'Content-Type': 'application/x-www-form-urlencoded'
 	          },
 	          body: fd
-	        }).then(_this5._status.bind(_this5)).then(function (data) {
+	        }).then(_this5._status.bind(_this5, format)).then(function (data) {
 	          _this5._loading.close();
 
 	          resolve(data);
@@ -46766,34 +46770,67 @@ var Forestry = (function () {
 	      _this._editGeo();
 	    }).on('incident:saveItem', function (e) {
 	      _this._saveItem(e.detail);
-	    }).on('incident:IncidentCheck', function (e) {
-	      var response = fetch("".concat(_this._path, "/Monitoring/CheckIncident"), {
-	        method: 'POST',
-	        credentials: 'include',
-	        headers: {
-	          'Content-Type': 'application/json'
-	        },
-	        body: JSON.stringify(e.detail)
-	      });
-	    }).on('incident:IncidentAccept', function (e) {
-	      var response = fetch("".concat(_this._path, "/Monitoring/ApproveIncident"), {
-	        method: 'POST',
-	        credentials: 'include',
-	        headers: {
-	          'Content-Type': 'application/json'
-	        },
-	        body: JSON.stringify(e.detail)
-	      });
-	    }).on('incident:IncidentDecline', function (e) {
-	      var response = fetch("".concat(_this._path, "/Monitoring/DeclineIncident"), {
-	        method: 'POST',
-	        credentials: 'include',
-	        headers: {
-	          'Content-Type': 'application/json'
-	        },
-	        body: JSON.stringify(e.detail)
-	      });
-	    }).on('close', function (e) {
+	    }).on('incident:IncidentCheck', /*#__PURE__*/function () {
+	      var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e) {
+	        return regeneratorRuntime.wrap(function _callee$(_context) {
+	          while (1) {
+	            switch (_context.prev = _context.next) {
+	              case 0:
+	                _context.next = 2;
+	                return _this.httpPost("".concat(_this._path, "/Monitoring/CheckIncident"), e.detail);
+
+	              case 2:
+	              case "end":
+	                return _context.stop();
+	            }
+	          }
+	        }, _callee);
+	      }));
+
+	      return function (_x) {
+	        return _ref2.apply(this, arguments);
+	      };
+	    }()).on('incident:IncidentAccept', /*#__PURE__*/function () {
+	      var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(e) {
+	        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+	          while (1) {
+	            switch (_context2.prev = _context2.next) {
+	              case 0:
+	                _context2.next = 2;
+	                return _this.httpPost("".concat(_this._path, "/Monitoring/ApproveIncident"), e.detail);
+
+	              case 2:
+	              case "end":
+	                return _context2.stop();
+	            }
+	          }
+	        }, _callee2);
+	      }));
+
+	      return function (_x2) {
+	        return _ref3.apply(this, arguments);
+	      };
+	    }()).on('incident:IncidentDecline', /*#__PURE__*/function () {
+	      var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(e) {
+	        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+	          while (1) {
+	            switch (_context3.prev = _context3.next) {
+	              case 0:
+	                _context3.next = 2;
+	                return _this.httpPost("".concat(_this._path, "/Monitoring/DeclineIncident"), e.detail);
+
+	              case 2:
+	              case "end":
+	                return _context3.stop();
+	            }
+	          }
+	        }, _callee3);
+	      }));
+
+	      return function (_x3) {
+	        return _ref4.apply(this, arguments);
+	      };
+	    }()).on('close', function (e) {
 	      var map = _this._layer._map;
 	      var rastr = _this._layer.verifyRaster;
 
@@ -46830,17 +46867,17 @@ var Forestry = (function () {
 	  _createClass(Incidents$1, [{
 	    key: "_getForestChangeStatusList",
 	    value: function () {
-	      var _getForestChangeStatusList2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+	      var _getForestChangeStatusList2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
 	        var data;
-	        return regeneratorRuntime.wrap(function _callee$(_context) {
+	        return regeneratorRuntime.wrap(function _callee4$(_context4) {
 	          while (1) {
-	            switch (_context.prev = _context.next) {
+	            switch (_context4.prev = _context4.next) {
 	              case 0:
-	                _context.next = 2;
+	                _context4.next = 2;
 	                return this.httpGet("".concat(this._path, "/Monitoring/GetForestChangeStatusList"), {});
 
 	              case 2:
-	                data = _context.sent;
+	                data = _context4.sent;
 
 	                if (data) {
 	                  this.StatusList = (data.forestChangeStatusList || []).reduce(function (p, c) {
@@ -46851,10 +46888,10 @@ var Forestry = (function () {
 
 	              case 4:
 	              case "end":
-	                return _context.stop();
+	                return _context4.stop();
 	            }
 	          }
-	        }, _callee, this);
+	        }, _callee4, this);
 	      }));
 
 	      function _getForestChangeStatusList() {
@@ -46866,11 +46903,10 @@ var Forestry = (function () {
 	  }, {
 	    key: "_saveItem",
 	    value: function () {
-	      var _saveItem2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(out) {
-	        var response;
-	        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+	      var _saveItem2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(out) {
+	        return regeneratorRuntime.wrap(function _callee5$(_context5) {
 	          while (1) {
-	            switch (_context2.prev = _context2.next) {
+	            switch (_context5.prev = _context5.next) {
 	              case 0:
 	                if (this._drawingObj) {
 	                  out.wkbGeometry = JSON.stringify(this._drawingObj[0].toGeoJSON().geometry);
@@ -46878,29 +46914,21 @@ var Forestry = (function () {
 	                  this._removeDrawing();
 	                }
 
-	                _context2.next = 3;
-	                return fetch("".concat(this._path, "/Monitoring/SaveIncident"), {
-	                  method: 'POST',
-	                  credentials: 'include',
-	                  headers: {
-	                    'Content-Type': 'application/json'
-	                  },
-	                  body: JSON.stringify(out)
-	                });
+	                _context5.next = 3;
+	                return this.httpPost("".concat(this._path, "/Monitoring/SaveIncident"), out);
 
 	              case 3:
-	                response = _context2.sent;
 	                L.gmx.layersVersion.now();
 
-	              case 5:
+	              case 4:
 	              case "end":
-	                return _context2.stop();
+	                return _context5.stop();
 	            }
 	          }
-	        }, _callee2, this);
+	        }, _callee5, this);
 	      }));
 
-	      function _saveItem(_x) {
+	      function _saveItem(_x4) {
 	        return _saveItem2.apply(this, arguments);
 	      }
 
@@ -46955,27 +46983,27 @@ var Forestry = (function () {
 	  }, {
 	    key: "_click",
 	    value: function () {
-	      var _click2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(e) {
+	      var _click2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(e) {
 	        var _e$gmx, id, properties, data;
 
-	        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+	        return regeneratorRuntime.wrap(function _callee6$(_context6) {
 	          while (1) {
-	            switch (_context3.prev = _context3.next) {
+	            switch (_context6.prev = _context6.next) {
 	              case 0:
 	                if (!this.canClick) {
-	                  _context3.next = 8;
+	                  _context6.next = 8;
 	                  break;
 	                }
 
 	                L.DomEvent.stopPropagation(e);
 	                _e$gmx = e.gmx, id = _e$gmx.id, properties = _e$gmx.properties;
-	                _context3.next = 5;
+	                _context6.next = 5;
 	                return this.httpGet("".concat(this._path, "/Monitoring/GetIncident"), {
 	                  IncidentID: properties.id
 	                });
 
 	              case 5:
-	                data = _context3.sent;
+	                data = _context6.sent;
 
 	                if (data) {
 	                  this._view.open(_objectSpread2({
@@ -46991,13 +47019,13 @@ var Forestry = (function () {
 
 	              case 8:
 	              case "end":
-	                return _context3.stop();
+	                return _context6.stop();
 	            }
 	          }
-	        }, _callee3, this);
+	        }, _callee6, this);
 	      }));
 
-	      function _click(_x2) {
+	      function _click(_x5) {
 	        return _click2.apply(this, arguments);
 	      }
 
@@ -47067,8 +47095,8 @@ var Forestry = (function () {
 	    }
 	  }, {
 	    key: "getFilter",
-	    value: function getFilter(_ref2) {
-	      var properties = _ref2.properties;
+	    value: function getFilter(_ref5) {
+	      var properties = _ref5.properties;
 	      var c = properties[this._cid];
 	      var s = properties[this._sid];
 
@@ -47152,20 +47180,20 @@ var Forestry = (function () {
 	  }, {
 	    key: "showIncident",
 	    value: function () {
-	      var _showIncident = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(id) {
+	      var _showIncident = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(id) {
 	        var data, Geometry, GmxID, g, b, c;
-	        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+	        return regeneratorRuntime.wrap(function _callee7$(_context7) {
 	          while (1) {
-	            switch (_context4.prev = _context4.next) {
+	            switch (_context7.prev = _context7.next) {
 	              case 0:
-	                _context4.next = 2;
+	                _context7.next = 2;
 	                return this.httpGet("".concat(this._path, "/Monitoring/GetIncident"), {
 	                  IncidentID: id,
 	                  NeedGeometry: true
 	                });
 
 	              case 2:
-	                data = _context4.sent;
+	                data = _context7.sent;
 
 	                if (data) {
 	                  this._legend.enableGroup('incidents');
@@ -47192,13 +47220,13 @@ var Forestry = (function () {
 
 	              case 4:
 	              case "end":
-	                return _context4.stop();
+	                return _context7.stop();
 	            }
 	          }
-	        }, _callee4, this);
+	        }, _callee7, this);
 	      }));
 
-	      function showIncident(_x3) {
+	      function showIncident(_x6) {
 	        return _showIncident.apply(this, arguments);
 	      }
 
@@ -67553,7 +67581,7 @@ var Forestry = (function () {
 
 	    _this = _super.call(this, container, strings$8);
 
-	    _this._container.classList.add('scanex-forestry-analytics');
+	    _this._container.classList.add('scanex-forestry-analytics', 'scrollable');
 
 	    _this._path = path;
 	    return _this;
@@ -68730,6 +68758,15 @@ var Forestry = (function () {
 	        anonymous: 'anonymous',
 	        useCredentials: 'useCredentials'
 	      },
+	      wms: {
+	        title: 'Добавить слой WMS',
+	        layers: 'layers',
+	        styles: 'styles',
+	        format: 'format',
+	        transparent: 'transparent',
+	        crs: 'crs',
+	        uppercase: 'uppercase'
+	      },
 	      vector: {
 	        title: 'Добавить векторный слой',
 	        name: 'Название',
@@ -69047,32 +69084,132 @@ var Forestry = (function () {
 
 	var translate$k = T.getText.bind(T);
 
+	var WmsView = /*#__PURE__*/function (_Dialog) {
+	  _inherits(WmsView, _Dialog);
+
+	  var _super = _createSuper(WmsView);
+
+	  function WmsView() {
+	    var _this;
+
+	    _classCallCheck(this, WmsView);
+
+	    _this = _super.call(this, {
+	      title: translate$k('uploaded.wms.title'),
+	      modal: true,
+	      top: 200,
+	      left: 400
+	    });
+
+	    _this._element.classList.add('scanex-forestry-wms-view');
+
+	    _this.content.innerHTML = "<div class=\"name\">\n                <label>".concat(translate$k('uploaded.tms.name'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"url\">\n                <label>").concat(translate$k('uploaded.tms.url'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"zoom\">\n                <label>").concat(translate$k('uploaded.tms.zoom'), "</label>\n                <div></div>\n            </div>\n            <div class=\"advanced-button\">\n                <label>").concat(translate$k('uploaded.tms.advanced'), "</label>\n                <i class=\"scanex-uploaded-icon down\"></i>\n            </div>\n            <div class=\"advanced-content hidden\">\n                <div class=\"subdomains\">\n                    <label>").concat(translate$k('uploaded.tms.subdomains'), "</label>              \n                    <input type=\"text\" value=\"abc\">                \n                </div>\n                <div class=\"error-tile-url\">\n                    <label>").concat(translate$k('uploaded.tms.errorTileUrl'), "</label>\n                    <input class=\"value\" type=\"text\" value=\"\">                \n                </div>\n                <div class=\"zoom-offset\">\n                    <label>").concat(translate$k('uploaded.tms.zoomOffset'), "</label>\n                    <div></div>\n                </div>\n                <div class=\"tile-reverse\">\n                    <label>").concat(translate$k('uploaded.tms.tileReverse'), "</label>                \n                    <input type=\"checkbox\" value=\"tileReverse\">                \n                </div>\n                <div class=\"zoom-reverse\">\n                    <label>").concat(translate$k('uploaded.tms.zoomReverse'), "</label>                \n                    <input type=\"checkbox\" value=\"zoomReverse\">                \n                </div>\n                <div class=\"detect-retina\">\n                    <label>").concat(translate$k('uploaded.tms.detectRetina'), "</label>                \n                    <input type=\"checkbox\" value=\"detectRetina\">                \n                </div>                \n                <div class=\"use-credentials\">\n                    <label>").concat(translate$k('uploaded.tms.useCredentials'), "</label>            \n                    <input type=\"checkbox\" value=\"useCredentials\">                \n                </div>\n                <div class=\"layers\">\n                    <label>").concat(translate$k('uploaded.wms.layers'), "</label>            \n                    <input class=\"value\" type=\"text\" value=\"\">                 \n                </div>\n                <div class=\"styles\">\n                    <label>").concat(translate$k('uploaded.wms.styles'), "</label>\n                    <input class=\"value\" type=\"text\" value=\"\">                 \n                </div>\n                <div class=\"format\">\n                    <label>").concat(translate$k('uploaded.wms.format'), "</label>\n                    <select>\n                        <option value=\"image/jpeg\">image/jpeg</option>\n                        <option value=\"image/png\">image/png</option>\n                    </select>               \n                </div>\n                <div class=\"transparent\">\n                    <label>").concat(translate$k('uploaded.wms.transparent'), "</label>            \n                    <input type=\"checkbox\" value=\"transparent\">                \n                </div>\n                <div class=\"crs\">\n                    <label>").concat(translate$k('uploaded.wms.crs'), "</label>            \n                    <input class=\"value\" type=\"text\" value=\"\">                 \n                </div>\n            </div>");
+	    _this._name = _this.content.querySelector('.name').querySelector('input');
+	    _this._url = _this.content.querySelector('.url').querySelector('input');
+	    _this._zoom = new Interval(_this.content.querySelector('.zoom').querySelector('div'), {
+	      min: 1,
+	      max: 21,
+	      slider: Slider2
+	    });
+	    _this._zoom.lo = 1;
+	    _this._zoom.hi = 21;
+
+	    var btnAdvanced = _this.content.querySelector('.advanced-button');
+
+	    var icoAdvanced = btnAdvanced.querySelector('.scanex-uploaded-icon');
+
+	    var adv = _this.content.querySelector('.advanced-content');
+
+	    btnAdvanced.addEventListener('click', function (e) {
+	      e.stopPropagation();
+
+	      if (adv.classList.contains('hidden')) {
+	        adv.classList.remove('hidden');
+	        icoAdvanced.classList.remove('down');
+	        icoAdvanced.classList.add('up');
+	      } else {
+	        adv.classList.add('hidden');
+	        icoAdvanced.classList.remove('up');
+	        icoAdvanced.classList.add('down');
+	      }
+	    });
+	    _this._subdomains = _this.content.querySelector('.subdomains').querySelector('input');
+	    _this._errorTileUrl = _this.content.querySelector('.error-tile-url').querySelector('input');
+	    _this._zoomOffset = new Spinner(_this.content.querySelector('.zoom-offset').querySelector('div'));
+	    _this._zoomOffset.min = 0;
+	    _this._zoomOffset.max = 10;
+	    _this._zoomOffset.value = 0;
+	    _this._zoomReverse = _this.content.querySelector('.zoom-reverse').querySelector('input');
+	    _this._tileReverse = _this.content.querySelector('.tile-reverse').querySelector('input');
+	    _this._detectRetina = _this.content.querySelector('.detect-retina').querySelector('input');
+	    _this._useCredentials = _this.content.querySelector('.use-credentials').querySelector('input');
+	    _this._layers = _this.content.querySelector('.layers').querySelector('input');
+	    _this._styles = _this.content.querySelector('.styles').querySelector('input');
+	    _this._format = _this.content.querySelector('.format').querySelector('select');
+	    _this._transparent = _this.content.querySelector('.transparent').querySelector('input');
+	    _this.footer.innerHTML = "<button>".concat(translate$k('uploaded.tms.ok'), "</button>");
+	    _this._btn = _this.footer.querySelector('button');
+
+	    _this._btn.addEventListener('click', function (e) {
+	      e.stopPropagation();
+	      var event = document.createEvent('Event');
+	      event.initEvent('ok', false, false);
+	      event.detail = {
+	        minZoom: _this._zoom.lo,
+	        maxZoom: _this._zoom.hi,
+	        title: _this._name.value,
+	        description: '',
+	        url: _this._url.value,
+	        subdomains: _this._subdomains.value,
+	        errorTileUrl: _this._errorTileUrl.value,
+	        zoomOffset: _this._zoomOffset.value,
+	        tileReverse: _this._tileReverse.checked,
+	        zoomReverse: _this._zoomReverse.checked,
+	        detectRetina: _this._detectRetina.checked,
+	        crossOrigin: _this._useCredentials.checked && 'use-credentials' || 'anonymous',
+	        layers: _this._layers.value,
+	        styles: _this._styles.value,
+	        format: _this._format.value,
+	        transparent: _this._transparent.value
+	      };
+
+	      _this.dispatchEvent(event);
+	    });
+
+	    return _this;
+	  }
+
+	  return WmsView;
+	}(Dialog);
+
+	var translate$l = T.getText.bind(T);
+
 	var roundBytes = function roundBytes(s) {
 	  if (s > 1024 * 1024 * 1024 * 1024 * 1.2) {
 	    return "".concat((Math.round(s / (1024 * 1024 * 1024 * 1024) * 100) / 100).toLocaleString('ru-RU', {
 	      minimumFractionDigits: 1,
 	      maximumFractionDigits: 1
-	    }), " ").concat(translate$k('uploaded.units.tb'));
+	    }), " ").concat(translate$l('uploaded.units.tb'));
 	  } else if (s > 1024 * 1024 * 1024 * 1.2) {
 	    return "".concat((Math.round(s / (1024 * 1024 * 1024) * 100) / 100).toLocaleString('ru-RU', {
 	      minimumFractionDigits: 1,
 	      maximumFractionDigits: 1
-	    }), " ").concat(translate$k('uploaded.units.gb'));
+	    }), " ").concat(translate$l('uploaded.units.gb'));
 	  } else if (s > 1024 * 1024 * 1.2) {
 	    return "".concat((Math.round(s / (1024 * 1024) * 100) / 100).toLocaleString('ru-RU', {
 	      minimumFractionDigits: 1,
 	      maximumFractionDigits: 1
-	    }), " ").concat(translate$k('uploaded.units.mb'));
+	    }), " ").concat(translate$l('uploaded.units.mb'));
 	  } else if (s > 1024 * 1.2) {
 	    return "".concat((Math.round(s / 1024 * 100) / 100).toLocaleString('ru-RU', {
 	      minimumFractionDigits: 1,
 	      maximumFractionDigits: 1
-	    }), " ").concat(translate$k('uploaded.units.kb'));
+	    }), " ").concat(translate$l('uploaded.units.kb'));
 	  } else {
 	    return "".concat(Math.round(s).toLocaleString('ru-RU', {
 	      minimumFractionDigits: 1,
 	      maximumFractionDigits: 1
-	    }), " ").concat(translate$k('uploaded.units.b'));
+	    }), " ").concat(translate$l('uploaded.units.b'));
 	  }
 	};
 
@@ -69099,7 +69236,7 @@ var Forestry = (function () {
 	      var _this = this;
 
 	      this._panel = new Dialog({
-	        title: translate$k('uploaded.load'),
+	        title: translate$l('uploaded.load'),
 	        left: 500,
 	        top: 300,
 	        modal: true
@@ -69152,11 +69289,11 @@ var Forestry = (function () {
 	    key: "cancelled",
 	    value: function cancelled(index) {
 	      this._status = STATUS.PAUSED;
-	      this._btn.innerText = translate$k('uploaded.resume');
+	      this._btn.innerText = translate$l('uploaded.resume');
 
 	      var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
 
-	      row.querySelector('.status').innerText = translate$k('uploaded.cancelled');
+	      row.querySelector('.status').innerText = translate$l('uploaded.cancelled');
 	    }
 	  }, {
 	    key: "error",
@@ -69165,8 +69302,8 @@ var Forestry = (function () {
 
 	      var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
 
-	      row.querySelector('.status').innerText = translate$k('uploaded.error.file');
-	      this._btn.innerText = translate$k('uploaded.close');
+	      row.querySelector('.status').innerText = translate$l('uploaded.error.file');
+	      this._btn.innerText = translate$l('uploaded.close');
 	    }
 	  }, {
 	    key: "completed",
@@ -69174,7 +69311,7 @@ var Forestry = (function () {
 	      var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
 
 	      row.querySelector('.percent').innerText = percent;
-	      row.querySelector('.status').innerText = translate$k('uploaded.completed');
+	      row.querySelector('.status').innerText = translate$l('uploaded.completed');
 	    }
 	  }, {
 	    key: "waiting",
@@ -69182,17 +69319,17 @@ var Forestry = (function () {
 	      var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
 
 	      row.querySelector('.percent').innerText = percent;
-	      row.querySelector('.status').innerText = translate$k('uploaded.waiting');
+	      row.querySelector('.status').innerText = translate$l('uploaded.waiting');
 	    }
 	  }, {
 	    key: "started",
 	    value: function started(index) {
 	      this._status = STATUS.STARTED;
-	      this._btn.innerText = translate$k('uploaded.pause');
+	      this._btn.innerText = translate$l('uploaded.pause');
 
 	      var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
 
-	      row.querySelector('.status').innerText = translate$k('uploaded.started');
+	      row.querySelector('.status').innerText = translate$l('uploaded.started');
 	    }
 	  }, {
 	    key: "loading",
@@ -69200,13 +69337,13 @@ var Forestry = (function () {
 	      var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
 
 	      row.querySelector('.percent').innerText = percent;
-	      row.querySelector('.status').innerText = translate$k('uploaded.loading');
+	      row.querySelector('.status').innerText = translate$l('uploaded.loading');
 	    }
 	  }, {
 	    key: "stats",
 	    value: function stats(speed, size, total) {
-	      this._speed.innerText = "".concat(translate$k('uploaded.speed'), ": ").concat(roundBytes(speed), " / ").concat(translate$k('uploaded.units.s'));
-	      this._progress.innerText = "".concat(translate$k('uploaded.progress'), ": ").concat(roundBytes(size), " ").concat(translate$k('uploaded.of'), " ").concat(roundBytes(total));
+	      this._speed.innerText = "".concat(translate$l('uploaded.speed'), ": ").concat(roundBytes(speed), " / ").concat(translate$l('uploaded.units.s'));
+	      this._progress.innerText = "".concat(translate$l('uploaded.progress'), ": ").concat(roundBytes(size), " ").concat(translate$l('uploaded.of'), " ").concat(roundBytes(total));
 	    }
 	  }, {
 	    key: "files",
@@ -69226,7 +69363,7 @@ var Forestry = (function () {
 	  return UploadProgress;
 	}(EventTarget);
 
-	var translate$l = T.getText.bind(T);
+	var translate$m = T.getText.bind(T);
 
 	var LayerProperties = /*#__PURE__*/function (_Dialog) {
 	  _inherits(LayerProperties, _Dialog);
@@ -69239,7 +69376,7 @@ var Forestry = (function () {
 	    _classCallCheck(this, LayerProperties);
 
 	    _this = _super.call(this, {
-	      title: translate$l('uploaded.vector.title'),
+	      title: translate$m('uploaded.vector.title'),
 	      modal: true,
 	      top: 200,
 	      left: 400
@@ -69247,9 +69384,9 @@ var Forestry = (function () {
 
 	    _this._element.classList.add('scanex-forestry-vector-layer-properties');
 
-	    _this.content.innerHTML = "<div class=\"name\">\n            <label>".concat(translate$l('uploaded.vector.name'), "</label>\n            <input type=\"text\" value=\"\">\n        </div>");
+	    _this.content.innerHTML = "<div class=\"name\">\n            <label>".concat(translate$m('uploaded.vector.name'), "</label>\n            <input type=\"text\" value=\"\">\n        </div>");
 	    _this._name = _this.content.querySelector('.name').querySelector('input');
-	    _this.footer.innerHTML = "<button>".concat(translate$l('uploaded.vector.ok'), "</button>");
+	    _this.footer.innerHTML = "<button>".concat(translate$m('uploaded.vector.ok'), "</button>");
 	    _this._btn = _this.footer.querySelector('button');
 
 	    _this._btn.addEventListener('click', function (e) {
@@ -70049,7 +70186,7 @@ var Forestry = (function () {
 	  return FileUploader;
 	}(Controller);
 
-	var translate$m = T.getText.bind(T);
+	var translate$n = T.getText.bind(T);
 
 	var Uploaded$1 = /*#__PURE__*/function (_Controller) {
 	  _inherits(Uploaded$1, _Controller);
@@ -70159,9 +70296,11 @@ var Forestry = (function () {
 
 	                  if (layer) {
 	                    _this._map.removeLayer(layer);
+
+	                    delete _this._layers[layerID];
 	                  }
 	                } else {
-	                  _this._notification.error(translate$m('uploaded.error.remove'), NOTIFY_TIMEOUT);
+	                  _this._notification.error(translate$n('uploaded.error.remove'), NOTIFY_TIMEOUT);
 	                }
 
 	                _context3.next = 8;
@@ -70181,29 +70320,30 @@ var Forestry = (function () {
 	    }());
 
 	    _this._view.on('upload', /*#__PURE__*/function () {
-	      var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(e) {
-	        var id, tms;
-	        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+	      var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(e) {
+	        var id, dlg, _dlg, _dlg2;
+
+	        return regeneratorRuntime.wrap(function _callee7$(_context7) {
 	          while (1) {
-	            switch (_context5.prev = _context5.next) {
+	            switch (_context7.prev = _context7.next) {
 	              case 0:
 	                id = e.detail;
 
 	                if (id === 'tms') {
-	                  tms = new TmsView();
-	                  tms.addEventListener('close', function () {
-	                    tms.destroy();
-	                    tms = null;
+	                  dlg = new TmsView();
+	                  dlg.addEventListener('close', function () {
+	                    dlg.destroy();
+	                    dlg = null;
 	                  });
-	                  tms.addEventListener('ok', /*#__PURE__*/function () {
+	                  dlg.addEventListener('ok', /*#__PURE__*/function () {
 	                    var _ref6 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(e) {
 	                      var ok;
 	                      return regeneratorRuntime.wrap(function _callee4$(_context4) {
 	                        while (1) {
 	                          switch (_context4.prev = _context4.next) {
 	                            case 0:
-	                              tms.destroy();
-	                              tms = null;
+	                              dlg.destroy();
+	                              dlg = null;
 	                              _context4.next = 4;
 	                              return _this._createTmsLayer(e.detail);
 
@@ -70230,18 +70370,112 @@ var Forestry = (function () {
 	                      return _ref6.apply(this, arguments);
 	                    };
 	                  }());
+	                }
+
+	                if (id === 'wms') {
+	                  _dlg = new WmsView();
+
+	                  _dlg.addEventListener('close', function () {
+	                    _dlg.destroy();
+
+	                    _dlg = null;
+	                  });
+
+	                  _dlg.addEventListener('ok', /*#__PURE__*/function () {
+	                    var _ref7 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(e) {
+	                      var ok;
+	                      return regeneratorRuntime.wrap(function _callee5$(_context5) {
+	                        while (1) {
+	                          switch (_context5.prev = _context5.next) {
+	                            case 0:
+	                              _dlg.destroy();
+
+	                              _dlg = null;
+	                              _context5.next = 4;
+	                              return _this._createWmsLayer(e.detail);
+
+	                            case 4:
+	                              ok = _context5.sent;
+
+	                              if (!ok) {
+	                                _context5.next = 8;
+	                                break;
+	                              }
+
+	                              _context5.next = 8;
+	                              return _this.view();
+
+	                            case 8:
+	                            case "end":
+	                              return _context5.stop();
+	                          }
+	                        }
+	                      }, _callee5);
+	                    }));
+
+	                    return function (_x5) {
+	                      return _ref7.apply(this, arguments);
+	                    };
+	                  }());
+	                }
+
+	                if (id === 'wfs') {
+	                  _dlg2 = new WfsView();
+
+	                  _dlg2.addEventListener('close', function () {
+	                    _dlg2.destroy();
+
+	                    _dlg2 = null;
+	                  });
+
+	                  _dlg2.addEventListener('ok', /*#__PURE__*/function () {
+	                    var _ref8 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(e) {
+	                      var ok;
+	                      return regeneratorRuntime.wrap(function _callee6$(_context6) {
+	                        while (1) {
+	                          switch (_context6.prev = _context6.next) {
+	                            case 0:
+	                              _dlg2.destroy();
+
+	                              _dlg2 = null;
+	                              _context6.next = 4;
+	                              return _this._createWfsLayer(e.detail);
+
+	                            case 4:
+	                              ok = _context6.sent;
+
+	                              if (!ok) {
+	                                _context6.next = 8;
+	                                break;
+	                              }
+
+	                              _context6.next = 8;
+	                              return _this.view();
+
+	                            case 8:
+	                            case "end":
+	                              return _context6.stop();
+	                          }
+	                        }
+	                      }, _callee6);
+	                    }));
+
+	                    return function (_x6) {
+	                      return _ref8.apply(this, arguments);
+	                    };
+	                  }());
 	                } else if (id === 'vector') {
 	                  _this._fileUploader.upload(id);
 	                } else if (id === 'raster') {
 	                  _this._fileUploader.upload(id);
 	                }
 
-	              case 2:
+	              case 4:
 	              case "end":
-	                return _context5.stop();
+	                return _context7.stop();
 	            }
 	          }
-	        }, _callee5);
+	        }, _callee7);
 	      }));
 
 	      return function (_x3) {
@@ -70258,54 +70492,203 @@ var Forestry = (function () {
 	      var _e$detail = e.detail,
 	          selected = _e$detail.selected,
 	          layerID = _e$detail.layerID;
-	      Object.keys(selected).forEach(function (id) {
-	        var item = selected[id];
-	        var type = item.type;
+	      Object.keys(selected).forEach( /*#__PURE__*/function () {
+	        var _ref9 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(id) {
+	          var properties, _properties, type, _properties2, coordinates, _layer, MinZoom, MaxZoom, RasterSRS, hostName, _properties3, LayerID, border, geometry, _layer2, _properties4, MetaProperties, urlTemplate, minZoom, maxZoom, subdomains, errorTileUrl, zoomOffset, zoomReverse, tileReverse, detectRetina, crossOrigin, _layer3, layers, bs, miny, maxy, minx, maxx, getScale, scale;
 
-	        if (type === 'Vector') {
-	          var coordinates = item.border.coordinates;
+	          return regeneratorRuntime.wrap(function _callee8$(_context8) {
+	            while (1) {
+	              switch (_context8.prev = _context8.next) {
+	                case 0:
+	                  properties = selected[id];
+	                  _properties = properties, type = _properties.type;
 
-	          var _layer = leafletSrc.geoJSON({
-	            type: 'Feature',
-	            geometry: {
-	              type: 'Polygon',
-	              coordinates: coordinates
+	                  if (!(type === 'Vector')) {
+	                    _context8.next = 9;
+	                    break;
+	                  }
+
+	                  _properties2 = properties, coordinates = _properties2.border.coordinates;
+	                  _layer = leafletSrc.geoJSON({
+	                    type: 'Feature',
+	                    geometry: {
+	                      type: 'Polygon',
+	                      coordinates: coordinates
+	                    }
+	                  });
+	                  _this._layers[id] = _layer;
+
+	                  _this._map.addLayer(_layer);
+
+	                  _context8.next = 52;
+	                  break;
+
+	                case 9:
+	                  if (!(type === 'Raster')) {
+	                    _context8.next = 22;
+	                    break;
+	                  }
+
+	                  MinZoom = 0;
+	                  MaxZoom = 20;
+	                  RasterSRS = 3857;
+	                  hostName = '/';
+	                  properties = _objectSpread2({
+	                    styles: [{
+	                      MinZoom: MinZoom,
+	                      MaxZoom: MaxZoom
+	                    }],
+	                    MinZoom: MinZoom,
+	                    MaxZoom: MaxZoom,
+	                    RasterSRS: RasterSRS
+	                  }, properties);
+	                  _properties3 = properties, LayerID = _properties3.LayerID, border = _properties3.border;
+	                  geometry = leafletSrc.gmxUtil.convertGeometry(border, false, true);
+	                  _layer2 = leafletSrc.gmx.createLayer({
+	                    properties: properties,
+	                    geometry: geometry
+	                  }, {
+	                    skipTiles: "All",
+	                    srs: RasterSRS,
+	                    hostName: hostName,
+	                    layerID: LayerID,
+	                    zIndex: -500000,
+	                    gmxEndPoints: {
+	                      checkVersion: "".concat(_this._path, "/Layer/CheckVersion.ashx"),
+	                      layerProps: "".concat(_this._path, "/Layer/GetLayerJson.ashx"),
+	                      searchLayerItem: "".concat(_this._path, "/VectorLayer/Search.ashx"),
+	                      tileProps: "".concat(_this._path, "/TileSender.ashx"),
+	                      mapProps: "".concat(_this._path, "/TileSender.ashx")
+	                    }
+	                  });
+	                  _this._layers[id] = _layer2;
+
+	                  _this._map.addLayer(_layer2);
+
+	                  _context8.next = 52;
+	                  break;
+
+	                case 22:
+	                  if (!(type === 'Virtual')) {
+	                    _context8.next = 52;
+	                    break;
+	                  }
+
+	                  _properties4 = properties, MetaProperties = _properties4.MetaProperties;
+	                  urlTemplate = MetaProperties.urlTemplate.Value;
+	                  minZoom = parseInt(MetaProperties.minZoom.Value, 10);
+	                  maxZoom = parseInt(MetaProperties.maxZoom.Value, 10);
+	                  subdomains = MetaProperties.subdomains.Value;
+	                  errorTileUrl = MetaProperties.errorTileUrl.Value;
+	                  zoomOffset = parseInt(MetaProperties.zoomOffset.Value, 10);
+	                  zoomReverse = MetaProperties.zoomReverse.Value.toLowerCase() === 'true';
+	                  tileReverse = MetaProperties.tileReverse.Value.toLowerCase() === 'true';
+	                  detectRetina = MetaProperties.detectRetina.Value.toLowerCase() === 'true';
+	                  crossOrigin = MetaProperties.crossOrigin.Value;
+
+	                  if (!(MetaProperties.type.Value === 'tms')) {
+	                    _context8.next = 40;
+	                    break;
+	                  }
+
+	                  _layer3 = leafletSrc.tileLayer(urlTemplate, {
+	                    minZoom: minZoom,
+	                    maxZoom: maxZoom,
+	                    subdomains: subdomains,
+	                    errorTileUrl: errorTileUrl,
+	                    zoomOffset: zoomOffset,
+	                    tms: tileReverse,
+	                    zoomReverse: zoomReverse,
+	                    detectRetina: detectRetina,
+	                    crossOrigin: crossOrigin
+	                  });
+	                  _this._layers[id] = _layer3;
+
+	                  _this._map.addLayer(_layer3);
+
+	                  _context8.next = 52;
+	                  break;
+
+	                case 40:
+	                  if (!(MetaProperties.type.Value === 'wms')) {
+	                    _context8.next = 52;
+	                    break;
+	                  }
+
+	                  _context8.next = 43;
+	                  return _this._getWmsLayers(urlTemplate);
+
+	                case 43:
+	                  layers = _context8.sent;
+	                  bs = map.getBounds();
+	                  miny = Math.max(bs.getSouth(), -90);
+	                  maxy = Math.min(bs.getNorth(), 90);
+	                  minx = Math.max(bs.getWest(), -180);
+	                  maxx = Math.min(bs.getEast(), 180);
+
+	                  getScale = function getScale(z) {
+	                    return Math.pow(2, -z) * 156543.033928041;
+	                  };
+
+	                  scale = getScale(map.getZoom());
+	                  layers.forEach(function (item) {
+	                    var name = item.name,
+	                        bbox = item.bbox;
+	                    var format = MetaProperties.format.Value;
+	                    var transparent = MetaProperties.transparent.Value.toLowerCase() === 'true';
+
+	                    if (bbox) {
+	                      minx = Math.min(bbox.minx, minx);
+	                      miny = Math.min(bbox.miny, miny);
+	                      maxx = Math.max(bbox.maxx, maxx);
+	                      maxy = Math.max(bbox.maxy, maxy);
+	                      if (minx >= maxx || miny >= maxy) return;
+	                    }
+
+	                    var mercMin = leafletSrc.Projection.Mercator.project({
+	                      lat: miny,
+	                      lng: minx
+	                    });
+	                    var mercMax = leafletSrc.Projection.Mercator.project({
+	                      lat: maxy,
+	                      lng: maxx
+	                    });
+	                    var width = Math.round((mercMax.x - mercMin.x) / scale);
+	                    var height = Math.round((mercMax.y - mercMin.y) / scale);
+	                    var layer = leafletSrc.tileLayer.wms("".concat(_this._path, "/proxy?").concat(encodeURIComponent(urlTemplate)), {
+	                      minZoom: minZoom,
+	                      maxZoom: maxZoom,
+	                      subdomains: subdomains,
+	                      errorTileUrl: errorTileUrl,
+	                      zoomOffset: zoomOffset,
+	                      tms: false,
+	                      zoomReverse: zoomReverse,
+	                      detectRetina: detectRetina,
+	                      crossOrigin: crossOrigin,
+	                      layers: name,
+	                      styles: '',
+	                      format: format,
+	                      transparent: transparent,
+	                      width: width,
+	                      height: height
+	                    });
+	                    _this._layers[id] = layer;
+
+	                    _this._map.addLayer(layer);
+	                  });
+
+	                case 52:
+	                case "end":
+	                  return _context8.stop();
+	              }
 	            }
-	          });
+	          }, _callee8);
+	        }));
 
-	          _this._layers[id] = _layer;
-
-	          _this._map.addLayer(_layer);
-	        } else if (type === 'Virtual') {
-	          var MetaProperties = item.MetaProperties;
-	          var urlTemplate = MetaProperties.urlTemplate.Value;
-	          var minZoom = parseInt(MetaProperties.minZoom.Value, 10);
-	          var maxZoom = parseInt(MetaProperties.maxZoom.Value, 10);
-	          var subdomains = MetaProperties.subdomains.Value;
-	          var errorTileUrl = MetaProperties.errorTileUrl.Value;
-	          var zoomOffset = parseInt(MetaProperties.zoomOffset.Value, 10);
-	          var zoomReverse = MetaProperties.zoomReverse.Value.toLowerCase() === 'true';
-	          var tileReverse = MetaProperties.tileReverse.Value.toLowerCase() === 'true';
-	          var detectRetina = MetaProperties.detectRetina.Value.toLowerCase() === 'true';
-	          var crossOrigin = MetaProperties.crossOrigin.Value;
-
-	          var _layer2 = leafletSrc.tileLayer(urlTemplate, {
-	            minZoom: minZoom,
-	            maxZoom: maxZoom,
-	            subdomains: subdomains,
-	            errorTileUrl: errorTileUrl,
-	            zoomOffset: zoomOffset,
-	            tms: tileReverse,
-	            zoomReverse: zoomReverse,
-	            detectRetina: detectRetina,
-	            crossOrigin: crossOrigin
-	          });
-
-	          _this._layers[id] = _layer2;
-
-	          _this._map.addLayer(_layer2);
-	        }
-	      });
+	        return function (_x7) {
+	          return _ref9.apply(this, arguments);
+	        };
+	      }());
 	      var layer = layerID && _this._layers[layerID];
 
 	      if (layer) {
@@ -70329,39 +70712,39 @@ var Forestry = (function () {
 	  }, {
 	    key: "view",
 	    value: function () {
-	      var _view = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6() {
+	      var _view = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9() {
 	        var data;
-	        return regeneratorRuntime.wrap(function _callee6$(_context6) {
+	        return regeneratorRuntime.wrap(function _callee9$(_context9) {
 	          while (1) {
-	            switch (_context6.prev = _context6.next) {
+	            switch (_context9.prev = _context9.next) {
 	              case 0:
 	                if (!this._permissions.MyData) {
-	                  _context6.next = 7;
+	                  _context9.next = 7;
 	                  break;
 	                }
 
-	                _context6.next = 3;
+	                _context9.next = 3;
 	                return this._query(this._view.page);
 
 	              case 3:
-	                data = _context6.sent;
+	                data = _context9.sent;
 
 	                if (data) {
 	                  this._view.open(data);
 	                }
 
-	                _context6.next = 8;
+	                _context9.next = 8;
 	                break;
 
 	              case 7:
-	                this._notification.error(translate$m('forbidden.uploaded'), NOTIFY_TIMEOUT);
+	                this._notification.error(translate$n('forbidden.uploaded'), NOTIFY_TIMEOUT);
 
 	              case 8:
 	              case "end":
-	                return _context6.stop();
+	                return _context9.stop();
 	            }
 	          }
-	        }, _callee6, this);
+	        }, _callee9, this);
 	      }));
 
 	      function view() {
@@ -70373,14 +70756,14 @@ var Forestry = (function () {
 	  }, {
 	    key: "_query",
 	    value: function () {
-	      var _query2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(page) {
+	      var _query2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(page) {
 	        var _yield$this$httpGet, Status, Result;
 
-	        return regeneratorRuntime.wrap(function _callee7$(_context7) {
+	        return regeneratorRuntime.wrap(function _callee10$(_context10) {
 	          while (1) {
-	            switch (_context7.prev = _context7.next) {
+	            switch (_context10.prev = _context10.next) {
 	              case 0:
-	                _context7.next = 2;
+	                _context10.next = 2;
 	                return this.httpGet("".concat(this._path, "/Layer/Search2.ashx"), {
 	                  WrapStyle: 'None',
 	                  query: '',
@@ -70393,33 +70776,110 @@ var Forestry = (function () {
 	                });
 
 	              case 2:
-	                _yield$this$httpGet = _context7.sent;
+	                _yield$this$httpGet = _context10.sent;
 	                Status = _yield$this$httpGet.Status;
 	                Result = _yield$this$httpGet.Result;
 
 	                if (!(Status === 'ok')) {
-	                  _context7.next = 9;
+	                  _context10.next = 9;
 	                  break;
 	                }
 
-	                return _context7.abrupt("return", Result);
+	                return _context10.abrupt("return", Result);
 
 	              case 9:
-	                return _context7.abrupt("return", false);
+	                return _context10.abrupt("return", false);
 
 	              case 10:
 	              case "end":
-	                return _context7.stop();
+	                return _context10.stop();
 	            }
 	          }
-	        }, _callee7, this);
+	        }, _callee10, this);
 	      }));
 
-	      function _query(_x5) {
+	      function _query(_x8) {
 	        return _query2.apply(this, arguments);
 	      }
 
 	      return _query;
+	    }()
+	  }, {
+	    key: "_getWmsLayers",
+	    value: function () {
+	      var _getWmsLayers2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11(url) {
+	        var data, dp, xd, ls, layers, _iterator, _step, x, n, layer, bbox, minx, maxx, miny, maxy;
+
+	        return regeneratorRuntime.wrap(function _callee11$(_context11) {
+	          while (1) {
+	            switch (_context11.prev = _context11.next) {
+	              case 0:
+	                _context11.next = 2;
+	                return this.httpGet("".concat(this._path, "/proxy?").concat(encodeURIComponent("".concat(url, "&service=WMS&request=GetCapabilities&version=1.3.0"))), {}, 'text');
+
+	              case 2:
+	                data = _context11.sent;
+
+	                if (!data) {
+	                  _context11.next = 13;
+	                  break;
+	                }
+
+	                dp = new DOMParser();
+	                xd = dp.parseFromString(data, 'text/xml');
+	                ls = xd.querySelectorAll('Layer');
+	                layers = [];
+	                _iterator = _createForOfIteratorHelper(ls);
+
+	                try {
+	                  for (_iterator.s(); !(_step = _iterator.n()).done;) {
+	                    x = _step.value;
+	                    n = x.querySelector('Name');
+	                    layer = {};
+
+	                    if (n) {
+	                      layer.name = n.innerHTML;
+	                      bbox = x.querySelector('EX_GeographicBoundingBox');
+
+	                      if (bbox) {
+	                        minx = bbox.querySelector('westBoundLongitude');
+	                        maxx = bbox.querySelector('eastBoundLongitude');
+	                        miny = bbox.querySelector('southBoundLatitude');
+	                        maxy = bbox.querySelector('northBoundLatitude');
+	                        layer.bbox = {
+	                          minx: minx && parseFloat(minx.innerHTML),
+	                          maxx: maxx && parseFloat(maxx.innerHTML),
+	                          miny: miny && parseFloat(miny.innerHTML),
+	                          maxy: maxy && parseFloat(maxy.innerHTML)
+	                        };
+	                        layers.push(layer);
+	                      }
+	                    }
+	                  }
+	                } catch (err) {
+	                  _iterator.e(err);
+	                } finally {
+	                  _iterator.f();
+	                }
+
+	                return _context11.abrupt("return", layers);
+
+	              case 13:
+	                return _context11.abrupt("return", null);
+
+	              case 14:
+	              case "end":
+	                return _context11.stop();
+	            }
+	          }
+	        }, _callee11, this);
+	      }));
+
+	      function _getWmsLayers(_x9) {
+	        return _getWmsLayers2.apply(this, arguments);
+	      }
+
+	      return _getWmsLayers;
 	    }()
 	  }, {
 	    key: "_deleteLayer",
@@ -70457,23 +70917,22 @@ var Forestry = (function () {
 	    }
 	  }, {
 	    key: "_createTmsLayer",
-	    value: function _createTmsLayer(_ref7) {
+	    value: function _createTmsLayer(_ref10) {
 	      var _this3 = this;
 
-	      var title = _ref7.title,
-	          description = _ref7.description,
-	          copyright = _ref7.copyright,
-	          url = _ref7.url,
-	          subdomains = _ref7.subdomains,
-	          errorTileUrl = _ref7.errorTileUrl,
-	          tms = _ref7.tms,
-	          minZoom = _ref7.minZoom,
-	          maxZoom = _ref7.maxZoom,
-	          zoomOffset = _ref7.zoomOffset,
-	          zoomReverse = _ref7.zoomReverse,
-	          tileReverse = _ref7.tileReverse,
-	          detectRetina = _ref7.detectRetina,
-	          crossOrigin = _ref7.crossOrigin;
+	      var title = _ref10.title,
+	          description = _ref10.description,
+	          copyright = _ref10.copyright,
+	          url = _ref10.url,
+	          subdomains = _ref10.subdomains,
+	          errorTileUrl = _ref10.errorTileUrl,
+	          minZoom = _ref10.minZoom,
+	          maxZoom = _ref10.maxZoom,
+	          zoomOffset = _ref10.zoomOffset,
+	          zoomReverse = _ref10.zoomReverse,
+	          tileReverse = _ref10.tileReverse,
+	          detectRetina = _ref10.detectRetina,
+	          crossOrigin = _ref10.crossOrigin;
 	      return new Promise(function (resolve) {
 	        var fd = new FormData();
 	        fd.append('WrapStyle', 'None');
@@ -70500,8 +70959,8 @@ var Forestry = (function () {
 	            Value: crossOrigin,
 	            Type: 'String'
 	          },
-	          tms: {
-	            Value: tms && 'true' || 'false',
+	          type: {
+	            Value: 'tms',
 	            Type: 'String'
 	          },
 	          minZoom: {
@@ -70542,6 +71001,121 @@ var Forestry = (function () {
 
 	            if (Status === 'ok') {
 	              _this3.poll(Result.TaskID).then(function () {
+	                return resolve(true);
+	              }).catch(function () {
+	                return resolve(false);
+	              });
+	            } else {
+	              resolve(false);
+	            }
+	          } else {
+	            resolve(false);
+	          }
+	        });
+	      });
+	    }
+	  }, {
+	    key: "_createWmsLayer",
+	    value: function _createWmsLayer(_ref11) {
+	      var _this4 = this;
+
+	      var title = _ref11.title,
+	          description = _ref11.description,
+	          copyright = _ref11.copyright,
+	          url = _ref11.url,
+	          subdomains = _ref11.subdomains,
+	          errorTileUrl = _ref11.errorTileUrl,
+	          minZoom = _ref11.minZoom,
+	          maxZoom = _ref11.maxZoom,
+	          zoomOffset = _ref11.zoomOffset,
+	          zoomReverse = _ref11.zoomReverse,
+	          tileReverse = _ref11.tileReverse,
+	          detectRetina = _ref11.detectRetina,
+	          crossOrigin = _ref11.crossOrigin,
+	          layers = _ref11.layers,
+	          styles = _ref11.styles,
+	          format = _ref11.format,
+	          transparent = _ref11.transparent;
+	      return new Promise(function (resolve) {
+	        var _meta2;
+
+	        var fd = new FormData();
+	        fd.append('WrapStyle', 'None');
+	        fd.append('Title', title || '');
+	        fd.append('Description', description || '');
+	        fd.append('Copyright', copyright || '');
+	        fd.append('SourceType', 'Virtual');
+	        fd.append('ContentID', 'WMS' );
+	        var meta = (_meta2 = {
+	          urlTemplate: {
+	            Value: url,
+	            Type: 'String'
+	          },
+	          subdomains: {
+	            Value: subdomains,
+	            Type: 'String'
+	          },
+	          errorTileUrl: {
+	            Value: errorTileUrl,
+	            Type: 'String'
+	          },
+	          crossOrigin: {
+	            Value: crossOrigin,
+	            Type: 'String'
+	          },
+	          type: {
+	            Value: 'wms',
+	            Type: 'String'
+	          },
+	          minZoom: {
+	            Value: minZoom.toString(),
+	            Type: 'String'
+	          },
+	          maxZoom: {
+	            Value: maxZoom.toString(),
+	            Type: 'String'
+	          },
+	          zoomOffset: {
+	            Value: zoomOffset.toString(),
+	            Type: 'String'
+	          },
+	          tileReverse: {
+	            Value: tileReverse && 'true' || 'false',
+	            Type: 'String'
+	          },
+	          zoomReverse: {
+	            Value: zoomReverse && 'true' || 'false',
+	            Type: 'String'
+	          },
+	          detectRetina: {
+	            Value: detectRetina && 'true' || 'false',
+	            Type: 'String'
+	          }
+	        }, _defineProperty(_meta2, "crossOrigin", {
+	          Value: crossOrigin,
+	          Type: 'String'
+	        }), _defineProperty(_meta2, "layers", {
+	          Value: layers,
+	          Type: 'String'
+	        }), _defineProperty(_meta2, "styles", {
+	          Value: styles,
+	          Type: 'String'
+	        }), _defineProperty(_meta2, "format", {
+	          Value: format,
+	          Type: 'String'
+	        }), _defineProperty(_meta2, "transparent", {
+	          Value: transparent && 'true' || 'false',
+	          Type: 'String'
+	        }), _meta2);
+	        fd.append('MetaProperties', JSON.stringify(meta));
+
+	        _this4.postData("".concat(_this4._path, "/VectorLayer/Insert.ashx"), fd).then(function (data) {
+	          if (data) {
+	            var Status = data.Status,
+	                Result = data.Result;
+
+	            if (Status === 'ok') {
+	              _this4.poll(Result.TaskID).then(function () {
 	                return resolve(true);
 	              }).catch(function () {
 	                return resolve(false);
@@ -73168,7 +73742,7 @@ var Forestry = (function () {
 	    info: 'Информация'
 	  }
 	});
-	var translate$n = T$2.getText.bind(T$2);
+	var translate$o = T$2.getText.bind(T$2);
 
 	var delay = function delay(timeout) {
 	  return new Promise(function (resolve) {
@@ -73218,7 +73792,7 @@ var Forestry = (function () {
 	      el.classList.add('noselect');
 	      el.classList.add('notify-red');
 	      el.classList.add('opening');
-	      el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-notify-icon notify-error\"></i>\n                </td>            \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$n('notify.error'), "</label>                \n                    <div class=\"message\">").concat(text, "</div>\n                </td>\n                <td>            \n                    <i class=\"scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
+	      el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-notify-icon notify-error\"></i>\n                </td>            \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$o('notify.error'), "</label>                \n                    <div class=\"message\">").concat(text, "</div>\n                </td>\n                <td>            \n                    <i class=\"scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
 
 	      this._container.appendChild(el);
 
@@ -73246,7 +73820,7 @@ var Forestry = (function () {
 	      el.classList.add('noselect');
 	      el.classList.add('notify-orange');
 	      el.classList.add('opening');
-	      el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-notify-icon notify-warn\"></i>\n                </td>    \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$n('notify.warn'), "</label>\n                    <div class=\"message\">").concat(text, "</div>    \n                </td>            \n                <td>\n                    <i class=\"scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
+	      el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-notify-icon notify-warn\"></i>\n                </td>    \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$o('notify.warn'), "</label>\n                    <div class=\"message\">").concat(text, "</div>    \n                </td>            \n                <td>\n                    <i class=\"scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
 
 	      this._container.appendChild(el);
 
@@ -73274,7 +73848,7 @@ var Forestry = (function () {
 	      el.classList.add('noselect');
 	      el.classList.add('notify-green');
 	      el.classList.add('opening');
-	      el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-notify-icon notify-info\"></i>\n                </td>            \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$n('notify.info'), "</label>                    \n                    <div class=\"message\">").concat(text, "</div>    \n                </td>                                \n                <td>\n                    <i class=\"scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
+	      el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-notify-icon notify-info\"></i>\n                </td>            \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$o('notify.info'), "</label>                    \n                    <div class=\"message\">").concat(text, "</div>    \n                </td>                                \n                <td>\n                    <i class=\"scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
 
 	      this._container.appendChild(el);
 
@@ -73298,7 +73872,7 @@ var Forestry = (function () {
 
 	var notify_1 = Notification;
 
-	var translate$o = T.getText.bind(T);
+	var translate$p = T.getText.bind(T);
 	var ALLOWED_LAYERS = ['warehouses', 'roads', 'declarations', 'incidents_temporal', 'quadrants', 'stands', 'projects', 'plots', 'fires', 'parks', 'forestries_local', 'forestries', 'regions', 'sentinel', 'landsat'].reverse();
 
 	var Map = /*#__PURE__*/function (_EventTarget) {
@@ -73474,7 +74048,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 5:
-	                this._notification.error(translate$o('forbidden.analytics'), NOTIFY_TIMEOUT);
+	                this._notification.error(translate$p('forbidden.analytics'), NOTIFY_TIMEOUT);
 
 	              case 6:
 	              case "end":
@@ -73511,7 +74085,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 5:
-	                this._notification.error(translate$o('forbidden.requests'), NOTIFY_TIMEOUT);
+	                this._notification.error(translate$p('forbidden.requests'), NOTIFY_TIMEOUT);
 
 	              case 6:
 	              case "end":
@@ -73533,7 +74107,7 @@ var Forestry = (function () {
 	      if (this._controllers.projects) {
 	        this._controllers.projects.create();
 	      } else {
-	        this._notification.error(translate$o('forbidden.project.create'), NOTIFY_TIMEOUT);
+	        this._notification.error(translate$p('forbidden.project.create'), NOTIFY_TIMEOUT);
 	      }
 	    }
 	  }, {
@@ -73568,7 +74142,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 5:
-	                this._notification.error(translate$o('forbidden.incident'), NOTIFY_TIMEOUT);
+	                this._notification.error(translate$p('forbidden.incident'), NOTIFY_TIMEOUT);
 
 	              case 6:
 	              case "end":
@@ -73592,11 +74166,22 @@ var Forestry = (function () {
 	          while (1) {
 	            switch (_context4.prev = _context4.next) {
 	              case 0:
-	                if (this._controllers.uploaded) ; else {
-	                  this._notification.error(translate$o('forbidden.uploaded'), NOTIFY_TIMEOUT);
+	                if (!this._controllers.uploaded) {
+	                  _context4.next = 5;
+	                  break;
 	                }
 
-	              case 1:
+	                _context4.next = 3;
+	                return this._controllers.uploaded.view();
+
+	              case 3:
+	                _context4.next = 6;
+	                break;
+
+	              case 5:
+	                this._notification.error(translate$p('forbidden.uploaded'), NOTIFY_TIMEOUT);
+
+	              case 6:
 	              case "end":
 	                return _context4.stop();
 	            }
@@ -73625,23 +74210,14 @@ var Forestry = (function () {
 	      var _load = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10() {
 	        var _this3 = this;
 
-	        var _ref2,
-	            rightOffset,
-	            mapId,
-	            apk,
-	            currentBaseLayer,
-	            _args10 = arguments;
-
+	        var mapId, apk, currentBaseLayer;
 	        return regeneratorRuntime.wrap(function _callee10$(_context10) {
 	          while (1) {
 	            switch (_context10.prev = _context10.next) {
 	              case 0:
-	                _ref2 = _args10.length > 0 && _args10[0] !== undefined ? _args10[0] : {
-	                  rightOffset: 10
-	                }, rightOffset = _ref2.rightOffset;
 	                window.SELF = this;
 	                mapId = 'default';
-	                _context10.next = 5;
+	                _context10.next = 4;
 	                return leafletSrc.gmx.loadMap(mapId, {
 	                  leafletMap: this._map,
 	                  hostName: '/',
@@ -73656,7 +74232,7 @@ var Forestry = (function () {
 	                  }
 	                });
 
-	              case 5:
+	              case 4:
 	                this._gmxMap = _context10.sent;
 
 	                this._map.on('zoomend', function (e) {
@@ -73667,10 +74243,10 @@ var Forestry = (function () {
 
 	                this._controllers = {};
 	                this._zoom = new Zoom();
-	                _context10.next = 11;
+	                _context10.next = 10;
 	                return leafletSrc.gmx.gmxSessionManager.requestSessionKey('maps.kosmosnimki.ru', this._apiKey);
 
-	              case 11:
+	              case 10:
 	                apk = _context10.sent;
 	                this._legend = new Legend();
 
@@ -73696,10 +74272,10 @@ var Forestry = (function () {
 	                  _this3._controllers.baseLayers.hide();
 	                });
 
-	                _context10.next = 20;
+	                _context10.next = 19;
 	                return this._controllers.baseLayers.load();
 
-	              case 20:
+	              case 19:
 	                currentBaseLayer = window.localStorage.getItem('forestry.baselayer');
 
 	                if (currentBaseLayer) {
@@ -73740,12 +74316,12 @@ var Forestry = (function () {
 	                    index: ALLOWED_LAYERS.indexOf(kind.Value)
 	                  };
 	                }) // set z-index & options
-	                .map(function (_ref3) {
-	                  var layer = _ref3.layer,
-	                      kind = _ref3.kind,
-	                      index = _ref3.index,
-	                      isRaster = _ref3.isRaster,
-	                      temporal = _ref3.temporal;
+	                .map(function (_ref2) {
+	                  var layer = _ref2.layer,
+	                      kind = _ref2.kind,
+	                      index = _ref2.index,
+	                      isRaster = _ref2.isRaster,
+	                      temporal = _ref2.temporal;
 
 	                  if (typeof layer.disablePopup === 'function') {
 	                    layer.disablePopup();
@@ -73767,9 +74343,9 @@ var Forestry = (function () {
 	                    kind: kind
 	                  };
 	                }) // create layers cache
-	                .reduce(function (a, _ref4) {
-	                  var layer = _ref4.layer,
-	                      kind = _ref4.kind;
+	                .reduce(function (a, _ref3) {
+	                  var layer = _ref3.layer,
+	                      kind = _ref3.kind;
 	                  a[kind] = layer;
 	                  return a;
 	                }, {}); // attach layer controllers        
@@ -73787,7 +74363,7 @@ var Forestry = (function () {
 	                  });
 
 	                  this._controllers.quadrants.on('quadrant:toggle', /*#__PURE__*/function () {
-	                    var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(e) {
+	                    var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(e) {
 	                      var _e$detail, gmx_id, forestryID;
 
 	                      return regeneratorRuntime.wrap(function _callee5$(_context5) {
@@ -73813,7 +74389,7 @@ var Forestry = (function () {
 	                    }));
 
 	                    return function (_x2) {
-	                      return _ref5.apply(this, arguments);
+	                      return _ref4.apply(this, arguments);
 	                    };
 	                  }());
 	                }
@@ -73883,7 +74459,7 @@ var Forestry = (function () {
 	                  });
 
 	                  this._controllers.projects.on('create', /*#__PURE__*/function () {
-	                    var _ref6 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(e) {
+	                    var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(e) {
 	                      var event;
 	                      return regeneratorRuntime.wrap(function _callee6$(_context6) {
 	                        while (1) {
@@ -73904,7 +74480,7 @@ var Forestry = (function () {
 	                    }));
 
 	                    return function (_x3) {
-	                      return _ref6.apply(this, arguments);
+	                      return _ref5.apply(this, arguments);
 	                    };
 	                  }());
 
@@ -73951,7 +74527,7 @@ var Forestry = (function () {
 	                  });
 
 	                  this._controllers.requests.on('view', /*#__PURE__*/function () {
-	                    var _ref8 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(e) {
+	                    var _ref7 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(e) {
 	                      var _e$detail2, id, forestryID, _this3$_layers$projec, LayerID, c, z;
 
 	                      return regeneratorRuntime.wrap(function _callee8$(_context8) {
@@ -73994,7 +74570,7 @@ var Forestry = (function () {
 	                    }));
 
 	                    return function (_x4) {
-	                      return _ref8.apply(this, arguments);
+	                      return _ref7.apply(this, arguments);
 	                    };
 	                  }());
 
@@ -74003,7 +74579,7 @@ var Forestry = (function () {
 	                  });
 
 	                  this._controllers.requests.on('edit', /*#__PURE__*/function () {
-	                    var _ref9 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9(e) {
+	                    var _ref8 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9(e) {
 	                      var _e$detail3, id, forestryID, _this3$_layers$projec2, LayerID, c, z;
 
 	                      return regeneratorRuntime.wrap(function _callee9$(_context9) {
@@ -74046,7 +74622,7 @@ var Forestry = (function () {
 	                    }));
 
 	                    return function (_x5) {
-	                      return _ref9.apply(this, arguments);
+	                      return _ref8.apply(this, arguments);
 	                    };
 	                  }());
 	                }
@@ -74150,9 +74726,7 @@ var Forestry = (function () {
 	                  notification: this._notification
 	                });
 
-	                this._moveLeft(rightOffset);
-
-	              case 40:
+	              case 38:
 	              case "end":
 	                return _context10.stop();
 	            }
