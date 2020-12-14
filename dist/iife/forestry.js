@@ -68933,6 +68933,11 @@ var Forestry = (function () {
 	        name: 'Название',
 	        ok: 'Подтвердить'
 	      },
+	      raster: {
+	        title: 'Добавить растровый слой',
+	        name: 'Название',
+	        ok: 'Подтвердить'
+	      },
 	      type: 'Тип данных',
 	      waiting: 'Ожидание...',
 	      units: {
@@ -69658,13 +69663,13 @@ var Forestry = (function () {
 
 	  var _super = _createSuper(LayerProperties);
 
-	  function LayerProperties() {
+	  function LayerProperties(title) {
 	    var _this;
 
 	    _classCallCheck(this, LayerProperties);
 
 	    _this = _super.call(this, {
-	      title: translate$n('uploaded.vector.title'),
+	      title: title,
 	      modal: true,
 	      top: 200,
 	      left: 400
@@ -69694,6 +69699,7 @@ var Forestry = (function () {
 	  return LayerProperties;
 	}(Dialog);
 
+	var translate$o = T.getText.bind(T);
 	var FILE_EXTENSIONS = {
 	  vector: ['.geojson', '.shp', '.dbf', '.prj', '.sbn', '.sbx', '.shx', '.dat', '.mif', '.mid', '.csv', '.gpx', '.kml', '.kmz', '.sxf', '.sqlite', '.geojson', '.gdbtable'].join(','),
 	  raster: ['.tif', '.tiff', '.tfw', '.xml', '.jpg', '.jgw', '.png', '.pgw', '.jp2', '.j2w'].join(',')
@@ -69761,7 +69767,8 @@ var Forestry = (function () {
 	    value: function upload(type) {
 	      var _this2 = this;
 
-	      var dlg = new LayerProperties();
+	      var title = type === 'vector' ? translate$o('uploaded.vector.title') : translate$o('uploaded.raster.title');
+	      var dlg = new LayerProperties(title);
 	      dlg.on('ok', function (e) {
 	        var title = e.detail.title;
 	        dlg.destroy();
@@ -70817,7 +70824,7 @@ var Forestry = (function () {
 	  return parse_node(xml.childNodes[0]);
 	}
 
-	var translate$o = T.getText.bind(T);
+	var translate$p = T.getText.bind(T);
 
 	var Uploaded$1 = /*#__PURE__*/function (_Controller) {
 	  _inherits(Uploaded$1, _Controller);
@@ -70931,7 +70938,7 @@ var Forestry = (function () {
 	                    delete _this._layers[layerID];
 	                  }
 	                } else {
-	                  _this._notification.error(translate$o('uploaded.error.remove'), NOTIFY_TIMEOUT);
+	                  _this._notification.error(translate$p('uploaded.error.remove'), NOTIFY_TIMEOUT);
 	                }
 
 	                _context3.next = 8;
@@ -71432,7 +71439,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 8:
-	                this._notification.error(translate$o('forbidden.uploaded'), NOTIFY_TIMEOUT);
+	                this._notification.error(translate$p('forbidden.uploaded'), NOTIFY_TIMEOUT);
 
 	              case 9:
 	              case "end":
@@ -74629,7 +74636,7 @@ var Forestry = (function () {
 	    info: 'Информация'
 	  }
 	});
-	var translate$p = T$2.getText.bind(T$2);
+	var translate$q = T$2.getText.bind(T$2);
 
 	var delay = function delay(timeout) {
 	  return new Promise(function (resolve) {
@@ -74679,7 +74686,7 @@ var Forestry = (function () {
 	      el.classList.add('noselect');
 	      el.classList.add('notify-red');
 	      el.classList.add('opening');
-	      el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-notify-icon notify-error\"></i>\n                </td>            \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$p('notify.error'), "</label>                \n                    <div class=\"message\">").concat(text, "</div>\n                </td>\n                <td>            \n                    <i class=\"scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
+	      el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-notify-icon notify-error\"></i>\n                </td>            \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$q('notify.error'), "</label>                \n                    <div class=\"message\">").concat(text, "</div>\n                </td>\n                <td>            \n                    <i class=\"scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
 
 	      this._container.appendChild(el);
 
@@ -74707,7 +74714,7 @@ var Forestry = (function () {
 	      el.classList.add('noselect');
 	      el.classList.add('notify-orange');
 	      el.classList.add('opening');
-	      el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-notify-icon notify-warn\"></i>\n                </td>    \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$p('notify.warn'), "</label>\n                    <div class=\"message\">").concat(text, "</div>    \n                </td>            \n                <td>\n                    <i class=\"scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
+	      el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-notify-icon notify-warn\"></i>\n                </td>    \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$q('notify.warn'), "</label>\n                    <div class=\"message\">").concat(text, "</div>    \n                </td>            \n                <td>\n                    <i class=\"scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
 
 	      this._container.appendChild(el);
 
@@ -74735,7 +74742,7 @@ var Forestry = (function () {
 	      el.classList.add('noselect');
 	      el.classList.add('notify-green');
 	      el.classList.add('opening');
-	      el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-notify-icon notify-info\"></i>\n                </td>            \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$p('notify.info'), "</label>                    \n                    <div class=\"message\">").concat(text, "</div>    \n                </td>                                \n                <td>\n                    <i class=\"scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
+	      el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-notify-icon notify-info\"></i>\n                </td>            \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$q('notify.info'), "</label>                    \n                    <div class=\"message\">").concat(text, "</div>    \n                </td>                                \n                <td>\n                    <i class=\"scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
 
 	      this._container.appendChild(el);
 
@@ -74759,7 +74766,7 @@ var Forestry = (function () {
 
 	var notify_1 = Notification;
 
-	var translate$q = T.getText.bind(T);
+	var translate$r = T.getText.bind(T);
 	var ALLOWED_LAYERS = ['warehouses', 'roads', 'declarations', 'incidents_temporal', 'quadrants', 'stands', 'projects', 'plots', 'fires', 'parks', 'forestries_local', 'forestries', 'regions', 'sentinel', 'landsat'].reverse();
 
 	var Map = /*#__PURE__*/function (_EventTarget) {
@@ -74935,7 +74942,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 5:
-	                this._notification.error(translate$q('forbidden.analytics'), NOTIFY_TIMEOUT);
+	                this._notification.error(translate$r('forbidden.analytics'), NOTIFY_TIMEOUT);
 
 	              case 6:
 	              case "end":
@@ -74972,7 +74979,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 5:
-	                this._notification.error(translate$q('forbidden.requests'), NOTIFY_TIMEOUT);
+	                this._notification.error(translate$r('forbidden.requests'), NOTIFY_TIMEOUT);
 
 	              case 6:
 	              case "end":
@@ -74994,7 +75001,7 @@ var Forestry = (function () {
 	      if (this._controllers.projects) {
 	        this._controllers.projects.create();
 	      } else {
-	        this._notification.error(translate$q('forbidden.project.create'), NOTIFY_TIMEOUT);
+	        this._notification.error(translate$r('forbidden.project.create'), NOTIFY_TIMEOUT);
 	      }
 	    }
 	  }, {
@@ -75029,7 +75036,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 5:
-	                this._notification.error(translate$q('forbidden.incident'), NOTIFY_TIMEOUT);
+	                this._notification.error(translate$r('forbidden.incident'), NOTIFY_TIMEOUT);
 
 	              case 6:
 	              case "end":
@@ -75066,7 +75073,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 5:
-	                this._notification.error(translate$q('forbidden.uploaded'), NOTIFY_TIMEOUT);
+	                this._notification.error(translate$r('forbidden.uploaded'), NOTIFY_TIMEOUT);
 
 	              case 6:
 	              case "end":
@@ -75094,17 +75101,17 @@ var Forestry = (function () {
 	  }, {
 	    key: "load",
 	    value: function () {
-	      var _load = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10() {
+	      var _load = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9() {
 	        var _this3 = this;
 
 	        var mapId, apk, currentBaseLayer;
-	        return regeneratorRuntime.wrap(function _callee10$(_context10) {
+	        return regeneratorRuntime.wrap(function _callee9$(_context9) {
 	          while (1) {
-	            switch (_context10.prev = _context10.next) {
+	            switch (_context9.prev = _context9.next) {
 	              case 0:
 	                window.SELF = this;
 	                mapId = 'default';
-	                _context10.next = 4;
+	                _context9.next = 4;
 	                return leafletSrc.gmx.loadMap(mapId, {
 	                  leafletMap: this._map,
 	                  hostName: '/',
@@ -75120,7 +75127,7 @@ var Forestry = (function () {
 	                });
 
 	              case 4:
-	                this._gmxMap = _context10.sent;
+	                this._gmxMap = _context9.sent;
 
 	                this._map.on('zoomend', function (e) {
 	                  if (_this3._grid) {
@@ -75130,11 +75137,11 @@ var Forestry = (function () {
 
 	                this._controllers = {};
 	                this._zoom = new Zoom();
-	                _context10.next = 10;
+	                _context9.next = 10;
 	                return leafletSrc.gmx.gmxSessionManager.requestSessionKey('maps.kosmosnimki.ru', this._apiKey);
 
 	              case 10:
-	                apk = _context10.sent;
+	                apk = _context9.sent;
 	                this._legend = new Legend();
 
 	                this._legend.addTo(this._map);
@@ -75159,7 +75166,7 @@ var Forestry = (function () {
 	                  _this3._controllers.baseLayers.hide();
 	                });
 
-	                _context10.next = 19;
+	                _context9.next = 19;
 	                return this._controllers.baseLayers.load();
 
 	              case 19:
@@ -75345,46 +75352,30 @@ var Forestry = (function () {
 	                    loading: this._loading
 	                  });
 
-	                  this._controllers.projects.on('create', /*#__PURE__*/function () {
-	                    var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(e) {
-	                      var event;
-	                      return regeneratorRuntime.wrap(function _callee6$(_context6) {
-	                        while (1) {
-	                          switch (_context6.prev = _context6.next) {
-	                            case 0:
-	                              event = document.createEvent('Event');
-	                              event.initEvent('request:create', false, false);
-	                              event.detail = e.detail;
+	                  this._controllers.projects.on('create', function (e) {
+	                    var event = document.createEvent('Event');
+	                    event.initEvent('request:create', false, false);
+	                    event.detail = e.detail;
 
-	                              _this3.dispatchEvent(event);
+	                    _this3.dispatchEvent(event);
 
-	                            case 4:
-	                            case "end":
-	                              return _context6.stop();
-	                          }
-	                        }
-	                      }, _callee6);
-	                    }));
+	                    _this3._layers.projects.repaint();
+	                  });
 
-	                    return function (_x3) {
-	                      return _ref5.apply(this, arguments);
-	                    };
-	                  }());
-
-	                  this._controllers.projects.on('back', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7() {
-	                    return regeneratorRuntime.wrap(function _callee7$(_context7) {
+	                  this._controllers.projects.on('back', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6() {
+	                    return regeneratorRuntime.wrap(function _callee6$(_context6) {
 	                      while (1) {
-	                        switch (_context7.prev = _context7.next) {
+	                        switch (_context6.prev = _context6.next) {
 	                          case 0:
-	                            _context7.next = 2;
+	                            _context6.next = 2;
 	                            return _this3.showRequests();
 
 	                          case 2:
 	                          case "end":
-	                            return _context7.stop();
+	                            return _context6.stop();
 	                        }
 	                      }
-	                    }, _callee7);
+	                    }, _callee6);
 	                  })));
 	                }
 
@@ -75414,15 +75405,15 @@ var Forestry = (function () {
 	                  });
 
 	                  this._controllers.requests.on('view', /*#__PURE__*/function () {
-	                    var _ref7 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(e) {
+	                    var _ref6 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(e) {
 	                      var _e$detail2, id, forestryID, _this3$_layers$projec, LayerID, c, z;
 
-	                      return regeneratorRuntime.wrap(function _callee8$(_context8) {
+	                      return regeneratorRuntime.wrap(function _callee7$(_context7) {
 	                        while (1) {
-	                          switch (_context8.prev = _context8.next) {
+	                          switch (_context7.prev = _context7.next) {
 	                            case 0:
 	                              _e$detail2 = e.detail, id = _e$detail2.id, forestryID = _e$detail2.forestryID;
-	                              _context8.next = 3;
+	                              _context7.next = 3;
 	                              return _this3._controllers.projects.view({
 	                                id: id,
 	                                forestryID: forestryID
@@ -75430,6 +75421,58 @@ var Forestry = (function () {
 
 	                            case 3:
 	                              _this3$_layers$projec = _this3._layers.projects.getGmxProperties(), LayerID = _this3$_layers$projec.LayerID;
+	                              _context7.prev = 4;
+	                              _context7.next = 7;
+	                              return getObjectCenter(_this3._gmxPath, LayerID, id);
+
+	                            case 7:
+	                              c = _context7.sent;
+	                              z = 10;
+
+	                              _this3._map.setView(c, z);
+
+	                              _context7.next = 15;
+	                              break;
+
+	                            case 12:
+	                              _context7.prev = 12;
+	                              _context7.t0 = _context7["catch"](4);
+	                              console.log(_context7.t0);
+
+	                            case 15:
+	                            case "end":
+	                              return _context7.stop();
+	                          }
+	                        }
+	                      }, _callee7, null, [[4, 12]]);
+	                    }));
+
+	                    return function (_x3) {
+	                      return _ref6.apply(this, arguments);
+	                    };
+	                  }());
+
+	                  this._controllers.requests.on('create', function () {
+	                    _this3._controllers.projects.create();
+	                  });
+
+	                  this._controllers.requests.on('edit', /*#__PURE__*/function () {
+	                    var _ref7 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(e) {
+	                      var _e$detail3, id, forestryID, _this3$_layers$projec2, LayerID, c, z;
+
+	                      return regeneratorRuntime.wrap(function _callee8$(_context8) {
+	                        while (1) {
+	                          switch (_context8.prev = _context8.next) {
+	                            case 0:
+	                              _e$detail3 = e.detail, id = _e$detail3.id, forestryID = _e$detail3.forestryID;
+	                              _context8.next = 3;
+	                              return _this3._controllers.projects.edit({
+	                                id: id,
+	                                forestryID: forestryID
+	                              });
+
+	                            case 3:
+	                              _this3$_layers$projec2 = _this3._layers.projects.getGmxProperties(), LayerID = _this3$_layers$projec2.LayerID;
 	                              _context8.prev = 4;
 	                              _context8.next = 7;
 	                              return getObjectCenter(_this3._gmxPath, LayerID, id);
@@ -75458,58 +75501,6 @@ var Forestry = (function () {
 
 	                    return function (_x4) {
 	                      return _ref7.apply(this, arguments);
-	                    };
-	                  }());
-
-	                  this._controllers.requests.on('create', function () {
-	                    _this3._controllers.projects.create();
-	                  });
-
-	                  this._controllers.requests.on('edit', /*#__PURE__*/function () {
-	                    var _ref8 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9(e) {
-	                      var _e$detail3, id, forestryID, _this3$_layers$projec2, LayerID, c, z;
-
-	                      return regeneratorRuntime.wrap(function _callee9$(_context9) {
-	                        while (1) {
-	                          switch (_context9.prev = _context9.next) {
-	                            case 0:
-	                              _e$detail3 = e.detail, id = _e$detail3.id, forestryID = _e$detail3.forestryID;
-	                              _context9.next = 3;
-	                              return _this3._controllers.projects.edit({
-	                                id: id,
-	                                forestryID: forestryID
-	                              });
-
-	                            case 3:
-	                              _this3$_layers$projec2 = _this3._layers.projects.getGmxProperties(), LayerID = _this3$_layers$projec2.LayerID;
-	                              _context9.prev = 4;
-	                              _context9.next = 7;
-	                              return getObjectCenter(_this3._gmxPath, LayerID, id);
-
-	                            case 7:
-	                              c = _context9.sent;
-	                              z = 10;
-
-	                              _this3._map.setView(c, z);
-
-	                              _context9.next = 15;
-	                              break;
-
-	                            case 12:
-	                              _context9.prev = 12;
-	                              _context9.t0 = _context9["catch"](4);
-	                              console.log(_context9.t0);
-
-	                            case 15:
-	                            case "end":
-	                              return _context9.stop();
-	                          }
-	                        }
-	                      }, _callee9, null, [[4, 12]]);
-	                    }));
-
-	                    return function (_x5) {
-	                      return _ref8.apply(this, arguments);
 	                    };
 	                  }());
 	                }
@@ -75616,10 +75607,10 @@ var Forestry = (function () {
 
 	              case 38:
 	              case "end":
-	                return _context10.stop();
+	                return _context9.stop();
 	            }
 	          }
-	        }, _callee10, this);
+	        }, _callee9, this);
 	      }));
 
 	      function load() {
