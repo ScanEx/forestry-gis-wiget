@@ -939,70 +939,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
 .scanex-notify-icon.notify-error {background-image: url("data:image/svg+xml,%3csvg width='35' height='35' viewBox='0 0 35 35' fill='none' xmlns='http://www.w3.org/2000/svg'%3e %3cpath d='M17.375 26.375C17.7892 26.375 18.125 26.0392 18.125 25.625C18.125 25.2108 17.7892 24.875 17.375 24.875C16.9608 24.875 16.625 25.2108 16.625 25.625C16.625 26.0392 16.9608 26.375 17.375 26.375Z' fill='%23FF4F42'/%3e %3cpath d='M17.375 33.875C26.4877 33.875 33.875 26.4877 33.875 17.375C33.875 8.2623 26.4877 0.875 17.375 0.875C8.2623 0.875 0.875 8.2623 0.875 17.375C0.875 26.4877 8.2623 33.875 17.375 33.875Z' stroke='%23FF4F42' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3cpath d='M17.375 8.375V20.375' stroke='%23FF4F42' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3cpath d='M17.375 26.375C17.7892 26.375 18.125 26.0392 18.125 25.625C18.125 25.2108 17.7892 24.875 17.375 24.875C16.9608 24.875 16.625 25.2108 16.625 25.625C16.625 26.0392 16.9608 26.375 17.375 26.375Z' stroke='%23FF4F42' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3c/svg%3e");}
 .scanex-notify-icon.notify-info {background-image: url("data:image/svg+xml,%3csvg width='33' height='32' viewBox='0 0 33 32' fill='none' xmlns='http://www.w3.org/2000/svg'%3e %3cpath d='M30.35 12.4C30.725 13.675 30.875 14.95 30.875 16.375C30.875 24.625 24.125 31.375 15.875 31.375C7.625 31.375 0.875 24.625 0.875 16.375C0.875 8.125 7.625 1.375 15.875 1.375C18.8 1.375 21.5 2.2 23.75 3.625' stroke='%2339BC82' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3cpath d='M9.875 13.375L15.875 19.375L32.375 2.875' stroke='%2339BC82' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3c/svg%3e");}
 .scanex-notify-icon.notify-warn {background-image: url("data:image/svg+xml,%3csvg width='35' height='32' viewBox='0 0 35 32' fill='none' xmlns='http://www.w3.org/2000/svg'%3e %3cpath d='M10.9998 21.6251L13.8161 27.8456C14.3583 29.0613 13.8131 30.4871 12.5973 31.0293C11.3816 31.5716 9.95581 31.0263 9.41356 29.8106L3.9873 17.6523' stroke='%23E8A700' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3cpath d='M23.375 25.375L11.375 17.875H5.375C2.8895 17.875 0.875 15.8605 0.875 13.375C0.875 10.8895 2.8895 8.875 5.375 8.875H11.375L23.375 1.375V25.375Z' stroke='%23E8A700' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3cpath d='M30.875 13.375H33.875' stroke='%23E8A700' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3cpath d='M29.0664 6.625L31.6652 5.125' stroke='%23E8A700' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3cpath d='M29.0664 20.125L31.6652 21.625' stroke='%23E8A700' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3cpath d='M6.875 8.875V17.875' stroke='%23E8A700' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3c/svg%3e");}
-.scanex-forestry-content > .view.hidden {
-    display: none;
-}
-.scanex-forestry-content .view {
-    background-color: #FFFFFF;
-    padding: 15px 15px 0 15px;
-    border-radius: 6px;
-    height: 310px;
-    display: -webkit-inline-box;
-    display: -ms-inline-flexbox;
-    display: inline-flex;    
-    -webkit-box-pack: justify;
-    -ms-flex-pack: justify;
-    justify-content: space-between;
-    -webkit-box-align: start;
-    -ms-flex-align: start;
-    align-items: flex-start;    
-}
-
-.scanex-forestry-content .view .scanex-component-icon {
-    background-repeat: no-repeat;
-    background-position: center;
-    cursor: pointer;
-    width: 24px;
-    height: 24px;
-    vertical-align: middle;
-    float: right;
-    opacity: 0.3;
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    transform: scaleY(0.9);
-}
-.leaflet-control.scanex-forestry-zoom {
-    background-color: #FFFFFF;
-    border-radius: 10px;    
-    padding: 7px 0;    
-    border: 1px solid #e0e0e0;    
-    clear: none;   
-}
-.scanex-forestry-zoom .middle {
-    font-style: normal;
-    font-weight: 600;
-    font-size: 14px;
-    line-height: 19px;
-    color: #453d3d;
-    border-left: 2px solid #e3e8f1;
-    border-right: 2px solid #e3e8f1;
-    width: 40px;
-    padding: 0px 10px 0px 10px;
-    text-align: center;
-}
-.scanex-forestry-zoom > * {
-    display: inline-block;
-    vertical-align: middle;    
-}
-.scanex-forestry-zoom .scanex-zoom-icon {
-    background-repeat: no-repeat;
-    background-position: center;    
-    cursor: pointer;
-    width: 24px;
-    height: 24px;        
-    margin: 0px 5px 0px 5px;
-}
 .leaflet-gmx-center {
     height: 100%;
     width: 100%;
@@ -1098,6 +1034,39 @@ svg.leaflet-image-layer.leaflet-interactive path {
 	margin-left: 4px;
 }
 
+.scanex-forestry-content > .view.hidden {
+    display: none;
+}
+.scanex-forestry-content .view {
+    background-color: #FFFFFF;
+    padding: 15px 15px 0 15px;
+    border-radius: 6px;
+    height: 310px;
+    display: -webkit-inline-box;
+    display: -ms-inline-flexbox;
+    display: inline-flex;    
+    -webkit-box-pack: justify;
+    -ms-flex-pack: justify;
+    justify-content: space-between;
+    -webkit-box-align: start;
+    -ms-flex-align: start;
+    align-items: flex-start;    
+}
+
+.scanex-forestry-content .view .scanex-component-icon {
+    background-repeat: no-repeat;
+    background-position: center;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    vertical-align: middle;
+    float: right;
+    opacity: 0.3;
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    transform: scaleY(0.9);
+}
 .leaflet-control.scanex-forestry-legend {  
     clear: none;      
 }
@@ -1363,6 +1332,37 @@ svg.leaflet-image-layer.leaflet-interactive path {
 .scanex-date-interval .top label:nth-child(2) {
     margin-right: 15px;
 }
+.leaflet-control.scanex-forestry-zoom {
+    background-color: #FFFFFF;
+    border-radius: 10px;    
+    padding: 7px 0;    
+    border: 1px solid #e0e0e0;    
+    clear: none;   
+}
+.scanex-forestry-zoom .middle {
+    font-style: normal;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 19px;
+    color: #453d3d;
+    border-left: 2px solid #e3e8f1;
+    border-right: 2px solid #e3e8f1;
+    width: 40px;
+    padding: 0px 10px 0px 10px;
+    text-align: center;
+}
+.scanex-forestry-zoom > * {
+    display: inline-block;
+    vertical-align: middle;    
+}
+.scanex-forestry-zoom .scanex-zoom-icon {
+    background-repeat: no-repeat;
+    background-position: center;    
+    cursor: pointer;
+    width: 24px;
+    height: 24px;        
+    margin: 0px 5px 0px 5px;
+}
 .scanex-forestry-notify {
     position: absolute;
     top: 60px;
@@ -1487,6 +1487,9 @@ svg.leaflet-image-layer.leaflet-interactive path {
 	cursor: default;
 }
 
+.scanex-forestry-content .view[data-id=fires] {
+    margin-bottom: 60px;
+}
 .scanex-forestry-declaration .scrollable {
     max-height: 240px;
 }
@@ -1771,9 +1774,7 @@ hr {
 .scanex-forestry-content .view .scanex-forestry-incident {
     margin-right: 17px;
 }
-.scanex-forestry-content .view[data-id=fires] {
-    margin-bottom: 60px;
-}
+
 .scanex-forestry-view-plot .content > * {
     float: left;
 }
@@ -1812,7 +1813,6 @@ hr {
     margin-top: 20px;
     margin-bottom: 20px;
 }
-
 
 .scanex-forestry-project * {
     box-sizing: border-box !important;
@@ -2577,6 +2577,49 @@ hr {
 .container.scanex-forestry-analytics {
     height: 100%;
 }
+.scanex-forestry-content .view[data-id=stands] {
+    height: 470px;
+}
+.scanex-forestry-stand label {
+    font-family: 'Open Sans', 'Arial';
+    white-space: nowrap;
+    font-style: normal;
+    font-weight: normal;
+    font-size: 14px;
+    line-height: 19px;
+}
+.scanex-forestry-stand .levels {
+    height: 360px;    
+}
+.scanex-forestry-stand > .content > * {    
+    float: left;    
+}
+.scanex-forestry-stand table {
+    table-layout: fixed;    
+}
+.scanex-forestry-stand .chart {
+    width: 400px;
+    height: 180px;
+}
+
+.scanex-forestry-stand .content {
+    display: inline-flex;
+    flex-wrap: wrap;
+}
+
+.scanex-forestry-stand  .apexcharts-legend-series {
+    position: relative;
+    overflow: hidden;
+}
+
+.scanex-forestry-stand  .apexcharts-legend.apexcharts-align-right.position-right {
+    /* overflow: hidden; */
+}
+
+.scanex-forestry-stand  .events {
+    height: 182px;
+    margin: 0px 16px 0px 16px;
+}
 .scanex-forestry-uploaded {
     width: 100%;
 }
@@ -2827,49 +2870,6 @@ hr {
     position: relative;
 }
 
-.scanex-forestry-content .view[data-id=stands] {
-    height: 470px;
-}
-.scanex-forestry-stand label {
-    font-family: 'Open Sans', 'Arial';
-    white-space: nowrap;
-    font-style: normal;
-    font-weight: normal;
-    font-size: 14px;
-    line-height: 19px;
-}
-.scanex-forestry-stand .levels {
-    height: 360px;    
-}
-.scanex-forestry-stand > .content > * {    
-    float: left;    
-}
-.scanex-forestry-stand table {
-    table-layout: fixed;    
-}
-.scanex-forestry-stand .chart {
-    width: 400px;
-    height: 180px;
-}
-
-.scanex-forestry-stand .content {
-    display: inline-flex;
-    flex-wrap: wrap;
-}
-
-.scanex-forestry-stand  .apexcharts-legend-series {
-    position: relative;
-    overflow: hidden;
-}
-
-.scanex-forestry-stand  .apexcharts-legend.apexcharts-align-right.position-right {
-    /* overflow: hidden; */
-}
-
-.scanex-forestry-stand  .events {
-    height: 182px;
-    margin: 0px 16px 0px 16px;
-}
 div.timeline-frame {
     -moz-box-sizing: border-box;
     border: 1px solid #bebebe;
@@ -3603,6 +3603,47 @@ http://nicolasgallagher.com/micro-clearfix-hack/
 .scanex-forestry-baselayers-view .scanex-baselayers .content .baselayer.user-baselayer.current {
     border: 1px solid transparent;
 }
+.scanex-forestry-view-project table {
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+.scanex-forestry-view-project > .content > * {
+    float: left;
+}
+.scanex-forestry-view-project > .content .stats {    
+    padding-right: 15px;
+    max-height: 190px;
+}
+.scanex-forestry-view-project .species > table td:last-child {
+    width: 100px;
+    text-align: right;
+}
+.container.scanex-forestry-view-project label {
+    font-weight: bold;
+}
+.container.scanex-forestry-view-project .separator {
+    font-size: 13px;
+    font-weight: bold;
+    padding: 10px 0px 10px 0px;
+}
+
+.scanex-forestry-view-project > .content .chart {
+    width: 450px;    
+}
+
+.scanex-forestry-view-project .scanex-project-icon {
+    background-color: transparent;
+    background-position: center;
+    background-repeat: no-repeat;
+    width: 24px;
+    height: 24px;
+    border: none;
+    transform: scale(0.84);
+    opacity: 0.5;
+    margin-bottom: 3px;
+    position: relative;
+    top: 3px;
+}
 .scanex-forestry-project .quadrants>.scrollable {
     overflow-y: auto;
     max-height: 185px;
@@ -3658,47 +3699,6 @@ http://nicolasgallagher.com/micro-clearfix-hack/
 }
 .scanex-forestry-project .quadrants table>tbody>tr {
     cursor: pointer;
-}
-.scanex-forestry-view-project table {
-    table-layout: fixed;
-    border-collapse: collapse;
-}
-.scanex-forestry-view-project > .content > * {
-    float: left;
-}
-.scanex-forestry-view-project > .content .stats {    
-    padding-right: 15px;
-    max-height: 190px;
-}
-.scanex-forestry-view-project .species > table td:last-child {
-    width: 100px;
-    text-align: right;
-}
-.container.scanex-forestry-view-project label {
-    font-weight: bold;
-}
-.container.scanex-forestry-view-project .separator {
-    font-size: 13px;
-    font-weight: bold;
-    padding: 10px 0px 10px 0px;
-}
-
-.scanex-forestry-view-project > .content .chart {
-    width: 450px;    
-}
-
-.scanex-forestry-view-project .scanex-project-icon {
-    background-color: transparent;
-    background-position: center;
-    background-repeat: no-repeat;
-    width: 24px;
-    height: 24px;
-    border: none;
-    transform: scale(0.84);
-    opacity: 0.5;
-    margin-bottom: 3px;
-    position: relative;
-    top: 3px;
 }
 .scanex-forestry-project .species {
     width: 715px;
@@ -3991,6 +3991,115 @@ http://nicolasgallagher.com/micro-clearfix-hack/
     position: relative;
     bottom: 15px;
 }
+.scanex-forestry-wms-view.scanex-component-dialog { 
+    width: 500px;
+    background-color: #FFFFFF;
+    padding: 21px;
+    font-family: Arial;
+    color: #000;
+}
+.scanex-forestry-wms-view .hidden {
+    display: none;
+}
+.scanex-forestry-wms-view .scanex-uploaded-icon {
+    background-repeat: no-repeat;
+    background-position: center;
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    vertical-align: middle;
+    cursor: pointer;
+    color: #067A57;
+}
+
+.scanex-forestry-wms-view.scanex-component-dialog .scanex-component-icon.close {
+    position: relative;
+    bottom: 15px;
+    left: 5px;
+}
+
+.scanex-forestry-wms-view.scanex-component-dialog .header {
+    cursor: pointer;
+    min-height: 60px;
+    font-family: Arial;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 24px;
+    line-height: 40px;
+}
+
+.scanex-forestry-wms-view.scanex-component-dialog .name {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    min-height: 40px;
+    align-items: center;
+    margin-bottom: 21px;
+}
+
+.scanex-forestry-wms-view.scanex-component-dialog .name label {
+    margin-right: 15px;
+    width: 90px;
+    opacity: 0.4;
+    font-weight: 600;
+}
+
+.scanex-forestry-wms-view.scanex-component-dialog .name input[type="text"] {
+    height: 34px;
+    border-radius: 50px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    outline: none;
+    padding: 0 15px;
+    width: 300px;
+}
+
+.scanex-forestry-wms-view.scanex-component-dialog .url {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    min-height: 40px;
+    align-items: center;
+    margin-bottom: 21px;
+}
+
+.scanex-forestry-wms-view.scanex-component-dialog .url label {
+    margin-right: 15px;
+    width: 90px;
+    opacity: 0.4;
+    font-weight: 600;
+}
+
+.scanex-forestry-wms-view.scanex-component-dialog .url input[type="text"] {
+    height: 34px;
+    border-radius: 50px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    outline: none;
+    padding: 0 15px;
+    width: 300px;
+}
+
+.scanex-forestry-wms-view.scanex-component-dialog .footer button {
+    font-family: 'Open Sans', 'Arial';
+    font-style: normal;
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 28px;
+    text-align: center;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    color: #FFFFFF;
+    width: 150px;
+    background: #008060;
+    border-radius: 50px;
+    height: 37px;
+    min-height: 37px;
+    width: 200px;
+    min-width: 200px;
+    outline: none;
+}
 .scanex-forestry-tms-view.scanex-component-dialog {
     width: 500px;
     background-color: #FFFFFF;
@@ -4234,115 +4343,6 @@ http://nicolasgallagher.com/micro-clearfix-hack/
 }
 
 .scanex-forestry-tms-view.scanex-component-dialog .footer button {
-    font-family: 'Open Sans', 'Arial';
-    font-style: normal;
-    font-weight: 600;
-    font-size: 16px;
-    line-height: 28px;
-    text-align: center;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-    color: #FFFFFF;
-    width: 150px;
-    background: #008060;
-    border-radius: 50px;
-    height: 37px;
-    min-height: 37px;
-    width: 200px;
-    min-width: 200px;
-    outline: none;
-}
-.scanex-forestry-wms-view.scanex-component-dialog { 
-    width: 500px;
-    background-color: #FFFFFF;
-    padding: 21px;
-    font-family: Arial;
-    color: #000;
-}
-.scanex-forestry-wms-view .hidden {
-    display: none;
-}
-.scanex-forestry-wms-view .scanex-uploaded-icon {
-    background-repeat: no-repeat;
-    background-position: center;
-    display: inline-block;
-    width: 20px;
-    height: 20px;
-    vertical-align: middle;
-    cursor: pointer;
-    color: #067A57;
-}
-
-.scanex-forestry-wms-view.scanex-component-dialog .scanex-component-icon.close {
-    position: relative;
-    bottom: 15px;
-    left: 5px;
-}
-
-.scanex-forestry-wms-view.scanex-component-dialog .header {
-    cursor: pointer;
-    min-height: 60px;
-    font-family: Arial;
-    font-style: normal;
-    font-weight: bold;
-    font-size: 24px;
-    line-height: 40px;
-}
-
-.scanex-forestry-wms-view.scanex-component-dialog .name {
-    width: 100%;
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-start;
-    min-height: 40px;
-    align-items: center;
-    margin-bottom: 21px;
-}
-
-.scanex-forestry-wms-view.scanex-component-dialog .name label {
-    margin-right: 15px;
-    width: 90px;
-    opacity: 0.4;
-    font-weight: 600;
-}
-
-.scanex-forestry-wms-view.scanex-component-dialog .name input[type="text"] {
-    height: 34px;
-    border-radius: 50px;
-    border: 1px solid rgba(0, 0, 0, 0.2);
-    outline: none;
-    padding: 0 15px;
-    width: 300px;
-}
-
-.scanex-forestry-wms-view.scanex-component-dialog .url {
-    width: 100%;
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-start;
-    min-height: 40px;
-    align-items: center;
-    margin-bottom: 21px;
-}
-
-.scanex-forestry-wms-view.scanex-component-dialog .url label {
-    margin-right: 15px;
-    width: 90px;
-    opacity: 0.4;
-    font-weight: 600;
-}
-
-.scanex-forestry-wms-view.scanex-component-dialog .url input[type="text"] {
-    height: 34px;
-    border-radius: 50px;
-    border: 1px solid rgba(0, 0, 0, 0.2);
-    outline: none;
-    padding: 0 15px;
-    width: 300px;
-}
-
-.scanex-forestry-wms-view.scanex-component-dialog .footer button {
     font-family: 'Open Sans', 'Arial';
     font-style: normal;
     font-weight: 600;
@@ -4740,6 +4740,13 @@ http://nicolasgallagher.com/micro-clearfix-hack/
 }
 .scanex-forestry-progress {    
     border-radius: 6px;
+    width: 500px;
+    background-color: #FFFFFF;
+    padding: 21px;
+    font-family: Arial;
+    color: #000;
+    max-height: 400px;
+    overflow-y: auto;
 }
 .scanex-forestry-progress ul {
     list-style: none;
@@ -4769,6 +4776,50 @@ http://nicolasgallagher.com/micro-clearfix-hack/
 .scanex-forestry-progress.scanex-forestry-progress.scanex-floating-panel .panel-body {
     box-shadow: 0px 1px 5.6px 1.4px rgba(88, 88, 88, 0.52);    
     background-color: #FFFFFF;
+}
+
+
+.scanex-forestry-progress  .scanex-component-icon.close {
+    position: relative;
+    bottom: 15px;
+    left: 5px;
+}
+
+.scanex-forestry-progress  .header {
+    cursor: pointer;
+    min-height: 60px;
+    font-family: Arial;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 24px;
+    line-height: 40px;
+}
+
+.scanex-forestry-progress .content {
+    margin-bottom: 23px;
+    line-height: 24px;
+}
+
+
+.scanex-forestry-progress .footer button {
+    font-family: 'Open Sans', 'Arial';
+    font-style: normal;
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 28px;
+    text-align: center;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    color: #FFFFFF;
+    width: 150px;
+    background: #008060;
+    border-radius: 50px;
+    height: 37px;
+    min-height: 37px;
+    width: 200px;
+    min-width: 200px;
+    outline: none;
 }
 .scanex-forestry-vector-layer-properties {
     width: 500px;
@@ -4918,39 +4969,6 @@ http://nicolasgallagher.com/micro-clearfix-hack/
 .scanex-component-form > table > tbody > tr > td:first-child > label {
     margin-right: 10px;
 }
-.scanex-component-pager input[type=text],
-.scanex-component-pager button {    
-    font-family: sans-serif;
-    font-style: normal;
-    font-weight: 600;
-    font-size: 16px;
-    line-height: 28px;
-    text-align: center;
-    border-radius: 6px;    
-}
-.scanex-component-pager button {
-    cursor: pointer;
-    color: #FFFFFF;
-    border: none;
-}
-.scanex-component-pager input[type=text],
-.scanex-component-pager .first,
-.scanex-component-pager .last {
-    width: 40px;    
-}
-.scanex-component-pager .previous,
-.scanex-component-pager .next {
-    background: #6B707B;
-}
-.scanex-component-pager .previous,
-.scanex-component-pager .next {    
-    width: 150px;
-    margin-left: 10px;
-    margin-right: 10px;
-}
-.scanex-component-pager input[type=text] {
-    border: 1px solid #6B707B;
-}
 .scanex-component-spinner > * {
     display: inline-block;
     vertical-align: middle;
@@ -4992,6 +5010,39 @@ http://nicolasgallagher.com/micro-clearfix-hack/
     width: 15px;
     height: 15px;
 }
+.scanex-component-pager input[type=text],
+.scanex-component-pager button {    
+    font-family: sans-serif;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 28px;
+    text-align: center;
+    border-radius: 6px;    
+}
+.scanex-component-pager button {
+    cursor: pointer;
+    color: #FFFFFF;
+    border: none;
+}
+.scanex-component-pager input[type=text],
+.scanex-component-pager .first,
+.scanex-component-pager .last {
+    width: 40px;    
+}
+.scanex-component-pager .previous,
+.scanex-component-pager .next {
+    background: #6B707B;
+}
+.scanex-component-pager .previous,
+.scanex-component-pager .next {    
+    width: 150px;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+.scanex-component-pager input[type=text] {
+    border: 1px solid #6B707B;
+}
 .scanex-component-tabs > .tabs > *,
 .scanex-component-tabs > .panels > * {
     float: left;
@@ -5005,15 +5056,6 @@ http://nicolasgallagher.com/micro-clearfix-hack/
 }
 .scanex-component-tabs > .panels > .hidden {
     visibility: hidden;
-}
-.scanex-component-slider > .slider-bar > .slider-tick.slider-tick-middle {
-    float: left;
-    position: absolute;
-}
-.scanex-component-slider > .slider-bar > .slider-tick.slider-tick-middle > label {
-    position: absolute;
-    top: -20px;
-    background-color: #ffffff;
 }
 .scanex-component-slider {
     height: 21px;    
@@ -5052,14 +5094,14 @@ http://nicolasgallagher.com/micro-clearfix-hack/
 .scanex-component-slider > .slider-bar >.slider-range > .slider-tick-left {
     float: left;
 }
-.scanex-component-range > table,
-.scanex-component-range > table > tbody > tr > td:nth-child(2) {
-    width: 100%;
+.scanex-component-slider > .slider-bar > .slider-tick.slider-tick-middle {
+    float: left;
+    position: absolute;
 }
-.scanex-component-range input {
-    width: 35px;
-    text-align: center;
-    border: none;
+.scanex-component-slider > .slider-bar > .slider-tick.slider-tick-middle > label {
+    position: absolute;
+    top: -20px;
+    background-color: #ffffff;
 }
 .scanex-component-menu .scanex-menu-group .scanex-menu-group-header > * {
     vertical-align: middle;    
@@ -5079,4 +5121,13 @@ http://nicolasgallagher.com/micro-clearfix-hack/
 }
 .scanex-component-menu .scanex-menu-group .scanex-menu-group-children {
     margin-left: 15px;
+}
+.scanex-component-range > table,
+.scanex-component-range > table > tbody > tr > td:nth-child(2) {
+    width: 100%;
+}
+.scanex-component-range input {
+    width: 35px;
+    text-align: center;
+    border: none;
 }
