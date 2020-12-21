@@ -27967,17 +27967,17 @@ var Forestry = (function () {
 	}
 
 	var m = function m(v) {
-	  return v && v.toLocaleString('ru-RU', {
+	  return (v && parseFloat(v) || 0).toLocaleString('ru-RU', {
 	    minimumFractionDigits: 0,
 	    maximumFractionDigits: 0
-	  }) || 0;
+	  });
 	};
 
 	var ha = function ha(v) {
-	  return v && v.toLocaleString('ru-RU', {
+	  return (v && parseFloat(v) || 0).toLocaleString('ru-RU', {
 	    minimumFractionDigits: 1,
 	    maximumFractionDigits: 1
-	  }) || 0;
+	  });
 	};
 
 	var rub = function rub(v) {
@@ -27988,10 +27988,10 @@ var Forestry = (function () {
 	};
 
 	var fmt = function fmt(v) {
-	  return v && v.toLocaleString('ru-RU', {
+	  return (v && parseFloat(v) || 0).toLocaleString('ru-RU', {
 	    minimumFractionDigits: 1,
 	    maximumFractionDigits: 1
-	  }) || 0;
+	  });
 	};
 
 	var date = function date(v) {
@@ -39325,28 +39325,31 @@ var Forestry = (function () {
 	var strings$1 = {
 	  rus: {
 	    declaration: {
-	      title: 'Лесная декларация №',
-	      federalSubject: 'Наименование субъекта Российской Федерации',
-	      executive: 'Орган исполнительной власти',
-	      officer: 'Ответственное лицо',
-	      lessee: 'Арендатор',
 	      contract: 'Договор аренды',
-	      purpose_of_forest: 'Целевое назначение лесов',
-	      protective_forest_category: 'Категория защитных лесов',
-	      forestry_name: 'Наименование лесничества (лесопарка)',
-	      local_forestry_name: 'Наименование участкового лесничества',
-	      tract_name: 'Наименование урочища (при наличии)',
-	      quadrant_number: 'Номер лесного квартала',
-	      forest_inventory_unit_number: 'Номер лесотаксационного выдела',
-	      num: 'Номер лесосеки',
-	      total_square: 'Площадь лесосеки (лесотаксационного выдела)',
+	      doc: 'Документы к договору аренды',
+	      executive: 'Орган исполнительной власти',
+	      farm: 'Хозяйство',
 	      felling_form: 'Форма рубки',
 	      felling_type: 'Вид рубки',
-	      farm: 'Хозяйство',
+	      forest_inventory_unit_number: 'Номер лесотаксационного выдела',
+	      forestry_name: 'Наименование лесничества (лесопарка)',
+	      lessee: 'Арендатор',
+	      local_forestry_name: 'Наименование участкового лесничества',
+	      num: 'Номер лесосеки',
+	      numsign: '№',
+	      of: 'от',
+	      officer: 'Ответственное лицо',
+	      protective_forest_category: 'Категория защитных лесов',
+	      purpose_of_forest: 'Целевое назначение лесов',
+	      quadrant_number: 'Номер лесного квартала',
+	      region: 'Наименование субъекта Российской Федерации',
 	      species: 'Вырубаемая древесная порода',
-	      unit_of_measurement: 'Единицы измерения',
 	      stock: 'Объем заготовки',
-	      doc: 'Документы к договору аренды'
+	      term: 'Срок действия ЛД',
+	      title: 'Лесная декларация',
+	      total_square: 'Площадь лесосеки (лесотаксационного выдела)',
+	      tract_name: 'Наименование урочища (при наличии)',
+	      unit_of_measurement: 'Единицы измерения'
 	    }
 	  }
 	};
@@ -39383,7 +39386,7 @@ var Forestry = (function () {
 
 	    _this._container.classList.add('scanex-forestry-declaration');
 
-	    _this._container.innerHTML = "<h1 class=\"header\">\n            <label>".concat(_this.translate('declaration.title'), "</label>\n            <label class=\"number\"></label>\n        </h1>\n        <div class=\"scrollable\">\n            <table cellspacing=\"0\" cellpadding=\"0\">\n                <tbody>                    \n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.executive'), "</td>\n                        <td class=\"value executive\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.officer'), "</td>\n                        <td class=\"value officer\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.lessee'), "</td>\n                        <td class=\"value lessee\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.contract'), "</td>\n                        <td class=\"value contract\"></td>\n                    </tr>\n                </tbody>\n            </table>\n            <div>\n                <i class=\"scanex-declaration-icon doc\"></i>\n                <button class=\"open-doc\">").concat(_this.translate('declaration.doc'), "</button>\n            </div>        \n            <table cellspacing=\"0\" cellpadding=\"0\">\n                <tbody>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.purpose_of_forest'), "</td>\n                        <td class=\"value purpose_of_forest\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.protective_forest_category'), "</td>\n                        <td class=\"value protective_forest_category\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.forestry_name'), "</td>\n                        <td class=\"value forestry_name\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.local_forestry_name'), "</td>\n                        <td class=\"value local_forestry_name\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.tract_name'), "</td>\n                        <td class=\"value tract_name\"></td>\n                    </tr>                                \n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.quadrant_number'), "</td>\n                        <td class=\"value quadrant_number\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.forest_inventory_unit_number'), "</td>\n                        <td class=\"value forest_inventory_unit_number\"></td>\n                    </tr>\n                </tbody>\n            </table>\n            <div class=\"content\"></div>\n        </div>");
+	    _this._container.innerHTML = "<h1 class=\"header\">\n            <label>".concat(_this.translate('declaration.title'), " ").concat(_this.translate('declaration.numsign'), "</label>\n            <label class=\"number\"></label>\n        </h1>\n        <div class=\"scrollable\">\n            <table cellspacing=\"0\" cellpadding=\"0\">\n                <tbody>   \n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.region'), "</td>\n                        <td class=\"value region\"></td>\n                    </tr>                 \n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.executive'), "</td>\n                        <td class=\"value executive\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.officer'), "</td>\n                        <td class=\"value officer\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.lessee'), "</td>\n                        <td class=\"value lessee\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.contract'), "</td>\n                        <td class=\"value contract\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.term'), "</td>\n                        <td class=\"value term\"></td>\n                    </tr>\n                </tbody>\n            </table>                    \n            <table cellspacing=\"0\" cellpadding=\"0\" class=\"volumes\">\n                <tbody>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.purpose_of_forest'), "</td>\n                        <td class=\"value purpose_of_forest\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.protective_forest_category'), "</td>\n                        <td class=\"value protective_forest_category\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.forestry_name'), "</td>\n                        <td class=\"value forestry_name\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.local_forestry_name'), "</td>\n                        <td class=\"value local_forestry_name\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.tract_name'), "</td>\n                        <td class=\"value tract_name\"></td>\n                    </tr>                                \n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.quadrant_number'), "</td>\n                        <td class=\"value quadrant_number\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.forest_inventory_unit_number'), "</td>\n                        <td class=\"value forest_inventory_unit_number\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.num'), "</td>\n                        <td class=\"value num\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.total_square'), ", ").concat(_this.translate('units.ha'), "</td>\n                        <td class=\"value total_square\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.felling_form'), "</td>\n                        <td class=\"value felling_form\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.felling_type'), "</td>\n                        <td class=\"value felling_type\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.farm'), "</td>\n                        <td class=\"value farm\"></td>\n                    </tr>\n                </tbody>\n            </table>\n            <div class=\"content\"></div>\n            <div>\n                <i class=\"scanex-declaration-icon doc\"></i>\n                <button class=\"open-doc\">").concat(_this.translate('declaration.title'), "</button>\n            </div>\n        </div>");
 	    return _this;
 	  }
 
@@ -39399,48 +39402,60 @@ var Forestry = (function () {
 
 	      this._gmx_id = gmx_id;
 	      var DeclarationNumber = data.DeclarationNumber,
+	          Region = data.Region,
 	          ExecutiveAuthority = data.ExecutiveAuthority,
 	          ResponsiblePerson = data.ResponsiblePerson,
 	          Owner = data.Owner,
 	          DogovorNumber = data.DogovorNumber,
-	          CuttingAreas = data.CuttingAreas;
-	      this._container.querySelector('.number').innerText = DeclarationNumber || ''; // this._container.querySelector('.federal-subject').innerText = Region || '';
+	          DogovorDate = data.DogovorDate,
+	          CuttingArea = data.CuttingArea,
+	          BeginDate = data.BeginDate,
+	          EndDate = data.EndDate;
+	      this._container.querySelector('.number').innerText = DeclarationNumber || '-';
+	      this._container.querySelector('.region').innerText = Region || '-';
+	      this._container.querySelector('.executive').innerText = ExecutiveAuthority || '-';
+	      this._container.querySelector('.officer').innerText = ResponsiblePerson || '-';
+	      this._container.querySelector('.lessee').innerText = Owner || '-';
+	      var contractDate = DogovorDate && new Date(DogovorDate);
+	      var contractYear = contractDate && contractDate.getFullYear();
+	      this._container.querySelector('.contract').innerText = DogovorNumber && contractYear && "".concat(this.translate('declaration.numsign'), " ").concat(DogovorNumber, " / ").concat(contractYear, " ").concat(this.translate('declaration.of'), " ").concat(this.date(contractDate)) || '-';
+	      this._container.querySelector('.term').innerText = "".concat(BeginDate && this.date(new Date(BeginDate)) || '', " - ").concat(EndDate && this.date(new Date(EndDate)) || '');
+	      var num = CuttingArea.num,
+	          farm = CuttingArea.farm,
+	          volumes = CuttingArea.volumes,
+	          tract_name = CuttingArea.tract_name,
+	          felling_form = CuttingArea.felling_form,
+	          felling_type = CuttingArea.felling_type,
+	          total_square = CuttingArea.total_square,
+	          forestry_name = CuttingArea.forestry_name,
+	          quadrant_number = CuttingArea.quadrant_number,
+	          purpose_of_forest = CuttingArea.purpose_of_forest,
+	          cutting_area_square = CuttingArea.cutting_area_square,
+	          exploitative_square = CuttingArea.exploitative_square,
+	          local_forestry_name = CuttingArea.local_forestry_name,
+	          unit_of_measurement = CuttingArea.unit_of_measurement,
+	          protective_forest_category = CuttingArea.protective_forest_category,
+	          forest_inventory_unit_number = CuttingArea.forest_inventory_unit_number;
+	      this._container.querySelector('.purpose_of_forest').innerText = purpose_of_forest || '-';
+	      this._container.querySelector('.protective_forest_category').innerText = protective_forest_category || '-';
+	      this._container.querySelector('.forestry_name').innerText = forestry_name || '-';
+	      this._container.querySelector('.local_forestry_name').innerText = local_forestry_name || '-';
+	      this._container.querySelector('.tract_name').innerText = tract_name || '-';
+	      this._container.querySelector('.quadrant_number').innerText = quadrant_number || '-';
+	      this._container.querySelector('.forest_inventory_unit_number').innerText = forest_inventory_unit_number || '-';
+	      this._container.querySelector('.num').innerText = num || '-';
+	      this._container.querySelector('.total_square').innerText = total_square && this.ha(total_square) || '-';
+	      this._container.querySelector('.felling_form').innerText = felling_form || '-';
+	      this._container.querySelector('.felling_type').innerText = felling_type || '-';
+	      this._container.querySelector('.farm').innerText = farm || '-';
 
-	      this._container.querySelector('.executive').innerText = ExecutiveAuthority || '';
-	      this._container.querySelector('.officer').innerText = ResponsiblePerson || '';
-	      this._container.querySelector('.lessee').innerText = Owner || '';
-	      this._container.querySelector('.contract').innerText = DogovorNumber || '';
-
-	      var _ref2 = Array.isArray(CuttingAreas) && CuttingAreas.length ? CuttingAreas[0].volumes[0] : {},
-	          purpose_of_forest = _ref2.purpose_of_forest,
-	          protective_forest_category = _ref2.protective_forest_category,
-	          forestry_name = _ref2.forestry_name,
-	          local_forestry_name = _ref2.local_forestry_name,
-	          tract_name = _ref2.tract_name,
-	          quadrant_number = _ref2.quadrant_number,
-	          forest_inventory_unit_number = _ref2.forest_inventory_unit_number;
-
-	      this._container.querySelector('.purpose_of_forest').innerText = purpose_of_forest || '';
-	      this._container.querySelector('.protective_forest_category').innerText = protective_forest_category || '';
-	      this._container.querySelector('.forestry_name').innerText = forestry_name || '';
-	      this._container.querySelector('.local_forestry_name').innerText = local_forestry_name || '';
-	      this._container.querySelector('.tract_name').innerText = tract_name || '';
-	      this._container.querySelector('.quadrant_number').innerText = quadrant_number || '';
-	      this._container.querySelector('.forest_inventory_unit_number').innerText = forest_inventory_unit_number || '';
-	      this._container.querySelector('.content').innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tbody>                \n                ".concat(Array.isArray(CuttingAreas) ? CuttingAreas.map(function (_ref3) {
-	        var num = _ref3.num,
-	            volumes = _ref3.volumes;
-	        return "<tr class=\"num\">\n                        <td>".concat(_this2.translate('declaration.num'), "</td>\n                        <td>").concat(num || '', "</td>\n                    </tr>\n                    ").concat(Array.isArray(volumes) ? volumes.map(function (_ref4) {
-	          var total_square = _ref4.total_square,
-	              felling_form = _ref4.felling_form,
-	              felling_type = _ref4.felling_type,
-	              farm = _ref4.farm,
-	              species = _ref4.species,
-	              unit_of_measurement = _ref4.unit_of_measurement,
-	              stock = _ref4.stock;
-	          return "<tr>\n                            <td class=\"text\">".concat(_this2.translate('declaration.total_square'), ", ").concat(_this2.translate('units.ha'), "</td>\n                            <td class=\"value amount\">").concat(_this2.ha(total_square), "</td>\n                        </tr>\n                        <tr>\n                            <td class=\"text\">").concat(_this2.translate('declaration.felling_form'), "</td>\n                            <td class=\"value amount\">").concat(felling_form || '', "</td>\n                        </tr>\n                        <tr>\n                            <td class=\"text\">").concat(_this2.translate('declaration.felling_type'), "</td>\n                            <td class=\"value amount\">").concat(felling_type || '', "</td>\n                        </tr>\n                        <tr>\n                            <td class=\"text\">").concat(_this2.translate('declaration.farm'), "</td>\n                            <td class=\"value amount\">").concat(farm || '', "</td>\n                        </tr>\n                        <tr>\n                            <td class=\"text\">").concat(_this2.translate('declaration.species'), "</td>\n                            <td class=\"value amount\">").concat(species || '', "</td>\n                        </tr>                        \n                        <tr>\n                            <td class=\"text\">").concat(_this2.translate('declaration.stock'), ", ").concat(_this2.translate('units.m'), "<sup>3</sup></td>\n                            <td class=\"value amount\">").concat(_this2.m(stock), "</td>\n                        </tr>");
-	        }).join('') : '');
-	      }).join('') : '', "              \n            </tbody>\n        </table>");
+	      if (Array.isArray(volumes)) {
+	        this._container.querySelector('.content').innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\" class=\"volumes-last\">\n                <thead>\n                    <tr>\n                        <th class=\"text\">".concat(this.translate('declaration.species'), "</th>\n                        <th class=\"text\">").concat(this.translate('declaration.stock'), ", ").concat(this.translate('units.m'), "<sup>3</sup></th>\n                    </tr>\n                </thead>\n                <tbody>\n                    ").concat(volumes.map(function (_ref2) {
+	          var species = _ref2.species,
+	              stock = _ref2.stock;
+	          return "<tr>                            \n                            <td class=\"value amount\">".concat(species || '-', "</td>                        \n                            <td class=\"value amount\">").concat(_this2.m(stock), "</td>\n                        </tr>");
+	        }).join(''), "\n                </tbody>\n            </table>");
+	      }
 
 	      var node = this._container.querySelector('.open-doc');
 
@@ -65526,7 +65541,7 @@ var Forestry = (function () {
 	        var farm = _ref2.farm,
 	            rent_cost = _ref2.rent_cost,
 	            value = _ref2.value;
-	        return "<tr>\n                            <td class=\"text\">".concat(farm, "</td>\n                            <td class=\"value\">").concat(_this2.m(value), "</td>\n                        </tr>");
+	        return "<tr class=\"volumes\">\n                            <td class=\"text\">".concat(farm, "</td>\n                            <td class=\"value\">").concat(_this2.m(value), "</td>\n                        </tr>");
 	      }).join('') : '', "\n            </tbody>\n        </table>\n\t\t<div>\n\t\t\t<i class=\"scanex-view-plot-icon doc\"></i>\n\t\t\t<button class=\"open-doc\">").concat(this.translate('plot.doc'), "</button>\n\t\t</div>");
 
 	      var node = this._container.querySelector('.open-doc');
