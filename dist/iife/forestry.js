@@ -948,6 +948,119 @@ var Forestry = (function () {
 	  return result;
 	};
 
+	// babel-minify transpiles RegExp('a', 'y') -> /a/y and it causes SyntaxError,
+	// so we use an intermediate function.
+	function RE(s, f) {
+	  return RegExp(s, f);
+	}
+
+	var UNSUPPORTED_Y = fails(function () {
+	  // babel-minify transpiles RegExp('a', 'y') -> /a/y and it causes SyntaxError
+	  var re = RE('a', 'y');
+	  re.lastIndex = 2;
+	  return re.exec('abcd') != null;
+	});
+
+	var BROKEN_CARET = fails(function () {
+	  // https://bugzilla.mozilla.org/show_bug.cgi?id=773687
+	  var re = RE('^r', 'gy');
+	  re.lastIndex = 2;
+	  return re.exec('str') != null;
+	});
+
+	var regexpStickyHelpers = {
+		UNSUPPORTED_Y: UNSUPPORTED_Y,
+		BROKEN_CARET: BROKEN_CARET
+	};
+
+	var nativeExec = RegExp.prototype.exec;
+	// This always refers to the native implementation, because the
+	// String#replace polyfill uses ./fix-regexp-well-known-symbol-logic.js,
+	// which loads this file before patching the method.
+	var nativeReplace = String.prototype.replace;
+
+	var patchedExec = nativeExec;
+
+	var UPDATES_LAST_INDEX_WRONG = (function () {
+	  var re1 = /a/;
+	  var re2 = /b*/g;
+	  nativeExec.call(re1, 'a');
+	  nativeExec.call(re2, 'a');
+	  return re1.lastIndex !== 0 || re2.lastIndex !== 0;
+	})();
+
+	var UNSUPPORTED_Y$1 = regexpStickyHelpers.UNSUPPORTED_Y || regexpStickyHelpers.BROKEN_CARET;
+
+	// nonparticipating capturing group, copied from es5-shim's String#split patch.
+	var NPCG_INCLUDED = /()??/.exec('')[1] !== undefined;
+
+	var PATCH = UPDATES_LAST_INDEX_WRONG || NPCG_INCLUDED || UNSUPPORTED_Y$1;
+
+	if (PATCH) {
+	  patchedExec = function exec(str) {
+	    var re = this;
+	    var lastIndex, reCopy, match, i;
+	    var sticky = UNSUPPORTED_Y$1 && re.sticky;
+	    var flags = regexpFlags.call(re);
+	    var source = re.source;
+	    var charsAdded = 0;
+	    var strCopy = str;
+
+	    if (sticky) {
+	      flags = flags.replace('y', '');
+	      if (flags.indexOf('g') === -1) {
+	        flags += 'g';
+	      }
+
+	      strCopy = String(str).slice(re.lastIndex);
+	      // Support anchored sticky behavior.
+	      if (re.lastIndex > 0 && (!re.multiline || re.multiline && str[re.lastIndex - 1] !== '\n')) {
+	        source = '(?: ' + source + ')';
+	        strCopy = ' ' + strCopy;
+	        charsAdded++;
+	      }
+	      // ^(? + rx + ) is needed, in combination with some str slicing, to
+	      // simulate the 'y' flag.
+	      reCopy = new RegExp('^(?:' + source + ')', flags);
+	    }
+
+	    if (NPCG_INCLUDED) {
+	      reCopy = new RegExp('^' + source + '$(?!\\s)', flags);
+	    }
+	    if (UPDATES_LAST_INDEX_WRONG) lastIndex = re.lastIndex;
+
+	    match = nativeExec.call(sticky ? reCopy : re, strCopy);
+
+	    if (sticky) {
+	      if (match) {
+	        match.input = match.input.slice(charsAdded);
+	        match[0] = match[0].slice(charsAdded);
+	        match.index = re.lastIndex;
+	        re.lastIndex += match[0].length;
+	      } else re.lastIndex = 0;
+	    } else if (UPDATES_LAST_INDEX_WRONG && match) {
+	      re.lastIndex = re.global ? match.index + match[0].length : lastIndex;
+	    }
+	    if (NPCG_INCLUDED && match && match.length > 1) {
+	      // Fix browsers whose `exec` methods don't consistently return `undefined`
+	      // for NPCG, like IE8. NOTE: This doesn' work for /(.?)?/
+	      nativeReplace.call(match[0], reCopy, function () {
+	        for (i = 1; i < arguments.length - 2; i++) {
+	          if (arguments[i] === undefined) match[i] = undefined;
+	        }
+	      });
+	    }
+
+	    return match;
+	  };
+	}
+
+	var regexpExec = patchedExec;
+
+	_export({ target: 'RegExp', proto: true, forced: /./.exec !== regexpExec }, {
+	  exec: regexpExec
+	});
+
 	var TO_STRING = 'toString';
 	var RegExpPrototype = RegExp.prototype;
 	var nativeToString = RegExpPrototype[TO_STRING];
@@ -967,6 +1080,185 @@ var Forestry = (function () {
 	    return '/' + p + '/' + f;
 	  }, { unsafe: true });
 	}
+
+	// TODO: Remove from `core-js@4` since it's moved to entry points
+
+
+
+
+
+
+
+	var SPECIES$2 = wellKnownSymbol('species');
+
+	var REPLACE_SUPPORTS_NAMED_GROUPS = !fails(function () {
+	  // #replace needs built-in support for named groups.
+	  // #match works fine because it just return the exec results, even if it has
+	  // a "grops" property.
+	  var re = /./;
+	  re.exec = function () {
+	    var result = [];
+	    result.groups = { a: '7' };
+	    return result;
+	  };
+	  return ''.replace(re, '$<a>') !== '7';
+	});
+
+	// IE <= 11 replaces $0 with the whole match, as if it was $&
+	// https://stackoverflow.com/questions/6024666/getting-ie-to-replace-a-regex-with-the-literal-string-0
+	var REPLACE_KEEPS_$0 = (function () {
+	  return 'a'.replace(/./, '$0') === '$0';
+	})();
+
+	var REPLACE = wellKnownSymbol('replace');
+	// Safari <= 13.0.3(?) substitutes nth capture where n>m with an empty string
+	var REGEXP_REPLACE_SUBSTITUTES_UNDEFINED_CAPTURE = (function () {
+	  if (/./[REPLACE]) {
+	    return /./[REPLACE]('a', '$0') === '';
+	  }
+	  return false;
+	})();
+
+	// Chrome 51 has a buggy "split" implementation when RegExp#exec !== nativeExec
+	// Weex JS has frozen built-in prototypes, so use try / catch wrapper
+	var SPLIT_WORKS_WITH_OVERWRITTEN_EXEC = !fails(function () {
+	  var re = /(?:)/;
+	  var originalExec = re.exec;
+	  re.exec = function () { return originalExec.apply(this, arguments); };
+	  var result = 'ab'.split(re);
+	  return result.length !== 2 || result[0] !== 'a' || result[1] !== 'b';
+	});
+
+	var fixRegexpWellKnownSymbolLogic = function (KEY, length, exec, sham) {
+	  var SYMBOL = wellKnownSymbol(KEY);
+
+	  var DELEGATES_TO_SYMBOL = !fails(function () {
+	    // String methods call symbol-named RegEp methods
+	    var O = {};
+	    O[SYMBOL] = function () { return 7; };
+	    return ''[KEY](O) != 7;
+	  });
+
+	  var DELEGATES_TO_EXEC = DELEGATES_TO_SYMBOL && !fails(function () {
+	    // Symbol-named RegExp methods call .exec
+	    var execCalled = false;
+	    var re = /a/;
+
+	    if (KEY === 'split') {
+	      // We can't use real regex here since it causes deoptimization
+	      // and serious performance degradation in V8
+	      // https://github.com/zloirock/core-js/issues/306
+	      re = {};
+	      // RegExp[@@split] doesn't call the regex's exec method, but first creates
+	      // a new one. We need to return the patched regex when creating the new one.
+	      re.constructor = {};
+	      re.constructor[SPECIES$2] = function () { return re; };
+	      re.flags = '';
+	      re[SYMBOL] = /./[SYMBOL];
+	    }
+
+	    re.exec = function () { execCalled = true; return null; };
+
+	    re[SYMBOL]('');
+	    return !execCalled;
+	  });
+
+	  if (
+	    !DELEGATES_TO_SYMBOL ||
+	    !DELEGATES_TO_EXEC ||
+	    (KEY === 'replace' && !(
+	      REPLACE_SUPPORTS_NAMED_GROUPS &&
+	      REPLACE_KEEPS_$0 &&
+	      !REGEXP_REPLACE_SUBSTITUTES_UNDEFINED_CAPTURE
+	    )) ||
+	    (KEY === 'split' && !SPLIT_WORKS_WITH_OVERWRITTEN_EXEC)
+	  ) {
+	    var nativeRegExpMethod = /./[SYMBOL];
+	    var methods = exec(SYMBOL, ''[KEY], function (nativeMethod, regexp, str, arg2, forceStringMethod) {
+	      if (regexp.exec === regexpExec) {
+	        if (DELEGATES_TO_SYMBOL && !forceStringMethod) {
+	          // The native String method already delegates to @@method (this
+	          // polyfilled function), leasing to infinite recursion.
+	          // We avoid it by directly calling the native @@method method.
+	          return { done: true, value: nativeRegExpMethod.call(regexp, str, arg2) };
+	        }
+	        return { done: true, value: nativeMethod.call(str, regexp, arg2) };
+	      }
+	      return { done: false };
+	    }, {
+	      REPLACE_KEEPS_$0: REPLACE_KEEPS_$0,
+	      REGEXP_REPLACE_SUBSTITUTES_UNDEFINED_CAPTURE: REGEXP_REPLACE_SUBSTITUTES_UNDEFINED_CAPTURE
+	    });
+	    var stringMethod = methods[0];
+	    var regexMethod = methods[1];
+
+	    redefine(String.prototype, KEY, stringMethod);
+	    redefine(RegExp.prototype, SYMBOL, length == 2
+	      // 21.2.5.8 RegExp.prototype[@@replace](string, replaceValue)
+	      // 21.2.5.11 RegExp.prototype[@@split](string, limit)
+	      ? function (string, arg) { return regexMethod.call(string, this, arg); }
+	      // 21.2.5.6 RegExp.prototype[@@match](string)
+	      // 21.2.5.9 RegExp.prototype[@@search](string)
+	      : function (string) { return regexMethod.call(string, this); }
+	    );
+	  }
+
+	  if (sham) createNonEnumerableProperty(RegExp.prototype[SYMBOL], 'sham', true);
+	};
+
+	// `SameValue` abstract operation
+	// https://tc39.github.io/ecma262/#sec-samevalue
+	var sameValue = Object.is || function is(x, y) {
+	  // eslint-disable-next-line no-self-compare
+	  return x === y ? x !== 0 || 1 / x === 1 / y : x != x && y != y;
+	};
+
+	// `RegExpExec` abstract operation
+	// https://tc39.github.io/ecma262/#sec-regexpexec
+	var regexpExecAbstract = function (R, S) {
+	  var exec = R.exec;
+	  if (typeof exec === 'function') {
+	    var result = exec.call(R, S);
+	    if (typeof result !== 'object') {
+	      throw TypeError('RegExp exec method returned something other than an Object or null');
+	    }
+	    return result;
+	  }
+
+	  if (classofRaw(R) !== 'RegExp') {
+	    throw TypeError('RegExp#exec called on incompatible receiver');
+	  }
+
+	  return regexpExec.call(R, S);
+	};
+
+	// @@search logic
+	fixRegexpWellKnownSymbolLogic('search', 1, function (SEARCH, nativeSearch, maybeCallNative) {
+	  return [
+	    // `String.prototype.search` method
+	    // https://tc39.github.io/ecma262/#sec-string.prototype.search
+	    function search(regexp) {
+	      var O = requireObjectCoercible(this);
+	      var searcher = regexp == undefined ? undefined : regexp[SEARCH];
+	      return searcher !== undefined ? searcher.call(regexp, O) : new RegExp(regexp)[SEARCH](String(O));
+	    },
+	    // `RegExp.prototype[@@search]` method
+	    // https://tc39.github.io/ecma262/#sec-regexp.prototype-@@search
+	    function (regexp) {
+	      var res = maybeCallNative(nativeSearch, regexp, this);
+	      if (res.done) return res.value;
+
+	      var rx = anObject(regexp);
+	      var S = String(this);
+
+	      var previousLastIndex = rx.lastIndex;
+	      if (!sameValue(previousLastIndex, 0)) rx.lastIndex = 0;
+	      var result = regexpExecAbstract(rx, S);
+	      if (!sameValue(rx.lastIndex, previousLastIndex)) rx.lastIndex = previousLastIndex;
+	      return result === null ? -1 : result.index;
+	    }
+	  ];
+	});
 
 	// iterable DOM collections
 	// flag - `iterable` interface - 'entries', 'keys', 'values', 'forEach' methods
@@ -1730,7 +2022,7 @@ var Forestry = (function () {
 	var HAS_SPECIES_SUPPORT$2 = arrayMethodHasSpeciesSupport('slice');
 	var USES_TO_LENGTH$5 = arrayMethodUsesToLength('slice', { ACCESSORS: true, 0: 0, 1: 2 });
 
-	var SPECIES$2 = wellKnownSymbol('species');
+	var SPECIES$3 = wellKnownSymbol('species');
 	var nativeSlice = [].slice;
 	var max$1 = Math.max;
 
@@ -1751,7 +2043,7 @@ var Forestry = (function () {
 	      if (typeof Constructor == 'function' && (Constructor === Array || isArray(Constructor.prototype))) {
 	        Constructor = undefined;
 	      } else if (isObject(Constructor)) {
-	        Constructor = Constructor[SPECIES$2];
+	        Constructor = Constructor[SPECIES$3];
 	        if (Constructor === null) Constructor = undefined;
 	      }
 	      if (Constructor === Array || Constructor === undefined) {
@@ -1818,14 +2110,14 @@ var Forestry = (function () {
 	  return target;
 	};
 
-	var SPECIES$3 = wellKnownSymbol('species');
+	var SPECIES$4 = wellKnownSymbol('species');
 
 	var setSpecies = function (CONSTRUCTOR_NAME) {
 	  var Constructor = getBuiltIn(CONSTRUCTOR_NAME);
 	  var defineProperty = objectDefineProperty.f;
 
-	  if (descriptors && Constructor && !Constructor[SPECIES$3]) {
-	    defineProperty(Constructor, SPECIES$3, {
+	  if (descriptors && Constructor && !Constructor[SPECIES$4]) {
+	    defineProperty(Constructor, SPECIES$4, {
 	      configurable: true,
 	      get: function () { return this; }
 	    });
@@ -1950,14 +2242,14 @@ var Forestry = (function () {
 	  return ITERATION_SUPPORT;
 	};
 
-	var SPECIES$4 = wellKnownSymbol('species');
+	var SPECIES$5 = wellKnownSymbol('species');
 
 	// `SpeciesConstructor` abstract operation
 	// https://tc39.github.io/ecma262/#sec-speciesconstructor
 	var speciesConstructor = function (O, defaultConstructor) {
 	  var C = anObject(O).constructor;
 	  var S;
-	  return C === undefined || (S = anObject(C)[SPECIES$4]) == undefined ? defaultConstructor : aFunction$1(S);
+	  return C === undefined || (S = anObject(C)[SPECIES$5]) == undefined ? defaultConstructor : aFunction$1(S);
 	};
 
 	var engineIsIos = /(iphone|ipod|ipad).*applewebkit/i.test(engineUserAgent);
@@ -2196,7 +2488,7 @@ var Forestry = (function () {
 
 
 
-	var SPECIES$5 = wellKnownSymbol('species');
+	var SPECIES$6 = wellKnownSymbol('species');
 	var PROMISE = 'Promise';
 	var getInternalState$2 = internalState.get;
 	var setInternalState$2 = internalState.set;
@@ -2239,7 +2531,7 @@ var Forestry = (function () {
 	    exec(function () { /* empty */ }, function () { /* empty */ });
 	  };
 	  var constructor = promise.constructor = {};
-	  constructor[SPECIES$5] = FakePromise;
+	  constructor[SPECIES$6] = FakePromise;
 	  return !(promise.then(function () { /* empty */ }) instanceof FakePromise);
 	});
 
@@ -4369,31 +4661,6 @@ var Forestry = (function () {
 	  return isObject(it) && ((isRegExp = it[MATCH]) !== undefined ? !!isRegExp : classofRaw(it) == 'RegExp');
 	};
 
-	// babel-minify transpiles RegExp('a', 'y') -> /a/y and it causes SyntaxError,
-	// so we use an intermediate function.
-	function RE(s, f) {
-	  return RegExp(s, f);
-	}
-
-	var UNSUPPORTED_Y = fails(function () {
-	  // babel-minify transpiles RegExp('a', 'y') -> /a/y and it causes SyntaxError
-	  var re = RE('a', 'y');
-	  re.lastIndex = 2;
-	  return re.exec('abcd') != null;
-	});
-
-	var BROKEN_CARET = fails(function () {
-	  // https://bugzilla.mozilla.org/show_bug.cgi?id=773687
-	  var re = RE('^r', 'gy');
-	  re.lastIndex = 2;
-	  return re.exec('str') != null;
-	});
-
-	var regexpStickyHelpers = {
-		UNSUPPORTED_Y: UNSUPPORTED_Y,
-		BROKEN_CARET: BROKEN_CARET
-	};
-
 	var defineProperty$7 = objectDefineProperty.f;
 	var getOwnPropertyNames$2 = objectGetOwnPropertyNames.f;
 
@@ -4414,9 +4681,9 @@ var Forestry = (function () {
 	// "new" should create a new object, old webkit bug
 	var CORRECT_NEW = new NativeRegExp(re1) !== re1;
 
-	var UNSUPPORTED_Y$1 = regexpStickyHelpers.UNSUPPORTED_Y;
+	var UNSUPPORTED_Y$2 = regexpStickyHelpers.UNSUPPORTED_Y;
 
-	var FORCED$2 = descriptors && isForced_1('RegExp', (!CORRECT_NEW || UNSUPPORTED_Y$1 || fails(function () {
+	var FORCED$2 = descriptors && isForced_1('RegExp', (!CORRECT_NEW || UNSUPPORTED_Y$2 || fails(function () {
 	  re2[MATCH$1] = false;
 	  // RegExp constructor can alter flags and IsRegExp works correct with @@match
 	  return NativeRegExp(re1) != re1 || NativeRegExp(re2) == re2 || NativeRegExp(re1, 'i') != '/a/i';
@@ -4442,7 +4709,7 @@ var Forestry = (function () {
 	      pattern = pattern.source;
 	    }
 
-	    if (UNSUPPORTED_Y$1) {
+	    if (UNSUPPORTED_Y$2) {
 	      sticky = !!flags && flags.indexOf('y') > -1;
 	      if (sticky) flags = flags.replace(/y/g, '');
 	    }
@@ -4453,7 +4720,7 @@ var Forestry = (function () {
 	      RegExpWrapper
 	    );
 
-	    if (UNSUPPORTED_Y$1 && sticky) setInternalState$5(result, { sticky: sticky });
+	    if (UNSUPPORTED_Y$2 && sticky) setInternalState$5(result, { sticky: sticky });
 
 	    return result;
 	  };
@@ -4474,94 +4741,6 @@ var Forestry = (function () {
 
 	// https://tc39.github.io/ecma262/#sec-get-regexp-@@species
 	setSpecies('RegExp');
-
-	var nativeExec = RegExp.prototype.exec;
-	// This always refers to the native implementation, because the
-	// String#replace polyfill uses ./fix-regexp-well-known-symbol-logic.js,
-	// which loads this file before patching the method.
-	var nativeReplace = String.prototype.replace;
-
-	var patchedExec = nativeExec;
-
-	var UPDATES_LAST_INDEX_WRONG = (function () {
-	  var re1 = /a/;
-	  var re2 = /b*/g;
-	  nativeExec.call(re1, 'a');
-	  nativeExec.call(re2, 'a');
-	  return re1.lastIndex !== 0 || re2.lastIndex !== 0;
-	})();
-
-	var UNSUPPORTED_Y$2 = regexpStickyHelpers.UNSUPPORTED_Y || regexpStickyHelpers.BROKEN_CARET;
-
-	// nonparticipating capturing group, copied from es5-shim's String#split patch.
-	var NPCG_INCLUDED = /()??/.exec('')[1] !== undefined;
-
-	var PATCH = UPDATES_LAST_INDEX_WRONG || NPCG_INCLUDED || UNSUPPORTED_Y$2;
-
-	if (PATCH) {
-	  patchedExec = function exec(str) {
-	    var re = this;
-	    var lastIndex, reCopy, match, i;
-	    var sticky = UNSUPPORTED_Y$2 && re.sticky;
-	    var flags = regexpFlags.call(re);
-	    var source = re.source;
-	    var charsAdded = 0;
-	    var strCopy = str;
-
-	    if (sticky) {
-	      flags = flags.replace('y', '');
-	      if (flags.indexOf('g') === -1) {
-	        flags += 'g';
-	      }
-
-	      strCopy = String(str).slice(re.lastIndex);
-	      // Support anchored sticky behavior.
-	      if (re.lastIndex > 0 && (!re.multiline || re.multiline && str[re.lastIndex - 1] !== '\n')) {
-	        source = '(?: ' + source + ')';
-	        strCopy = ' ' + strCopy;
-	        charsAdded++;
-	      }
-	      // ^(? + rx + ) is needed, in combination with some str slicing, to
-	      // simulate the 'y' flag.
-	      reCopy = new RegExp('^(?:' + source + ')', flags);
-	    }
-
-	    if (NPCG_INCLUDED) {
-	      reCopy = new RegExp('^' + source + '$(?!\\s)', flags);
-	    }
-	    if (UPDATES_LAST_INDEX_WRONG) lastIndex = re.lastIndex;
-
-	    match = nativeExec.call(sticky ? reCopy : re, strCopy);
-
-	    if (sticky) {
-	      if (match) {
-	        match.input = match.input.slice(charsAdded);
-	        match[0] = match[0].slice(charsAdded);
-	        match.index = re.lastIndex;
-	        re.lastIndex += match[0].length;
-	      } else re.lastIndex = 0;
-	    } else if (UPDATES_LAST_INDEX_WRONG && match) {
-	      re.lastIndex = re.global ? match.index + match[0].length : lastIndex;
-	    }
-	    if (NPCG_INCLUDED && match && match.length > 1) {
-	      // Fix browsers whose `exec` methods don't consistently return `undefined`
-	      // for NPCG, like IE8. NOTE: This doesn' work for /(.?)?/
-	      nativeReplace.call(match[0], reCopy, function () {
-	        for (i = 1; i < arguments.length - 2; i++) {
-	          if (arguments[i] === undefined) match[i] = undefined;
-	        }
-	      });
-	    }
-
-	    return match;
-	  };
-	}
-
-	var regexpExec = patchedExec;
-
-	_export({ target: 'RegExp', proto: true, forced: /./.exec !== regexpExec }, {
-	  exec: regexpExec
-	});
 
 	var notARegexp = function (it) {
 	  if (isRegexp(it)) {
@@ -4592,156 +4771,12 @@ var Forestry = (function () {
 	  }
 	});
 
-	// TODO: Remove from `core-js@4` since it's moved to entry points
-
-
-
-
-
-
-
-	var SPECIES$6 = wellKnownSymbol('species');
-
-	var REPLACE_SUPPORTS_NAMED_GROUPS = !fails(function () {
-	  // #replace needs built-in support for named groups.
-	  // #match works fine because it just return the exec results, even if it has
-	  // a "grops" property.
-	  var re = /./;
-	  re.exec = function () {
-	    var result = [];
-	    result.groups = { a: '7' };
-	    return result;
-	  };
-	  return ''.replace(re, '$<a>') !== '7';
-	});
-
-	// IE <= 11 replaces $0 with the whole match, as if it was $&
-	// https://stackoverflow.com/questions/6024666/getting-ie-to-replace-a-regex-with-the-literal-string-0
-	var REPLACE_KEEPS_$0 = (function () {
-	  return 'a'.replace(/./, '$0') === '$0';
-	})();
-
-	var REPLACE = wellKnownSymbol('replace');
-	// Safari <= 13.0.3(?) substitutes nth capture where n>m with an empty string
-	var REGEXP_REPLACE_SUBSTITUTES_UNDEFINED_CAPTURE = (function () {
-	  if (/./[REPLACE]) {
-	    return /./[REPLACE]('a', '$0') === '';
-	  }
-	  return false;
-	})();
-
-	// Chrome 51 has a buggy "split" implementation when RegExp#exec !== nativeExec
-	// Weex JS has frozen built-in prototypes, so use try / catch wrapper
-	var SPLIT_WORKS_WITH_OVERWRITTEN_EXEC = !fails(function () {
-	  var re = /(?:)/;
-	  var originalExec = re.exec;
-	  re.exec = function () { return originalExec.apply(this, arguments); };
-	  var result = 'ab'.split(re);
-	  return result.length !== 2 || result[0] !== 'a' || result[1] !== 'b';
-	});
-
-	var fixRegexpWellKnownSymbolLogic = function (KEY, length, exec, sham) {
-	  var SYMBOL = wellKnownSymbol(KEY);
-
-	  var DELEGATES_TO_SYMBOL = !fails(function () {
-	    // String methods call symbol-named RegEp methods
-	    var O = {};
-	    O[SYMBOL] = function () { return 7; };
-	    return ''[KEY](O) != 7;
-	  });
-
-	  var DELEGATES_TO_EXEC = DELEGATES_TO_SYMBOL && !fails(function () {
-	    // Symbol-named RegExp methods call .exec
-	    var execCalled = false;
-	    var re = /a/;
-
-	    if (KEY === 'split') {
-	      // We can't use real regex here since it causes deoptimization
-	      // and serious performance degradation in V8
-	      // https://github.com/zloirock/core-js/issues/306
-	      re = {};
-	      // RegExp[@@split] doesn't call the regex's exec method, but first creates
-	      // a new one. We need to return the patched regex when creating the new one.
-	      re.constructor = {};
-	      re.constructor[SPECIES$6] = function () { return re; };
-	      re.flags = '';
-	      re[SYMBOL] = /./[SYMBOL];
-	    }
-
-	    re.exec = function () { execCalled = true; return null; };
-
-	    re[SYMBOL]('');
-	    return !execCalled;
-	  });
-
-	  if (
-	    !DELEGATES_TO_SYMBOL ||
-	    !DELEGATES_TO_EXEC ||
-	    (KEY === 'replace' && !(
-	      REPLACE_SUPPORTS_NAMED_GROUPS &&
-	      REPLACE_KEEPS_$0 &&
-	      !REGEXP_REPLACE_SUBSTITUTES_UNDEFINED_CAPTURE
-	    )) ||
-	    (KEY === 'split' && !SPLIT_WORKS_WITH_OVERWRITTEN_EXEC)
-	  ) {
-	    var nativeRegExpMethod = /./[SYMBOL];
-	    var methods = exec(SYMBOL, ''[KEY], function (nativeMethod, regexp, str, arg2, forceStringMethod) {
-	      if (regexp.exec === regexpExec) {
-	        if (DELEGATES_TO_SYMBOL && !forceStringMethod) {
-	          // The native String method already delegates to @@method (this
-	          // polyfilled function), leasing to infinite recursion.
-	          // We avoid it by directly calling the native @@method method.
-	          return { done: true, value: nativeRegExpMethod.call(regexp, str, arg2) };
-	        }
-	        return { done: true, value: nativeMethod.call(str, regexp, arg2) };
-	      }
-	      return { done: false };
-	    }, {
-	      REPLACE_KEEPS_$0: REPLACE_KEEPS_$0,
-	      REGEXP_REPLACE_SUBSTITUTES_UNDEFINED_CAPTURE: REGEXP_REPLACE_SUBSTITUTES_UNDEFINED_CAPTURE
-	    });
-	    var stringMethod = methods[0];
-	    var regexMethod = methods[1];
-
-	    redefine(String.prototype, KEY, stringMethod);
-	    redefine(RegExp.prototype, SYMBOL, length == 2
-	      // 21.2.5.8 RegExp.prototype[@@replace](string, replaceValue)
-	      // 21.2.5.11 RegExp.prototype[@@split](string, limit)
-	      ? function (string, arg) { return regexMethod.call(string, this, arg); }
-	      // 21.2.5.6 RegExp.prototype[@@match](string)
-	      // 21.2.5.9 RegExp.prototype[@@search](string)
-	      : function (string) { return regexMethod.call(string, this); }
-	    );
-	  }
-
-	  if (sham) createNonEnumerableProperty(RegExp.prototype[SYMBOL], 'sham', true);
-	};
-
 	var charAt$1 = stringMultibyte.charAt;
 
 	// `AdvanceStringIndex` abstract operation
 	// https://tc39.github.io/ecma262/#sec-advancestringindex
 	var advanceStringIndex = function (S, index, unicode) {
 	  return index + (unicode ? charAt$1(S, index).length : 1);
-	};
-
-	// `RegExpExec` abstract operation
-	// https://tc39.github.io/ecma262/#sec-regexpexec
-	var regexpExecAbstract = function (R, S) {
-	  var exec = R.exec;
-	  if (typeof exec === 'function') {
-	    var result = exec.call(R, S);
-	    if (typeof result !== 'object') {
-	      throw TypeError('RegExp exec method returned something other than an Object or null');
-	    }
-	    return result;
-	  }
-
-	  if (classofRaw(R) !== 'RegExp') {
-	    throw TypeError('RegExp#exec called on incompatible receiver');
-	  }
-
-	  return regexpExec.call(R, S);
 	};
 
 	var max$3 = Math.max;
@@ -19625,13 +19660,6 @@ var Forestry = (function () {
 	  getOwnPropertyNames: nativeGetOwnPropertyNames$2
 	});
 
-	// `SameValue` abstract operation
-	// https://tc39.github.io/ecma262/#sec-samevalue
-	var sameValue = Object.is || function is(x, y) {
-	  // eslint-disable-next-line no-self-compare
-	  return x === y ? x !== 0 || 1 / x === 1 / y : x != x && y != y;
-	};
-
 	// `Object.is` method
 	// https://tc39.github.io/ecma262/#sec-object.is
 	_export({ target: 'Object', stat: true }, {
@@ -19690,34 +19718,6 @@ var Forestry = (function () {
 	// https://tc39.github.io/ecma262/#sec-string.prototype.repeat
 	_export({ target: 'String', proto: true }, {
 	  repeat: stringRepeat
-	});
-
-	// @@search logic
-	fixRegexpWellKnownSymbolLogic('search', 1, function (SEARCH, nativeSearch, maybeCallNative) {
-	  return [
-	    // `String.prototype.search` method
-	    // https://tc39.github.io/ecma262/#sec-string.prototype.search
-	    function search(regexp) {
-	      var O = requireObjectCoercible(this);
-	      var searcher = regexp == undefined ? undefined : regexp[SEARCH];
-	      return searcher !== undefined ? searcher.call(regexp, O) : new RegExp(regexp)[SEARCH](String(O));
-	    },
-	    // `RegExp.prototype[@@search]` method
-	    // https://tc39.github.io/ecma262/#sec-regexp.prototype-@@search
-	    function (regexp) {
-	      var res = maybeCallNative(nativeSearch, regexp, this);
-	      if (res.done) return res.value;
-
-	      var rx = anObject(regexp);
-	      var S = String(this);
-
-	      var previousLastIndex = rx.lastIndex;
-	      if (!sameValue(previousLastIndex, 0)) rx.lastIndex = 0;
-	      var result = regexpExecAbstract(rx, S);
-	      if (!sameValue(rx.lastIndex, previousLastIndex)) rx.lastIndex = previousLastIndex;
-	      return result === null ? -1 : result.index;
-	    }
-	  ];
 	});
 
 	// `Float32Array` constructor
@@ -24786,6 +24786,209 @@ var Forestry = (function () {
 	  }
 	})();
 
+	var GmxVirtualWMSLayer = function GmxVirtualWMSLayer()
+	/*options*/
+	{};
+
+	GmxVirtualWMSLayer.prototype.initFromDescription = function (layerDescription) {
+	  var WMS_OPTIONS = ['crossOrigin', 'layers', 'styles', 'format', 'transparent', 'version', 'minZoom', 'maxZoom', 'tileSize', 'f', 'bboxSR', 'imageSR', 'size'];
+	  var WMS_OPTIONS_PROCESSORS = {
+	    tileSize: parseInt
+	  };
+	  var props = layerDescription.properties,
+	      meta = props.MetaProperties,
+	      baseURL = meta['base-url'] && meta['base-url'].Value,
+	      options = {};
+
+	  if (!baseURL) {
+	    return new leafletSrc.gmx.DummyLayer(props);
+	  }
+
+	  if (props.Copyright) {
+	    options.attribution = props.Copyright;
+	  }
+
+	  var metas = {};
+
+	  for (var p in meta) {
+	    var v = meta[p].Value;
+
+	    if (WMS_OPTIONS.indexOf(p) !== -1) {
+	      options[p] = WMS_OPTIONS_PROCESSORS[p] ? WMS_OPTIONS_PROCESSORS[p](v) : v;
+	    }
+
+	    if (p.indexOf('Function') !== -1) {
+	      v = new Function('ev', v);
+	    }
+
+	    metas[p] = v;
+	  }
+
+	  var layer = leafletSrc.tileLayer.wms(baseURL, options);
+
+	  layer.getGmxProperties = function () {
+	    return props;
+	  };
+
+	  layer.setStyleHook = function () {
+	    return layer;
+	  };
+
+	  layer.setFilter = function () {
+	    return layer;
+	  };
+
+	  layer.metas = metas;
+	  var balloonTemplate = meta['balloonTemplate'] && meta['balloonTemplate'].Value;
+	  var infoFormat = meta['info_format'] && meta['info_format'].Value;
+	  var popupURLTemplate = meta['popupURLTemplate'] && meta['popupURLTemplate'].Value;
+
+	  if (metas.clickable) {
+	    layer.options.clickable = true;
+
+	    layer.onAdd = function (map) {
+	      leafletSrc.DomUtil.addClass(map.getContainer(), 'gmx-cursor-help');
+	      leafletSrc.TileLayer.WMS.prototype.onAdd.apply(this, arguments);
+	    };
+
+	    layer.onRemove = function (map) {
+	      leafletSrc.DomUtil.removeClass(map.getContainer(), 'gmx-cursor-help');
+	      lastOpenedPopup && map.removeLayer(lastOpenedPopup);
+	      leafletSrc.TileLayer.WMS.prototype.onRemove.apply(this, arguments);
+	    };
+
+	    var lastOpenedPopup;
+
+	    layer.gmxEventCheck = function (event) {
+	      if (event.type === 'click') {
+	        event.layer = layer;
+	        var latlng = event.latlng,
+	            urlFuncton = layer.metas.popupURLFunction,
+	            isFunction = typeof urlFuncton === 'function';
+
+	        if (popupURLTemplate || isFunction) {
+	          var url1 = isFunction ? urlFuncton(event) : leafletSrc.Util.template(popupURLTemplate, {
+	            lat: latlng.lat,
+	            lng: latlng.lng
+	          });
+	          var body = layer.metas.body;
+
+	          if (layer.metas.proxy === 'true') {
+	            url1 = (leafletSrc.gmx.gmxProxy || '//maps.kosmosnimki.ru/ApiSave.ashx') + '?WrapStyle=none&get=' + encodeURIComponent(url1);
+	          }
+
+	          fetch(url1, {
+	            mode: 'cors'
+	          }).then(function (resp) {
+	            return body ? resp.text() : resp.json();
+	          }).then(function (json) {
+	            var features = typeof json === 'string' ? [json] : json.features,
+	                it = null;
+
+	            if (!features && json.Status === 'ok' && json.Result) {
+	              var geoJSON = JSON.parse(json.Result);
+	              features = geoJSON.features;
+	            }
+
+	            if (features && features.length) {
+	              var content = '';
+	              it = features[0];
+
+	              if (isFunction) {
+	                it.summary = leafletSrc.gmxUtil.prettifyArea(leafletSrc.gmxUtil.geoJSONGetArea(it));
+	                content = leafletSrc.gmxUtil.parseBalloonTemplate('', it);
+	              } else {
+	                content = body ? it : JSON.stringify(features, null, 2);
+	              }
+
+	              lastOpenedPopup = leafletSrc.popup({
+	                maxHeight: 400
+	              }).setLatLng(latlng).setContent(content).openOn(this._map);
+	            }
+
+	            if (!it) {
+	              console.log('Not found features:', json);
+	            }
+	          }.bind(this)).catch(function (err) {
+	            console.log('err', err);
+	          });
+	        } else {
+	          var p = this._map.project(latlng),
+	              tileSize = layer.options.tileSize,
+	              I = Math.round(p.x % tileSize),
+	              J = Math.round(p.y % tileSize),
+	              tilePoint = p.divideBy(tileSize).floor(),
+	              url = this.getTileUrl(tilePoint),
+	              info = infoFormat || 'application/geojson';
+
+	          url = url.replace('=GetMap', '=GetFeatureInfo'); // url += '&X=' + I + '&Y=' + J + '&QUERY_LAYERS=' + options.layers;
+
+	          url += '&X=' + I + '&Y=' + J + '&INFO_FORMAT=' + info + '&QUERY_LAYERS=' + options.layers;
+
+	          if (layer.metas.feature_count) {
+	            url += '&feature_count=' + layer.metas.feature_count;
+	          }
+
+	          if (layer.metas.proxy === 'true') {
+	            url = '//maps.kosmosnimki.ru/proxy?' + encodeURIComponent(url);
+	          }
+
+	          fetch(url, {
+	            mode: 'cors'
+	          }).then(function (resp) {
+	            return resp.json();
+	          }).then(function (geoJSON) {
+	            var items = geoJSON.features;
+
+	            if (items.length) {
+	              var curr = -1,
+	                  lastIndex = items.length - 1,
+	                  setPage = function setPage(prev) {
+	                curr += prev ? -1 : 1;
+
+	                if (curr > lastIndex) {
+	                  curr = 0;
+	                } else if (curr < 0) {
+	                  curr = lastIndex;
+	                }
+
+	                var it = items[curr],
+	                    div = leafletSrc.DomUtil.create('div', 'wmsInfo');
+	                div.innerHTML = '<div class="wmsInfo">\
+										<div class="paginate">\
+										<span class="icon-left-open" style="visibility: ' + (curr > 0 ? 'visible' : 'hidden') + ';"></span>\
+										<span class="center"><b>' + (curr + 1) + '</b> из <b>' + (lastIndex + 1) + '</b></span>\
+										<span class="icon-right-open" style="visibility: ' + (curr < lastIndex ? 'visible' : 'hidden') + ';"></span>\
+									</div>\
+									<div class="feature">' + template(balloonTemplate, it.properties) + '</div></div>';
+	                var left = div.getElementsByClassName('icon-left-open'),
+	                    right = div.getElementsByClassName('icon-right-open');
+	                leafletSrc.DomEvent.on(left[0], 'click', function () {
+	                  lastOpenedPopup.setContent(setPage(true));
+	                }, this);
+	                leafletSrc.DomEvent.on(right[0], 'click', function () {
+	                  lastOpenedPopup.setContent(setPage());
+	                }, this);
+	                return div;
+	              };
+
+	              lastOpenedPopup = leafletSrc.popup().setLatLng(event.latlng).setContent(setPage()).openOn(this._map);
+	            }
+	          }.bind(this)).catch(function (err) {
+	            console.warn(err);
+	          });
+	        }
+	      }
+
+	      return 1;
+	    };
+	  }
+
+	  return layer;
+	};
+
+	leafletSrc.gmx.addLayerClass('WMS', GmxVirtualWMSLayer);
+
 	var GmxDrawingContextMenu = /*#__PURE__*/function () {
 	  function GmxDrawingContextMenu() {
 	    var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
@@ -27996,6 +28199,13 @@ var Forestry = (function () {
 
 	var date = function date(v) {
 	  return v && v.toLocaleDateString() || '';
+	};
+
+	var int = function int(v) {
+	  return (v && parseInt(v, 10) || 0).toLocaleString('ru-RU', {
+	    minimumFractionDigits: 0,
+	    maximumFractionDigits: 0
+	  });
 	};
 
 	var CHART_COLORS = ['#F26429', '#A700C2', '#AAFF67', '#67FFC8', '#AA6600', '#EA67FF', '#58C900', '#8D8D8D', '#5F5F5F', '#8BC7FF', '#FF0000', '#DAD100', '#7367FF', '#0082FA', '#0007B9', '#FF6767', '#009A63', '#FFF967'];
@@ -36068,6 +36278,250 @@ var Forestry = (function () {
 	  }
 	});
 
+	var Legend = leafletSrc.Control.extend({
+	  includes: leafletSrc.Evented.prototype,
+	  options: {
+	    position: 'topright'
+	  },
+	  initialize: function initialize() {
+	    this._components = {};
+	  },
+	  onAdd: function onAdd(map) {
+	    var _this = this;
+
+	    this._container = leafletSrc.DomUtil.create('div', 'scanex-forestry-legend noselect');
+	    leafletSrc.DomEvent.disableScrollPropagation(this._container);
+	    leafletSrc.DomEvent.disableClickPropagation(this._container);
+	    this._icon = leafletSrc.DomUtil.create('div', 'scanex-legend-icon icon', this._container);
+	    this._panel = leafletSrc.DomUtil.create('div', 'panel hidden', this._container);
+	    this._content = leafletSrc.DomUtil.create('div', 'scrollable', this._panel);
+	    leafletSrc.DomEvent.on(this._icon, 'click', function (e) {
+	      leafletSrc.DomEvent.stopPropagation(e);
+	      _this._active = !_this._active;
+
+	      if (_this._active) {
+	        _this.show();
+	      } else {
+	        _this.hide();
+	      }
+	    });
+	    return this._container;
+	  },
+	  onRemove: function onRemove(map) {},
+	  show: function show() {
+	    this._active = true;
+	    leafletSrc.DomUtil.addClass(this._icon, 'active');
+	    leafletSrc.DomUtil.removeClass(this._panel, 'hidden');
+	    this.fire('show');
+	  },
+	  hide: function hide() {
+	    this._active = false;
+	    leafletSrc.DomUtil.removeClass(this._icon, 'active');
+	    leafletSrc.DomUtil.addClass(this._panel, 'hidden');
+	    this.fire('hide');
+	  },
+	  enable: function enable(id) {
+	    var container = this._container.querySelector("[data-id=\"".concat(id, "\"]"));
+
+	    if (container) {
+	      var btn = container.querySelector('.toggle');
+	      leafletSrc.DomUtil.addClass(btn, 'toggle-active');
+
+	      this._checkComponent(id);
+
+	      this.fire('click', {
+	        id: id,
+	        visible: true
+	      });
+	    }
+	  },
+	  disable: function disable(id) {
+	    var container = this._container.querySelector("[data-id=\"".concat(id, "\"]"));
+
+	    if (container) {
+	      var btn = container.querySelector('.toggle');
+	      leafletSrc.DomUtil.removeClass(btn, 'toggle-active');
+
+	      this._checkComponent(id);
+
+	      this.fire('click', {
+	        id: id,
+	        visible: false
+	      });
+	    }
+	  },
+	  state: function state(id) {
+	    var container = this._container.querySelector("[data-id=\"".concat(id, "\"]"));
+
+	    if (container) {
+	      var btn = container.querySelector('.toggle');
+	      return leafletSrc.DomUtil.hasClass(btn, 'toggle-active');
+	    } else {
+	      return false;
+	    }
+	  },
+	  toggle: function toggle(id) {
+	    var container = this._container.querySelector("[data-id=\"".concat(id, "\"]"));
+
+	    if (container) {
+	      var btn = container.querySelector('.toggle');
+	      var visible = !leafletSrc.DomUtil.hasClass(btn, 'toggle-active');
+
+	      if (visible) {
+	        this.enable(id);
+	      } else {
+	        this.disable(id);
+	      }
+	    }
+	  },
+	  _checkComponent: function _checkComponent(id) {
+	    var container = this._container.querySelector("[data-id=\"".concat(id, "\"]"));
+
+	    if (container && container.parentNode && leafletSrc.DomUtil.hasClass(container.parentNode, 'children')) {
+	      var g = container.parentNode.parentNode;
+
+	      if (g && leafletSrc.DomUtil.hasClass(g, 'group')) {
+	        var h = g.querySelector('.header');
+	        var b = h.querySelector('.toggle');
+
+	        if (this._checkGroup(g)) {
+	          leafletSrc.DomUtil.addClass(b, 'toggle-active');
+	        } else {
+	          leafletSrc.DomUtil.removeClass(b, 'toggle-active');
+	        }
+	      }
+	    }
+	  },
+	  _checkGroup: function _checkGroup(group) {
+	    if (group) {
+	      var components = group.querySelectorAll('.component');
+
+	      var _iterator = _createForOfIteratorHelper(components),
+	          _step;
+
+	      try {
+	        for (_iterator.s(); !(_step = _iterator.n()).done;) {
+	          var c = _step.value;
+	          var btn = c.querySelector('.toggle');
+	          ;
+
+	          if (!leafletSrc.DomUtil.hasClass(btn, 'toggle-active')) {
+	            return false;
+	          }
+	        }
+	      } catch (err) {
+	        _iterator.e(err);
+	      } finally {
+	        _iterator.f();
+	      }
+
+	      return true;
+	    }
+	  },
+	  addComponent: function addComponent(id, title, parent) {
+	    var _this2 = this;
+
+	    var container = leafletSrc.DomUtil.create('div', 'component', parent ? parent : this._content);
+	    container.setAttribute('data-id', id);
+	    leafletSrc.DomUtil.create('i', null, container);
+	    leafletSrc.DomUtil.create('label', 'title', container).innerText = title;
+	    leafletSrc.DomUtil.create('div', 'toggle', container);
+	    leafletSrc.DomEvent.on(container, 'click', function (e) {
+	      _this2.toggle(id);
+	    }, this);
+	    this._components[id] = container;
+	    return container;
+	  },
+	  addGroup: function addGroup(id, title) {
+	    var _this3 = this;
+
+	    var container = leafletSrc.DomUtil.create('div', 'group', this._content);
+	    container.setAttribute('data-id', id);
+	    var header = leafletSrc.DomUtil.create('div', 'header', container);
+	    var icon = leafletSrc.DomUtil.create('i', 'scanex-legend-icon', header);
+	    leafletSrc.DomUtil.addClass(icon, id);
+	    var label = leafletSrc.DomUtil.create('label', 'title', header);
+	    label.innerText = title;
+	    var btn = leafletSrc.DomUtil.create('div', 'toggle', header);
+	    var children = leafletSrc.DomUtil.create('div', 'children hidden', container);
+
+	    var toggle = function toggle(e) {
+	      leafletSrc.DomEvent.stopPropagation(e);
+
+	      if (leafletSrc.DomUtil.hasClass(children, 'hidden')) {
+	        leafletSrc.DomUtil.removeClass(children, 'hidden');
+	      } else {
+	        leafletSrc.DomUtil.addClass(children, 'hidden');
+	      }
+	    };
+
+	    leafletSrc.DomEvent.on(icon, 'click', toggle, this);
+	    leafletSrc.DomEvent.on(label, 'click', toggle, this);
+	    leafletSrc.DomEvent.on(btn, 'click', function (e) {
+	      var visible = !leafletSrc.DomUtil.hasClass(btn, 'toggle-active');
+
+	      if (visible) {
+	        _this3.enableGroup(id);
+	      } else {
+	        _this3.disableGroup(id);
+	      }
+	    }, this);
+	    return children;
+	  },
+	  enableGroup: function enableGroup(id) {
+	    var container = this._container.querySelector(".group[data-id=\"".concat(id, "\"]"));
+
+	    if (container) {
+	      // const btn = container.querySelector('.header').querySelector('.toggle');
+	      // L.DomUtil.addClass(btn, 'toggle-active');
+	      var children = container.querySelector('.children');
+
+	      var _iterator2 = _createForOfIteratorHelper(children.querySelectorAll('.component')),
+	          _step2;
+
+	      try {
+	        for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+	          var item = _step2.value;
+
+	          var _id = item.getAttribute('data-id');
+
+	          this.enable(_id);
+	        }
+	      } catch (err) {
+	        _iterator2.e(err);
+	      } finally {
+	        _iterator2.f();
+	      }
+	    }
+	  },
+	  disableGroup: function disableGroup(id) {
+	    var container = this._container.querySelector(".group[data-id=\"".concat(id, "\"]"));
+
+	    if (container) {
+	      // const btn = container.querySelector('.header').querySelector('.toggle');
+	      // L.DomUtil.removeClass(btn, 'toggle-active');
+	      var children = container.querySelector('.children');
+
+	      var _iterator3 = _createForOfIteratorHelper(children.querySelectorAll('.component')),
+	          _step3;
+
+	      try {
+	        for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+	          var item = _step3.value;
+
+	          var _id2 = item.getAttribute('data-id');
+
+	          this.disable(_id2);
+	        }
+	      } catch (err) {
+	        _iterator3.e(err);
+	      } finally {
+	        _iterator3.f();
+	      }
+	    }
+	  }
+	});
+
 	T.addText('eng', {
 	  gmxLocation: {
 	    locationChange: 'Сhange the map center:',
@@ -36647,248 +37101,60 @@ var Forestry = (function () {
 
 	var gmxLocation = leafletSrc.Control.GmxLocation;
 
-	var Legend = leafletSrc.Control.extend({
+	var Place = leafletSrc.Control.extend({
+	  options: {
+	    position: 'topright'
+	  },
+	  onAdd: function onAdd(map) {
+	    var container = leafletSrc.DomUtil.create('div', 'scanex-forestry-place');
+	    leafletSrc.DomEvent.disableScrollPropagation(container);
+	    leafletSrc.DomEvent.disableClickPropagation(container);
+	    return container;
+	  },
+	  onRemove: function onRemove() {}
+	});
+
+	var Control = leafletSrc.Control.extend({
 	  includes: leafletSrc.Evented.prototype,
 	  options: {
 	    position: 'topright'
 	  },
-	  initialize: function initialize() {
-	    this._components = {};
-	  },
 	  onAdd: function onAdd(map) {
 	    var _this = this;
 
-	    this._container = leafletSrc.DomUtil.create('div', 'scanex-forestry-legend noselect');
-	    leafletSrc.DomEvent.disableScrollPropagation(this._container);
-	    leafletSrc.DomEvent.disableClickPropagation(this._container);
-	    this._icon = leafletSrc.DomUtil.create('div', 'scanex-legend-icon icon', this._container);
-	    this._panel = leafletSrc.DomUtil.create('div', 'panel hidden', this._container);
-	    this._content = leafletSrc.DomUtil.create('div', 'scrollable', this._panel);
-	    leafletSrc.DomEvent.on(this._icon, 'click', function (e) {
-	      leafletSrc.DomEvent.stopPropagation(e);
-	      _this._active = !_this._active;
+	    var container = leafletSrc.DomUtil.create('div', 'scanex-forestry-search');
+	    leafletSrc.DomEvent.disableScrollPropagation(container);
+	    leafletSrc.DomEvent.disableClickPropagation(container);
+	    var text = leafletSrc.DomUtil.create('input', '', container);
+	    leafletSrc.DomEvent.on(text, 'keydown', /*#__PURE__*/function () {
+	      var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e) {
+	        return regeneratorRuntime.wrap(function _callee$(_context) {
+	          while (1) {
+	            switch (_context.prev = _context.next) {
+	              case 0:
+	                leafletSrc.DomEvent.stopPropagation(e);
 
-	      if (_this._active) {
-	        _this.show();
-	      } else {
-	        _this.hide();
-	      }
-	    });
-	    return this._container;
-	  },
-	  onRemove: function onRemove(map) {},
-	  show: function show() {
-	    this._active = true;
-	    leafletSrc.DomUtil.addClass(this._icon, 'active');
-	    leafletSrc.DomUtil.removeClass(this._panel, 'hidden');
-	    this.fire('show');
-	  },
-	  hide: function hide() {
-	    this._active = false;
-	    leafletSrc.DomUtil.removeClass(this._icon, 'active');
-	    leafletSrc.DomUtil.addClass(this._panel, 'hidden');
-	    this.fire('hide');
-	  },
-	  enable: function enable(id) {
-	    var container = this._container.querySelector("[data-id=\"".concat(id, "\"]"));
+	                if (e.keyCode === 13) {
+	                  _this.fire('search', {
+	                    text: text.value.trim()
+	                  });
+	                }
 
-	    if (container) {
-	      var btn = container.querySelector('.toggle');
-	      leafletSrc.DomUtil.addClass(btn, 'toggle-active');
-
-	      this._checkComponent(id);
-
-	      this.fire('click', {
-	        id: id,
-	        visible: true
-	      });
-	    }
-	  },
-	  disable: function disable(id) {
-	    var container = this._container.querySelector("[data-id=\"".concat(id, "\"]"));
-
-	    if (container) {
-	      var btn = container.querySelector('.toggle');
-	      leafletSrc.DomUtil.removeClass(btn, 'toggle-active');
-
-	      this._checkComponent(id);
-
-	      this.fire('click', {
-	        id: id,
-	        visible: false
-	      });
-	    }
-	  },
-	  state: function state(id) {
-	    var container = this._container.querySelector("[data-id=\"".concat(id, "\"]"));
-
-	    if (container) {
-	      var btn = container.querySelector('.toggle');
-	      return leafletSrc.DomUtil.hasClass(btn, 'toggle-active');
-	    } else {
-	      return false;
-	    }
-	  },
-	  toggle: function toggle(id) {
-	    var container = this._container.querySelector("[data-id=\"".concat(id, "\"]"));
-
-	    if (container) {
-	      var btn = container.querySelector('.toggle');
-	      var visible = !leafletSrc.DomUtil.hasClass(btn, 'toggle-active');
-
-	      if (visible) {
-	        this.enable(id);
-	      } else {
-	        this.disable(id);
-	      }
-	    }
-	  },
-	  _checkComponent: function _checkComponent(id) {
-	    var container = this._container.querySelector("[data-id=\"".concat(id, "\"]"));
-
-	    if (container && container.parentNode && leafletSrc.DomUtil.hasClass(container.parentNode, 'children')) {
-	      var g = container.parentNode.parentNode;
-
-	      if (g && leafletSrc.DomUtil.hasClass(g, 'group')) {
-	        var h = g.querySelector('.header');
-	        var b = h.querySelector('.toggle');
-
-	        if (this._checkGroup(g)) {
-	          leafletSrc.DomUtil.addClass(b, 'toggle-active');
-	        } else {
-	          leafletSrc.DomUtil.removeClass(b, 'toggle-active');
-	        }
-	      }
-	    }
-	  },
-	  _checkGroup: function _checkGroup(group) {
-	    if (group) {
-	      var components = group.querySelectorAll('.component');
-
-	      var _iterator = _createForOfIteratorHelper(components),
-	          _step;
-
-	      try {
-	        for (_iterator.s(); !(_step = _iterator.n()).done;) {
-	          var c = _step.value;
-	          var btn = c.querySelector('.toggle');
-	          ;
-
-	          if (!leafletSrc.DomUtil.hasClass(btn, 'toggle-active')) {
-	            return false;
+	              case 2:
+	              case "end":
+	                return _context.stop();
+	            }
 	          }
-	        }
-	      } catch (err) {
-	        _iterator.e(err);
-	      } finally {
-	        _iterator.f();
-	      }
+	        }, _callee);
+	      }));
 
-	      return true;
-	    }
-	  },
-	  addComponent: function addComponent(id, title, parent) {
-	    var _this2 = this;
-
-	    var container = leafletSrc.DomUtil.create('div', 'component', parent ? parent : this._content);
-	    container.setAttribute('data-id', id);
-	    leafletSrc.DomUtil.create('i', null, container);
-	    leafletSrc.DomUtil.create('label', 'title', container).innerText = title;
-	    leafletSrc.DomUtil.create('div', 'toggle', container);
-	    leafletSrc.DomEvent.on(container, 'click', function (e) {
-	      _this2.toggle(id);
-	    }, this);
-	    this._components[id] = container;
+	      return function (_x) {
+	        return _ref.apply(this, arguments);
+	      };
+	    }(), this);
 	    return container;
 	  },
-	  addGroup: function addGroup(id, title) {
-	    var _this3 = this;
-
-	    var container = leafletSrc.DomUtil.create('div', 'group', this._content);
-	    container.setAttribute('data-id', id);
-	    var header = leafletSrc.DomUtil.create('div', 'header', container);
-	    var icon = leafletSrc.DomUtil.create('i', 'scanex-legend-icon', header);
-	    leafletSrc.DomUtil.addClass(icon, id);
-	    var label = leafletSrc.DomUtil.create('label', 'title', header);
-	    label.innerText = title;
-	    var btn = leafletSrc.DomUtil.create('div', 'toggle', header);
-	    var children = leafletSrc.DomUtil.create('div', 'children hidden', container);
-
-	    var toggle = function toggle(e) {
-	      leafletSrc.DomEvent.stopPropagation(e);
-
-	      if (leafletSrc.DomUtil.hasClass(children, 'hidden')) {
-	        leafletSrc.DomUtil.removeClass(children, 'hidden');
-	      } else {
-	        leafletSrc.DomUtil.addClass(children, 'hidden');
-	      }
-	    };
-
-	    leafletSrc.DomEvent.on(icon, 'click', toggle, this);
-	    leafletSrc.DomEvent.on(label, 'click', toggle, this);
-	    leafletSrc.DomEvent.on(btn, 'click', function (e) {
-	      var visible = !leafletSrc.DomUtil.hasClass(btn, 'toggle-active');
-
-	      if (visible) {
-	        _this3.enableGroup(id);
-	      } else {
-	        _this3.disableGroup(id);
-	      }
-	    }, this);
-	    return children;
-	  },
-	  enableGroup: function enableGroup(id) {
-	    var container = this._container.querySelector(".group[data-id=\"".concat(id, "\"]"));
-
-	    if (container) {
-	      // const btn = container.querySelector('.header').querySelector('.toggle');
-	      // L.DomUtil.addClass(btn, 'toggle-active');
-	      var children = container.querySelector('.children');
-
-	      var _iterator2 = _createForOfIteratorHelper(children.querySelectorAll('.component')),
-	          _step2;
-
-	      try {
-	        for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
-	          var item = _step2.value;
-
-	          var _id = item.getAttribute('data-id');
-
-	          this.enable(_id);
-	        }
-	      } catch (err) {
-	        _iterator2.e(err);
-	      } finally {
-	        _iterator2.f();
-	      }
-	    }
-	  },
-	  disableGroup: function disableGroup(id) {
-	    var container = this._container.querySelector(".group[data-id=\"".concat(id, "\"]"));
-
-	    if (container) {
-	      // const btn = container.querySelector('.header').querySelector('.toggle');
-	      // L.DomUtil.removeClass(btn, 'toggle-active');
-	      var children = container.querySelector('.children');
-
-	      var _iterator3 = _createForOfIteratorHelper(children.querySelectorAll('.component')),
-	          _step3;
-
-	      try {
-	        for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
-	          var item = _step3.value;
-
-	          var _id2 = item.getAttribute('data-id');
-
-	          this.disable(_id2);
-	        }
-	      } catch (err) {
-	        _iterator3.e(err);
-	      } finally {
-	        _iterator3.f();
-	      }
-	    }
-	  }
+	  onRemove: function onRemove() {}
 	});
 
 	var Zoom = leafletSrc.Control.extend({
@@ -36919,20 +37185,7 @@ var Forestry = (function () {
 	  onRemove: function onRemove() {}
 	});
 
-	var Place = leafletSrc.Control.extend({
-	  options: {
-	    position: 'topright'
-	  },
-	  onAdd: function onAdd(map) {
-	    var container = leafletSrc.DomUtil.create('div', 'scanex-forestry-place');
-	    leafletSrc.DomEvent.disableScrollPropagation(container);
-	    leafletSrc.DomEvent.disableClickPropagation(container);
-	    return container;
-	  },
-	  onRemove: function onRemove() {}
-	});
-
-	var Control = leafletSrc.Control.extend({
+	var Control$1 = leafletSrc.Control.extend({
 	  includes: leafletSrc.Evented.prototype,
 	  options: {
 	    position: 'topright',
@@ -37183,25 +37436,27 @@ var Forestry = (function () {
 	      m2: 'кв. м'
 	    },
 	    legend: {
-	      quadrants: 'Квартальная сеть',
-	      stands: 'Выделы',
+	      borders: 'Административные границы',
+	      cadastre: 'Кадастровая карта',
+	      declarations: 'Декларации',
+	      fires: 'Пожары',
+	      forestries: 'Лесничества',
+	      forestries_local: 'Участковые лесничества',
+	      incidents: 'Космический мониторинг',
+	      landsat: 'Landsat-8',
 	      parks: 'ООПТ',
 	      parks_federal: 'Федеральные ООПТ',
 	      parks_regional: 'Региональные ООПТ',
-	      fires: 'Пожары',
-	      declarations: 'Декларации',
-	      incidents: 'Космический мониторинг',
-	      projects: 'Проекты участков',
+	      plan: 'План лесных насаждений',
 	      plots: 'Арендованные участки',
-	      borders: 'Административные границы',
+	      projects: 'Проекты участков',
+	      quadrants: 'Квартальная сеть',
 	      rasters: 'Спутниковые снимки',
-	      landsat: 'Landsat-8',
-	      sentinel: 'Sentinel-2',
 	      regions: 'Регионы',
 	      roads: 'Дороги',
+	      sentinel: 'Sentinel-2',
+	      stands: 'Выделы',
 	      warehouses: 'Пункты погрузки',
-	      forestries: 'Лесничества',
-	      forestries_local: 'Участковые лесничества',
 	      burn: {
 	        unconfirmed: 'Гарь неподтвержденная',
 	        working: 'Гарь в работе (проверки)',
@@ -38798,7 +39053,7 @@ var Forestry = (function () {
 	      loading: loading
 	    });
 	    _this._path = path;
-	    _this._control = new Control({
+	    _this._control = new Control$1({
 	      apiKey: apiKey,
 	      add: permissions.AddBaseLayer
 	    });
@@ -39198,6 +39453,35 @@ var Forestry = (function () {
 
 	var translate$7 = T.getText.bind(T);
 
+	var Cadastre = /*#__PURE__*/function (_LayerController) {
+	  _inherits(Cadastre, _LayerController);
+
+	  var _super = _createSuper(Cadastre);
+
+	  function Cadastre(_ref) {
+	    var map = _ref.map,
+	        content = _ref.content,
+	        notification = _ref.notification,
+	        loading = _ref.loading,
+	        layer = _ref.layer,
+	        legend = _ref.legend;
+
+	    _classCallCheck(this, Cadastre);
+
+	    return _super.call(this, {
+	      kind: 'cadastre',
+	      map: map,
+	      content: content,
+	      notification: notification,
+	      loading: loading,
+	      layer: layer,
+	      legend: legend
+	    });
+	  }
+
+	  return Cadastre;
+	}(LayerController);
+
 	var View$1 = /*#__PURE__*/function (_EventTarget) {
 	  _inherits(View, _EventTarget);
 
@@ -39276,6 +39560,11 @@ var Forestry = (function () {
 	      return m(value);
 	    }
 	  }, {
+	    key: "int",
+	    value: function int$1(value) {
+	      return int(value);
+	    }
+	  }, {
 	    key: "rub",
 	    value: function rub$1(value) {
 	      return rub(value);
@@ -39347,6 +39636,7 @@ var Forestry = (function () {
 	      stock: 'Объем заготовки',
 	      term: 'Срок действия ЛД',
 	      title: 'Лесная декларация',
+	      total: 'ИТОГО',
 	      total_square: 'Площадь лесосеки (лесотаксационного выдела)',
 	      tract_name: 'Наименование урочища (при наличии)',
 	      unit_of_measurement: 'Единицы измерения'
@@ -39386,7 +39676,7 @@ var Forestry = (function () {
 
 	    _this._container.classList.add('scanex-forestry-declaration');
 
-	    _this._container.innerHTML = "<h1 class=\"header\">\n            <label>".concat(_this.translate('declaration.title'), " ").concat(_this.translate('declaration.numsign'), "</label>\n            <label class=\"number\"></label>\n        </h1>\n        <div class=\"scrollable\">\n            <table cellspacing=\"0\" cellpadding=\"0\">\n                <tbody>   \n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.region'), "</td>\n                        <td class=\"value region\"></td>\n                    </tr>                 \n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.executive'), "</td>\n                        <td class=\"value executive\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.officer'), "</td>\n                        <td class=\"value officer\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.lessee'), "</td>\n                        <td class=\"value lessee\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.contract'), "</td>\n                        <td class=\"value contract\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.term'), "</td>\n                        <td class=\"value term\"></td>\n                    </tr>\n                </tbody>\n            </table>                    \n            <table cellspacing=\"0\" cellpadding=\"0\" class=\"volumes\">\n                <tbody>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.purpose_of_forest'), "</td>\n                        <td class=\"value purpose_of_forest\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.protective_forest_category'), "</td>\n                        <td class=\"value protective_forest_category\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.forestry_name'), "</td>\n                        <td class=\"value forestry_name\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.local_forestry_name'), "</td>\n                        <td class=\"value local_forestry_name\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.tract_name'), "</td>\n                        <td class=\"value tract_name\"></td>\n                    </tr>                                \n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.quadrant_number'), "</td>\n                        <td class=\"value quadrant_number\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.forest_inventory_unit_number'), "</td>\n                        <td class=\"value forest_inventory_unit_number\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.num'), "</td>\n                        <td class=\"value num\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.total_square'), ", ").concat(_this.translate('units.ha'), "</td>\n                        <td class=\"value total_square\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.felling_form'), "</td>\n                        <td class=\"value felling_form\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.felling_type'), "</td>\n                        <td class=\"value felling_type\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.farm'), "</td>\n                        <td class=\"value farm\"></td>\n                    </tr>\n                </tbody>\n            </table>\n            <div class=\"content\"></div>\n            <div>\n                <i class=\"scanex-declaration-icon doc\"></i>\n                <button class=\"open-doc\">").concat(_this.translate('declaration.title'), "</button>\n            </div>\n        </div>");
+	    _this._container.innerHTML = "<h1 class=\"header\">\n            <label>".concat(_this.translate('declaration.title'), " ").concat(_this.translate('declaration.numsign'), "</label>\n            <label class=\"number\"></label>\n        </h1>\n        <div class=\"scrollable\">\n            <table cellspacing=\"0\" cellpadding=\"0\">\n                <tbody>   \n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.region'), "</td>\n                        <td class=\"value region\"></td>\n                    </tr>                 \n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.executive'), "</td>\n                        <td class=\"value executive\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.officer'), "</td>\n                        <td class=\"value officer\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.lessee'), "</td>\n                        <td class=\"value lessee\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.contract'), "</td>\n                        <td class=\"value contract\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.term'), "</td>\n                        <td class=\"value term\"></td>\n                    </tr>\n                </tbody>\n            </table>                    \n            <table cellspacing=\"0\" cellpadding=\"0\" class=\"volumes\">\n                <tbody>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.purpose_of_forest'), "</td>\n                        <td class=\"value purpose_of_forest\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.protective_forest_category'), "</td>\n                        <td class=\"value protective_forest_category\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.forestry_name'), "</td>\n                        <td class=\"value forestry_name\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.local_forestry_name'), "</td>\n                        <td class=\"value local_forestry_name\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.tract_name'), "</td>\n                        <td class=\"value tract_name\"></td>\n                    </tr>                                \n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.quadrant_number'), "</td>\n                        <td class=\"value quadrant_number\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.forest_inventory_unit_number'), "</td>\n                        <td class=\"value forest_inventory_unit_number\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.num'), "</td>\n                        <td class=\"value num\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.total_square'), ", ").concat(_this.translate('units.ha'), "</td>\n                        <td class=\"value total_square\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.felling_form'), "</td>\n                        <td class=\"value felling_form\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.felling_type'), "</td>\n                        <td class=\"value felling_type\"></td>\n                    </tr>\n                    <tr>\n                        <td class=\"text\">").concat(_this.translate('declaration.farm'), "</td>\n                        <td class=\"value farm\"></td>\n                    </tr>\n                </tbody>\n            </table>\n            <div class=\"content\"></div>\n            <div>                \n                <button class=\"open-doc\"><i class=\"scanex-declaration-icon doc\"></i>").concat(_this.translate('declaration.title'), "</button>\n            </div>\n        </div>");
 	    return _this;
 	  }
 
@@ -39450,11 +39740,15 @@ var Forestry = (function () {
 	      this._container.querySelector('.farm').innerText = farm || '-';
 
 	      if (Array.isArray(volumes)) {
-	        this._container.querySelector('.content').innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\" class=\"volumes-last\">\n                <thead>\n                    <tr>\n                        <th class=\"text\">".concat(this.translate('declaration.species'), "</th>\n                        <th class=\"text\">").concat(this.translate('declaration.stock'), ", ").concat(this.translate('units.m'), "<sup>3</sup></th>\n                    </tr>\n                </thead>\n                <tbody>\n                    ").concat(volumes.map(function (_ref2) {
-	          var species = _ref2.species,
-	              stock = _ref2.stock;
+	        var total = volumes.reduce(function (a, _ref2) {
+	          var stock = _ref2.stock;
+	          return a + parseFloat(stock);
+	        }, 0);
+	        this._container.querySelector('.content').innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\" class=\"volumes-last\">\n                <thead>\n                    <tr>\n                        <th>".concat(this.translate('declaration.species'), "</th>\n                        <th>").concat(this.translate('declaration.stock'), ", ").concat(this.translate('units.m'), "<sup>3</sup></th>\n                    </tr>\n                </thead>\n                <tbody>\n                    ").concat(volumes.map(function (_ref3) {
+	          var species = _ref3.species,
+	              stock = _ref3.stock;
 	          return "<tr>                            \n                            <td class=\"value amount\">".concat(species || '-', "</td>                        \n                            <td class=\"value amount\">").concat(_this2.m(stock), "</td>\n                        </tr>");
-	        }).join(''), "\n                </tbody>\n            </table>");
+	        }).join(''), "\n                    <tr>                            \n                        <td class=\"value amount\">").concat(this.translate('declaration.total'), "</td>                        \n                        <td class=\"value amount\">").concat(this.m(total), "</td>\n                    </tr>\n                </tbody>\n            </table>");
 	      }
 
 	      var node = this._container.querySelector('.open-doc');
@@ -47699,6 +47993,35 @@ var Forestry = (function () {
 
 	  return Parks$1;
 	}(Controller);
+
+	var Plan = /*#__PURE__*/function (_LayerController) {
+	  _inherits(Plan, _LayerController);
+
+	  var _super = _createSuper(Plan);
+
+	  function Plan(_ref) {
+	    var map = _ref.map,
+	        content = _ref.content,
+	        notification = _ref.notification,
+	        loading = _ref.loading,
+	        layer = _ref.layer,
+	        legend = _ref.legend;
+
+	    _classCallCheck(this, Plan);
+
+	    return _super.call(this, {
+	      kind: 'plan',
+	      map: map,
+	      content: content,
+	      notification: notification,
+	      loading: loading,
+	      layer: layer,
+	      legend: legend
+	    });
+	  }
+
+	  return Plan;
+	}(LayerController);
 
 	var log$3 = Math.log;
 	var LOG10E = Math.LOG10E;
@@ -67241,48 +67564,76 @@ var Forestry = (function () {
 	  rus: {
 	    quadrant: {
 	      stock: {
-	        label: 'Объем древесины',
-	        all: 'Весь'
+	        permitted: 'Доступный',
+	        probable: 'Прогноз',
+	        total: 'Таксация',
+	        table: 'Данные о запасах',
+	        label: 'Запас (всего / деловая), м',
+	        all: 'Весь',
+	        general: 'всего',
+	        deal: 'деловая',
+	        species: 'Порода'
 	      },
+	      total: 'Итого',
+	      description: 'Книга таксационных описаний',
+	      plan: 'Лесоустроительные планшеты',
 	      about: 'На основании данных лесоустройства',
 	      title: 'Квартал',
-	      stow: 'Урочище',
+	      stow: 'Урочище (при наличии)',
 	      forestry: 'Лесничество',
-	      localForestry: 'Участковое лесничество',
+	      forestry_local: 'Уч. лесничество',
+	      number: 'Номер квартала',
+	      area: 'Площадь, га',
+	      usage: 'Целевое назначение',
 	      invalid: 'Недопустимый состав участка'
 	    },
 	    stand: {
-	      title: 'Выдел',
-	      usage: 'Целевое назначение лесов',
-	      year: 'Год лесоустройства',
-	      area: 'Площадь выдела',
-	      category: 'Категория земель',
-	      protected: 'Особозащитные участки (ОЗУ)',
-	      slope: 'Экспозиция / крутизна',
-	      targetSpecies: 'Целевая порода',
-	      mainSpecies: 'Преобладающая порода',
 	      age: 'Группа возраста',
-	      klass: 'Класс возраста',
+	      area: 'Площадь, га',
 	      bonitet: 'Бонитет',
-	      type: 'Тип леса',
+	      category: 'Категория земель',
+	      conditions: 'Тип лесорастительных условий',
+	      forestry: 'Лесничество',
+	      forestry_local: 'Уч. лесничество',
+	      mainSpecies: 'Преобладающая порода',
+	      klass: 'Класс возраста',
+	      num: 'Номер выдела',
+	      ozu: 'Особозащитные участки (ОЗУ)',
 	      percentage: 'Процент выполнения',
-	      volume: 'Запас выдела на 1 га',
+	      protected: 'Категория защитности',
+	      quadrant: 'Номер квартала',
+	      species: 'Породный состав',
+	      slope: 'Крутизна склона в градусах / экспозиция',
+	      advance: {
+	        title: 'Информация о подросте',
+	        species: 'Состав',
+	        age: 'Возраст, лет',
+	        height: 'Высота, м',
+	        volume: 'Количество, тыс. шт / га'
+	      },
 	      storey: {
+	        info: 'Информация о породе',
 	        title: 'Ярус',
 	        age: 'Возраст, лет',
 	        basal_area_sum: 'Сумма площадей сечений',
-	        dbh: 'Диаметр',
+	        dbh: 'Д',
 	        density: 'Полнота',
-	        gross_volume: 'Запас на 1 га',
-	        height: 'Высота',
+	        gross_volume: 'Запас общий на выделе',
+	        height: 'Н',
 	        marketability_class: 'Класс товарности',
 	        origin_id: 'Происхождение',
-	        rate: 'Коэфициент состава',
-	        species: 'Породный состав'
+	        rate: 'Коэф. участия',
+	        total: 'Итого',
+	        species: 'Древесная порода'
 	      },
-	      stock: {
-	        all: 'Весь'
-	      }
+	      stow: 'Урочище (при наличии)',
+	      targetSpecies: 'Целевая порода',
+	      taxation: 'Книга таксационных описаний',
+	      title: 'Выдел',
+	      forest_type: 'Тип леса',
+	      usage: 'Целевое назначение лесов',
+	      volume: 'Запас выдела',
+	      year: 'Год лесоустройства'
 	    }
 	  }
 	};
@@ -67319,97 +67670,147 @@ var Forestry = (function () {
 
 	    _this._container.classList.add('scanex-forestry-quadrant');
 
-	    _this._container.innerHTML = "<h1 class=\"title\">".concat(_this.translate('quadrant.title'), "</h1>\n\t\t<h2 class=\"forestry\"></h2>\n\t\t<div class=\"stock\">").concat(_this.translate('quadrant.stock.label'), "</div>\n\t\t<div class=\"about\">").concat(_this.translate('quadrant.about'), "</div>\n\t\t<div class=\"chart\"></div>");
-	    _this._forestry = _this._container.querySelector('.forestry');
-	    _this._chart = new apexcharts_common(_this._container.querySelector('.chart'), {
-	      tooltip: {
-	        x: {
-	          formatter: _this.chartFormatDataLabels.bind(_assertThisInitialized(_this))
-	        },
-	        y: {
-	          formatter: _this.chartFormatDataLabels.bind(_assertThisInitialized(_this))
-	        }
-	      },
-	      colors: CHART_COLORS,
-	      chart: {
-	        type: 'donut',
-	        width: '100%',
-	        height: '140px',
-	        fontFamily: 'Open Sans'
-	      },
-	      labels: [],
-	      series: [],
-	      dataLabels: {
-	        enabled: false
-	      },
-	      legend: {
-	        position: 'right',
-	        width: '300px',
-	        fontSize: '12px',
-	        formatter: _this.chartFormatLegend.bind(_assertThisInitialized(_this)),
-	        horizontalAlign: 'right',
-	        verticalAlign: 'top'
-	      },
-	      plotOptions: {
-	        pie: {
-	          donut: {
-	            size: '85%',
-	            labels: {
-	              show: true,
-	              value: {
-	                formatter: _this.chartFormatValue.bind(_assertThisInitialized(_this)),
-	                fontSize: '12px',
-	                show: true
-	              },
-	              total: {
-	                formatter: _this.chartFormatTotal.bind(_assertThisInitialized(_this)),
-	                label: _this.translate('quadrant.stock.all'),
-	                fontSize: '12px',
-	                fontWeight: 600,
-	                show: true
-	              }
-	            }
-	          }
-	        }
+	    _this._container.innerHTML = "<h1 class=\"header1\">".concat(_this.translate('quadrant.title'), "</h1>\n\t\t<h2 class=\"header2\"></h2>\n\t\t<div class=\"scrollable\">\n\t\t\t<div class=\"download-description\">\n\t\t\t\t<i class=\"scanex-quadrant-icon download\"></i>\n\t\t\t\t<label>").concat(_this.translate('quadrant.description'), "</label>\n\t\t\t</div>\n\t\t\t<div class=\"download-plan\">\n\t\t\t\t<i class=\"scanex-quadrant-icon download\"></i>\n\t\t\t\t<label>").concat(_this.translate('quadrant.plan'), "</label>\n\t\t\t</div>\n\t\t\t<div class=\"info\">\n\t\t\t\t<div class=\"forestry\">\n\t\t\t\t\t<label class=\"label\">").concat(_this.translate('quadrant.forestry'), "</label>\n\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"forestry-local\">\n\t\t\t\t\t<label class=\"label\">").concat(_this.translate('quadrant.forestry_local'), "</label>\n\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"stow\">\n\t\t\t\t\t<label class=\"label\">").concat(_this.translate('quadrant.stow'), "</label>\n\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"number\">\n\t\t\t\t\t<label class=\"label\">").concat(_this.translate('quadrant.number'), "</label>\n\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"area\">\n\t\t\t\t\t<label class=\"label\">").concat(_this.translate('quadrant.area'), "</label>\n\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"usage\">\n\t\t\t\t\t<label class=\"label\">").concat(_this.translate('quadrant.usage'), "</label>\n\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"header3\">").concat(_this.translate('quadrant.stock.table'), "</div>\n\t\t\t<div class=\"stats\">\n\t\t\t\t<div class=\"header\">\n\t\t\t\t\t<div class=\"species\">").concat(_this.translate('quadrant.stock.species'), "</div>\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<div class=\"stock\">").concat(_this.translate('quadrant.stock.label'), "<sup>3</sup></div>\n\t\t\t\t\t\t<div class=\"details\">\n\t\t\t\t\t\t\t<div class=\"permitted\">").concat(_this.translate('quadrant.stock.permitted'), "</div>\n\t\t\t\t\t\t\t<div class=\"probable\">").concat(_this.translate('quadrant.stock.probable'), "</div>\n\t\t\t\t\t\t\t<div class=\"total\">").concat(_this.translate('quadrant.stock.total'), "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"body\"></div>\n\t\t\t</div>\n\t\t</div>");
+	    _this._header2 = _this._container.querySelector('.header2');
+	    _this._body = _this._container.querySelector('.body');
+
+	    _this._container.querySelector('.download-description').addEventListener('click', function (e) {
+	      e.stopPropagation();
+
+	      if (_this._descriptionDocumentID) {
+	        var event = document.createEvent('Event');
+	        event.initEvent('download', false, false);
+	        event.detail = _this._descriptionDocumentID;
+
+	        _this.dispatchEvent(event);
+	      } else {
+	        var _event = document.createEvent('Event');
+
+	        _event.initEvent('notavailable', false, false);
+
+	        _this.dispatchEvent(_event);
 	      }
 	    });
 
-	    _this._chart.render();
+	    _this._container.querySelector('.download-plan').addEventListener('click', function (e) {
+	      e.stopPropagation();
 
+	      if (_this._planDocumentID) {
+	        var event = document.createEvent('Event');
+	        event.initEvent('download', false, false);
+	        event.detail = _this._planDocumentID;
+
+	        _this.dispatchEvent(event);
+	      } else {
+	        var _event2 = document.createEvent('Event');
+
+	        _event2.initEvent('notavailable', false, false);
+
+	        _this.dispatchEvent(_event2);
+	      }
+	    });
+
+	    _this._forestry = _this._container.querySelector('.info .forestry .value');
+	    _this._forestryLocal = _this._container.querySelector('.info .forestry-local .value');
+	    _this._stow = _this._container.querySelector('.info .stow .value');
+	    _this._number = _this._container.querySelector('.info .number .value');
+	    _this._area = _this._container.querySelector('.info .area .value');
+	    _this._usage = _this._container.querySelector('.info .usage .value');
 	    return _this;
 	  }
 
 	  _createClass(Quadrants, [{
 	    key: "open",
 	    value: function open(data) {
+	      var _this2 = this;
+
 	      _get(_getPrototypeOf(Quadrants.prototype), "open", this).call(this);
 
 	      var gmx_id = data.gmx_id,
 	          Forestry = data.Forestry,
+	          Area = data.Area,
 	          LocalForestry = data.LocalForestry,
 	          Num = data.Num,
 	          Stock = data.Stock,
-	          Stow = data.Stow;
+	          Stow = data.Stow,
+	          Documents = data.Documents;
 	      this._gmx_id = gmx_id;
-	      this._forestry.innerHTML = "".concat(this.translate('quadrant.forestry'), ": ").concat(Forestry, ", ").concat(this.translate('quadrant.localForestry'), ": ").concat(LocalForestry).concat(Stow ? ", ".concat(this.translate('quadrant.stow'), ": ").concat(Stow) : '', ", ").concat(this.translate('quadrant.title'), " \u2116").concat(Num);
+	      this._header2.innerHTML = "".concat(this.translate('quadrant.forestry'), ": ").concat(Forestry, ", ").concat(this.translate('quadrant.forestry_local'), ": ").concat(LocalForestry).concat(Stow ? ", ".concat(this.translate('quadrant.stow'), ": ").concat(Stow) : '', ", ").concat(this.translate('quadrant.title'), " \u2116").concat(Num);
+	      this._forestry.innerText = Forestry || '-';
+	      this._forestryLocal.innerText = LocalForestry || '-';
+	      this._stow.innerText = Stow || '-';
+	      this._number.innerText = Num || '-';
+	      this._area.innerText = Area && this.ha(Area) || '-';
+
+	      if (Array.isArray(Documents)) {
+	        var _iterator = _createForOfIteratorHelper(Documents),
+	            _step;
+
+	        try {
+	          for (_iterator.s(); !(_step = _iterator.n()).done;) {
+	            var _step$value = _step.value,
+	                document_id = _step$value.document_id,
+	                document_type_id = _step$value.document_type_id;
+
+	            switch (document_type_id) {
+	              case 5:
+	                this._descriptionDocumentID = document_id;
+	                break;
+
+	              case 6:
+	                this._planDocumentID = document_id;
+	                break;
+
+	              default:
+	                break;
+	            }
+	          }
+	        } catch (err) {
+	          _iterator.e(err);
+	        } finally {
+	          _iterator.f();
+	        }
+	      } else {
+	        this._descriptionDocumentID = null;
+	        this._planDocumentID = null;
+	      }
 
 	      if (Array.isArray(Stock)) {
-	        var _Stock$reduce = Stock.reduce(function (a, s) {
-	          a.labels.push(s.species);
-	          a.series.push(s.stock);
+	        var total = Stock.reduce(function (a, _ref) {
+	          var permitted_stock = _ref.permitted_stock,
+	              permitted_stock_deal = _ref.permitted_stock_deal,
+	              probable_stock = _ref.probable_stock,
+	              probable_stock_deal = _ref.probable_stock_deal,
+	              species = _ref.species,
+	              total_stock = _ref.total_stock,
+	              total_stock_deal = _ref.total_stock_deal;
+	          a.permitted_stock += permitted_stock;
+	          a.permitted_stock_deal += permitted_stock_deal;
+	          a.probable_stock += probable_stock;
+	          a.probable_stock_deal += probable_stock_deal;
+	          a.total_stock += total_stock;
+	          a.total_stock_deal += total_stock_deal;
 	          return a;
 	        }, {
-	          labels: [],
-	          series: []
-	        }),
-	            labels = _Stock$reduce.labels,
-	            series = _Stock$reduce.series;
-
-	        this._chart.updateOptions({
-	          labels: labels
+	          permitted_stock: 0,
+	          permitted_stock_deal: 0,
+	          probable_stock: 0,
+	          probable_stock_deal: 0,
+	          total_stock: 0,
+	          total_stock_deal: 0
 	        });
-
-	        this._chart.updateSeries(series);
+	        this._body.innerHTML = "".concat(Stock.map(function (_ref2) {
+	          var permitted_stock = _ref2.permitted_stock,
+	              permitted_stock_deal = _ref2.permitted_stock_deal,
+	              probable_stock = _ref2.probable_stock,
+	              probable_stock_deal = _ref2.probable_stock_deal,
+	              species = _ref2.species,
+	              total_stock = _ref2.total_stock,
+	              total_stock_deal = _ref2.total_stock_deal;
+	          return "<div class=\"row\">\n\t\t\t\t\t<div class=\"label\">".concat(species, "</div>\n\t\t\t\t\t<div class=\"value\">").concat(_this2.m(permitted_stock), "</div>\n\t\t\t\t\t<div class=\"value\">").concat(_this2.m(permitted_stock_deal), "</div>\n\t\t\t\t\t<div class=\"value\">").concat(_this2.m(probable_stock), "</div>\n\t\t\t\t\t<div class=\"value\">").concat(_this2.m(probable_stock_deal), "</div>\n\t\t\t\t\t<div class=\"value\">").concat(_this2.m(total_stock), "</div>\n\t\t\t\t\t<div class=\"value\">").concat(_this2.m(total_stock_deal), "</div>\n\t\t\t\t</div>");
+	        }).join(''), "\n\t\t\t<div class=\"row total\">\n\t\t\t\t<div class=\"label\">").concat(this.translate('quadrant.total').toUpperCase(), "</div>\n\t\t\t\t<div class=\"value\">").concat(this.m(total.permitted_stock), "</div>\n\t\t\t\t<div class=\"value\">").concat(this.m(total.permitted_stock_deal), "</div>\n\t\t\t\t<div class=\"value\">").concat(this.m(total.probable_stock), "</div>\n\t\t\t\t<div class=\"value\">").concat(this.m(total.probable_stock_deal), "</div>\n\t\t\t\t<div class=\"value\">").concat(this.m(total.total_stock), "</div>\n\t\t\t\t<div class=\"value\">").concat(this.m(total.total_stock_deal), "</div>\n\t\t\t</div>");
+	      } else {
+	        this._body.innerHTML = '';
 	      }
 	    }
 	  }, {
@@ -67470,66 +67871,40 @@ var Forestry = (function () {
 
 	    _this._container.classList.add('scanex-forestry-stand');
 
-	    _this._container.innerHTML = "<h1 class=\"header1\">".concat(_this.translate('stand.title'), "</h1>\n\t\t<h2 class=\"header2\"></h2>\n\t\t<div class=\"content\">\n\t\t\t<div class=\"stats\"></div>\t\t\t\n\t\t\t<div>\n\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t<div class=\"events scrollable\"></div>\n\t\t\t</div>\n\t\t\t<div class=\"levels scrollable\"></div>\n\t\t</div>");
+	    _this._container.innerHTML = "\n\t\t<h1 class=\"header1\">".concat(_this.translate('stand.title'), "</h1>\n\t\t<h2 class=\"header2\"></h2>\t\t\n\t\t<button class=\"stand-doc\">\n\t\t\t<i class=\"scanex-stand-icon doc\"></i>").concat(_this.translate('stand.taxation'), "\n\t\t</button>\t\t\n\t\t<div class=\"content scrollable\">\n\t\t\t<div class=\"stats\">\n\t\t\t\t<div class=\"info\">\n\t\t\t\t\t<div class=\"forestry\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.forestry'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"forestry-local\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.forestry_local'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"stow\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.stow'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"quadrant\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.quadrant'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"num\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.num'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"area\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.area'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"category\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.category'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"usage\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.usage'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"protected\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.protected'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"ozu\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.ozu'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"forest-type\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.forest_type'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"conditions\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.conditions'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"slope\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.slope'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"volume\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.volume'), ", ").concat(_this.translate('units.m'), "<sup>3</sup></label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"advance\">\n\t\t\t\t\t<div class=\"header\">").concat(_this.translate('stand.advance.title'), "</div>\n\t\t\t\t\t<div class=\"species\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.advance.species'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"age\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.advance.age'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"height\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.advance.height'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"volume\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.advance.volume'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\t\t\t\t\t\n\t\t\t<div class=\"levels\"></div>\n\t\t</div>");
 	    _this._header = _this._container.querySelector('.header2');
-	    _this._stats = _this._container.querySelector('.stats');
-	    _this._chart = new apexcharts_common(_this._container.querySelector('.chart'), {
-	      tooltip: {
-	        x: {
-	          formatter: _this.chartFormatDataLabels.bind(_assertThisInitialized(_this))
-	        },
-	        y: {
-	          formatter: _this.chartFormatDataLabels.bind(_assertThisInitialized(_this))
-	        }
-	      },
-	      colors: CHART_COLORS,
-	      chart: {
-	        type: 'donut',
-	        width: '100%',
-	        height: '180px',
-	        fontFamily: 'Open Sans'
-	      },
-	      labels: [],
-	      series: [],
-	      dataLabels: {
-	        enabled: false
-	      },
-	      legend: {
-	        position: 'right',
-	        fontSize: '12px',
-	        // height: '180px',
-	        formatter: _this.chartFormatLegend.bind(_assertThisInitialized(_this)),
-	        horizontalAlign: 'right',
-	        verticalAlign: 'top'
-	      },
-	      plotOptions: {
-	        pie: {
-	          donut: {
-	            size: '85%',
-	            labels: {
-	              show: true,
-	              value: {
-	                formatter: _this.chartFormatValue.bind(_assertThisInitialized(_this)),
-	                fontSize: '12px',
-	                show: true
-	              },
-	              total: {
-	                formatter: _this.chartFormatTotal.bind(_assertThisInitialized(_this)),
-	                label: _this.translate('stand.stock.all'),
-	                fontSize: '12px',
-	                fontWeight: 600,
-	                show: true
-	              }
-	            }
-	          }
-	        }
+	    _this._forestry = _this._container.querySelector('.forestry .value');
+	    _this._forestryLocal = _this._container.querySelector('.forestry-local .value');
+	    _this._stow = _this._container.querySelector('.stow .value');
+	    _this._quadrant = _this._container.querySelector('.quadrant .value');
+	    _this._num = _this._container.querySelector('.num .value');
+	    _this._area = _this._container.querySelector('.area .value');
+	    _this._category = _this._container.querySelector('.category .value');
+	    _this._usage = _this._container.querySelector('.usage .value');
+	    _this._protected = _this._container.querySelector('.protected .value');
+	    _this._ozu = _this._container.querySelector('.ozu .value');
+	    _this._forestType = _this._container.querySelector('.forest-type .value');
+	    _this._conditions = _this._container.querySelector('.conditions .value');
+	    _this._slope = _this._container.querySelector('.slope .value');
+	    _this._volume = _this._container.querySelector('.volume .value');
+	    _this._advanceSpecies = _this._container.querySelector('.advance .species .value');
+	    _this._advanceAge = _this._container.querySelector('.advance .age .value');
+	    _this._advanceHeight = _this._container.querySelector('.advance .height .value');
+	    _this._advanceVolume = _this._container.querySelector('.advance .volume .value');
+	    _this._levels = _this._container.querySelector('.levels');
+
+	    _this._container.querySelector('.stand-doc').addEventListener('click', function (e) {
+	      e.stopPropagation();
+
+	      if (_this._descriptionDocumentID) {
+	        var event = document.createEvent('Event');
+	        event.initEvent('download', false, false);
+	        event.detail = _this._descriptionDocumentID;
+
+	        _this.dispatchEvent(event);
 	      }
 	    });
 
-	    _this._chart.render();
-
-	    _this._levels = _this._container.querySelector('.levels');
-	    _this._events = _this._container.querySelector('.events');
 	    return _this;
 	  }
 
@@ -67541,11 +67916,13 @@ var Forestry = (function () {
 	      _get(_getPrototypeOf(Stands.prototype), "open", this).call(this);
 
 	      var gmx_id = data.gmx_id,
+	          AdvanceRegeneration = data.AdvanceRegeneration,
 	          Forestry = data.Forestry,
 	          LocalForestry = data.LocalForestry,
 	          Stow = data.Stow,
 	          Quadrant = data.Quadrant,
 	          Stand = data.Stand,
+	          Documents = data.Documents,
 	          ForestUseType = data.ForestUseType,
 	          ForestType = data.ForestType,
 	          UpdatingYear = data.UpdatingYear,
@@ -67567,56 +67944,127 @@ var Forestry = (function () {
 	      this._header.innerText = [Forestry, LocalForestry, Stow, Quadrant, Stand].filter(function (v) {
 	        return v;
 	      }).join(', ');
+	      this._forestry.innerText = Forestry || '-';
+	      this._forestryLocal.innerText = LocalForestry || '-';
+	      this._stow.innerText = Stow || '-';
+	      this._quadrant.innerText = Quadrant || '-';
+	      this._num.innerText = Stand || '-';
+	      this._area.innerText = Square && this.ha(Square) || '-';
+	      this._category.innerText = LandCategory || '-';
+	      this._usage.innerText = ForestUseType || '-';
+	      this._ozu.innerText = OZU || '-';
+	      this._forestType.innerText = ForestType || '-';
+	      this._slope.innerText = "".concat(Steepness && this.int(Steepness) || '', " - ").concat(Exposition && this.int(Exposition) || '');
 	      var volume = Array.isArray(StoreyAggInfo) && StoreyAggInfo.reduce(function (a, _ref) {
 	        var gross_volume = _ref.gross_volume;
 	        return a + gross_volume;
 	      }, 0) || 0;
-	      this._stats.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">".concat(this.translate('stand.usage'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(ForestUseType || "", "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.year'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(UpdatingYear || "", "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.area'), ", ").concat(this.translate('units.ha'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(this.ha(Square), "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.category'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(LandCategory || "", "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.protected'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(OZU || "", "</td>                    \n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.slope'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(Exposition || "", " / ").concat(Steepness || "", "</td>\n\t\t\t\t</tr>\n\t\t\t\t<!--tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.targetSpecies'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(TargetSpecies || "", "</td>                    \n\t\t\t\t</tr-->\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.mainSpecies'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(PredominantSpecies || "", "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.age'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(AgeGroup || "", "</td>                    \n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.klass'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(AgeClass || "", "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.bonitet'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(Bonitet || "", "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.type'), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(ForestType || '', "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('stand.volume'), ", ").concat(this.translate('units.m'), "<sup>3</sup></td>\n\t\t\t\t\t<td class=\"value\">").concat(volume || "", "</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
+	      this._volume.innerText = volume && this.m(volume) || '-';
 
-	      if (Array.isArray(Stock) && Stock.length) {
-	        var _Stock$reduce = Stock.reduce(function (a, _ref2) {
-	          var stock = _ref2.stock,
-	              species = _ref2.species;
-	          a.labels.push(species);
-	          a.series.push(stock);
-	          return a;
-	        }, {
-	          labels: [],
-	          series: []
-	        }),
-	            labels = _Stock$reduce.labels,
-	            series = _Stock$reduce.series;
+	      if (Array.isArray(StoreyInfo)) {
+	        this._levels.innerHTML = "".concat(StoreyInfo.map(function (_ref2) {
+	          var storey = _ref2.storey,
+	              abbr = _ref2.abbr,
+	              age = _ref2.age,
+	              basal_area_sum = _ref2.basal_area_sum,
+	              dbh = _ref2.dbh,
+	              density = _ref2.density,
+	              gross_volume = _ref2.gross_volume,
+	              height = _ref2.height,
+	              marketability_class = _ref2.marketability_class,
+	              species_info = _ref2.species_info;
+	          return "<div class=\"storey\">\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t<label class=\"label\">".concat(_this2.translate('stand.storey.title'), "</label>\n\t\t\t\t\t\t\t<label class=\"value\">").concat(storey, "</label>\t\t\t\t\t\t\n\t\t\t\t\t\t</div>\t\t\t\t\t\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t<label class=\"label\">").concat(_this2.translate('stand.species'), "</label>\n\t\t\t\t\t\t\t<label class=\"value\">").concat(abbr, "</label>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t<label class=\"label\">").concat(_this2.translate('stand.age'), "</label>\n\t\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t<label class=\"label\">").concat(_this2.translate('stand.klass'), "</label>\n\t\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t<label class=\"label\">").concat(_this2.translate('stand.bonitet'), "</label>\n\t\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t\t</div>\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t<label class=\"label\">").concat(_this2.translate('stand.storey.gross_volume'), ", ").concat(_this2.translate('units.m'), "<sup>3</sup></label>\n\t\t\t\t\t\t\t<label class=\"value\">").concat(_this2.m(gross_volume), "</label>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"header\">\n\t\t\t\t\t\t\t<i class=\"scanex-stand-icon plus\"></i>\n\t\t\t\t\t\t\t<label>").concat(_this2.translate('stand.storey.info'), "</label>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<table class=\"species hidden\" cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t\t\t\t\t<thead>\n\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t<th>").concat(_this2.translate('stand.storey.rate'), "</th>\n\t\t\t\t\t\t\t\t\t<th>").concat(_this2.translate('stand.storey.species'), "</th>\n\t\t\t\t\t\t\t\t\t<th>").concat(_this2.translate('stand.storey.age'), "</th>\n\t\t\t\t\t\t\t\t\t<th>").concat(_this2.translate('stand.storey.height'), ", ").concat(_this2.translate('units.m'), "</th>\n\t\t\t\t\t\t\t\t\t<th>").concat(_this2.translate('stand.storey.dbh'), ", ").concat(_this2.translate('units.cm'), "</th>\n\t\t\t\t\t\t\t\t\t<th>").concat(_this2.translate('stand.storey.gross_volume'), ", ").concat(_this2.translate('units.m'), "<sup>3</sup></th>\n\t\t\t\t\t\t\t\t\t<th>").concat(_this2.translate('stand.storey.marketability_class'), "</th>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t</thead>\n\t\t\t\t\t\t\t<tbody>").concat(species_info.map(function (_ref3) {
+	            var age = _ref3.age,
+	                basal_area_sum = _ref3.basal_area_sum,
+	                dbh = _ref3.dbh,
+	                density = _ref3.density,
+	                gross_volume = _ref3.gross_volume,
+	                height = _ref3.height,
+	                marketability_class = _ref3.marketability_class,
+	                origin_id = _ref3.origin_id,
+	                rate = _ref3.rate,
+	                species = _ref3.species;
+	            return "<tr>\n\t\t\t\t\t\t\t\t\t<td>".concat(rate, "</td>\n\t\t\t\t\t\t\t\t\t<td>").concat(species, "</td>\n\t\t\t\t\t\t\t\t\t<td>").concat(age, "</td>\n\t\t\t\t\t\t\t\t\t<td>").concat(height, "</td>\n\t\t\t\t\t\t\t\t\t<td>").concat(dbh, "</td>\n\t\t\t\t\t\t\t\t\t<td>").concat(gross_volume, "</td>\n\t\t\t\t\t\t\t\t\t<td>").concat(marketability_class, "</td>\n\t\t\t\t\t\t\t\t</tr>");
+	          }).join(''), "\n\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t<td colspan=\"5\">").concat(_this2.translate('stand.storey.total'), "</td>\n\t\t\t\t\t\t\t\t\t<td>").concat(_this2.m(species_info.reduce(function (a, _ref4) {
+	            var gross_volume = _ref4.gross_volume;
+	            return a + parseFloat(gross_volume);
+	          }, 0)), "</td>\n\t\t\t\t\t\t\t\t\t<td></td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t</tbody>\n\t\t\t\t\t\t</table>\t\t\t\t\t\n\t\t\t\t\t</div>");
+	        }).join(''));
 
-	        this._chart.updateOptions({
-	          labels: labels
-	        });
+	        if (AdvanceRegeneration) {
+	          var age = AdvanceRegeneration.age,
+	              composition = AdvanceRegeneration.composition,
+	              height = AdvanceRegeneration.height,
+	              num_per_ha = AdvanceRegeneration.num_per_ha;
+	          this._advanceSpecies.innerText = composition || '-';
+	          this._advanceAge.innerText = age || '-';
+	          this._advanceHeight.innerText = height || '-';
+	          this._advanceVolume.innerText = this.fmt(num_per_ha);
+	        }
 
-	        this._chart.updateSeries(series);
+	        var _iterator = _createForOfIteratorHelper(this._levels.querySelectorAll('.storey')),
+	            _step;
+
+	        try {
+	          var _loop = function _loop() {
+	            var st = _step.value;
+	            var h = st.querySelector('.header');
+	            var i = h.querySelector('i');
+	            var s = st.querySelector('.species');
+	            h.addEventListener('click', function (e) {
+	              e.stopPropagation();
+	              var visible = i.classList.contains('plus');
+
+	              if (visible) {
+	                i.classList.remove('plus');
+	                i.classList.add('minus');
+	                s.classList.remove('hidden');
+	              } else {
+	                i.classList.remove('minus');
+	                i.classList.add('plus');
+	                s.classList.add('hidden');
+	              }
+	            });
+	          };
+
+	          for (_iterator.s(); !(_step = _iterator.n()).done;) {
+	            _loop();
+	          }
+	        } catch (err) {
+	          _iterator.e(err);
+	        } finally {
+	          _iterator.f();
+	        }
+	      } else {
+	        this._levels.innerHTML = '';
 	      }
 
-	      if (Array.isArray(StoreyAggInfo)) {
-	        this._levels.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t\t<tbody>".concat(StoreyAggInfo.map(function (_ref3) {
-	          var storey = _ref3.storey,
-	              abbr = _ref3.abbr,
-	              age = _ref3.age,
-	              basal_area_sum = _ref3.basal_area_sum,
-	              dbh = _ref3.dbh,
-	              density = _ref3.density,
-	              gross_volume = _ref3.gross_volume,
-	              height = _ref3.height,
-	              marketability_class = _ref3.marketability_class,
-	              rate = _ref3.rate;
-	          return "<tr class=\"storey\">\n\t\t\t\t\t\t<td class=\"text\">".concat(_this2.translate('stand.storey.title'), "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(storey, "</td>\t\t\t\t\t\t\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.species'), "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(abbr, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.height'), ", ").concat(_this2.translate('units.m'), "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(_this2.fmt(height), "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.age'), "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(age, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.dbh'), ", ").concat(_this2.translate('units.cm'), "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(_this2.fmt(dbh), "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.density'), "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(_this2.fmt(density), "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.marketability_class'), "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(marketability_class, "</td>\n\t\t\t\t\t</tr>\t\t\t\t\t\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.storey.gross_volume'), ", ").concat(_this2.translate('units.m'), "<sup>3</sup></td>\n\t\t\t\t\t\t<td class=\"value\">").concat(_this2.m(gross_volume), "</td>\n\t\t\t\t\t</tr>");
-	        }).join(''), "</tbody>\n\t\t\t</table>");
-	      }
+	      if (Array.isArray(Documents)) {
+	        var _iterator2 = _createForOfIteratorHelper(Documents),
+	            _step2;
 
-	      if (Array.isArray(Events)) {
-	        this._events.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t\t<tbody>".concat(Events.map(function (_ref4) {
-	          var name = _ref4.name,
-	              activity = _ref4.activity,
-	              fillingpercent = _ref4.fillingpercent;
-	          return "<tr>\n\t\t\t\t\t\t<td class=\"text\">".concat(name, "</td>\n\t\t\t\t\t\t<td class=\"value\">").concat(activity, "</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"text\">").concat(_this2.translate('stand.percentage'), "</td>\n\t\t\t\t\t\t<td class=\"value percentage\">").concat(_this2.fmt(fillingpercent)).concat(_this2.translate('units.pc'), "</td>\n\t\t\t\t\t</tr>");
-	        }).join(''), "</tbody>\n\t\t\t</table>");
+	        try {
+	          for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+	            var _step2$value = _step2.value,
+	                document_id = _step2$value.document_id,
+	                document_type_id = _step2$value.document_type_id;
+
+	            switch (document_type_id) {
+	              case 5:
+	                this._descriptionDocumentID = document_id;
+	                break;
+
+	              default:
+	                break;
+	            }
+	          }
+	        } catch (err) {
+	          _iterator2.e(err);
+	        } finally {
+	          _iterator2.f();
+	        }
+	      } else {
+	        this._descriptionDocumentID = null;
 	      }
 	    }
 	  }, {
@@ -67706,6 +68154,14 @@ var Forestry = (function () {
 	      _this._quadrantView.on('close', function () {
 	        _this._layers.quadrants && _this._layers.quadrants.repaint();
 	      });
+
+	      _this._quadrantView.on('download', function (e) {
+	        window.location = "".concat(_this._path, "/Forest/GetDocument?DocumentID=").concat(e.detail);
+	      });
+
+	      _this._quadrantView.on('notavailable', function (e) {
+	        _this._notification.warn(translate$f('warn.notavailable'), NOTIFY_TIMEOUT);
+	      });
 	    }
 
 	    if (_this._layers.stands && _this._permissions.ForestStands) {
@@ -67735,6 +68191,10 @@ var Forestry = (function () {
 
 	      _this._standView.on('close', function () {
 	        _this._layers.stands && _this._layers.stands.repaint();
+	      });
+
+	      _this._standView.on('download', function (e) {
+	        window.location = "".concat(_this._path, "/Forest/GetDocument?DocumentID=").concat(e.detail);
 	      });
 	    }
 
@@ -68843,6 +69303,169 @@ var Forestry = (function () {
 
 	var strings$a = {
 	  rus: {
+	    search: {
+	      title: 'Результаты поиска'
+	    }
+	  }
+	};
+
+	var Search = /*#__PURE__*/function (_BaseView) {
+	  _inherits(Search, _BaseView);
+
+	  var _super = _createSuper(Search);
+
+	  function Search(container) {
+	    var _this;
+
+	    _classCallCheck(this, Search);
+
+	    _this = _super.call(this, container, strings$a);
+
+	    _this._container.classList.add('scanex-forestry-search-result');
+
+	    _this._container.innerHTML = "<h1>".concat(_this.translate('search.title'), "</h1>\n\t\t\t<div class=\"content scrollable\"></div>");
+	    _this._body = _this._container.querySelector('.content');
+	    return _this;
+	  }
+
+	  _createClass(Search, [{
+	    key: "open",
+	    value: function open(items) {
+	      var _this2 = this;
+
+	      _get(_getPrototypeOf(Search.prototype), "open", this).call(this);
+
+	      this._items = items.reduce(function (a, _ref) {
+	        var ID = _ref.ID,
+	            Bound = _ref.Bound;
+	        a[ID] = Bound;
+	        return a;
+	      }, {});
+	      this._body.innerHTML = items.map(function (_ref2) {
+	        var ID = _ref2.ID,
+	            Address = _ref2.Address;
+	        return "<div class=\"row\" data-id=\"".concat(ID, "\">").concat(Address, "</div>");
+	      }).join('');
+
+	      var _iterator = _createForOfIteratorHelper(this._body.querySelectorAll('.row')),
+	          _step;
+
+	      try {
+	        var _loop = function _loop() {
+	          var row = _step.value;
+	          row.addEventListener('click', function (e) {
+	            e.stopPropagation();
+	            var id = row.getAttribute('data-id');
+	            var event = document.createEvent('Event');
+	            event.initEvent('select', false, false);
+	            event.detail = _this2._items[id];
+
+	            _this2.dispatchEvent(event);
+	          });
+	        };
+
+	        for (_iterator.s(); !(_step = _iterator.n()).done;) {
+	          _loop();
+	        }
+	      } catch (err) {
+	        _iterator.e(err);
+	      } finally {
+	        _iterator.f();
+	      }
+	    }
+	  }]);
+
+	  return Search;
+	}(View$1);
+
+	var Search$1 = /*#__PURE__*/function (_Controller) {
+	  _inherits(Search$1, _Controller);
+
+	  var _super = _createSuper(Search$1);
+
+	  function Search$1(_ref) {
+	    var _this;
+
+	    var map = _ref.map,
+	        content = _ref.content,
+	        notification = _ref.notification,
+	        loading = _ref.loading,
+	        legend = _ref.legend,
+	        path = _ref.path,
+	        permissions = _ref.permissions;
+
+	    _classCallCheck(this, Search$1);
+
+	    _this = _super.call(this, {
+	      map: map,
+	      content: content,
+	      notification: notification,
+	      loading: loading
+	    });
+	    _this._permissions = permissions;
+	    _this._path = path;
+	    _this._legend = legend;
+	    _this._maxZoom = 16;
+	    _this._control = new Control();
+
+	    _this._control.addTo(_this._map);
+
+	    _this._view = _this._content.add('search-result', Search);
+
+	    _this._view.on('select', function (e) {
+	      _this._legend.enable('quadrants');
+
+	      var geojson = leafletSrc.geoJSON(e.detail);
+	      var bounds = geojson.getBounds();
+
+	      _this._map.fitBounds(bounds, {
+	        maxZoom: _this._maxZoom
+	      });
+
+	      _this._map.invalidateSize();
+	    });
+
+	    _this._control.on('search', /*#__PURE__*/function () {
+	      var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e) {
+	        var text, data;
+	        return regeneratorRuntime.wrap(function _callee$(_context) {
+	          while (1) {
+	            switch (_context.prev = _context.next) {
+	              case 0:
+	                text = e.text;
+	                _context.next = 3;
+	                return _this.httpGet("".concat(_this._path, "/Forest/SearchStands"), {
+	                  Lexems: text
+	                });
+
+	              case 3:
+	                data = _context.sent;
+
+	                if (Array.isArray(data) && data.length) {
+	                  _this._view.open(data);
+	                }
+
+	              case 5:
+	              case "end":
+	                return _context.stop();
+	            }
+	          }
+	        }, _callee);
+	      }));
+
+	      return function (_x) {
+	        return _ref2.apply(this, arguments);
+	      };
+	    }());
+
+	    return _this;
+	  }
+
+	  return Search$1;
+	}(Controller);
+
+	var strings$b = {
+	  rus: {
 	    uploaded: {
 	      add: 'Добавить',
 	      cancel: 'Остановить',
@@ -68948,7 +69571,7 @@ var Forestry = (function () {
 
 	    _classCallCheck(this, Uploaded);
 
-	    _this = _super.call(this, container, strings$a);
+	    _this = _super.call(this, container, strings$b);
 	    _this._columns = columns;
 	    _this._types = ['vector', 'raster', 'tms', 'wms', 'wfs'];
 	    _this._pageSize = pageSize;
@@ -71911,11 +72534,11 @@ var Forestry = (function () {
 	            Type: 'String'
 	          },
 	          minZoom: {
-	            Value: minZoom.toString(),
+	            Value: minZoom && minZoom.toString(),
 	            Type: 'String'
 	          },
 	          maxZoom: {
-	            Value: maxZoom.toString(),
+	            Value: maxZoom && maxZoom.toString(),
 	            Type: 'String'
 	          },
 	          zoomOffset: {
@@ -74865,7 +75488,7 @@ var Forestry = (function () {
 	var notify_1 = Notification;
 
 	var translate$p = T.getText.bind(T);
-	var ALLOWED_LAYERS$1 = ['incidents_temporal', 'forestries_local', 'forestries', 'regions', 'fires', 'warehouses', 'roads', 'declarations', 'plots', 'projects', 'parks', 'quadrants', 'stands', 'sentinel', 'landsat'].reverse();
+	var ALLOWED_LAYERS$1 = ['incidents_temporal', 'forestries_local', 'forestries', 'regions', 'fires', 'warehouses', 'roads', 'declarations', 'plots', 'projects', 'parks', 'stands', 'quadrants', 'sentinel', 'landsat', 'cadastre', 'plan'].reverse();
 
 	var Map = /*#__PURE__*/function (_EventTarget) {
 	  _inherits(Map, _EventTarget);
@@ -75239,6 +75862,18 @@ var Forestry = (function () {
 
 	                this._zoom.addTo(this._map);
 
+	                if (this._permissions.GeoSearch) {
+	                  this._controllers.search = new Search$1({
+	                    map: this._map,
+	                    content: this._content,
+	                    path: this._apiPath,
+	                    legend: this._legend,
+	                    permissions: this._permissions,
+	                    notification: this._notification,
+	                    loading: this._loading
+	                  });
+	                }
+
 	                this._controllers.baseLayers = new BaseLayers({
 	                  map: this._map,
 	                  apiKey: apk,
@@ -75257,10 +75892,10 @@ var Forestry = (function () {
 	                  _this3._controllers.baseLayers.hide();
 	                });
 
-	                _context9.next = 19;
+	                _context9.next = 20;
 	                return this._controllers.baseLayers.load();
 
-	              case 19:
+	              case 20:
 	                currentBaseLayer = window.localStorage.getItem('forestry.baselayer');
 
 	                if (currentBaseLayer) {
@@ -75333,7 +75968,7 @@ var Forestry = (function () {
 	                      kind = _ref3.kind;
 	                  a[kind] = layer;
 	                  return a;
-	                }, {}); // attach layer controllers        
+	                }, {}); // attach layer controllers                  
 
 	                if (this._layers.quadrants && this._permissions.ForestBlocks) {
 	                  this._controllers.quadrants = new Quadrants$2({
@@ -75377,19 +76012,7 @@ var Forestry = (function () {
 	                      return _ref4.apply(this, arguments);
 	                    };
 	                  }());
-	                } // if (this._layers.stands && this._permissions.ForestStands) {                        
-	                //     this._controllers.stands = new Components.Stands.Controller({
-	                //         map: this._map,
-	                //         layer: this._layers.stands,
-	                //         legend: this._legend,
-	                //         content: this._content,
-	                //         path: this._apiPath,
-	                //         permissions: this._permissions,
-	                //         notification: this._notification,
-	                //         loading: this._loading,
-	                //     });                      
-	                // }
-
+	                }
 
 	                if (this._layers.declarations && this._permissions.ForestDeclarations) {
 	                  this._controllers.declarations = new Declarations({
@@ -75617,6 +76240,24 @@ var Forestry = (function () {
 	                    loading: this._loading,
 	                    permissions: this._permissions
 	                  });
+	                }
+
+	                if (this._permissions.ViewPublicCadastr) {
+	                  this._controllers.cadastre = new Cadastre({
+	                    map: this._map,
+	                    content: this._content,
+	                    layer: this._layers.cadastre,
+	                    legend: this._legend
+	                  });
+	                }
+
+	                if (this._layers.plan && this._permissions.ForestPlanLayer) {
+	                  this._controllers.plan = new Plan({
+	                    map: this._map,
+	                    content: this._content,
+	                    layer: this._layers.plan,
+	                    legend: this._legend
+	                  });
 	                } // if (this._layers.regions || this._layers.forestries || this._layers.forestries_local) {
 	                //     this._controllers.borders = new Components.Borders.Controller({
 	                //         map: this._map,
@@ -75694,7 +76335,7 @@ var Forestry = (function () {
 	                  notification: this._notification
 	                });
 
-	              case 36:
+	              case 39:
 	              case "end":
 	                return _context9.stop();
 	            }
