@@ -67618,13 +67618,14 @@ var Forestry = (function () {
 	        basal_area_sum: 'Сумма площадей сечений',
 	        dbh: 'Д',
 	        density: 'Полнота',
-	        gross_volume: 'Запас общий на выделе',
+	        gross_volume: 'Запас на 1 га',
 	        height: 'Н',
 	        marketability_class: 'Класс товарности',
 	        origin_id: 'Происхождение',
 	        rate: 'Коэф. участия',
 	        total: 'Итого',
-	        species: 'Древесная порода'
+	        species: 'Древесная порода',
+	        volume: 'Запас на выделе'
 	      },
 	      stow: 'Урочище (при наличии)',
 	      targetSpecies: 'Целевая порода',
@@ -67938,7 +67939,7 @@ var Forestry = (function () {
 	          Bonitet = data.Bonitet,
 	          Stock = data.Stock,
 	          StoreyInfo = data.StoreyInfo,
-	          StoreyAggInfo = data.StoreyAggInfo,
+	          StockStand = data.StockStand,
 	          Events = data.Events;
 	      this._gmx_id = gmx_id;
 	      this._header.innerText = [Forestry, LocalForestry, Stow, Quadrant, Stand].filter(function (v) {
@@ -67955,38 +67956,34 @@ var Forestry = (function () {
 	      this._ozu.innerText = OZU || '-';
 	      this._forestType.innerText = ForestType || '-';
 	      this._slope.innerText = "".concat(Steepness && this.int(Steepness) || '', " - ").concat(Exposition && this.int(Exposition) || '');
-	      var volume = Array.isArray(StoreyAggInfo) && StoreyAggInfo.reduce(function (a, _ref) {
-	        var gross_volume = _ref.gross_volume;
-	        return a + gross_volume;
-	      }, 0) || 0;
-	      this._volume.innerText = volume && this.m(volume) || '-';
+	      this._volume.innerText = StockStand && this.m(StockStand) || '-';
 
 	      if (Array.isArray(StoreyInfo)) {
-	        this._levels.innerHTML = "".concat(StoreyInfo.map(function (_ref2) {
-	          var storey = _ref2.storey,
-	              abbr = _ref2.abbr,
-	              age = _ref2.age,
-	              basal_area_sum = _ref2.basal_area_sum,
-	              dbh = _ref2.dbh,
-	              density = _ref2.density,
-	              gross_volume = _ref2.gross_volume,
-	              height = _ref2.height,
-	              marketability_class = _ref2.marketability_class,
-	              species_info = _ref2.species_info;
-	          return "<div class=\"storey\">\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t<label class=\"label\">".concat(_this2.translate('stand.storey.title'), "</label>\n\t\t\t\t\t\t\t<label class=\"value\">").concat(storey, "</label>\t\t\t\t\t\t\n\t\t\t\t\t\t</div>\t\t\t\t\t\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t<label class=\"label\">").concat(_this2.translate('stand.species'), "</label>\n\t\t\t\t\t\t\t<label class=\"value\">").concat(abbr, "</label>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t<label class=\"label\">").concat(_this2.translate('stand.age'), "</label>\n\t\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t<label class=\"label\">").concat(_this2.translate('stand.klass'), "</label>\n\t\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t<label class=\"label\">").concat(_this2.translate('stand.bonitet'), "</label>\n\t\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t\t</div>\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t<label class=\"label\">").concat(_this2.translate('stand.storey.gross_volume'), ", ").concat(_this2.translate('units.m'), "<sup>3</sup></label>\n\t\t\t\t\t\t\t<label class=\"value\">").concat(_this2.m(gross_volume), "</label>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"header\">\n\t\t\t\t\t\t\t<i class=\"scanex-stand-icon plus\"></i>\n\t\t\t\t\t\t\t<label>").concat(_this2.translate('stand.storey.info'), "</label>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<table class=\"species hidden\" cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t\t\t\t\t<thead>\n\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t<th>").concat(_this2.translate('stand.storey.rate'), "</th>\n\t\t\t\t\t\t\t\t\t<th>").concat(_this2.translate('stand.storey.species'), "</th>\n\t\t\t\t\t\t\t\t\t<th>").concat(_this2.translate('stand.storey.age'), "</th>\n\t\t\t\t\t\t\t\t\t<th>").concat(_this2.translate('stand.storey.height'), ", ").concat(_this2.translate('units.m'), "</th>\n\t\t\t\t\t\t\t\t\t<th>").concat(_this2.translate('stand.storey.dbh'), ", ").concat(_this2.translate('units.cm'), "</th>\n\t\t\t\t\t\t\t\t\t<th>").concat(_this2.translate('stand.storey.gross_volume'), ", ").concat(_this2.translate('units.m'), "<sup>3</sup></th>\n\t\t\t\t\t\t\t\t\t<th>").concat(_this2.translate('stand.storey.marketability_class'), "</th>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t</thead>\n\t\t\t\t\t\t\t<tbody>").concat(species_info.map(function (_ref3) {
-	            var age = _ref3.age,
-	                basal_area_sum = _ref3.basal_area_sum,
-	                dbh = _ref3.dbh,
-	                density = _ref3.density,
-	                gross_volume = _ref3.gross_volume,
-	                height = _ref3.height,
-	                marketability_class = _ref3.marketability_class,
-	                origin_id = _ref3.origin_id,
-	                rate = _ref3.rate,
-	                species = _ref3.species;
+	        this._levels.innerHTML = "".concat(StoreyInfo.map(function (_ref) {
+	          var storey = _ref.storey,
+	              abbr = _ref.abbr,
+	              age = _ref.age,
+	              basal_area_sum = _ref.basal_area_sum,
+	              dbh = _ref.dbh,
+	              density = _ref.density,
+	              gross_volume = _ref.gross_volume,
+	              height = _ref.height,
+	              marketability_class = _ref.marketability_class,
+	              species_info = _ref.species_info;
+	          return "<div class=\"storey\">\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t<label class=\"label\">".concat(_this2.translate('stand.storey.title'), "</label>\n\t\t\t\t\t\t\t<label class=\"value\">").concat(storey, "</label>\t\t\t\t\t\t\n\t\t\t\t\t\t</div>\t\t\t\t\t\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t<label class=\"label\">").concat(_this2.translate('stand.species'), "</label>\n\t\t\t\t\t\t\t<label class=\"value\">").concat(abbr, "</label>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t<label class=\"label\">").concat(_this2.translate('stand.age'), "</label>\n\t\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t<label class=\"label\">").concat(_this2.translate('stand.klass'), "</label>\n\t\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t<label class=\"label\">").concat(_this2.translate('stand.bonitet'), "</label>\n\t\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t\t</div>\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t<label class=\"label\">").concat(_this2.translate('stand.storey.gross_volume'), ", ").concat(_this2.translate('units.m'), "<sup>3</sup></label>\n\t\t\t\t\t\t\t<label class=\"value\">").concat(_this2.m(gross_volume), "</label>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"header\">\n\t\t\t\t\t\t\t<i class=\"scanex-stand-icon plus\"></i>\n\t\t\t\t\t\t\t<label>").concat(_this2.translate('stand.storey.info'), "</label>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<table class=\"species hidden\" cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t\t\t\t\t<thead>\n\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t<th>").concat(_this2.translate('stand.storey.rate'), "</th>\n\t\t\t\t\t\t\t\t\t<th>").concat(_this2.translate('stand.storey.species'), "</th>\n\t\t\t\t\t\t\t\t\t<th>").concat(_this2.translate('stand.storey.age'), "</th>\n\t\t\t\t\t\t\t\t\t<th>").concat(_this2.translate('stand.storey.height'), ", ").concat(_this2.translate('units.m'), "</th>\n\t\t\t\t\t\t\t\t\t<th>").concat(_this2.translate('stand.storey.dbh'), ", ").concat(_this2.translate('units.cm'), "</th>\n\t\t\t\t\t\t\t\t\t<th>").concat(_this2.translate('stand.storey.volume'), ", ").concat(_this2.translate('units.m'), "<sup>3</sup></th>\n\t\t\t\t\t\t\t\t\t<th>").concat(_this2.translate('stand.storey.marketability_class'), "</th>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t</thead>\n\t\t\t\t\t\t\t<tbody>").concat(species_info.map(function (_ref2) {
+	            var age = _ref2.age,
+	                basal_area_sum = _ref2.basal_area_sum,
+	                dbh = _ref2.dbh,
+	                density = _ref2.density,
+	                gross_volume = _ref2.gross_volume,
+	                height = _ref2.height,
+	                marketability_class = _ref2.marketability_class,
+	                origin_id = _ref2.origin_id,
+	                rate = _ref2.rate,
+	                species = _ref2.species;
 	            return "<tr>\n\t\t\t\t\t\t\t\t\t<td>".concat(rate, "</td>\n\t\t\t\t\t\t\t\t\t<td>").concat(species, "</td>\n\t\t\t\t\t\t\t\t\t<td>").concat(age, "</td>\n\t\t\t\t\t\t\t\t\t<td>").concat(height, "</td>\n\t\t\t\t\t\t\t\t\t<td>").concat(dbh, "</td>\n\t\t\t\t\t\t\t\t\t<td>").concat(gross_volume, "</td>\n\t\t\t\t\t\t\t\t\t<td>").concat(marketability_class, "</td>\n\t\t\t\t\t\t\t\t</tr>");
-	          }).join(''), "\n\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t<td colspan=\"5\">").concat(_this2.translate('stand.storey.total'), "</td>\n\t\t\t\t\t\t\t\t\t<td>").concat(_this2.m(species_info.reduce(function (a, _ref4) {
-	            var gross_volume = _ref4.gross_volume;
+	          }).join(''), "\n\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t<td colspan=\"5\">").concat(_this2.translate('stand.storey.total'), "</td>\n\t\t\t\t\t\t\t\t\t<td>").concat(_this2.m(species_info.reduce(function (a, _ref3) {
+	            var gross_volume = _ref3.gross_volume;
 	            return a + parseFloat(gross_volume);
 	          }, 0)), "</td>\n\t\t\t\t\t\t\t\t\t<td></td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t</tbody>\n\t\t\t\t\t\t</table>\t\t\t\t\t\n\t\t\t\t\t</div>");
 	        }).join(''));
