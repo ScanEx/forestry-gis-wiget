@@ -67617,7 +67617,7 @@ var Forestry = (function () {
 	        age: 'Возраст, лет',
 	        basal_area_sum: 'Сумма площадей сечений',
 	        dbh: 'Д',
-	        density: 'Полнота',
+	        density: 'Полнота (0,01)',
 	        gross_volume: 'Запас на 1 га',
 	        height: 'Н',
 	        marketability_class: 'Класс товарности',
@@ -67671,7 +67671,7 @@ var Forestry = (function () {
 
 	    _this._container.classList.add('scanex-forestry-quadrant');
 
-	    _this._container.innerHTML = "<h1 class=\"header1\">".concat(_this.translate('quadrant.title'), "</h1>\n\t\t<h2 class=\"header2\"></h2>\n\t\t<div class=\"scrollable\">\n\t\t\t<div class=\"download-description\">\n\t\t\t\t<i class=\"scanex-quadrant-icon download\"></i>\n\t\t\t\t<label>").concat(_this.translate('quadrant.description'), "</label>\n\t\t\t</div>\n\t\t\t<div class=\"download-plan\">\n\t\t\t\t<i class=\"scanex-quadrant-icon download\"></i>\n\t\t\t\t<label>").concat(_this.translate('quadrant.plan'), "</label>\n\t\t\t</div>\n\t\t\t<div class=\"info\">\n\t\t\t\t<div class=\"forestry\">\n\t\t\t\t\t<label class=\"label\">").concat(_this.translate('quadrant.forestry'), "</label>\n\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"forestry-local\">\n\t\t\t\t\t<label class=\"label\">").concat(_this.translate('quadrant.forestry_local'), "</label>\n\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"stow\">\n\t\t\t\t\t<label class=\"label\">").concat(_this.translate('quadrant.stow'), "</label>\n\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"number\">\n\t\t\t\t\t<label class=\"label\">").concat(_this.translate('quadrant.number'), "</label>\n\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"area\">\n\t\t\t\t\t<label class=\"label\">").concat(_this.translate('quadrant.area'), "</label>\n\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"usage\">\n\t\t\t\t\t<label class=\"label\">").concat(_this.translate('quadrant.usage'), "</label>\n\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"header3\">").concat(_this.translate('quadrant.stock.table'), "</div>\n\t\t\t<div class=\"stats\">\n\t\t\t\t<div class=\"header\">\n\t\t\t\t\t<div class=\"species\">").concat(_this.translate('quadrant.stock.species'), "</div>\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<div class=\"stock\">").concat(_this.translate('quadrant.stock.label'), "<sup>3</sup></div>\n\t\t\t\t\t\t<div class=\"details\">\n\t\t\t\t\t\t\t<div class=\"permitted\">").concat(_this.translate('quadrant.stock.permitted'), "</div>\n\t\t\t\t\t\t\t<div class=\"probable\">").concat(_this.translate('quadrant.stock.probable'), "</div>\n\t\t\t\t\t\t\t<div class=\"total\">").concat(_this.translate('quadrant.stock.total'), "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"body\"></div>\n\t\t\t</div>\n\t\t</div>");
+	    _this._container.innerHTML = "<h1 class=\"header1\">".concat(_this.translate('quadrant.title'), "</h1>\n\t\t<h2 class=\"header2\"></h2>\n\t\t<div class=\"scrollable\">\t\t\t\n\t\t\t<div class=\"info\">\n\t\t\t\t<div class=\"forestry\">\n\t\t\t\t\t<label class=\"label\">").concat(_this.translate('quadrant.forestry'), "</label>\n\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"forestry-local\">\n\t\t\t\t\t<label class=\"label\">").concat(_this.translate('quadrant.forestry_local'), "</label>\n\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"stow\">\n\t\t\t\t\t<label class=\"label\">").concat(_this.translate('quadrant.stow'), "</label>\n\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"number\">\n\t\t\t\t\t<label class=\"label\">").concat(_this.translate('quadrant.number'), "</label>\n\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"area\">\n\t\t\t\t\t<label class=\"label\">").concat(_this.translate('quadrant.area'), "</label>\n\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"usage\">\n\t\t\t\t\t<label class=\"label\">").concat(_this.translate('quadrant.usage'), "</label>\n\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"header3\">").concat(_this.translate('quadrant.stock.table'), "</div>\n\t\t\t<div class=\"stats\">\n\t\t\t\t<div class=\"header\">\n\t\t\t\t\t<div class=\"species\">").concat(_this.translate('quadrant.stock.species'), "</div>\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<div class=\"stock\">").concat(_this.translate('quadrant.stock.label'), "<sup>3</sup></div>\n\t\t\t\t\t\t<div class=\"details\">\n\t\t\t\t\t\t\t<div class=\"permitted\">").concat(_this.translate('quadrant.stock.permitted'), "</div>\n\t\t\t\t\t\t\t<div class=\"probable\">").concat(_this.translate('quadrant.stock.probable'), "</div>\n\t\t\t\t\t\t\t<div class=\"total\">").concat(_this.translate('quadrant.stock.total'), "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"body\"></div>\n\t\t\t</div>\n\t\t\t<div class=\"footer\">\n\t\t\t\t<div class=\"download-description\">\n\t\t\t\t\t<i class=\"scanex-quadrant-icon download\"></i>\n\t\t\t\t\t<label>").concat(_this.translate('quadrant.description'), "</label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"download-plan\">\n\t\t\t\t\t<i class=\"scanex-quadrant-icon download\"></i>\n\t\t\t\t\t<label>").concat(_this.translate('quadrant.plan'), "</label>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>");
 	    _this._header2 = _this._container.querySelector('.header2');
 	    _this._body = _this._container.querySelector('.body');
 
@@ -67732,6 +67732,7 @@ var Forestry = (function () {
 	          Area = data.Area,
 	          LocalForestry = data.LocalForestry,
 	          Num = data.Num,
+	          SpecialPurpose = data.SpecialPurpose,
 	          Stock = data.Stock,
 	          Stow = data.Stow,
 	          Documents = data.Documents;
@@ -67741,6 +67742,7 @@ var Forestry = (function () {
 	      this._forestryLocal.innerText = LocalForestry || '-';
 	      this._stow.innerText = Stow || '-';
 	      this._number.innerText = Num || '-';
+	      this._usage.innerText = SpecialPurpose || '-';
 	      this._area.innerText = Area && this.ha(Area) || '-';
 
 	      if (Array.isArray(Documents)) {
@@ -67872,7 +67874,7 @@ var Forestry = (function () {
 
 	    _this._container.classList.add('scanex-forestry-stand');
 
-	    _this._container.innerHTML = "\n\t\t<h1 class=\"header1\">".concat(_this.translate('stand.title'), "</h1>\n\t\t<h2 class=\"header2\"></h2>\t\t\n\t\t<button class=\"stand-doc\">\n\t\t\t<i class=\"scanex-stand-icon doc\"></i>").concat(_this.translate('stand.taxation'), "\n\t\t</button>\t\t\n\t\t<div class=\"content scrollable\">\n\t\t\t<div class=\"stats\">\n\t\t\t\t<div class=\"info\">\n\t\t\t\t\t<div class=\"forestry\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.forestry'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"forestry-local\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.forestry_local'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"stow\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.stow'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"quadrant\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.quadrant'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"num\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.num'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"area\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.area'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"category\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.category'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"usage\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.usage'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"protected\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.protected'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"ozu\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.ozu'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"forest-type\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.forest_type'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"conditions\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.conditions'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"slope\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.slope'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"volume\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.volume'), ", ").concat(_this.translate('units.m'), "<sup>3</sup></label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"advance\">\n\t\t\t\t\t<div class=\"header\">").concat(_this.translate('stand.advance.title'), "</div>\n\t\t\t\t\t<div class=\"species\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.advance.species'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"age\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.advance.age'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"height\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.advance.height'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"volume\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.advance.volume'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\t\t\t\t\t\n\t\t\t<div class=\"levels\"></div>\n\t\t</div>");
+	    _this._container.innerHTML = "\n\t\t<h1 class=\"header1\">".concat(_this.translate('stand.title'), "</h1>\n\t\t<h2 class=\"header2\"></h2>\t\t\t\t\n\t\t<div class=\"content scrollable\">\n\t\t\t<div class=\"stats\">\n\t\t\t\t<div class=\"info\">\n\t\t\t\t\t<div class=\"forestry\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.forestry'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"forestry-local\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.forestry_local'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"stow\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.stow'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"quadrant\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.quadrant'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"num\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.num'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"area\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.area'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"category\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.category'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"usage\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.usage'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"protected\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.protected'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"ozu\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.ozu'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"forest-type\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.forest_type'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"conditions\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.conditions'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"slope\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.slope'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"volume\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.volume'), ", ").concat(_this.translate('units.m'), "<sup>3</sup></label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"advance\">\n\t\t\t\t\t<div class=\"header\">").concat(_this.translate('stand.advance.title'), "</div>\n\t\t\t\t\t<div class=\"species\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.advance.species'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"age\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.advance.age'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"height\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.advance.height'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"volume\">\n\t\t\t\t\t\t<label class=\"label\">").concat(_this.translate('stand.advance.volume'), "</label>\n\t\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\t\t\t\t\t\n\t\t\t<div class=\"levels\"></div>\n\t\t\t<div class=\"stand-doc\">\n\t\t\t\t<i class=\"scanex-stand-icon download\"></i>\n\t\t\t\t<label>").concat(_this.translate('stand.taxation'), "</label>\n\t\t\t</div>\n\t\t</div>");
 	    _this._header = _this._container.querySelector('.header2');
 	    _this._forestry = _this._container.querySelector('.forestry .value');
 	    _this._forestryLocal = _this._container.querySelector('.forestry-local .value');
@@ -67903,6 +67905,12 @@ var Forestry = (function () {
 	        event.detail = _this._descriptionDocumentID;
 
 	        _this.dispatchEvent(event);
+	      } else {
+	        var _event = document.createEvent('Event');
+
+	        _event.initEvent('notavailable', false, false);
+
+	        _this.dispatchEvent(_event);
 	      }
 	    });
 
@@ -67926,21 +67934,15 @@ var Forestry = (function () {
 	          Documents = data.Documents,
 	          ForestUseType = data.ForestUseType,
 	          ForestType = data.ForestType,
-	          UpdatingYear = data.UpdatingYear,
+	          ForestUseProtectionType = data.ForestUseProtectionType,
+	          ForestSiteType = data.ForestSiteType,
 	          Square = data.Square,
 	          LandCategory = data.LandCategory,
 	          OZU = data.OZU,
 	          Exposition = data.Exposition,
 	          Steepness = data.Steepness,
-	          TargetSpecies = data.TargetSpecies,
-	          PredominantSpecies = data.PredominantSpecies,
-	          AgeGroup = data.AgeGroup,
-	          AgeClass = data.AgeClass,
-	          Bonitet = data.Bonitet,
-	          Stock = data.Stock,
 	          StoreyInfo = data.StoreyInfo,
-	          StockStand = data.StockStand,
-	          Events = data.Events;
+	          StockStand = data.StockStand;
 	      this._gmx_id = gmx_id;
 	      this._header.innerText = [Forestry, LocalForestry, Stow, Quadrant, Stand].filter(function (v) {
 	        return v;
@@ -67953,9 +67955,11 @@ var Forestry = (function () {
 	      this._area.innerText = Square && this.ha(Square) || '-';
 	      this._category.innerText = LandCategory || '-';
 	      this._usage.innerText = ForestUseType || '-';
+	      this._protected.innerText = ForestUseProtectionType || '-';
+	      this._conditions.innerText = ForestSiteType || '-';
 	      this._ozu.innerText = OZU || '-';
 	      this._forestType.innerText = ForestType || '-';
-	      this._slope.innerText = "".concat(Steepness && this.int(Steepness) || '', " - ").concat(Exposition && this.int(Exposition) || '');
+	      this._slope.innerText = "".concat(Steepness && this.int(Steepness) || '', " / ").concat(Exposition && this.int(Exposition) || '');
 	      this._volume.innerText = StockStand && this.m(StockStand) || '-';
 
 	      if (Array.isArray(StoreyInfo)) {
@@ -67972,7 +67976,7 @@ var Forestry = (function () {
 	              height = _ref.height,
 	              marketability_class = _ref.marketability_class,
 	              species_info = _ref.species_info;
-	          return "<div class=\"storey\">\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t<label class=\"label\">".concat(_this2.translate('stand.storey.title'), "</label>\n\t\t\t\t\t\t\t<label class=\"value\">").concat(storey, "</label>\t\t\t\t\t\t\n\t\t\t\t\t\t</div>\t\t\t\t\t\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t<label class=\"label\">").concat(_this2.translate('stand.species'), "</label>\n\t\t\t\t\t\t\t<label class=\"value\">").concat(abbr, "</label>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t<label class=\"label\">").concat(_this2.translate('stand.age'), "</label>\n\t\t\t\t\t\t\t<label class=\"value\">").concat(age_group, "</label>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t<label class=\"label\">").concat(_this2.translate('stand.klass'), "</label>\n\t\t\t\t\t\t\t<label class=\"value\">").concat(age_class, "</label>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t<label class=\"label\">").concat(_this2.translate('stand.bonitet'), "</label>\n\t\t\t\t\t\t\t<label class=\"value\">").concat(bonitet, "</label>\n\t\t\t\t\t\t</div>\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t<label class=\"label\">").concat(_this2.translate('stand.storey.gross_volume'), ", ").concat(_this2.translate('units.m'), "<sup>3</sup></label>\n\t\t\t\t\t\t\t<label class=\"value\">").concat(_this2.m(gross_volume), "</label>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"header\">\n\t\t\t\t\t\t\t<i class=\"scanex-stand-icon plus\"></i>\n\t\t\t\t\t\t\t<label>").concat(_this2.translate('stand.storey.info'), "</label>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<table class=\"species hidden\" cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t\t\t\t\t<thead>\n\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t<th>").concat(_this2.translate('stand.storey.rate'), "</th>\n\t\t\t\t\t\t\t\t\t<th>").concat(_this2.translate('stand.storey.species'), "</th>\n\t\t\t\t\t\t\t\t\t<th>").concat(_this2.translate('stand.storey.age'), "</th>\n\t\t\t\t\t\t\t\t\t<th>").concat(_this2.translate('stand.storey.height'), ", ").concat(_this2.translate('units.m'), "</th>\n\t\t\t\t\t\t\t\t\t<th>").concat(_this2.translate('stand.storey.dbh'), ", ").concat(_this2.translate('units.cm'), "</th>\n\t\t\t\t\t\t\t\t\t<th>").concat(_this2.translate('stand.storey.volume'), ", ").concat(_this2.translate('units.m'), "<sup>3</sup></th>\n\t\t\t\t\t\t\t\t\t<th>").concat(_this2.translate('stand.storey.marketability_class'), "</th>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t</thead>\n\t\t\t\t\t\t\t<tbody>").concat(species_info.map(function (_ref2) {
+	          return "<div class=\"storey\">\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t<label class=\"label\">".concat(_this2.translate('stand.storey.title'), "</label>\n\t\t\t\t\t\t\t<label class=\"value\">").concat(storey, "</label>\t\t\t\t\t\t\n\t\t\t\t\t\t</div>\t\t\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t<label class=\"label\">").concat(_this2.translate('stand.species'), "</label>\n\t\t\t\t\t\t\t<label class=\"value\">").concat(abbr, "</label>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t<label class=\"label\">").concat(_this2.translate('stand.storey.density'), "</label>\n\t\t\t\t\t\t\t<label class=\"value\">").concat(_this2.fmt(density), "</label>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t<label class=\"label\">").concat(_this2.translate('stand.age'), "</label>\n\t\t\t\t\t\t\t<label class=\"value\">").concat(age_group, "</label>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t<label class=\"label\">").concat(_this2.translate('stand.klass'), "</label>\n\t\t\t\t\t\t\t<label class=\"value\">").concat(age_class, "</label>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t<label class=\"label\">").concat(_this2.translate('stand.bonitet'), "</label>\n\t\t\t\t\t\t\t<label class=\"value\">").concat(bonitet, "</label>\n\t\t\t\t\t\t</div>\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t<label class=\"label\">").concat(_this2.translate('stand.storey.gross_volume'), ", ").concat(_this2.translate('units.m'), "<sup>3</sup></label>\n\t\t\t\t\t\t\t<label class=\"value\">").concat(_this2.m(gross_volume), "</label>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"header\">\n\t\t\t\t\t\t\t<i class=\"scanex-stand-icon plus\"></i>\n\t\t\t\t\t\t\t<label>").concat(_this2.translate('stand.storey.info'), "</label>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<table class=\"species hidden\" cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t\t\t\t\t<thead>\n\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t<th>").concat(_this2.translate('stand.storey.rate'), "</th>\n\t\t\t\t\t\t\t\t\t<th>").concat(_this2.translate('stand.storey.species'), "</th>\n\t\t\t\t\t\t\t\t\t<th>").concat(_this2.translate('stand.storey.age'), "</th>\n\t\t\t\t\t\t\t\t\t<th>").concat(_this2.translate('stand.storey.height'), ", ").concat(_this2.translate('units.m'), "</th>\n\t\t\t\t\t\t\t\t\t<th>").concat(_this2.translate('stand.storey.dbh'), ", ").concat(_this2.translate('units.cm'), "</th>\n\t\t\t\t\t\t\t\t\t<th>").concat(_this2.translate('stand.storey.volume'), ", ").concat(_this2.translate('units.m'), "<sup>3</sup></th>\n\t\t\t\t\t\t\t\t\t<th>").concat(_this2.translate('stand.storey.marketability_class'), "</th>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t</thead>\n\t\t\t\t\t\t\t<tbody>").concat(species_info.map(function (_ref2) {
 	            var age = _ref2.age,
 	                basal_area_sum = _ref2.basal_area_sum,
 	                dbh = _ref2.dbh,
@@ -68194,6 +68198,10 @@ var Forestry = (function () {
 
 	      _this._standView.on('download', function (e) {
 	        window.location = "".concat(_this._path, "/Forest/GetDocument?DocumentID=").concat(e.detail);
+	      });
+
+	      _this._standView.on('notavailable', function (e) {
+	        _this._notification.warn(translate$f('warn.notavailable'), NOTIFY_TIMEOUT);
 	      });
 	    }
 
@@ -69372,6 +69380,11 @@ var Forestry = (function () {
 	        _iterator.f();
 	      }
 	    }
+	  }, {
+	    key: "clear",
+	    value: function clear() {
+	      this._body.innerHTML = '';
+	    }
 	  }]);
 
 	  return Search;
@@ -69442,6 +69455,8 @@ var Forestry = (function () {
 
 	                if (Array.isArray(data) && data.length) {
 	                  _this._view.open(data);
+	                } else {
+	                  _this._view.clear();
 	                }
 
 	              case 5:
@@ -76241,7 +76256,7 @@ var Forestry = (function () {
 	                  });
 	                }
 
-	                if (this._permissions.ViewPublicCadastr) {
+	                if (this._layers.cadastre && this._permissions.ViewPublicCadastr) {
 	                  this._controllers.cadastre = new Cadastre({
 	                    map: this._map,
 	                    content: this._content,
