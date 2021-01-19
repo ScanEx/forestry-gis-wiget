@@ -37443,6 +37443,7 @@ var Forestry = (function () {
 	      forestries: 'Лесничества',
 	      forestries_local: 'Участковые лесничества',
 	      incidents: 'Космический мониторинг',
+	      kppo: 'КППО',
 	      landsat: 'Landsat-8',
 	      parks: 'ООПТ',
 	      parks_federal: 'Федеральные ООПТ',
@@ -47629,6 +47630,35 @@ var Forestry = (function () {
 
 	  return Incidents$1;
 	}(Controller);
+
+	var KPPO = /*#__PURE__*/function (_LayerController) {
+	  _inherits(KPPO, _LayerController);
+
+	  var _super = _createSuper(KPPO);
+
+	  function KPPO(_ref) {
+	    var map = _ref.map,
+	        content = _ref.content,
+	        notification = _ref.notification,
+	        loading = _ref.loading,
+	        layer = _ref.layer,
+	        legend = _ref.legend;
+
+	    _classCallCheck(this, KPPO);
+
+	    return _super.call(this, {
+	      kind: 'kppo',
+	      map: map,
+	      content: content,
+	      notification: notification,
+	      loading: loading,
+	      layer: layer,
+	      legend: legend
+	    });
+	  }
+
+	  return KPPO;
+	}(LayerController);
 
 	var Legend$1 = /*#__PURE__*/function (_EventTarget) {
 	  _inherits(Legend, _EventTarget);
@@ -75502,7 +75532,7 @@ var Forestry = (function () {
 	var notify_1 = Notification;
 
 	var translate$p = T.getText.bind(T);
-	var ALLOWED_LAYERS$1 = ['incidents_temporal', 'forestries_local', 'forestries', 'regions', 'fires', 'warehouses', 'roads', 'declarations', 'plots', 'projects', 'parks', 'stands', 'quadrants', 'sentinel', 'landsat', 'cadastre', 'plan'].reverse();
+	var ALLOWED_LAYERS$1 = ['incidents_temporal', 'forestries_local', 'forestries', 'regions', 'fires', 'warehouses', 'roads', 'declarations', 'plots', 'projects', 'parks', 'stands', 'quadrants', 'sentinel', 'landsat', 'cadastre', 'plan', 'kppo'].reverse();
 
 	var Map = /*#__PURE__*/function (_EventTarget) {
 	  _inherits(Map, _EventTarget);
@@ -76272,6 +76302,17 @@ var Forestry = (function () {
 	                    layer: this._layers.plan,
 	                    legend: this._legend
 	                  });
+	                }
+
+	                if (this._layers.kppo) {
+	                  this._controllers.kppo = new KPPO({
+	                    map: this._map,
+	                    layer: this._layers.kppo,
+	                    legend: this._legend,
+	                    content: this._content,
+	                    notification: this._notification,
+	                    loading: this._loading
+	                  });
 	                } // if (this._layers.regions || this._layers.forestries || this._layers.forestries_local) {
 	                //     this._controllers.borders = new Components.Borders.Controller({
 	                //         map: this._map,
@@ -76349,7 +76390,7 @@ var Forestry = (function () {
 	                  notification: this._notification
 	                });
 
-	              case 39:
+	              case 40:
 	              case "end":
 	                return _context9.stop();
 	            }
