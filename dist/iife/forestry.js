@@ -66712,14 +66712,12 @@ var Forestry = (function () {
 	  function Project(container, _ref) {
 	    var _this;
 
-	    var layer = _ref.layer,
-	        forestryIndex = _ref.forestryIndex,
+	    var forestryIndex = _ref.forestryIndex,
 	        projectIndex = _ref.projectIndex;
 
 	    _classCallCheck(this, Project);
 
 	    _this = _super.call(this, container, strings$6);
-	    _this._layer = layer;
 	    _this._forestryIndex = forestryIndex;
 	    _this._projectIndex = projectIndex;
 
@@ -66798,8 +66796,9 @@ var Forestry = (function () {
 	    value: function clear() {
 	      this._quadrants.items = [];
 	      this._species.items = [];
-	      this._forestryID = null;
+	      this._gmx_id = null;
 	      this._id = null;
+	      this._forestryID = null;
 	      this.disableSave();
 	    }
 	  }, {
@@ -66839,21 +66838,20 @@ var Forestry = (function () {
 	      });
 	    }
 	  }, {
-	    key: "getFilter",
-	    value: function getFilter(kind, properties) {
-	      if (kind === 'projects') {
-	        return this._gmx_id !== properties.id;
-	      } else {
-	        return true;
-	      }
-	    }
-	  }, {
 	    key: "getStyleHook",
+	    // getFilter(kind, properties) {
+	    //     if (kind === 'projects') {
+	    //         return this._gmx_id !== properties.id;
+	    //     }
+	    //     else {
+	    //         return true;
+	    //     }
+	    // }
 	    value: function getStyleHook(kind, _ref4) {
 	      var id = _ref4.id,
 	          properties = _ref4.properties;
 
-	      if (kind === 'quadrants') {
+	      if (kind === 'quadrants_editor') {
 	        if (this.quadrants.includes(id)) {
 	          return STYLE;
 	        } else if (this._forestryID) {
@@ -66861,11 +66859,12 @@ var Forestry = (function () {
 	        } else {
 	          return {};
 	        }
-	      } else if (kind === 'projects') {
-	        return this._projectIndex >= 0 && this._id === properties[this._projectIndex] ? null : {};
-	      } else {
-	        return {};
-	      }
+	      } // else if (kind === 'projects') {
+	      //     return this._projectIndex >= 0 && this._id === properties[this._projectIndex] ? null : {};
+	      // }
+	      else {
+	          return {};
+	        }
 	    }
 	  }, {
 	    key: "open",
@@ -66874,7 +66873,6 @@ var Forestry = (function () {
 	        quadrants: [],
 	        species: []
 	      },
-	          gmx_id = _ref5.gmx_id,
 	          forestProjectID = _ref5.forestProjectID,
 	          title = _ref5.title,
 	          forestryID = _ref5.forestryID,
@@ -66882,10 +66880,6 @@ var Forestry = (function () {
 	          species = _ref5.species;
 
 	      _get(_getPrototypeOf(Project.prototype), "open", this).call(this);
-
-	      if (gmx_id) {
-	        this._gmx_id = gmx_id;
-	      }
 
 	      this._id = forestProjectID;
 	      this._description.value = title || "".concat(this.translate('project.default'), " - ").concat(new Date().toLocaleDateString());
@@ -66918,6 +66912,11 @@ var Forestry = (function () {
 	        var gmx_id = _ref6.gmx_id;
 	        return gmx_id;
 	      });
+	    }
+	  }, {
+	    key: "forestProjectID",
+	    get: function get() {
+	      return this._id;
 	    }
 	  }]);
 
@@ -66980,10 +66979,9 @@ var Forestry = (function () {
 	      _this._layers.projects.repaint();
 	    });
 
-	    var forestryIndex = indexByName(layers.quadrants, 'forestry_id');
-	    var projectIndex = indexByName(layers.projects, 'id');
+	    var forestryIndex = layers.quadrants_editor && indexByName(layers.quadrants_editor, 'forestry_id') || -1;
+	    var projectIndex = layers.quadrants_editor && indexByName(layers.projects, 'id') || -1;
 	    _this._project = _this._content.add('edit-project', Project, {
-	      layer: _this._layer,
 	      forestryIndex: forestryIndex,
 	      projectIndex: projectIndex
 	    });
@@ -67097,9 +67095,56 @@ var Forestry = (function () {
 	      };
 	    }());
 
-	    _this._project.on('close', function () {
-	      _this._layers.quadrants.repaint();
+	    _this._project.on('open', function () {
+	      _this.enableQuadrantsEditor();
 	    });
+
+	    _this._project.on('close', function () {
+	      _this.disableQuadrantsEditor();
+	    });
+
+	    if (_this._layers.quadrants_editor) {
+	      _this._layers.quadrants_editor.setStyleHook(function (item) {
+	        var c = _this._content.getCurrent();
+
+	        if (c) {
+	          return c.getStyleHook('quadrants_editor', item);
+	        } else {
+	          return {};
+	        }
+	      });
+
+	      _this._layers.quadrants_editor.on('click', /*#__PURE__*/function () {
+	        var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(e) {
+	          var _e$gmx, id, properties;
+
+	          return regeneratorRuntime.wrap(function _callee4$(_context4) {
+	            while (1) {
+	              switch (_context4.prev = _context4.next) {
+	                case 0:
+	                  _e$gmx = e.gmx, id = _e$gmx.id, properties = _e$gmx.properties;
+	                  _context4.next = 3;
+	                  return _this.toggleQuadrant({
+	                    gmx_id: id,
+	                    forestryID: properties.forestry_id
+	                  });
+
+	                case 3:
+	                  _this._layers.quadrants_editor.repaint();
+
+	                case 4:
+	                case "end":
+	                  return _context4.stop();
+	              }
+	            }
+	          }, _callee4);
+	        }));
+
+	        return function (_x4) {
+	          return _ref5.apply(this, arguments);
+	        };
+	      }());
+	    }
 
 	    return _this;
 	  }
@@ -67116,74 +67161,56 @@ var Forestry = (function () {
 	  }, {
 	    key: "_click",
 	    value: function () {
-	      var _click2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(e) {
-	        var _e$gmx, id, properties, status_calc, forestry_id, plot_project_status_id;
+	      var _click2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(e) {
+	        var _e$gmx2, id, properties, status_calc, forestry_id, plot_project_status_id;
 
-	        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+	        return regeneratorRuntime.wrap(function _callee5$(_context5) {
 	          while (1) {
-	            switch (_context4.prev = _context4.next) {
+	            switch (_context5.prev = _context5.next) {
 	              case 0:
 	                if (!this.canClick) {
-	                  _context4.next = 17;
+	                  _context5.next = 12;
 	                  break;
 	                }
 
 	                L.DomEvent.stopPropagation(e);
-	                _e$gmx = e.gmx, id = _e$gmx.id, properties = _e$gmx.properties;
+	                _e$gmx2 = e.gmx, id = _e$gmx2.id, properties = _e$gmx2.properties;
 	                status_calc = properties.status_calc, forestry_id = properties.forestry_id, plot_project_status_id = properties.plot_project_status_id;
 
-	                if (!(status_calc === 1)) {
-	                  _context4.next = 14;
+	                if (!(plot_project_status_id === 1 || plot_project_status_id === 7)) {
+	                  _context5.next = 9;
 	                  break;
 	                }
 
-	                if (!(plot_project_status_id === 1)) {
-	                  _context4.next = 10;
-	                  break;
-	                }
-
-	                _context4.next = 8;
+	                _context5.next = 7;
 	                return this.edit({
 	                  id: properties.id,
 	                  forestryID: forestry_id
 	                });
 
-	              case 8:
-	                _context4.next = 12;
+	              case 7:
+	                _context5.next = 11;
 	                break;
 
-	              case 10:
-	                _context4.next = 12;
+	              case 9:
+	                _context5.next = 11;
 	                return this.view({
-	                  gmx_id: id,
 	                  id: properties.id,
 	                  forestryID: forestry_id
 	                });
 
-	              case 12:
-	                _context4.next = 16;
-	                break;
-
-	              case 14:
-	                _context4.next = 16;
-	                return this.view({
-	                  gmx_id: id,
-	                  id: properties.id,
-	                  forestryID: forestry_id
-	                });
-
-	              case 16:
+	              case 11:
 	                this._layers.projects.repaint();
 
-	              case 17:
+	              case 12:
 	              case "end":
-	                return _context4.stop();
+	                return _context5.stop();
 	            }
 	          }
-	        }, _callee4, this);
+	        }, _callee5, this);
 	      }));
 
-	      function _click(_x4) {
+	      function _click(_x5) {
 	        return _click2.apply(this, arguments);
 	      }
 
@@ -67192,28 +67219,28 @@ var Forestry = (function () {
 	  }, {
 	    key: "_validate",
 	    value: function () {
-	      var _validate2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(ids) {
-	        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+	      var _validate2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(ids) {
+	        return regeneratorRuntime.wrap(function _callee6$(_context6) {
 	          while (1) {
-	            switch (_context5.prev = _context5.next) {
+	            switch (_context6.prev = _context6.next) {
 	              case 0:
-	                _context5.next = 2;
+	                _context6.next = 2;
 	                return this.httpPost("".concat(this._path, "/Forest/ValidateForestProjectGmxIds"), {
 	                  ForestBlocks: ids
 	                });
 
 	              case 2:
-	                return _context5.abrupt("return", _context5.sent);
+	                return _context6.abrupt("return", _context6.sent);
 
 	              case 3:
 	              case "end":
-	                return _context5.stop();
+	                return _context6.stop();
 	            }
 	          }
-	        }, _callee5, this);
+	        }, _callee6, this);
 	      }));
 
-	      function _validate(_x5) {
+	      function _validate(_x6) {
 	        return _validate2.apply(this, arguments);
 	      }
 
@@ -67237,25 +67264,38 @@ var Forestry = (function () {
 	      } else {
 	        this._notification.error(translate$e('forbidden.project.create'), NOTIFY_TIMEOUT);
 	      }
+	    }
+	  }, {
+	    key: "enableQuadrantsEditor",
+	    value: function enableQuadrantsEditor() {
+	      this._quadrantsActive = this._legend.state('quadrants');
+
+	      this._legend.disable('quadrants');
+
+	      this._layers.quadrants_editor && this._map.addLayer(this._layers.quadrants_editor);
+	    }
+	  }, {
+	    key: "disableQuadrantsEditor",
+	    value: function disableQuadrantsEditor() {
+	      this._quadrantsActive && this._legend.enable('quadrants');
+	      this._layers.quadrants_editor && this._map.removeLayer(this._layers.quadrants_editor);
 	    } // draft
 
 	  }, {
 	    key: "edit",
 	    value: function () {
-	      var _edit = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(_ref5) {
+	      var _edit = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(_ref6) {
 	        var id, forestryID, data, title, gmxIds, res, Status, SquareStat, ForestStat;
-	        return regeneratorRuntime.wrap(function _callee6$(_context6) {
+	        return regeneratorRuntime.wrap(function _callee7$(_context7) {
 	          while (1) {
-	            switch (_context6.prev = _context6.next) {
+	            switch (_context7.prev = _context7.next) {
 	              case 0:
-	                id = _ref5.id, forestryID = _ref5.forestryID;
+	                id = _ref6.id, forestryID = _ref6.forestryID;
 
 	                if (!this._permissions.ForestProjectsEdit) {
-	                  _context6.next = 27;
+	                  _context7.next = 26;
 	                  break;
 	                }
-
-	                this._legend.enable('quadrants');
 
 	                this._legend.enable('projects');
 
@@ -67263,35 +67303,35 @@ var Forestry = (function () {
 
 	                this._legend.enable('parks');
 
-	                _context6.next = 8;
+	                _context7.next = 7;
 	                return this.httpGet("".concat(this._path, "/Forest/GetPlotProjectDraft"), {
 	                  ForestProjectID: id
 	                });
 
-	              case 8:
-	                data = _context6.sent;
+	              case 7:
+	                data = _context7.sent;
 
 	                if (!data) {
-	                  _context6.next = 25;
+	                  _context7.next = 24;
 	                  break;
 	                }
 
 	                title = data.title, gmxIds = data.gmxIds;
-	                _context6.next = 13;
+	                _context7.next = 12;
 	                return this._validate(gmxIds);
 
-	              case 13:
-	                res = _context6.sent;
+	              case 12:
+	                res = _context7.sent;
 
 	                if (!res) {
-	                  _context6.next = 25;
+	                  _context7.next = 24;
 	                  break;
 	                }
 
 	                Status = res.Status, SquareStat = res.SquareStat, ForestStat = res.ForestStat;
 
 	                if (!(Status === 'valid')) {
-	                  _context6.next = 23;
+	                  _context7.next = 22;
 	                  break;
 	                }
 
@@ -67307,29 +67347,29 @@ var Forestry = (function () {
 
 	                this._layers.quadrants.repaint();
 
-	                return _context6.abrupt("return", true);
+	                return _context7.abrupt("return", true);
 
-	              case 23:
+	              case 22:
 	                this._notification.warn(translate$e('quadrant.invalid'), NOTIFY_TIMEOUT);
 
-	                return _context6.abrupt("return", false);
+	                return _context7.abrupt("return", false);
 
-	              case 25:
-	                _context6.next = 28;
+	              case 24:
+	                _context7.next = 27;
 	                break;
 
-	              case 27:
+	              case 26:
 	                this._notification.error(translate$e('forbidden.project.edit'), NOTIFY_TIMEOUT);
 
-	              case 28:
+	              case 27:
 	              case "end":
-	                return _context6.stop();
+	                return _context7.stop();
 	            }
 	          }
-	        }, _callee6, this);
+	        }, _callee7, this);
 	      }));
 
-	      function edit(_x6) {
+	      function edit(_x7) {
 	        return _edit.apply(this, arguments);
 	      }
 
@@ -67338,26 +67378,26 @@ var Forestry = (function () {
 	  }, {
 	    key: "view",
 	    value: function () {
-	      var _view = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(_ref6) {
+	      var _view = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(_ref7) {
 	        var gmx_id, id, forestryID, data;
-	        return regeneratorRuntime.wrap(function _callee7$(_context7) {
+	        return regeneratorRuntime.wrap(function _callee8$(_context8) {
 	          while (1) {
-	            switch (_context7.prev = _context7.next) {
+	            switch (_context8.prev = _context8.next) {
 	              case 0:
-	                gmx_id = _ref6.gmx_id, id = _ref6.id, forestryID = _ref6.forestryID;
+	                gmx_id = _ref7.gmx_id, id = _ref7.id, forestryID = _ref7.forestryID;
 
 	                if (!this._permissions.ForestProjectsView) {
-	                  _context7.next = 8;
+	                  _context8.next = 8;
 	                  break;
 	                }
 
-	                _context7.next = 4;
+	                _context8.next = 4;
 	                return this.httpGet("".concat(this._path, "/Forest/GetPlotProjectApplication"), {
 	                  ForestProjectID: id
 	                });
 
 	              case 4:
-	                data = _context7.sent;
+	                data = _context8.sent;
 
 	                if (data) {
 	                  this._info.open(_objectSpread2({
@@ -67365,7 +67405,7 @@ var Forestry = (function () {
 	                  }, data));
 	                }
 
-	                _context7.next = 9;
+	                _context8.next = 9;
 	                break;
 
 	              case 8:
@@ -67373,13 +67413,13 @@ var Forestry = (function () {
 
 	              case 9:
 	              case "end":
-	                return _context7.stop();
+	                return _context8.stop();
 	            }
 	          }
-	        }, _callee7, this);
+	        }, _callee8, this);
 	      }));
 
-	      function view(_x7) {
+	      function view(_x8) {
 	        return _view.apply(this, arguments);
 	      }
 
@@ -67388,14 +67428,14 @@ var Forestry = (function () {
 	  }, {
 	    key: "_save",
 	    value: function () {
-	      var _save2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(_ref7) {
+	      var _save2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9(_ref8) {
 	        var forestProjectID, title, forestQs;
-	        return regeneratorRuntime.wrap(function _callee8$(_context8) {
+	        return regeneratorRuntime.wrap(function _callee9$(_context9) {
 	          while (1) {
-	            switch (_context8.prev = _context8.next) {
+	            switch (_context9.prev = _context9.next) {
 	              case 0:
-	                forestProjectID = _ref7.forestProjectID, title = _ref7.title, forestQs = _ref7.forestQs;
-	                _context8.next = 3;
+	                forestProjectID = _ref8.forestProjectID, title = _ref8.title, forestQs = _ref8.forestQs;
+	                _context9.next = 3;
 	                return this.httpPost("".concat(this._path, "/Forest/StoreDraftForestProjectGmxIds"), {
 	                  forestProjectID: forestProjectID,
 	                  title: title,
@@ -67403,17 +67443,17 @@ var Forestry = (function () {
 	                });
 
 	              case 3:
-	                return _context8.abrupt("return", _context8.sent);
+	                return _context9.abrupt("return", _context9.sent);
 
 	              case 4:
 	              case "end":
-	                return _context8.stop();
+	                return _context9.stop();
 	            }
 	          }
-	        }, _callee8, this);
+	        }, _callee9, this);
 	      }));
 
-	      function _save(_x8) {
+	      function _save(_x9) {
 	        return _save2.apply(this, arguments);
 	      }
 
@@ -67422,19 +67462,19 @@ var Forestry = (function () {
 	  }, {
 	    key: "_createRequest",
 	    value: function () {
-	      var _createRequest2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9(id) {
+	      var _createRequest2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(id) {
 	        var data, event;
-	        return regeneratorRuntime.wrap(function _callee9$(_context9) {
+	        return regeneratorRuntime.wrap(function _callee10$(_context10) {
 	          while (1) {
-	            switch (_context9.prev = _context9.next) {
+	            switch (_context10.prev = _context10.next) {
 	              case 0:
-	                _context9.next = 2;
+	                _context10.next = 2;
 	                return this.httpPost("".concat(this._path, "/Forest/CreateApplicationFromDraft"), {
 	                  ForestProjectID: id
 	                });
 
 	              case 2:
-	                data = _context9.sent;
+	                data = _context10.sent;
 
 	                if (data) {
 	                  event = document.createEvent('Event');
@@ -67447,13 +67487,13 @@ var Forestry = (function () {
 
 	              case 4:
 	              case "end":
-	                return _context9.stop();
+	                return _context10.stop();
 	            }
 	          }
-	        }, _callee9, this);
+	        }, _callee10, this);
 	      }));
 
-	      function _createRequest(_x9) {
+	      function _createRequest(_x10) {
 	        return _createRequest2.apply(this, arguments);
 	      }
 
@@ -67462,77 +67502,14 @@ var Forestry = (function () {
 	  }, {
 	    key: "_removeQuadrant",
 	    value: function () {
-	      var _removeQuadrant2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(_ref8) {
-	        var gmx_id, forestryID, ids, data, Status, SquareStat, ForestStat;
-	        return regeneratorRuntime.wrap(function _callee10$(_context10) {
-	          while (1) {
-	            switch (_context10.prev = _context10.next) {
-	              case 0:
-	                gmx_id = _ref8.gmx_id, forestryID = _ref8.forestryID;
-	                ids = this._project.remove(gmx_id);
-
-	                if (!(ids.length === 0)) {
-	                  _context10.next = 7;
-	                  break;
-	                }
-
-	                this._project.clear();
-
-	                this._layers.quadrants.repaint();
-
-	                _context10.next = 11;
-	                break;
-
-	              case 7:
-	                _context10.next = 9;
-	                return this._validate(ids);
-
-	              case 9:
-	                data = _context10.sent;
-
-	                if (data) {
-	                  Status = data.Status, SquareStat = data.SquareStat, ForestStat = data.ForestStat;
-
-	                  if (Status === 'valid') {
-	                    this._valid = {
-	                      forestryID: forestryID,
-	                      quadrants: SquareStat,
-	                      species: ForestStat
-	                    };
-	                  } else {
-	                    this._notification.warn(translate$e('quadrant.invalid'), NOTIFY_TIMEOUT);
-	                  }
-
-	                  this._project.open(this._valid);
-
-	                  this._layers.quadrants.repaint();
-	                }
-
-	              case 11:
-	              case "end":
-	                return _context10.stop();
-	            }
-	          }
-	        }, _callee10, this);
-	      }));
-
-	      function _removeQuadrant(_x10) {
-	        return _removeQuadrant2.apply(this, arguments);
-	      }
-
-	      return _removeQuadrant;
-	    }()
-	  }, {
-	    key: "toggleQuadrant",
-	    value: function () {
-	      var _toggleQuadrant = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11(_ref9) {
+	      var _removeQuadrant2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11(_ref9) {
 	        var gmx_id, forestryID, ids, data, Status, SquareStat, ForestStat;
 	        return regeneratorRuntime.wrap(function _callee11$(_context11) {
 	          while (1) {
 	            switch (_context11.prev = _context11.next) {
 	              case 0:
 	                gmx_id = _ref9.gmx_id, forestryID = _ref9.forestryID;
-	                ids = this._project.toggle(gmx_id);
+	                ids = this._project.remove(gmx_id);
 
 	                if (!(ids.length === 0)) {
 	                  _context11.next = 7;
@@ -67558,6 +67535,8 @@ var Forestry = (function () {
 
 	                  if (Status === 'valid') {
 	                    this._valid = {
+	                      gmx_id: this._project.gmx_id,
+	                      forestProjectID: this._project.forestProjectID,
 	                      forestryID: forestryID,
 	                      quadrants: SquareStat,
 	                      species: ForestStat
@@ -67579,7 +67558,71 @@ var Forestry = (function () {
 	        }, _callee11, this);
 	      }));
 
-	      function toggleQuadrant(_x11) {
+	      function _removeQuadrant(_x11) {
+	        return _removeQuadrant2.apply(this, arguments);
+	      }
+
+	      return _removeQuadrant;
+	    }()
+	  }, {
+	    key: "toggleQuadrant",
+	    value: function () {
+	      var _toggleQuadrant = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee12(_ref10) {
+	        var gmx_id, forestryID, ids, data, Status, SquareStat, ForestStat;
+	        return regeneratorRuntime.wrap(function _callee12$(_context12) {
+	          while (1) {
+	            switch (_context12.prev = _context12.next) {
+	              case 0:
+	                gmx_id = _ref10.gmx_id, forestryID = _ref10.forestryID;
+	                ids = this._project.toggle(gmx_id);
+
+	                if (!(ids.length === 0)) {
+	                  _context12.next = 7;
+	                  break;
+	                }
+
+	                this._project.clear();
+
+	                this._layers.quadrants.repaint();
+
+	                _context12.next = 11;
+	                break;
+
+	              case 7:
+	                _context12.next = 9;
+	                return this._validate(ids);
+
+	              case 9:
+	                data = _context12.sent;
+
+	                if (data) {
+	                  Status = data.Status, SquareStat = data.SquareStat, ForestStat = data.ForestStat;
+
+	                  if (Status === 'valid') {
+	                    this._valid = {
+	                      forestProjectID: this._project.forestProjectID,
+	                      forestryID: forestryID,
+	                      quadrants: SquareStat,
+	                      species: ForestStat
+	                    };
+	                  } else {
+	                    this._notification.warn(translate$e('quadrant.invalid'), NOTIFY_TIMEOUT);
+	                  }
+
+	                  this._project.open(this._valid);
+
+	                  this._layers.quadrants.repaint();
+	                }
+
+	              case 11:
+	              case "end":
+	                return _context12.stop();
+	            }
+	          }
+	        }, _callee12, this);
+	      }));
+
+	      function toggleQuadrant(_x12) {
 	        return _toggleQuadrant.apply(this, arguments);
 	      }
 
@@ -68278,18 +68321,14 @@ var Forestry = (function () {
 	                  break;
 	                }
 
-	                this._gmx_id = id; // if (Array.isArray(data.Stock)) {
-
+	                this._gmx_id = id;
 	                _context.next = 14;
 	                return this._standView.open(_objectSpread2({
 	                  gmx_id: this._gmx_id
 	                }, data));
 
 	              case 14:
-	                this._layers.stands && this._layers.stands.repaint(); // }
-	                // else {
-	                //     this._notification.warn(translate('warn.notavailable'), NOTIFY_TIMEOUT);
-	                // }
+	                this._layers.stands && this._layers.stands.repaint();
 
 	              case 15:
 	              case "end":
@@ -68309,49 +68348,29 @@ var Forestry = (function () {
 	    key: "_quadrantClick",
 	    value: function () {
 	      var _quadrantClick2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(e) {
-	        var mode, _e$gmx2, id, properties, event;
+	        var _e$gmx2, id, properties;
 
 	        return regeneratorRuntime.wrap(function _callee2$(_context2) {
 	          while (1) {
 	            switch (_context2.prev = _context2.next) {
 	              case 0:
-	                L.DomEvent.stopPropagation(e);
-	                mode = this._content.getCurrentId();
-	                _e$gmx2 = e.gmx, id = _e$gmx2.id, properties = _e$gmx2.properties;
+	                L.DomEvent.stopPropagation(e); // const mode = this._content.getCurrentId();        
 
-	                if (!(mode === 'quadrants')) {
-	                  _context2.next = 8;
-	                  break;
-	                }
+	                _e$gmx2 = e.gmx, id = _e$gmx2.id, properties = _e$gmx2.properties; // if (mode === 'quadrants') {
+	                //     await this._toggleQuadrant(id, properties.id);
+	                // }
+	                // else if (mode === 'edit-project') {
+	                //     let event = document.createEvent('Event');
+	                //     event.initEvent('quadrant:toggle', false, false);
+	                //     event.detail = {gmx_id: id, forestryID: properties.forestry_id};
+	                //     this.dispatchEvent(event);            
+	                // }        
+	                // else {
 
-	                _context2.next = 6;
+	                _context2.next = 4;
 	                return this._toggleQuadrant(id, properties.id);
 
-	              case 6:
-	                _context2.next = 17;
-	                break;
-
-	              case 8:
-	                if (!(mode === 'edit-project')) {
-	                  _context2.next = 15;
-	                  break;
-	                }
-
-	                event = document.createEvent('Event');
-	                event.initEvent('quadrant:toggle', false, false);
-	                event.detail = {
-	                  gmx_id: id,
-	                  forestryID: properties.forestry_id
-	                };
-	                this.dispatchEvent(event);
-	                _context2.next = 17;
-	                break;
-
-	              case 15:
-	                _context2.next = 17;
-	                return this._toggleQuadrant(id, properties.id);
-
-	              case 17:
+	              case 4:
 	              case "end":
 	                return _context2.stop();
 	            }
@@ -69049,6 +69068,18 @@ var Forestry = (function () {
 	      return {};
 	    }
 	  }, {
+	    key: "isEditable",
+	    value: function isEditable(statusID) {
+	      switch (statusID) {
+	        case 1:
+	        case 7:
+	          return true;
+
+	        default:
+	          return false;
+	      }
+	    }
+	  }, {
 	    key: "open",
 	    value: function open(_ref) {
 	      var _this2 = this;
@@ -69065,7 +69096,7 @@ var Forestry = (function () {
 	            forestry = _ref2.forestry,
 	            localForestries = _ref2.localForestries,
 	            totalSquare = _ref2.totalSquare;
-	        return "<tr class=\"request\">\n                <td class=\"value\" data-id=\"id\">".concat(number, "</td>\n                <td class=\"value\" data-id=\"title\">").concat(title, "</td>\n                <td class=\"value\" data-id=\"status\">").concat(status, "</td>\n                <td class=\"value\" data-id=\"forestry\">").concat(forestry, "</td>\n                <td class=\"value\" data-id=\"local_forestry\">").concat(localForestries, "</td>\n                <td class=\"value\" data-id=\"area\">").concat(_this2.ha(totalSquare), "</td>\n                <td class=\"value\" data-id=\"amount\"></td>\n                <td class=\"value\" data-id=\"remove\">").concat(statusID === 1 ? '<i class="scanex-requests-icon remove"></i>' : '', "</td>\n            </tr>");
+	        return "<tr class=\"request\">\n                <td class=\"value\" data-id=\"id\">".concat(number, "</td>\n                <td class=\"value\" data-id=\"title\">").concat(title, "</td>\n                <td class=\"value\" data-id=\"status\">").concat(status, "</td>\n                <td class=\"value\" data-id=\"forestry\">").concat(forestry, "</td>\n                <td class=\"value\" data-id=\"local_forestry\">").concat(localForestries, "</td>\n                <td class=\"value\" data-id=\"area\">").concat(_this2.ha(totalSquare), "</td>\n                <td class=\"value\" data-id=\"amount\"></td>\n                <td class=\"value\" data-id=\"remove\">").concat(_this2.isEditable(statusID) ? '<i class="scanex-requests-icon remove"></i>' : '', "</td>\n            </tr>");
 	      }).join('');
 
 	      var rows = this._content.querySelectorAll('.request');
@@ -69095,6 +69126,7 @@ var Forestry = (function () {
 
 	          switch (statusID) {
 	            case 1:
+	            case 7:
 	              event = document.createEvent('Event');
 	              event.initEvent('edit', false, false);
 	              event.detail = {
@@ -75532,7 +75564,7 @@ var Forestry = (function () {
 	var notify_1 = Notification;
 
 	var translate$p = T.getText.bind(T);
-	var ALLOWED_LAYERS$1 = ['incidents_temporal', 'forestries_local', 'forestries', 'regions', 'fires', 'warehouses', 'roads', 'declarations', 'plots', 'projects', 'parks', 'stands', 'quadrants', 'sentinel', 'landsat', 'cadastre', 'plan', 'kppo'].reverse();
+	var ALLOWED_LAYERS$1 = ['incidents_temporal', 'forestries_local', 'forestries', 'regions', 'fires', 'warehouses', 'roads', 'declarations', 'quadrants_editor', 'plots', 'projects', 'parks', 'stands', 'quadrants', 'sentinel', 'landsat', 'cadastre', 'plan', 'kppo'].reverse();
 
 	var Map = /*#__PURE__*/function (_EventTarget) {
 	  _inherits(Map, _EventTarget);
@@ -75859,17 +75891,17 @@ var Forestry = (function () {
 	  }, {
 	    key: "load",
 	    value: function () {
-	      var _load = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9() {
+	      var _load = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8() {
 	        var _this3 = this;
 
 	        var mapId, apk, currentBaseLayer;
-	        return regeneratorRuntime.wrap(function _callee9$(_context9) {
+	        return regeneratorRuntime.wrap(function _callee8$(_context8) {
 	          while (1) {
-	            switch (_context9.prev = _context9.next) {
+	            switch (_context8.prev = _context8.next) {
 	              case 0:
 	                window.SELF = this;
 	                mapId = 'default';
-	                _context9.next = 4;
+	                _context8.next = 4;
 	                return leafletSrc.gmx.loadMap(mapId, {
 	                  leafletMap: this._map,
 	                  hostName: '/',
@@ -75885,7 +75917,7 @@ var Forestry = (function () {
 	                });
 
 	              case 4:
-	                this._gmxMap = _context9.sent;
+	                this._gmxMap = _context8.sent;
 
 	                this._map.on('zoomend', function (e) {
 	                  if (_this3._grid) {
@@ -75895,11 +75927,11 @@ var Forestry = (function () {
 
 	                this._controllers = {};
 	                this._zoom = new Zoom();
-	                _context9.next = 10;
+	                _context8.next = 10;
 	                return leafletSrc.gmx.gmxSessionManager.requestSessionKey('maps.kosmosnimki.ru', this._apiKey);
 
 	              case 10:
-	                apk = _context9.sent;
+	                apk = _context8.sent;
 	                this._legend = new Legend();
 
 	                this._legend.addTo(this._map);
@@ -75936,7 +75968,7 @@ var Forestry = (function () {
 	                  _this3._controllers.baseLayers.hide();
 	                });
 
-	                _context9.next = 20;
+	                _context8.next = 20;
 	                return this._controllers.baseLayers.load();
 
 	              case 20:
@@ -76024,38 +76056,11 @@ var Forestry = (function () {
 	                    permissions: this._permissions,
 	                    notification: this._notification,
 	                    loading: this._loading
-	                  });
-
-	                  this._controllers.quadrants.on('quadrant:toggle', /*#__PURE__*/function () {
-	                    var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(e) {
-	                      var _e$detail, gmx_id, forestryID;
-
-	                      return regeneratorRuntime.wrap(function _callee5$(_context5) {
-	                        while (1) {
-	                          switch (_context5.prev = _context5.next) {
-	                            case 0:
-	                              _e$detail = e.detail, gmx_id = _e$detail.gmx_id, forestryID = _e$detail.forestryID;
-	                              _context5.next = 3;
-	                              return _this3._controllers.projects.toggleQuadrant({
-	                                gmx_id: gmx_id,
-	                                forestryID: forestryID
-	                              });
-
-	                            case 3:
-	                              _this3._layers.quadrants.repaint();
-
-	                            case 4:
-	                            case "end":
-	                              return _context5.stop();
-	                          }
-	                        }
-	                      }, _callee5);
-	                    }));
-
-	                    return function (_x2) {
-	                      return _ref4.apply(this, arguments);
-	                    };
-	                  }());
+	                  }); // this._controllers.quadrants.on('quadrant:toggle', async e => {
+	                  //     const {gmx_id, forestryID} = e.detail;
+	                  //     await this._controllers.projects.toggleQuadrant({gmx_id, forestryID});
+	                  //     this._layers.quadrants.repaint();
+	                  // });
 	                }
 
 	                if (this._layers.declarations && this._permissions.ForestDeclarations) {
@@ -76119,20 +76124,20 @@ var Forestry = (function () {
 	                    _this3._layers.projects.repaint();
 	                  });
 
-	                  this._controllers.projects.on('back', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6() {
-	                    return regeneratorRuntime.wrap(function _callee6$(_context6) {
+	                  this._controllers.projects.on('back', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5() {
+	                    return regeneratorRuntime.wrap(function _callee5$(_context5) {
 	                      while (1) {
-	                        switch (_context6.prev = _context6.next) {
+	                        switch (_context5.prev = _context5.next) {
 	                          case 0:
-	                            _context6.next = 2;
+	                            _context5.next = 2;
 	                            return _this3.showRequests();
 
 	                          case 2:
 	                          case "end":
-	                            return _context6.stop();
+	                            return _context5.stop();
 	                        }
 	                      }
-	                    }, _callee6);
+	                    }, _callee5);
 	                  })));
 	                }
 
@@ -76162,15 +76167,15 @@ var Forestry = (function () {
 	                  });
 
 	                  this._controllers.requests.on('view', /*#__PURE__*/function () {
-	                    var _ref6 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(e) {
-	                      var _e$detail2, id, forestryID, _this3$_layers$projec, LayerID, c, z;
+	                    var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(e) {
+	                      var _e$detail, id, forestryID, _this3$_layers$projec, LayerID, c, z;
 
-	                      return regeneratorRuntime.wrap(function _callee7$(_context7) {
+	                      return regeneratorRuntime.wrap(function _callee6$(_context6) {
 	                        while (1) {
-	                          switch (_context7.prev = _context7.next) {
+	                          switch (_context6.prev = _context6.next) {
 	                            case 0:
-	                              _e$detail2 = e.detail, id = _e$detail2.id, forestryID = _e$detail2.forestryID;
-	                              _context7.next = 3;
+	                              _e$detail = e.detail, id = _e$detail.id, forestryID = _e$detail.forestryID;
+	                              _context6.next = 3;
 	                              return _this3._controllers.projects.view({
 	                                id: id,
 	                                forestryID: forestryID
@@ -76178,6 +76183,58 @@ var Forestry = (function () {
 
 	                            case 3:
 	                              _this3$_layers$projec = _this3._layers.projects.getGmxProperties(), LayerID = _this3$_layers$projec.LayerID;
+	                              _context6.prev = 4;
+	                              _context6.next = 7;
+	                              return getObjectCenter(_this3._gmxPath, LayerID, id);
+
+	                            case 7:
+	                              c = _context6.sent;
+	                              z = 10;
+
+	                              _this3._map.setView(c, z);
+
+	                              _context6.next = 15;
+	                              break;
+
+	                            case 12:
+	                              _context6.prev = 12;
+	                              _context6.t0 = _context6["catch"](4);
+	                              console.log(_context6.t0);
+
+	                            case 15:
+	                            case "end":
+	                              return _context6.stop();
+	                          }
+	                        }
+	                      }, _callee6, null, [[4, 12]]);
+	                    }));
+
+	                    return function (_x2) {
+	                      return _ref5.apply(this, arguments);
+	                    };
+	                  }());
+
+	                  this._controllers.requests.on('create', function () {
+	                    _this3._controllers.projects.create();
+	                  });
+
+	                  this._controllers.requests.on('edit', /*#__PURE__*/function () {
+	                    var _ref6 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(e) {
+	                      var _e$detail2, id, forestryID, _this3$_layers$projec2, LayerID, c, z;
+
+	                      return regeneratorRuntime.wrap(function _callee7$(_context7) {
+	                        while (1) {
+	                          switch (_context7.prev = _context7.next) {
+	                            case 0:
+	                              _e$detail2 = e.detail, id = _e$detail2.id, forestryID = _e$detail2.forestryID;
+	                              _context7.next = 3;
+	                              return _this3._controllers.projects.edit({
+	                                id: id,
+	                                forestryID: forestryID
+	                              });
+
+	                            case 3:
+	                              _this3$_layers$projec2 = _this3._layers.projects.getGmxProperties(), LayerID = _this3$_layers$projec2.LayerID;
 	                              _context7.prev = 4;
 	                              _context7.next = 7;
 	                              return getObjectCenter(_this3._gmxPath, LayerID, id);
@@ -76206,58 +76263,6 @@ var Forestry = (function () {
 
 	                    return function (_x3) {
 	                      return _ref6.apply(this, arguments);
-	                    };
-	                  }());
-
-	                  this._controllers.requests.on('create', function () {
-	                    _this3._controllers.projects.create();
-	                  });
-
-	                  this._controllers.requests.on('edit', /*#__PURE__*/function () {
-	                    var _ref7 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(e) {
-	                      var _e$detail3, id, forestryID, _this3$_layers$projec2, LayerID, c, z;
-
-	                      return regeneratorRuntime.wrap(function _callee8$(_context8) {
-	                        while (1) {
-	                          switch (_context8.prev = _context8.next) {
-	                            case 0:
-	                              _e$detail3 = e.detail, id = _e$detail3.id, forestryID = _e$detail3.forestryID;
-	                              _context8.next = 3;
-	                              return _this3._controllers.projects.edit({
-	                                id: id,
-	                                forestryID: forestryID
-	                              });
-
-	                            case 3:
-	                              _this3$_layers$projec2 = _this3._layers.projects.getGmxProperties(), LayerID = _this3$_layers$projec2.LayerID;
-	                              _context8.prev = 4;
-	                              _context8.next = 7;
-	                              return getObjectCenter(_this3._gmxPath, LayerID, id);
-
-	                            case 7:
-	                              c = _context8.sent;
-	                              z = 10;
-
-	                              _this3._map.setView(c, z);
-
-	                              _context8.next = 15;
-	                              break;
-
-	                            case 12:
-	                              _context8.prev = 12;
-	                              _context8.t0 = _context8["catch"](4);
-	                              console.log(_context8.t0);
-
-	                            case 15:
-	                            case "end":
-	                              return _context8.stop();
-	                          }
-	                        }
-	                      }, _callee8, null, [[4, 12]]);
-	                    }));
-
-	                    return function (_x4) {
-	                      return _ref7.apply(this, arguments);
 	                    };
 	                  }());
 	                }
@@ -76392,10 +76397,10 @@ var Forestry = (function () {
 
 	              case 40:
 	              case "end":
-	                return _context9.stop();
+	                return _context8.stop();
 	            }
 	          }
-	        }, _callee9, this);
+	        }, _callee8, this);
 	      }));
 
 	      function load() {
