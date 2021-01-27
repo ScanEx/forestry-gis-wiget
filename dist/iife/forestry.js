@@ -37702,7 +37702,7 @@ var Forestry = (function () {
 	                      if (Status === 'ok') {
 	                        if (Result.Completed) {
 	                          window.clearInterval(id);
-	                          resolve();
+	                          resolve(Result);
 	                        }
 	                      }
 	                    } else {
@@ -46483,6 +46483,7 @@ var Forestry = (function () {
 	      // bplaTitle: 'Снимок зоны инцидента с БПЛА.tiff',
 	      BplaView: 'Просмотр',
 	      BplaDownload: 'Загрузить',
+	      BplaDownloadTitle: 'Загрузить снимок с БПЛА',
 	      BplaRemove: 'Удалить',
 	      docs: 'Документы',
 	      detail: 'Детали',
@@ -46598,7 +46599,7 @@ var Forestry = (function () {
 
 	      var str2 = this._parseProps(data);
 
-	      this._container.innerHTML = "\n\t\t\t".concat(title, "\n\n\t\t\t<div class=\"inside\">\n\t\t\t\t<div class=\"inside_left\">\n\t\t\t\t\t<div class=\"table1\">\n\t\t\t\t\t\t").concat(str2, "\n\n\t\t\t\t\t\t<div class=\"table1_row\">").concat(this.translate('incident.comment'), "</div>\n\t\t\t\t\t\t\n\t\t\t\t\t\t<textarea class=\"usr-text-area\" ").concat(this._permission.IncidentEdit && data.IsEditable && curStatus === 2 ? '' : 'disabled', ">").concat(data.Comment || '', "</textarea>\n\t\t\t\t\t\t<div class=\"table1_row \">").concat(this.translate('incident.bpla'), ":</div>\n\n\t\t\t\t\t\t<div class=\"table1_row f-l-start\">\n\t\t\t\t\t\t\t<span>").concat(props.uav_date || '', "</span>\n\t\t\t\t\t\t\t<span>").concat(props.uav_description || '', "</span>\n\t\t\t\t\t\t\t<div class=\"group_buttons\">\n\t\t\t\t\t\t\t\t").concat(this._permission.BplaView && props.uav_raster_id ? "<div class=\"mini-green-but BplaView\">".concat(this.translate('incident.BplaView'), "</div>") : '', "\n\t\t\t\t\t\t\t\t").concat(this._permission.BplaDownload ? "<div class=\"mini-green-but BplaDownload\">".concat(this.translate('incident.BplaDownload'), "</div>") : '', "\n\t\t\t\t\t\t\t\t").concat(this._permission.BplaRemove && props.uav_raster_id ? "<div class=\"mini-green-but BplaRemove\">".concat(this.translate('incident.BplaRemove'), "</div>") : '', "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t").concat(str1, "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"rubka\">\n\t\t\t\t\t<div class=\"right-wrapper-top \">\n\t\t\t\t\t\t").concat(this._buttonsStr, "\n\t\t\t\t\t </div>\n\t\t\t\t\t<hr />\n\t\t\t\t\t <div class=\"right-wrapper-bottom \">\n\t\t\t\t\t\t").concat(this._permission.IncidentAccept && data.IsEditable && curStatus === 2 ? "<button class=\"IncidentAccept button\">".concat(this.translate('incident.IncidentAccept'), "</button>") : '', "\n\t\t\t\t\t\t").concat(this._permission.IncidentCheck && data.IsEditable && curStatus === 1 ? "<button class=\"IncidentCheck button\">".concat(this.translate('incident.IncidentCheck'), "</button>") : '', "\n\t\t\t\t\t\t").concat(this._permission.IncidentDecline && data.IsEditable && (curStatus === 1 || curStatus === 2) ? "<button class=\"IncidentDecline button\">".concat(this.translate('incident.IncidentDecline'), "</button>") : '', "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>");
+	      this._container.innerHTML = "\n\t\t\t".concat(title, "\n\n\t\t\t<div class=\"inside\">\n\t\t\t\t<div class=\"inside_left\">\n\t\t\t\t\t<div class=\"table1\">\n\t\t\t\t\t\t").concat(str2, "\n\n\t\t\t\t\t\t<div class=\"table1_row\">").concat(this.translate('incident.comment'), "</div>\n\t\t\t\t\t\t\n\t\t\t\t\t\t<textarea class=\"usr-text-area\" ").concat(this._permission.IncidentEdit && data.IsEditable && curStatus === 2 ? '' : 'disabled', ">").concat(data.Comment || '', "</textarea>\n\t\t\t\t\t\t<div class=\"table1_row \">").concat(this.translate('incident.bpla'), ":</div>\n\n\t\t\t\t\t\t<div class=\"table1_row f-l-start\">\n\t\t\t\t\t\t\t<span>").concat(props.uav_date || '', "</span>\n\t\t\t\t\t\t\t<span>").concat(data.UavDescription || '', "</span>\n\t\t\t\t\t\t\t<div class=\"group_buttons\">\n\t\t\t\t\t\t\t\t").concat(this._permission.BplaView && data.UavRasterID ? "<div class=\"mini-green-but BplaView\">".concat(this.translate('incident.BplaView'), "</div>") : '', "\n\t\t\t\t\t\t\t\t").concat(this._permission.BplaDownload ? "<div class=\"mini-green-but BplaDownload\">".concat(this.translate('incident.BplaDownload'), "</div>") : '', "\n\t\t\t\t\t\t\t\t").concat(this._permission.BplaRemove && data.UavRasterID ? "<div class=\"mini-green-but BplaRemove\">".concat(this.translate('incident.BplaRemove'), "</div>") : '', "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t").concat(str1, "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"rubka\">\n\t\t\t\t\t<div class=\"right-wrapper-top \">\n\t\t\t\t\t\t").concat(this._buttonsStr, "\n\t\t\t\t\t </div>\n\t\t\t\t\t<hr />\n\t\t\t\t\t <div class=\"right-wrapper-bottom \">\n\t\t\t\t\t\t").concat(this._permission.IncidentAccept && data.IsEditable && curStatus === 2 ? "<button class=\"IncidentAccept button\">".concat(this.translate('incident.IncidentAccept'), "</button>") : '', "\n\t\t\t\t\t\t").concat(this._permission.IncidentCheck && data.IsEditable && curStatus === 1 ? "<button class=\"IncidentCheck button\">".concat(this.translate('incident.IncidentCheck'), "</button>") : '', "\n\t\t\t\t\t\t").concat(this._permission.IncidentDecline && data.IsEditable && (curStatus === 1 || curStatus === 2) ? "<button class=\"IncidentDecline button\">".concat(this.translate('incident.IncidentDecline'), "</button>") : '', "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>");
 	      var rasters = data.Rasters || {};
 
 	      var node = this._container.querySelector('.verRastr');
@@ -46781,7 +46782,7 @@ var Forestry = (function () {
 	          e.stopPropagation();
 	          var event = document.createEvent('Event');
 	          event.initEvent('incident:bplaRaster', false, false);
-	          event.detail = props.uav_raster_id;
+	          event.detail = data.UavRasterID;
 
 	          _this3.dispatchEvent(event);
 	        });
@@ -46924,6 +46925,1015 @@ var Forestry = (function () {
 
 	var translate$9 = T.getText.bind(T);
 
+	var roundBytes = function roundBytes(s) {
+	  if (s > 1024 * 1024 * 1024 * 1024 * 1.2) {
+	    return "".concat((Math.round(s / (1024 * 1024 * 1024 * 1024) * 100) / 100).toLocaleString('ru-RU', {
+	      minimumFractionDigits: 1,
+	      maximumFractionDigits: 1
+	    }), " ").concat(translate$9('uploaded.units.tb'));
+	  } else if (s > 1024 * 1024 * 1024 * 1.2) {
+	    return "".concat((Math.round(s / (1024 * 1024 * 1024) * 100) / 100).toLocaleString('ru-RU', {
+	      minimumFractionDigits: 1,
+	      maximumFractionDigits: 1
+	    }), " ").concat(translate$9('uploaded.units.gb'));
+	  } else if (s > 1024 * 1024 * 1.2) {
+	    return "".concat((Math.round(s / (1024 * 1024) * 100) / 100).toLocaleString('ru-RU', {
+	      minimumFractionDigits: 1,
+	      maximumFractionDigits: 1
+	    }), " ").concat(translate$9('uploaded.units.mb'));
+	  } else if (s > 1024 * 1.2) {
+	    return "".concat((Math.round(s / 1024 * 100) / 100).toLocaleString('ru-RU', {
+	      minimumFractionDigits: 1,
+	      maximumFractionDigits: 1
+	    }), " ").concat(translate$9('uploaded.units.kb'));
+	  } else {
+	    return "".concat(Math.round(s).toLocaleString('ru-RU', {
+	      minimumFractionDigits: 1,
+	      maximumFractionDigits: 1
+	    }), " ").concat(translate$9('uploaded.units.b'));
+	  }
+	};
+
+	var STATUS = {
+	  STARTED: 0,
+	  PAUSED: 1,
+	  ERROR: 2
+	};
+
+	var UploadProgress = /*#__PURE__*/function (_EventTarget) {
+	  _inherits(UploadProgress, _EventTarget);
+
+	  var _super = _createSuper(UploadProgress);
+
+	  function UploadProgress() {
+	    _classCallCheck(this, UploadProgress);
+
+	    return _super.call(this);
+	  }
+
+	  _createClass(UploadProgress, [{
+	    key: "start",
+	    value: function start() {
+	      var _this = this;
+
+	      this._panel = new Dialog({
+	        title: translate$9('uploaded.load'),
+	        left: 500,
+	        top: 300,
+	        modal: true
+	      });
+
+	      this._panel._element.classList.add('scanex-forestry-progress');
+
+	      this._panel.on('close', this.stop.bind(this));
+
+	      this._panel.content.innerHTML = "<ul class=\"files\"></ul>\n            <div class=\"progress\"></div>\n            <div class=\"speed\"></div>";
+	      this._panel.footer.innerHTML = "<button></button>";
+	      this._btn = this._panel.footer.querySelector('button');
+
+	      this._btn.addEventListener('click', function (e) {
+	        e.stopPropagation();
+
+	        if (_this._status === STATUS.STARTED) {
+	          var event = document.createEvent('Event');
+	          event.initEvent('pause', false, false);
+
+	          _this.dispatchEvent(event);
+	        } else if (_this._status === STATUS.PAUSED) {
+	          var _event = document.createEvent('Event');
+
+	          _event.initEvent('resume', false, false);
+
+	          _this.dispatchEvent(_event);
+	        } else if (_this._status === STATUS.ERROR) {
+	          _this._panel.destroy();
+
+	          _this._panel = null;
+	        }
+	      });
+
+	      this._files = this._panel.content.querySelector('.files');
+	      this._speed = this._panel.content.querySelector('.speed');
+	      this._progress = this._panel.content.querySelector('.progress');
+	    }
+	  }, {
+	    key: "stop",
+	    value: function stop() {
+	      this._panel.destroy();
+
+	      this._panel = null;
+	      var event = document.createEvent('Event');
+	      event.initEvent('stop', false, false);
+	      this.dispatchEvent(event);
+	    }
+	  }, {
+	    key: "cancelled",
+	    value: function cancelled(index) {
+	      this._status = STATUS.PAUSED;
+	      this._btn.innerText = translate$9('uploaded.resume');
+
+	      var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
+
+	      row.querySelector('.status').innerText = translate$9('uploaded.cancelled');
+	    }
+	  }, {
+	    key: "error",
+	    value: function error(index) {
+	      this._status = STATUS.ERROR;
+
+	      var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
+
+	      row.querySelector('.status').innerText = translate$9('uploaded.error.file');
+	      this._btn.innerText = translate$9('uploaded.close');
+	    }
+	  }, {
+	    key: "completed",
+	    value: function completed(index, percent) {
+	      var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
+
+	      row.querySelector('.percent').innerText = percent;
+	      row.querySelector('.status').innerText = translate$9('uploaded.completed');
+	    }
+	  }, {
+	    key: "waiting",
+	    value: function waiting(index, percent) {
+	      var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
+
+	      row.querySelector('.percent').innerText = percent;
+	      row.querySelector('.status').innerText = translate$9('uploaded.waiting');
+	    }
+	  }, {
+	    key: "started",
+	    value: function started(index) {
+	      this._status = STATUS.STARTED;
+	      this._btn.innerText = translate$9('uploaded.pause');
+
+	      var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
+
+	      row.querySelector('.status').innerText = translate$9('uploaded.started');
+	    }
+	  }, {
+	    key: "loading",
+	    value: function loading(index, percent) {
+	      var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
+
+	      row.querySelector('.percent').innerText = percent;
+	      row.querySelector('.status').innerText = translate$9('uploaded.loading');
+	    }
+	  }, {
+	    key: "stats",
+	    value: function stats(speed, size, total) {
+	      this._speed.innerText = "".concat(translate$9('uploaded.speed'), ": ").concat(roundBytes(speed), " / ").concat(translate$9('uploaded.units.s'));
+	      this._progress.innerText = "".concat(translate$9('uploaded.progress'), ": ").concat(roundBytes(size), " ").concat(translate$9('uploaded.of'), " ").concat(roundBytes(total));
+	    }
+	  }, {
+	    key: "files",
+	    set: function set(files) {
+	      this._files.innerHTML = files.map(function (_ref, i) {
+	        var name = _ref.name;
+	        return "<li data-id=\"".concat(i, "\">\n                <label class=\"name\">").concat(name, "</label>\n                <label class=\"percent\"></label>\n                <label class=\"status\"></label>\n            </li>");
+	      }).join('');
+	    }
+	  }, {
+	    key: "speed",
+	    set: function set(speed) {
+	      this._speed.innerText = speed;
+	    }
+	  }]);
+
+	  return UploadProgress;
+	}(EventTarget);
+
+	var translate$a = T.getText.bind(T);
+
+	var LayerProperties = /*#__PURE__*/function (_Dialog) {
+	  _inherits(LayerProperties, _Dialog);
+
+	  var _super = _createSuper(LayerProperties);
+
+	  function LayerProperties(title) {
+	    var _this;
+
+	    _classCallCheck(this, LayerProperties);
+
+	    _this = _super.call(this, {
+	      title: title,
+	      modal: true,
+	      top: 200,
+	      left: 400
+	    });
+
+	    _this._element.classList.add('scanex-forestry-vector-layer-properties');
+
+	    _this.content.innerHTML = "<div class=\"name\">\n            <label>".concat(translate$a('uploaded.vector.name'), "</label>\n            <input type=\"text\" value=\"\">\n        </div>");
+	    _this._name = _this.content.querySelector('.name').querySelector('input');
+	    _this.footer.innerHTML = "<button>".concat(translate$a('uploaded.vector.ok'), "</button>");
+	    _this._btn = _this.footer.querySelector('button');
+
+	    _this._btn.addEventListener('click', function (e) {
+	      e.stopPropagation();
+	      var event = document.createEvent('Event');
+	      event.initEvent('ok', false, false);
+	      event.detail = {
+	        title: _this._name.value
+	      };
+
+	      _this.dispatchEvent(event);
+	    });
+
+	    return _this;
+	  }
+
+	  return LayerProperties;
+	}(Dialog);
+
+	var translate$b = T.getText.bind(T);
+	var FILE_EXTENSIONS = {
+	  vector: ['.geojson', '.shp', '.dbf', '.prj', '.sbn', '.sbx', '.shx', '.dat', '.mif', '.mid', '.csv', '.gpx', '.kml', '.kmz', '.sxf', '.sqlite', '.geojson', '.gdbtable'].join(','),
+	  raster: ['.tif', '.tiff', '.tfw', '.xml', '.jpg', '.jgw', '.png', '.pgw', '.jp2', '.j2w'].join(',')
+	};
+
+	var FileUploader = /*#__PURE__*/function (_Controller) {
+	  _inherits(FileUploader, _Controller);
+
+	  var _super = _createSuper(FileUploader);
+
+	  function FileUploader(_ref) {
+	    var _this;
+
+	    var map = _ref.map,
+	        content = _ref.content,
+	        notification = _ref.notification,
+	        loading = _ref.loading,
+	        path = _ref.path,
+	        permissions = _ref.permissions,
+	        title = _ref.title,
+	        _ref$uploadFileSize = _ref.uploadFileSize,
+	        uploadFileSize = _ref$uploadFileSize === void 0 ? 500 * 1024 : _ref$uploadFileSize;
+
+	    _classCallCheck(this, FileUploader);
+
+	    _this = _super.call(this, {
+	      map: map,
+	      content: content,
+	      notification: notification,
+	      loading: loading
+	    });
+	    _this._permissions = permissions;
+	    _this._uploadFileSize = uploadFileSize;
+	    _this._path = path;
+	    _this._title = title;
+	    _this._progress = new UploadProgress();
+
+	    _this._progress.on('resume', _this._resume.bind(_assertThisInitialized(_this)));
+
+	    _this._progress.on('pause', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+	      return regeneratorRuntime.wrap(function _callee$(_context) {
+	        while (1) {
+	          switch (_context.prev = _context.next) {
+	            case 0:
+	              _context.next = 2;
+	              return _this._pause();
+
+	            case 2:
+	              return _context.abrupt("return", _context.sent);
+
+	            case 3:
+	            case "end":
+	              return _context.stop();
+	          }
+	        }
+	      }, _callee);
+	    })));
+
+	    _this._progress.on('stop', _this._stopSpeedTimer.bind(_assertThisInitialized(_this)));
+
+	    _this._layerProperties = {};
+	    return _this;
+	  }
+
+	  _createClass(FileUploader, [{
+	    key: "upload",
+	    value: function upload(type) {
+	      var _this2 = this;
+
+	      var title = this._title || (type === 'vector' ? translate$b('uploaded.vector.title') : translate$b('uploaded.raster.title'));
+	      var dlg = new LayerProperties(title);
+	      dlg.on('ok', function (e) {
+	        var title = e.detail.title;
+	        dlg.destroy();
+	        dlg = null;
+
+	        if (!_this2._files) {
+	          _this2._files = document.createElement('input');
+
+	          _this2._files.setAttribute('type', 'file');
+
+	          _this2._files.setAttribute('multiple', 'true');
+
+	          _this2._files.setAttribute('accept', FILE_EXTENSIONS[type]); // this._files.style.visibility = 'hidden';
+
+
+	          _this2._files.style.width = '0px';
+	          _this2._files.style.height = '0px';
+	          document.body.appendChild(_this2._files);
+
+	          _this2._files.addEventListener('change', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
+	            var sandbox;
+	            return regeneratorRuntime.wrap(function _callee2$(_context2) {
+	              while (1) {
+	                switch (_context2.prev = _context2.next) {
+	                  case 0:
+	                    _this2._progress.start();
+
+	                    _context2.next = 3;
+	                    return _this2._createSandbox();
+
+	                  case 3:
+	                    sandbox = _context2.sent;
+	                    _this2._upfiles = _this2._createParts(_this2._files.files);
+	                    _this2._progress.files = _this2._upfiles;
+	                    document.body.removeChild(_this2._files);
+	                    _this2._files = null;
+	                    _this2._layerProperties = {
+	                      type: type,
+	                      title: title,
+	                      sandbox: sandbox
+	                    };
+
+	                    _this2._startUpload();
+
+	                  case 10:
+	                  case "end":
+	                    return _context2.stop();
+	                }
+	              }
+	            }, _callee2);
+	          })));
+	        }
+
+	        _this2._files.click();
+	      });
+	      dlg.on('close', function () {
+	        dlg.destroy();
+	        dlg = null;
+	      });
+	    }
+	  }, {
+	    key: "_createParts",
+	    value: function _createParts(files) {
+	      var upfiles = [];
+
+	      for (var i = 0; i < files.length; i++) {
+	        var partsCount = Math.ceil(files[i].size / this._uploadFileSize);
+	        var parts = [];
+
+	        for (var j = 0; j < partsCount - 1; ++j) {
+	          parts.push({
+	            xhr: null,
+	            status: 'none',
+	            size: this._uploadFileSize,
+	            send: 0,
+	            needSend: this._uploadFileSize
+	          });
+	        }
+
+	        var lastSize = files[i].size - this._uploadFileSize * (partsCount - 1);
+	        parts.push({
+	          xhr: null,
+	          status: 'none',
+	          size: lastSize,
+	          send: 0,
+	          needSend: lastSize
+	        }); //статус загрузки чанка
+
+	        var p = {
+	          item: files[i],
+	          name: files[i].name,
+	          parts: parts,
+	          totalBytes: files[i].size,
+	          status: 'none' //статус загрузки файла
+
+	        };
+	        upfiles.push(p);
+	      }
+
+	      return upfiles;
+	    }
+	  }, {
+	    key: "_startUpload",
+	    value: function _startUpload() {
+	      this._upfilesStatus = "progress";
+
+	      for (var i = 0; i < this._upfiles.length; ++i) {
+	        //запускаем 6 потоков
+	        if (this._upfiles[i].status === "error") {
+	          this._upfiles[i].status = "none";
+	        }
+
+	        var wait = false;
+
+	        for (var j = 0; j < this._upfiles[i].parts.length; ++j) {
+	          if (this._upfiles[i].parts[j].status === "error") {
+	            this._upfiles[i].parts[j].status = "none"; //отменяем ошибку
+	          }
+
+	          if (this._upfiles[i].parts[j].status === "none") {
+	            wait = true; //если есть не отосланые чанки
+	          }
+	        }
+
+	        var p = this._percent(this._upfiles[i]);
+
+	        if (wait) {
+	          this._progress.waiting(i, p);
+	        } else {
+	          this._progress.completed(i, p);
+	        }
+	      }
+
+	      for (var _i = 0; _i < 8; _i++) {
+	        //запускаем 6 потоков
+	        this._sendNextPart();
+	      }
+
+	      this._stopSpeedTimer();
+
+	      this._speedTimer = setInterval(this._renewSpeedTimer.bind(this), 1000);
+	    }
+	  }, {
+	    key: "_percent",
+	    value: function _percent(t) {
+	      return Math.round(t.parts.reduce(function (a, p) {
+	        return a + p.size / t.totalBytes * (p.send / p.needSend);
+	      }, 0) * 100);
+	    }
+	  }, {
+	    key: "_sendNextPart",
+	    value: function _sendNextPart() {
+	      var _this3 = this;
+
+	      if (this._upfilesStatus === 'error') {
+	        return false;
+	      }
+
+	      var sandbox = this._layerProperties.sandbox;
+
+	      var _loop = function _loop(i) {
+	        var t = _this3._upfiles[i];
+
+	        var _loop2 = function _loop2(j) {
+	          if (t.parts[j].status === "none") {
+	            var startByte = _this3._uploadFileSize * j;
+	            var countBytes = _this3._uploadFileSize;
+
+	            if (startByte + countBytes > t.totalBytes) {
+	              countBytes = t.totalBytes - startByte;
+	            }
+
+	            if (t.status === "none") {
+	              t.status = "progress";
+
+	              _this3._progress.started(i);
+	            }
+
+	            t.parts[j].status = "progress";
+	            var chunk = t.item.slice(startByte, startByte + countBytes + 1);
+	            var chunkFile = new File([chunk], t.name);
+	            var fd = new FormData();
+	            fd.append("sandbox", sandbox);
+	            fd.append("startByte", startByte);
+	            fd.append("file", chunkFile);
+	            var req = new XMLHttpRequest();
+	            req.open("post", "".concat(_this3._path, "/sandbox/upload"));
+	            t.parts[j].xhr = req;
+	            req.upload.onerror = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
+	              return regeneratorRuntime.wrap(function _callee3$(_context3) {
+	                while (1) {
+	                  switch (_context3.prev = _context3.next) {
+	                    case 0:
+	                      t.parts[j].status = 'error';
+	                      t.parts[j].xhr = null;
+	                      t.status = "error";
+
+	                      _this3._progress.error(i);
+
+	                      _context3.next = 6;
+	                      return _this3._errorUpload();
+
+	                    case 6:
+	                    case "end":
+	                      return _context3.stop();
+	                  }
+	                }
+	              }, _callee3);
+	            }));
+	            var lastSend = 0;
+
+	            req.upload.onprogress = function (e) {
+	              t.parts[j].send = e.loaded;
+	              t.parts[j].needSend = e.total;
+
+	              var p = _this3._percent(t);
+
+	              _this3._progress.loading(i, p);
+
+	              _this3._currentSendBytes += e.loaded - lastSend; //подсчёт скорости
+
+	              lastSend = e.loaded;
+	            };
+
+	            req.onload = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
+	              var oksum, p, sumFilesOk;
+	              return regeneratorRuntime.wrap(function _callee4$(_context4) {
+	                while (1) {
+	                  switch (_context4.prev = _context4.next) {
+	                    case 0:
+	                      t.parts[j].xhr = null;
+
+	                      if (!(req.status !== 200)) {
+	                        _context4.next = 9;
+	                        break;
+	                      }
+
+	                      // анализируем HTTP-статус ответа, если статус не 200, то произошла ошибка
+	                      t.parts[j].status = 'error';
+	                      t.status = "error";
+
+	                      _this3._progress.error(i);
+
+	                      _context4.next = 7;
+	                      return _this3._errorUpload();
+
+	                    case 7:
+	                      _context4.next = 25;
+	                      break;
+
+	                    case 9:
+	                      if (!(_this3._upfilesStatus === "error")) {
+	                        _context4.next = 17;
+	                        break;
+	                      }
+
+	                      //если кто-то глюкнул останавливаем всё. Возможно это отмена
+	                      t.parts[j].status = 'error';
+	                      t.status = "error";
+
+	                      _this3._progress.error(i);
+
+	                      _context4.next = 15;
+	                      return _this3._errorUpload();
+
+	                    case 15:
+	                      _context4.next = 25;
+	                      break;
+
+	                    case 17:
+	                      // если всё прошло гладко, выводим результат
+	                      t.parts[j].status = 'finish';
+	                      oksum = t.parts.reduce(function (a, _ref6) {
+	                        var status = _ref6.status;
+	                        return status === 'finish' ? a + 1 : a;
+	                      }, 0);
+
+	                      if (oksum === t.parts.length) {
+	                        t.status = "finish";
+	                        p = _this3._percent(t);
+
+	                        _this3._progress.completed(i, p);
+	                      }
+
+	                      _this3._sendNextPart(); //проверяем что все файлы отосланы
+
+
+	                      sumFilesOk = _this3._upfiles.reduce(function (a, _ref7) {
+	                        var status = _ref7.status;
+	                        return status === 'finish' ? a + 1 : a;
+	                      }, 0);
+
+	                      if (!(sumFilesOk === _this3._upfiles.length)) {
+	                        _context4.next = 25;
+	                        break;
+	                      }
+
+	                      _context4.next = 25;
+	                      return _this3._finishUpload();
+
+	                    case 25:
+	                    case "end":
+	                      return _context4.stop();
+	                  }
+	                }
+	              }, _callee4);
+	            }));
+	            req.send(fd);
+	            return {
+	              v: {
+	                v: true
+	              }
+	            };
+	          }
+	        };
+
+	        for (var j = 0; j < t.parts.length; ++j) {
+	          var _ret2 = _loop2(j);
+
+	          if (_typeof(_ret2) === "object") return _ret2.v;
+	        }
+	      };
+
+	      for (var i = 0; i < this._upfiles.length; ++i) {
+	        var _ret = _loop(i);
+
+	        if (_typeof(_ret) === "object") return _ret.v;
+	      }
+
+	      return false;
+	    }
+	  }, {
+	    key: "_stopSpeedTimer",
+	    value: function _stopSpeedTimer() {
+	      if (this._speedTimer != null) {
+	        clearInterval(this._speedTimer);
+	      }
+
+	      this._speedTimer = null;
+	      this._progress.speed = '';
+	      this._oldSendBytes = [];
+	      this._currentSendBytes = 0;
+	    }
+	  }, {
+	    key: "_renewSpeedTimer",
+	    value: function _renewSpeedTimer() {
+	      var _this$_upfiles$reduce = this._upfiles.reduce(function (_ref8, t) {
+	        var ready = _ref8.ready,
+	            total = _ref8.total;
+	        ready = t.parts.reduce(function (a, tp) {
+	          switch (tp.status) {
+	            case 'progress':
+	              return a + tp.size * (tp.send / tp.needSend);
+
+	            case 'finish':
+	              return a + tp.size;
+
+	            default:
+	              return a;
+	          }
+	        }, ready);
+	        return {
+	          ready: ready,
+	          total: total + t.totalBytes
+	        };
+	      }, {
+	        ready: 0,
+	        total: 0
+	      }),
+	          ready = _this$_upfiles$reduce.ready,
+	          total = _this$_upfiles$reduce.total; //история скорости
+
+
+	      this._oldSendBytes.unshift(this._currentSendBytes);
+
+	      if (this._oldSendBytes.length > 5) {
+	        this._oldSendBytes.length = 5;
+	      }
+
+	      var sumSend = this._oldSendBytes.reduce(function (a, b) {
+	        return a + b;
+	      }, 0);
+
+	      var s = Math.round(sumSend / this._oldSendBytes.length); //байт в секунду
+
+	      this._progress.stats(s, ready, total);
+
+	      this._currentSendBytes = 0;
+	    }
+	  }, {
+	    key: "_resume",
+	    value: function _resume() {
+	      if (this._upfilesStatus === "error") {
+	        this._startUpload();
+	      }
+	    }
+	  }, {
+	    key: "_pause",
+	    value: function () {
+	      var _pause2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5() {
+	        var ok, t, i;
+	        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+	          while (1) {
+	            switch (_context5.prev = _context5.next) {
+	              case 0:
+	                this._stopSpeedTimer();
+
+	                ok = true;
+	                i = 0;
+
+	              case 3:
+	                if (!(i < this._upfiles.length)) {
+	                  _context5.next = 11;
+	                  break;
+	                }
+
+	                t = this._upfiles[i];
+	                ok = t.parts.reduce(function (a, tp) {
+	                  if (tp.status === "progress" && tp.xhr != null) {
+	                    tp.xhr.abort();
+	                    tp.status = 'none';
+	                    a = false;
+	                  }
+
+	                  return a;
+	                }, true);
+
+	                if (ok) {
+	                  _context5.next = 8;
+	                  break;
+	                }
+
+	                return _context5.abrupt("break", 11);
+
+	              case 8:
+	                ++i;
+	                _context5.next = 3;
+	                break;
+
+	              case 11:
+	                if (!(t && !ok)) {
+	                  _context5.next = 16;
+	                  break;
+	                }
+
+	                t.status = "error";
+
+	                this._progress.cancelled(i);
+
+	                _context5.next = 16;
+	                return this._errorUpload();
+
+	              case 16:
+	              case "end":
+	                return _context5.stop();
+	            }
+	          }
+	        }, _callee5, this);
+	      }));
+
+	      function _pause() {
+	        return _pause2.apply(this, arguments);
+	      }
+
+	      return _pause;
+	    }()
+	  }, {
+	    key: "_errorUpload",
+	    value: function () {
+	      var _errorUpload2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6() {
+	        var event;
+	        return regeneratorRuntime.wrap(function _callee6$(_context6) {
+	          while (1) {
+	            switch (_context6.prev = _context6.next) {
+	              case 0:
+	                if (this._upfilesStatus !== 'error') {
+	                  this._stopSpeedTimer();
+
+	                  this._upfilesStatus = 'error'; // document.getElementById('global_status').textContent = "Error";
+	                  // document.getElementById("cancel").disabled = true;
+	                  // document.getElementById("resume").disabled = false;
+	                  // document.getElementById("send").disabled = false;
+	                  // document.getElementById("open").disabled = false;
+	                  // this._progress.stop();
+
+	                  event = document.createEvent('Event');
+	                  event.initEvent('error', false, false); // this._layerProperties = {};
+
+	                  this.dispatchEvent(event);
+	                }
+
+	              case 1:
+	              case "end":
+	                return _context6.stop();
+	            }
+	          }
+	        }, _callee6, this);
+	      }));
+
+	      function _errorUpload() {
+	        return _errorUpload2.apply(this, arguments);
+	      }
+
+	      return _errorUpload;
+	    }()
+	  }, {
+	    key: "_finishUpload",
+	    value: function () {
+	      var _finishUpload2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7() {
+	        var _this$_layerPropertie, type, title, sandbox, _yield$this$_createVe, TaskID, event, _yield$this$_createRa, _TaskID, data, _event;
+
+	        return regeneratorRuntime.wrap(function _callee7$(_context7) {
+	          while (1) {
+	            switch (_context7.prev = _context7.next) {
+	              case 0:
+	                if (!(this._upfilesStatus === 'finish')) {
+	                  _context7.next = 2;
+	                  break;
+	                }
+
+	                return _context7.abrupt("return");
+
+	              case 2:
+	                if (!(this._upfilesStatus === 'progress')) {
+	                  _context7.next = 31;
+	                  break;
+	                }
+
+	                this._stopSpeedTimer();
+
+	                this._upfilesStatus = 'finish'; // document.getElementById('global_status').textContent = "Finish";
+	                // document.getElementById("cancel").disabled = true;
+	                // document.getElementById("resume").disabled = true;
+	                // document.getElementById("send").disabled = false;
+	                // document.getElementById("open").disabled = false;
+
+	                this._progress.stop();
+
+	                _this$_layerPropertie = this._layerProperties, type = _this$_layerPropertie.type, title = _this$_layerPropertie.title, sandbox = _this$_layerPropertie.sandbox;
+
+	                if (!(type === 'vector')) {
+	                  _context7.next = 19;
+	                  break;
+	                }
+
+	                _context7.next = 10;
+	                return this._createVectorLayer(sandbox, title);
+
+	              case 10:
+	                _yield$this$_createVe = _context7.sent;
+	                TaskID = _yield$this$_createVe.Result.TaskID;
+	                _context7.next = 14;
+	                return this.poll(TaskID);
+
+	              case 14:
+	                event = document.createEvent('Event');
+	                event.initEvent('finished', false, false);
+	                this.dispatchEvent(event);
+	                _context7.next = 31;
+	                break;
+
+	              case 19:
+	                if (!(type === 'raster')) {
+	                  _context7.next = 31;
+	                  break;
+	                }
+
+	                _context7.next = 22;
+	                return this._createRasterLayer(sandbox, title);
+
+	              case 22:
+	                _yield$this$_createRa = _context7.sent;
+	                _TaskID = _yield$this$_createRa.Result.TaskID;
+	                _context7.next = 26;
+	                return this.poll(_TaskID);
+
+	              case 26:
+	                data = _context7.sent;
+	                _event = document.createEvent('Event');
+
+	                _event.initEvent('finished', false, false);
+
+	                _event.detail = data;
+	                this.dispatchEvent(_event);
+
+	              case 31:
+	              case "end":
+	                return _context7.stop();
+	            }
+	          }
+	        }, _callee7, this);
+	      }));
+
+	      function _finishUpload() {
+	        return _finishUpload2.apply(this, arguments);
+	      }
+
+	      return _finishUpload;
+	    }()
+	  }, {
+	    key: "_createSandbox",
+	    value: function () {
+	      var _createSandbox2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8() {
+	        var _yield$this$httpGet, sandbox;
+
+	        return regeneratorRuntime.wrap(function _callee8$(_context8) {
+	          while (1) {
+	            switch (_context8.prev = _context8.next) {
+	              case 0:
+	                _context8.next = 2;
+	                return this.httpGet("".concat(this._path, "/sandbox/CreateSandbox"));
+
+	              case 2:
+	                _yield$this$httpGet = _context8.sent;
+	                sandbox = _yield$this$httpGet.sandbox;
+
+	                if (!sandbox) {
+	                  _context8.next = 6;
+	                  break;
+	                }
+
+	                return _context8.abrupt("return", sandbox);
+
+	              case 6:
+	                return _context8.abrupt("return");
+
+	              case 7:
+	              case "end":
+	                return _context8.stop();
+	            }
+	          }
+	        }, _callee8, this);
+	      }));
+
+	      function _createSandbox() {
+	        return _createSandbox2.apply(this, arguments);
+	      }
+
+	      return _createSandbox;
+	    }()
+	  }, {
+	    key: "_createVectorLayer",
+	    value: function () {
+	      var _createVectorLayer2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9(sandboxId, title) {
+	        var fd, data;
+	        return regeneratorRuntime.wrap(function _callee9$(_context9) {
+	          while (1) {
+	            switch (_context9.prev = _context9.next) {
+	              case 0:
+	                fd = new FormData();
+	                fd.append('SourceType', 'sandbox');
+	                fd.append('SandboxId', sandboxId);
+	                fd.append('title', title);
+	                _context9.next = 6;
+	                return this.postData("".concat(this._path, "/VectorLayer/Insert.ashx"), fd);
+
+	              case 6:
+	                data = _context9.sent;
+	                return _context9.abrupt("return", data || false);
+
+	              case 8:
+	              case "end":
+	                return _context9.stop();
+	            }
+	          }
+	        }, _callee9, this);
+	      }));
+
+	      function _createVectorLayer(_x, _x2) {
+	        return _createVectorLayer2.apply(this, arguments);
+	      }
+
+	      return _createVectorLayer;
+	    }()
+	  }, {
+	    key: "_createRasterLayer",
+	    value: function () {
+	      var _createRasterLayer2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(sandboxId, title) {
+	        var fd, data;
+	        return regeneratorRuntime.wrap(function _callee10$(_context10) {
+	          while (1) {
+	            switch (_context10.prev = _context10.next) {
+	              case 0:
+	                fd = new FormData();
+	                fd.append('SourceType', 'sandbox');
+	                fd.append('SandboxId', sandboxId);
+	                fd.append('title', title);
+	                _context10.next = 6;
+	                return this.postData("".concat(this._path, "/RasterLayer/Insert.ashx"), fd);
+
+	              case 6:
+	                data = _context10.sent;
+	                return _context10.abrupt("return", data || false);
+
+	              case 8:
+	              case "end":
+	                return _context10.stop();
+	            }
+	          }
+	        }, _callee10, this);
+	      }));
+
+	      function _createRasterLayer(_x3, _x4) {
+	        return _createRasterLayer2.apply(this, arguments);
+	      }
+
+	      return _createRasterLayer;
+	    }()
+	  }]);
+
+	  return FileUploader;
+	}(Controller);
+
+	var translate$c = T.getText.bind(T);
+
 	var _DAY$1 = 60 * 60 * 24 * 1000;
 
 	var Incidents$1 = /*#__PURE__*/function (_Controller) {
@@ -46987,39 +47997,39 @@ var Forestry = (function () {
 
 	    _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
 
-	    var p = _this._legend.addGroup(_this._kind, translate$9('legend.incidents'));
+	    var p = _this._legend.addGroup(_this._kind, translate$c('legend.incidents'));
 
-	    _this._legend.addComponent('cut-unconfirmed', translate$9('legend.cut.unconfirmed'), p);
+	    _this._legend.addComponent('cut-unconfirmed', translate$c('legend.cut.unconfirmed'), p);
 
-	    _this._legend.addComponent('cut-working', translate$9('legend.cut.working'), p);
+	    _this._legend.addComponent('cut-working', translate$c('legend.cut.working'), p);
 
-	    _this._legend.addComponent('cut-faux', translate$9('legend.cut.faux'), p);
+	    _this._legend.addComponent('cut-faux', translate$c('legend.cut.faux'), p);
 
-	    _this._legend.addComponent('cut-confirmed', translate$9('legend.cut.confirmed'), p);
+	    _this._legend.addComponent('cut-confirmed', translate$c('legend.cut.confirmed'), p);
 
-	    _this._legend.addComponent('windthrow-unconfirmed', translate$9('legend.windthrow.unconfirmed'), p);
+	    _this._legend.addComponent('windthrow-unconfirmed', translate$c('legend.windthrow.unconfirmed'), p);
 
-	    _this._legend.addComponent('windthrow-working', translate$9('legend.windthrow.working'), p);
+	    _this._legend.addComponent('windthrow-working', translate$c('legend.windthrow.working'), p);
 
-	    _this._legend.addComponent('windthrow-faux', translate$9('legend.windthrow.faux'), p);
+	    _this._legend.addComponent('windthrow-faux', translate$c('legend.windthrow.faux'), p);
 
-	    _this._legend.addComponent('windthrow-confirmed', translate$9('legend.windthrow.confirmed'), p);
+	    _this._legend.addComponent('windthrow-confirmed', translate$c('legend.windthrow.confirmed'), p);
 
-	    _this._legend.addComponent('disease-unconfirmed', translate$9('legend.disease.unconfirmed'), p);
+	    _this._legend.addComponent('disease-unconfirmed', translate$c('legend.disease.unconfirmed'), p);
 
-	    _this._legend.addComponent('disease-working', translate$9('legend.disease.working'), p);
+	    _this._legend.addComponent('disease-working', translate$c('legend.disease.working'), p);
 
-	    _this._legend.addComponent('disease-faux', translate$9('legend.disease.faux'), p);
+	    _this._legend.addComponent('disease-faux', translate$c('legend.disease.faux'), p);
 
-	    _this._legend.addComponent('disease-confirmed', translate$9('legend.disease.confirmed'), p);
+	    _this._legend.addComponent('disease-confirmed', translate$c('legend.disease.confirmed'), p);
 
-	    _this._legend.addComponent('burn-unconfirmed', translate$9('legend.burn.unconfirmed'), p);
+	    _this._legend.addComponent('burn-unconfirmed', translate$c('legend.burn.unconfirmed'), p);
 
-	    _this._legend.addComponent('burn-working', translate$9('legend.burn.working'), p);
+	    _this._legend.addComponent('burn-working', translate$c('legend.burn.working'), p);
 
-	    _this._legend.addComponent('burn-faux', translate$9('legend.burn.faux'), p);
+	    _this._legend.addComponent('burn-faux', translate$c('legend.burn.faux'), p);
 
-	    _this._legend.addComponent('burn-confirmed', translate$9('legend.burn.confirmed'), p);
+	    _this._legend.addComponent('burn-confirmed', translate$c('legend.burn.confirmed'), p);
 
 	    _this._view = _this._content.add(_this._kind, Incidents, {
 	      permissions: _this._permissions
@@ -47078,28 +48088,32 @@ var Forestry = (function () {
 	        });
 	      }
 	    }).on('incident:bplaDownload', function (e) {
-	      console.log('_bplaDownload', e.detail);
-	    }).on('incident:bplaRemove', function (e) {
-	      console.log('_bplaRemove', e.detail);
-	    }).on('incident:download', function (e) {
-	      window.location = "".concat(_this._path, "/Monitoring/DownloadIncidentContour?IncidentID=").concat(e.detail, "&Format=Shape");
-	    }).on('incident:editGeo', function (e) {
-	      _this._editGeo();
-	    }).on('incident:saveItem', function (e) {
-	      _this._saveItem(e.detail);
-	    }).on('incident:IncidentCheck', /*#__PURE__*/function () {
+	      _this._fileUploader.upload('raster');
+	    }).on('incident:bplaRemove', /*#__PURE__*/function () {
 	      var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e) {
+	        var incidentID;
 	        return regeneratorRuntime.wrap(function _callee$(_context) {
 	          while (1) {
 	            switch (_context.prev = _context.next) {
 	              case 0:
-	                _context.next = 2;
-	                return _this.httpPost("".concat(_this._path, "/Monitoring/CheckIncident"), e.detail);
-
-	              case 2:
-	                _this._redrawLayer();
+	                incidentID = _this._gmxProperties.id;
+	                _context.next = 3;
+	                return _this.httpPost("".concat(_this._path, "/Monitoring/DeleteUAVImage"), {
+	                  incidentID: incidentID
+	                });
 
 	              case 3:
+	                _context.next = 5;
+	                return _this.showIncident(incidentID);
+
+	              case 5:
+	                if (_this._layer.bplaRaster && _this._layer.bplaRaster._map) {
+	                  map.removeLayer(_this._layer.bplaRaster);
+	                }
+
+	                delete _this._layer.bplaRaster;
+
+	              case 7:
 	              case "end":
 	                return _context.stop();
 	            }
@@ -47110,14 +48124,20 @@ var Forestry = (function () {
 	      return function (_x) {
 	        return _ref2.apply(this, arguments);
 	      };
-	    }()).on('incident:IncidentAccept', /*#__PURE__*/function () {
+	    }()).on('incident:download', function (e) {
+	      window.location = "".concat(_this._path, "/Monitoring/DownloadIncidentContour?IncidentID=").concat(e.detail, "&Format=Shape");
+	    }).on('incident:editGeo', function (e) {
+	      _this._editGeo();
+	    }).on('incident:saveItem', function (e) {
+	      _this._saveItem(e.detail);
+	    }).on('incident:IncidentCheck', /*#__PURE__*/function () {
 	      var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(e) {
 	        return regeneratorRuntime.wrap(function _callee2$(_context2) {
 	          while (1) {
 	            switch (_context2.prev = _context2.next) {
 	              case 0:
 	                _context2.next = 2;
-	                return _this.httpPost("".concat(_this._path, "/Monitoring/ApproveIncident"), e.detail);
+	                return _this.httpPost("".concat(_this._path, "/Monitoring/CheckIncident"), e.detail);
 
 	              case 2:
 	                _this._redrawLayer();
@@ -47133,14 +48153,14 @@ var Forestry = (function () {
 	      return function (_x2) {
 	        return _ref3.apply(this, arguments);
 	      };
-	    }()).on('incident:IncidentDecline', /*#__PURE__*/function () {
+	    }()).on('incident:IncidentAccept', /*#__PURE__*/function () {
 	      var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(e) {
 	        return regeneratorRuntime.wrap(function _callee3$(_context3) {
 	          while (1) {
 	            switch (_context3.prev = _context3.next) {
 	              case 0:
 	                _context3.next = 2;
-	                return _this.httpPost("".concat(_this._path, "/Monitoring/DeclineIncident"), e.detail);
+	                return _this.httpPost("".concat(_this._path, "/Monitoring/ApproveIncident"), e.detail);
 
 	              case 2:
 	                _this._redrawLayer();
@@ -47155,6 +48175,29 @@ var Forestry = (function () {
 
 	      return function (_x3) {
 	        return _ref4.apply(this, arguments);
+	      };
+	    }()).on('incident:IncidentDecline', /*#__PURE__*/function () {
+	      var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(e) {
+	        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+	          while (1) {
+	            switch (_context4.prev = _context4.next) {
+	              case 0:
+	                _context4.next = 2;
+	                return _this.httpPost("".concat(_this._path, "/Monitoring/DeclineIncident"), e.detail);
+
+	              case 2:
+	                _this._redrawLayer();
+
+	              case 3:
+	              case "end":
+	                return _context4.stop();
+	            }
+	          }
+	        }, _callee4);
+	      }));
+
+	      return function (_x4) {
+	        return _ref5.apply(this, arguments);
 	      };
 	    }()).on('close', function (e) {
 	      var map = _this._layer._map;
@@ -47183,6 +48226,65 @@ var Forestry = (function () {
 	      _this._layer.repaint();
 	    });
 
+	    _this._fileUploader = new FileUploader({
+	      map: map,
+	      content: content,
+	      notification: notification,
+	      title: translate$c('incident.BplaDownloadTitle'),
+	      loading: loading,
+	      path: _this._gmxPath,
+	      permissions: permissions
+	    });
+
+	    _this._fileUploader.on('finished', /*#__PURE__*/function () {
+	      var _ref6 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(e) {
+	        var _e$detail$Result$prop, LayerID, title, incidentID;
+
+	        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+	          while (1) {
+	            switch (_context5.prev = _context5.next) {
+	              case 0:
+	                _e$detail$Result$prop = e.detail.Result.properties, LayerID = _e$detail$Result$prop.LayerID, title = _e$detail$Result$prop.title;
+	                incidentID = _this._gmxProperties.id;
+	                _context5.next = 4;
+	                return _this.httpPost("".concat(_this._path, "/Monitoring/UploadUAVImage"), {
+	                  incidentID: incidentID,
+	                  uavID: LayerID,
+	                  uavDescription: title
+	                });
+
+	              case 4:
+	                _context5.next = 6;
+	                return _this.showIncident(incidentID);
+
+	              case 6:
+	              case "end":
+	                return _context5.stop();
+	            }
+	          }
+	        }, _callee5);
+	      }));
+
+	      return function (_x5) {
+	        return _ref6.apply(this, arguments);
+	      };
+	    }());
+
+	    _this._fileUploader.on('error', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6() {
+	      return regeneratorRuntime.wrap(function _callee6$(_context6) {
+	        while (1) {
+	          switch (_context6.prev = _context6.next) {
+	            case 0:
+	              console.log('error');
+
+	            case 1:
+	            case "end":
+	              return _context6.stop();
+	          }
+	        }
+	      }, _callee6);
+	    })));
+
 	    _this.StatusList = {};
 
 	    _this._getForestChangeStatusList();
@@ -47203,17 +48305,17 @@ var Forestry = (function () {
 	  }, {
 	    key: "_getForestChangeStatusList",
 	    value: function () {
-	      var _getForestChangeStatusList2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
+	      var _getForestChangeStatusList2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7() {
 	        var data;
-	        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+	        return regeneratorRuntime.wrap(function _callee7$(_context7) {
 	          while (1) {
-	            switch (_context4.prev = _context4.next) {
+	            switch (_context7.prev = _context7.next) {
 	              case 0:
-	                _context4.next = 2;
+	                _context7.next = 2;
 	                return this.httpGet("".concat(this._path, "/Monitoring/GetForestChangeStatusList"), {});
 
 	              case 2:
-	                data = _context4.sent;
+	                data = _context7.sent;
 
 	                if (data) {
 	                  this.StatusList = (data.forestChangeStatusList || []).reduce(function (p, c) {
@@ -47224,10 +48326,10 @@ var Forestry = (function () {
 
 	              case 4:
 	              case "end":
-	                return _context4.stop();
+	                return _context7.stop();
 	            }
 	          }
-	        }, _callee4, this);
+	        }, _callee7, this);
 	      }));
 
 	      function _getForestChangeStatusList() {
@@ -47239,10 +48341,10 @@ var Forestry = (function () {
 	  }, {
 	    key: "_saveItem",
 	    value: function () {
-	      var _saveItem2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(out) {
-	        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+	      var _saveItem2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(out) {
+	        return regeneratorRuntime.wrap(function _callee8$(_context8) {
 	          while (1) {
-	            switch (_context5.prev = _context5.next) {
+	            switch (_context8.prev = _context8.next) {
 	              case 0:
 	                if (this._drawingObj) {
 	                  out.wkbGeometry = JSON.stringify(this._drawingObj[0].toGeoJSON().geometry);
@@ -47250,7 +48352,7 @@ var Forestry = (function () {
 	                  this._removeDrawing();
 	                }
 
-	                _context5.next = 3;
+	                _context8.next = 3;
 	                return this.httpPost("".concat(this._path, "/Monitoring/SaveIncident"), out);
 
 	              case 3:
@@ -47259,13 +48361,13 @@ var Forestry = (function () {
 
 	              case 4:
 	              case "end":
-	                return _context5.stop();
+	                return _context8.stop();
 	            }
 	          }
-	        }, _callee5, this);
+	        }, _callee8, this);
 	      }));
 
-	      function _saveItem(_x4) {
+	      function _saveItem(_x6) {
 	        return _saveItem2.apply(this, arguments);
 	      }
 
@@ -47285,19 +48387,19 @@ var Forestry = (function () {
 	  }, {
 	    key: "_getRasterLayer",
 	    value: function () {
-	      var _getRasterLayer2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(id) {
+	      var _getRasterLayer2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9(id) {
 	        var data, layer, props;
-	        return regeneratorRuntime.wrap(function _callee6$(_context6) {
+	        return regeneratorRuntime.wrap(function _callee9$(_context9) {
 	          while (1) {
-	            switch (_context6.prev = _context6.next) {
+	            switch (_context9.prev = _context9.next) {
 	              case 0:
-	                _context6.next = 2;
+	                _context9.next = 2;
 	                return this.httpGet("/gis/Layer/GetLayerJson.ashx", {
 	                  LayerName: id
 	                });
 
 	              case 2:
-	                data = _context6.sent;
+	                data = _context9.sent;
 
 	                if (data.Status === 'ok') {
 	                  props = data.Result.properties;
@@ -47319,17 +48421,17 @@ var Forestry = (function () {
 	                  });
 	                }
 
-	                return _context6.abrupt("return", layer);
+	                return _context9.abrupt("return", layer);
 
 	              case 5:
 	              case "end":
-	                return _context6.stop();
+	                return _context9.stop();
 	            }
 	          }
-	        }, _callee6, this);
+	        }, _callee9, this);
 	      }));
 
-	      function _getRasterLayer(_x5) {
+	      function _getRasterLayer(_x7) {
 	        return _getRasterLayer2.apply(this, arguments);
 	      }
 
@@ -47373,27 +48475,27 @@ var Forestry = (function () {
 	  }, {
 	    key: "_click",
 	    value: function () {
-	      var _click2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(e) {
+	      var _click2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(e) {
 	        var _e$gmx, id, properties, data;
 
-	        return regeneratorRuntime.wrap(function _callee7$(_context7) {
+	        return regeneratorRuntime.wrap(function _callee10$(_context10) {
 	          while (1) {
-	            switch (_context7.prev = _context7.next) {
+	            switch (_context10.prev = _context10.next) {
 	              case 0:
 	                if (!this.canClick) {
-	                  _context7.next = 8;
+	                  _context10.next = 8;
 	                  break;
 	                }
 
 	                L.DomEvent.stopPropagation(e);
 	                _e$gmx = e.gmx, id = _e$gmx.id, properties = _e$gmx.properties;
-	                _context7.next = 5;
+	                _context10.next = 5;
 	                return this.httpGet("".concat(this._path, "/Monitoring/GetIncident"), {
 	                  IncidentID: properties.id
 	                });
 
 	              case 5:
-	                data = _context7.sent;
+	                data = _context10.sent;
 
 	                if (data) {
 	                  this._view.open(_objectSpread2({
@@ -47403,19 +48505,20 @@ var Forestry = (function () {
 	                  }, data));
 
 	                  this._gmx_id = id;
+	                  this._gmxProperties = properties;
 	                }
 
 	                this._layer.repaint();
 
 	              case 8:
 	              case "end":
-	                return _context7.stop();
+	                return _context10.stop();
 	            }
 	          }
-	        }, _callee7, this);
+	        }, _callee10, this);
 	      }));
 
-	      function _click(_x6) {
+	      function _click(_x8) {
 	        return _click2.apply(this, arguments);
 	      }
 
@@ -47489,8 +48592,8 @@ var Forestry = (function () {
 	    }
 	  }, {
 	    key: "getFilter",
-	    value: function getFilter(_ref5) {
-	      var properties = _ref5.properties;
+	    value: function getFilter(_ref8) {
+	      var properties = _ref8.properties;
 	      var c = properties[this._cid];
 	      var s = properties[this._sid];
 
@@ -47574,20 +48677,20 @@ var Forestry = (function () {
 	  }, {
 	    key: "showIncident",
 	    value: function () {
-	      var _showIncident = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(id) {
+	      var _showIncident = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11(id) {
 	        var data, Geometry, GmxID, g, b, c;
-	        return regeneratorRuntime.wrap(function _callee8$(_context8) {
+	        return regeneratorRuntime.wrap(function _callee11$(_context11) {
 	          while (1) {
-	            switch (_context8.prev = _context8.next) {
+	            switch (_context11.prev = _context11.next) {
 	              case 0:
-	                _context8.next = 2;
+	                _context11.next = 2;
 	                return this.httpGet("".concat(this._path, "/Monitoring/GetIncident"), {
 	                  IncidentID: id,
 	                  NeedGeometry: true
 	                });
 
 	              case 2:
-	                data = _context8.sent;
+	                data = _context11.sent;
 
 	                if (data) {
 	                  this._legend.enableGroup('incidents');
@@ -47614,13 +48717,13 @@ var Forestry = (function () {
 
 	              case 4:
 	              case "end":
-	                return _context8.stop();
+	                return _context11.stop();
 	            }
 	          }
-	        }, _callee8, this);
+	        }, _callee11, this);
 	      }));
 
-	      function showIncident(_x7) {
+	      function showIncident(_x9) {
 	        return _showIncident.apply(this, arguments);
 	      }
 
@@ -47841,7 +48944,7 @@ var Forestry = (function () {
 	  return Parks;
 	}(View$1);
 
-	var translate$a = T.getText.bind(T);
+	var translate$d = T.getText.bind(T);
 
 	var Parks$1 = /*#__PURE__*/function (_Controller) {
 	  _inherits(Parks$1, _Controller);
@@ -47884,18 +48987,18 @@ var Forestry = (function () {
 	      }
 
 	      if (_this._permissions.FederalSPNA) {
-	        _this._legend.addComponent('parks-federal', translate$a("legend.parks_federal"));
+	        _this._legend.addComponent('parks-federal', translate$d("legend.parks_federal"));
 	      }
 
 	      if (_this._permissions.RegionalSPNA) {
-	        _this._legend.addComponent('parks-regional', translate$a("legend.parks_regional"));
+	        _this._legend.addComponent('parks-regional', translate$d("legend.parks_regional"));
 	      }
 
 	      _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
 
 	      _this._layer.setFilter(_this.getFilter.bind(_assertThisInitialized(_this)));
 	    } else {
-	      _this._legend.addComponent('parks', translate$a("legend.parks"));
+	      _this._legend.addComponent('parks', translate$d("legend.parks"));
 	    }
 
 	    _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
@@ -66306,7 +67409,7 @@ var Forestry = (function () {
 	  return Info;
 	}(View$1);
 
-	var translate$b = T.getText.bind(T);
+	var translate$e = T.getText.bind(T);
 
 	var Quadrants = /*#__PURE__*/function (_EventTarget) {
 	  _inherits(Quadrants, _EventTarget);
@@ -66333,7 +67436,7 @@ var Forestry = (function () {
 	      var _this2 = this;
 
 	      this._items = Array.isArray(items) && items || [];
-	      this._container.innerHTML = this._items.length ? "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th>".concat(translate$b('project.localForestry'), " / ").concat(translate$b('project.tract'), "</th>                    \n                    <th>").concat(translate$b('project.quadrants'), "</th>\n                    <th>").concat(translate$b('project.year'), "</th>                    \n                </tr>\n            </thead>\n        </table>\n        <div class=\"scrollable\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody>").concat(this._items.map(function (_ref) {
+	      this._container.innerHTML = this._items.length ? "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th>".concat(translate$e('project.localForestry'), " / ").concat(translate$e('project.tract'), "</th>                    \n                    <th>").concat(translate$e('project.quadrants'), "</th>\n                    <th>").concat(translate$e('project.year'), "</th>                    \n                </tr>\n            </thead>\n        </table>\n        <div class=\"scrollable\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody>").concat(this._items.map(function (_ref) {
 	        var local_forestry = _ref.local_forestry,
 	            stow = _ref.stow,
 	            num = _ref.num,
@@ -66409,7 +67512,7 @@ var Forestry = (function () {
 	  return Quadrants;
 	}(EventTarget);
 
-	var translate$c = T.getText.bind(T);
+	var translate$f = T.getText.bind(T);
 
 	var SpeciesTable = /*#__PURE__*/function (_EventTarget) {
 	  _inherits(SpeciesTable, _EventTarget);
@@ -66447,14 +67550,14 @@ var Forestry = (function () {
 	            total_stock_deal = _ref.total_stock_deal;
 	        return "<tr class=\"type\">\n                <td class=\"text\">".concat(species, "</td>\n                <td class=\"value\">").concat(m(permitted_stock), "</td>\n                <td class=\"value\">").concat(m(permitted_stock_deal), "</td>\n                <td class=\"value\">").concat(m(probable_stock), "</td>\n                <td class=\"value\">").concat(m(probable_stock_deal), "</td>\n                <td class=\"value\">").concat(m(total_stock), "</td>\n                <td class=\"value\">").concat(m(total_stock_deal), "</td>\n            </tr>");
 	      }).join('');
-	      this._container.innerHTML = rows ? "<div class=\"title\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>                 \n                        <tr>\n                            <td class=\"text\" rowspan=\"2\">".concat(translate$c('project.species'), "</td>\n                            <td class=\"text\" colspan=\"3\">").concat(translate$c('project.stock.label'), " (").concat(translate$c('project.stock.general'), " / ").concat(translate$c('project.stock.deal'), "), ").concat(translate$c('units.m'), "<sup>3</sup></td>\n                        </tr>\n                        <tr>                            \n                            <td class=\"text text-top\">").concat(translate$c('project.stock.permitted'), "</td>                        \n                            <td class=\"text text-top\">").concat(translate$c('project.stock.probable'), "</td>\n                            <td class=\"text text-top\">").concat(translate$c('project.stock.total'), "</td>\n                        </tr>\n                    </tbody>\n                </table>\n            </div>\n            <div class=\"content scrollable\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>").concat(rows, "</tbody>\n                </table>\n            </div>") : '';
+	      this._container.innerHTML = rows ? "<div class=\"title\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>                 \n                        <tr>\n                            <td class=\"text\" rowspan=\"2\">".concat(translate$f('project.species'), "</td>\n                            <td class=\"text\" colspan=\"3\">").concat(translate$f('project.stock.label'), " (").concat(translate$f('project.stock.general'), " / ").concat(translate$f('project.stock.deal'), "), ").concat(translate$f('units.m'), "<sup>3</sup></td>\n                        </tr>\n                        <tr>                            \n                            <td class=\"text text-top\">").concat(translate$f('project.stock.permitted'), "</td>                        \n                            <td class=\"text text-top\">").concat(translate$f('project.stock.probable'), "</td>\n                            <td class=\"text text-top\">").concat(translate$f('project.stock.total'), "</td>\n                        </tr>\n                    </tbody>\n                </table>\n            </div>\n            <div class=\"content scrollable\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>").concat(rows, "</tbody>\n                </table>\n            </div>") : '';
 	    }
 	  }]);
 
 	  return SpeciesTable;
 	}(EventTarget);
 
-	var translate$d = T.getText.bind(T);
+	var translate$g = T.getText.bind(T);
 
 	var Species = /*#__PURE__*/function () {
 	  function Species(container) {
@@ -66464,7 +67567,7 @@ var Forestry = (function () {
 
 	    this._species = [];
 	    this._container = container;
-	    this._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<thead class=\"menu\">\n\t\t\t\t<tr>\n\t\t\t\t\t<th colspan=\"3\">\n\t\t\t\t\t\t<button class=\"stock active\">".concat(translate$d('project.stock.table'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"permitted\">").concat(translate$d('project.stock.permitted'), "</button>\n\t\t\t\t\t</th>\t\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"probable\">").concat(translate$d('project.stock.probable'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"total\">").concat(translate$d('project.stock.total'), "</button>\n\t\t\t\t\t</th>\t\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td colspan=\"3\">\n\t\t\t\t\t\t<div class=\"table\"></div>\n\t\t\t\t\t\t<div class=\"graph\">\n\t\t\t\t\t\t\t<div class=\"label\">").concat(translate$d('project.stock.title'), " (").concat(translate$d('project.stock.general'), " / ").concat(translate$d('project.stock.deal'), ")</div>\n\t\t\t\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t\t\t</div>\t\t\t\t\t\t\n\t\t\t\t\t</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
+	    this._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<thead class=\"menu\">\n\t\t\t\t<tr>\n\t\t\t\t\t<th colspan=\"3\">\n\t\t\t\t\t\t<button class=\"stock active\">".concat(translate$g('project.stock.table'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"permitted\">").concat(translate$g('project.stock.permitted'), "</button>\n\t\t\t\t\t</th>\t\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"probable\">").concat(translate$g('project.stock.probable'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"total\">").concat(translate$g('project.stock.total'), "</button>\n\t\t\t\t\t</th>\t\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td colspan=\"3\">\n\t\t\t\t\t\t<div class=\"table\"></div>\n\t\t\t\t\t\t<div class=\"graph\">\n\t\t\t\t\t\t\t<div class=\"label\">").concat(translate$g('project.stock.title'), " (").concat(translate$g('project.stock.general'), " / ").concat(translate$g('project.stock.deal'), ")</div>\n\t\t\t\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t\t\t</div>\t\t\t\t\t\t\n\t\t\t\t\t</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
 	    this._buttons = this._container.querySelectorAll('button');
 
 	    var btnStock = this._container.querySelector('.stock');
@@ -66519,11 +67622,11 @@ var Forestry = (function () {
 	    };
 
 	    var fmt_labels = function fmt_labels(val) {
-	      return "".concat(m(parseFloat(val)), " ").concat(translate$d('units.m3'));
+	      return "".concat(m(parseFloat(val)), " ").concat(translate$g('units.m3'));
 	    };
 
 	    var fmt_value = function fmt_value(val) {
-	      return "".concat(m(parseFloat(val)), " ").concat(translate$d('units.m3'));
+	      return "".concat(m(parseFloat(val)), " ").concat(translate$g('units.m3'));
 	    };
 
 	    var fmt_total = function fmt_total(w) {
@@ -66578,7 +67681,7 @@ var Forestry = (function () {
 	              total: {
 	                show: true,
 	                formatter: fmt_total,
-	                label: translate$d('project.stock.all'),
+	                label: translate$g('project.stock.all'),
 	                fontSize: '12px',
 	                fontWeight: 600
 	              }
@@ -66923,7 +68026,7 @@ var Forestry = (function () {
 	  return Project;
 	}(View$1);
 
-	var translate$e = T.getText.bind(T);
+	var translate$h = T.getText.bind(T);
 
 	var indexByName = function indexByName(layer, name) {
 	  var _layer$getGmxProperti = layer.getGmxProperties(),
@@ -67262,7 +68365,7 @@ var Forestry = (function () {
 
 	        this._layers.quadrants.repaint();
 	      } else {
-	        this._notification.error(translate$e('forbidden.project.create'), NOTIFY_TIMEOUT);
+	        this._notification.error(translate$h('forbidden.project.create'), NOTIFY_TIMEOUT);
 	      }
 	    }
 	  }, {
@@ -67350,7 +68453,7 @@ var Forestry = (function () {
 	                return _context7.abrupt("return", true);
 
 	              case 22:
-	                this._notification.warn(translate$e('quadrant.invalid'), NOTIFY_TIMEOUT);
+	                this._notification.warn(translate$h('quadrant.invalid'), NOTIFY_TIMEOUT);
 
 	                return _context7.abrupt("return", false);
 
@@ -67359,7 +68462,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 26:
-	                this._notification.error(translate$e('forbidden.project.edit'), NOTIFY_TIMEOUT);
+	                this._notification.error(translate$h('forbidden.project.edit'), NOTIFY_TIMEOUT);
 
 	              case 27:
 	              case "end":
@@ -67409,7 +68512,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 8:
-	                this._notification.error(translate$e('forbidden.project.edit'), NOTIFY_TIMEOUT);
+	                this._notification.error(translate$h('forbidden.project.edit'), NOTIFY_TIMEOUT);
 
 	              case 9:
 	              case "end":
@@ -67542,7 +68645,7 @@ var Forestry = (function () {
 	                      species: ForestStat
 	                    };
 	                  } else {
-	                    this._notification.warn(translate$e('quadrant.invalid'), NOTIFY_TIMEOUT);
+	                    this._notification.warn(translate$h('quadrant.invalid'), NOTIFY_TIMEOUT);
 	                  }
 
 	                  this._project.open(this._valid);
@@ -67606,7 +68709,7 @@ var Forestry = (function () {
 	                      species: ForestStat
 	                    };
 	                  } else {
-	                    this._notification.warn(translate$e('quadrant.invalid'), NOTIFY_TIMEOUT);
+	                    this._notification.warn(translate$h('quadrant.invalid'), NOTIFY_TIMEOUT);
 	                  }
 
 	                  this._project.open(this._valid);
@@ -68067,16 +69170,21 @@ var Forestry = (function () {
 	          }, 0)), "</td>\n\t\t\t\t\t\t\t\t\t<td></td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t</tbody>\n\t\t\t\t\t\t</table>\t\t\t\t\t\n\t\t\t\t\t</div>");
 	        }).join(''));
 
-	        if (AdvanceRegeneration) {
-	          var age = AdvanceRegeneration.age,
-	              composition = AdvanceRegeneration.composition,
-	              height = AdvanceRegeneration.height,
-	              num_per_ha = AdvanceRegeneration.num_per_ha;
-	          this._advanceSpecies.innerText = composition || '-';
-	          this._advanceAge.innerText = age || '-';
-	          this._advanceHeight.innerText = height || '-';
-	          this._advanceVolume.innerText = this.fmt(num_per_ha);
-	        }
+	        var _ref4 = AdvanceRegeneration || {
+	          age: '-',
+	          composition: '-',
+	          height: '-',
+	          num_per_ha: ''
+	        },
+	            age = _ref4.age,
+	            composition = _ref4.composition,
+	            height = _ref4.height,
+	            num_per_ha = _ref4.num_per_ha;
+
+	        this._advanceSpecies.innerText = composition;
+	        this._advanceAge.innerText = age;
+	        this._advanceHeight.innerText = height;
+	        this._advanceVolume.innerText = num_per_ha && this.fmt(num_per_ha) || '-';
 
 	        var _iterator = _createForOfIteratorHelper(this._levels.querySelectorAll('.storey')),
 	            _step;
@@ -68164,7 +69272,7 @@ var Forestry = (function () {
 	  return Stands;
 	}(View$1);
 
-	var translate$f = T.getText.bind(T);
+	var translate$i = T.getText.bind(T);
 	var ALLOWED_LAYERS = ['forestries_local', 'forestries', 'regions', 'quadrants', 'stands'];
 
 	var Quadrants$2 = /*#__PURE__*/function (_Controller) {
@@ -68196,7 +69304,7 @@ var Forestry = (function () {
 	    _this._legend = legend;
 	    _this._path = path;
 	    _this._permissions = permissions;
-	    var title = translate$f("legend.".concat(_this._layers.stands ? 'stands' : 'quadrants'));
+	    var title = translate$i("legend.".concat(_this._layers.stands ? 'stands' : 'quadrants'));
 
 	    _this._legend.addComponent('quadrants', title);
 
@@ -68236,7 +69344,7 @@ var Forestry = (function () {
 	      });
 
 	      _this._quadrantView.on('notavailable', function (e) {
-	        _this._notification.warn(translate$f('warn.notavailable'), NOTIFY_TIMEOUT);
+	        _this._notification.warn(translate$i('warn.notavailable'), NOTIFY_TIMEOUT);
 	      });
 	    }
 
@@ -68274,7 +69382,7 @@ var Forestry = (function () {
 	      });
 
 	      _this._standView.on('notavailable', function (e) {
-	        _this._notification.warn(translate$f('warn.notavailable'), NOTIFY_TIMEOUT);
+	        _this._notification.warn(translate$i('warn.notavailable'), NOTIFY_TIMEOUT);
 	      });
 	    }
 
@@ -68445,7 +69553,7 @@ var Forestry = (function () {
 	                  } else {
 	                    this._quadrantView.close();
 
-	                    this._notification.warn(translate$f('warn.notavailable'), NOTIFY_TIMEOUT);
+	                    this._notification.warn(translate$i('warn.notavailable'), NOTIFY_TIMEOUT);
 	                  }
 	                } else {
 	                  this._quadrantView.close();
@@ -68473,7 +69581,7 @@ var Forestry = (function () {
 	  return Quadrants;
 	}(Controller);
 
-	var translate$g = T.getText.bind(T);
+	var translate$j = T.getText.bind(T);
 
 	var RasterCatalog = /*#__PURE__*/function () {
 	  function RasterCatalog(_ref) {
@@ -68497,7 +69605,7 @@ var Forestry = (function () {
 	    if (ids.some(function (id) {
 	      return _this._layers[id];
 	    })) {
-	      var p = this._legend.addGroup('rasters', translate$g('legend.rasters'));
+	      var p = this._legend.addGroup('rasters', translate$j('legend.rasters'));
 
 	      ids.forEach(function (kind) {
 	        var layer = _this._layers[kind];
@@ -68505,7 +69613,7 @@ var Forestry = (function () {
 	        if (layer) {
 	          layer.setZIndexOffset(zIndexOffset);
 
-	          _this._legend.addComponent(kind, translate$g("legend.".concat(kind)), p);
+	          _this._legend.addComponent(kind, translate$j("legend.".concat(kind)), p);
 	        }
 	      });
 
@@ -69918,7 +71026,7 @@ var Forestry = (function () {
 	  return Uploaded;
 	}(View$1);
 
-	var translate$h = T.getText.bind(T);
+	var translate$k = T.getText.bind(T);
 
 	var TmsView = /*#__PURE__*/function (_Dialog) {
 	  _inherits(TmsView, _Dialog);
@@ -69931,7 +71039,7 @@ var Forestry = (function () {
 	    _classCallCheck(this, TmsView);
 
 	    _this = _super.call(this, {
-	      title: translate$h('uploaded.tms.title'),
+	      title: translate$k('uploaded.tms.title'),
 	      modal: true,
 	      top: 200,
 	      left: 400
@@ -69939,7 +71047,7 @@ var Forestry = (function () {
 
 	    _this._element.classList.add('scanex-forestry-tms-view');
 
-	    _this.content.innerHTML = "<div class=\"name\">\n                <label>".concat(translate$h('uploaded.tms.name'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"url\">\n                <label>").concat(translate$h('uploaded.tms.url'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"zoom\">\n                <label>").concat(translate$h('uploaded.tms.zoom'), "</label>\n                <div></div>\n            </div>\n            <div class=\"advanced-button\">\n                <label>").concat(translate$h('uploaded.tms.advanced'), "</label>\n                <i class=\"scanex-uploaded-icon down\"></i>\n            </div>\n            <div class=\"advanced-content hidden\">\n                <div class=\"subdomains\">\n                    <label>").concat(translate$h('uploaded.tms.subdomains'), "</label>              \n                    <input type=\"text\" value=\"abc\">                \n                </div>\n                <div class=\"error-tile-url\">\n                    <label>").concat(translate$h('uploaded.tms.errorTileUrl'), "</label>\n                    <input class=\"value\" type=\"text\" value=\"\">                \n                </div>\n                <div class=\"zoom-offset\">\n                    <label>").concat(translate$h('uploaded.tms.zoomOffset'), "</label>\n                    <div></div>\n                </div>\n                <div class=\"tile-reverse\">\n                    <label>").concat(translate$h('uploaded.tms.tileReverse'), "</label>                \n                    <input type=\"checkbox\" value=\"tileReverse\">                \n                </div>\n                <div class=\"zoom-reverse\">\n                    <label>").concat(translate$h('uploaded.tms.zoomReverse'), "</label>                \n                    <input type=\"checkbox\" value=\"zoomReverse\">                \n                </div>\n                <div class=\"detect-retina\">\n                    <label>").concat(translate$h('uploaded.tms.detectRetina'), "</label>                \n                    <input type=\"checkbox\" value=\"detectRetina\">                \n                </div>\n                <div class=\"use-credentials\">\n                    <label>").concat(translate$h('uploaded.tms.useCredentials'), "</label>            \n                    <input type=\"checkbox\" value=\"useCredentials\">                \n                </div>\n            </div>");
+	    _this.content.innerHTML = "<div class=\"name\">\n                <label>".concat(translate$k('uploaded.tms.name'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"url\">\n                <label>").concat(translate$k('uploaded.tms.url'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"zoom\">\n                <label>").concat(translate$k('uploaded.tms.zoom'), "</label>\n                <div></div>\n            </div>\n            <div class=\"advanced-button\">\n                <label>").concat(translate$k('uploaded.tms.advanced'), "</label>\n                <i class=\"scanex-uploaded-icon down\"></i>\n            </div>\n            <div class=\"advanced-content hidden\">\n                <div class=\"subdomains\">\n                    <label>").concat(translate$k('uploaded.tms.subdomains'), "</label>              \n                    <input type=\"text\" value=\"abc\">                \n                </div>\n                <div class=\"error-tile-url\">\n                    <label>").concat(translate$k('uploaded.tms.errorTileUrl'), "</label>\n                    <input class=\"value\" type=\"text\" value=\"\">                \n                </div>\n                <div class=\"zoom-offset\">\n                    <label>").concat(translate$k('uploaded.tms.zoomOffset'), "</label>\n                    <div></div>\n                </div>\n                <div class=\"tile-reverse\">\n                    <label>").concat(translate$k('uploaded.tms.tileReverse'), "</label>                \n                    <input type=\"checkbox\" value=\"tileReverse\">                \n                </div>\n                <div class=\"zoom-reverse\">\n                    <label>").concat(translate$k('uploaded.tms.zoomReverse'), "</label>                \n                    <input type=\"checkbox\" value=\"zoomReverse\">                \n                </div>\n                <div class=\"detect-retina\">\n                    <label>").concat(translate$k('uploaded.tms.detectRetina'), "</label>                \n                    <input type=\"checkbox\" value=\"detectRetina\">                \n                </div>\n                <div class=\"use-credentials\">\n                    <label>").concat(translate$k('uploaded.tms.useCredentials'), "</label>            \n                    <input type=\"checkbox\" value=\"useCredentials\">                \n                </div>\n            </div>");
 	    _this._name = _this.content.querySelector('.name').querySelector('input');
 	    _this._url = _this.content.querySelector('.url').querySelector('input');
 	    _this._zoom = new Interval(_this.content.querySelector('.zoom').querySelector('div'), {
@@ -69979,7 +71087,7 @@ var Forestry = (function () {
 	    _this._tileReverse = _this.content.querySelector('.tile-reverse').querySelector('input');
 	    _this._detectRetina = _this.content.querySelector('.detect-retina').querySelector('input');
 	    _this._useCredentials = _this.content.querySelector('.use-credentials').querySelector('input');
-	    _this.footer.innerHTML = "<button>".concat(translate$h('uploaded.tms.ok'), "</button>");
+	    _this.footer.innerHTML = "<button>".concat(translate$k('uploaded.tms.ok'), "</button>");
 	    _this._btn = _this.footer.querySelector('button');
 
 	    _this._btn.addEventListener('click', function (e) {
@@ -70011,7 +71119,7 @@ var Forestry = (function () {
 	  return TmsView;
 	}(Dialog);
 
-	var translate$i = T.getText.bind(T);
+	var translate$l = T.getText.bind(T);
 
 	var WmsView = /*#__PURE__*/function (_Dialog) {
 	  _inherits(WmsView, _Dialog);
@@ -70024,7 +71132,7 @@ var Forestry = (function () {
 	    _classCallCheck(this, WmsView);
 
 	    _this = _super.call(this, {
-	      title: translate$i('uploaded.wms.title'),
+	      title: translate$l('uploaded.wms.title'),
 	      modal: true,
 	      top: 200,
 	      left: 400
@@ -70032,10 +71140,10 @@ var Forestry = (function () {
 
 	    _this._element.classList.add('scanex-forestry-wms-view');
 
-	    _this.content.innerHTML = "<div class=\"name\">\n                <label>".concat(translate$i('uploaded.tms.name'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"url\">\n                <label>").concat(translate$i('uploaded.tms.url'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>");
+	    _this.content.innerHTML = "<div class=\"name\">\n                <label>".concat(translate$l('uploaded.tms.name'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"url\">\n                <label>").concat(translate$l('uploaded.tms.url'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>");
 	    _this._name = _this.content.querySelector('.name').querySelector('input');
 	    _this._url = _this.content.querySelector('.url').querySelector('input');
-	    _this.footer.innerHTML = "<button>".concat(translate$i('uploaded.tms.ok'), "</button>");
+	    _this.footer.innerHTML = "<button>".concat(translate$l('uploaded.tms.ok'), "</button>");
 	    _this._btn = _this.footer.querySelector('button');
 
 	    _this._btn.addEventListener('click', function (e) {
@@ -70056,7 +71164,7 @@ var Forestry = (function () {
 	  return WmsView;
 	}(Dialog);
 
-	var translate$j = T.getText.bind(T);
+	var translate$m = T.getText.bind(T);
 
 	var WfsView = /*#__PURE__*/function (_Dialog) {
 	  _inherits(WfsView, _Dialog);
@@ -70069,7 +71177,7 @@ var Forestry = (function () {
 	    _classCallCheck(this, WfsView);
 
 	    _this = _super.call(this, {
-	      title: translate$j('uploaded.wfs.title'),
+	      title: translate$m('uploaded.wfs.title'),
 	      modal: true,
 	      top: 200,
 	      left: 400
@@ -70077,7 +71185,7 @@ var Forestry = (function () {
 
 	    _this._element.classList.add('scanex-forestry-wfs-view');
 
-	    _this.content.innerHTML = "<div class=\"name\">\n                <label>".concat(translate$j('uploaded.tms.name'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"url\">\n                <label>").concat(translate$j('uploaded.tms.url'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"zoom\">\n                <label>").concat(translate$j('uploaded.tms.zoom'), "</label>\n                <div></div>\n            </div>\n            <div class=\"advanced-button\">\n                <label>").concat(translate$j('uploaded.tms.advanced'), "</label>\n                <i class=\"scanex-uploaded-icon down\"></i>\n            </div>\n            <div class=\"advanced-content hidden\">\n                <div class=\"subdomains\">\n                    <label>").concat(translate$j('uploaded.tms.subdomains'), "</label>              \n                    <input type=\"text\" value=\"abc\">                \n                </div>\n                <div class=\"error-tile-url\">\n                    <label>").concat(translate$j('uploaded.tms.errorTileUrl'), "</label>\n                    <input class=\"value\" type=\"text\" value=\"\">                \n                </div>\n                <div class=\"zoom-offset\">\n                    <label>").concat(translate$j('uploaded.tms.zoomOffset'), "</label>\n                    <div></div>\n                </div>\n                <div class=\"tile-reverse\">\n                    <label>").concat(translate$j('uploaded.tms.tileReverse'), "</label>                \n                    <input type=\"checkbox\" value=\"tileReverse\">                \n                </div>\n                <div class=\"zoom-reverse\">\n                    <label>").concat(translate$j('uploaded.tms.zoomReverse'), "</label>                \n                    <input type=\"checkbox\" value=\"zoomReverse\">                \n                </div>\n                <div class=\"detect-retina\">\n                    <label>").concat(translate$j('uploaded.tms.detectRetina'), "</label>                \n                    <input type=\"checkbox\" value=\"detectRetina\">                \n                </div>                \n                <div class=\"use-credentials\">\n                    <label>").concat(translate$j('uploaded.tms.useCredentials'), "</label>            \n                    <input type=\"checkbox\" value=\"useCredentials\">                \n                </div>\n                <div class=\"layers\">\n                    <label>").concat(translate$j('uploaded.wfs.layers'), "</label>            \n                    <input class=\"value\" type=\"text\" value=\"\">                 \n                </div>\n                <div class=\"styles\">\n                    <label>").concat(translate$j('uploaded.wfs.styles'), "</label>\n                    <input class=\"value\" type=\"text\" value=\"\">                 \n                </div>\n                <div class=\"format\">\n                    <label>").concat(translate$j('uploaded.wfs.format'), "</label>\n                    <select>\n                        <option value=\"image/jpeg\">image/jpeg</option>\n                        <option value=\"image/png\">image/png</option>\n                    </select>               \n                </div>\n                <div class=\"transparent\">\n                    <label>").concat(translate$j('uploaded.wfs.transparent'), "</label>            \n                    <input type=\"checkbox\" value=\"transparent\">                \n                </div>\n                <div class=\"crs\">\n                    <label>").concat(translate$j('uploaded.wfs.crs'), "</label>            \n                    <input class=\"value\" type=\"text\" value=\"\">                 \n                </div>\n            </div>");
+	    _this.content.innerHTML = "<div class=\"name\">\n                <label>".concat(translate$m('uploaded.tms.name'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"url\">\n                <label>").concat(translate$m('uploaded.tms.url'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"zoom\">\n                <label>").concat(translate$m('uploaded.tms.zoom'), "</label>\n                <div></div>\n            </div>\n            <div class=\"advanced-button\">\n                <label>").concat(translate$m('uploaded.tms.advanced'), "</label>\n                <i class=\"scanex-uploaded-icon down\"></i>\n            </div>\n            <div class=\"advanced-content hidden\">\n                <div class=\"subdomains\">\n                    <label>").concat(translate$m('uploaded.tms.subdomains'), "</label>              \n                    <input type=\"text\" value=\"abc\">                \n                </div>\n                <div class=\"error-tile-url\">\n                    <label>").concat(translate$m('uploaded.tms.errorTileUrl'), "</label>\n                    <input class=\"value\" type=\"text\" value=\"\">                \n                </div>\n                <div class=\"zoom-offset\">\n                    <label>").concat(translate$m('uploaded.tms.zoomOffset'), "</label>\n                    <div></div>\n                </div>\n                <div class=\"tile-reverse\">\n                    <label>").concat(translate$m('uploaded.tms.tileReverse'), "</label>                \n                    <input type=\"checkbox\" value=\"tileReverse\">                \n                </div>\n                <div class=\"zoom-reverse\">\n                    <label>").concat(translate$m('uploaded.tms.zoomReverse'), "</label>                \n                    <input type=\"checkbox\" value=\"zoomReverse\">                \n                </div>\n                <div class=\"detect-retina\">\n                    <label>").concat(translate$m('uploaded.tms.detectRetina'), "</label>                \n                    <input type=\"checkbox\" value=\"detectRetina\">                \n                </div>                \n                <div class=\"use-credentials\">\n                    <label>").concat(translate$m('uploaded.tms.useCredentials'), "</label>            \n                    <input type=\"checkbox\" value=\"useCredentials\">                \n                </div>\n                <div class=\"layers\">\n                    <label>").concat(translate$m('uploaded.wfs.layers'), "</label>            \n                    <input class=\"value\" type=\"text\" value=\"\">                 \n                </div>\n                <div class=\"styles\">\n                    <label>").concat(translate$m('uploaded.wfs.styles'), "</label>\n                    <input class=\"value\" type=\"text\" value=\"\">                 \n                </div>\n                <div class=\"format\">\n                    <label>").concat(translate$m('uploaded.wfs.format'), "</label>\n                    <select>\n                        <option value=\"image/jpeg\">image/jpeg</option>\n                        <option value=\"image/png\">image/png</option>\n                    </select>               \n                </div>\n                <div class=\"transparent\">\n                    <label>").concat(translate$m('uploaded.wfs.transparent'), "</label>            \n                    <input type=\"checkbox\" value=\"transparent\">                \n                </div>\n                <div class=\"crs\">\n                    <label>").concat(translate$m('uploaded.wfs.crs'), "</label>            \n                    <input class=\"value\" type=\"text\" value=\"\">                 \n                </div>\n            </div>");
 	    _this._name = _this.content.querySelector('.name').querySelector('input');
 	    _this._url = _this.content.querySelector('.url').querySelector('input');
 	    _this._zoom = new Interval(_this.content.querySelector('.zoom').querySelector('div'), {
@@ -70121,7 +71229,7 @@ var Forestry = (function () {
 	    _this._styles = _this.content.querySelector('.styles').querySelector('input');
 	    _this._format = _this.content.querySelector('.format').querySelector('select');
 	    _this._transparent = _this.content.querySelector('.transparent').querySelector('input');
-	    _this.footer.innerHTML = "<button>".concat(translate$j('uploaded.tms.ok'), "</button>");
+	    _this.footer.innerHTML = "<button>".concat(translate$m('uploaded.tms.ok'), "</button>");
 	    _this._btn = _this.footer.querySelector('button');
 
 	    _this._btn.addEventListener('click', function (e) {
@@ -70155,1011 +71263,6 @@ var Forestry = (function () {
 
 	  return WfsView;
 	}(Dialog);
-
-	var translate$k = T.getText.bind(T);
-
-	var roundBytes = function roundBytes(s) {
-	  if (s > 1024 * 1024 * 1024 * 1024 * 1.2) {
-	    return "".concat((Math.round(s / (1024 * 1024 * 1024 * 1024) * 100) / 100).toLocaleString('ru-RU', {
-	      minimumFractionDigits: 1,
-	      maximumFractionDigits: 1
-	    }), " ").concat(translate$k('uploaded.units.tb'));
-	  } else if (s > 1024 * 1024 * 1024 * 1.2) {
-	    return "".concat((Math.round(s / (1024 * 1024 * 1024) * 100) / 100).toLocaleString('ru-RU', {
-	      minimumFractionDigits: 1,
-	      maximumFractionDigits: 1
-	    }), " ").concat(translate$k('uploaded.units.gb'));
-	  } else if (s > 1024 * 1024 * 1.2) {
-	    return "".concat((Math.round(s / (1024 * 1024) * 100) / 100).toLocaleString('ru-RU', {
-	      minimumFractionDigits: 1,
-	      maximumFractionDigits: 1
-	    }), " ").concat(translate$k('uploaded.units.mb'));
-	  } else if (s > 1024 * 1.2) {
-	    return "".concat((Math.round(s / 1024 * 100) / 100).toLocaleString('ru-RU', {
-	      minimumFractionDigits: 1,
-	      maximumFractionDigits: 1
-	    }), " ").concat(translate$k('uploaded.units.kb'));
-	  } else {
-	    return "".concat(Math.round(s).toLocaleString('ru-RU', {
-	      minimumFractionDigits: 1,
-	      maximumFractionDigits: 1
-	    }), " ").concat(translate$k('uploaded.units.b'));
-	  }
-	};
-
-	var STATUS = {
-	  STARTED: 0,
-	  PAUSED: 1,
-	  ERROR: 2
-	};
-
-	var UploadProgress = /*#__PURE__*/function (_EventTarget) {
-	  _inherits(UploadProgress, _EventTarget);
-
-	  var _super = _createSuper(UploadProgress);
-
-	  function UploadProgress() {
-	    _classCallCheck(this, UploadProgress);
-
-	    return _super.call(this);
-	  }
-
-	  _createClass(UploadProgress, [{
-	    key: "start",
-	    value: function start() {
-	      var _this = this;
-
-	      this._panel = new Dialog({
-	        title: translate$k('uploaded.load'),
-	        left: 500,
-	        top: 300,
-	        modal: true
-	      });
-
-	      this._panel._element.classList.add('scanex-forestry-progress');
-
-	      this._panel.on('close', this.stop.bind(this));
-
-	      this._panel.content.innerHTML = "<ul class=\"files\"></ul>\n            <div class=\"progress\"></div>\n            <div class=\"speed\"></div>";
-	      this._panel.footer.innerHTML = "<button></button>";
-	      this._btn = this._panel.footer.querySelector('button');
-
-	      this._btn.addEventListener('click', function (e) {
-	        e.stopPropagation();
-
-	        if (_this._status === STATUS.STARTED) {
-	          var event = document.createEvent('Event');
-	          event.initEvent('pause', false, false);
-
-	          _this.dispatchEvent(event);
-	        } else if (_this._status === STATUS.PAUSED) {
-	          var _event = document.createEvent('Event');
-
-	          _event.initEvent('resume', false, false);
-
-	          _this.dispatchEvent(_event);
-	        } else if (_this._status === STATUS.ERROR) {
-	          _this._panel.destroy();
-
-	          _this._panel = null;
-	        }
-	      });
-
-	      this._files = this._panel.content.querySelector('.files');
-	      this._speed = this._panel.content.querySelector('.speed');
-	      this._progress = this._panel.content.querySelector('.progress');
-	    }
-	  }, {
-	    key: "stop",
-	    value: function stop() {
-	      this._panel.destroy();
-
-	      this._panel = null;
-	      var event = document.createEvent('Event');
-	      event.initEvent('stop', false, false);
-	      this.dispatchEvent(event);
-	    }
-	  }, {
-	    key: "cancelled",
-	    value: function cancelled(index) {
-	      this._status = STATUS.PAUSED;
-	      this._btn.innerText = translate$k('uploaded.resume');
-
-	      var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
-
-	      row.querySelector('.status').innerText = translate$k('uploaded.cancelled');
-	    }
-	  }, {
-	    key: "error",
-	    value: function error(index) {
-	      this._status = STATUS.ERROR;
-
-	      var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
-
-	      row.querySelector('.status').innerText = translate$k('uploaded.error.file');
-	      this._btn.innerText = translate$k('uploaded.close');
-	    }
-	  }, {
-	    key: "completed",
-	    value: function completed(index, percent) {
-	      var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
-
-	      row.querySelector('.percent').innerText = percent;
-	      row.querySelector('.status').innerText = translate$k('uploaded.completed');
-	    }
-	  }, {
-	    key: "waiting",
-	    value: function waiting(index, percent) {
-	      var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
-
-	      row.querySelector('.percent').innerText = percent;
-	      row.querySelector('.status').innerText = translate$k('uploaded.waiting');
-	    }
-	  }, {
-	    key: "started",
-	    value: function started(index) {
-	      this._status = STATUS.STARTED;
-	      this._btn.innerText = translate$k('uploaded.pause');
-
-	      var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
-
-	      row.querySelector('.status').innerText = translate$k('uploaded.started');
-	    }
-	  }, {
-	    key: "loading",
-	    value: function loading(index, percent) {
-	      var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
-
-	      row.querySelector('.percent').innerText = percent;
-	      row.querySelector('.status').innerText = translate$k('uploaded.loading');
-	    }
-	  }, {
-	    key: "stats",
-	    value: function stats(speed, size, total) {
-	      this._speed.innerText = "".concat(translate$k('uploaded.speed'), ": ").concat(roundBytes(speed), " / ").concat(translate$k('uploaded.units.s'));
-	      this._progress.innerText = "".concat(translate$k('uploaded.progress'), ": ").concat(roundBytes(size), " ").concat(translate$k('uploaded.of'), " ").concat(roundBytes(total));
-	    }
-	  }, {
-	    key: "files",
-	    set: function set(files) {
-	      this._files.innerHTML = files.map(function (_ref, i) {
-	        var name = _ref.name;
-	        return "<li data-id=\"".concat(i, "\">\n                <label class=\"name\">").concat(name, "</label>\n                <label class=\"percent\"></label>\n                <label class=\"status\"></label>\n            </li>");
-	      }).join('');
-	    }
-	  }, {
-	    key: "speed",
-	    set: function set(speed) {
-	      this._speed.innerText = speed;
-	    }
-	  }]);
-
-	  return UploadProgress;
-	}(EventTarget);
-
-	var translate$l = T.getText.bind(T);
-
-	var LayerProperties = /*#__PURE__*/function (_Dialog) {
-	  _inherits(LayerProperties, _Dialog);
-
-	  var _super = _createSuper(LayerProperties);
-
-	  function LayerProperties(title) {
-	    var _this;
-
-	    _classCallCheck(this, LayerProperties);
-
-	    _this = _super.call(this, {
-	      title: title,
-	      modal: true,
-	      top: 200,
-	      left: 400
-	    });
-
-	    _this._element.classList.add('scanex-forestry-vector-layer-properties');
-
-	    _this.content.innerHTML = "<div class=\"name\">\n            <label>".concat(translate$l('uploaded.vector.name'), "</label>\n            <input type=\"text\" value=\"\">\n        </div>");
-	    _this._name = _this.content.querySelector('.name').querySelector('input');
-	    _this.footer.innerHTML = "<button>".concat(translate$l('uploaded.vector.ok'), "</button>");
-	    _this._btn = _this.footer.querySelector('button');
-
-	    _this._btn.addEventListener('click', function (e) {
-	      e.stopPropagation();
-	      var event = document.createEvent('Event');
-	      event.initEvent('ok', false, false);
-	      event.detail = {
-	        title: _this._name.value
-	      };
-
-	      _this.dispatchEvent(event);
-	    });
-
-	    return _this;
-	  }
-
-	  return LayerProperties;
-	}(Dialog);
-
-	var translate$m = T.getText.bind(T);
-	var FILE_EXTENSIONS = {
-	  vector: ['.geojson', '.shp', '.dbf', '.prj', '.sbn', '.sbx', '.shx', '.dat', '.mif', '.mid', '.csv', '.gpx', '.kml', '.kmz', '.sxf', '.sqlite', '.geojson', '.gdbtable'].join(','),
-	  raster: ['.tif', '.tiff', '.tfw', '.xml', '.jpg', '.jgw', '.png', '.pgw', '.jp2', '.j2w'].join(',')
-	};
-
-	var FileUploader = /*#__PURE__*/function (_Controller) {
-	  _inherits(FileUploader, _Controller);
-
-	  var _super = _createSuper(FileUploader);
-
-	  function FileUploader(_ref) {
-	    var _this;
-
-	    var map = _ref.map,
-	        content = _ref.content,
-	        notification = _ref.notification,
-	        loading = _ref.loading,
-	        path = _ref.path,
-	        permissions = _ref.permissions,
-	        _ref$uploadFileSize = _ref.uploadFileSize,
-	        uploadFileSize = _ref$uploadFileSize === void 0 ? 1024 : _ref$uploadFileSize;
-
-	    _classCallCheck(this, FileUploader);
-
-	    _this = _super.call(this, {
-	      map: map,
-	      content: content,
-	      notification: notification,
-	      loading: loading
-	    });
-	    _this._permissions = permissions;
-	    _this._uploadFileSize = uploadFileSize;
-	    _this._path = path;
-	    _this._progress = new UploadProgress();
-
-	    _this._progress.on('resume', _this._resume.bind(_assertThisInitialized(_this)));
-
-	    _this._progress.on('pause', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
-	      return regeneratorRuntime.wrap(function _callee$(_context) {
-	        while (1) {
-	          switch (_context.prev = _context.next) {
-	            case 0:
-	              _context.next = 2;
-	              return _this._pause();
-
-	            case 2:
-	              return _context.abrupt("return", _context.sent);
-
-	            case 3:
-	            case "end":
-	              return _context.stop();
-	          }
-	        }
-	      }, _callee);
-	    })));
-
-	    _this._progress.on('stop', _this._stopSpeedTimer.bind(_assertThisInitialized(_this)));
-
-	    _this._layerProperties = {};
-	    return _this;
-	  }
-
-	  _createClass(FileUploader, [{
-	    key: "upload",
-	    value: function upload(type) {
-	      var _this2 = this;
-
-	      var title = type === 'vector' ? translate$m('uploaded.vector.title') : translate$m('uploaded.raster.title');
-	      var dlg = new LayerProperties(title);
-	      dlg.on('ok', function (e) {
-	        var title = e.detail.title;
-	        dlg.destroy();
-	        dlg = null;
-
-	        if (!_this2._files) {
-	          _this2._files = document.createElement('input');
-
-	          _this2._files.setAttribute('type', 'file');
-
-	          _this2._files.setAttribute('multiple', 'true');
-
-	          _this2._files.setAttribute('accept', FILE_EXTENSIONS[type]); // this._files.style.visibility = 'hidden';
-
-
-	          _this2._files.style.width = '0px';
-	          _this2._files.style.height = '0px';
-	          document.body.appendChild(_this2._files);
-
-	          _this2._files.addEventListener('change', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
-	            var sandbox;
-	            return regeneratorRuntime.wrap(function _callee2$(_context2) {
-	              while (1) {
-	                switch (_context2.prev = _context2.next) {
-	                  case 0:
-	                    _this2._progress.start();
-
-	                    _context2.next = 3;
-	                    return _this2._createSandbox();
-
-	                  case 3:
-	                    sandbox = _context2.sent;
-	                    _this2._upfiles = _this2._createParts(_this2._files.files);
-	                    _this2._progress.files = _this2._upfiles;
-	                    document.body.removeChild(_this2._files);
-	                    _this2._files = null;
-	                    _this2._layerProperties = {
-	                      type: type,
-	                      title: title,
-	                      sandbox: sandbox
-	                    };
-
-	                    _this2._startUpload();
-
-	                  case 10:
-	                  case "end":
-	                    return _context2.stop();
-	                }
-	              }
-	            }, _callee2);
-	          })));
-	        }
-
-	        _this2._files.click();
-	      });
-	      dlg.on('close', function () {
-	        dlg.destroy();
-	        dlg = null;
-	      });
-	    }
-	  }, {
-	    key: "_createParts",
-	    value: function _createParts(files) {
-	      var upfiles = [];
-
-	      for (var i = 0; i < files.length; i++) {
-	        var partsCount = Math.ceil(files[i].size / this._uploadFileSize);
-	        var parts = [];
-
-	        for (var j = 0; j < partsCount - 1; ++j) {
-	          parts.push({
-	            xhr: null,
-	            status: 'none',
-	            size: this._uploadFileSize,
-	            send: 0,
-	            needSend: this._uploadFileSize
-	          });
-	        }
-
-	        var lastSize = files[i].size - this._uploadFileSize * (partsCount - 1);
-	        parts.push({
-	          xhr: null,
-	          status: 'none',
-	          size: lastSize,
-	          send: 0,
-	          needSend: lastSize
-	        }); //статус загрузки чанка
-
-	        var p = {
-	          item: files[i],
-	          name: files[i].name,
-	          parts: parts,
-	          totalBytes: files[i].size,
-	          status: 'none' //статус загрузки файла
-
-	        };
-	        upfiles.push(p);
-	      }
-
-	      return upfiles;
-	    }
-	  }, {
-	    key: "_startUpload",
-	    value: function _startUpload() {
-	      this._upfilesStatus = "progress";
-
-	      for (var i = 0; i < this._upfiles.length; ++i) {
-	        //запускаем 6 потоков
-	        if (this._upfiles[i].status === "error") {
-	          this._upfiles[i].status = "none";
-	        }
-
-	        var wait = false;
-
-	        for (var j = 0; j < this._upfiles[i].parts.length; ++j) {
-	          if (this._upfiles[i].parts[j].status === "error") {
-	            this._upfiles[i].parts[j].status = "none"; //отменяем ошибку
-	          }
-
-	          if (this._upfiles[i].parts[j].status === "none") {
-	            wait = true; //если есть не отосланые чанки
-	          }
-	        }
-
-	        var p = this._percent(this._upfiles[i]);
-
-	        if (wait) {
-	          this._progress.waiting(i, p);
-	        } else {
-	          this._progress.completed(i, p);
-	        }
-	      }
-
-	      for (var _i = 0; _i < 8; _i++) {
-	        //запускаем 6 потоков
-	        this._sendNextPart();
-	      }
-
-	      this._stopSpeedTimer();
-
-	      this._speedTimer = setInterval(this._renewSpeedTimer.bind(this), 1000);
-	    }
-	  }, {
-	    key: "_percent",
-	    value: function _percent(t) {
-	      return Math.round(t.parts.reduce(function (a, p) {
-	        return a + p.size / t.totalBytes * (p.send / p.needSend);
-	      }, 0) * 100);
-	    }
-	  }, {
-	    key: "_sendNextPart",
-	    value: function _sendNextPart() {
-	      var _this3 = this;
-
-	      if (this._upfilesStatus === 'error') {
-	        return false;
-	      }
-
-	      var sandbox = this._layerProperties.sandbox;
-
-	      var _loop = function _loop(i) {
-	        var t = _this3._upfiles[i];
-
-	        var _loop2 = function _loop2(j) {
-	          if (t.parts[j].status === "none") {
-	            var startByte = _this3._uploadFileSize * j;
-	            var countBytes = _this3._uploadFileSize;
-
-	            if (startByte + countBytes > t.totalBytes) {
-	              countBytes = t.totalBytes - startByte;
-	            }
-
-	            if (t.status === "none") {
-	              t.status = "progress";
-
-	              _this3._progress.started(i);
-	            }
-
-	            t.parts[j].status = "progress";
-	            var chunk = t.item.slice(startByte, startByte + countBytes + 1);
-	            var chunkFile = new File([chunk], t.name);
-	            var fd = new FormData();
-	            fd.append("sandbox", sandbox);
-	            fd.append("startByte", startByte);
-	            fd.append("file", chunkFile);
-	            var req = new XMLHttpRequest();
-	            req.open("post", "".concat(_this3._path, "/sandbox/upload"));
-	            t.parts[j].xhr = req;
-	            req.upload.onerror = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
-	              return regeneratorRuntime.wrap(function _callee3$(_context3) {
-	                while (1) {
-	                  switch (_context3.prev = _context3.next) {
-	                    case 0:
-	                      t.parts[j].status = 'error';
-	                      t.parts[j].xhr = null;
-	                      t.status = "error";
-
-	                      _this3._progress.error(i);
-
-	                      _context3.next = 6;
-	                      return _this3._errorUpload();
-
-	                    case 6:
-	                    case "end":
-	                      return _context3.stop();
-	                  }
-	                }
-	              }, _callee3);
-	            }));
-	            var lastSend = 0;
-
-	            req.upload.onprogress = function (e) {
-	              t.parts[j].send = e.loaded;
-	              t.parts[j].needSend = e.total;
-
-	              var p = _this3._percent(t);
-
-	              _this3._progress.loading(i, p);
-
-	              _this3._currentSendBytes += e.loaded - lastSend; //подсчёт скорости
-
-	              lastSend = e.loaded;
-	            };
-
-	            req.onload = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
-	              var oksum, p, sumFilesOk;
-	              return regeneratorRuntime.wrap(function _callee4$(_context4) {
-	                while (1) {
-	                  switch (_context4.prev = _context4.next) {
-	                    case 0:
-	                      t.parts[j].xhr = null;
-
-	                      if (!(req.status !== 200)) {
-	                        _context4.next = 9;
-	                        break;
-	                      }
-
-	                      // анализируем HTTP-статус ответа, если статус не 200, то произошла ошибка
-	                      t.parts[j].status = 'error';
-	                      t.status = "error";
-
-	                      _this3._progress.error(i);
-
-	                      _context4.next = 7;
-	                      return _this3._errorUpload();
-
-	                    case 7:
-	                      _context4.next = 25;
-	                      break;
-
-	                    case 9:
-	                      if (!(_this3._upfilesStatus === "error")) {
-	                        _context4.next = 17;
-	                        break;
-	                      }
-
-	                      //если кто-то глюкнул останавливаем всё. Возможно это отмена
-	                      t.parts[j].status = 'error';
-	                      t.status = "error";
-
-	                      _this3._progress.error(i);
-
-	                      _context4.next = 15;
-	                      return _this3._errorUpload();
-
-	                    case 15:
-	                      _context4.next = 25;
-	                      break;
-
-	                    case 17:
-	                      // если всё прошло гладко, выводим результат
-	                      t.parts[j].status = 'finish';
-	                      oksum = t.parts.reduce(function (a, _ref6) {
-	                        var status = _ref6.status;
-	                        return status === 'finish' ? a + 1 : a;
-	                      }, 0);
-
-	                      if (oksum === t.parts.length) {
-	                        t.status = "finish";
-	                        p = _this3._percent(t);
-
-	                        _this3._progress.completed(i, p);
-	                      }
-
-	                      _this3._sendNextPart(); //проверяем что все файлы отосланы
-
-
-	                      sumFilesOk = _this3._upfiles.reduce(function (a, _ref7) {
-	                        var status = _ref7.status;
-	                        return status === 'finish' ? a + 1 : a;
-	                      }, 0);
-
-	                      if (!(sumFilesOk === _this3._upfiles.length)) {
-	                        _context4.next = 25;
-	                        break;
-	                      }
-
-	                      _context4.next = 25;
-	                      return _this3._finishUpload();
-
-	                    case 25:
-	                    case "end":
-	                      return _context4.stop();
-	                  }
-	                }
-	              }, _callee4);
-	            }));
-	            req.send(fd);
-	            return {
-	              v: {
-	                v: true
-	              }
-	            };
-	          }
-	        };
-
-	        for (var j = 0; j < t.parts.length; ++j) {
-	          var _ret2 = _loop2(j);
-
-	          if (_typeof(_ret2) === "object") return _ret2.v;
-	        }
-	      };
-
-	      for (var i = 0; i < this._upfiles.length; ++i) {
-	        var _ret = _loop(i);
-
-	        if (_typeof(_ret) === "object") return _ret.v;
-	      }
-
-	      return false;
-	    }
-	  }, {
-	    key: "_stopSpeedTimer",
-	    value: function _stopSpeedTimer() {
-	      if (this._speedTimer != null) {
-	        clearInterval(this._speedTimer);
-	      }
-
-	      this._speedTimer = null;
-	      this._progress.speed = '';
-	      this._oldSendBytes = [];
-	      this._currentSendBytes = 0;
-	    }
-	  }, {
-	    key: "_renewSpeedTimer",
-	    value: function _renewSpeedTimer() {
-	      var _this$_upfiles$reduce = this._upfiles.reduce(function (_ref8, t) {
-	        var ready = _ref8.ready,
-	            total = _ref8.total;
-	        ready = t.parts.reduce(function (a, tp) {
-	          switch (tp.status) {
-	            case 'progress':
-	              return a + tp.size * (tp.send / tp.needSend);
-
-	            case 'finish':
-	              return a + tp.size;
-
-	            default:
-	              return a;
-	          }
-	        }, ready);
-	        return {
-	          ready: ready,
-	          total: total + t.totalBytes
-	        };
-	      }, {
-	        ready: 0,
-	        total: 0
-	      }),
-	          ready = _this$_upfiles$reduce.ready,
-	          total = _this$_upfiles$reduce.total; //история скорости
-
-
-	      this._oldSendBytes.unshift(this._currentSendBytes);
-
-	      if (this._oldSendBytes.length > 5) {
-	        this._oldSendBytes.length = 5;
-	      }
-
-	      var sumSend = this._oldSendBytes.reduce(function (a, b) {
-	        return a + b;
-	      }, 0);
-
-	      var s = Math.round(sumSend / this._oldSendBytes.length); //байт в секунду
-
-	      this._progress.stats(s, ready, total);
-
-	      this._currentSendBytes = 0;
-	    }
-	  }, {
-	    key: "_resume",
-	    value: function _resume() {
-	      if (this._upfilesStatus === "error") {
-	        this._startUpload();
-	      }
-	    }
-	  }, {
-	    key: "_pause",
-	    value: function () {
-	      var _pause2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5() {
-	        var ok, t, i;
-	        return regeneratorRuntime.wrap(function _callee5$(_context5) {
-	          while (1) {
-	            switch (_context5.prev = _context5.next) {
-	              case 0:
-	                this._stopSpeedTimer();
-
-	                ok = true;
-	                i = 0;
-
-	              case 3:
-	                if (!(i < this._upfiles.length)) {
-	                  _context5.next = 11;
-	                  break;
-	                }
-
-	                t = this._upfiles[i];
-	                ok = t.parts.reduce(function (a, tp) {
-	                  if (tp.status === "progress" && tp.xhr != null) {
-	                    tp.xhr.abort();
-	                    tp.status = 'none';
-	                    a = false;
-	                  }
-
-	                  return a;
-	                }, true);
-
-	                if (ok) {
-	                  _context5.next = 8;
-	                  break;
-	                }
-
-	                return _context5.abrupt("break", 11);
-
-	              case 8:
-	                ++i;
-	                _context5.next = 3;
-	                break;
-
-	              case 11:
-	                if (!(t && !ok)) {
-	                  _context5.next = 16;
-	                  break;
-	                }
-
-	                t.status = "error";
-
-	                this._progress.cancelled(i);
-
-	                _context5.next = 16;
-	                return this._errorUpload();
-
-	              case 16:
-	              case "end":
-	                return _context5.stop();
-	            }
-	          }
-	        }, _callee5, this);
-	      }));
-
-	      function _pause() {
-	        return _pause2.apply(this, arguments);
-	      }
-
-	      return _pause;
-	    }()
-	  }, {
-	    key: "_errorUpload",
-	    value: function () {
-	      var _errorUpload2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6() {
-	        var event;
-	        return regeneratorRuntime.wrap(function _callee6$(_context6) {
-	          while (1) {
-	            switch (_context6.prev = _context6.next) {
-	              case 0:
-	                if (this._upfilesStatus !== 'error') {
-	                  this._stopSpeedTimer();
-
-	                  this._upfilesStatus = 'error'; // document.getElementById('global_status').textContent = "Error";
-	                  // document.getElementById("cancel").disabled = true;
-	                  // document.getElementById("resume").disabled = false;
-	                  // document.getElementById("send").disabled = false;
-	                  // document.getElementById("open").disabled = false;
-	                  // this._progress.stop();
-
-	                  event = document.createEvent('Event');
-	                  event.initEvent('error', false, false); // this._layerProperties = {};
-
-	                  this.dispatchEvent(event);
-	                }
-
-	              case 1:
-	              case "end":
-	                return _context6.stop();
-	            }
-	          }
-	        }, _callee6, this);
-	      }));
-
-	      function _errorUpload() {
-	        return _errorUpload2.apply(this, arguments);
-	      }
-
-	      return _errorUpload;
-	    }()
-	  }, {
-	    key: "_finishUpload",
-	    value: function () {
-	      var _finishUpload2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7() {
-	        var _this$_layerPropertie, type, title, sandbox, _yield$this$_createVe, TaskID, event, _yield$this$_createRa, _TaskID, _event;
-
-	        return regeneratorRuntime.wrap(function _callee7$(_context7) {
-	          while (1) {
-	            switch (_context7.prev = _context7.next) {
-	              case 0:
-	                if (!(this._upfilesStatus === 'finish')) {
-	                  _context7.next = 2;
-	                  break;
-	                }
-
-	                return _context7.abrupt("return");
-
-	              case 2:
-	                if (!(this._upfilesStatus === 'progress')) {
-	                  _context7.next = 29;
-	                  break;
-	                }
-
-	                this._stopSpeedTimer();
-
-	                this._upfilesStatus = 'finish'; // document.getElementById('global_status').textContent = "Finish";
-	                // document.getElementById("cancel").disabled = true;
-	                // document.getElementById("resume").disabled = true;
-	                // document.getElementById("send").disabled = false;
-	                // document.getElementById("open").disabled = false;
-
-	                this._progress.stop();
-
-	                _this$_layerPropertie = this._layerProperties, type = _this$_layerPropertie.type, title = _this$_layerPropertie.title, sandbox = _this$_layerPropertie.sandbox;
-
-	                if (!(type === 'vector')) {
-	                  _context7.next = 19;
-	                  break;
-	                }
-
-	                _context7.next = 10;
-	                return this._createVectorLayer(sandbox, title);
-
-	              case 10:
-	                _yield$this$_createVe = _context7.sent;
-	                TaskID = _yield$this$_createVe.Result.TaskID;
-	                _context7.next = 14;
-	                return this.poll(TaskID);
-
-	              case 14:
-	                event = document.createEvent('Event');
-	                event.initEvent('finished', false, false);
-	                this.dispatchEvent(event);
-	                _context7.next = 29;
-	                break;
-
-	              case 19:
-	                if (!(type === 'raster')) {
-	                  _context7.next = 29;
-	                  break;
-	                }
-
-	                _context7.next = 22;
-	                return this._createRasterLayer(sandbox, title);
-
-	              case 22:
-	                _yield$this$_createRa = _context7.sent;
-	                _TaskID = _yield$this$_createRa.Result.TaskID;
-	                _context7.next = 26;
-	                return this.poll(_TaskID);
-
-	              case 26:
-	                _event = document.createEvent('Event');
-
-	                _event.initEvent('finished', false, false);
-
-	                this.dispatchEvent(_event);
-
-	              case 29:
-	              case "end":
-	                return _context7.stop();
-	            }
-	          }
-	        }, _callee7, this);
-	      }));
-
-	      function _finishUpload() {
-	        return _finishUpload2.apply(this, arguments);
-	      }
-
-	      return _finishUpload;
-	    }()
-	  }, {
-	    key: "_createSandbox",
-	    value: function () {
-	      var _createSandbox2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8() {
-	        var _yield$this$httpGet, sandbox;
-
-	        return regeneratorRuntime.wrap(function _callee8$(_context8) {
-	          while (1) {
-	            switch (_context8.prev = _context8.next) {
-	              case 0:
-	                _context8.next = 2;
-	                return this.httpGet("".concat(this._path, "/sandbox/CreateSandbox"));
-
-	              case 2:
-	                _yield$this$httpGet = _context8.sent;
-	                sandbox = _yield$this$httpGet.sandbox;
-
-	                if (!sandbox) {
-	                  _context8.next = 6;
-	                  break;
-	                }
-
-	                return _context8.abrupt("return", sandbox);
-
-	              case 6:
-	                return _context8.abrupt("return");
-
-	              case 7:
-	              case "end":
-	                return _context8.stop();
-	            }
-	          }
-	        }, _callee8, this);
-	      }));
-
-	      function _createSandbox() {
-	        return _createSandbox2.apply(this, arguments);
-	      }
-
-	      return _createSandbox;
-	    }()
-	  }, {
-	    key: "_createVectorLayer",
-	    value: function () {
-	      var _createVectorLayer2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9(sandboxId, title) {
-	        var fd, data;
-	        return regeneratorRuntime.wrap(function _callee9$(_context9) {
-	          while (1) {
-	            switch (_context9.prev = _context9.next) {
-	              case 0:
-	                fd = new FormData();
-	                fd.append('SourceType', 'sandbox');
-	                fd.append('SandboxId', sandboxId);
-	                fd.append('title', title);
-	                _context9.next = 6;
-	                return this.postData("".concat(this._path, "/VectorLayer/Insert.ashx"), fd);
-
-	              case 6:
-	                data = _context9.sent;
-	                return _context9.abrupt("return", data || false);
-
-	              case 8:
-	              case "end":
-	                return _context9.stop();
-	            }
-	          }
-	        }, _callee9, this);
-	      }));
-
-	      function _createVectorLayer(_x, _x2) {
-	        return _createVectorLayer2.apply(this, arguments);
-	      }
-
-	      return _createVectorLayer;
-	    }()
-	  }, {
-	    key: "_createRasterLayer",
-	    value: function () {
-	      var _createRasterLayer2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(sandboxId, title) {
-	        var fd, data;
-	        return regeneratorRuntime.wrap(function _callee10$(_context10) {
-	          while (1) {
-	            switch (_context10.prev = _context10.next) {
-	              case 0:
-	                fd = new FormData();
-	                fd.append('SourceType', 'sandbox');
-	                fd.append('SandboxId', sandboxId);
-	                fd.append('title', title);
-	                _context10.next = 6;
-	                return this.postData("".concat(this._path, "/RasterLayer/Insert.ashx"), fd);
-
-	              case 6:
-	                data = _context10.sent;
-	                return _context10.abrupt("return", data || false);
-
-	              case 8:
-	              case "end":
-	                return _context10.stop();
-	            }
-	          }
-	        }, _callee10, this);
-	      }));
-
-	      function _createRasterLayer(_x3, _x4) {
-	        return _createRasterLayer2.apply(this, arguments);
-	      }
-
-	      return _createRasterLayer;
-	    }()
-	  }]);
-
-	  return FileUploader;
-	}(Controller);
 
 	function parseLinearRing(linearRing) {
 	  var children = linearRing.children;
