@@ -33,7 +33,7 @@ var Forestry = (function () {
 	  }
 	};
 
-	// Thank's IE8 for his funny defineProperty
+	// Detect IE8's incomplete defineProperty implementation
 	var descriptors = !fails(function () {
 	  return Object.defineProperty({}, 1, { get: function () { return 7; } })[1] != 7;
 	});
@@ -45,7 +45,7 @@ var Forestry = (function () {
 	var NASHORN_BUG = getOwnPropertyDescriptor && !nativePropertyIsEnumerable.call({ 1: 2 }, 1);
 
 	// `Object.prototype.propertyIsEnumerable` method implementation
-	// https://tc39.github.io/ecma262/#sec-object.prototype.propertyisenumerable
+	// https://tc39.es/ecma262/#sec-object.prototype.propertyisenumerable
 	var f = NASHORN_BUG ? function propertyIsEnumerable(V) {
 	  var descriptor = getOwnPropertyDescriptor(this, V);
 	  return !!descriptor && descriptor.enumerable;
@@ -82,7 +82,7 @@ var Forestry = (function () {
 	} : Object;
 
 	// `RequireObjectCoercible` abstract operation
-	// https://tc39.github.io/ecma262/#sec-requireobjectcoercible
+	// https://tc39.es/ecma262/#sec-requireobjectcoercible
 	var requireObjectCoercible = function (it) {
 	  if (it == undefined) throw TypeError("Can't call method on " + it);
 	  return it;
@@ -101,7 +101,7 @@ var Forestry = (function () {
 	};
 
 	// `ToPrimitive` abstract operation
-	// https://tc39.github.io/ecma262/#sec-toprimitive
+	// https://tc39.es/ecma262/#sec-toprimitive
 	// instead of the ES6 spec version, we didn't implement @@toPrimitive case
 	// and the second argument - flag - preferred type is a string
 	var toPrimitive = function (input, PREFERRED_STRING) {
@@ -137,7 +137,7 @@ var Forestry = (function () {
 	var nativeGetOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
 
 	// `Object.getOwnPropertyDescriptor` method
-	// https://tc39.github.io/ecma262/#sec-object.getownpropertydescriptor
+	// https://tc39.es/ecma262/#sec-object.getownpropertydescriptor
 	var f$1 = descriptors ? nativeGetOwnPropertyDescriptor : function getOwnPropertyDescriptor(O, P) {
 	  O = toIndexedObject(O);
 	  P = toPrimitive(P, true);
@@ -160,7 +160,7 @@ var Forestry = (function () {
 	var nativeDefineProperty = Object.defineProperty;
 
 	// `Object.defineProperty` method
-	// https://tc39.github.io/ecma262/#sec-object.defineproperty
+	// https://tc39.es/ecma262/#sec-object.defineproperty
 	var f$2 = descriptors ? nativeDefineProperty : function defineProperty(O, P, Attributes) {
 	  anObject(O);
 	  P = toPrimitive(P, true);
@@ -218,9 +218,9 @@ var Forestry = (function () {
 	(module.exports = function (key, value) {
 	  return sharedStore[key] || (sharedStore[key] = value !== undefined ? value : {});
 	})('versions', []).push({
-	  version: '3.7.0',
+	  version: '3.8.2',
 	  mode:  'global',
-	  copyright: '© 2020 Denis Pushkarev (zloirock.ru)'
+	  copyright: '© 2021 Denis Pushkarev (zloirock.ru)'
 	});
 	});
 
@@ -346,7 +346,7 @@ var Forestry = (function () {
 	var floor = Math.floor;
 
 	// `ToInteger` abstract operation
-	// https://tc39.github.io/ecma262/#sec-tointeger
+	// https://tc39.es/ecma262/#sec-tointeger
 	var toInteger = function (argument) {
 	  return isNaN(argument = +argument) ? 0 : (argument > 0 ? floor : ceil)(argument);
 	};
@@ -354,7 +354,7 @@ var Forestry = (function () {
 	var min = Math.min;
 
 	// `ToLength` abstract operation
-	// https://tc39.github.io/ecma262/#sec-tolength
+	// https://tc39.es/ecma262/#sec-tolength
 	var toLength = function (argument) {
 	  return argument > 0 ? min(toInteger(argument), 0x1FFFFFFFFFFFFF) : 0; // 2 ** 53 - 1 == 9007199254740991
 	};
@@ -392,10 +392,10 @@ var Forestry = (function () {
 
 	var arrayIncludes = {
 	  // `Array.prototype.includes` method
-	  // https://tc39.github.io/ecma262/#sec-array.prototype.includes
+	  // https://tc39.es/ecma262/#sec-array.prototype.includes
 	  includes: createMethod(true),
 	  // `Array.prototype.indexOf` method
-	  // https://tc39.github.io/ecma262/#sec-array.prototype.indexof
+	  // https://tc39.es/ecma262/#sec-array.prototype.indexof
 	  indexOf: createMethod(false)
 	};
 
@@ -429,7 +429,7 @@ var Forestry = (function () {
 	var hiddenKeys$1 = enumBugKeys.concat('length', 'prototype');
 
 	// `Object.getOwnPropertyNames` method
-	// https://tc39.github.io/ecma262/#sec-object.getownpropertynames
+	// https://tc39.es/ecma262/#sec-object.getownpropertynames
 	var f$3 = Object.getOwnPropertyNames || function getOwnPropertyNames(O) {
 	  return objectKeysInternal(O, hiddenKeys$1);
 	};
@@ -565,13 +565,13 @@ var Forestry = (function () {
 	};
 
 	// `ToObject` abstract operation
-	// https://tc39.github.io/ecma262/#sec-toobject
+	// https://tc39.es/ecma262/#sec-toobject
 	var toObject = function (argument) {
 	  return Object(requireObjectCoercible(argument));
 	};
 
 	// `IsArray` abstract operation
-	// https://tc39.github.io/ecma262/#sec-isarray
+	// https://tc39.es/ecma262/#sec-isarray
 	var isArray = Array.isArray || function isArray(arg) {
 	  return classofRaw(arg) == 'Array';
 	};
@@ -602,7 +602,7 @@ var Forestry = (function () {
 	var SPECIES = wellKnownSymbol('species');
 
 	// `ArraySpeciesCreate` abstract operation
-	// https://tc39.github.io/ecma262/#sec-arrayspeciescreate
+	// https://tc39.es/ecma262/#sec-arrayspeciescreate
 	var arraySpeciesCreate = function (originalArray, length) {
 	  var C;
 	  if (isArray(originalArray)) {
@@ -618,13 +618,14 @@ var Forestry = (function () {
 
 	var push = [].push;
 
-	// `Array.prototype.{ forEach, map, filter, some, every, find, findIndex }` methods implementation
+	// `Array.prototype.{ forEach, map, filter, some, every, find, findIndex, filterOut }` methods implementation
 	var createMethod$1 = function (TYPE) {
 	  var IS_MAP = TYPE == 1;
 	  var IS_FILTER = TYPE == 2;
 	  var IS_SOME = TYPE == 3;
 	  var IS_EVERY = TYPE == 4;
 	  var IS_FIND_INDEX = TYPE == 6;
+	  var IS_FILTER_OUT = TYPE == 7;
 	  var NO_HOLES = TYPE == 5 || IS_FIND_INDEX;
 	  return function ($this, callbackfn, that, specificCreate) {
 	    var O = toObject($this);
@@ -633,7 +634,7 @@ var Forestry = (function () {
 	    var length = toLength(self.length);
 	    var index = 0;
 	    var create = specificCreate || arraySpeciesCreate;
-	    var target = IS_MAP ? create($this, length) : IS_FILTER ? create($this, 0) : undefined;
+	    var target = IS_MAP ? create($this, length) : IS_FILTER || IS_FILTER_OUT ? create($this, 0) : undefined;
 	    var value, result;
 	    for (;length > index; index++) if (NO_HOLES || index in self) {
 	      value = self[index];
@@ -645,7 +646,10 @@ var Forestry = (function () {
 	          case 5: return value;             // find
 	          case 6: return index;             // findIndex
 	          case 2: push.call(target, value); // filter
-	        } else if (IS_EVERY) return false;  // every
+	        } else switch (TYPE) {
+	          case 4: return false;             // every
+	          case 7: push.call(target, value); // filterOut
+	        }
 	      }
 	    }
 	    return IS_FIND_INDEX ? -1 : IS_SOME || IS_EVERY ? IS_EVERY : target;
@@ -654,26 +658,29 @@ var Forestry = (function () {
 
 	var arrayIteration = {
 	  // `Array.prototype.forEach` method
-	  // https://tc39.github.io/ecma262/#sec-array.prototype.foreach
+	  // https://tc39.es/ecma262/#sec-array.prototype.foreach
 	  forEach: createMethod$1(0),
 	  // `Array.prototype.map` method
-	  // https://tc39.github.io/ecma262/#sec-array.prototype.map
+	  // https://tc39.es/ecma262/#sec-array.prototype.map
 	  map: createMethod$1(1),
 	  // `Array.prototype.filter` method
-	  // https://tc39.github.io/ecma262/#sec-array.prototype.filter
+	  // https://tc39.es/ecma262/#sec-array.prototype.filter
 	  filter: createMethod$1(2),
 	  // `Array.prototype.some` method
-	  // https://tc39.github.io/ecma262/#sec-array.prototype.some
+	  // https://tc39.es/ecma262/#sec-array.prototype.some
 	  some: createMethod$1(3),
 	  // `Array.prototype.every` method
-	  // https://tc39.github.io/ecma262/#sec-array.prototype.every
+	  // https://tc39.es/ecma262/#sec-array.prototype.every
 	  every: createMethod$1(4),
 	  // `Array.prototype.find` method
-	  // https://tc39.github.io/ecma262/#sec-array.prototype.find
+	  // https://tc39.es/ecma262/#sec-array.prototype.find
 	  find: createMethod$1(5),
 	  // `Array.prototype.findIndex` method
-	  // https://tc39.github.io/ecma262/#sec-array.prototype.findIndex
-	  findIndex: createMethod$1(6)
+	  // https://tc39.es/ecma262/#sec-array.prototype.findIndex
+	  findIndex: createMethod$1(6),
+	  // `Array.prototype.filterOut` method
+	  // https://github.com/tc39/proposal-array-filtering
+	  filterOut: createMethod$1(7)
 	};
 
 	var engineUserAgent = getBuiltIn('navigator', 'userAgent') || '';
@@ -745,7 +752,7 @@ var Forestry = (function () {
 	var USES_TO_LENGTH = arrayMethodUsesToLength('filter');
 
 	// `Array.prototype.filter` method
-	// https://tc39.github.io/ecma262/#sec-array.prototype.filter
+	// https://tc39.es/ecma262/#sec-array.prototype.filter
 	// with adding support of @@species
 	_export({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT || !USES_TO_LENGTH }, {
 	  filter: function filter(callbackfn /* , thisArg */) {
@@ -769,13 +776,13 @@ var Forestry = (function () {
 	var USES_TO_LENGTH$1 = arrayMethodUsesToLength('forEach');
 
 	// `Array.prototype.forEach` method implementation
-	// https://tc39.github.io/ecma262/#sec-array.prototype.foreach
+	// https://tc39.es/ecma262/#sec-array.prototype.foreach
 	var arrayForEach = (!STRICT_METHOD || !USES_TO_LENGTH$1) ? function forEach(callbackfn /* , thisArg */) {
 	  return $forEach(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
 	} : [].forEach;
 
 	// `Array.prototype.forEach` method
-	// https://tc39.github.io/ecma262/#sec-array.prototype.foreach
+	// https://tc39.es/ecma262/#sec-array.prototype.foreach
 	_export({ target: 'Array', proto: true, forced: [].forEach != arrayForEach }, {
 	  forEach: arrayForEach
 	});
@@ -791,7 +798,7 @@ var Forestry = (function () {
 	var USES_TO_LENGTH$2 = arrayMethodUsesToLength('indexOf', { ACCESSORS: true, 1: 0 });
 
 	// `Array.prototype.indexOf` method
-	// https://tc39.github.io/ecma262/#sec-array.prototype.indexof
+	// https://tc39.es/ecma262/#sec-array.prototype.indexof
 	_export({ target: 'Array', proto: true, forced: NEGATIVE_ZERO || !STRICT_METHOD$1 || !USES_TO_LENGTH$2 }, {
 	  indexOf: function indexOf(searchElement /* , fromIndex = 0 */) {
 	    return NEGATIVE_ZERO
@@ -810,7 +817,7 @@ var Forestry = (function () {
 	var USES_TO_LENGTH$3 = arrayMethodUsesToLength('map');
 
 	// `Array.prototype.map` method
-	// https://tc39.github.io/ecma262/#sec-array.prototype.map
+	// https://tc39.es/ecma262/#sec-array.prototype.map
 	// with adding support of @@species
 	_export({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT$1 || !USES_TO_LENGTH$3 }, {
 	  map: function map(callbackfn /* , thisArg */) {
@@ -847,10 +854,10 @@ var Forestry = (function () {
 
 	var arrayReduce = {
 	  // `Array.prototype.reduce` method
-	  // https://tc39.github.io/ecma262/#sec-array.prototype.reduce
+	  // https://tc39.es/ecma262/#sec-array.prototype.reduce
 	  left: createMethod$2(false),
 	  // `Array.prototype.reduceRight` method
-	  // https://tc39.github.io/ecma262/#sec-array.prototype.reduceright
+	  // https://tc39.es/ecma262/#sec-array.prototype.reduceright
 	  right: createMethod$2(true)
 	};
 
@@ -869,7 +876,7 @@ var Forestry = (function () {
 	var CHROME_BUG = !engineIsNode && engineV8Version > 79 && engineV8Version < 83;
 
 	// `Array.prototype.reduce` method
-	// https://tc39.github.io/ecma262/#sec-array.prototype.reduce
+	// https://tc39.es/ecma262/#sec-array.prototype.reduce
 	_export({ target: 'Array', proto: true, forced: !STRICT_METHOD$2 || !USES_TO_LENGTH$4 || CHROME_BUG }, {
 	  reduce: function reduce(callbackfn /* , initialValue */) {
 	    return $reduce(this, callbackfn, arguments.length, arguments.length > 1 ? arguments[1] : undefined);
@@ -877,7 +884,7 @@ var Forestry = (function () {
 	});
 
 	// `Object.keys` method
-	// https://tc39.github.io/ecma262/#sec-object.keys
+	// https://tc39.es/ecma262/#sec-object.keys
 	var objectKeys = Object.keys || function keys(O) {
 	  return objectKeysInternal(O, enumBugKeys);
 	};
@@ -885,7 +892,7 @@ var Forestry = (function () {
 	var FAILS_ON_PRIMITIVES = fails(function () { objectKeys(1); });
 
 	// `Object.keys` method
-	// https://tc39.github.io/ecma262/#sec-object.keys
+	// https://tc39.es/ecma262/#sec-object.keys
 	_export({ target: 'Object', stat: true, forced: FAILS_ON_PRIMITIVES }, {
 	  keys: function keys(it) {
 	    return objectKeys(toObject(it));
@@ -923,19 +930,19 @@ var Forestry = (function () {
 	};
 
 	// `Object.prototype.toString` method implementation
-	// https://tc39.github.io/ecma262/#sec-object.prototype.tostring
+	// https://tc39.es/ecma262/#sec-object.prototype.tostring
 	var objectToString = toStringTagSupport ? {}.toString : function toString() {
 	  return '[object ' + classof(this) + ']';
 	};
 
 	// `Object.prototype.toString` method
-	// https://tc39.github.io/ecma262/#sec-object.prototype.tostring
+	// https://tc39.es/ecma262/#sec-object.prototype.tostring
 	if (!toStringTagSupport) {
 	  redefine(Object.prototype, 'toString', objectToString, { unsafe: true });
 	}
 
 	// `RegExp.prototype.flags` getter implementation
-	// https://tc39.github.io/ecma262/#sec-get-regexp.prototype.flags
+	// https://tc39.es/ecma262/#sec-get-regexp.prototype.flags
 	var regexpFlags = function () {
 	  var that = anObject(this);
 	  var result = '';
@@ -1057,6 +1064,8 @@ var Forestry = (function () {
 
 	var regexpExec = patchedExec;
 
+	// `RegExp.prototype.exec` method
+	// https://tc39.es/ecma262/#sec-regexp.prototype.exec
 	_export({ target: 'RegExp', proto: true, forced: /./.exec !== regexpExec }, {
 	  exec: regexpExec
 	});
@@ -1070,7 +1079,7 @@ var Forestry = (function () {
 	var INCORRECT_NAME = nativeToString.name != TO_STRING;
 
 	// `RegExp.prototype.toString` method
-	// https://tc39.github.io/ecma262/#sec-regexp.prototype.tostring
+	// https://tc39.es/ecma262/#sec-regexp.prototype.tostring
 	if (NOT_GENERIC || INCORRECT_NAME) {
 	  redefine(RegExp.prototype, TO_STRING, function toString() {
 	    var R = anObject(this);
@@ -1207,14 +1216,14 @@ var Forestry = (function () {
 	};
 
 	// `SameValue` abstract operation
-	// https://tc39.github.io/ecma262/#sec-samevalue
+	// https://tc39.es/ecma262/#sec-samevalue
 	var sameValue = Object.is || function is(x, y) {
 	  // eslint-disable-next-line no-self-compare
 	  return x === y ? x !== 0 || 1 / x === 1 / y : x != x && y != y;
 	};
 
 	// `RegExpExec` abstract operation
-	// https://tc39.github.io/ecma262/#sec-regexpexec
+	// https://tc39.es/ecma262/#sec-regexpexec
 	var regexpExecAbstract = function (R, S) {
 	  var exec = R.exec;
 	  if (typeof exec === 'function') {
@@ -1236,14 +1245,14 @@ var Forestry = (function () {
 	fixRegexpWellKnownSymbolLogic('search', 1, function (SEARCH, nativeSearch, maybeCallNative) {
 	  return [
 	    // `String.prototype.search` method
-	    // https://tc39.github.io/ecma262/#sec-string.prototype.search
+	    // https://tc39.es/ecma262/#sec-string.prototype.search
 	    function search(regexp) {
 	      var O = requireObjectCoercible(this);
 	      var searcher = regexp == undefined ? undefined : regexp[SEARCH];
 	      return searcher !== undefined ? searcher.call(regexp, O) : new RegExp(regexp)[SEARCH](String(O));
 	    },
 	    // `RegExp.prototype[@@search]` method
-	    // https://tc39.github.io/ecma262/#sec-regexp.prototype-@@search
+	    // https://tc39.es/ecma262/#sec-regexp.prototype-@@search
 	    function (regexp) {
 	      var res = maybeCallNative(nativeSearch, regexp, this);
 	      if (res.done) return res.value;
@@ -1308,7 +1317,7 @@ var Forestry = (function () {
 	}
 
 	// `Object.defineProperties` method
-	// https://tc39.github.io/ecma262/#sec-object.defineproperties
+	// https://tc39.es/ecma262/#sec-object.defineproperties
 	var objectDefineProperties = descriptors ? Object.defineProperties : function defineProperties(O, Properties) {
 	  anObject(O);
 	  var keys = objectKeys(Properties);
@@ -1379,7 +1388,7 @@ var Forestry = (function () {
 	hiddenKeys[IE_PROTO] = true;
 
 	// `Object.create` method
-	// https://tc39.github.io/ecma262/#sec-object.create
+	// https://tc39.es/ecma262/#sec-object.create
 	var objectCreate = Object.create || function create(O, Properties) {
 	  var result;
 	  if (O !== null) {
@@ -1570,7 +1579,7 @@ var Forestry = (function () {
 	};
 
 	// `Symbol` constructor
-	// https://tc39.github.io/ecma262/#sec-symbol-constructor
+	// https://tc39.es/ecma262/#sec-symbol-constructor
 	if (!nativeSymbol) {
 	  $Symbol = function Symbol() {
 	    if (this instanceof $Symbol) throw TypeError('Symbol is not a constructor');
@@ -1627,7 +1636,7 @@ var Forestry = (function () {
 
 	_export({ target: SYMBOL, stat: true, forced: !nativeSymbol }, {
 	  // `Symbol.for` method
-	  // https://tc39.github.io/ecma262/#sec-symbol.for
+	  // https://tc39.es/ecma262/#sec-symbol.for
 	  'for': function (key) {
 	    var string = String(key);
 	    if (has(StringToSymbolRegistry, string)) return StringToSymbolRegistry[string];
@@ -1637,7 +1646,7 @@ var Forestry = (function () {
 	    return symbol;
 	  },
 	  // `Symbol.keyFor` method
-	  // https://tc39.github.io/ecma262/#sec-symbol.keyfor
+	  // https://tc39.es/ecma262/#sec-symbol.keyfor
 	  keyFor: function keyFor(sym) {
 	    if (!isSymbol(sym)) throw TypeError(sym + ' is not a symbol');
 	    if (has(SymbolToStringRegistry, sym)) return SymbolToStringRegistry[sym];
@@ -1648,25 +1657,25 @@ var Forestry = (function () {
 
 	_export({ target: 'Object', stat: true, forced: !nativeSymbol, sham: !descriptors }, {
 	  // `Object.create` method
-	  // https://tc39.github.io/ecma262/#sec-object.create
+	  // https://tc39.es/ecma262/#sec-object.create
 	  create: $create,
 	  // `Object.defineProperty` method
-	  // https://tc39.github.io/ecma262/#sec-object.defineproperty
+	  // https://tc39.es/ecma262/#sec-object.defineproperty
 	  defineProperty: $defineProperty,
 	  // `Object.defineProperties` method
-	  // https://tc39.github.io/ecma262/#sec-object.defineproperties
+	  // https://tc39.es/ecma262/#sec-object.defineproperties
 	  defineProperties: $defineProperties,
 	  // `Object.getOwnPropertyDescriptor` method
-	  // https://tc39.github.io/ecma262/#sec-object.getownpropertydescriptors
+	  // https://tc39.es/ecma262/#sec-object.getownpropertydescriptors
 	  getOwnPropertyDescriptor: $getOwnPropertyDescriptor
 	});
 
 	_export({ target: 'Object', stat: true, forced: !nativeSymbol }, {
 	  // `Object.getOwnPropertyNames` method
-	  // https://tc39.github.io/ecma262/#sec-object.getownpropertynames
+	  // https://tc39.es/ecma262/#sec-object.getownpropertynames
 	  getOwnPropertyNames: $getOwnPropertyNames,
 	  // `Object.getOwnPropertySymbols` method
-	  // https://tc39.github.io/ecma262/#sec-object.getownpropertysymbols
+	  // https://tc39.es/ecma262/#sec-object.getownpropertysymbols
 	  getOwnPropertySymbols: $getOwnPropertySymbols
 	});
 
@@ -1679,7 +1688,7 @@ var Forestry = (function () {
 	});
 
 	// `JSON.stringify` method behavior with symbols
-	// https://tc39.github.io/ecma262/#sec-json.stringify
+	// https://tc39.es/ecma262/#sec-json.stringify
 	if ($stringify) {
 	  var FORCED_JSON_STRINGIFY = !nativeSymbol || fails(function () {
 	    var symbol = $Symbol();
@@ -1711,12 +1720,12 @@ var Forestry = (function () {
 	}
 
 	// `Symbol.prototype[@@toPrimitive]` method
-	// https://tc39.github.io/ecma262/#sec-symbol.prototype-@@toprimitive
+	// https://tc39.es/ecma262/#sec-symbol.prototype-@@toprimitive
 	if (!$Symbol[PROTOTYPE$1][TO_PRIMITIVE]) {
 	  createNonEnumerableProperty($Symbol[PROTOTYPE$1], TO_PRIMITIVE, $Symbol[PROTOTYPE$1].valueOf);
 	}
 	// `Symbol.prototype[@@toStringTag]` property
-	// https://tc39.github.io/ecma262/#sec-symbol.prototype-@@tostringtag
+	// https://tc39.es/ecma262/#sec-symbol.prototype-@@tostringtag
 	setToStringTag($Symbol, SYMBOL);
 
 	hiddenKeys[HIDDEN] = true;
@@ -1765,22 +1774,22 @@ var Forestry = (function () {
 	}
 
 	// `Symbol.asyncIterator` well-known symbol
-	// https://tc39.github.io/ecma262/#sec-symbol.asynciterator
+	// https://tc39.es/ecma262/#sec-symbol.asynciterator
 	defineWellKnownSymbol('asyncIterator');
 
 	// `Symbol.iterator` well-known symbol
-	// https://tc39.github.io/ecma262/#sec-symbol.iterator
+	// https://tc39.es/ecma262/#sec-symbol.iterator
 	defineWellKnownSymbol('iterator');
 
 	// `Symbol.toStringTag` well-known symbol
-	// https://tc39.github.io/ecma262/#sec-symbol.tostringtag
+	// https://tc39.es/ecma262/#sec-symbol.tostringtag
 	defineWellKnownSymbol('toStringTag');
 
 	var UNSCOPABLES = wellKnownSymbol('unscopables');
 	var ArrayPrototype = Array.prototype;
 
 	// Array.prototype[@@unscopables]
-	// https://tc39.github.io/ecma262/#sec-array.prototype-@@unscopables
+	// https://tc39.es/ecma262/#sec-array.prototype-@@unscopables
 	if (ArrayPrototype[UNSCOPABLES] == undefined) {
 	  objectDefineProperty.f(ArrayPrototype, UNSCOPABLES, {
 	    configurable: true,
@@ -1805,7 +1814,7 @@ var Forestry = (function () {
 	var ObjectPrototype$1 = Object.prototype;
 
 	// `Object.getPrototypeOf` method
-	// https://tc39.github.io/ecma262/#sec-object.getprototypeof
+	// https://tc39.es/ecma262/#sec-object.getprototypeof
 	var objectGetPrototypeOf = correctPrototypeGetter ? Object.getPrototypeOf : function (O) {
 	  O = toObject(O);
 	  if (has(O, IE_PROTO$1)) return O[IE_PROTO$1];
@@ -1820,7 +1829,7 @@ var Forestry = (function () {
 	var returnThis = function () { return this; };
 
 	// `%IteratorPrototype%` object
-	// https://tc39.github.io/ecma262/#sec-%iteratorprototype%-object
+	// https://tc39.es/ecma262/#sec-%iteratorprototype%-object
 	var IteratorPrototype, PrototypeOfArrayIteratorPrototype, arrayIterator;
 
 	if ([].keys) {
@@ -1868,7 +1877,7 @@ var Forestry = (function () {
 	};
 
 	// `Object.setPrototypeOf` method
-	// https://tc39.github.io/ecma262/#sec-object.setprototypeof
+	// https://tc39.es/ecma262/#sec-object.setprototypeof
 	// Works with __proto__ only. Old v8 can't work with null proto objects.
 	/* eslint-disable no-proto */
 	var objectSetPrototypeOf = Object.setPrototypeOf || ('__proto__' in {} ? function () {
@@ -1971,15 +1980,15 @@ var Forestry = (function () {
 	var getInternalState$1 = internalState.getterFor(ARRAY_ITERATOR);
 
 	// `Array.prototype.entries` method
-	// https://tc39.github.io/ecma262/#sec-array.prototype.entries
+	// https://tc39.es/ecma262/#sec-array.prototype.entries
 	// `Array.prototype.keys` method
-	// https://tc39.github.io/ecma262/#sec-array.prototype.keys
+	// https://tc39.es/ecma262/#sec-array.prototype.keys
 	// `Array.prototype.values` method
-	// https://tc39.github.io/ecma262/#sec-array.prototype.values
+	// https://tc39.es/ecma262/#sec-array.prototype.values
 	// `Array.prototype[@@iterator]` method
-	// https://tc39.github.io/ecma262/#sec-array.prototype-@@iterator
+	// https://tc39.es/ecma262/#sec-array.prototype-@@iterator
 	// `CreateArrayIterator` internal method
-	// https://tc39.github.io/ecma262/#sec-createarrayiterator
+	// https://tc39.es/ecma262/#sec-createarrayiterator
 	var es_array_iterator = defineIterator(Array, 'Array', function (iterated, kind) {
 	  setInternalState$1(this, {
 	    type: ARRAY_ITERATOR,
@@ -1988,7 +1997,7 @@ var Forestry = (function () {
 	    kind: kind                         // kind
 	  });
 	// `%ArrayIteratorPrototype%.next` method
-	// https://tc39.github.io/ecma262/#sec-%arrayiteratorprototype%.next
+	// https://tc39.es/ecma262/#sec-%arrayiteratorprototype%.next
 	}, function () {
 	  var state = getInternalState$1(this);
 	  var target = state.target;
@@ -2004,11 +2013,11 @@ var Forestry = (function () {
 	}, 'values');
 
 	// argumentsList[@@iterator] is %ArrayProto_values%
-	// https://tc39.github.io/ecma262/#sec-createunmappedargumentsobject
-	// https://tc39.github.io/ecma262/#sec-createmappedargumentsobject
+	// https://tc39.es/ecma262/#sec-createunmappedargumentsobject
+	// https://tc39.es/ecma262/#sec-createmappedargumentsobject
 	iterators.Arguments = iterators.Array;
 
-	// https://tc39.github.io/ecma262/#sec-array.prototype-@@unscopables
+	// https://tc39.es/ecma262/#sec-array.prototype-@@unscopables
 	addToUnscopables('keys');
 	addToUnscopables('values');
 	addToUnscopables('entries');
@@ -2027,7 +2036,7 @@ var Forestry = (function () {
 	var max$1 = Math.max;
 
 	// `Array.prototype.slice` method
-	// https://tc39.github.io/ecma262/#sec-array.prototype.slice
+	// https://tc39.es/ecma262/#sec-array.prototype.slice
 	// fallback for not array-like ES3 strings and DOM objects
 	_export({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT$2 || !USES_TO_LENGTH$5 }, {
 	  slice: function slice(start, end) {
@@ -2065,7 +2074,7 @@ var Forestry = (function () {
 	var NAME = 'name';
 
 	// Function instances `.name` property
-	// https://tc39.github.io/ecma262/#sec-function-instances-name
+	// https://tc39.es/ecma262/#sec-function-instances-name
 	if (descriptors && !(NAME in FunctionPrototype)) {
 	  defineProperty$4(FunctionPrototype, NAME, {
 	    configurable: true,
@@ -2080,17 +2089,17 @@ var Forestry = (function () {
 	}
 
 	// JSON[@@toStringTag] property
-	// https://tc39.github.io/ecma262/#sec-json-@@tostringtag
+	// https://tc39.es/ecma262/#sec-json-@@tostringtag
 	setToStringTag(global_1.JSON, 'JSON', true);
 
 	// Math[@@toStringTag] property
-	// https://tc39.github.io/ecma262/#sec-math-@@tostringtag
+	// https://tc39.es/ecma262/#sec-math-@@tostringtag
 	setToStringTag(Math, 'Math', true);
 
 	var FAILS_ON_PRIMITIVES$1 = fails(function () { objectGetPrototypeOf(1); });
 
 	// `Object.getPrototypeOf` method
-	// https://tc39.github.io/ecma262/#sec-object.getprototypeof
+	// https://tc39.es/ecma262/#sec-object.getprototypeof
 	_export({ target: 'Object', stat: true, forced: FAILS_ON_PRIMITIVES$1, sham: !correctPrototypeGetter }, {
 	  getPrototypeOf: function getPrototypeOf(it) {
 	    return objectGetPrototypeOf(toObject(it));
@@ -2098,7 +2107,7 @@ var Forestry = (function () {
 	});
 
 	// `Object.setPrototypeOf` method
-	// https://tc39.github.io/ecma262/#sec-object.setprototypeof
+	// https://tc39.es/ecma262/#sec-object.setprototypeof
 	_export({ target: 'Object', stat: true }, {
 	  setPrototypeOf: objectSetPrototypeOf
 	});
@@ -2245,7 +2254,7 @@ var Forestry = (function () {
 	var SPECIES$5 = wellKnownSymbol('species');
 
 	// `SpeciesConstructor` abstract operation
-	// https://tc39.github.io/ecma262/#sec-speciesconstructor
+	// https://tc39.es/ecma262/#sec-speciesconstructor
 	var speciesConstructor = function (O, defaultConstructor) {
 	  var C = anObject(O).constructor;
 	  var S;
@@ -2354,8 +2363,11 @@ var Forestry = (function () {
 	  clear: clear
 	};
 
+	var engineIsWebosWebkit = /web0s(?!.*chrome)/i.test(engineUserAgent);
+
 	var getOwnPropertyDescriptor$2 = objectGetOwnPropertyDescriptor.f;
 	var macrotask = task.set;
+
 
 
 
@@ -2389,7 +2401,8 @@ var Forestry = (function () {
 	  };
 
 	  // browsers with MutationObserver, except iOS - https://github.com/zloirock/core-js/issues/339
-	  if (!engineIsIos && !engineIsNode && MutationObserver$1 && document$2) {
+	  // also except WebOS Webkit https://github.com/zloirock/core-js/issues/898
+	  if (!engineIsIos && !engineIsNode && !engineIsWebosWebkit && MutationObserver$1 && document$2) {
 	    toggle = true;
 	    node = document$2.createTextNode('');
 	    new MutationObserver$1(flush).observe(node, { characterData: true });
@@ -2711,7 +2724,7 @@ var Forestry = (function () {
 	  };
 	  Internal.prototype = redefineAll(PromiseConstructor.prototype, {
 	    // `Promise.prototype.then` method
-	    // https://tc39.github.io/ecma262/#sec-promise.prototype.then
+	    // https://tc39.es/ecma262/#sec-promise.prototype.then
 	    then: function then(onFulfilled, onRejected) {
 	      var state = getInternalPromiseState(this);
 	      var reaction = newPromiseCapability$1(speciesConstructor(this, PromiseConstructor));
@@ -2724,7 +2737,7 @@ var Forestry = (function () {
 	      return reaction.promise;
 	    },
 	    // `Promise.prototype.catch` method
-	    // https://tc39.github.io/ecma262/#sec-promise.prototype.catch
+	    // https://tc39.es/ecma262/#sec-promise.prototype.catch
 	    'catch': function (onRejected) {
 	      return this.then(undefined, onRejected);
 	    }
@@ -2776,7 +2789,7 @@ var Forestry = (function () {
 	// statics
 	_export({ target: PROMISE, stat: true, forced: FORCED }, {
 	  // `Promise.reject` method
-	  // https://tc39.github.io/ecma262/#sec-promise.reject
+	  // https://tc39.es/ecma262/#sec-promise.reject
 	  reject: function reject(r) {
 	    var capability = newPromiseCapability$1(this);
 	    capability.reject.call(undefined, r);
@@ -2786,7 +2799,7 @@ var Forestry = (function () {
 
 	_export({ target: PROMISE, stat: true, forced:  FORCED }, {
 	  // `Promise.resolve` method
-	  // https://tc39.github.io/ecma262/#sec-promise.resolve
+	  // https://tc39.es/ecma262/#sec-promise.resolve
 	  resolve: function resolve(x) {
 	    return promiseResolve( this, x);
 	  }
@@ -2794,7 +2807,7 @@ var Forestry = (function () {
 
 	_export({ target: PROMISE, stat: true, forced: INCORRECT_ITERATION }, {
 	  // `Promise.all` method
-	  // https://tc39.github.io/ecma262/#sec-promise.all
+	  // https://tc39.es/ecma262/#sec-promise.all
 	  all: function all(iterable) {
 	    var C = this;
 	    var capability = newPromiseCapability$1(C);
@@ -2823,7 +2836,7 @@ var Forestry = (function () {
 	    return capability.promise;
 	  },
 	  // `Promise.race` method
-	  // https://tc39.github.io/ecma262/#sec-promise.race
+	  // https://tc39.es/ecma262/#sec-promise.race
 	  race: function race(iterable) {
 	    var C = this;
 	    var capability = newPromiseCapability$1(C);
@@ -2857,7 +2870,7 @@ var Forestry = (function () {
 
 	var stringMultibyte = {
 	  // `String.prototype.codePointAt` method
-	  // https://tc39.github.io/ecma262/#sec-string.prototype.codepointat
+	  // https://tc39.es/ecma262/#sec-string.prototype.codepointat
 	  codeAt: createMethod$3(false),
 	  // `String.prototype.at` method
 	  // https://github.com/mathiasbynens/String.prototype.at
@@ -2873,7 +2886,7 @@ var Forestry = (function () {
 	var getInternalState$3 = internalState.getterFor(STRING_ITERATOR);
 
 	// `String.prototype[@@iterator]` method
-	// https://tc39.github.io/ecma262/#sec-string.prototype-@@iterator
+	// https://tc39.es/ecma262/#sec-string.prototype-@@iterator
 	defineIterator(String, 'String', function (iterated) {
 	  setInternalState$3(this, {
 	    type: STRING_ITERATOR,
@@ -2881,7 +2894,7 @@ var Forestry = (function () {
 	    index: 0
 	  });
 	// `%StringIteratorPrototype%.next` method
-	// https://tc39.github.io/ecma262/#sec-%stringiteratorprototype%.next
+	// https://tc39.es/ecma262/#sec-%stringiteratorprototype%.next
 	}, function next() {
 	  var state = getInternalState$3(this);
 	  var string = state.string;
@@ -4050,7 +4063,7 @@ var Forestry = (function () {
 	var FORCED$1 = !IS_CONCAT_SPREADABLE_SUPPORT || !SPECIES_SUPPORT;
 
 	// `Array.prototype.concat` method
-	// https://tc39.github.io/ecma262/#sec-array.prototype.concat
+	// https://tc39.es/ecma262/#sec-array.prototype.concat
 	// with adding support of @@isConcatSpreadable and @@species
 	_export({ target: 'Array', proto: true, forced: FORCED$1 }, {
 	  concat: function concat(arg) { // eslint-disable-line no-unused-vars
@@ -4075,7 +4088,7 @@ var Forestry = (function () {
 	});
 
 	// `Array.prototype.fill` method implementation
-	// https://tc39.github.io/ecma262/#sec-array.prototype.fill
+	// https://tc39.es/ecma262/#sec-array.prototype.fill
 	var arrayFill = function fill(value /* , start = 0, end = @length */) {
 	  var O = toObject(this);
 	  var length = toLength(O.length);
@@ -4088,12 +4101,12 @@ var Forestry = (function () {
 	};
 
 	// `Array.prototype.fill` method
-	// https://tc39.github.io/ecma262/#sec-array.prototype.fill
+	// https://tc39.es/ecma262/#sec-array.prototype.fill
 	_export({ target: 'Array', proto: true }, {
 	  fill: arrayFill
 	});
 
-	// https://tc39.github.io/ecma262/#sec-array.prototype-@@unscopables
+	// https://tc39.es/ecma262/#sec-array.prototype-@@unscopables
 	addToUnscopables('fill');
 
 	var $includes = arrayIncludes.includes;
@@ -4103,14 +4116,14 @@ var Forestry = (function () {
 	var USES_TO_LENGTH$6 = arrayMethodUsesToLength('indexOf', { ACCESSORS: true, 1: 0 });
 
 	// `Array.prototype.includes` method
-	// https://tc39.github.io/ecma262/#sec-array.prototype.includes
+	// https://tc39.es/ecma262/#sec-array.prototype.includes
 	_export({ target: 'Array', proto: true, forced: !USES_TO_LENGTH$6 }, {
 	  includes: function includes(el /* , fromIndex = 0 */) {
 	    return $includes(this, el, arguments.length > 1 ? arguments[1] : undefined);
 	  }
 	});
 
-	// https://tc39.github.io/ecma262/#sec-array.prototype-@@unscopables
+	// https://tc39.es/ecma262/#sec-array.prototype-@@unscopables
 	addToUnscopables('includes');
 
 	var nativeJoin = [].join;
@@ -4119,7 +4132,7 @@ var Forestry = (function () {
 	var STRICT_METHOD$3 = arrayMethodIsStrict('join', ',');
 
 	// `Array.prototype.join` method
-	// https://tc39.github.io/ecma262/#sec-array.prototype.join
+	// https://tc39.es/ecma262/#sec-array.prototype.join
 	_export({ target: 'Array', proto: true, forced: ES3_STRINGS || !STRICT_METHOD$3 }, {
 	  join: function join(separator) {
 	    return nativeJoin.call(toIndexedObject(this), separator === undefined ? ',' : separator);
@@ -4135,7 +4148,7 @@ var Forestry = (function () {
 	var MAXIMUM_ALLOWED_LENGTH_EXCEEDED = 'Maximum allowed length exceeded';
 
 	// `Array.prototype.splice` method
-	// https://tc39.github.io/ecma262/#sec-array.prototype.splice
+	// https://tc39.es/ecma262/#sec-array.prototype.splice
 	// with adding support of @@species
 	_export({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT$3 || !USES_TO_LENGTH$7 }, {
 	  splice: function splice(start, deleteCount /* , ...items */) {
@@ -4189,7 +4202,7 @@ var Forestry = (function () {
 	var arrayBufferNative = typeof ArrayBuffer !== 'undefined' && typeof DataView !== 'undefined';
 
 	// `ToIndex` abstract operation
-	// https://tc39.github.io/ecma262/#sec-toindex
+	// https://tc39.es/ecma262/#sec-toindex
 	var toIndex = function (it) {
 	  if (it === undefined) return 0;
 	  var number = toInteger(it);
@@ -4509,7 +4522,7 @@ var Forestry = (function () {
 	});
 
 	// `ArrayBuffer.prototype.slice` method
-	// https://tc39.github.io/ecma262/#sec-arraybuffer.prototype.slice
+	// https://tc39.es/ecma262/#sec-arraybuffer.prototype.slice
 	_export({ target: 'ArrayBuffer', proto: true, unsafe: true, forced: INCORRECT_SLICE }, {
 	  slice: function slice(start, end) {
 	    if (nativeArrayBufferSlice !== undefined && end === undefined) {
@@ -4532,7 +4545,7 @@ var Forestry = (function () {
 	var floor$2 = Math.floor;
 
 	// `Math.trunc` method
-	// https://tc39.github.io/ecma262/#sec-math.trunc
+	// https://tc39.es/ecma262/#sec-math.trunc
 	_export({ target: 'Math', stat: true }, {
 	  trunc: function trunc(it) {
 	    return (it > 0 ? floor$2 : ceil$1)(it);
@@ -4574,13 +4587,13 @@ var Forestry = (function () {
 
 	var stringTrim = {
 	  // `String.prototype.{ trimLeft, trimStart }` methods
-	  // https://tc39.github.io/ecma262/#sec-string.prototype.trimstart
+	  // https://tc39.es/ecma262/#sec-string.prototype.trimstart
 	  start: createMethod$4(1),
 	  // `String.prototype.{ trimRight, trimEnd }` methods
-	  // https://tc39.github.io/ecma262/#sec-string.prototype.trimend
+	  // https://tc39.es/ecma262/#sec-string.prototype.trimend
 	  end: createMethod$4(2),
 	  // `String.prototype.trim` method
-	  // https://tc39.github.io/ecma262/#sec-string.prototype.trim
+	  // https://tc39.es/ecma262/#sec-string.prototype.trim
 	  trim: createMethod$4(3)
 	};
 
@@ -4597,7 +4610,7 @@ var Forestry = (function () {
 	var BROKEN_CLASSOF = classofRaw(objectCreate(NumberPrototype)) == NUMBER;
 
 	// `ToNumber` abstract operation
-	// https://tc39.github.io/ecma262/#sec-tonumber
+	// https://tc39.es/ecma262/#sec-tonumber
 	var toNumber = function (argument) {
 	  var it = toPrimitive(argument, false);
 	  var first, third, radix, maxCode, digits, length, index, code;
@@ -4626,7 +4639,7 @@ var Forestry = (function () {
 	};
 
 	// `Number` constructor
-	// https://tc39.github.io/ecma262/#sec-number-constructor
+	// https://tc39.es/ecma262/#sec-number-constructor
 	if (isForced_1(NUMBER, !NativeNumber(' 0o1') || !NativeNumber('0b1') || NativeNumber('+0x1'))) {
 	  var NumberWrapper = function Number(value) {
 	    var it = arguments.length < 1 ? 0 : value;
@@ -4641,7 +4654,9 @@ var Forestry = (function () {
 	    'MAX_VALUE,MIN_VALUE,NaN,NEGATIVE_INFINITY,POSITIVE_INFINITY,' +
 	    // ES2015 (in case, if modules with ES2015 Number statics required before):
 	    'EPSILON,isFinite,isInteger,isNaN,isSafeInteger,MAX_SAFE_INTEGER,' +
-	    'MIN_SAFE_INTEGER,parseFloat,parseInt,isInteger'
+	    'MIN_SAFE_INTEGER,parseFloat,parseInt,isInteger,' +
+	    // ESNext
+	    'fromString,range'
 	  ).split(','), j$1 = 0, key$1; keys$2.length > j$1; j$1++) {
 	    if (has(NativeNumber, key$1 = keys$2[j$1]) && !has(NumberWrapper, key$1)) {
 	      defineProperty$6(NumberWrapper, key$1, getOwnPropertyDescriptor$3(NativeNumber, key$1));
@@ -4655,7 +4670,7 @@ var Forestry = (function () {
 	var MATCH = wellKnownSymbol('match');
 
 	// `IsRegExp` abstract operation
-	// https://tc39.github.io/ecma262/#sec-isregexp
+	// https://tc39.es/ecma262/#sec-isregexp
 	var isRegexp = function (it) {
 	  var isRegExp;
 	  return isObject(it) && ((isRegExp = it[MATCH]) !== undefined ? !!isRegExp : classofRaw(it) == 'RegExp');
@@ -4690,7 +4705,7 @@ var Forestry = (function () {
 	})));
 
 	// `RegExp` constructor
-	// https://tc39.github.io/ecma262/#sec-regexp-constructor
+	// https://tc39.es/ecma262/#sec-regexp-constructor
 	if (FORCED$2) {
 	  var RegExpWrapper = function RegExp(pattern, flags) {
 	    var thisIsRegExp = this instanceof RegExpWrapper;
@@ -4739,7 +4754,7 @@ var Forestry = (function () {
 	  redefine(global_1, 'RegExp', RegExpWrapper);
 	}
 
-	// https://tc39.github.io/ecma262/#sec-get-regexp-@@species
+	// https://tc39.es/ecma262/#sec-get-regexp-@@species
 	setSpecies('RegExp');
 
 	var notARegexp = function (it) {
@@ -4763,7 +4778,7 @@ var Forestry = (function () {
 	};
 
 	// `String.prototype.includes` method
-	// https://tc39.github.io/ecma262/#sec-string.prototype.includes
+	// https://tc39.es/ecma262/#sec-string.prototype.includes
 	_export({ target: 'String', proto: true, forced: !correctIsRegexpLogic('includes') }, {
 	  includes: function includes(searchString /* , position = 0 */) {
 	    return !!~String(requireObjectCoercible(this))
@@ -4774,16 +4789,52 @@ var Forestry = (function () {
 	var charAt$1 = stringMultibyte.charAt;
 
 	// `AdvanceStringIndex` abstract operation
-	// https://tc39.github.io/ecma262/#sec-advancestringindex
+	// https://tc39.es/ecma262/#sec-advancestringindex
 	var advanceStringIndex = function (S, index, unicode) {
 	  return index + (unicode ? charAt$1(S, index).length : 1);
 	};
 
-	var max$3 = Math.max;
-	var min$3 = Math.min;
 	var floor$3 = Math.floor;
+	var replace = ''.replace;
 	var SUBSTITUTION_SYMBOLS = /\$([$&'`]|\d\d?|<[^>]*>)/g;
 	var SUBSTITUTION_SYMBOLS_NO_NAMED = /\$([$&'`]|\d\d?)/g;
+
+	// https://tc39.es/ecma262/#sec-getsubstitution
+	var getSubstitution = function (matched, str, position, captures, namedCaptures, replacement) {
+	  var tailPos = position + matched.length;
+	  var m = captures.length;
+	  var symbols = SUBSTITUTION_SYMBOLS_NO_NAMED;
+	  if (namedCaptures !== undefined) {
+	    namedCaptures = toObject(namedCaptures);
+	    symbols = SUBSTITUTION_SYMBOLS;
+	  }
+	  return replace.call(replacement, symbols, function (match, ch) {
+	    var capture;
+	    switch (ch.charAt(0)) {
+	      case '$': return '$';
+	      case '&': return matched;
+	      case '`': return str.slice(0, position);
+	      case "'": return str.slice(tailPos);
+	      case '<':
+	        capture = namedCaptures[ch.slice(1, -1)];
+	        break;
+	      default: // \d\d?
+	        var n = +ch;
+	        if (n === 0) return match;
+	        if (n > m) {
+	          var f = floor$3(n / 10);
+	          if (f === 0) return match;
+	          if (f <= m) return captures[f - 1] === undefined ? ch.charAt(1) : captures[f - 1] + ch.charAt(1);
+	          return match;
+	        }
+	        capture = captures[n - 1];
+	    }
+	    return capture === undefined ? '' : capture;
+	  });
+	};
+
+	var max$3 = Math.max;
+	var min$3 = Math.min;
 
 	var maybeToString = function (it) {
 	  return it === undefined ? it : String(it);
@@ -4797,7 +4848,7 @@ var Forestry = (function () {
 
 	  return [
 	    // `String.prototype.replace` method
-	    // https://tc39.github.io/ecma262/#sec-string.prototype.replace
+	    // https://tc39.es/ecma262/#sec-string.prototype.replace
 	    function replace(searchValue, replaceValue) {
 	      var O = requireObjectCoercible(this);
 	      var replacer = searchValue == undefined ? undefined : searchValue[REPLACE];
@@ -4806,7 +4857,7 @@ var Forestry = (function () {
 	        : nativeReplace.call(String(O), searchValue, replaceValue);
 	    },
 	    // `RegExp.prototype[@@replace]` method
-	    // https://tc39.github.io/ecma262/#sec-regexp.prototype-@@replace
+	    // https://tc39.es/ecma262/#sec-regexp.prototype-@@replace
 	    function (regexp, replaceValue) {
 	      if (
 	        (!REGEXP_REPLACE_SUBSTITUTES_UNDEFINED_CAPTURE && REPLACE_KEEPS_$0) ||
@@ -4869,40 +4920,6 @@ var Forestry = (function () {
 	      return accumulatedResult + S.slice(nextSourcePosition);
 	    }
 	  ];
-
-	  // https://tc39.github.io/ecma262/#sec-getsubstitution
-	  function getSubstitution(matched, str, position, captures, namedCaptures, replacement) {
-	    var tailPos = position + matched.length;
-	    var m = captures.length;
-	    var symbols = SUBSTITUTION_SYMBOLS_NO_NAMED;
-	    if (namedCaptures !== undefined) {
-	      namedCaptures = toObject(namedCaptures);
-	      symbols = SUBSTITUTION_SYMBOLS;
-	    }
-	    return nativeReplace.call(replacement, symbols, function (match, ch) {
-	      var capture;
-	      switch (ch.charAt(0)) {
-	        case '$': return '$';
-	        case '&': return matched;
-	        case '`': return str.slice(0, position);
-	        case "'": return str.slice(tailPos);
-	        case '<':
-	          capture = namedCaptures[ch.slice(1, -1)];
-	          break;
-	        default: // \d\d?
-	          var n = +ch;
-	          if (n === 0) return match;
-	          if (n > m) {
-	            var f = floor$3(n / 10);
-	            if (f === 0) return match;
-	            if (f <= m) return captures[f - 1] === undefined ? ch.charAt(1) : captures[f - 1] + ch.charAt(1);
-	            return match;
-	          }
-	          capture = captures[n - 1];
-	      }
-	      return capture === undefined ? '' : capture;
-	    });
-	  }
 	});
 
 	var arrayPush = [].push;
@@ -4967,7 +4984,7 @@ var Forestry = (function () {
 
 	  return [
 	    // `String.prototype.split` method
-	    // https://tc39.github.io/ecma262/#sec-string.prototype.split
+	    // https://tc39.es/ecma262/#sec-string.prototype.split
 	    function split(separator, limit) {
 	      var O = requireObjectCoercible(this);
 	      var splitter = separator == undefined ? undefined : separator[SPLIT];
@@ -4976,7 +4993,7 @@ var Forestry = (function () {
 	        : internalSplit.call(String(O), separator, limit);
 	    },
 	    // `RegExp.prototype[@@split]` method
-	    // https://tc39.github.io/ecma262/#sec-regexp.prototype-@@split
+	    // https://tc39.es/ecma262/#sec-regexp.prototype-@@split
 	    //
 	    // NOTE: This cannot be properly polyfilled in engines that don't support
 	    // the 'y' flag.
@@ -5042,7 +5059,7 @@ var Forestry = (function () {
 
 
 	// `String.prototype.trim` method
-	// https://tc39.github.io/ecma262/#sec-string.prototype.trim
+	// https://tc39.es/ecma262/#sec-string.prototype.trim
 	_export({ target: 'String', proto: true, forced: stringTrimForced('trim') }, {
 	  trim: function trim() {
 	    return $trim(this);
@@ -5083,13 +5100,24 @@ var Forestry = (function () {
 	  Float64Array: 8
 	};
 
+	var BigIntArrayConstructorsList = {
+	  BigInt64Array: 8,
+	  BigUint64Array: 8
+	};
+
 	var isView = function isView(it) {
+	  if (!isObject(it)) return false;
 	  var klass = classof(it);
-	  return klass === 'DataView' || has(TypedArrayConstructorsList, klass);
+	  return klass === 'DataView'
+	    || has(TypedArrayConstructorsList, klass)
+	    || has(BigIntArrayConstructorsList, klass);
 	};
 
 	var isTypedArray = function (it) {
-	  return isObject(it) && has(TypedArrayConstructorsList, classof(it));
+	  if (!isObject(it)) return false;
+	  var klass = classof(it);
+	  return has(TypedArrayConstructorsList, klass)
+	    || has(BigIntArrayConstructorsList, klass);
 	};
 
 	var aTypedArray = function (it) {
@@ -5493,7 +5521,7 @@ var Forestry = (function () {
 	});
 
 	// `Uint8Array` constructor
-	// https://tc39.github.io/ecma262/#sec-typedarray-objects
+	// https://tc39.es/ecma262/#sec-typedarray-objects
 	typedArrayConstructor('Uint8', function (init) {
 	  return function Uint8Array(data, byteOffset, length) {
 	    return init(this, data, byteOffset, length);
@@ -5503,7 +5531,7 @@ var Forestry = (function () {
 	var min$5 = Math.min;
 
 	// `Array.prototype.copyWithin` method implementation
-	// https://tc39.github.io/ecma262/#sec-array.prototype.copywithin
+	// https://tc39.es/ecma262/#sec-array.prototype.copywithin
 	var arrayCopyWithin = [].copyWithin || function copyWithin(target /* = 0 */, start /* = 0, end = @length */) {
 	  var O = toObject(this);
 	  var len = toLength(O.length);
@@ -5529,7 +5557,7 @@ var Forestry = (function () {
 	var exportTypedArrayMethod$1 = arrayBufferViewCore.exportTypedArrayMethod;
 
 	// `%TypedArray%.prototype.copyWithin` method
-	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.copywithin
+	// https://tc39.es/ecma262/#sec-%typedarray%.prototype.copywithin
 	exportTypedArrayMethod$1('copyWithin', function copyWithin(target, start /* , end */) {
 	  return arrayCopyWithin.call(aTypedArray$1(this), target, start, arguments.length > 2 ? arguments[2] : undefined);
 	});
@@ -5540,7 +5568,7 @@ var Forestry = (function () {
 	var exportTypedArrayMethod$2 = arrayBufferViewCore.exportTypedArrayMethod;
 
 	// `%TypedArray%.prototype.every` method
-	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.every
+	// https://tc39.es/ecma262/#sec-%typedarray%.prototype.every
 	exportTypedArrayMethod$2('every', function every(callbackfn /* , thisArg */) {
 	  return $every(aTypedArray$2(this), callbackfn, arguments.length > 1 ? arguments[1] : undefined);
 	});
@@ -5549,7 +5577,7 @@ var Forestry = (function () {
 	var exportTypedArrayMethod$3 = arrayBufferViewCore.exportTypedArrayMethod;
 
 	// `%TypedArray%.prototype.fill` method
-	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.fill
+	// https://tc39.es/ecma262/#sec-%typedarray%.prototype.fill
 	// eslint-disable-next-line no-unused-vars
 	exportTypedArrayMethod$3('fill', function fill(value /* , start, end */) {
 	  return arrayFill.apply(aTypedArray$3(this), arguments);
@@ -5563,7 +5591,7 @@ var Forestry = (function () {
 	var exportTypedArrayMethod$4 = arrayBufferViewCore.exportTypedArrayMethod;
 
 	// `%TypedArray%.prototype.filter` method
-	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.filter
+	// https://tc39.es/ecma262/#sec-%typedarray%.prototype.filter
 	exportTypedArrayMethod$4('filter', function filter(callbackfn /* , thisArg */) {
 	  var list = $filter$1(aTypedArray$4(this), callbackfn, arguments.length > 1 ? arguments[1] : undefined);
 	  var C = speciesConstructor(this, this.constructor);
@@ -5580,7 +5608,7 @@ var Forestry = (function () {
 	var exportTypedArrayMethod$5 = arrayBufferViewCore.exportTypedArrayMethod;
 
 	// `%TypedArray%.prototype.find` method
-	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.find
+	// https://tc39.es/ecma262/#sec-%typedarray%.prototype.find
 	exportTypedArrayMethod$5('find', function find(predicate /* , thisArg */) {
 	  return $find(aTypedArray$5(this), predicate, arguments.length > 1 ? arguments[1] : undefined);
 	});
@@ -5591,7 +5619,7 @@ var Forestry = (function () {
 	var exportTypedArrayMethod$6 = arrayBufferViewCore.exportTypedArrayMethod;
 
 	// `%TypedArray%.prototype.findIndex` method
-	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.findindex
+	// https://tc39.es/ecma262/#sec-%typedarray%.prototype.findindex
 	exportTypedArrayMethod$6('findIndex', function findIndex(predicate /* , thisArg */) {
 	  return $findIndex(aTypedArray$6(this), predicate, arguments.length > 1 ? arguments[1] : undefined);
 	});
@@ -5602,7 +5630,7 @@ var Forestry = (function () {
 	var exportTypedArrayMethod$7 = arrayBufferViewCore.exportTypedArrayMethod;
 
 	// `%TypedArray%.prototype.forEach` method
-	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.foreach
+	// https://tc39.es/ecma262/#sec-%typedarray%.prototype.foreach
 	exportTypedArrayMethod$7('forEach', function forEach(callbackfn /* , thisArg */) {
 	  $forEach$2(aTypedArray$7(this), callbackfn, arguments.length > 1 ? arguments[1] : undefined);
 	});
@@ -5613,7 +5641,7 @@ var Forestry = (function () {
 	var exportTypedArrayMethod$8 = arrayBufferViewCore.exportTypedArrayMethod;
 
 	// `%TypedArray%.prototype.includes` method
-	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.includes
+	// https://tc39.es/ecma262/#sec-%typedarray%.prototype.includes
 	exportTypedArrayMethod$8('includes', function includes(searchElement /* , fromIndex */) {
 	  return $includes$1(aTypedArray$8(this), searchElement, arguments.length > 1 ? arguments[1] : undefined);
 	});
@@ -5624,7 +5652,7 @@ var Forestry = (function () {
 	var exportTypedArrayMethod$9 = arrayBufferViewCore.exportTypedArrayMethod;
 
 	// `%TypedArray%.prototype.indexOf` method
-	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.indexof
+	// https://tc39.es/ecma262/#sec-%typedarray%.prototype.indexof
 	exportTypedArrayMethod$9('indexOf', function indexOf(searchElement /* , fromIndex */) {
 	  return $indexOf$1(aTypedArray$9(this), searchElement, arguments.length > 1 ? arguments[1] : undefined);
 	});
@@ -5646,20 +5674,20 @@ var Forestry = (function () {
 	};
 
 	// `%TypedArray%.prototype.entries` method
-	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.entries
+	// https://tc39.es/ecma262/#sec-%typedarray%.prototype.entries
 	exportTypedArrayMethod$a('entries', function entries() {
 	  return arrayEntries.call(aTypedArray$a(this));
 	});
 	// `%TypedArray%.prototype.keys` method
-	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.keys
+	// https://tc39.es/ecma262/#sec-%typedarray%.prototype.keys
 	exportTypedArrayMethod$a('keys', function keys() {
 	  return arrayKeys.call(aTypedArray$a(this));
 	});
 	// `%TypedArray%.prototype.values` method
-	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.values
+	// https://tc39.es/ecma262/#sec-%typedarray%.prototype.values
 	exportTypedArrayMethod$a('values', typedArrayValues, !CORRECT_ITER_NAME);
 	// `%TypedArray%.prototype[@@iterator]` method
-	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype-@@iterator
+	// https://tc39.es/ecma262/#sec-%typedarray%.prototype-@@iterator
 	exportTypedArrayMethod$a(ITERATOR$6, typedArrayValues, !CORRECT_ITER_NAME);
 
 	var aTypedArray$b = arrayBufferViewCore.aTypedArray;
@@ -5667,7 +5695,7 @@ var Forestry = (function () {
 	var $join = [].join;
 
 	// `%TypedArray%.prototype.join` method
-	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.join
+	// https://tc39.es/ecma262/#sec-%typedarray%.prototype.join
 	// eslint-disable-next-line no-unused-vars
 	exportTypedArrayMethod$b('join', function join(separator) {
 	  return $join.apply(aTypedArray$b(this), arguments);
@@ -5682,7 +5710,7 @@ var Forestry = (function () {
 	var FORCED$3 = NEGATIVE_ZERO$1 || !STRICT_METHOD$4 || !USES_TO_LENGTH$8;
 
 	// `Array.prototype.lastIndexOf` method implementation
-	// https://tc39.github.io/ecma262/#sec-array.prototype.lastindexof
+	// https://tc39.es/ecma262/#sec-array.prototype.lastindexof
 	var arrayLastIndexOf = FORCED$3 ? function lastIndexOf(searchElement /* , fromIndex = @[*-1] */) {
 	  // convert -0 to +0
 	  if (NEGATIVE_ZERO$1) return nativeLastIndexOf.apply(this, arguments) || 0;
@@ -5699,7 +5727,7 @@ var Forestry = (function () {
 	var exportTypedArrayMethod$c = arrayBufferViewCore.exportTypedArrayMethod;
 
 	// `%TypedArray%.prototype.lastIndexOf` method
-	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.lastindexof
+	// https://tc39.es/ecma262/#sec-%typedarray%.prototype.lastindexof
 	// eslint-disable-next-line no-unused-vars
 	exportTypedArrayMethod$c('lastIndexOf', function lastIndexOf(searchElement /* , fromIndex */) {
 	  return arrayLastIndexOf.apply(aTypedArray$c(this), arguments);
@@ -5713,7 +5741,7 @@ var Forestry = (function () {
 	var exportTypedArrayMethod$d = arrayBufferViewCore.exportTypedArrayMethod;
 
 	// `%TypedArray%.prototype.map` method
-	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.map
+	// https://tc39.es/ecma262/#sec-%typedarray%.prototype.map
 	exportTypedArrayMethod$d('map', function map(mapfn /* , thisArg */) {
 	  return $map$1(aTypedArray$d(this), mapfn, arguments.length > 1 ? arguments[1] : undefined, function (O, length) {
 	    return new (aTypedArrayConstructor$3(speciesConstructor(O, O.constructor)))(length);
@@ -5726,7 +5754,7 @@ var Forestry = (function () {
 	var exportTypedArrayMethod$e = arrayBufferViewCore.exportTypedArrayMethod;
 
 	// `%TypedArray%.prototype.reduce` method
-	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.reduce
+	// https://tc39.es/ecma262/#sec-%typedarray%.prototype.reduce
 	exportTypedArrayMethod$e('reduce', function reduce(callbackfn /* , initialValue */) {
 	  return $reduce$1(aTypedArray$e(this), callbackfn, arguments.length, arguments.length > 1 ? arguments[1] : undefined);
 	});
@@ -5737,7 +5765,7 @@ var Forestry = (function () {
 	var exportTypedArrayMethod$f = arrayBufferViewCore.exportTypedArrayMethod;
 
 	// `%TypedArray%.prototype.reduceRicht` method
-	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.reduceright
+	// https://tc39.es/ecma262/#sec-%typedarray%.prototype.reduceright
 	exportTypedArrayMethod$f('reduceRight', function reduceRight(callbackfn /* , initialValue */) {
 	  return $reduceRight(aTypedArray$f(this), callbackfn, arguments.length, arguments.length > 1 ? arguments[1] : undefined);
 	});
@@ -5747,7 +5775,7 @@ var Forestry = (function () {
 	var floor$4 = Math.floor;
 
 	// `%TypedArray%.prototype.reverse` method
-	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.reverse
+	// https://tc39.es/ecma262/#sec-%typedarray%.prototype.reverse
 	exportTypedArrayMethod$g('reverse', function reverse() {
 	  var that = this;
 	  var length = aTypedArray$g(that).length;
@@ -5770,7 +5798,7 @@ var Forestry = (function () {
 	});
 
 	// `%TypedArray%.prototype.set` method
-	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.set
+	// https://tc39.es/ecma262/#sec-%typedarray%.prototype.set
 	exportTypedArrayMethod$h('set', function set(arrayLike /* , offset */) {
 	  aTypedArray$h(this);
 	  var offset = toOffset(arguments.length > 1 ? arguments[1] : undefined, 1);
@@ -5793,7 +5821,7 @@ var Forestry = (function () {
 	});
 
 	// `%TypedArray%.prototype.slice` method
-	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.slice
+	// https://tc39.es/ecma262/#sec-%typedarray%.prototype.slice
 	exportTypedArrayMethod$i('slice', function slice(start, end) {
 	  var list = $slice.call(aTypedArray$i(this), start, end);
 	  var C = speciesConstructor(this, this.constructor);
@@ -5810,7 +5838,7 @@ var Forestry = (function () {
 	var exportTypedArrayMethod$j = arrayBufferViewCore.exportTypedArrayMethod;
 
 	// `%TypedArray%.prototype.some` method
-	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.some
+	// https://tc39.es/ecma262/#sec-%typedarray%.prototype.some
 	exportTypedArrayMethod$j('some', function some(callbackfn /* , thisArg */) {
 	  return $some(aTypedArray$j(this), callbackfn, arguments.length > 1 ? arguments[1] : undefined);
 	});
@@ -5820,7 +5848,7 @@ var Forestry = (function () {
 	var $sort = [].sort;
 
 	// `%TypedArray%.prototype.sort` method
-	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.sort
+	// https://tc39.es/ecma262/#sec-%typedarray%.prototype.sort
 	exportTypedArrayMethod$k('sort', function sort(comparefn) {
 	  return $sort.call(aTypedArray$k(this), comparefn);
 	});
@@ -5829,7 +5857,7 @@ var Forestry = (function () {
 	var exportTypedArrayMethod$l = arrayBufferViewCore.exportTypedArrayMethod;
 
 	// `%TypedArray%.prototype.subarray` method
-	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.subarray
+	// https://tc39.es/ecma262/#sec-%typedarray%.prototype.subarray
 	exportTypedArrayMethod$l('subarray', function subarray(begin, end) {
 	  var O = aTypedArray$l(this);
 	  var length = O.length;
@@ -5859,7 +5887,7 @@ var Forestry = (function () {
 	});
 
 	// `%TypedArray%.prototype.toLocaleString` method
-	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.tolocalestring
+	// https://tc39.es/ecma262/#sec-%typedarray%.prototype.tolocalestring
 	exportTypedArrayMethod$m('toLocaleString', function toLocaleString() {
 	  return $toLocaleString.apply(TO_LOCALE_STRING_BUG ? $slice$1.call(aTypedArray$m(this)) : aTypedArray$m(this), arguments);
 	}, FORCED$6);
@@ -5882,7 +5910,7 @@ var Forestry = (function () {
 	var IS_NOT_ARRAY_METHOD = Uint8ArrayPrototype.toString != arrayToString;
 
 	// `%TypedArray%.prototype.toString` method
-	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.tostring
+	// https://tc39.es/ecma262/#sec-%typedarray%.prototype.tostring
 	exportTypedArrayMethod$n('toString', arrayToString, IS_NOT_ARRAY_METHOD);
 
 	var leafletSrc = createCommonjsModule(function (module, exports) {
@@ -19284,12 +19312,12 @@ var Forestry = (function () {
 	}();
 
 	// `Array.prototype.copyWithin` method
-	// https://tc39.github.io/ecma262/#sec-array.prototype.copywithin
+	// https://tc39.es/ecma262/#sec-array.prototype.copywithin
 	_export({ target: 'Array', proto: true }, {
 	  copyWithin: arrayCopyWithin
 	});
 
-	// https://tc39.github.io/ecma262/#sec-array.prototype-@@unscopables
+	// https://tc39.es/ecma262/#sec-array.prototype-@@unscopables
 	addToUnscopables('copyWithin');
 
 	var $every$1 = arrayIteration.every;
@@ -19300,7 +19328,7 @@ var Forestry = (function () {
 	var USES_TO_LENGTH$9 = arrayMethodUsesToLength('every');
 
 	// `Array.prototype.every` method
-	// https://tc39.github.io/ecma262/#sec-array.prototype.every
+	// https://tc39.es/ecma262/#sec-array.prototype.every
 	_export({ target: 'Array', proto: true, forced: !STRICT_METHOD$5 || !USES_TO_LENGTH$9 }, {
 	  every: function every(callbackfn /* , thisArg */) {
 	    return $every$1(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
@@ -19320,14 +19348,14 @@ var Forestry = (function () {
 	if (FIND in []) Array(1)[FIND](function () { SKIPS_HOLES = false; });
 
 	// `Array.prototype.find` method
-	// https://tc39.github.io/ecma262/#sec-array.prototype.find
+	// https://tc39.es/ecma262/#sec-array.prototype.find
 	_export({ target: 'Array', proto: true, forced: SKIPS_HOLES || !USES_TO_LENGTH$a }, {
 	  find: function find(callbackfn /* , that = undefined */) {
 	    return $find$1(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
 	  }
 	});
 
-	// https://tc39.github.io/ecma262/#sec-array.prototype-@@unscopables
+	// https://tc39.es/ecma262/#sec-array.prototype-@@unscopables
 	addToUnscopables(FIND);
 
 	var $findIndex$1 = arrayIteration.findIndex;
@@ -19343,14 +19371,14 @@ var Forestry = (function () {
 	if (FIND_INDEX in []) Array(1)[FIND_INDEX](function () { SKIPS_HOLES$1 = false; });
 
 	// `Array.prototype.findIndex` method
-	// https://tc39.github.io/ecma262/#sec-array.prototype.findindex
+	// https://tc39.es/ecma262/#sec-array.prototype.findindex
 	_export({ target: 'Array', proto: true, forced: SKIPS_HOLES$1 || !USES_TO_LENGTH$b }, {
 	  findIndex: function findIndex(callbackfn /* , that = undefined */) {
 	    return $findIndex$1(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
 	  }
 	});
 
-	// https://tc39.github.io/ecma262/#sec-array.prototype-@@unscopables
+	// https://tc39.es/ecma262/#sec-array.prototype-@@unscopables
 	addToUnscopables(FIND_INDEX);
 
 	// call something on iterator step with safe closing on error
@@ -19365,7 +19393,7 @@ var Forestry = (function () {
 	};
 
 	// `Array.from` method implementation
-	// https://tc39.github.io/ecma262/#sec-array.from
+	// https://tc39.es/ecma262/#sec-array.from
 	var arrayFrom = function from(arrayLike /* , mapfn = undefined, thisArg = undefined */) {
 	  var O = toObject(arrayLike);
 	  var C = typeof this == 'function' ? this : Array;
@@ -19402,13 +19430,13 @@ var Forestry = (function () {
 	});
 
 	// `Array.from` method
-	// https://tc39.github.io/ecma262/#sec-array.from
+	// https://tc39.es/ecma262/#sec-array.from
 	_export({ target: 'Array', stat: true, forced: INCORRECT_ITERATION$1 }, {
 	  from: arrayFrom
 	});
 
 	// `Array.prototype.lastIndexOf` method
-	// https://tc39.github.io/ecma262/#sec-array.prototype.lastindexof
+	// https://tc39.es/ecma262/#sec-array.prototype.lastindexof
 	_export({ target: 'Array', proto: true, forced: arrayLastIndexOf !== [].lastIndexOf }, {
 	  lastIndexOf: arrayLastIndexOf
 	});
@@ -19421,7 +19449,7 @@ var Forestry = (function () {
 	var USES_TO_LENGTH$c = arrayMethodUsesToLength('some');
 
 	// `Array.prototype.some` method
-	// https://tc39.github.io/ecma262/#sec-array.prototype.some
+	// https://tc39.es/ecma262/#sec-array.prototype.some
 	_export({ target: 'Array', proto: true, forced: !STRICT_METHOD$6 || !USES_TO_LENGTH$c }, {
 	  some: function some(callbackfn /* , thisArg */) {
 	    return $some$1(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
@@ -19433,7 +19461,7 @@ var Forestry = (function () {
 	var NativeArrayBuffer$1 = global_1[ARRAY_BUFFER$1];
 
 	// `ArrayBuffer` constructor
-	// https://tc39.github.io/ecma262/#sec-arraybuffer-constructor
+	// https://tc39.es/ecma262/#sec-arraybuffer-constructor
 	_export({ global: true, forced: NativeArrayBuffer$1 !== ArrayBuffer$3 }, {
 	  ArrayBuffer: ArrayBuffer$3
 	});
@@ -19441,13 +19469,13 @@ var Forestry = (function () {
 	setSpecies(ARRAY_BUFFER$1);
 
 	// `globalThis` object
-	// https://github.com/tc39/proposal-global
+	// https://tc39.es/ecma262/#sec-globalthis
 	_export({ global: true }, {
 	  globalThis: global_1
 	});
 
 	// `thisNumberValue` abstract operation
-	// https://tc39.github.io/ecma262/#sec-thisnumbervalue
+	// https://tc39.es/ecma262/#sec-thisnumbervalue
 	var thisNumberValue = function (value) {
 	  if (typeof value != 'number' && classofRaw(value) != 'Number') {
 	    throw TypeError('Incorrect invocation');
@@ -19456,7 +19484,7 @@ var Forestry = (function () {
 	};
 
 	// `String.prototype.repeat` method implementation
-	// https://tc39.github.io/ecma262/#sec-string.prototype.repeat
+	// https://tc39.es/ecma262/#sec-string.prototype.repeat
 	var stringRepeat = ''.repeat || function repeat(count) {
 	  var str = String(requireObjectCoercible(this));
 	  var result = '';
@@ -19497,7 +19525,7 @@ var Forestry = (function () {
 	});
 
 	// `Number.prototype.toFixed` method
-	// https://tc39.github.io/ecma262/#sec-number.prototype.tofixed
+	// https://tc39.es/ecma262/#sec-number.prototype.tofixed
 	_export({ target: 'Number', proto: true, forced: FORCED$7 }, {
 	  // eslint-disable-next-line max-statements
 	  toFixed: function toFixed(fractionDigits) {
@@ -19590,7 +19618,7 @@ var Forestry = (function () {
 	var defineProperty$9 = Object.defineProperty;
 
 	// `Object.assign` method
-	// https://tc39.github.io/ecma262/#sec-object.assign
+	// https://tc39.es/ecma262/#sec-object.assign
 	var objectAssign = !nativeAssign || fails(function () {
 	  // should have correct order of operations (Edge bug)
 	  if (descriptors && nativeAssign({ b: 1 }, nativeAssign(defineProperty$9({}, 'a', {
@@ -19631,7 +19659,7 @@ var Forestry = (function () {
 	} : nativeAssign;
 
 	// `Object.assign` method
-	// https://tc39.github.io/ecma262/#sec-object.assign
+	// https://tc39.es/ecma262/#sec-object.assign
 	_export({ target: 'Object', stat: true, forced: Object.assign !== objectAssign }, {
 	  assign: objectAssign
 	});
@@ -19643,7 +19671,7 @@ var Forestry = (function () {
 	var FORCED$8 = !descriptors || FAILS_ON_PRIMITIVES$2;
 
 	// `Object.getOwnPropertyDescriptor` method
-	// https://tc39.github.io/ecma262/#sec-object.getownpropertydescriptor
+	// https://tc39.es/ecma262/#sec-object.getownpropertydescriptor
 	_export({ target: 'Object', stat: true, forced: FORCED$8, sham: !descriptors }, {
 	  getOwnPropertyDescriptor: function getOwnPropertyDescriptor(it, key) {
 	    return nativeGetOwnPropertyDescriptor$2(toIndexedObject(it), key);
@@ -19655,13 +19683,13 @@ var Forestry = (function () {
 	var FAILS_ON_PRIMITIVES$3 = fails(function () { return !Object.getOwnPropertyNames(1); });
 
 	// `Object.getOwnPropertyNames` method
-	// https://tc39.github.io/ecma262/#sec-object.getownpropertynames
+	// https://tc39.es/ecma262/#sec-object.getownpropertynames
 	_export({ target: 'Object', stat: true, forced: FAILS_ON_PRIMITIVES$3 }, {
 	  getOwnPropertyNames: nativeGetOwnPropertyNames$2
 	});
 
 	// `Object.is` method
-	// https://tc39.github.io/ecma262/#sec-object.is
+	// https://tc39.es/ecma262/#sec-object.is
 	_export({ target: 'Object', stat: true }, {
 	  is: sameValue
 	});
@@ -19669,7 +19697,7 @@ var Forestry = (function () {
 	var UNSUPPORTED_Y$3 = regexpStickyHelpers.UNSUPPORTED_Y;
 
 	// `RegExp.prototype.flags` getter
-	// https://tc39.github.io/ecma262/#sec-get-regexp.prototype.flags
+	// https://tc39.es/ecma262/#sec-get-regexp.prototype.flags
 	if (descriptors && (/./g.flags != 'g' || UNSUPPORTED_Y$3)) {
 	  objectDefineProperty.f(RegExp.prototype, 'flags', {
 	    configurable: true,
@@ -19681,14 +19709,14 @@ var Forestry = (function () {
 	fixRegexpWellKnownSymbolLogic('match', 1, function (MATCH, nativeMatch, maybeCallNative) {
 	  return [
 	    // `String.prototype.match` method
-	    // https://tc39.github.io/ecma262/#sec-string.prototype.match
+	    // https://tc39.es/ecma262/#sec-string.prototype.match
 	    function match(regexp) {
 	      var O = requireObjectCoercible(this);
 	      var matcher = regexp == undefined ? undefined : regexp[MATCH];
 	      return matcher !== undefined ? matcher.call(regexp, O) : new RegExp(regexp)[MATCH](String(O));
 	    },
 	    // `RegExp.prototype[@@match]` method
-	    // https://tc39.github.io/ecma262/#sec-regexp.prototype-@@match
+	    // https://tc39.es/ecma262/#sec-regexp.prototype-@@match
 	    function (regexp) {
 	      var res = maybeCallNative(nativeMatch, regexp, this);
 	      if (res.done) return res.value;
@@ -19715,13 +19743,13 @@ var Forestry = (function () {
 	});
 
 	// `String.prototype.repeat` method
-	// https://tc39.github.io/ecma262/#sec-string.prototype.repeat
+	// https://tc39.es/ecma262/#sec-string.prototype.repeat
 	_export({ target: 'String', proto: true }, {
 	  repeat: stringRepeat
 	});
 
 	// `Float32Array` constructor
-	// https://tc39.github.io/ecma262/#sec-typedarray-objects
+	// https://tc39.es/ecma262/#sec-typedarray-objects
 	typedArrayConstructor('Float32', function (init) {
 	  return function Float32Array(data, byteOffset, length) {
 	    return init(this, data, byteOffset, length);
@@ -19729,7 +19757,7 @@ var Forestry = (function () {
 	});
 
 	// `Float64Array` constructor
-	// https://tc39.github.io/ecma262/#sec-typedarray-objects
+	// https://tc39.es/ecma262/#sec-typedarray-objects
 	typedArrayConstructor('Float64', function (init) {
 	  return function Float64Array(data, byteOffset, length) {
 	    return init(this, data, byteOffset, length);
@@ -19737,7 +19765,7 @@ var Forestry = (function () {
 	});
 
 	// `Int8Array` constructor
-	// https://tc39.github.io/ecma262/#sec-typedarray-objects
+	// https://tc39.es/ecma262/#sec-typedarray-objects
 	typedArrayConstructor('Int8', function (init) {
 	  return function Int8Array(data, byteOffset, length) {
 	    return init(this, data, byteOffset, length);
@@ -20010,7 +20038,7 @@ var Forestry = (function () {
 
 	var find = /[!'()~]|%20/g;
 
-	var replace = {
+	var replace$1 = {
 	  '!': '%21',
 	  "'": '%27',
 	  '(': '%28',
@@ -20020,7 +20048,7 @@ var Forestry = (function () {
 	};
 
 	var replacer = function (match) {
-	  return replace[match];
+	  return replace$1[match];
 	};
 
 	var serialize = function (it) {
@@ -21865,7 +21893,7 @@ var Forestry = (function () {
 	var m=maxInt$1;for(i=0;i<input.length;i++){currentValue=input[i];if(currentValue>=n&&currentValue<m){m=currentValue;}}// Increase `delta` enough to advance the decoder's <n,i> state to <m,0>, but guard against overflow.
 	var handledCPCountPlusOne=handledCPCount+1;if(m-n>floor$4$1((maxInt$1-delta)/handledCPCountPlusOne)){throw RangeError(OVERFLOW_ERROR$1);}delta+=(m-n)*handledCPCountPlusOne;n=m;for(i=0;i<input.length;i++){currentValue=input[i];if(currentValue<n&&++delta>maxInt$1){throw RangeError(OVERFLOW_ERROR$1);}if(currentValue==n){// Represent delta as a generalized variable-length integer.
 	var q=delta;for(var k=base$1;;/* no condition */k+=base$1){var t=k<=bias?tMin$1:k>=bias+tMax$1?tMax$1:k-bias;if(q<t)break;var qMinusT=q-t;var baseMinusT=base$1-t;output.push(stringFromCharCode$1(digitToBasic$1(t+qMinusT%baseMinusT)));q=floor$4$1(qMinusT/baseMinusT);}output.push(stringFromCharCode$1(digitToBasic$1(q)));bias=adapt$1(delta,handledCPCountPlusOne,handledCPCount==basicLength);delta=0;++handledCPCount;}}++delta;++n;}return output.join('');};var stringPunycodeToAscii$1=function stringPunycodeToAscii(input){var encoded=[];var labels=input.toLowerCase().replace(regexSeparators$1,".").split('.');var i,label;for(i=0;i<labels.length;i++){label=labels[i];encoded.push(regexNonASCII$1.test(label)?'xn--'+encode$1(label):label);}return encoded.join('.');};var getIterator$1=function getIterator(it){var iteratorMethod=getIteratorMethod$1(it);if(typeof iteratorMethod!='function'){throw TypeError(String(it)+' is not iterable');}return anObject$1(iteratorMethod.call(it));};// TODO: in core-js@4, move /modules/ dependencies to public entries for better optimization by tools like `preset-env`
-	var $fetch$1$1=getBuiltIn$1('fetch');var Headers$1=getBuiltIn$1('Headers');var ITERATOR$8$1=wellKnownSymbol$1('iterator');var URL_SEARCH_PARAMS$1='URLSearchParams';var URL_SEARCH_PARAMS_ITERATOR$1=URL_SEARCH_PARAMS$1+'Iterator';var setInternalState$5$1=internalState$1.set;var getInternalParamsState$1=internalState$1.getterFor(URL_SEARCH_PARAMS$1);var getInternalIteratorState$1=internalState$1.getterFor(URL_SEARCH_PARAMS_ITERATOR$1);var plus$1=/\+/g;var sequences$1=Array(4);var percentSequence$1=function percentSequence(bytes){return sequences$1[bytes-1]||(sequences$1[bytes-1]=RegExp('((?:%[\\da-f]{2}){'+bytes+'})','gi'));};var percentDecode$1=function percentDecode(sequence){try{return decodeURIComponent(sequence);}catch(error){return sequence;}};var deserialize$1=function deserialize(it){var result=it.replace(plus$1,' ');var bytes=4;try{return decodeURIComponent(result);}catch(error){while(bytes){result=result.replace(percentSequence$1(bytes--),percentDecode$1);}return result;}};var find$1=/[!'()~]|%20/g;var replace$1={'!':'%21',"'":'%27','(':'%28',')':'%29','~':'%7E','%20':'+'};var replacer$1=function replacer(match){return replace$1[match];};var serialize$1=function serialize(it){return encodeURIComponent(it).replace(find$1,replacer$1);};var parseSearchParams$1=function parseSearchParams(result,query){if(query){var attributes=query.split('&');var index=0;var attribute,entry;while(index<attributes.length){attribute=attributes[index++];if(attribute.length){entry=attribute.split('=');result.push({key:deserialize$1(entry.shift()),value:deserialize$1(entry.join('='))});}}}};var updateSearchParams$1=function updateSearchParams(query){this.entries.length=0;parseSearchParams$1(this.entries,query);};var validateArgumentsLength$1=function validateArgumentsLength(passed,required){if(passed<required)throw TypeError('Not enough arguments');};var URLSearchParamsIterator$1=createIteratorConstructor$1(function Iterator(params,kind){setInternalState$5$1(this,{type:URL_SEARCH_PARAMS_ITERATOR$1,iterator:getIterator$1(getInternalParamsState$1(params).entries),kind:kind});},'Iterator',function next(){var state=getInternalIteratorState$1(this);var kind=state.kind;var step=state.iterator.next();var entry=step.value;if(!step.done){step.value=kind==='keys'?entry.key:kind==='values'?entry.value:[entry.key,entry.value];}return step;});// `URLSearchParams` constructor
+	var $fetch$1$1=getBuiltIn$1('fetch');var Headers$1=getBuiltIn$1('Headers');var ITERATOR$8$1=wellKnownSymbol$1('iterator');var URL_SEARCH_PARAMS$1='URLSearchParams';var URL_SEARCH_PARAMS_ITERATOR$1=URL_SEARCH_PARAMS$1+'Iterator';var setInternalState$5$1=internalState$1.set;var getInternalParamsState$1=internalState$1.getterFor(URL_SEARCH_PARAMS$1);var getInternalIteratorState$1=internalState$1.getterFor(URL_SEARCH_PARAMS_ITERATOR$1);var plus$1=/\+/g;var sequences$1=Array(4);var percentSequence$1=function percentSequence(bytes){return sequences$1[bytes-1]||(sequences$1[bytes-1]=RegExp('((?:%[\\da-f]{2}){'+bytes+'})','gi'));};var percentDecode$1=function percentDecode(sequence){try{return decodeURIComponent(sequence);}catch(error){return sequence;}};var deserialize$1=function deserialize(it){var result=it.replace(plus$1,' ');var bytes=4;try{return decodeURIComponent(result);}catch(error){while(bytes){result=result.replace(percentSequence$1(bytes--),percentDecode$1);}return result;}};var find$1=/[!'()~]|%20/g;var replace$2={'!':'%21',"'":'%27','(':'%28',')':'%29','~':'%7E','%20':'+'};var replacer$1=function replacer(match){return replace$2[match];};var serialize$1=function serialize(it){return encodeURIComponent(it).replace(find$1,replacer$1);};var parseSearchParams$1=function parseSearchParams(result,query){if(query){var attributes=query.split('&');var index=0;var attribute,entry;while(index<attributes.length){attribute=attributes[index++];if(attribute.length){entry=attribute.split('=');result.push({key:deserialize$1(entry.shift()),value:deserialize$1(entry.join('='))});}}}};var updateSearchParams$1=function updateSearchParams(query){this.entries.length=0;parseSearchParams$1(this.entries,query);};var validateArgumentsLength$1=function validateArgumentsLength(passed,required){if(passed<required)throw TypeError('Not enough arguments');};var URLSearchParamsIterator$1=createIteratorConstructor$1(function Iterator(params,kind){setInternalState$5$1(this,{type:URL_SEARCH_PARAMS_ITERATOR$1,iterator:getIterator$1(getInternalParamsState$1(params).entries),kind:kind});},'Iterator',function next(){var state=getInternalIteratorState$1(this);var kind=state.kind;var step=state.iterator.next();var entry=step.value;if(!step.done){step.value=kind==='keys'?entry.key:kind==='values'?entry.value:[entry.key,entry.value];}return step;});// `URLSearchParams` constructor
 	// https://url.spec.whatwg.org/#interface-urlsearchparams
 	var URLSearchParamsConstructor$1=function URLSearchParams()/* init */{anInstance$1(this,URLSearchParamsConstructor$1,URL_SEARCH_PARAMS$1);var init=arguments.length>0?arguments[0]:undefined;var that=this;var entries=[];var iteratorMethod,iterator,next,step,entryIterator,entryNext,first,second,key;setInternalState$5$1(that,{type:URL_SEARCH_PARAMS$1,entries:entries,updateURL:function updateURL(){/* empty */},updateSearchParams:updateSearchParams$1});if(init!==undefined){if(isObject$1(init)){iteratorMethod=getIteratorMethod$1(init);if(typeof iteratorMethod==='function'){iterator=iteratorMethod.call(init);next=iterator.next;while(!(step=next.call(iterator)).done){entryIterator=getIterator$1(anObject$1(step.value));entryNext=entryIterator.next;if((first=entryNext.call(entryIterator)).done||(second=entryNext.call(entryIterator)).done||!entryNext.call(entryIterator).done)throw TypeError('Expected sequence with length 2');entries.push({key:first.value+'',value:second.value+''});}}else for(key in init){if(has$2(init,key))entries.push({key:key,value:init[key]+''});}}else {parseSearchParams$1(entries,typeof init==='string'?init.charAt(0)==='?'?init.slice(1):init:init+'');}}};var URLSearchParamsPrototype$1=URLSearchParamsConstructor$1.prototype;redefineAll$1(URLSearchParamsPrototype$1,{// `URLSearchParams.prototype.appent` method
 	// https://url.spec.whatwg.org/#dom-urlsearchparams-append
@@ -37443,7 +37471,7 @@ var Forestry = (function () {
 	      forestries: 'Лесничества',
 	      forestries_local: 'Участковые лесничества',
 	      incidents: 'Космический мониторинг',
-	      kppo: 'КППО',
+	      kppo: 'Классы пожарной опасности',
 	      landsat: 'Landsat-8',
 	      parks: 'ООПТ',
 	      parks_federal: 'Федеральные ООПТ',
@@ -38249,13 +38277,13 @@ var Forestry = (function () {
 	var floor$9 = Math.floor;
 
 	// `Number.isInteger` method implementation
-	// https://tc39.github.io/ecma262/#sec-number.isinteger
+	// https://tc39.es/ecma262/#sec-number.isinteger
 	var isInteger = function isInteger(it) {
 	  return !isObject(it) && isFinite(it) && floor$9(it) === it;
 	};
 
 	// `Number.isInteger` method
-	// https://tc39.github.io/ecma262/#sec-number.isinteger
+	// https://tc39.es/ecma262/#sec-number.isinteger
 	_export({ target: 'Number', stat: true }, {
 	  isInteger: isInteger
 	});
@@ -40139,7 +40167,7 @@ var Forestry = (function () {
 	var FAILS_ON_PRIMITIVES$5 = fails(function () { nativeIsFrozen(1); });
 
 	// `Object.isFrozen` method
-	// https://tc39.github.io/ecma262/#sec-object.isfrozen
+	// https://tc39.es/ecma262/#sec-object.isfrozen
 	_export({ target: 'Object', stat: true, forced: FAILS_ON_PRIMITIVES$5 }, {
 	  isFrozen: function isFrozen(it) {
 	    return isObject(it) ? nativeIsFrozen ? nativeIsFrozen(it) : false : true;
@@ -48734,34 +48762,69 @@ var Forestry = (function () {
 	  return Incidents$1;
 	}(Controller);
 
-	var KPPO = /*#__PURE__*/function (_LayerController) {
-	  _inherits(KPPO, _LayerController);
+	var translate$d = T.getText.bind(T);
+	var ALLOWED_LAYERS = ['kppo_rgb', 'kppo'];
+
+	var KPPO = /*#__PURE__*/function (_Controller) {
+	  _inherits(KPPO, _Controller);
 
 	  var _super = _createSuper(KPPO);
 
 	  function KPPO(_ref) {
+	    var _this;
+
 	    var map = _ref.map,
 	        content = _ref.content,
 	        notification = _ref.notification,
 	        loading = _ref.loading,
-	        layer = _ref.layer,
+	        layers = _ref.layers,
 	        legend = _ref.legend;
 
 	    _classCallCheck(this, KPPO);
 
-	    return _super.call(this, {
-	      kind: 'kppo',
+	    _this = _super.call(this, {
 	      map: map,
 	      content: content,
 	      notification: notification,
-	      loading: loading,
-	      layer: layer,
-	      legend: legend
+	      loading: loading
 	    });
+	    _this._layers = layers;
+	    _this._legend = legend;
+	    var title = translate$d('legend.kppo');
+
+	    _this._legend.addComponent('kppo', title);
+
+	    _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
+
+	    return _this;
 	  }
 
+	  _createClass(KPPO, [{
+	    key: "_toggle",
+	    value: function _toggle(e) {
+	      var _this2 = this;
+
+	      var id = e.id,
+	          visible = e.visible;
+
+	      if (id === 'kppo') {
+	        if (visible) {
+	          ALLOWED_LAYERS.forEach(function (k) {
+	            var layer = _this2._layers[k];
+	            layer && _this2._map.addLayer(layer);
+	          });
+	        } else {
+	          ALLOWED_LAYERS.forEach(function (k) {
+	            var layer = _this2._layers[k];
+	            layer && _this2._map.removeLayer(layer);
+	          });
+	        }
+	      }
+	    }
+	  }]);
+
 	  return KPPO;
-	}(LayerController);
+	}(Controller);
 
 	var Legend$1 = /*#__PURE__*/function (_EventTarget) {
 	  _inherits(Legend, _EventTarget);
@@ -48944,7 +49007,7 @@ var Forestry = (function () {
 	  return Parks;
 	}(View$1);
 
-	var translate$d = T.getText.bind(T);
+	var translate$e = T.getText.bind(T);
 
 	var Parks$1 = /*#__PURE__*/function (_Controller) {
 	  _inherits(Parks$1, _Controller);
@@ -48987,18 +49050,18 @@ var Forestry = (function () {
 	      }
 
 	      if (_this._permissions.FederalSPNA) {
-	        _this._legend.addComponent('parks-federal', translate$d("legend.parks_federal"));
+	        _this._legend.addComponent('parks-federal', translate$e("legend.parks_federal"));
 	      }
 
 	      if (_this._permissions.RegionalSPNA) {
-	        _this._legend.addComponent('parks-regional', translate$d("legend.parks_regional"));
+	        _this._legend.addComponent('parks-regional', translate$e("legend.parks_regional"));
 	      }
 
 	      _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
 
 	      _this._layer.setFilter(_this.getFilter.bind(_assertThisInitialized(_this)));
 	    } else {
-	      _this._legend.addComponent('parks', translate$d("legend.parks"));
+	      _this._legend.addComponent('parks', translate$e("legend.parks"));
 	    }
 
 	    _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
@@ -49160,7 +49223,7 @@ var Forestry = (function () {
 	var LOG10E = Math.LOG10E;
 
 	// `Math.log10` method
-	// https://tc39.github.io/ecma262/#sec-math.log10
+	// https://tc39.es/ecma262/#sec-math.log10
 	_export({ target: 'Math', stat: true }, {
 	  log10: function log10(x) {
 	    return log$3(x) * LOG10E;
@@ -49168,7 +49231,7 @@ var Forestry = (function () {
 	});
 
 	// `Object.getOwnPropertyDescriptors` method
-	// https://tc39.github.io/ecma262/#sec-object.getownpropertydescriptors
+	// https://tc39.es/ecma262/#sec-object.getownpropertydescriptors
 	_export({ target: 'Object', stat: true, sham: !descriptors }, {
 	  getOwnPropertyDescriptors: function getOwnPropertyDescriptors(object) {
 	    var O = toIndexedObject(object);
@@ -49197,7 +49260,7 @@ var Forestry = (function () {
 	};
 
 	// `Function.prototype.bind` method implementation
-	// https://tc39.github.io/ecma262/#sec-function.prototype.bind
+	// https://tc39.es/ecma262/#sec-function.prototype.bind
 	var functionBind = Function.bind || function bind(that /* , ...args */) {
 	  var fn = aFunction$1(this);
 	  var partArgs = slice.call(arguments, 1);
@@ -49212,7 +49275,7 @@ var Forestry = (function () {
 	var nativeConstruct = getBuiltIn('Reflect', 'construct');
 
 	// `Reflect.construct` method
-	// https://tc39.github.io/ecma262/#sec-reflect.construct
+	// https://tc39.es/ecma262/#sec-reflect.construct
 	// MS Edge supports only 2 arguments and argumentsList argument is optional
 	// FF Nightly sets third argument as `new.target`, but does not create `this` from it
 	var NEW_TARGET_BUG = fails(function () {
@@ -49255,7 +49318,7 @@ var Forestry = (function () {
 	var quot = /"/g;
 
 	// B.2.3.2.1 CreateHTML(string, tag, attribute, value)
-	// https://tc39.github.io/ecma262/#sec-createhtml
+	// https://tc39.es/ecma262/#sec-createhtml
 	var createHtml = function (string, tag, attribute, value) {
 	  var S = String(requireObjectCoercible(string));
 	  var p1 = '<' + tag;
@@ -49273,7 +49336,7 @@ var Forestry = (function () {
 	};
 
 	// `String.prototype.fixed` method
-	// https://tc39.github.io/ecma262/#sec-string.prototype.fixed
+	// https://tc39.es/ecma262/#sec-string.prototype.fixed
 	_export({ target: 'String', proto: true, forced: stringHtmlForced('fixed') }, {
 	  fixed: function fixed() {
 	    return createHtml(this, 'tt', '', '');
@@ -49591,11 +49654,10 @@ var Forestry = (function () {
 	    }, {
 	      key: "getDimensions",
 	      value: function value(t) {
-	        var e = getComputedStyle(t),
-	            i = [],
-	            a = t.clientHeight,
-	            s = t.clientWidth;
-	        return a -= parseFloat(e.paddingTop) + parseFloat(e.paddingBottom), s -= parseFloat(e.paddingLeft) + parseFloat(e.paddingRight), i.push(s), i.push(a), i;
+	        var e = getComputedStyle(t, null),
+	            i = t.clientHeight,
+	            a = t.clientWidth;
+	        return i -= parseFloat(e.paddingTop) + parseFloat(e.paddingBottom), [a -= parseFloat(e.paddingLeft) + parseFloat(e.paddingRight), i];
 	      }
 	    }, {
 	      key: "getBoundingClientRect",
@@ -51399,6 +51461,12 @@ var Forestry = (function () {
 	                  dateFormatter: function dateFormatter(t) {
 	                    return new Date(t).toDateString();
 	                  }
+	                },
+	                png: {
+	                  filename: void 0
+	                },
+	                svg: {
+	                  filename: void 0
 	                }
 	              },
 	              autoSelected: "zoom"
@@ -51909,7 +51977,7 @@ var Forestry = (function () {
 	              formatter: void 0,
 	              title: {
 	                formatter: function formatter(t) {
-	                  return t + ": ";
+	                  return t ? t + ": " : "";
 	                }
 	              }
 	            },
@@ -52732,7 +52800,7 @@ var Forestry = (function () {
 	            y: s,
 	            drawnextLabel: !0
 	          };
-	          f && (x = this.dataLabelsCorrection(a, s, o, r, n, u, parseInt(d.style.fontSize, 10))), e.globals.zoomed || (a = x.x, s = x.y), x.textRects && (a + x.textRects.width < -20 || a > e.globals.gridWidth + 20) && (o = "");
+	          f && (x = this.dataLabelsCorrection(a, s, o, r, n, u, parseInt(d.style.fontSize, 10))), e.globals.zoomed || (a = x.x, s = x.y), x.textRects;
 	          var m = e.globals.dataLabels.style.colors[r];
 	          (("bar" === e.config.chart.type || "rangeBar" === e.config.chart.type) && e.config.plotOptions.bar.distributed || e.config.dataLabels.distributed) && (m = e.globals.dataLabels.style.colors[n]), g && (m = g);
 	          var v = d.offsetX,
@@ -53192,7 +53260,7 @@ var Forestry = (function () {
 	        }
 
 	        t.globals.previousPaths = [];
-	        ["line", "area", "bar", "candlestick", "radar"].forEach(function (i) {
+	        ["line", "area", "bar", "rangebar", "candlestick", "radar"].forEach(function (i) {
 	          for (var a, s = (a = i, t.globals.dom.baseEl.querySelectorAll(".apexcharts-".concat(a, "-series .apexcharts-series"))), r = 0; r < s.length; r++) {
 	            e(s, r, i);
 	          }
@@ -53760,42 +53828,43 @@ var Forestry = (function () {
 	            o = t.strokeWidth,
 	            l = t.elSeries,
 	            h = this.w,
-	            c = e.i,
-	            d = e.j,
-	            g = e.bc;
+	            c = e.realIndex,
+	            d = e.i,
+	            g = e.j,
+	            u = e.bc;
 
 	        if (h.globals.isXNumeric) {
-	          var u = c;
-	          h.globals.seriesX[c].length || (u = h.globals.maxValsInArrayIndex), i = (h.globals.seriesX[u][d] - h.globals.minX) / this.xRatio - r * this.seriesLen / 2;
+	          var f = c;
+	          h.globals.seriesX[c].length || (f = h.globals.maxValsInArrayIndex), i = (h.globals.seriesX[f][g] - h.globals.minX) / this.xRatio - r * this.seriesLen / 2;
 	        }
 
-	        var f = i + r * this.visibleI;
-	        a = void 0 === this.series[c][d] || null === this.series[c][d] ? n : n - this.series[c][d] / this.yRatio[this.yaxisIndex] + 2 * (this.isReversed ? this.series[c][d] / this.yRatio[this.yaxisIndex] : 0);
-	        var p = this.barHelpers.getColumnPaths({
-	          barXPosition: f,
+	        var p = i + r * this.visibleI;
+	        a = void 0 === this.series[d][g] || null === this.series[d][g] ? n : n - this.series[d][g] / this.yRatio[this.yaxisIndex] + 2 * (this.isReversed ? this.series[d][g] / this.yRatio[this.yaxisIndex] : 0);
+	        var x = this.barHelpers.getColumnPaths({
+	          barXPosition: p,
 	          barWidth: r,
 	          y1: n,
 	          y2: a,
 	          strokeWidth: o,
 	          series: this.series,
 	          realIndex: e.realIndex,
-	          i: c,
-	          j: d,
+	          i: d,
+	          j: g,
 	          w: h
 	        });
 	        return h.globals.isXNumeric || (i += s), this.barHelpers.barBackground({
-	          bc: g,
-	          j: d,
-	          i: c,
-	          x1: f - o / 2 - r * this.visibleI,
+	          bc: u,
+	          j: g,
+	          i: d,
+	          x1: p - o / 2 - r * this.visibleI,
 	          x2: r * this.seriesLen + o / 2,
 	          elSeries: l
 	        }), {
-	          pathTo: p.pathTo,
-	          pathFrom: p.pathFrom,
+	          pathTo: x.pathTo,
+	          pathFrom: x.pathFrom,
 	          x: i,
 	          y: a,
-	          barXPosition: f
+	          barXPosition: p
 	        };
 	      }
 	    }, {
@@ -54139,6 +54208,7 @@ var Forestry = (function () {
 	          y2: u,
 	          strokeWidth: this.strokeWidth,
 	          series: this.seriesRangeEnd,
+	          realIndex: e.realIndex,
 	          i: c,
 	          j: l,
 	          w: n
@@ -54175,6 +54245,7 @@ var Forestry = (function () {
 	          strokeWidth: this.strokeWidth,
 	          series: this.seriesRangeEnd,
 	          i: e.realIndex,
+	          realIndex: e.realIndex,
 	          j: e.j,
 	          w: h
 	        });
@@ -54207,7 +54278,7 @@ var Forestry = (function () {
 	            o = n.globals.seriesRangeStart[i][a],
 	            l = n.globals.seriesRangeEnd[i][a],
 	            h = n.globals.labels[a],
-	            c = n.config.series[i].name,
+	            c = n.config.series[i].name ? n.config.series[i].name : "",
 	            d = n.config.tooltip.y.formatter,
 	            g = n.config.tooltip.y.title.formatter,
 	            u = {
@@ -54587,7 +54658,7 @@ var Forestry = (function () {
 	        var a = t.xaxis.labels.formatter,
 	            s = t.xaxis.categories && t.xaxis.categories.length ? t.xaxis.categories : t.labels;
 	        return i && i.length && (s = i.map(function (t) {
-	          return t.toString();
+	          return Array.isArray(t) ? t : String(t);
 	        })), s && s.length && (t.xaxis.labels.formatter = function (t) {
 	          return f.isNumber(t) ? a(s[Math.floor(t) - 1]) : a(t);
 	        }), t.xaxis.categories = [], t.labels = [], t.xaxis.tickAmount = t.xaxis.tickAmount || "dataPoints", t;
@@ -55038,7 +55109,7 @@ var Forestry = (function () {
 	        var e = t;
 	        if (e.tooltip.shared && e.tooltip.intersect) throw new Error("tooltip.shared cannot be enabled when tooltip.intersect is true. Turn off any other option by setting it to false.");
 
-	        if (("bar" === e.chart.type || "rangeBar" === e.chart.type) && e.plotOptions.bar.horizontal) {
+	        if ("bar" === e.chart.type && e.plotOptions.bar.horizontal) {
 	          if (e.yaxis.length > 1) throw new Error("Multiple Y Axis for bars are not supported. Switch to column chart by setting plotOptions.bar.horizontal=false");
 	          e.yaxis[0].reversed && (e.yaxis[0].opposite = !0), e.xaxis.tooltip.enabled = !1, e.yaxis[0].tooltip.enabled = !1, e.chart.zoom.enabled = !1;
 	        }
@@ -55411,7 +55482,15 @@ var Forestry = (function () {
 	    }, {
 	      key: "parseDataAxisCharts",
 	      value: function value(t) {
-	        for (var e = this, i = arguments.length > 1 && void 0 !== arguments[1] ? arguments[1] : this.ctx, a = this.w.config, s = this.w.globals, r = new Y(i), n = a.labels.length > 0 ? a.labels.slice() : a.xaxis.categories.slice(), o = function o() {
+	        var e = this,
+	            i = arguments.length > 1 && void 0 !== arguments[1] ? arguments[1] : this.ctx,
+	            a = this.w.config,
+	            s = this.w.globals,
+	            r = new Y(i),
+	            n = a.labels.length > 0 ? a.labels.slice() : a.xaxis.categories.slice();
+	        s.isTimelineBar = "rangeBar" === a.chart.type && "datetime" === a.xaxis.type;
+
+	        for (var o = function o() {
 	          for (var t = 0; t < n.length; t++) {
 	            if ("string" == typeof n[t]) {
 	              if (!r.isValidDate(n[t])) throw new Error("You have provided invalid Date format. Please provide a valid JavaScript Date");
@@ -55641,7 +55720,7 @@ var Forestry = (function () {
 	        var p = new b(this.ctx),
 	            x = {};
 	        x = n.globals.rotateXLabels ? p.getTextRects(l, parseInt(r, 10), null, "rotate(".concat(n.config.xaxis.labels.rotate, " 0 0)"), !1) : p.getTextRects(l, parseInt(r, 10));
-	        var m = !n.config.xaxis.labels.showDuplicates && this.ctx.timeScale && "hours" !== this.ctx.timeScale.tickInterval && "minutes" !== this.ctx.timeScale.tickInterval;
+	        var m = !n.config.xaxis.labels.showDuplicates && this.ctx.timeScale;
 	        return !Array.isArray(l) && (0 === l.indexOf("NaN") || 0 === l.toLowerCase().indexOf("invalid") || l.toLowerCase().indexOf("infinity") >= 0 || s.indexOf(l) >= 0 && m) && (l = ""), {
 	          x: i,
 	          text: l,
@@ -55795,7 +55874,7 @@ var Forestry = (function () {
 	    }, {
 	      key: "exportToSVG",
 	      value: function value() {
-	        this.triggerDownload(this.svgUrl(), null, ".svg");
+	        this.triggerDownload(this.svgUrl(), this.w.config.chart.toolbar.export.svg.filename, ".svg");
 	      }
 	    }, {
 	      key: "exportToPng",
@@ -55804,7 +55883,7 @@ var Forestry = (function () {
 	        this.dataURI().then(function (e) {
 	          var i = e.imgURI,
 	              a = e.blob;
-	          a ? navigator.msSaveOrOpenBlob(a, t.w.globals.chartID + ".png") : t.triggerDownload(i, null, ".png");
+	          a ? navigator.msSaveOrOpenBlob(a, t.w.globals.chartID + ".png") : t.triggerDownload(i, t.w.config.chart.toolbar.export.png.filename, ".png");
 	        });
 	      }
 	    }, {
@@ -55826,10 +55905,10 @@ var Forestry = (function () {
 
 	          if (n.globals.axisCharts) {
 	            if ("category" === n.config.xaxis.type || n.config.xaxis.convertedCatToNumeric) if (n.globals.isBarHorizontal) {
-	              var a = n.globals.yLabelFormatters[0],
-	                  s = new M(e.ctx).getActiveConfigSeriesIndex();
-	              i = a(n.globals.labels[t], {
-	                seriesIndex: s,
+	              var s = n.globals.yLabelFormatters[0],
+	                  r = new M(e.ctx).getActiveConfigSeriesIndex();
+	              i = s(n.globals.labels[t], {
+	                seriesIndex: r,
 	                dataPointIndex: t,
 	                w: n
 	              });
@@ -55837,11 +55916,12 @@ var Forestry = (function () {
 	            "datetime" === n.config.xaxis.type && (n.config.xaxis.categories.length ? i = n.config.xaxis.categories[t] : n.config.labels.length && (i = n.config.labels[t]));
 	          } else i = n.config.labels[t];
 
-	          return i;
+	          return f.isNumber(i) ? i : i.split(a).join("");
 	        };
 
 	        o.push(n.config.chart.toolbar.export.csv.headerCategory), i.map(function (t, e) {
-	          n.globals.axisCharts && o.push(t.name ? t.name : "series-".concat(e));
+	          var i = t.name ? t.name : "series-".concat(e);
+	          n.globals.axisCharts && o.push(i.split(a).join("") ? i.split(a).join("") : "series-".concat(e));
 	        }), n.globals.axisCharts || (o.push(n.config.chart.toolbar.export.csv.headerValue), l.push(o.join(a))), i.map(function (t, e) {
 	          n.globals.axisCharts ? function (t, e) {
 	            if (o.length && 0 === e && l.push(o.join(a)), t.data && t.data.length) for (var s = 0; s < t.data.length; s++) {
@@ -55849,7 +55929,7 @@ var Forestry = (function () {
 	              var r = g(s);
 
 	              if (r || (c.isFormatXY() ? r = i[e].data[s].x : c.isFormat2DArray() && (r = i[e].data[s] ? i[e].data[s][0] : "")), 0 === e) {
-	                o.push((d = r, "datetime" === n.config.xaxis.type && String(d).length >= 10 ? n.config.chart.toolbar.export.csv.dateFormatter(r) : r));
+	                o.push((d = r, "datetime" === n.config.xaxis.type && String(d).length >= 10 ? n.config.chart.toolbar.export.csv.dateFormatter(r) : r.split(a).join("")));
 
 	                for (var h = 0; h < n.globals.series.length; h++) {
 	                  o.push(n.globals.series[h][s]);
@@ -55859,7 +55939,7 @@ var Forestry = (function () {
 	              ("candlestick" === n.config.chart.type || t.type && "candlestick" === t.type) && (o.pop(), o.push(n.globals.seriesCandleO[e][s]), o.push(n.globals.seriesCandleH[e][s]), o.push(n.globals.seriesCandleL[e][s]), o.push(n.globals.seriesCandleC[e][s])), "rangeBar" === n.config.chart.type && (o.pop(), o.push(n.globals.seriesRangeStart[e][s]), o.push(n.globals.seriesRangeEnd[e][s])), o.length && l.push(o.join(a));
 	            }
 	            var d;
-	          }(t, e) : ((o = []).push(n.globals.labels[e]), o.push(n.globals.series[e]), l.push(o.join(a)));
+	          }(t, e) : ((o = []).push(n.globals.labels[e].split(a).join("")), o.push(n.globals.series[e]), l.push(o.join(a)));
 	        }), h += l.join(r), this.triggerDownload(encodeURI(h), n.config.chart.toolbar.export.csv.filename, ".csv");
 	      }
 	    }, {
@@ -55905,28 +55985,32 @@ var Forestry = (function () {
 	          t = i.globals.gridWidth / c, n = n + t / 2 + i.config.xaxis.labels.offsetX;
 	        } else t = i.globals.gridWidth / o.length, n = n + t + i.config.xaxis.labels.offsetX;
 
-	        if (i.config.xaxis.labels.show) for (var d = function d(s) {
+	        for (var d = function d(s) {
 	          var l = n - t / 2 + i.config.xaxis.labels.offsetX;
 	          0 === s && 1 === h && t / 2 === n && 1 === i.globals.dataPoints && (l = i.globals.gridWidth / 2);
 	          var c = e.axesUtils.getLabel(o, i.globals.timescaleLabels, l, s, e.drawnLabels, e.xaxisFontSize),
 	              d = 28;
 	          i.globals.rotateXLabels && (d = 22);
-	          (c = void 0 !== i.config.xaxis.tickAmount && "dataPoints" !== i.config.xaxis.tickAmount && "datetime" !== i.config.xaxis.type ? e.axesUtils.checkLabelBasedOnTickamount(s, c, h) : e.axesUtils.checkForOverflowingLabels(s, c, h, e.drawnLabels, e.drawnLabelsRects)).text && i.globals.xaxisLabelsCount++;
-	          var g = a.drawText({
-	            x: c.x,
-	            y: e.offY + i.config.xaxis.labels.offsetY + d - ("top" === i.config.xaxis.position ? i.globals.xAxisHeight + i.config.xaxis.axisTicks.height - 2 : 0),
-	            text: c.text,
-	            textAnchor: "middle",
-	            fontWeight: c.isBold ? 600 : i.config.xaxis.labels.style.fontWeight,
-	            fontSize: e.xaxisFontSize,
-	            fontFamily: e.xaxisFontFamily,
-	            foreColor: Array.isArray(e.xaxisForeColors) ? i.config.xaxis.convertedCatToNumeric ? e.xaxisForeColors[i.globals.minX + s - 1] : e.xaxisForeColors[s] : e.xaxisForeColors,
-	            isPlainText: !1,
-	            cssClass: "apexcharts-xaxis-label " + i.config.xaxis.labels.style.cssClass
-	          });
-	          r.add(g);
-	          var u = document.createElementNS(i.globals.SVGNS, "title");
-	          u.textContent = Array.isArray(c.text) ? c.text.join(" ") : c.text, g.node.appendChild(u), "" !== c.text && (e.drawnLabels.push(c.text), e.drawnLabelsRects.push(c)), n += t;
+
+	          if ((c = void 0 !== i.config.xaxis.tickAmount && "dataPoints" !== i.config.xaxis.tickAmount && "datetime" !== i.config.xaxis.type ? e.axesUtils.checkLabelBasedOnTickamount(s, c, h) : e.axesUtils.checkForOverflowingLabels(s, c, h, e.drawnLabels, e.drawnLabelsRects)).text && i.globals.xaxisLabelsCount++, i.config.xaxis.labels.show) {
+	            var g = a.drawText({
+	              x: c.x,
+	              y: e.offY + i.config.xaxis.labels.offsetY + d - ("top" === i.config.xaxis.position ? i.globals.xAxisHeight + i.config.xaxis.axisTicks.height - 2 : 0),
+	              text: c.text,
+	              textAnchor: "middle",
+	              fontWeight: c.isBold ? 600 : i.config.xaxis.labels.style.fontWeight,
+	              fontSize: e.xaxisFontSize,
+	              fontFamily: e.xaxisFontFamily,
+	              foreColor: Array.isArray(e.xaxisForeColors) ? i.config.xaxis.convertedCatToNumeric ? e.xaxisForeColors[i.globals.minX + s - 1] : e.xaxisForeColors[s] : e.xaxisForeColors,
+	              isPlainText: !1,
+	              cssClass: "apexcharts-xaxis-label " + i.config.xaxis.labels.style.cssClass
+	            });
+	            r.add(g);
+	            var u = document.createElementNS(i.globals.SVGNS, "title");
+	            u.textContent = Array.isArray(c.text) ? c.text.join(" ") : c.text, g.node.appendChild(u), "" !== c.text && (e.drawnLabels.push(c.text), e.drawnLabelsRects.push(c));
+	          }
+
+	          n += t;
 	        }, g = 0; g <= h - 1; g++) {
 	          d(g);
 	        }
@@ -56465,23 +56549,15 @@ var Forestry = (function () {
 	      }
 	    }, {
 	      key: "logarithmicScale",
-	      value: function value(t, e, i, a) {
-	        (e <= 0 || e === Number.MIN_VALUE) && (e = .01);
-
-	        for (var s = Math.log(e) / Math.log(10), r = Math.log(i) / Math.log(10), n = Math.abs(i - e) / a, o = [], l = e; a >= 0;) {
-	          o.push(l), l += n, a -= 1;
+	      value: function value(t) {
+	        for (var e = [], i = Math.ceil(Math.log10(t)) + 1, a = 0; a < i; a++) {
+	          e.push(Math.pow(10, a));
 	        }
 
-	        var h = o.map(function (t, a) {
-	          t <= 0 && (t = .01);
-	          var n = (r - s) / (i - e),
-	              o = Math.pow(10, s + n * (t - s));
-	          return Math.round(o / f.roundToBase(o, 10)) * f.roundToBase(o, 10);
-	        });
-	        return 0 === h[0] && (h[0] = 1), {
-	          result: h,
-	          niceMin: h[0],
-	          niceMax: h[h.length - 1]
+	        return {
+	          result: e,
+	          niceMin: e[0],
+	          niceMax: e[e.length - 1]
 	        };
 	      }
 	    }, {
@@ -56489,7 +56565,7 @@ var Forestry = (function () {
 	      value: function value(t, e, i) {
 	        var a = t;
 
-	        if (void 0 !== e && this.w.config.yaxis[e].labels.formatter) {
+	        if (void 0 !== e && this.w.config.yaxis[e].labels.formatter && void 0 === this.w.config.yaxis[e].tickAmount) {
 	          var s = this.w.config.yaxis[e].labels.formatter(1);
 	          f.isNumber(Number(s)) && !f.isFloat(s) && (a = Math.ceil(i));
 	        }
@@ -56504,7 +56580,7 @@ var Forestry = (function () {
 	            r = a.isBarHorizontal ? s.xaxis : s.yaxis[t];
 	        void 0 === a.yAxisScale[t] && (a.yAxisScale[t] = []);
 	        var n = Math.abs(i - e);
-	        if (r.logarithmic && n <= 5 && (a.invalidLogScale = !0), r.logarithmic && n > 5) a.allSeriesCollapsed = !1, a.yAxisScale[t] = this.logarithmicScale(t, e, i, r.tickAmount ? r.tickAmount : Math.floor(Math.log10(i)));else if (i !== -Number.MAX_VALUE && f.isNumber(i)) {
+	        if (r.logarithmic && n <= 5 && (a.invalidLogScale = !0), r.logarithmic && n > 5) a.allSeriesCollapsed = !1, a.yAxisScale[t] = this.logarithmicScale(i);else if (i !== -Number.MAX_VALUE && f.isNumber(i)) {
 	          if (a.allSeriesCollapsed = !1, void 0 === r.min && void 0 === r.max || r.forceNiceScale) {
 	            var o = void 0 === s.yaxis[t].max && void 0 === s.yaxis[t].min || s.yaxis[t].forceNiceScale;
 	            a.yAxisScale[t] = this.niceScale(e, i, r.tickAmount ? r.tickAmount : n < 5 && n > 1 ? n + 1 : 5, t, o);
@@ -56710,11 +56786,11 @@ var Forestry = (function () {
 
 	        if (t.minY = r.minY, t.maxY = r.maxY, i = r.lowestY, e.chart.stacked && this._setStackedMinMax(), ("line" === e.chart.type || "area" === e.chart.type || "candlestick" === e.chart.type || "rangeBar" === e.chart.type && !t.isBarHorizontal) && t.minY === Number.MIN_VALUE && i !== -Number.MAX_VALUE && i !== t.maxY) {
 	          var n = t.maxY - i;
-	          i >= 0 && i <= 10 && (n = 0), t.minY = i - 5 * n / 100, i > 0 && t.minY < 0 && (t.minY = 0), t.maxY = t.maxY + 5 * n / 100;
+	          (i >= 0 && i <= 10 || void 0 !== e.yaxis[0].min || void 0 !== e.yaxis[0].max) && (n = 0), t.minY = i - 5 * n / 100, i > 0 && t.minY < 0 && (t.minY = 0), t.maxY = t.maxY + 5 * n / 100;
 	        }
 
 	        if (e.yaxis.forEach(function (e, i) {
-	          void 0 !== e.max && ("number" == typeof e.max ? t.maxYArr[i] = e.max : "function" == typeof e.max && (t.maxYArr[i] = e.max(t.maxY)), t.maxY = t.maxYArr[i]), void 0 !== e.min && ("number" == typeof e.min ? t.minYArr[i] = e.min : "function" == typeof e.min && (t.minYArr[i] = e.min(t.minY)), t.minY = t.minYArr[i]);
+	          void 0 !== e.max && ("number" == typeof e.max ? t.maxYArr[i] = e.max : "function" == typeof e.max && (t.maxYArr[i] = e.max(t.isMultipleYAxis ? t.maxYArr[i] : t.maxY)), t.maxY = t.maxYArr[i]), void 0 !== e.min && ("number" == typeof e.min ? t.minYArr[i] = e.min : "function" == typeof e.min && (t.minYArr[i] = e.min(t.isMultipleYAxis ? t.minYArr[i] === Number.MIN_VALUE ? 0 : t.minYArr[i] : t.minY)), t.minY = t.minYArr[i]);
 	        }), t.isBarHorizontal) {
 	          ["min", "max"].forEach(function (i) {
 	            void 0 !== e.xaxis[i] && "number" == typeof e.xaxis[i] && ("min" === i ? t.minY = e.xaxis[i] : t.maxY = e.xaxis[i]);
@@ -56727,7 +56803,8 @@ var Forestry = (function () {
 	          minY: t.minY,
 	          maxY: t.maxY,
 	          minYArr: t.minYArr,
-	          maxYArr: t.maxYArr
+	          maxYArr: t.maxYArr,
+	          yAxisScale: t.yAxisScale
 	        };
 	      }
 	    }, {
@@ -57143,7 +57220,9 @@ var Forestry = (function () {
 	            passive: !0
 	          });
 	        }), this.ctx.eventList.forEach(function (i) {
-	          e.globals.dom.baseEl.addEventListener(i, t.documentEvent);
+	          e.globals.dom.baseEl.addEventListener(i, t.documentEvent, {
+	            passive: !0
+	          });
 	        }), this.ctx.core.setupBrushHandler();
 	      }
 	    }, {
@@ -57756,7 +57835,7 @@ var Forestry = (function () {
 	          n(t, e);
 	        }), t.globals.yTitleCoords.map(function (t, e) {
 	          n(t, e);
-	        }), t.globals.isBarHorizontal && (e = t.globals.yLabelsCoords[0].width + t.globals.yTitleCoords[0].width + 15), this.dCtx.yAxisWidthLeft = i, this.dCtx.yAxisWidthRight = a, e;
+	        }), t.globals.isBarHorizontal && !t.config.yaxis[0].floating && (e = t.globals.yLabelsCoords[0].width + t.globals.yTitleCoords[0].width + 15), this.dCtx.yAxisWidthLeft = i, this.dCtx.yAxisWidthRight = a, e;
 	      }
 	    }]), t;
 	  }(),
@@ -58208,7 +58287,9 @@ var Forestry = (function () {
 	  }(),
 	      ht = function () {
 	    function t(i) {
-	      e(this, t), this.ctx = i, this.w = i.w, this.ev = this.w.config.chart.events, this.selectedClass = "apexcharts-selected", this.localeValues = this.w.globals.locale.toolbar;
+	      e(this, t), this.ctx = i, this.w = i.w;
+	      var a = this.w;
+	      this.ev = this.w.config.chart.events, this.selectedClass = "apexcharts-selected", this.localeValues = this.w.globals.locale.toolbar, this.minX = a.globals.minX, this.maxX = a.globals.maxX;
 	    }
 
 	    return a(t, [{
@@ -58362,10 +58443,12 @@ var Forestry = (function () {
 	    }, {
 	      key: "handleZoomIn",
 	      value: function value() {
-	        var t = this.w,
-	            e = (t.globals.minX + t.globals.maxX) / 2,
-	            i = (t.globals.minX + e) / 2,
-	            a = (t.globals.maxX + e) / 2,
+	        var t = this.w;
+	        t.globals.isTimelineBar && (this.minX = t.globals.minY, this.maxX = t.globals.maxY);
+
+	        var e = (this.minX + this.maxX) / 2,
+	            i = (this.minX + e) / 2,
+	            a = (this.maxX + e) / 2,
 	            s = this._getNewMinXMaxX(i, a);
 
 	        t.globals.disableZoomIn || this.zoomUpdateOptions(s.minX, s.maxX);
@@ -58375,10 +58458,10 @@ var Forestry = (function () {
 	      value: function value() {
 	        var t = this.w;
 
-	        if (!("datetime" === t.config.xaxis.type && new Date(t.globals.minX).getUTCFullYear() < 1e3)) {
-	          var e = (t.globals.minX + t.globals.maxX) / 2,
-	              i = t.globals.minX - (e - t.globals.minX),
-	              a = t.globals.maxX - (e - t.globals.maxX),
+	        if (t.globals.isTimelineBar && (this.minX = t.globals.minY, this.maxX = t.globals.maxY), !("datetime" === t.config.xaxis.type && new Date(this.minX).getUTCFullYear() < 1e3)) {
+	          var e = (this.minX + this.maxX) / 2,
+	              i = this.minX - (e - this.minX),
+	              a = this.maxX - (e - this.maxX),
 	              s = this._getNewMinXMaxX(i, a);
 
 	          t.globals.disableZoomOut || this.zoomUpdateOptions(s.minX, s.maxX);
@@ -58749,9 +58832,10 @@ var Forestry = (function () {
 	          s.startY = s.endY, s.endY = l;
 	        }
 
-	        var h = a.globals.xAxisScale.niceMin + s.startX * r.xRatio,
-	            c = a.globals.xAxisScale.niceMin + s.endX * r.xRatio,
-	            d = [],
+	        var h = void 0,
+	            c = void 0;
+	        a.globals.isTimelineBar ? (h = a.globals.yAxisScale[0].niceMin + s.startX * r.invertedYRatio, c = a.globals.yAxisScale[0].niceMin + s.endX * r.invertedYRatio) : (h = a.globals.xAxisScale.niceMin + s.startX * r.xRatio, c = a.globals.xAxisScale.niceMin + s.endX * r.xRatio);
+	        var d = [],
 	            g = [];
 	        if (a.config.yaxis.forEach(function (t, e) {
 	          d.push(a.globals.yAxisScale[e].niceMax - r.yRatio[e] * s.startY), g.push(a.globals.yAxisScale[e].niceMax - r.yRatio[e] * s.endY);
@@ -58811,8 +58895,8 @@ var Forestry = (function () {
 	          x: a.clientX,
 	          y: a.clientY
 	        };
-	        var n = i.globals.minX,
-	            o = i.globals.maxX;
+	        var n = i.globals.isTimelineBar ? i.globals.minY : i.globals.minX,
+	            o = i.globals.isTimelineBar ? i.globals.maxY : i.globals.maxX;
 	        i.config.xaxis.convertedCatToNumeric || a.panScrolled(n, o);
 	      }
 	    }, {
@@ -58834,22 +58918,25 @@ var Forestry = (function () {
 	      value: function value(t, e) {
 	        var i = this.w,
 	            a = this.xyRatios,
-	            s = f.clone(i.globals.initialConfig.yaxis);
-	        "left" === this.moveDirection ? (t = i.globals.minX + i.globals.gridWidth / 15 * a.xRatio, e = i.globals.maxX + i.globals.gridWidth / 15 * a.xRatio) : "right" === this.moveDirection && (t = i.globals.minX - i.globals.gridWidth / 15 * a.xRatio, e = i.globals.maxX - i.globals.gridWidth / 15 * a.xRatio), (t < i.globals.initialMinX || e > i.globals.initialMaxX) && (t = i.globals.minX, e = i.globals.maxX);
-	        var r = {
+	            s = f.clone(i.globals.initialConfig.yaxis),
+	            r = a.xRatio,
+	            n = i.globals.minX,
+	            o = i.globals.maxX;
+	        i.globals.isTimelineBar && (r = a.invertedYRatio, n = i.globals.minY, o = i.globals.maxY), "left" === this.moveDirection ? (t = n + i.globals.gridWidth / 15 * r, e = o + i.globals.gridWidth / 15 * r) : "right" === this.moveDirection && (t = n - i.globals.gridWidth / 15 * r, e = o - i.globals.gridWidth / 15 * r), i.globals.isTimelineBar || (t < i.globals.initialMinX || e > i.globals.initialMaxX) && (t = n, e = o);
+	        var l = {
 	          min: t,
 	          max: e
 	        };
 	        i.config.chart.zoom.autoScaleYaxis && (s = new j(this.ctx).autoScaleY(this.ctx, s, {
-	          xaxis: r
+	          xaxis: l
 	        }));
-	        var n = {
+	        var h = {
 	          xaxis: {
 	            min: t,
 	            max: e
 	          }
 	        };
-	        i.config.chart.group || (n.yaxis = s), this.updateScrolledChart(n, t, e);
+	        i.config.chart.group || (h.yaxis = s), this.updateScrolledChart(h, t, e);
 	      }
 	    }, {
 	      key: "updateScrolledChart",
@@ -59244,7 +59331,7 @@ var Forestry = (function () {
 	          i: void 0,
 	          dateFormatter: new Y(this.ctx).formatDate,
 	          w: this.w
-	        }) : a.globals.isBarHorizontal || (r = a.globals.xLabelFormatter(d, h));
+	        }) : r = a.globals.isBarHorizontal ? a.globals.yLabelFormatters[0](d, h) : a.globals.xLabelFormatter(d, h);
 	        return void 0 !== a.config.tooltip.x.formatter && (r = a.globals.ttKeyFormatter(d, h)), a.globals.seriesZ.length > 0 && a.globals.seriesZ[e].length > 0 && (o = c(a.globals.seriesZ[e][i], a)), n = "function" == typeof a.config.xaxis.tooltip.formatter ? a.globals.xaxisTooltipFormatter(d, h) : r, {
 	          val: Array.isArray(l) ? l.join(" ") : l,
 	          xVal: Array.isArray(r) ? r.join(" ") : r,
@@ -60072,8 +60159,20 @@ var Forestry = (function () {
 	          });
 	          var l = s.globals.clientX - o.left - a.ttWidth / 2,
 	              h = s.globals.clientY - o.top - a.ttHeight - 10;
-	          n.style.left = l + "px", n.style.top = h + "px";
-	        } else "mouseout" !== e.type && "touchend" !== e.type || n.classList.remove("apexcharts-active");
+
+	          if (n.style.left = l + "px", n.style.top = h + "px", s.config.legend.tooltipHoverFormatter) {
+	            var c = r - 1,
+	                d = (0, s.config.legend.tooltipHoverFormatter)(this.legendLabels[c].getAttribute("data:default-text"), {
+	              seriesIndex: c,
+	              dataPointIndex: c,
+	              w: s
+	            });
+	            this.legendLabels[c].innerHTML = d;
+	          }
+	        } else "mouseout" !== e.type && "touchend" !== e.type || (n.classList.remove("apexcharts-active"), s.config.legend.tooltipHoverFormatter && this.legendLabels.forEach(function (t) {
+	          var e = t.getAttribute("data:default-text");
+	          t.innerHTML = decodeURIComponent(e);
+	        }));
 	      }
 	    }, {
 	      key: "handleStickyTooltip",
@@ -60963,7 +61062,7 @@ var Forestry = (function () {
 	          if (v.attr({
 	            index: 0,
 	            j: d
-	          }), i.config.chart.dropShadow.enabled) {
+	          }), a.setSelectionFilter(v, 0, d), i.config.chart.dropShadow.enabled) {
 	            var y = i.config.chart.dropShadow;
 	            a.dropShadow(v, y, d);
 	          }
@@ -61000,7 +61099,7 @@ var Forestry = (function () {
 	            totalItems: t.length - 1,
 	            animBeginArr: this.animBeginArr,
 	            dur: k
-	          }), i.config.plotOptions.pie.expandOnClick && "polarArea" !== this.chartType && v.click(this.pieClicked.bind(this, d)), i.config.dataLabels.enabled) {
+	          }), i.config.plotOptions.pie.expandOnClick && "polarArea" !== this.chartType && v.click(this.pieClicked.bind(this, d)), void 0 !== i.globals.selectedDataPoints[0] && i.globals.selectedDataPoints[0].indexOf(d) > -1 && this.pieClicked(d), i.config.dataLabels.enabled) {
 	            var A = w.x,
 	                S = w.y,
 	                C = 100 * u / this.fullAngle + "%";
@@ -61312,7 +61411,7 @@ var Forestry = (function () {
 	    function t(i) {
 	      e(this, t), this.ctx = i, this.w = i.w, this.chartType = this.w.config.chart.type, this.initialAnim = this.w.config.chart.animations.enabled, this.dynamicAnim = this.initialAnim && this.w.config.chart.animations.dynamicAnimation.enabled, this.animDur = 0;
 	      var a = this.w;
-	      this.graphics = new b(this.ctx), this.lineColorArr = void 0 !== a.globals.stroke.colors ? a.globals.stroke.colors : a.globals.colors, this.defaultSize = a.globals.svgHeight < a.globals.svgWidth ? a.globals.gridHeight + 1.5 * a.globals.goldenPadding : a.globals.gridWidth, this.maxValue = this.w.globals.maxY, this.minValue = this.w.globals.minY, this.polygons = a.config.plotOptions.radar.polygons, this.strokeWidth = a.config.stroke.show ? a.config.stroke.width : 0, this.size = this.defaultSize / 2.1 - this.strokeWidth - a.config.chart.dropShadow.blur, a.config.xaxis.labels.show && (this.size = this.size - a.globals.xAxisLabelsWidth / 1.75), void 0 !== a.config.plotOptions.radar.size && (this.size = a.config.plotOptions.radar.size), this.dataRadiusOfPercent = [], this.dataRadius = [], this.angleArr = [], this.yaxisLabelsTextsPos = [];
+	      this.graphics = new b(this.ctx), this.lineColorArr = void 0 !== a.globals.stroke.colors ? a.globals.stroke.colors : a.globals.colors, this.defaultSize = a.globals.svgHeight < a.globals.svgWidth ? a.globals.gridHeight + 1.5 * a.globals.goldenPadding : a.globals.gridWidth, this.isLog = a.config.yaxis[0].logarithmic, this.coreUtils = new y(this.ctx), this.maxValue = this.isLog ? this.coreUtils.getLogVal(a.globals.maxY, 0) : a.globals.maxY, this.minValue = this.isLog ? this.coreUtils.getLogVal(this.w.globals.minY, 0) : a.globals.minY, this.polygons = a.config.plotOptions.radar.polygons, this.strokeWidth = a.config.stroke.show ? a.config.stroke.width : 0, this.size = this.defaultSize / 2.1 - this.strokeWidth - a.config.chart.dropShadow.blur, a.config.xaxis.labels.show && (this.size = this.size - a.globals.xAxisLabelsWidth / 1.75), void 0 !== a.config.plotOptions.radar.size && (this.size = a.config.plotOptions.radar.size), this.dataRadiusOfPercent = [], this.dataRadius = [], this.angleArr = [], this.yaxisLabelsTextsPos = [];
 	    }
 
 	    return a(t, [{
@@ -61349,7 +61448,7 @@ var Forestry = (function () {
 	          });
 	          e.dataRadiusOfPercent[o] = [], e.dataRadius[o] = [], e.angleArr[o] = [], t.forEach(function (t, i) {
 	            var a = Math.abs(e.maxValue - e.minValue);
-	            t += Math.abs(e.minValue), e.dataRadiusOfPercent[o][i] = t / a, e.dataRadius[o][i] = e.dataRadiusOfPercent[o][i] * e.size, e.angleArr[o][i] = i * e.disAngle;
+	            t += Math.abs(e.minValue), e.isLog && (t = e.coreUtils.getLogVal(t, 0)), e.dataRadiusOfPercent[o][i] = t / a, e.dataRadius[o][i] = e.dataRadiusOfPercent[o][i] * e.size, e.angleArr[o][i] = i * e.disAngle;
 	          }), g = e.getDataPointsPos(e.dataRadius[o], e.angleArr[o]);
 	          var c = e.createPaths(g, {
 	            x: 0,
@@ -61796,7 +61895,7 @@ var Forestry = (function () {
 	            s.dropShadow(z, I, m);
 	          }
 
-	          this.addListeners(z, this.radialDataLabels), v.add(z), z.attr({
+	          s.setSelectionFilter(z, 0, m), this.addListeners(z, this.radialDataLabels), v.add(z), z.attr({
 	            index: 0,
 	            j: m
 	          });
@@ -62438,8 +62537,9 @@ var Forestry = (function () {
 	            s = new L(this.ctx),
 	            r = a.group({
 	          class: "apexcharts-treemap"
-	        }),
-	            n = [];
+	        });
+	        if (i.globals.noData) return r;
+	        var n = [];
 	        return t.forEach(function (t) {
 	          var e = t.map(function (t) {
 	            return Math.abs(t);
@@ -62474,6 +62574,7 @@ var Forestry = (function () {
 	            u.attr({
 	              cx: h,
 	              cy: c,
+	              index: o,
 	              i: o,
 	              j: n,
 	              width: d - h,
@@ -63150,7 +63251,7 @@ var Forestry = (function () {
 	          i: []
 	        };
 	        s.series.map(function (e, d) {
-	          void 0 !== t[d].type ? ("column" === t[d].type || "bar" === t[d].type ? (s.series.length > 1 && a.plotOptions.bar.horizontal && console.warn("Horizontal bars are not supported in a mixed/combo chart. Please turn off `plotOptions.bar.horizontal`"), h.series.push(e), h.i.push(d), i.globals.columnSeries = h.series) : "area" === t[d].type ? (n.series.push(e), n.i.push(d)) : "line" === t[d].type ? (r.series.push(e), r.i.push(d)) : "scatter" === t[d].type ? (o.series.push(e), o.i.push(d)) : "bubble" === t[d].type ? (l.series.push(e), l.i.push(d)) : "candlestick" === t[d].type ? (c.series.push(e), c.i.push(d)) : console.warn("You have specified an unrecognized chart type. Available types for this propery are line/area/column/bar/scatter/bubble"), s.comboCharts = !0) : (r.series.push(e), r.i.push(d));
+	          void 0 !== t[d].type ? ("column" === t[d].type || "bar" === t[d].type ? (s.series.length > 1 && a.plotOptions.bar.horizontal && console.warn("Horizontal bars are not supported in a mixed/combo chart. Please turn off `plotOptions.bar.horizontal`"), h.series.push(e), h.i.push(d), i.globals.columnSeries = h.series) : "area" === t[d].type ? (n.series.push(e), n.i.push(d)) : "line" === t[d].type ? (r.series.push(e), r.i.push(d)) : "scatter" === t[d].type ? (o.series.push(e), o.i.push(d)) : "bubble" === t[d].type ? (l.series.push(e), l.i.push(d)) : "candlestick" === t[d].type ? (c.series.push(e), c.i.push(d)) : console.warn("You have specified an unrecognized chart type. Available types for this property are line/area/column/bar/scatter/bubble"), s.comboCharts = !0) : (r.series.push(e), r.i.push(d));
 	        });
 	        var d = new Pt(this.ctx, e),
 	            g = new vt(this.ctx, e);
@@ -63235,18 +63336,24 @@ var Forestry = (function () {
 	        t.svgWidth = e.chart.width, t.svgHeight = e.chart.height;
 	        var i = f.getDimensions(this.el),
 	            a = e.chart.width.toString().split(/[0-9]+/g).pop();
-	        if ("%" === a ? f.isNumber(i[0]) && (0 === i[0].width && (i = f.getDimensions(this.el.parentNode)), t.svgWidth = i[0] * parseInt(e.chart.width, 10) / 100) : "px" !== a && "" !== a || (t.svgWidth = parseInt(e.chart.width, 10)), "auto" !== t.svgHeight && "" !== t.svgHeight) {
-	          if ("%" === e.chart.height.toString().split(/[0-9]+/g).pop()) {
-	            var s = f.getDimensions(this.el.parentNode);
-	            t.svgHeight = s[1] * parseInt(e.chart.height, 10) / 100;
+	        "%" === a ? f.isNumber(i[0]) && (0 === i[0].width && (i = f.getDimensions(this.el.parentNode)), t.svgWidth = i[0] * parseInt(e.chart.width, 10) / 100) : "px" !== a && "" !== a || (t.svgWidth = parseInt(e.chart.width, 10));
+	        var s = e.chart.height.toString().split(/[0-9]+/g).pop();
+	        if ("auto" !== t.svgHeight && "" !== t.svgHeight) {
+	          if ("%" === s) {
+	            var r = f.getDimensions(this.el.parentNode);
+	            t.svgHeight = r[1] * parseInt(e.chart.height, 10) / 100;
 	          } else t.svgHeight = parseInt(e.chart.height, 10);
 	        } else t.axisCharts ? t.svgHeight = t.svgWidth / 1.61 : t.svgHeight = t.svgWidth / 1.2;
-	        t.svgWidth < 0 && (t.svgWidth = 0), t.svgHeight < 0 && (t.svgHeight = 0), b.setAttrs(t.dom.Paper.node, {
+
+	        if (t.svgWidth < 0 && (t.svgWidth = 0), t.svgHeight < 0 && (t.svgHeight = 0), b.setAttrs(t.dom.Paper.node, {
 	          width: t.svgWidth,
 	          height: t.svgHeight
-	        });
-	        var r = e.chart.sparkline.enabled ? 0 : t.axisCharts ? e.chart.parentHeightOffset : 0;
-	        t.dom.Paper.node.parentNode.parentNode.style.minHeight = t.svgHeight + r + "px", t.dom.elWrap.style.width = t.svgWidth + "px", t.dom.elWrap.style.height = t.svgHeight + "px";
+	        }), "%" !== s) {
+	          var n = e.chart.sparkline.enabled ? 0 : t.axisCharts ? e.chart.parentHeightOffset : 0;
+	          t.dom.Paper.node.parentNode.parentNode.style.minHeight = t.svgHeight + n + "px";
+	        }
+
+	        t.dom.elWrap.style.width = t.svgWidth + "px", t.dom.elWrap.style.height = t.svgHeight + "px";
 	      }
 	    }, {
 	      key: "shiftGraphPosition",
@@ -64459,7 +64566,9 @@ var Forestry = (function () {
 	          o = (a.handlerMap.indexOf(t) + 1 || a.handlerMap.push(t)) - 1,
 	          l = e.split(".")[0],
 	          h = e.split(".")[1] || "*";
-	      a.listeners[o] = a.listeners[o] || {}, a.listeners[o][l] = a.listeners[o][l] || {}, a.listeners[o][l][h] = a.listeners[o][l][h] || {}, i._svgjsListenerId || (i._svgjsListenerId = ++a.listenerId), a.listeners[o][l][h][i._svgjsListenerId] = n, t.addEventListener(l, n, r || !1);
+	      a.listeners[o] = a.listeners[o] || {}, a.listeners[o][l] = a.listeners[o][l] || {}, a.listeners[o][l][h] = a.listeners[o][l][h] || {}, i._svgjsListenerId || (i._svgjsListenerId = ++a.listenerId), a.listeners[o][l][h][i._svgjsListenerId] = n, t.addEventListener(l, n, r || {
+	        passive: !0
+	      });
 	    }, a.off = function (t, e, i) {
 	      var s = a.handlerMap.indexOf(t),
 	          r = e && e.split(".")[0],
@@ -66466,7 +66575,7 @@ var Forestry = (function () {
 	  }(),
 	      Rt = function () {
 	    function t(i, a) {
-	      e(this, t), this.opts = a, this.ctx = this, this.w = new N(a).init(), this.el = i, this.w.globals.cuid = f.randomId(), this.w.globals.chartID = this.w.config.chart.id ? f.escapeString(this.w.config.chart.id) : this.w.globals.cuid, new Yt(this).initModules(), this.create = f.bind(this.create, this), this.windowResizeHandler = this._windowResizeHandler.bind(this);
+	      e(this, t), this.opts = a, this.ctx = this, this.w = new N(a).init(), this.el = i, this.w.globals.cuid = f.randomId(), this.w.globals.chartID = this.w.config.chart.id ? f.escapeString(this.w.config.chart.id) : this.w.globals.cuid, new Yt(this).initModules(), this.create = f.bind(this.create, this), this.windowResizeHandler = this._windowResizeHandler.bind(this), this.parentResizeHandler = this._parentResizeCallback.bind(this);
 	    }
 
 	    return a(t, [{
@@ -66481,7 +66590,7 @@ var Forestry = (function () {
 	              chart: t
 	            }), t.setLocale(t.w.config.chart.defaultLocale);
 	            var a = t.w.config.chart.events.beforeMount;
-	            "function" == typeof a && a(t, t.w), t.events.fireEvent("beforeMount", [t, t.w]), window.addEventListener("resize", t.windowResizeHandler), window.addResizeListener(t.el.parentNode, t._parentResizeCallback.bind(t));
+	            "function" == typeof a && a(t, t.w), t.events.fireEvent("beforeMount", [t, t.w]), window.addEventListener("resize", t.windowResizeHandler), window.addResizeListener(t.el.parentNode, t.parentResizeHandler);
 	            var s = t.create(t.w.config.series, {});
 	            if (!s) return e(t);
 	            t.mount(s).then(function () {
@@ -66546,7 +66655,7 @@ var Forestry = (function () {
 	          } else a.globals.dom.elGraphical.add(e.elGraph);
 
 	          if ("front" === a.config.grid.position && n && a.globals.dom.elGraphical.add(n.el), "front" === a.config.xaxis.crosshairs.position && i.crosshairs.drawXCrosshairs(), "front" === a.config.yaxis[0].crosshairs.position && i.crosshairs.drawYCrosshairs(), "front" === a.config.annotations.position && (a.globals.dom.Paper.add(a.globals.dom.elAnnotations), i.annotations.drawAxesAnnotations()), !a.globals.noData) {
-	            if (a.config.tooltip.enabled && !a.globals.noData && i.w.globals.tooltip.drawTooltip(e.xyRatios), a.globals.axisCharts && (a.globals.isXNumeric || a.config.xaxis.convertedCatToNumeric)) (a.config.chart.zoom.enabled || a.config.chart.selection && a.config.chart.selection.enabled || a.config.chart.pan && a.config.chart.pan.enabled) && i.zoomPanSelection.init({
+	            if (a.config.tooltip.enabled && !a.globals.noData && i.w.globals.tooltip.drawTooltip(e.xyRatios), a.globals.axisCharts && (a.globals.isXNumeric || a.config.xaxis.convertedCatToNumeric || a.globals.isTimelineBar)) (a.config.chart.zoom.enabled || a.config.chart.selection && a.config.chart.selection.enabled || a.config.chart.pan && a.config.chart.pan.enabled) && i.zoomPanSelection.init({
 	              xyRatios: e.xyRatios
 	            });else {
 	              var c = a.config.chart.toolbar.tools;
@@ -66565,7 +66674,7 @@ var Forestry = (function () {
 	    }, {
 	      key: "destroy",
 	      value: function value() {
-	        window.removeEventListener("resize", this.windowResizeHandler), window.removeResizeListener(this.el.parentNode, this._parentResizeCallback.bind(this));
+	        window.removeEventListener("resize", this.windowResizeHandler), window.removeResizeListener(this.el.parentNode, this.parentResizeHandler);
 	        var t = this.w.config.chart.id;
 	        t && Apex._chartInstances.forEach(function (e, i) {
 	          e.id === f.escapeString(t) && Apex._chartInstances.splice(i, 1);
@@ -67409,7 +67518,7 @@ var Forestry = (function () {
 	  return Info;
 	}(View$1);
 
-	var translate$e = T.getText.bind(T);
+	var translate$f = T.getText.bind(T);
 
 	var Quadrants = /*#__PURE__*/function (_EventTarget) {
 	  _inherits(Quadrants, _EventTarget);
@@ -67436,7 +67545,7 @@ var Forestry = (function () {
 	      var _this2 = this;
 
 	      this._items = Array.isArray(items) && items || [];
-	      this._container.innerHTML = this._items.length ? "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th>".concat(translate$e('project.localForestry'), " / ").concat(translate$e('project.tract'), "</th>                    \n                    <th>").concat(translate$e('project.quadrants'), "</th>\n                    <th>").concat(translate$e('project.year'), "</th>                    \n                </tr>\n            </thead>\n        </table>\n        <div class=\"scrollable\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody>").concat(this._items.map(function (_ref) {
+	      this._container.innerHTML = this._items.length ? "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th>".concat(translate$f('project.localForestry'), " / ").concat(translate$f('project.tract'), "</th>                    \n                    <th>").concat(translate$f('project.quadrants'), "</th>\n                    <th>").concat(translate$f('project.year'), "</th>                    \n                </tr>\n            </thead>\n        </table>\n        <div class=\"scrollable\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody>").concat(this._items.map(function (_ref) {
 	        var local_forestry = _ref.local_forestry,
 	            stow = _ref.stow,
 	            num = _ref.num,
@@ -67512,7 +67621,7 @@ var Forestry = (function () {
 	  return Quadrants;
 	}(EventTarget);
 
-	var translate$f = T.getText.bind(T);
+	var translate$g = T.getText.bind(T);
 
 	var SpeciesTable = /*#__PURE__*/function (_EventTarget) {
 	  _inherits(SpeciesTable, _EventTarget);
@@ -67550,14 +67659,14 @@ var Forestry = (function () {
 	            total_stock_deal = _ref.total_stock_deal;
 	        return "<tr class=\"type\">\n                <td class=\"text\">".concat(species, "</td>\n                <td class=\"value\">").concat(m(permitted_stock), "</td>\n                <td class=\"value\">").concat(m(permitted_stock_deal), "</td>\n                <td class=\"value\">").concat(m(probable_stock), "</td>\n                <td class=\"value\">").concat(m(probable_stock_deal), "</td>\n                <td class=\"value\">").concat(m(total_stock), "</td>\n                <td class=\"value\">").concat(m(total_stock_deal), "</td>\n            </tr>");
 	      }).join('');
-	      this._container.innerHTML = rows ? "<div class=\"title\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>                 \n                        <tr>\n                            <td class=\"text\" rowspan=\"2\">".concat(translate$f('project.species'), "</td>\n                            <td class=\"text\" colspan=\"3\">").concat(translate$f('project.stock.label'), " (").concat(translate$f('project.stock.general'), " / ").concat(translate$f('project.stock.deal'), "), ").concat(translate$f('units.m'), "<sup>3</sup></td>\n                        </tr>\n                        <tr>                            \n                            <td class=\"text text-top\">").concat(translate$f('project.stock.permitted'), "</td>                        \n                            <td class=\"text text-top\">").concat(translate$f('project.stock.probable'), "</td>\n                            <td class=\"text text-top\">").concat(translate$f('project.stock.total'), "</td>\n                        </tr>\n                    </tbody>\n                </table>\n            </div>\n            <div class=\"content scrollable\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>").concat(rows, "</tbody>\n                </table>\n            </div>") : '';
+	      this._container.innerHTML = rows ? "<div class=\"title\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>                 \n                        <tr>\n                            <td class=\"text\" rowspan=\"2\">".concat(translate$g('project.species'), "</td>\n                            <td class=\"text\" colspan=\"3\">").concat(translate$g('project.stock.label'), " (").concat(translate$g('project.stock.general'), " / ").concat(translate$g('project.stock.deal'), "), ").concat(translate$g('units.m'), "<sup>3</sup></td>\n                        </tr>\n                        <tr>                            \n                            <td class=\"text text-top\">").concat(translate$g('project.stock.permitted'), "</td>                        \n                            <td class=\"text text-top\">").concat(translate$g('project.stock.probable'), "</td>\n                            <td class=\"text text-top\">").concat(translate$g('project.stock.total'), "</td>\n                        </tr>\n                    </tbody>\n                </table>\n            </div>\n            <div class=\"content scrollable\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>").concat(rows, "</tbody>\n                </table>\n            </div>") : '';
 	    }
 	  }]);
 
 	  return SpeciesTable;
 	}(EventTarget);
 
-	var translate$g = T.getText.bind(T);
+	var translate$h = T.getText.bind(T);
 
 	var Species = /*#__PURE__*/function () {
 	  function Species(container) {
@@ -67567,7 +67676,7 @@ var Forestry = (function () {
 
 	    this._species = [];
 	    this._container = container;
-	    this._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<thead class=\"menu\">\n\t\t\t\t<tr>\n\t\t\t\t\t<th colspan=\"3\">\n\t\t\t\t\t\t<button class=\"stock active\">".concat(translate$g('project.stock.table'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"permitted\">").concat(translate$g('project.stock.permitted'), "</button>\n\t\t\t\t\t</th>\t\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"probable\">").concat(translate$g('project.stock.probable'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"total\">").concat(translate$g('project.stock.total'), "</button>\n\t\t\t\t\t</th>\t\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td colspan=\"3\">\n\t\t\t\t\t\t<div class=\"table\"></div>\n\t\t\t\t\t\t<div class=\"graph\">\n\t\t\t\t\t\t\t<div class=\"label\">").concat(translate$g('project.stock.title'), " (").concat(translate$g('project.stock.general'), " / ").concat(translate$g('project.stock.deal'), ")</div>\n\t\t\t\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t\t\t</div>\t\t\t\t\t\t\n\t\t\t\t\t</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
+	    this._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<thead class=\"menu\">\n\t\t\t\t<tr>\n\t\t\t\t\t<th colspan=\"3\">\n\t\t\t\t\t\t<button class=\"stock active\">".concat(translate$h('project.stock.table'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"permitted\">").concat(translate$h('project.stock.permitted'), "</button>\n\t\t\t\t\t</th>\t\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"probable\">").concat(translate$h('project.stock.probable'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"total\">").concat(translate$h('project.stock.total'), "</button>\n\t\t\t\t\t</th>\t\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td colspan=\"3\">\n\t\t\t\t\t\t<div class=\"table\"></div>\n\t\t\t\t\t\t<div class=\"graph\">\n\t\t\t\t\t\t\t<div class=\"label\">").concat(translate$h('project.stock.title'), " (").concat(translate$h('project.stock.general'), " / ").concat(translate$h('project.stock.deal'), ")</div>\n\t\t\t\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t\t\t</div>\t\t\t\t\t\t\n\t\t\t\t\t</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
 	    this._buttons = this._container.querySelectorAll('button');
 
 	    var btnStock = this._container.querySelector('.stock');
@@ -67622,11 +67731,11 @@ var Forestry = (function () {
 	    };
 
 	    var fmt_labels = function fmt_labels(val) {
-	      return "".concat(m(parseFloat(val)), " ").concat(translate$g('units.m3'));
+	      return "".concat(m(parseFloat(val)), " ").concat(translate$h('units.m3'));
 	    };
 
 	    var fmt_value = function fmt_value(val) {
-	      return "".concat(m(parseFloat(val)), " ").concat(translate$g('units.m3'));
+	      return "".concat(m(parseFloat(val)), " ").concat(translate$h('units.m3'));
 	    };
 
 	    var fmt_total = function fmt_total(w) {
@@ -67681,7 +67790,7 @@ var Forestry = (function () {
 	              total: {
 	                show: true,
 	                formatter: fmt_total,
-	                label: translate$g('project.stock.all'),
+	                label: translate$h('project.stock.all'),
 	                fontSize: '12px',
 	                fontWeight: 600
 	              }
@@ -68026,7 +68135,7 @@ var Forestry = (function () {
 	  return Project;
 	}(View$1);
 
-	var translate$h = T.getText.bind(T);
+	var translate$i = T.getText.bind(T);
 
 	var indexByName = function indexByName(layer, name) {
 	  var _layer$getGmxProperti = layer.getGmxProperties(),
@@ -68365,7 +68474,7 @@ var Forestry = (function () {
 
 	        this._layers.quadrants.repaint();
 	      } else {
-	        this._notification.error(translate$h('forbidden.project.create'), NOTIFY_TIMEOUT);
+	        this._notification.error(translate$i('forbidden.project.create'), NOTIFY_TIMEOUT);
 	      }
 	    }
 	  }, {
@@ -68453,7 +68562,7 @@ var Forestry = (function () {
 	                return _context7.abrupt("return", true);
 
 	              case 22:
-	                this._notification.warn(translate$h('quadrant.invalid'), NOTIFY_TIMEOUT);
+	                this._notification.warn(translate$i('quadrant.invalid'), NOTIFY_TIMEOUT);
 
 	                return _context7.abrupt("return", false);
 
@@ -68462,7 +68571,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 26:
-	                this._notification.error(translate$h('forbidden.project.edit'), NOTIFY_TIMEOUT);
+	                this._notification.error(translate$i('forbidden.project.edit'), NOTIFY_TIMEOUT);
 
 	              case 27:
 	              case "end":
@@ -68512,7 +68621,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 8:
-	                this._notification.error(translate$h('forbidden.project.edit'), NOTIFY_TIMEOUT);
+	                this._notification.error(translate$i('forbidden.project.edit'), NOTIFY_TIMEOUT);
 
 	              case 9:
 	              case "end":
@@ -68645,7 +68754,7 @@ var Forestry = (function () {
 	                      species: ForestStat
 	                    };
 	                  } else {
-	                    this._notification.warn(translate$h('quadrant.invalid'), NOTIFY_TIMEOUT);
+	                    this._notification.warn(translate$i('quadrant.invalid'), NOTIFY_TIMEOUT);
 	                  }
 
 	                  this._project.open(this._valid);
@@ -68709,7 +68818,7 @@ var Forestry = (function () {
 	                      species: ForestStat
 	                    };
 	                  } else {
-	                    this._notification.warn(translate$h('quadrant.invalid'), NOTIFY_TIMEOUT);
+	                    this._notification.warn(translate$i('quadrant.invalid'), NOTIFY_TIMEOUT);
 	                  }
 
 	                  this._project.open(this._valid);
@@ -69272,8 +69381,8 @@ var Forestry = (function () {
 	  return Stands;
 	}(View$1);
 
-	var translate$i = T.getText.bind(T);
-	var ALLOWED_LAYERS = ['forestries_local', 'forestries', 'regions', 'quadrants', 'stands'];
+	var translate$j = T.getText.bind(T);
+	var ALLOWED_LAYERS$1 = ['forestries_local', 'forestries', 'regions', 'quadrants', 'stands'];
 
 	var Quadrants$2 = /*#__PURE__*/function (_Controller) {
 	  _inherits(Quadrants, _Controller);
@@ -69304,7 +69413,7 @@ var Forestry = (function () {
 	    _this._legend = legend;
 	    _this._path = path;
 	    _this._permissions = permissions;
-	    var title = translate$i("legend.".concat(_this._layers.stands ? 'stands' : 'quadrants'));
+	    var title = translate$j("legend.".concat(_this._layers.stands ? 'stands' : 'quadrants'));
 
 	    _this._legend.addComponent('quadrants', title);
 
@@ -69344,7 +69453,7 @@ var Forestry = (function () {
 	      });
 
 	      _this._quadrantView.on('notavailable', function (e) {
-	        _this._notification.warn(translate$i('warn.notavailable'), NOTIFY_TIMEOUT);
+	        _this._notification.warn(translate$j('warn.notavailable'), NOTIFY_TIMEOUT);
 	      });
 	    }
 
@@ -69382,7 +69491,7 @@ var Forestry = (function () {
 	      });
 
 	      _this._standView.on('notavailable', function (e) {
-	        _this._notification.warn(translate$i('warn.notavailable'), NOTIFY_TIMEOUT);
+	        _this._notification.warn(translate$j('warn.notavailable'), NOTIFY_TIMEOUT);
 	      });
 	    }
 
@@ -69502,12 +69611,12 @@ var Forestry = (function () {
 
 	      if (id === 'quadrants') {
 	        if (visible) {
-	          ALLOWED_LAYERS.forEach(function (k) {
+	          ALLOWED_LAYERS$1.forEach(function (k) {
 	            var layer = _this2._layers[k];
 	            layer && _this2._map.addLayer(layer);
 	          });
 	        } else {
-	          ALLOWED_LAYERS.forEach(function (k) {
+	          ALLOWED_LAYERS$1.forEach(function (k) {
 	            var layer = _this2._layers[k];
 	            layer && _this2._map.removeLayer(layer);
 	          });
@@ -69553,7 +69662,7 @@ var Forestry = (function () {
 	                  } else {
 	                    this._quadrantView.close();
 
-	                    this._notification.warn(translate$i('warn.notavailable'), NOTIFY_TIMEOUT);
+	                    this._notification.warn(translate$j('warn.notavailable'), NOTIFY_TIMEOUT);
 	                  }
 	                } else {
 	                  this._quadrantView.close();
@@ -69581,7 +69690,7 @@ var Forestry = (function () {
 	  return Quadrants;
 	}(Controller);
 
-	var translate$j = T.getText.bind(T);
+	var translate$k = T.getText.bind(T);
 
 	var RasterCatalog = /*#__PURE__*/function () {
 	  function RasterCatalog(_ref) {
@@ -69605,7 +69714,7 @@ var Forestry = (function () {
 	    if (ids.some(function (id) {
 	      return _this._layers[id];
 	    })) {
-	      var p = this._legend.addGroup('rasters', translate$j('legend.rasters'));
+	      var p = this._legend.addGroup('rasters', translate$k('legend.rasters'));
 
 	      ids.forEach(function (kind) {
 	        var layer = _this._layers[kind];
@@ -69613,7 +69722,7 @@ var Forestry = (function () {
 	        if (layer) {
 	          layer.setZIndexOffset(zIndexOffset);
 
-	          _this._legend.addComponent(kind, translate$j("legend.".concat(kind)), p);
+	          _this._legend.addComponent(kind, translate$k("legend.".concat(kind)), p);
 	        }
 	      });
 
@@ -71026,7 +71135,7 @@ var Forestry = (function () {
 	  return Uploaded;
 	}(View$1);
 
-	var translate$k = T.getText.bind(T);
+	var translate$l = T.getText.bind(T);
 
 	var TmsView = /*#__PURE__*/function (_Dialog) {
 	  _inherits(TmsView, _Dialog);
@@ -71039,7 +71148,7 @@ var Forestry = (function () {
 	    _classCallCheck(this, TmsView);
 
 	    _this = _super.call(this, {
-	      title: translate$k('uploaded.tms.title'),
+	      title: translate$l('uploaded.tms.title'),
 	      modal: true,
 	      top: 200,
 	      left: 400
@@ -71047,7 +71156,7 @@ var Forestry = (function () {
 
 	    _this._element.classList.add('scanex-forestry-tms-view');
 
-	    _this.content.innerHTML = "<div class=\"name\">\n                <label>".concat(translate$k('uploaded.tms.name'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"url\">\n                <label>").concat(translate$k('uploaded.tms.url'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"zoom\">\n                <label>").concat(translate$k('uploaded.tms.zoom'), "</label>\n                <div></div>\n            </div>\n            <div class=\"advanced-button\">\n                <label>").concat(translate$k('uploaded.tms.advanced'), "</label>\n                <i class=\"scanex-uploaded-icon down\"></i>\n            </div>\n            <div class=\"advanced-content hidden\">\n                <div class=\"subdomains\">\n                    <label>").concat(translate$k('uploaded.tms.subdomains'), "</label>              \n                    <input type=\"text\" value=\"abc\">                \n                </div>\n                <div class=\"error-tile-url\">\n                    <label>").concat(translate$k('uploaded.tms.errorTileUrl'), "</label>\n                    <input class=\"value\" type=\"text\" value=\"\">                \n                </div>\n                <div class=\"zoom-offset\">\n                    <label>").concat(translate$k('uploaded.tms.zoomOffset'), "</label>\n                    <div></div>\n                </div>\n                <div class=\"tile-reverse\">\n                    <label>").concat(translate$k('uploaded.tms.tileReverse'), "</label>                \n                    <input type=\"checkbox\" value=\"tileReverse\">                \n                </div>\n                <div class=\"zoom-reverse\">\n                    <label>").concat(translate$k('uploaded.tms.zoomReverse'), "</label>                \n                    <input type=\"checkbox\" value=\"zoomReverse\">                \n                </div>\n                <div class=\"detect-retina\">\n                    <label>").concat(translate$k('uploaded.tms.detectRetina'), "</label>                \n                    <input type=\"checkbox\" value=\"detectRetina\">                \n                </div>\n                <div class=\"use-credentials\">\n                    <label>").concat(translate$k('uploaded.tms.useCredentials'), "</label>            \n                    <input type=\"checkbox\" value=\"useCredentials\">                \n                </div>\n            </div>");
+	    _this.content.innerHTML = "<div class=\"name\">\n                <label>".concat(translate$l('uploaded.tms.name'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"url\">\n                <label>").concat(translate$l('uploaded.tms.url'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"zoom\">\n                <label>").concat(translate$l('uploaded.tms.zoom'), "</label>\n                <div></div>\n            </div>\n            <div class=\"advanced-button\">\n                <label>").concat(translate$l('uploaded.tms.advanced'), "</label>\n                <i class=\"scanex-uploaded-icon down\"></i>\n            </div>\n            <div class=\"advanced-content hidden\">\n                <div class=\"subdomains\">\n                    <label>").concat(translate$l('uploaded.tms.subdomains'), "</label>              \n                    <input type=\"text\" value=\"abc\">                \n                </div>\n                <div class=\"error-tile-url\">\n                    <label>").concat(translate$l('uploaded.tms.errorTileUrl'), "</label>\n                    <input class=\"value\" type=\"text\" value=\"\">                \n                </div>\n                <div class=\"zoom-offset\">\n                    <label>").concat(translate$l('uploaded.tms.zoomOffset'), "</label>\n                    <div></div>\n                </div>\n                <div class=\"tile-reverse\">\n                    <label>").concat(translate$l('uploaded.tms.tileReverse'), "</label>                \n                    <input type=\"checkbox\" value=\"tileReverse\">                \n                </div>\n                <div class=\"zoom-reverse\">\n                    <label>").concat(translate$l('uploaded.tms.zoomReverse'), "</label>                \n                    <input type=\"checkbox\" value=\"zoomReverse\">                \n                </div>\n                <div class=\"detect-retina\">\n                    <label>").concat(translate$l('uploaded.tms.detectRetina'), "</label>                \n                    <input type=\"checkbox\" value=\"detectRetina\">                \n                </div>\n                <div class=\"use-credentials\">\n                    <label>").concat(translate$l('uploaded.tms.useCredentials'), "</label>            \n                    <input type=\"checkbox\" value=\"useCredentials\">                \n                </div>\n            </div>");
 	    _this._name = _this.content.querySelector('.name').querySelector('input');
 	    _this._url = _this.content.querySelector('.url').querySelector('input');
 	    _this._zoom = new Interval(_this.content.querySelector('.zoom').querySelector('div'), {
@@ -71087,7 +71196,7 @@ var Forestry = (function () {
 	    _this._tileReverse = _this.content.querySelector('.tile-reverse').querySelector('input');
 	    _this._detectRetina = _this.content.querySelector('.detect-retina').querySelector('input');
 	    _this._useCredentials = _this.content.querySelector('.use-credentials').querySelector('input');
-	    _this.footer.innerHTML = "<button>".concat(translate$k('uploaded.tms.ok'), "</button>");
+	    _this.footer.innerHTML = "<button>".concat(translate$l('uploaded.tms.ok'), "</button>");
 	    _this._btn = _this.footer.querySelector('button');
 
 	    _this._btn.addEventListener('click', function (e) {
@@ -71119,7 +71228,7 @@ var Forestry = (function () {
 	  return TmsView;
 	}(Dialog);
 
-	var translate$l = T.getText.bind(T);
+	var translate$m = T.getText.bind(T);
 
 	var WmsView = /*#__PURE__*/function (_Dialog) {
 	  _inherits(WmsView, _Dialog);
@@ -71132,7 +71241,7 @@ var Forestry = (function () {
 	    _classCallCheck(this, WmsView);
 
 	    _this = _super.call(this, {
-	      title: translate$l('uploaded.wms.title'),
+	      title: translate$m('uploaded.wms.title'),
 	      modal: true,
 	      top: 200,
 	      left: 400
@@ -71140,10 +71249,10 @@ var Forestry = (function () {
 
 	    _this._element.classList.add('scanex-forestry-wms-view');
 
-	    _this.content.innerHTML = "<div class=\"name\">\n                <label>".concat(translate$l('uploaded.tms.name'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"url\">\n                <label>").concat(translate$l('uploaded.tms.url'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>");
+	    _this.content.innerHTML = "<div class=\"name\">\n                <label>".concat(translate$m('uploaded.tms.name'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"url\">\n                <label>").concat(translate$m('uploaded.tms.url'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>");
 	    _this._name = _this.content.querySelector('.name').querySelector('input');
 	    _this._url = _this.content.querySelector('.url').querySelector('input');
-	    _this.footer.innerHTML = "<button>".concat(translate$l('uploaded.tms.ok'), "</button>");
+	    _this.footer.innerHTML = "<button>".concat(translate$m('uploaded.tms.ok'), "</button>");
 	    _this._btn = _this.footer.querySelector('button');
 
 	    _this._btn.addEventListener('click', function (e) {
@@ -71164,7 +71273,7 @@ var Forestry = (function () {
 	  return WmsView;
 	}(Dialog);
 
-	var translate$m = T.getText.bind(T);
+	var translate$n = T.getText.bind(T);
 
 	var WfsView = /*#__PURE__*/function (_Dialog) {
 	  _inherits(WfsView, _Dialog);
@@ -71177,7 +71286,7 @@ var Forestry = (function () {
 	    _classCallCheck(this, WfsView);
 
 	    _this = _super.call(this, {
-	      title: translate$m('uploaded.wfs.title'),
+	      title: translate$n('uploaded.wfs.title'),
 	      modal: true,
 	      top: 200,
 	      left: 400
@@ -71185,7 +71294,7 @@ var Forestry = (function () {
 
 	    _this._element.classList.add('scanex-forestry-wfs-view');
 
-	    _this.content.innerHTML = "<div class=\"name\">\n                <label>".concat(translate$m('uploaded.tms.name'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"url\">\n                <label>").concat(translate$m('uploaded.tms.url'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"zoom\">\n                <label>").concat(translate$m('uploaded.tms.zoom'), "</label>\n                <div></div>\n            </div>\n            <div class=\"advanced-button\">\n                <label>").concat(translate$m('uploaded.tms.advanced'), "</label>\n                <i class=\"scanex-uploaded-icon down\"></i>\n            </div>\n            <div class=\"advanced-content hidden\">\n                <div class=\"subdomains\">\n                    <label>").concat(translate$m('uploaded.tms.subdomains'), "</label>              \n                    <input type=\"text\" value=\"abc\">                \n                </div>\n                <div class=\"error-tile-url\">\n                    <label>").concat(translate$m('uploaded.tms.errorTileUrl'), "</label>\n                    <input class=\"value\" type=\"text\" value=\"\">                \n                </div>\n                <div class=\"zoom-offset\">\n                    <label>").concat(translate$m('uploaded.tms.zoomOffset'), "</label>\n                    <div></div>\n                </div>\n                <div class=\"tile-reverse\">\n                    <label>").concat(translate$m('uploaded.tms.tileReverse'), "</label>                \n                    <input type=\"checkbox\" value=\"tileReverse\">                \n                </div>\n                <div class=\"zoom-reverse\">\n                    <label>").concat(translate$m('uploaded.tms.zoomReverse'), "</label>                \n                    <input type=\"checkbox\" value=\"zoomReverse\">                \n                </div>\n                <div class=\"detect-retina\">\n                    <label>").concat(translate$m('uploaded.tms.detectRetina'), "</label>                \n                    <input type=\"checkbox\" value=\"detectRetina\">                \n                </div>                \n                <div class=\"use-credentials\">\n                    <label>").concat(translate$m('uploaded.tms.useCredentials'), "</label>            \n                    <input type=\"checkbox\" value=\"useCredentials\">                \n                </div>\n                <div class=\"layers\">\n                    <label>").concat(translate$m('uploaded.wfs.layers'), "</label>            \n                    <input class=\"value\" type=\"text\" value=\"\">                 \n                </div>\n                <div class=\"styles\">\n                    <label>").concat(translate$m('uploaded.wfs.styles'), "</label>\n                    <input class=\"value\" type=\"text\" value=\"\">                 \n                </div>\n                <div class=\"format\">\n                    <label>").concat(translate$m('uploaded.wfs.format'), "</label>\n                    <select>\n                        <option value=\"image/jpeg\">image/jpeg</option>\n                        <option value=\"image/png\">image/png</option>\n                    </select>               \n                </div>\n                <div class=\"transparent\">\n                    <label>").concat(translate$m('uploaded.wfs.transparent'), "</label>            \n                    <input type=\"checkbox\" value=\"transparent\">                \n                </div>\n                <div class=\"crs\">\n                    <label>").concat(translate$m('uploaded.wfs.crs'), "</label>            \n                    <input class=\"value\" type=\"text\" value=\"\">                 \n                </div>\n            </div>");
+	    _this.content.innerHTML = "<div class=\"name\">\n                <label>".concat(translate$n('uploaded.tms.name'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"url\">\n                <label>").concat(translate$n('uploaded.tms.url'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"zoom\">\n                <label>").concat(translate$n('uploaded.tms.zoom'), "</label>\n                <div></div>\n            </div>\n            <div class=\"advanced-button\">\n                <label>").concat(translate$n('uploaded.tms.advanced'), "</label>\n                <i class=\"scanex-uploaded-icon down\"></i>\n            </div>\n            <div class=\"advanced-content hidden\">\n                <div class=\"subdomains\">\n                    <label>").concat(translate$n('uploaded.tms.subdomains'), "</label>              \n                    <input type=\"text\" value=\"abc\">                \n                </div>\n                <div class=\"error-tile-url\">\n                    <label>").concat(translate$n('uploaded.tms.errorTileUrl'), "</label>\n                    <input class=\"value\" type=\"text\" value=\"\">                \n                </div>\n                <div class=\"zoom-offset\">\n                    <label>").concat(translate$n('uploaded.tms.zoomOffset'), "</label>\n                    <div></div>\n                </div>\n                <div class=\"tile-reverse\">\n                    <label>").concat(translate$n('uploaded.tms.tileReverse'), "</label>                \n                    <input type=\"checkbox\" value=\"tileReverse\">                \n                </div>\n                <div class=\"zoom-reverse\">\n                    <label>").concat(translate$n('uploaded.tms.zoomReverse'), "</label>                \n                    <input type=\"checkbox\" value=\"zoomReverse\">                \n                </div>\n                <div class=\"detect-retina\">\n                    <label>").concat(translate$n('uploaded.tms.detectRetina'), "</label>                \n                    <input type=\"checkbox\" value=\"detectRetina\">                \n                </div>                \n                <div class=\"use-credentials\">\n                    <label>").concat(translate$n('uploaded.tms.useCredentials'), "</label>            \n                    <input type=\"checkbox\" value=\"useCredentials\">                \n                </div>\n                <div class=\"layers\">\n                    <label>").concat(translate$n('uploaded.wfs.layers'), "</label>            \n                    <input class=\"value\" type=\"text\" value=\"\">                 \n                </div>\n                <div class=\"styles\">\n                    <label>").concat(translate$n('uploaded.wfs.styles'), "</label>\n                    <input class=\"value\" type=\"text\" value=\"\">                 \n                </div>\n                <div class=\"format\">\n                    <label>").concat(translate$n('uploaded.wfs.format'), "</label>\n                    <select>\n                        <option value=\"image/jpeg\">image/jpeg</option>\n                        <option value=\"image/png\">image/png</option>\n                    </select>               \n                </div>\n                <div class=\"transparent\">\n                    <label>").concat(translate$n('uploaded.wfs.transparent'), "</label>            \n                    <input type=\"checkbox\" value=\"transparent\">                \n                </div>\n                <div class=\"crs\">\n                    <label>").concat(translate$n('uploaded.wfs.crs'), "</label>            \n                    <input class=\"value\" type=\"text\" value=\"\">                 \n                </div>\n            </div>");
 	    _this._name = _this.content.querySelector('.name').querySelector('input');
 	    _this._url = _this.content.querySelector('.url').querySelector('input');
 	    _this._zoom = new Interval(_this.content.querySelector('.zoom').querySelector('div'), {
@@ -71229,7 +71338,7 @@ var Forestry = (function () {
 	    _this._styles = _this.content.querySelector('.styles').querySelector('input');
 	    _this._format = _this.content.querySelector('.format').querySelector('select');
 	    _this._transparent = _this.content.querySelector('.transparent').querySelector('input');
-	    _this.footer.innerHTML = "<button>".concat(translate$m('uploaded.tms.ok'), "</button>");
+	    _this.footer.innerHTML = "<button>".concat(translate$n('uploaded.tms.ok'), "</button>");
 	    _this._btn = _this.footer.querySelector('button');
 
 	    _this._btn.addEventListener('click', function (e) {
@@ -71608,7 +71717,7 @@ var Forestry = (function () {
 	  return parse_node(xml.childNodes[0]);
 	}
 
-	var translate$n = T.getText.bind(T);
+	var translate$o = T.getText.bind(T);
 
 	var Uploaded$1 = /*#__PURE__*/function (_Controller) {
 	  _inherits(Uploaded$1, _Controller);
@@ -71722,7 +71831,7 @@ var Forestry = (function () {
 	                    delete _this._layers[layerID];
 	                  }
 	                } else {
-	                  _this._notification.error(translate$n('uploaded.error.remove'), NOTIFY_TIMEOUT);
+	                  _this._notification.error(translate$o('uploaded.error.remove'), NOTIFY_TIMEOUT);
 	                }
 
 	                _context3.next = 8;
@@ -72263,7 +72372,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 8:
-	                this._notification.error(translate$n('forbidden.uploaded'), NOTIFY_TIMEOUT);
+	                this._notification.error(translate$o('forbidden.uploaded'), NOTIFY_TIMEOUT);
 
 	              case 9:
 	              case "end":
@@ -75536,7 +75645,7 @@ var Forestry = (function () {
 	    info: 'Информация'
 	  }
 	});
-	var translate$o = T$2.getText.bind(T$2);
+	var translate$p = T$2.getText.bind(T$2);
 
 	var delay = function delay(timeout) {
 	  return new Promise(function (resolve) {
@@ -75586,7 +75695,7 @@ var Forestry = (function () {
 	      el.classList.add('noselect');
 	      el.classList.add('notify-red');
 	      el.classList.add('opening');
-	      el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-notify-icon notify-error\"></i>\n                </td>            \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$o('notify.error'), "</label>                \n                    <div class=\"message\">").concat(text, "</div>\n                </td>\n                <td>            \n                    <i class=\"scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
+	      el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-notify-icon notify-error\"></i>\n                </td>            \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$p('notify.error'), "</label>                \n                    <div class=\"message\">").concat(text, "</div>\n                </td>\n                <td>            \n                    <i class=\"scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
 
 	      this._container.appendChild(el);
 
@@ -75614,7 +75723,7 @@ var Forestry = (function () {
 	      el.classList.add('noselect');
 	      el.classList.add('notify-orange');
 	      el.classList.add('opening');
-	      el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-notify-icon notify-warn\"></i>\n                </td>    \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$o('notify.warn'), "</label>\n                    <div class=\"message\">").concat(text, "</div>    \n                </td>            \n                <td>\n                    <i class=\"scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
+	      el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-notify-icon notify-warn\"></i>\n                </td>    \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$p('notify.warn'), "</label>\n                    <div class=\"message\">").concat(text, "</div>    \n                </td>            \n                <td>\n                    <i class=\"scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
 
 	      this._container.appendChild(el);
 
@@ -75642,7 +75751,7 @@ var Forestry = (function () {
 	      el.classList.add('noselect');
 	      el.classList.add('notify-green');
 	      el.classList.add('opening');
-	      el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-notify-icon notify-info\"></i>\n                </td>            \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$o('notify.info'), "</label>                    \n                    <div class=\"message\">").concat(text, "</div>    \n                </td>                                \n                <td>\n                    <i class=\"scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
+	      el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-notify-icon notify-info\"></i>\n                </td>            \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$p('notify.info'), "</label>                    \n                    <div class=\"message\">").concat(text, "</div>    \n                </td>                                \n                <td>\n                    <i class=\"scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
 
 	      this._container.appendChild(el);
 
@@ -75666,8 +75775,8 @@ var Forestry = (function () {
 
 	var notify_1 = Notification;
 
-	var translate$p = T.getText.bind(T);
-	var ALLOWED_LAYERS$1 = ['incidents_temporal', 'forestries_local', 'forestries', 'regions', 'fires', 'warehouses', 'roads', 'declarations', 'quadrants_editor', 'plots', 'projects', 'parks', 'stands', 'quadrants', 'sentinel', 'landsat', 'cadastre', 'plan', 'kppo'].reverse();
+	var translate$q = T.getText.bind(T);
+	var ALLOWED_LAYERS$2 = ['incidents_temporal', 'forestries_local', 'forestries', 'regions', 'fires', 'warehouses', 'roads', 'declarations', 'quadrants_editor', 'plots', 'projects', 'parks', 'stands', 'quadrants', 'sentinel', 'landsat', 'cadastre', 'plan', 'kppo', 'kppo_rgb'].reverse();
 
 	var Map = /*#__PURE__*/function (_EventTarget) {
 	  _inherits(Map, _EventTarget);
@@ -75842,7 +75951,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 5:
-	                this._notification.error(translate$p('forbidden.analytics'), NOTIFY_TIMEOUT);
+	                this._notification.error(translate$q('forbidden.analytics'), NOTIFY_TIMEOUT);
 
 	              case 6:
 	              case "end":
@@ -75879,7 +75988,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 5:
-	                this._notification.error(translate$p('forbidden.requests'), NOTIFY_TIMEOUT);
+	                this._notification.error(translate$q('forbidden.requests'), NOTIFY_TIMEOUT);
 
 	              case 6:
 	              case "end":
@@ -75901,7 +76010,7 @@ var Forestry = (function () {
 	      if (this._controllers.projects) {
 	        this._controllers.projects.create();
 	      } else {
-	        this._notification.error(translate$p('forbidden.project.create'), NOTIFY_TIMEOUT);
+	        this._notification.error(translate$q('forbidden.project.create'), NOTIFY_TIMEOUT);
 	      }
 	    }
 	  }, {
@@ -75938,7 +76047,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 5:
-	                this._notification.error(translate$p('forbidden.incident'), NOTIFY_TIMEOUT);
+	                this._notification.error(translate$q('forbidden.incident'), NOTIFY_TIMEOUT);
 
 	              case 6:
 	              case "end":
@@ -75975,7 +76084,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 5:
-	                this._notification.error(translate$p('forbidden.uploaded'), NOTIFY_TIMEOUT);
+	                this._notification.error(translate$q('forbidden.uploaded'), NOTIFY_TIMEOUT);
 
 	              case 6:
 	              case "end":
@@ -76095,7 +76204,7 @@ var Forestry = (function () {
 	                  var _layer$getGmxProperti = layer.getGmxProperties(),
 	                      kind = _layer$getGmxProperti.MetaProperties.kind;
 
-	                  return kind && ALLOWED_LAYERS$1.indexOf(kind.Value) !== -1;
+	                  return kind && ALLOWED_LAYERS$2.indexOf(kind.Value) !== -1;
 	                }).map(function (layer) {
 	                  if (layer._map && layer._map !== _this3._map) {
 	                    layer._map.removeLayer(layer);
@@ -76112,7 +76221,7 @@ var Forestry = (function () {
 	                    kind: kind.Value,
 	                    isRaster: IsRasterCatalog,
 	                    temporal: Temporal,
-	                    index: ALLOWED_LAYERS$1.indexOf(kind.Value)
+	                    index: ALLOWED_LAYERS$2.indexOf(kind.Value)
 	                  };
 	                }) // set z-index & options
 	                .map(function (_ref2) {
@@ -76412,10 +76521,10 @@ var Forestry = (function () {
 	                  });
 	                }
 
-	                if (this._layers.kppo) {
+	                if (this._layers.kppo && this._layers.kppo_rgb) {
 	                  this._controllers.kppo = new KPPO({
 	                    map: this._map,
-	                    layer: this._layers.kppo,
+	                    layers: this._layers,
 	                    legend: this._legend,
 	                    content: this._content,
 	                    notification: this._notification,
