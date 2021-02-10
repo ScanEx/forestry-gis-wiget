@@ -76353,7 +76353,7 @@ var Forestry = (function () {
 	                  })));
 	                }
 
-	                if (this._layers.plots && this._permissions.ForestProjectsView) {
+	                if (this._layers.plots && this._permissions.PlotView) {
 	                  this._controllers.plots = new Plots$1({
 	                    map: this._map,
 	                    layer: this._layers.plots,
