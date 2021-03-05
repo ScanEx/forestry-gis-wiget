@@ -37472,6 +37472,7 @@ var Forestry = (function () {
 	      forestries_local: 'Участковые лесничества',
 	      incidents: 'Космический мониторинг',
 	      kppo: 'Классы пожарной опасности',
+	      lpo: 'Акты ЛПО',
 	      landsat: 'Landsat-8',
 	      parks: 'ООПТ',
 	      parks_federal: 'Федеральные ООПТ',
@@ -48826,6 +48827,61 @@ var Forestry = (function () {
 	  return KPPO;
 	}(Controller);
 
+	var translate$e = T.getText.bind(T);
+
+	var LPO = /*#__PURE__*/function (_Controller) {
+	  _inherits(LPO, _Controller);
+
+	  var _super = _createSuper(LPO);
+
+	  function LPO(_ref) {
+	    var _this;
+
+	    var map = _ref.map,
+	        content = _ref.content,
+	        notification = _ref.notification,
+	        loading = _ref.loading,
+	        layer = _ref.layer,
+	        legend = _ref.legend;
+
+	    _classCallCheck(this, LPO);
+
+	    _this = _super.call(this, {
+	      map: map,
+	      content: content,
+	      notification: notification,
+	      loading: loading
+	    });
+	    _this._layer = layer;
+	    _this._legend = legend;
+	    var title = translate$e('legend.lpo');
+
+	    _this._legend.addComponent('lpo', title);
+
+	    _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
+
+	    return _this;
+	  }
+
+	  _createClass(LPO, [{
+	    key: "_toggle",
+	    value: function _toggle(e) {
+	      var id = e.id,
+	          visible = e.visible;
+
+	      if (id === 'lpo') {
+	        if (visible) {
+	          this._layer && this._map.addLayer(this._layer);
+	        } else {
+	          this._layer && this._map.removeLayer(this._layer);
+	        }
+	      }
+	    }
+	  }]);
+
+	  return LPO;
+	}(Controller);
+
 	var Legend$1 = /*#__PURE__*/function (_EventTarget) {
 	  _inherits(Legend, _EventTarget);
 
@@ -49007,7 +49063,7 @@ var Forestry = (function () {
 	  return Parks;
 	}(View$1);
 
-	var translate$e = T.getText.bind(T);
+	var translate$f = T.getText.bind(T);
 
 	var Parks$1 = /*#__PURE__*/function (_Controller) {
 	  _inherits(Parks$1, _Controller);
@@ -49050,18 +49106,18 @@ var Forestry = (function () {
 	      }
 
 	      if (_this._permissions.FederalSPNA) {
-	        _this._legend.addComponent('parks-federal', translate$e("legend.parks_federal"));
+	        _this._legend.addComponent('parks-federal', translate$f("legend.parks_federal"));
 	      }
 
 	      if (_this._permissions.RegionalSPNA) {
-	        _this._legend.addComponent('parks-regional', translate$e("legend.parks_regional"));
+	        _this._legend.addComponent('parks-regional', translate$f("legend.parks_regional"));
 	      }
 
 	      _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
 
 	      _this._layer.setFilter(_this.getFilter.bind(_assertThisInitialized(_this)));
 	    } else {
-	      _this._legend.addComponent('parks', translate$e("legend.parks"));
+	      _this._legend.addComponent('parks', translate$f("legend.parks"));
 	    }
 
 	    _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
@@ -67518,7 +67574,7 @@ var Forestry = (function () {
 	  return Info;
 	}(View$1);
 
-	var translate$f = T.getText.bind(T);
+	var translate$g = T.getText.bind(T);
 
 	var Quadrants = /*#__PURE__*/function (_EventTarget) {
 	  _inherits(Quadrants, _EventTarget);
@@ -67545,7 +67601,7 @@ var Forestry = (function () {
 	      var _this2 = this;
 
 	      this._items = Array.isArray(items) && items || [];
-	      this._container.innerHTML = this._items.length ? "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th>".concat(translate$f('project.localForestry'), " / ").concat(translate$f('project.tract'), "</th>                    \n                    <th>").concat(translate$f('project.quadrants'), "</th>\n                    <th>").concat(translate$f('project.year'), "</th>                    \n                </tr>\n            </thead>\n        </table>\n        <div class=\"scrollable\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody>").concat(this._items.map(function (_ref) {
+	      this._container.innerHTML = this._items.length ? "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th>".concat(translate$g('project.localForestry'), " / ").concat(translate$g('project.tract'), "</th>                    \n                    <th>").concat(translate$g('project.quadrants'), "</th>\n                    <th>").concat(translate$g('project.year'), "</th>                    \n                </tr>\n            </thead>\n        </table>\n        <div class=\"scrollable\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody>").concat(this._items.map(function (_ref) {
 	        var local_forestry = _ref.local_forestry,
 	            stow = _ref.stow,
 	            num = _ref.num,
@@ -67621,7 +67677,7 @@ var Forestry = (function () {
 	  return Quadrants;
 	}(EventTarget);
 
-	var translate$g = T.getText.bind(T);
+	var translate$h = T.getText.bind(T);
 
 	var SpeciesTable = /*#__PURE__*/function (_EventTarget) {
 	  _inherits(SpeciesTable, _EventTarget);
@@ -67659,14 +67715,14 @@ var Forestry = (function () {
 	            total_stock_deal = _ref.total_stock_deal;
 	        return "<tr class=\"type\">\n                <td class=\"text\">".concat(species, "</td>\n                <td class=\"value\">").concat(m(permitted_stock), "</td>\n                <td class=\"value\">").concat(m(permitted_stock_deal), "</td>\n                <td class=\"value\">").concat(m(probable_stock), "</td>\n                <td class=\"value\">").concat(m(probable_stock_deal), "</td>\n                <td class=\"value\">").concat(m(total_stock), "</td>\n                <td class=\"value\">").concat(m(total_stock_deal), "</td>\n            </tr>");
 	      }).join('');
-	      this._container.innerHTML = rows ? "<div class=\"title\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>                 \n                        <tr>\n                            <td class=\"text\" rowspan=\"2\">".concat(translate$g('project.species'), "</td>\n                            <td class=\"text\" colspan=\"3\">").concat(translate$g('project.stock.label'), " (").concat(translate$g('project.stock.general'), " / ").concat(translate$g('project.stock.deal'), "), ").concat(translate$g('units.m'), "<sup>3</sup></td>\n                        </tr>\n                        <tr>                            \n                            <td class=\"text text-top\">").concat(translate$g('project.stock.permitted'), "</td>                        \n                            <td class=\"text text-top\">").concat(translate$g('project.stock.probable'), "</td>\n                            <td class=\"text text-top\">").concat(translate$g('project.stock.total'), "</td>\n                        </tr>\n                    </tbody>\n                </table>\n            </div>\n            <div class=\"content scrollable\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>").concat(rows, "</tbody>\n                </table>\n            </div>") : '';
+	      this._container.innerHTML = rows ? "<div class=\"title\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>                 \n                        <tr>\n                            <td class=\"text\" rowspan=\"2\">".concat(translate$h('project.species'), "</td>\n                            <td class=\"text\" colspan=\"3\">").concat(translate$h('project.stock.label'), " (").concat(translate$h('project.stock.general'), " / ").concat(translate$h('project.stock.deal'), "), ").concat(translate$h('units.m'), "<sup>3</sup></td>\n                        </tr>\n                        <tr>                            \n                            <td class=\"text text-top\">").concat(translate$h('project.stock.permitted'), "</td>                        \n                            <td class=\"text text-top\">").concat(translate$h('project.stock.probable'), "</td>\n                            <td class=\"text text-top\">").concat(translate$h('project.stock.total'), "</td>\n                        </tr>\n                    </tbody>\n                </table>\n            </div>\n            <div class=\"content scrollable\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>").concat(rows, "</tbody>\n                </table>\n            </div>") : '';
 	    }
 	  }]);
 
 	  return SpeciesTable;
 	}(EventTarget);
 
-	var translate$h = T.getText.bind(T);
+	var translate$i = T.getText.bind(T);
 
 	var Species = /*#__PURE__*/function () {
 	  function Species(container) {
@@ -67676,7 +67732,7 @@ var Forestry = (function () {
 
 	    this._species = [];
 	    this._container = container;
-	    this._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<thead class=\"menu\">\n\t\t\t\t<tr>\n\t\t\t\t\t<th colspan=\"3\">\n\t\t\t\t\t\t<button class=\"stock active\">".concat(translate$h('project.stock.table'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"permitted\">").concat(translate$h('project.stock.permitted'), "</button>\n\t\t\t\t\t</th>\t\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"probable\">").concat(translate$h('project.stock.probable'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"total\">").concat(translate$h('project.stock.total'), "</button>\n\t\t\t\t\t</th>\t\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td colspan=\"3\">\n\t\t\t\t\t\t<div class=\"table\"></div>\n\t\t\t\t\t\t<div class=\"graph\">\n\t\t\t\t\t\t\t<div class=\"label\">").concat(translate$h('project.stock.title'), " (").concat(translate$h('project.stock.general'), " / ").concat(translate$h('project.stock.deal'), ")</div>\n\t\t\t\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t\t\t</div>\t\t\t\t\t\t\n\t\t\t\t\t</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
+	    this._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<thead class=\"menu\">\n\t\t\t\t<tr>\n\t\t\t\t\t<th colspan=\"3\">\n\t\t\t\t\t\t<button class=\"stock active\">".concat(translate$i('project.stock.table'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"permitted\">").concat(translate$i('project.stock.permitted'), "</button>\n\t\t\t\t\t</th>\t\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"probable\">").concat(translate$i('project.stock.probable'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"total\">").concat(translate$i('project.stock.total'), "</button>\n\t\t\t\t\t</th>\t\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td colspan=\"3\">\n\t\t\t\t\t\t<div class=\"table\"></div>\n\t\t\t\t\t\t<div class=\"graph\">\n\t\t\t\t\t\t\t<div class=\"label\">").concat(translate$i('project.stock.title'), " (").concat(translate$i('project.stock.general'), " / ").concat(translate$i('project.stock.deal'), ")</div>\n\t\t\t\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t\t\t</div>\t\t\t\t\t\t\n\t\t\t\t\t</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
 	    this._buttons = this._container.querySelectorAll('button');
 
 	    var btnStock = this._container.querySelector('.stock');
@@ -67731,11 +67787,11 @@ var Forestry = (function () {
 	    };
 
 	    var fmt_labels = function fmt_labels(val) {
-	      return "".concat(m(parseFloat(val)), " ").concat(translate$h('units.m3'));
+	      return "".concat(m(parseFloat(val)), " ").concat(translate$i('units.m3'));
 	    };
 
 	    var fmt_value = function fmt_value(val) {
-	      return "".concat(m(parseFloat(val)), " ").concat(translate$h('units.m3'));
+	      return "".concat(m(parseFloat(val)), " ").concat(translate$i('units.m3'));
 	    };
 
 	    var fmt_total = function fmt_total(w) {
@@ -67790,7 +67846,7 @@ var Forestry = (function () {
 	              total: {
 	                show: true,
 	                formatter: fmt_total,
-	                label: translate$h('project.stock.all'),
+	                label: translate$i('project.stock.all'),
 	                fontSize: '12px',
 	                fontWeight: 600
 	              }
@@ -68135,7 +68191,7 @@ var Forestry = (function () {
 	  return Project;
 	}(View$1);
 
-	var translate$i = T.getText.bind(T);
+	var translate$j = T.getText.bind(T);
 
 	var indexByName = function indexByName(layer, name) {
 	  var _layer$getGmxProperti = layer.getGmxProperties(),
@@ -68474,7 +68530,7 @@ var Forestry = (function () {
 
 	        this._layers.quadrants.repaint();
 	      } else {
-	        this._notification.error(translate$i('forbidden.project.create'), NOTIFY_TIMEOUT);
+	        this._notification.error(translate$j('forbidden.project.create'), NOTIFY_TIMEOUT);
 	      }
 	    }
 	  }, {
@@ -68562,7 +68618,7 @@ var Forestry = (function () {
 	                return _context7.abrupt("return", true);
 
 	              case 22:
-	                this._notification.warn(translate$i('quadrant.invalid'), NOTIFY_TIMEOUT);
+	                this._notification.warn(translate$j('quadrant.invalid'), NOTIFY_TIMEOUT);
 
 	                return _context7.abrupt("return", false);
 
@@ -68571,7 +68627,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 26:
-	                this._notification.error(translate$i('forbidden.project.edit'), NOTIFY_TIMEOUT);
+	                this._notification.error(translate$j('forbidden.project.edit'), NOTIFY_TIMEOUT);
 
 	              case 27:
 	              case "end":
@@ -68621,7 +68677,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 8:
-	                this._notification.error(translate$i('forbidden.project.edit'), NOTIFY_TIMEOUT);
+	                this._notification.error(translate$j('forbidden.project.edit'), NOTIFY_TIMEOUT);
 
 	              case 9:
 	              case "end":
@@ -68754,7 +68810,7 @@ var Forestry = (function () {
 	                      species: ForestStat
 	                    };
 	                  } else {
-	                    this._notification.warn(translate$i('quadrant.invalid'), NOTIFY_TIMEOUT);
+	                    this._notification.warn(translate$j('quadrant.invalid'), NOTIFY_TIMEOUT);
 	                  }
 
 	                  this._project.open(this._valid);
@@ -68818,7 +68874,7 @@ var Forestry = (function () {
 	                      species: ForestStat
 	                    };
 	                  } else {
-	                    this._notification.warn(translate$i('quadrant.invalid'), NOTIFY_TIMEOUT);
+	                    this._notification.warn(translate$j('quadrant.invalid'), NOTIFY_TIMEOUT);
 	                  }
 
 	                  this._project.open(this._valid);
@@ -69381,7 +69437,7 @@ var Forestry = (function () {
 	  return Stands;
 	}(View$1);
 
-	var translate$j = T.getText.bind(T);
+	var translate$k = T.getText.bind(T);
 	var ALLOWED_LAYERS$1 = ['forestries_local', 'forestries', 'regions', 'quadrants', 'stands'];
 
 	var Quadrants$2 = /*#__PURE__*/function (_Controller) {
@@ -69413,7 +69469,7 @@ var Forestry = (function () {
 	    _this._legend = legend;
 	    _this._path = path;
 	    _this._permissions = permissions;
-	    var title = translate$j("legend.".concat(_this._layers.stands ? 'stands' : 'quadrants'));
+	    var title = translate$k("legend.".concat(_this._layers.stands ? 'stands' : 'quadrants'));
 
 	    _this._legend.addComponent('quadrants', title);
 
@@ -69453,7 +69509,7 @@ var Forestry = (function () {
 	      });
 
 	      _this._quadrantView.on('notavailable', function (e) {
-	        _this._notification.warn(translate$j('warn.notavailable'), NOTIFY_TIMEOUT);
+	        _this._notification.warn(translate$k('warn.notavailable'), NOTIFY_TIMEOUT);
 	      });
 	    }
 
@@ -69491,7 +69547,7 @@ var Forestry = (function () {
 	      });
 
 	      _this._standView.on('notavailable', function (e) {
-	        _this._notification.warn(translate$j('warn.notavailable'), NOTIFY_TIMEOUT);
+	        _this._notification.warn(translate$k('warn.notavailable'), NOTIFY_TIMEOUT);
 	      });
 	    }
 
@@ -69662,7 +69718,7 @@ var Forestry = (function () {
 	                  } else {
 	                    this._quadrantView.close();
 
-	                    this._notification.warn(translate$j('warn.notavailable'), NOTIFY_TIMEOUT);
+	                    this._notification.warn(translate$k('warn.notavailable'), NOTIFY_TIMEOUT);
 	                  }
 	                } else {
 	                  this._quadrantView.close();
@@ -69690,7 +69746,7 @@ var Forestry = (function () {
 	  return Quadrants;
 	}(Controller);
 
-	var translate$k = T.getText.bind(T);
+	var translate$l = T.getText.bind(T);
 
 	var RasterCatalog = /*#__PURE__*/function () {
 	  function RasterCatalog(_ref) {
@@ -69714,7 +69770,7 @@ var Forestry = (function () {
 	    if (ids.some(function (id) {
 	      return _this._layers[id];
 	    })) {
-	      var p = this._legend.addGroup('rasters', translate$k('legend.rasters'));
+	      var p = this._legend.addGroup('rasters', translate$l('legend.rasters'));
 
 	      ids.forEach(function (kind) {
 	        var layer = _this._layers[kind];
@@ -69722,7 +69778,7 @@ var Forestry = (function () {
 	        if (layer) {
 	          layer.setZIndexOffset(zIndexOffset);
 
-	          _this._legend.addComponent(kind, translate$k("legend.".concat(kind)), p);
+	          _this._legend.addComponent(kind, translate$l("legend.".concat(kind)), p);
 	        }
 	      });
 
@@ -71135,7 +71191,7 @@ var Forestry = (function () {
 	  return Uploaded;
 	}(View$1);
 
-	var translate$l = T.getText.bind(T);
+	var translate$m = T.getText.bind(T);
 
 	var TmsView = /*#__PURE__*/function (_Dialog) {
 	  _inherits(TmsView, _Dialog);
@@ -71148,7 +71204,7 @@ var Forestry = (function () {
 	    _classCallCheck(this, TmsView);
 
 	    _this = _super.call(this, {
-	      title: translate$l('uploaded.tms.title'),
+	      title: translate$m('uploaded.tms.title'),
 	      modal: true,
 	      top: 200,
 	      left: 400
@@ -71156,7 +71212,7 @@ var Forestry = (function () {
 
 	    _this._element.classList.add('scanex-forestry-tms-view');
 
-	    _this.content.innerHTML = "<div class=\"name\">\n                <label>".concat(translate$l('uploaded.tms.name'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"url\">\n                <label>").concat(translate$l('uploaded.tms.url'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"zoom\">\n                <label>").concat(translate$l('uploaded.tms.zoom'), "</label>\n                <div></div>\n            </div>\n            <div class=\"advanced-button\">\n                <label>").concat(translate$l('uploaded.tms.advanced'), "</label>\n                <i class=\"scanex-uploaded-icon down\"></i>\n            </div>\n            <div class=\"advanced-content hidden\">\n                <div class=\"subdomains\">\n                    <label>").concat(translate$l('uploaded.tms.subdomains'), "</label>              \n                    <input type=\"text\" value=\"abc\">                \n                </div>\n                <div class=\"error-tile-url\">\n                    <label>").concat(translate$l('uploaded.tms.errorTileUrl'), "</label>\n                    <input class=\"value\" type=\"text\" value=\"\">                \n                </div>\n                <div class=\"zoom-offset\">\n                    <label>").concat(translate$l('uploaded.tms.zoomOffset'), "</label>\n                    <div></div>\n                </div>\n                <div class=\"tile-reverse\">\n                    <label>").concat(translate$l('uploaded.tms.tileReverse'), "</label>                \n                    <input type=\"checkbox\" value=\"tileReverse\">                \n                </div>\n                <div class=\"zoom-reverse\">\n                    <label>").concat(translate$l('uploaded.tms.zoomReverse'), "</label>                \n                    <input type=\"checkbox\" value=\"zoomReverse\">                \n                </div>\n                <div class=\"detect-retina\">\n                    <label>").concat(translate$l('uploaded.tms.detectRetina'), "</label>                \n                    <input type=\"checkbox\" value=\"detectRetina\">                \n                </div>\n                <div class=\"use-credentials\">\n                    <label>").concat(translate$l('uploaded.tms.useCredentials'), "</label>            \n                    <input type=\"checkbox\" value=\"useCredentials\">                \n                </div>\n            </div>");
+	    _this.content.innerHTML = "<div class=\"name\">\n                <label>".concat(translate$m('uploaded.tms.name'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"url\">\n                <label>").concat(translate$m('uploaded.tms.url'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"zoom\">\n                <label>").concat(translate$m('uploaded.tms.zoom'), "</label>\n                <div></div>\n            </div>\n            <div class=\"advanced-button\">\n                <label>").concat(translate$m('uploaded.tms.advanced'), "</label>\n                <i class=\"scanex-uploaded-icon down\"></i>\n            </div>\n            <div class=\"advanced-content hidden\">\n                <div class=\"subdomains\">\n                    <label>").concat(translate$m('uploaded.tms.subdomains'), "</label>              \n                    <input type=\"text\" value=\"abc\">                \n                </div>\n                <div class=\"error-tile-url\">\n                    <label>").concat(translate$m('uploaded.tms.errorTileUrl'), "</label>\n                    <input class=\"value\" type=\"text\" value=\"\">                \n                </div>\n                <div class=\"zoom-offset\">\n                    <label>").concat(translate$m('uploaded.tms.zoomOffset'), "</label>\n                    <div></div>\n                </div>\n                <div class=\"tile-reverse\">\n                    <label>").concat(translate$m('uploaded.tms.tileReverse'), "</label>                \n                    <input type=\"checkbox\" value=\"tileReverse\">                \n                </div>\n                <div class=\"zoom-reverse\">\n                    <label>").concat(translate$m('uploaded.tms.zoomReverse'), "</label>                \n                    <input type=\"checkbox\" value=\"zoomReverse\">                \n                </div>\n                <div class=\"detect-retina\">\n                    <label>").concat(translate$m('uploaded.tms.detectRetina'), "</label>                \n                    <input type=\"checkbox\" value=\"detectRetina\">                \n                </div>\n                <div class=\"use-credentials\">\n                    <label>").concat(translate$m('uploaded.tms.useCredentials'), "</label>            \n                    <input type=\"checkbox\" value=\"useCredentials\">                \n                </div>\n            </div>");
 	    _this._name = _this.content.querySelector('.name').querySelector('input');
 	    _this._url = _this.content.querySelector('.url').querySelector('input');
 	    _this._zoom = new Interval(_this.content.querySelector('.zoom').querySelector('div'), {
@@ -71196,7 +71252,7 @@ var Forestry = (function () {
 	    _this._tileReverse = _this.content.querySelector('.tile-reverse').querySelector('input');
 	    _this._detectRetina = _this.content.querySelector('.detect-retina').querySelector('input');
 	    _this._useCredentials = _this.content.querySelector('.use-credentials').querySelector('input');
-	    _this.footer.innerHTML = "<button>".concat(translate$l('uploaded.tms.ok'), "</button>");
+	    _this.footer.innerHTML = "<button>".concat(translate$m('uploaded.tms.ok'), "</button>");
 	    _this._btn = _this.footer.querySelector('button');
 
 	    _this._btn.addEventListener('click', function (e) {
@@ -71228,7 +71284,7 @@ var Forestry = (function () {
 	  return TmsView;
 	}(Dialog);
 
-	var translate$m = T.getText.bind(T);
+	var translate$n = T.getText.bind(T);
 
 	var WmsView = /*#__PURE__*/function (_Dialog) {
 	  _inherits(WmsView, _Dialog);
@@ -71241,7 +71297,7 @@ var Forestry = (function () {
 	    _classCallCheck(this, WmsView);
 
 	    _this = _super.call(this, {
-	      title: translate$m('uploaded.wms.title'),
+	      title: translate$n('uploaded.wms.title'),
 	      modal: true,
 	      top: 200,
 	      left: 400
@@ -71249,10 +71305,10 @@ var Forestry = (function () {
 
 	    _this._element.classList.add('scanex-forestry-wms-view');
 
-	    _this.content.innerHTML = "<div class=\"name\">\n                <label>".concat(translate$m('uploaded.tms.name'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"url\">\n                <label>").concat(translate$m('uploaded.tms.url'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>");
+	    _this.content.innerHTML = "<div class=\"name\">\n                <label>".concat(translate$n('uploaded.tms.name'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"url\">\n                <label>").concat(translate$n('uploaded.tms.url'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>");
 	    _this._name = _this.content.querySelector('.name').querySelector('input');
 	    _this._url = _this.content.querySelector('.url').querySelector('input');
-	    _this.footer.innerHTML = "<button>".concat(translate$m('uploaded.tms.ok'), "</button>");
+	    _this.footer.innerHTML = "<button>".concat(translate$n('uploaded.tms.ok'), "</button>");
 	    _this._btn = _this.footer.querySelector('button');
 
 	    _this._btn.addEventListener('click', function (e) {
@@ -71273,7 +71329,7 @@ var Forestry = (function () {
 	  return WmsView;
 	}(Dialog);
 
-	var translate$n = T.getText.bind(T);
+	var translate$o = T.getText.bind(T);
 
 	var WfsView = /*#__PURE__*/function (_Dialog) {
 	  _inherits(WfsView, _Dialog);
@@ -71286,7 +71342,7 @@ var Forestry = (function () {
 	    _classCallCheck(this, WfsView);
 
 	    _this = _super.call(this, {
-	      title: translate$n('uploaded.wfs.title'),
+	      title: translate$o('uploaded.wfs.title'),
 	      modal: true,
 	      top: 200,
 	      left: 400
@@ -71294,7 +71350,7 @@ var Forestry = (function () {
 
 	    _this._element.classList.add('scanex-forestry-wfs-view');
 
-	    _this.content.innerHTML = "<div class=\"name\">\n                <label>".concat(translate$n('uploaded.tms.name'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"url\">\n                <label>").concat(translate$n('uploaded.tms.url'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"zoom\">\n                <label>").concat(translate$n('uploaded.tms.zoom'), "</label>\n                <div></div>\n            </div>\n            <div class=\"advanced-button\">\n                <label>").concat(translate$n('uploaded.tms.advanced'), "</label>\n                <i class=\"scanex-uploaded-icon down\"></i>\n            </div>\n            <div class=\"advanced-content hidden\">\n                <div class=\"subdomains\">\n                    <label>").concat(translate$n('uploaded.tms.subdomains'), "</label>              \n                    <input type=\"text\" value=\"abc\">                \n                </div>\n                <div class=\"error-tile-url\">\n                    <label>").concat(translate$n('uploaded.tms.errorTileUrl'), "</label>\n                    <input class=\"value\" type=\"text\" value=\"\">                \n                </div>\n                <div class=\"zoom-offset\">\n                    <label>").concat(translate$n('uploaded.tms.zoomOffset'), "</label>\n                    <div></div>\n                </div>\n                <div class=\"tile-reverse\">\n                    <label>").concat(translate$n('uploaded.tms.tileReverse'), "</label>                \n                    <input type=\"checkbox\" value=\"tileReverse\">                \n                </div>\n                <div class=\"zoom-reverse\">\n                    <label>").concat(translate$n('uploaded.tms.zoomReverse'), "</label>                \n                    <input type=\"checkbox\" value=\"zoomReverse\">                \n                </div>\n                <div class=\"detect-retina\">\n                    <label>").concat(translate$n('uploaded.tms.detectRetina'), "</label>                \n                    <input type=\"checkbox\" value=\"detectRetina\">                \n                </div>                \n                <div class=\"use-credentials\">\n                    <label>").concat(translate$n('uploaded.tms.useCredentials'), "</label>            \n                    <input type=\"checkbox\" value=\"useCredentials\">                \n                </div>\n                <div class=\"layers\">\n                    <label>").concat(translate$n('uploaded.wfs.layers'), "</label>            \n                    <input class=\"value\" type=\"text\" value=\"\">                 \n                </div>\n                <div class=\"styles\">\n                    <label>").concat(translate$n('uploaded.wfs.styles'), "</label>\n                    <input class=\"value\" type=\"text\" value=\"\">                 \n                </div>\n                <div class=\"format\">\n                    <label>").concat(translate$n('uploaded.wfs.format'), "</label>\n                    <select>\n                        <option value=\"image/jpeg\">image/jpeg</option>\n                        <option value=\"image/png\">image/png</option>\n                    </select>               \n                </div>\n                <div class=\"transparent\">\n                    <label>").concat(translate$n('uploaded.wfs.transparent'), "</label>            \n                    <input type=\"checkbox\" value=\"transparent\">                \n                </div>\n                <div class=\"crs\">\n                    <label>").concat(translate$n('uploaded.wfs.crs'), "</label>            \n                    <input class=\"value\" type=\"text\" value=\"\">                 \n                </div>\n            </div>");
+	    _this.content.innerHTML = "<div class=\"name\">\n                <label>".concat(translate$o('uploaded.tms.name'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"url\">\n                <label>").concat(translate$o('uploaded.tms.url'), "</label>\n                <input type=\"text\" value=\"\">                \n            </div>\n            <div class=\"zoom\">\n                <label>").concat(translate$o('uploaded.tms.zoom'), "</label>\n                <div></div>\n            </div>\n            <div class=\"advanced-button\">\n                <label>").concat(translate$o('uploaded.tms.advanced'), "</label>\n                <i class=\"scanex-uploaded-icon down\"></i>\n            </div>\n            <div class=\"advanced-content hidden\">\n                <div class=\"subdomains\">\n                    <label>").concat(translate$o('uploaded.tms.subdomains'), "</label>              \n                    <input type=\"text\" value=\"abc\">                \n                </div>\n                <div class=\"error-tile-url\">\n                    <label>").concat(translate$o('uploaded.tms.errorTileUrl'), "</label>\n                    <input class=\"value\" type=\"text\" value=\"\">                \n                </div>\n                <div class=\"zoom-offset\">\n                    <label>").concat(translate$o('uploaded.tms.zoomOffset'), "</label>\n                    <div></div>\n                </div>\n                <div class=\"tile-reverse\">\n                    <label>").concat(translate$o('uploaded.tms.tileReverse'), "</label>                \n                    <input type=\"checkbox\" value=\"tileReverse\">                \n                </div>\n                <div class=\"zoom-reverse\">\n                    <label>").concat(translate$o('uploaded.tms.zoomReverse'), "</label>                \n                    <input type=\"checkbox\" value=\"zoomReverse\">                \n                </div>\n                <div class=\"detect-retina\">\n                    <label>").concat(translate$o('uploaded.tms.detectRetina'), "</label>                \n                    <input type=\"checkbox\" value=\"detectRetina\">                \n                </div>                \n                <div class=\"use-credentials\">\n                    <label>").concat(translate$o('uploaded.tms.useCredentials'), "</label>            \n                    <input type=\"checkbox\" value=\"useCredentials\">                \n                </div>\n                <div class=\"layers\">\n                    <label>").concat(translate$o('uploaded.wfs.layers'), "</label>            \n                    <input class=\"value\" type=\"text\" value=\"\">                 \n                </div>\n                <div class=\"styles\">\n                    <label>").concat(translate$o('uploaded.wfs.styles'), "</label>\n                    <input class=\"value\" type=\"text\" value=\"\">                 \n                </div>\n                <div class=\"format\">\n                    <label>").concat(translate$o('uploaded.wfs.format'), "</label>\n                    <select>\n                        <option value=\"image/jpeg\">image/jpeg</option>\n                        <option value=\"image/png\">image/png</option>\n                    </select>               \n                </div>\n                <div class=\"transparent\">\n                    <label>").concat(translate$o('uploaded.wfs.transparent'), "</label>            \n                    <input type=\"checkbox\" value=\"transparent\">                \n                </div>\n                <div class=\"crs\">\n                    <label>").concat(translate$o('uploaded.wfs.crs'), "</label>            \n                    <input class=\"value\" type=\"text\" value=\"\">                 \n                </div>\n            </div>");
 	    _this._name = _this.content.querySelector('.name').querySelector('input');
 	    _this._url = _this.content.querySelector('.url').querySelector('input');
 	    _this._zoom = new Interval(_this.content.querySelector('.zoom').querySelector('div'), {
@@ -71338,7 +71394,7 @@ var Forestry = (function () {
 	    _this._styles = _this.content.querySelector('.styles').querySelector('input');
 	    _this._format = _this.content.querySelector('.format').querySelector('select');
 	    _this._transparent = _this.content.querySelector('.transparent').querySelector('input');
-	    _this.footer.innerHTML = "<button>".concat(translate$n('uploaded.tms.ok'), "</button>");
+	    _this.footer.innerHTML = "<button>".concat(translate$o('uploaded.tms.ok'), "</button>");
 	    _this._btn = _this.footer.querySelector('button');
 
 	    _this._btn.addEventListener('click', function (e) {
@@ -71717,7 +71773,7 @@ var Forestry = (function () {
 	  return parse_node(xml.childNodes[0]);
 	}
 
-	var translate$o = T.getText.bind(T);
+	var translate$p = T.getText.bind(T);
 
 	var Uploaded$1 = /*#__PURE__*/function (_Controller) {
 	  _inherits(Uploaded$1, _Controller);
@@ -71831,7 +71887,7 @@ var Forestry = (function () {
 	                    delete _this._layers[layerID];
 	                  }
 	                } else {
-	                  _this._notification.error(translate$o('uploaded.error.remove'), NOTIFY_TIMEOUT);
+	                  _this._notification.error(translate$p('uploaded.error.remove'), NOTIFY_TIMEOUT);
 	                }
 
 	                _context3.next = 8;
@@ -72372,7 +72428,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 8:
-	                this._notification.error(translate$o('forbidden.uploaded'), NOTIFY_TIMEOUT);
+	                this._notification.error(translate$p('forbidden.uploaded'), NOTIFY_TIMEOUT);
 
 	              case 9:
 	              case "end":
@@ -75645,7 +75701,7 @@ var Forestry = (function () {
 	    info: 'Информация'
 	  }
 	});
-	var translate$p = T$2.getText.bind(T$2);
+	var translate$q = T$2.getText.bind(T$2);
 
 	var delay = function delay(timeout) {
 	  return new Promise(function (resolve) {
@@ -75695,7 +75751,7 @@ var Forestry = (function () {
 	      el.classList.add('noselect');
 	      el.classList.add('notify-red');
 	      el.classList.add('opening');
-	      el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-notify-icon notify-error\"></i>\n                </td>            \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$p('notify.error'), "</label>                \n                    <div class=\"message\">").concat(text, "</div>\n                </td>\n                <td>            \n                    <i class=\"scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
+	      el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-notify-icon notify-error\"></i>\n                </td>            \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$q('notify.error'), "</label>                \n                    <div class=\"message\">").concat(text, "</div>\n                </td>\n                <td>            \n                    <i class=\"scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
 
 	      this._container.appendChild(el);
 
@@ -75723,7 +75779,7 @@ var Forestry = (function () {
 	      el.classList.add('noselect');
 	      el.classList.add('notify-orange');
 	      el.classList.add('opening');
-	      el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-notify-icon notify-warn\"></i>\n                </td>    \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$p('notify.warn'), "</label>\n                    <div class=\"message\">").concat(text, "</div>    \n                </td>            \n                <td>\n                    <i class=\"scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
+	      el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-notify-icon notify-warn\"></i>\n                </td>    \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$q('notify.warn'), "</label>\n                    <div class=\"message\">").concat(text, "</div>    \n                </td>            \n                <td>\n                    <i class=\"scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
 
 	      this._container.appendChild(el);
 
@@ -75751,7 +75807,7 @@ var Forestry = (function () {
 	      el.classList.add('noselect');
 	      el.classList.add('notify-green');
 	      el.classList.add('opening');
-	      el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-notify-icon notify-info\"></i>\n                </td>            \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$p('notify.info'), "</label>                    \n                    <div class=\"message\">").concat(text, "</div>    \n                </td>                                \n                <td>\n                    <i class=\"scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
+	      el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-notify-icon notify-info\"></i>\n                </td>            \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$q('notify.info'), "</label>                    \n                    <div class=\"message\">").concat(text, "</div>    \n                </td>                                \n                <td>\n                    <i class=\"scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
 
 	      this._container.appendChild(el);
 
@@ -75775,8 +75831,8 @@ var Forestry = (function () {
 
 	var notify_1 = Notification;
 
-	var translate$q = T.getText.bind(T);
-	var ALLOWED_LAYERS$2 = ['incidents_temporal', 'forestries_local', 'forestries', 'regions', 'fires', 'warehouses', 'roads', 'declarations', 'quadrants_editor', 'plots', 'projects', 'parks', 'stands', 'quadrants', 'sentinel', 'landsat', 'cadastre', 'plan', 'kppo', 'kppo_rgb'].reverse();
+	var translate$r = T.getText.bind(T);
+	var ALLOWED_LAYERS$2 = ['incidents_temporal', 'forestries_local', 'forestries', 'regions', 'fires', 'warehouses', 'roads', 'declarations', 'quadrants_editor', 'plots', 'projects', 'parks', 'stands', 'quadrants', 'sentinel', 'landsat', 'cadastre', 'plan', 'kppo', 'kppo_rgb', 'lpo'].reverse();
 
 	var Map = /*#__PURE__*/function (_EventTarget) {
 	  _inherits(Map, _EventTarget);
@@ -75951,7 +76007,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 5:
-	                this._notification.error(translate$q('forbidden.analytics'), NOTIFY_TIMEOUT);
+	                this._notification.error(translate$r('forbidden.analytics'), NOTIFY_TIMEOUT);
 
 	              case 6:
 	              case "end":
@@ -75988,7 +76044,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 5:
-	                this._notification.error(translate$q('forbidden.requests'), NOTIFY_TIMEOUT);
+	                this._notification.error(translate$r('forbidden.requests'), NOTIFY_TIMEOUT);
 
 	              case 6:
 	              case "end":
@@ -76010,7 +76066,7 @@ var Forestry = (function () {
 	      if (this._controllers.projects) {
 	        this._controllers.projects.create();
 	      } else {
-	        this._notification.error(translate$q('forbidden.project.create'), NOTIFY_TIMEOUT);
+	        this._notification.error(translate$r('forbidden.project.create'), NOTIFY_TIMEOUT);
 	      }
 	    }
 	  }, {
@@ -76047,7 +76103,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 5:
-	                this._notification.error(translate$q('forbidden.incident'), NOTIFY_TIMEOUT);
+	                this._notification.error(translate$r('forbidden.incident'), NOTIFY_TIMEOUT);
 
 	              case 6:
 	              case "end":
@@ -76084,7 +76140,7 @@ var Forestry = (function () {
 	                break;
 
 	              case 5:
-	                this._notification.error(translate$q('forbidden.uploaded'), NOTIFY_TIMEOUT);
+	                this._notification.error(translate$r('forbidden.uploaded'), NOTIFY_TIMEOUT);
 
 	              case 6:
 	              case "end":
@@ -76530,6 +76586,17 @@ var Forestry = (function () {
 	                    notification: this._notification,
 	                    loading: this._loading
 	                  });
+	                }
+
+	                if (this._layers.lpo) {
+	                  this._controllers.lpo = new LPO({
+	                    map: this._map,
+	                    layer: this._layers.lpo,
+	                    legend: this._legend,
+	                    content: this._content,
+	                    notification: this._notification,
+	                    loading: this._loading
+	                  });
 	                } // if (this._layers.regions || this._layers.forestries || this._layers.forestries_local) {
 	                //     this._controllers.borders = new Components.Borders.Controller({
 	                //         map: this._map,
@@ -76607,7 +76674,7 @@ var Forestry = (function () {
 	                  notification: this._notification
 	                });
 
-	              case 40:
+	              case 41:
 	              case "end":
 	                return _context8.stop();
 	            }
