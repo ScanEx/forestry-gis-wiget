@@ -139,60 +139,6 @@
 .scanex-uploaded-icon.up {background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='64 64 896 896' focusable='false' data-icon='up' width='1em' height='1em' fill='%23067A57' aria-hidden='true'%3e%3cpath d='M890.5 755.3L537.9 269.2c-12.8-17.6-39-17.6-51.7 0L133.5 755.3A8 8 0 00140 768h75c5.1 0 9.9-2.5 12.9-6.6L512 369.8l284.1 391.6c3 4.1 7.8 6.6 12.9 6.6h75c6.5 0 10.3-7.4 6.5-12.7z'%3e%3c/path%3e%3c/svg%3e");}
 .scanex-zoom-icon.minus {background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='64 64 896 896' focusable='false' class='' data-icon='minus' width='1em' height='1em' fill='currentColor' aria-hidden='true'%3e%3cpath d='M872 474H152c-4.4 0-8 3.6-8 8v60c0 4.4 3.6 8 8 8h720c4.4 0 8-3.6 8-8v-60c0-4.4-3.6-8-8-8z'%3e%3c/path%3e%3c/svg%3e");}
 .scanex-zoom-icon.plus {background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='64 64 896 896' focusable='false' class='' data-icon='plus' width='1em' height='1em' fill='currentColor' aria-hidden='true'%3e%3cdefs%3e%3cstyle%3e%3c/style%3e%3c/defs%3e%3cpath d='M482 152h60q8 0 8 8v704q0 8-8 8h-60q-8 0-8-8V160q0-8 8-8z'%3e%3c/path%3e%3cpath d='M176 474h672q8 0 8 8v60q0 8-8 8H176q-8 0-8-8v-60q0-8 8-8z'%3e%3c/path%3e%3c/svg%3e");}
-﻿button.findFiresButton
-{
-	margin-top: 3px;
-	padding: 2px;
-}
-
-#checkContainer
-{
-	margin-top: 5px;
-}
-
-#checkContainer td
-{
-	padding: 3px 0px
-}
-
-#checkContainer td
-{
-	font-family: sans-serif;
-	font-size: 11px;
-}
-
-#checkContainer input
-{
-	margin: 0px 0px 0px 3px;
-	width: 13px;
-	height: 13px;
-}
-
-#fireMappletInfo *
-{
-	margin: 0px;
-	padding: 0px;
-}
-
-#fireMappletInfo
-{
-	border-spacing: 0px;
-}
-
-.fireMappletHours
-{
-    font-family: sans-serif;
-	font-size: 11px;
-    margin: 4px 0px 0px 23px;
-}
-
-.fireMappletLabel {
-    margin-left: 3px;
-}
-
-.fireMappletContainer {
-    margin-left: 4px;
-}
 /* required styles */
 
 .leaflet-pane,
@@ -947,6 +893,223 @@ svg.leaflet-image-layer.leaflet-interactive path {
 .scanex-notify-icon.notify-error {background-image: url("data:image/svg+xml,%3csvg width='35' height='35' viewBox='0 0 35 35' fill='none' xmlns='http://www.w3.org/2000/svg'%3e %3cpath d='M17.375 26.375C17.7892 26.375 18.125 26.0392 18.125 25.625C18.125 25.2108 17.7892 24.875 17.375 24.875C16.9608 24.875 16.625 25.2108 16.625 25.625C16.625 26.0392 16.9608 26.375 17.375 26.375Z' fill='%23FF4F42'/%3e %3cpath d='M17.375 33.875C26.4877 33.875 33.875 26.4877 33.875 17.375C33.875 8.2623 26.4877 0.875 17.375 0.875C8.2623 0.875 0.875 8.2623 0.875 17.375C0.875 26.4877 8.2623 33.875 17.375 33.875Z' stroke='%23FF4F42' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3cpath d='M17.375 8.375V20.375' stroke='%23FF4F42' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3cpath d='M17.375 26.375C17.7892 26.375 18.125 26.0392 18.125 25.625C18.125 25.2108 17.7892 24.875 17.375 24.875C16.9608 24.875 16.625 25.2108 16.625 25.625C16.625 26.0392 16.9608 26.375 17.375 26.375Z' stroke='%23FF4F42' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3c/svg%3e");}
 .scanex-notify-icon.notify-info {background-image: url("data:image/svg+xml,%3csvg width='33' height='32' viewBox='0 0 33 32' fill='none' xmlns='http://www.w3.org/2000/svg'%3e %3cpath d='M30.35 12.4C30.725 13.675 30.875 14.95 30.875 16.375C30.875 24.625 24.125 31.375 15.875 31.375C7.625 31.375 0.875 24.625 0.875 16.375C0.875 8.125 7.625 1.375 15.875 1.375C18.8 1.375 21.5 2.2 23.75 3.625' stroke='%2339BC82' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3cpath d='M9.875 13.375L15.875 19.375L32.375 2.875' stroke='%2339BC82' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3c/svg%3e");}
 .scanex-notify-icon.notify-warn {background-image: url("data:image/svg+xml,%3csvg width='35' height='32' viewBox='0 0 35 32' fill='none' xmlns='http://www.w3.org/2000/svg'%3e %3cpath d='M10.9998 21.6251L13.8161 27.8456C14.3583 29.0613 13.8131 30.4871 12.5973 31.0293C11.3816 31.5716 9.95581 31.0263 9.41356 29.8106L3.9873 17.6523' stroke='%23E8A700' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3cpath d='M23.375 25.375L11.375 17.875H5.375C2.8895 17.875 0.875 15.8605 0.875 13.375C0.875 10.8895 2.8895 8.875 5.375 8.875H11.375L23.375 1.375V25.375Z' stroke='%23E8A700' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3cpath d='M30.875 13.375H33.875' stroke='%23E8A700' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3cpath d='M29.0664 6.625L31.6652 5.125' stroke='%23E8A700' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3cpath d='M29.0664 20.125L31.6652 21.625' stroke='%23E8A700' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3cpath d='M6.875 8.875V17.875' stroke='%23E8A700' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3c/svg%3e");}
+﻿button.findFiresButton
+{
+	margin-top: 3px;
+	padding: 2px;
+}
+
+#checkContainer
+{
+	margin-top: 5px;
+}
+
+#checkContainer td
+{
+	padding: 3px 0px
+}
+
+#checkContainer td
+{
+	font-family: sans-serif;
+	font-size: 11px;
+}
+
+#checkContainer input
+{
+	margin: 0px 0px 0px 3px;
+	width: 13px;
+	height: 13px;
+}
+
+#fireMappletInfo *
+{
+	margin: 0px;
+	padding: 0px;
+}
+
+#fireMappletInfo
+{
+	border-spacing: 0px;
+}
+
+.fireMappletHours
+{
+    font-family: sans-serif;
+	font-size: 11px;
+    margin: 4px 0px 0px 23px;
+}
+
+.fireMappletLabel {
+    margin-left: 3px;
+}
+
+.fireMappletContainer {
+    margin-left: 4px;
+}
+.scanex-notify-icon.notify-close {background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='64 64 896 896' focusable='false' class='' data-icon='close' width='1em' height='1em' fill='currentColor' aria-hidden='true'%3e%3cpath d='M563.8 512l262.5-312.9c4.4-5.2.7-13.1-6.1-13.1h-79.8c-4.7 0-9.2 2.1-12.3 5.7L511.6 449.8 295.1 191.7c-3-3.6-7.5-5.7-12.3-5.7H203c-6.8 0-10.5 7.9-6.1 13.1L459.4 512 196.9 824.9A7.95 7.95 0 00203 838h79.8c4.7 0 9.2-2.1 12.3-5.7l216.5-258.1 216.5 258.1c3 3.6 7.5 5.7 12.3 5.7h79.8c6.8 0 10.5-7.9 6.1-13.1L563.8 512z'%3e%3c/path%3e%3c/svg%3e");}
+.scanex-notify-icon.notify-error {background-image: url("data:image/svg+xml,%3csvg width='35' height='35' viewBox='0 0 35 35' fill='none' xmlns='http://www.w3.org/2000/svg'%3e %3cpath d='M17.375 26.375C17.7892 26.375 18.125 26.0392 18.125 25.625C18.125 25.2108 17.7892 24.875 17.375 24.875C16.9608 24.875 16.625 25.2108 16.625 25.625C16.625 26.0392 16.9608 26.375 17.375 26.375Z' fill='%23FF4F42'/%3e %3cpath d='M17.375 33.875C26.4877 33.875 33.875 26.4877 33.875 17.375C33.875 8.2623 26.4877 0.875 17.375 0.875C8.2623 0.875 0.875 8.2623 0.875 17.375C0.875 26.4877 8.2623 33.875 17.375 33.875Z' stroke='%23FF4F42' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3cpath d='M17.375 8.375V20.375' stroke='%23FF4F42' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3cpath d='M17.375 26.375C17.7892 26.375 18.125 26.0392 18.125 25.625C18.125 25.2108 17.7892 24.875 17.375 24.875C16.9608 24.875 16.625 25.2108 16.625 25.625C16.625 26.0392 16.9608 26.375 17.375 26.375Z' stroke='%23FF4F42' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3c/svg%3e");}
+.scanex-notify-icon.notify-info {background-image: url("data:image/svg+xml,%3csvg width='33' height='32' viewBox='0 0 33 32' fill='none' xmlns='http://www.w3.org/2000/svg'%3e %3cpath d='M30.35 12.4C30.725 13.675 30.875 14.95 30.875 16.375C30.875 24.625 24.125 31.375 15.875 31.375C7.625 31.375 0.875 24.625 0.875 16.375C0.875 8.125 7.625 1.375 15.875 1.375C18.8 1.375 21.5 2.2 23.75 3.625' stroke='%2339BC82' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3cpath d='M9.875 13.375L15.875 19.375L32.375 2.875' stroke='%2339BC82' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3c/svg%3e");}
+.scanex-notify-icon.notify-warn {background-image: url("data:image/svg+xml,%3csvg width='35' height='32' viewBox='0 0 35 32' fill='none' xmlns='http://www.w3.org/2000/svg'%3e %3cpath d='M10.9998 21.6251L13.8161 27.8456C14.3583 29.0613 13.8131 30.4871 12.5973 31.0293C11.3816 31.5716 9.95581 31.0263 9.41356 29.8106L3.9873 17.6523' stroke='%23E8A700' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3cpath d='M23.375 25.375L11.375 17.875H5.375C2.8895 17.875 0.875 15.8605 0.875 13.375C0.875 10.8895 2.8895 8.875 5.375 8.875H11.375L23.375 1.375V25.375Z' stroke='%23E8A700' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3cpath d='M30.875 13.375H33.875' stroke='%23E8A700' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3cpath d='M29.0664 6.625L31.6652 5.125' stroke='%23E8A700' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3cpath d='M29.0664 20.125L31.6652 21.625' stroke='%23E8A700' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3cpath d='M6.875 8.875V17.875' stroke='%23E8A700' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round'/%3e %3c/svg%3e");}
+@keyframes notify-opening {
+    from {width: 0px;}
+    to {width: 300px;}
+}
+
+@keyframes notify-closing {
+    from {width: 300px;}
+    to {width: 0px;}
+}
+
+.scanex-notify-container {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    z-index: 1000000;
+}
+
+.scanex-notify-container .scanex-notify {    
+    border-radius: 8px 0px 0px 8px;
+    font-family: 'Open Sans', sans-serif;
+    font-style: normal;
+    font-weight: normal;
+    font-size: 12px;
+    line-height: 16px;
+    color: #453D3D;
+    box-shadow: 0px 8px 10px 8px rgba(0, 0, 0, 0.15);
+    background-color: #FFFFFF;
+    cursor: default;    
+    margin: 5px;    
+    overflow: hidden;
+    width: 300px;
+    float: right;
+    clear: both;
+}
+.scanex-notify-container .scanex-notify.opening {
+    animation-name: notify-opening;
+    animation-duration: 0.5s;
+    animation-fill-mode: both;
+    animation-timing-function: linear;
+}
+.scanex-notify-container .scanex-notify.closing {
+    animation-name: notify-closing;
+    animation-duration: 0.5s;
+    animation-fill-mode: both;
+    animation-timing-function: linear;
+}
+.scanex-notify-container .scanex-notify.noselect {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+.scanex-notify-container .scanex-notify td:first-child > * {
+    width: 15px;
+    height: 75px;
+    border-radius: 8px 0px 0px 8px;
+    display: block;
+}
+.scanex-notify-container .scanex-notify td:last-child {
+    vertical-align: top;
+}
+.scanex-notify-container .scanex-notify.notify-red td:first-child > * {
+    background-color:#FF4F42;    
+}
+.scanex-notify-container .scanex-notify .title {
+    font-weight: 600;
+}
+.scanex-notify-container .scanex-notify .text {
+    width: 100%;
+    vertical-align: top;
+    padding-top: 8px;
+}
+.scanex-notify-container .scanex-notify .message {
+    width: 160px;
+}
+.scanex-notify-container .scanex-notify.notify-red .title {
+    color: #FF4F42;    
+}
+.scanex-notify-container .scanex-notify.notify-orange td:first-child > * {
+    background-color: #E8A700;
+}
+.scanex-notify-container .scanex-notify.notify-orange .title {
+    color: #E8A700;    
+}
+.scanex-notify-container .scanex-notify.notify-green td:first-child > * {
+    background-color: #39BC82;
+}
+.scanex-notify-container .scanex-notify.notify-green .title {
+    color: #39BC82;    
+}
+.scanex-notify-container .scanex-notify .scanex-notify-icon {
+    background-position: center;
+    background-repeat: no-repeat;
+    display: inline-block;
+}
+.scanex-notify-container .scanex-notify .scanex-notify-icon.notify-close {
+    width: 18px;
+    height: 18px;    
+    cursor: pointer;
+}
+.scanex-notify-container .scanex-notify .scanex-notify-icon.notify-error,
+.scanex-notify-container .scanex-notify .scanex-notify-icon.notify-warn,
+.scanex-notify-container .scanex-notify .scanex-notify-icon.notify-info {
+    width: 35px;
+    height: 35px;
+    margin: 0px 20px 0px 20px;
+}
+.leaflet-control.scanex-forestry-search {
+    background-color: #FFFFFF;
+    border-radius: 10px;
+    padding: 7px 0;
+    border: 1px solid #e0e0e0;
+    clear: none;    
+}
+.scanex-forestry-search input {
+    border-style: none;
+    font-style: normal;
+    font-weight: normal;
+    font-size: 14px;
+    line-height: 19px;
+    color: #453d3d;    
+    width: 300px;
+    height: 23px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+.leaflet-control.scanex-forestry-zoom {
+    background-color: #FFFFFF;
+    border-radius: 10px;    
+    padding: 7px 0;    
+    border: 1px solid #e0e0e0;    
+    clear: none;   
+}
+.scanex-forestry-zoom .middle {
+    font-style: normal;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 19px;
+    color: #453d3d;
+    border-left: 2px solid #e3e8f1;
+    border-right: 2px solid #e3e8f1;
+    width: 40px;
+    padding: 0px 10px 0px 10px;
+    text-align: center;
+}
+.scanex-forestry-zoom > * {
+    display: inline-block;
+    vertical-align: middle;    
+}
+.scanex-forestry-zoom .scanex-zoom-icon {
+    background-repeat: no-repeat;
+    background-position: center;    
+    cursor: pointer;
+    width: 24px;
+    height: 24px;        
+    margin: 0px 5px 0px 5px;
+}
 .leaflet-control.scanex-forestry-legend {  
     clear: none;      
 }
@@ -1162,75 +1325,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
     right: 5px;
     transform: scaleY(0.9);
 }
-.leaflet-control.scanex-forestry-search {
-    background-color: #FFFFFF;
-    border-radius: 10px;
-    padding: 7px 0;
-    border: 1px solid #e0e0e0;
-    clear: none;    
-}
-.scanex-forestry-search input {
-    border-style: none;
-    font-style: normal;
-    font-weight: normal;
-    font-size: 14px;
-    line-height: 19px;
-    color: #453d3d;    
-    width: 300px;
-    height: 23px;
-    padding-left: 10px;
-    padding-right: 10px;
-}
-.leaflet-control.scanex-forestry-zoom {
-    background-color: #FFFFFF;
-    border-radius: 10px;    
-    padding: 7px 0;    
-    border: 1px solid #e0e0e0;    
-    clear: none;   
-}
-.scanex-forestry-zoom .middle {
-    font-style: normal;
-    font-weight: 600;
-    font-size: 14px;
-    line-height: 19px;
-    color: #453d3d;
-    border-left: 2px solid #e3e8f1;
-    border-right: 2px solid #e3e8f1;
-    width: 40px;
-    padding: 0px 10px 0px 10px;
-    text-align: center;
-}
-.scanex-forestry-zoom > * {
-    display: inline-block;
-    vertical-align: middle;    
-}
-.scanex-forestry-zoom .scanex-zoom-icon {
-    background-repeat: no-repeat;
-    background-position: center;    
-    cursor: pointer;
-    width: 24px;
-    height: 24px;        
-    margin: 0px 5px 0px 5px;
-}
-.leaflet-gmx-center {
-    height: 100%;
-    width: 100%;
-    margin-left: 6px;
-    margin-top: 6px;
-    pointer-events: none;
-    position: absolute;
-}
-.leaflet-gmx-center div {
-    height: 12px;
-    width: 12px;
-    margin-bottom: 5px;
-    margin-right: 5px;
-    margin-right: 3px;
-    bottom: 50%;
-    right: 50%;
-    position: absolute;
-}
-
 .scanex-date-interval div.timeline-frame {
     background-color: #d3d3d3b5;
 }
@@ -1314,6 +1408,25 @@ svg.leaflet-image-layer.leaflet-interactive path {
 .scanex-date-interval .top label:nth-child(2) {
     margin-right: 15px;
 }
+.leaflet-gmx-center {
+    height: 100%;
+    width: 100%;
+    margin-left: 6px;
+    margin-top: 6px;
+    pointer-events: none;
+    position: absolute;
+}
+.leaflet-gmx-center div {
+    height: 12px;
+    width: 12px;
+    margin-bottom: 5px;
+    margin-right: 5px;
+    margin-right: 3px;
+    bottom: 50%;
+    right: 50%;
+    position: absolute;
+}
+
 .gmxLocation-input {
     text-align: center;
 	width: 210px;
@@ -1390,362 +1503,63 @@ svg.leaflet-image-layer.leaflet-interactive path {
 	margin-left: 4px;
 }
 
+.leaflet-popup-content textarea {
+    outline: none;
+    -moz-appearance: none;
+    border: 1px solid white;
+}
+.leaflet-popup-content textarea:hover {
+    border: 1px solid #999;
+}
+.gmxTooltipBG {
+    fill: white;
+    stroke: black;
+    stroke-width: 1;
+    opacity: 0.85;
+}
+.leaflet-drawing-lines {
+   pointer-events: none;
+}
+.leaflet-drawing-lines-fill {
+    pointer-events: visiblepainted;
+}
+.leaflet-drawing-points {
+    pointer-events: visible;
+}
+
+.leaflet-drawing-bbox.Move {
+	cursor: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACDSURBVEhL5ZFBCoAwDATzc/25GuhCDpu01A0IDuxFZYZW+x3HWAsuvsbkkSiXR5gck58E4jZkgezoVWD5unDnjCrgz6cRyHcDvjQS5W9HI+cz9vHO3EWJEcbKu1QOEGHMAlM5yD6sAsvyiiogoSWAf8ImuRaHRWRyECNyOXBxm/yLmN2K8muV4HlslQAAAABJRU5ErkJggg=='), pointer;
+}
+.leaflet-drawing-bbox.Rotate {
+	cursor: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAFRSURBVEhLtZRJTsNAEEXNeB/uwIYdgwBxCCSmPbBHCCJxBQRHYhIgTgEs4D2TklpJh9hO+0tPsdvVVWm76lctdTr87U0/ULTIMuzBPbyABUaLGNNJm/ABkTTlDEJvsPV32UwLMIBI9gAHsDK8P4dUEXcFcy5M0w244Qv2YRFC6T8PHYKxUeRfbYOBn7DqQkMZ+w3u3XAhJz/WOxh05EJLeRL3+k2WXCgtX+UjWGTXhT50DBa4q+9GZG/POkTRaU/1XSIT+0C6FrHDIkdQd12aPChRZKyln8EHHnMWmXgsudJvLGC79SJNzQK2Wjq9xeSgOSRdT3EC7jXHRIfVQQ1y7NtYxRpoL+6daBWhazBQA8udJO0wX6VOGz50AVM1D7qiGyRVtKGd5tSGNcglNLLrkEf1fYZy8yKvsA6dlH6sdIi0glvYgaLOGUV6VXZK86qqX08Va+VOfxC5AAAAAElFTkSuQmCC'), pointer;
+}
+
+/* static Tooltips */
+.leaflet-tooltip.staticTooltip  {
+	pointer-events: auto;
+}
+.leaflet-tooltip.staticTooltip  .content {
+	display: flex;
+	cursor: text;
+}
+.leaflet-tooltip.staticTooltip .closeBtn {
+    position: relative;
+    right: -6px;
+    top: -11px;
+	cursor: pointer;
+}
+
+.leaflet-contextmenu a.leaflet-contextmenu-item.over {
+    background-color: lightgray;
+	cursor: pointer;
+}
+.leaflet-contextmenu a.leaflet-contextmenu-item.over.leaflet-contextmenu-item-disabled {
+	cursor: default;
+}
+
+
 .scanex-forestry-content .view[data-id=fires] {
     margin-bottom: 60px;
-}
-
-.scanex-forestry-view-plot .content > * {
-    float: left;
-}
-.scanex-forestry-view-plot .chart {    
-    width: 450px;
-}
-.scanex-forestry-view-plot .separator {
-    font-size: 13px;
-    font-weight: bold;
-    padding: 10px 0px 10px 0px;
-}
-.scanex-forestry-view-plot .stats {
-    max-height: 195px;
-}
-
-.scanex-forestry-view-plot .scanex-view-plot-icon {
-    background-repeat: no-repeat;
-    background-position: center;
-    cursor: pointer;
-    width: 24px;
-    height: 24px;
-    display: inline-block;
-    vertical-align: middle;
-}
-
-.scanex-forestry-view-plot .open-doc {
-    font-family: 'Open Sans', 'Arial';
-    font-style: normal;
-    font-weight: 600;
-    font-size: 16px;
-    line-height: 24px;
-    color: #067A57;
-    border: none;
-    background-color: transparent;
-    vertical-align: middle;
-    margin-top: 20px;
-    margin-bottom: 20px;
-}
-
-
-.scanex-forestry-view-plot tr.volumes td.text {
-    border-right: 1px solid rgba(0,0,0,0.1);
-    border-left: 1px solid rgba(0,0,0,0.1);
-    padding: 0 15px;
-}
-
-.scanex-forestry-view-plot tr.volumes td.value {
-    text-align: left;
-    padding: 0 15px;
-    color: #6B707B;
-    border-right: 1px solid rgba(0,0,0,0.1);
-}
-
-.scanex-forestry-project * {
-    box-sizing: border-box !important;
-}
-.scanex-forestry-project .header-left>*,
-.scanex-forestry-project .header-right>* {
-    vertical-align: middle;
-    display: inline-block;
-}
-
-.scanex-forestry-project .header-left {
-    float: left;
-}
-
-.scanex-forestry-project .header-right {
-    float: right;
-    margin-right: 16px;
-    margin-bottom: 10px;
-    margin-top: 0;
-}
-
-.scanex-forestry-project .header {
-    height: 40px;
-    margin-bottom: 10px;
-}
-
-.scanex-forestry-project .content {
-    clear: both;
-    display: inline-flex;
-    justify-content: space-between;
-    width: 100%;
-}
-
-.scanex-forestry-project .content>* {
-    display: inline-block;
-    vertical-align: top;
-}
-
-.scanex-forestry-project .description {
-    padding: 10px 15px 10px 15px;
-    border: 1px solid #D9E1E6;
-    font-family: 'Open Sans', 'Arial';
-    font-style: normal;
-    font-size: 14px;
-    border-radius: 24px;
-    justify-content: center;
-    align-items: center;
-    outline: none;
-    height: 37px;
-    max-height: 37px;
-    position: relative;
-    left: 45px;
-    box-sizing: border-box;
-}
-
-.scanex-forestry-project .head {
-    font-family: 'Open Sans', 'Arial';
-    font-style: normal;
-    font-weight: bold;
-    font-size: 18px;
-    white-space: nowrap;
-    margin-left: 5px;
-    white-space: nowrap;
-    margin-right: 10px;
-}
-
-.scanex-forestry-project .species thead.menu {
-    display: table;
-    margin-bottom: 15px;
-}
-
-.scanex-forestry-project .species thead.menu th:nth-child(4) {
-    border-right: none;
-}
-
-.scanex-forestry-project .scanex-project-icon {
-    background-color: transparent;
-    background-position: center;
-    background-repeat: no-repeat;
-    width: 24px;
-    height: 24px;
-    border: none;
-    opacity: 0.5;
-    margin-bottom: 3px;
-    display: inline-block;
-    vertical-align: middle;
-    cursor: pointer;
-    transform: scale(0.75);
-}
-
-.scanex-forestry-project .request,
-.scanex-forestry-project .create,
-.scanex-forestry-project .save {
-    background-repeat: no-repeat;
-    background-position: center;
-    float: right;
-    background: #067A57;
-    outline: none;
-    border: none;
-    border-radius: 24px;
-    cursor: pointer;
-    margin-left: 15px;
-    height: 37px;
-    max-height: 37px;
-    width: auto;
-    min-width: 210px;
-    padding: 0 20px;
-    font-family: 'Open Sans', 'Arial';
-    font-style: normal;
-    font-weight: 600;
-    font-size: 16px;
-    text-align: center;
-    color: #FFF;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    outline: none;
-}
-
-.scanex-forestry-requests thead button.create {
-    margin-left: 10px;
-}
-
-.scanex-forestry-project .hidden {
-    display: none;
-}
-
-.scanex-forestry-content .view>.container.scanex-forestry-project {
-    min-width: 1200px;
-}
-
-.scanex-forestry-project .request:disabled,
-.scanex-forestry-project .create:disabled,
-.scanex-forestry-project .save:disabled {
-
-    background: #f8f8f8;
-    border: 1px solid #e1e1e1;
-    color: #e1e1e1;
-}
-.scanex-forestry-content .view[data-id=edit-project] .scanex-component-icon.close {
-    display: none;
-}
-.scanex-forestry-quadrant {
-    --cell-width: 80px;
-    --label-width: 250px;
-    --cell-height: 40px;
-}
-.scanex-forestry-content .view[data-id=quadrants] {
-    height: 410px;
-}
-.scanex-forestry-quadrant * {
-    box-sizing: border-box !important;
-}
-.scanex-forestry-quadrant .header2 {
-    white-space: normal;
-}
-.scanex-forestry-quadrant .scrollable {
-    max-height: 315px;
-}
-.scanex-forestry-quadrant .download-description label,
-.scanex-forestry-quadrant .download-plan label{
-    cursor: pointer;
-    font-family: 'Open Sans';
-    font-style: normal;
-    font-weight: bold;
-    font-size: 16px;
-    line-height: 22px;
-    color: #008060;
-}
-.scanex-forestry-quadrant .info .label,
-.scanex-forestry-quadrant .info .value {
-    display: inline-block;
-    font-family: 'Open Sans';
-    font-style: normal;   
-    font-size: 13px;     
-}
-.scanex-forestry-quadrant .info .label {
-    font-weight: 600;    
-    line-height: 18px;
-    color: #6B707B;
-}
-.scanex-forestry-quadrant .info .value {
-    font-weight: normal;    
-    line-height: 24px;
-    color: #000000;
-}
-.scanex-forestry-quadrant .info .label {
-    width: 320px;
-}
-.scanex-forestry-quadrant .header3 {
-    font-family: 'Open Sans';
-    font-style: normal;
-    font-weight: bold;
-    font-size: 18px;
-    line-height: 40px;
-    margin-top: 22px;
-    margin-bottom: 10px;
-}
-.scanex-forestry-quadrant .stats .header div {
-    font-family: 'Open Sans';
-    font-style: normal;
-    font-weight: 600;
-    font-size: 14px;
-    line-height: 20px;
-    color: #9A9DA4;
-}
-.scanex-forestry-quadrant .stats .header > div,
-.scanex-forestry-quadrant .stats .header .details > div,
-.scanex-forestry-quadrant .stats .body > .row > div {
-    float: left;    
-}
-.scanex-forestry-quadrant .stats .header .species {
-    height: calc(2 * var(--cell-height));
-    padding-top: 30px;
-}
-.scanex-forestry-quadrant .stats .header .stock {
-    padding-top: 8px;
-}
-.scanex-forestry-quadrant .stats .header .details > div {
-    padding-top: 10px;
-}
-.scanex-forestry-quadrant .stats .header .species,
-.scanex-forestry-quadrant .stats .header .stock,
-.scanex-forestry-quadrant .stats .header .details > div {
-    background-color: #F1F1F2;
-}
-.scanex-forestry-quadrant .stats .header .species,
-.scanex-forestry-quadrant .stats .header .details > div,
-.scanex-forestry-quadrant .stats .header .stock,
-.scanex-forestry-quadrant .stats .body .label,
-.scanex-forestry-quadrant .stats .body .value {
-    border-bottom: 1px solid #DFDFE0;
-}
-/* .scanex-forestry-quadrant .stats .body .row:last-child .label,
-.scanex-forestry-quadrant .stats .body .row:last-child .value {
-    border-bottom: none;
-} */
-.scanex-forestry-quadrant .stats .header .details > div,
-.scanex-forestry-quadrant .stats .header .stock,
-.scanex-forestry-quadrant .stats .body .value {
-    border-left: 1px solid #DFDFE0;    
-}
-.scanex-forestry-quadrant .stats .body .label {    
-    padding-left: 50px;
-    width: calc(var(--label-width));
-}
-.scanex-forestry-quadrant .stats .header .details > div {
-    width: calc(2 * var(--cell-width));
-}
-.scanex-forestry-quadrant .stats .header .stock,
-.scanex-forestry-quadrant .stats .header .details > div {
-    height: var(--cell-height);    
-}
-.scanex-forestry-quadrant .stats .header div,
-.scanex-forestry-quadrant .stats .body .value {
-    text-align: center;
-}
-.scanex-forestry-quadrant .stats .body,
-.scanex-forestry-quadrant .stats .body .row {
-    clear: both;
-}
-.scanex-forestry-quadrant .stats .header .species {
-    width: var(--label-width);
-}
-.scanex-forestry-quadrant .stats .body .value {
-    width: var(--cell-width);
-    text-align: right;
-    padding-right: 20px;
-}
-.scanex-forestry-quadrant .stats .body .label,
-.scanex-forestry-quadrant .stats .body .value {
-    height: var(--cell-height);
-    padding-top: 14px;
-    font-family: 'Open Sans';
-    font-style: normal;
-    font-weight: normal;
-    font-size: 12px;
-    line-height: 14px;
-}
-.scanex-forestry-quadrant .stats .body .row.total .label,
-.scanex-forestry-quadrant .stats .body .row.total .value {
-    font-weight: bold;
-}
-.scanex-forestry-quadrant .scanex-quadrant-icon {
-    background-repeat: no-repeat;
-    background-position: center;
-    cursor: pointer;
-    width: 30px;
-    height: 30px;
-    display: inline-block;
-    vertical-align: middle;
-}
-.scanex-forestry-quadrant .footer {
-    margin-top: 15px;
-    float: left;
-}
-
-
-.scanex-forestry-quadrant .stats {
-    min-width: 730px;
 }
 .scanex-forestry-requests>table>thead {
     background-color: #F3F3F3;
@@ -1930,6 +1744,147 @@ svg.leaflet-image-layer.leaflet-interactive path {
 .container.scanex-forestry-analytics {
     height: 100%;
 }
+.scanex-forestry-project * {
+    box-sizing: border-box !important;
+}
+.scanex-forestry-project .header-left>*,
+.scanex-forestry-project .header-right>* {
+    vertical-align: middle;
+    display: inline-block;
+}
+
+.scanex-forestry-project .header-left {
+    float: left;
+}
+
+.scanex-forestry-project .header-right {
+    float: right;
+    margin-right: 16px;
+    margin-bottom: 10px;
+    margin-top: 0;
+}
+
+.scanex-forestry-project .header {
+    height: 40px;
+    margin-bottom: 10px;
+}
+
+.scanex-forestry-project .content {
+    clear: both;
+    display: inline-flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.scanex-forestry-project .content>* {
+    display: inline-block;
+    vertical-align: top;
+}
+
+.scanex-forestry-project .description {
+    padding: 10px 15px 10px 15px;
+    border: 1px solid #D9E1E6;
+    font-family: 'Open Sans', 'Arial';
+    font-style: normal;
+    font-size: 14px;
+    border-radius: 24px;
+    justify-content: center;
+    align-items: center;
+    outline: none;
+    height: 37px;
+    max-height: 37px;
+    position: relative;
+    left: 45px;
+    box-sizing: border-box;
+}
+
+.scanex-forestry-project .head {
+    font-family: 'Open Sans', 'Arial';
+    font-style: normal;
+    font-weight: bold;
+    font-size: 18px;
+    white-space: nowrap;
+    margin-left: 5px;
+    white-space: nowrap;
+    margin-right: 10px;
+}
+
+.scanex-forestry-project .species thead.menu {
+    display: table;
+    margin-bottom: 15px;
+}
+
+.scanex-forestry-project .species thead.menu th:nth-child(4) {
+    border-right: none;
+}
+
+.scanex-forestry-project .scanex-project-icon {
+    background-color: transparent;
+    background-position: center;
+    background-repeat: no-repeat;
+    width: 24px;
+    height: 24px;
+    border: none;
+    opacity: 0.5;
+    margin-bottom: 3px;
+    display: inline-block;
+    vertical-align: middle;
+    cursor: pointer;
+    transform: scale(0.75);
+}
+
+.scanex-forestry-project .request,
+.scanex-forestry-project .create,
+.scanex-forestry-project .save {
+    background-repeat: no-repeat;
+    background-position: center;
+    float: right;
+    background: #067A57;
+    outline: none;
+    border: none;
+    border-radius: 24px;
+    cursor: pointer;
+    margin-left: 15px;
+    height: 37px;
+    max-height: 37px;
+    width: auto;
+    min-width: 210px;
+    padding: 0 20px;
+    font-family: 'Open Sans', 'Arial';
+    font-style: normal;
+    font-weight: 600;
+    font-size: 16px;
+    text-align: center;
+    color: #FFF;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    outline: none;
+}
+
+.scanex-forestry-requests thead button.create {
+    margin-left: 10px;
+}
+
+.scanex-forestry-project .hidden {
+    display: none;
+}
+
+.scanex-forestry-content .view>.container.scanex-forestry-project {
+    min-width: 1200px;
+}
+
+.scanex-forestry-project .request:disabled,
+.scanex-forestry-project .create:disabled,
+.scanex-forestry-project .save:disabled {
+
+    background: #f8f8f8;
+    border: 1px solid #e1e1e1;
+    color: #e1e1e1;
+}
+.scanex-forestry-content .view[data-id=edit-project] .scanex-component-icon.close {
+    display: none;
+}
 .scanex-forestry-search-result .content {
     max-height: 250px;
 }
@@ -1937,60 +1892,165 @@ svg.leaflet-image-layer.leaflet-interactive path {
     border-bottom: 1px solid #F2F2F2F2;
     cursor: pointer;
 }
-.leaflet-popup-content textarea {
-    outline: none;
-    -moz-appearance: none;
-    border: 1px solid white;
+.scanex-forestry-quadrant {
+    --cell-width: 80px;
+    --label-width: 250px;
+    --cell-height: 40px;
 }
-.leaflet-popup-content textarea:hover {
-    border: 1px solid #999;
+.scanex-forestry-content .view[data-id=quadrants] {
+    height: 410px;
 }
-.gmxTooltipBG {
-    fill: white;
-    stroke: black;
-    stroke-width: 1;
-    opacity: 0.85;
+.scanex-forestry-quadrant * {
+    box-sizing: border-box !important;
 }
-.leaflet-drawing-lines {
-   pointer-events: none;
+.scanex-forestry-quadrant .header2 {
+    white-space: normal;
 }
-.leaflet-drawing-lines-fill {
-    pointer-events: visiblepainted;
+.scanex-forestry-quadrant .scrollable {
+    max-height: 315px;
 }
-.leaflet-drawing-points {
-    pointer-events: visible;
+.scanex-forestry-quadrant .download-description label,
+.scanex-forestry-quadrant .download-plan label{
+    cursor: pointer;
+    font-family: 'Open Sans';
+    font-style: normal;
+    font-weight: bold;
+    font-size: 16px;
+    line-height: 22px;
+    color: #008060;
+}
+.scanex-forestry-quadrant .info .label,
+.scanex-forestry-quadrant .info .value {
+    display: inline-block;
+    font-family: 'Open Sans';
+    font-style: normal;   
+    font-size: 13px;     
+}
+.scanex-forestry-quadrant .info .label {
+    font-weight: 600;    
+    line-height: 18px;
+    color: #6B707B;
+}
+.scanex-forestry-quadrant .info .value {
+    font-weight: normal;    
+    line-height: 24px;
+    color: #000000;
+}
+.scanex-forestry-quadrant .info .label {
+    width: 320px;
+}
+.scanex-forestry-quadrant .header3 {
+    font-family: 'Open Sans';
+    font-style: normal;
+    font-weight: bold;
+    font-size: 18px;
+    line-height: 40px;
+    margin-top: 22px;
+    margin-bottom: 10px;
+}
+.scanex-forestry-quadrant .stats .header div {
+    font-family: 'Open Sans';
+    font-style: normal;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 20px;
+    color: #9A9DA4;
+}
+.scanex-forestry-quadrant .stats .header > div,
+.scanex-forestry-quadrant .stats .header .details > div,
+.scanex-forestry-quadrant .stats .body > .row > div {
+    float: left;    
+}
+.scanex-forestry-quadrant .stats .header .species {
+    height: calc(2 * var(--cell-height));
+    padding-top: 30px;
+}
+.scanex-forestry-quadrant .stats .header .stock {
+    padding-top: 8px;
+}
+.scanex-forestry-quadrant .stats .header .details > div {
+    padding-top: 10px;
+}
+.scanex-forestry-quadrant .stats .header .species,
+.scanex-forestry-quadrant .stats .header .stock,
+.scanex-forestry-quadrant .stats .header .details > div {
+    background-color: #F1F1F2;
+}
+.scanex-forestry-quadrant .stats .header .species,
+.scanex-forestry-quadrant .stats .header .details > div,
+.scanex-forestry-quadrant .stats .header .stock,
+.scanex-forestry-quadrant .stats .body .label,
+.scanex-forestry-quadrant .stats .body .value {
+    border-bottom: 1px solid #DFDFE0;
+}
+/* .scanex-forestry-quadrant .stats .body .row:last-child .label,
+.scanex-forestry-quadrant .stats .body .row:last-child .value {
+    border-bottom: none;
+} */
+.scanex-forestry-quadrant .stats .header .details > div,
+.scanex-forestry-quadrant .stats .header .stock,
+.scanex-forestry-quadrant .stats .body .value {
+    border-left: 1px solid #DFDFE0;    
+}
+.scanex-forestry-quadrant .stats .body .label {    
+    padding-left: 50px;
+    width: calc(var(--label-width));
+}
+.scanex-forestry-quadrant .stats .header .details > div {
+    width: calc(2 * var(--cell-width));
+}
+.scanex-forestry-quadrant .stats .header .stock,
+.scanex-forestry-quadrant .stats .header .details > div {
+    height: var(--cell-height);    
+}
+.scanex-forestry-quadrant .stats .header div,
+.scanex-forestry-quadrant .stats .body .value {
+    text-align: center;
+}
+.scanex-forestry-quadrant .stats .body,
+.scanex-forestry-quadrant .stats .body .row {
+    clear: both;
+}
+.scanex-forestry-quadrant .stats .header .species {
+    width: var(--label-width);
+}
+.scanex-forestry-quadrant .stats .body .value {
+    width: var(--cell-width);
+    text-align: right;
+    padding-right: 20px;
+}
+.scanex-forestry-quadrant .stats .body .label,
+.scanex-forestry-quadrant .stats .body .value {
+    height: var(--cell-height);
+    padding-top: 14px;
+    font-family: 'Open Sans';
+    font-style: normal;
+    font-weight: normal;
+    font-size: 12px;
+    line-height: 14px;
+}
+.scanex-forestry-quadrant .stats .body .row.total .label,
+.scanex-forestry-quadrant .stats .body .row.total .value {
+    font-weight: bold;
+}
+.scanex-forestry-quadrant .scanex-quadrant-icon {
+    background-repeat: no-repeat;
+    background-position: center;
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    display: inline-block;
+    vertical-align: middle;
+}
+.scanex-forestry-quadrant .footer {
+    margin-top: 15px;
+    float: left;
 }
 
-.leaflet-drawing-bbox.Move {
-	cursor: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACDSURBVEhL5ZFBCoAwDATzc/25GuhCDpu01A0IDuxFZYZW+x3HWAsuvsbkkSiXR5gck58E4jZkgezoVWD5unDnjCrgz6cRyHcDvjQS5W9HI+cz9vHO3EWJEcbKu1QOEGHMAlM5yD6sAsvyiiogoSWAf8ImuRaHRWRyECNyOXBxm/yLmN2K8muV4HlslQAAAABJRU5ErkJggg=='), pointer;
-}
-.leaflet-drawing-bbox.Rotate {
-	cursor: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAFRSURBVEhLtZRJTsNAEEXNeB/uwIYdgwBxCCSmPbBHCCJxBQRHYhIgTgEs4D2TklpJh9hO+0tPsdvVVWm76lctdTr87U0/ULTIMuzBPbyABUaLGNNJm/ABkTTlDEJvsPV32UwLMIBI9gAHsDK8P4dUEXcFcy5M0w244Qv2YRFC6T8PHYKxUeRfbYOBn7DqQkMZ+w3u3XAhJz/WOxh05EJLeRL3+k2WXCgtX+UjWGTXhT50DBa4q+9GZG/POkTRaU/1XSIT+0C6FrHDIkdQd12aPChRZKyln8EHHnMWmXgsudJvLGC79SJNzQK2Wjq9xeSgOSRdT3EC7jXHRIfVQQ1y7NtYxRpoL+6daBWhazBQA8udJO0wX6VOGz50AVM1D7qiGyRVtKGd5tSGNcglNLLrkEf1fYZy8yKvsA6dlH6sdIi0glvYgaLOGUV6VXZK86qqX08Va+VOfxC5AAAAAElFTkSuQmCC'), pointer;
-}
 
-/* static Tooltips */
-.leaflet-tooltip.staticTooltip  {
-	pointer-events: auto;
+.scanex-forestry-quadrant .stats {
+    min-width: 730px;
 }
-.leaflet-tooltip.staticTooltip  .content {
-	display: flex;
-	cursor: text;
-}
-.leaflet-tooltip.staticTooltip .closeBtn {
-    position: relative;
-    right: -6px;
-    top: -11px;
-	cursor: pointer;
-}
-
-.leaflet-contextmenu a.leaflet-contextmenu-item.over {
-    background-color: lightgray;
-	cursor: pointer;
-}
-.leaflet-contextmenu a.leaflet-contextmenu-item.over.leaflet-contextmenu-item-disabled {
-	cursor: default;
-}
-
 .scanex-forestry-declaration .scrollable {
     max-height: 240px;
 }
@@ -2323,156 +2383,6 @@ hr {
 .scanex-forestry-content .view .scanex-forestry-incident {
     margin-right: 17px;
 }
-.scanex-forestry-content .view[data-id=stands] {
-    height: 470px;
-}
-.scanex-forestry-stand .content {
-    max-height: 375px;
-}
-.scanex-forestry-stand .header2 {
-    white-space: normal;
-}
-.scanex-forestry-stand .stats > .info > div > *,
-.scanex-forestry-stand .stats > .advance > div > *,
-.scanex-forestry-stand .levels > .storey > div > * {
-    display: inline-block;
-    vertical-align: middle;
-}
-.scanex-forestry-stand .stats > * {
-    display: inline-block;
-    vertical-align: top;
-}
-.scanex-forestry-stand .stats {
-    margin-bottom: 40px;
-}
-.scanex-forestry-stand .stats > .advance {
-    margin-left: 30px;
-    width: 315px;
-}
-.scanex-forestry-stand .stats > .advance .header {
-    font-family: Open Sans;
-    font-style: normal;
-    font-weight: bold;
-    font-size: 12px;
-    line-height: 16px;
-    color: #453D3D;
-    margin-bottom: 10px;
-}
-.scanex-forestry-stand .stats > .advance .label {
-    width: 180px;
-}
-.scanex-forestry-stand .levels,
-.scanex-forestry-stand .levels > .storey .header {
-    border-top: 1px solid rgba(0,0,0, 0.1);
-}
-.scanex-forestry-stand .levels > .storey {
-    margin-top: 12px;
-}
-.scanex-forestry-stand .levels > .storey:first-child {
-    margin-top: 10px;
-}
-.scanex-forestry-stand .levels > .storey table,
-.scanex-forestry-stand .levels > .storey table td:first-child {
-    width: 100%;
-}
-.scanex-forestry-stand .levels > .storey table th,
-.scanex-forestry-stand .levels > .storey table td {
-    white-space: nowrap;
-    text-align: center;
-    font-family: Open Sans;
-    font-style: normal;    
-    padding: 10px;
-}
-.scanex-forestry-stand .levels > .storey table th {        
-    font-weight: 600;
-    font-size: 14px;
-    line-height: 20px;        
-    background-color: #E5E5E6;
-    color: #6B707B;
-}
-.scanex-forestry-stand .levels > .storey table td {    
-    font-weight: normal;
-    font-size: 12px;
-    line-height: 14px;
-}
-.scanex-forestry-stand .levels > .storey table tr:last-child td {
-    font-weight: 600;
-}
-.scanex-forestry-stand .levels > .storey table th:first-child,
-.scanex-forestry-stand .levels > .storey table td:first-child {
-    text-align: left;
-    padding-left: 30px;
-}
-.scanex-forestry-stand .levels > .storey table th:last-child,
-.scanex-forestry-stand .levels > .storey table td:last-child {
-    text-align: right;
-    padding-right: 30px;
-}
-.scanex-forestry-stand .levels > .storey .species.hidden {
-    display: none;
-}
-.scanex-forestry-stand .content .label,
-.scanex-forestry-stand .content .value {        
-    font-style: normal;    
-    font-size: 13px;
-    font-family: 'Open Sans', 'Arial';    
-}
-.scanex-forestry-stand .content .label {
-    width: 300px;
-    white-space: nowrap;
-    text-align: left;    
-    font-weight: 600;    
-    line-height: 18px;
-    color: #6B707B;
-    padding-right: 10px;    
-}
-.scanex-forestry-stand .content .value {
-    text-align: right;    
-    font-weight: normal;    
-    line-height: 24px;
-    color: #000000;
-}
-.scanex-forestry-stand .scanex-stand-icon {
-    background-repeat: no-repeat;
-    background-position: center;
-    cursor: pointer;
-    width: 30px;
-    height: 30px;
-    display: inline-block;
-    vertical-align: middle;
-}
-.scanex-forestry-stand .stand-doc {
-    font-family: 'Open Sans', 'Arial';
-    font-style: normal;
-    font-weight: 600;
-    font-size: 16px;
-    line-height: 24px;
-    color: #067A57;
-    border: none;
-    background-color: transparent;
-    vertical-align: middle;    
-    margin-top: 20px;
-}
-.scanex-forestry-stand .stand-doc > * {
-    cursor: pointer;
-}
-.scanex-forestry-stand .levels > .storey .header {
-    padding: 5px 0px 5px 0px;
-    margin-top: 10px;    
-}
-.scanex-forestry-stand .levels > .storey .header label {
-    font-family: Open Sans;
-    font-style: normal;
-    font-weight: 600;
-    font-size: 12px;
-    line-height: 16px;
-    color: #453D3D;
-    cursor: pointer;
-}
-
-.container.scanex-forestry-stand {
-    min-width: 914px;
-}
 .scanex-forestry-uploaded {
     width: 100%;
 }
@@ -2723,6 +2633,209 @@ hr {
     position: relative;
 }
 
+.scanex-forestry-view-plot .content > * {
+    float: left;
+}
+.scanex-forestry-view-plot .chart {    
+    width: 450px;
+}
+.scanex-forestry-view-plot .separator {
+    font-size: 13px;
+    font-weight: bold;
+    padding: 10px 0px 10px 0px;
+}
+.scanex-forestry-view-plot .stats {
+    max-height: 195px;
+}
+
+.scanex-forestry-view-plot .scanex-view-plot-icon {
+    background-repeat: no-repeat;
+    background-position: center;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.scanex-forestry-view-plot .open-doc {
+    font-family: 'Open Sans', 'Arial';
+    font-style: normal;
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 24px;
+    color: #067A57;
+    border: none;
+    background-color: transparent;
+    vertical-align: middle;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+
+.scanex-forestry-view-plot tr.volumes td.text {
+    border-right: 1px solid rgba(0,0,0,0.1);
+    border-left: 1px solid rgba(0,0,0,0.1);
+    padding: 0 15px;
+}
+
+.scanex-forestry-view-plot tr.volumes td.value {
+    text-align: left;
+    padding: 0 15px;
+    color: #6B707B;
+    border-right: 1px solid rgba(0,0,0,0.1);
+}
+
+.scanex-forestry-content .view[data-id=stands] {
+    height: 470px;
+}
+.scanex-forestry-stand .content {
+    max-height: 375px;
+}
+.scanex-forestry-stand .header2 {
+    white-space: normal;
+}
+.scanex-forestry-stand .stats > .info > div > *,
+.scanex-forestry-stand .stats > .advance > div > *,
+.scanex-forestry-stand .levels > .storey > div > * {
+    display: inline-block;
+    vertical-align: middle;
+}
+.scanex-forestry-stand .stats > * {
+    display: inline-block;
+    vertical-align: top;
+}
+.scanex-forestry-stand .stats {
+    margin-bottom: 40px;
+}
+.scanex-forestry-stand .stats > .advance {
+    margin-left: 30px;
+    width: 315px;
+}
+.scanex-forestry-stand .stats > .advance .header {
+    font-family: Open Sans;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 12px;
+    line-height: 16px;
+    color: #453D3D;
+    margin-bottom: 10px;
+}
+.scanex-forestry-stand .stats > .advance .label {
+    width: 180px;
+}
+.scanex-forestry-stand .levels,
+.scanex-forestry-stand .levels > .storey .header {
+    border-top: 1px solid rgba(0,0,0, 0.1);
+}
+.scanex-forestry-stand .levels > .storey {
+    margin-top: 12px;
+}
+.scanex-forestry-stand .levels > .storey:first-child {
+    margin-top: 10px;
+}
+.scanex-forestry-stand .levels > .storey table,
+.scanex-forestry-stand .levels > .storey table td:first-child {
+    width: 100%;
+}
+.scanex-forestry-stand .levels > .storey table th,
+.scanex-forestry-stand .levels > .storey table td {
+    white-space: nowrap;
+    text-align: center;
+    font-family: Open Sans;
+    font-style: normal;    
+    padding: 10px;
+}
+.scanex-forestry-stand .levels > .storey table th {        
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 20px;        
+    background-color: #E5E5E6;
+    color: #6B707B;
+}
+.scanex-forestry-stand .levels > .storey table td {    
+    font-weight: normal;
+    font-size: 12px;
+    line-height: 14px;
+}
+.scanex-forestry-stand .levels > .storey table tr:last-child td {
+    font-weight: 600;
+}
+.scanex-forestry-stand .levels > .storey table th:first-child,
+.scanex-forestry-stand .levels > .storey table td:first-child {
+    text-align: left;
+    padding-left: 30px;
+}
+.scanex-forestry-stand .levels > .storey table th:last-child,
+.scanex-forestry-stand .levels > .storey table td:last-child {
+    text-align: right;
+    padding-right: 30px;
+}
+.scanex-forestry-stand .levels > .storey .species.hidden {
+    display: none;
+}
+.scanex-forestry-stand .content .label,
+.scanex-forestry-stand .content .value {        
+    font-style: normal;    
+    font-size: 13px;
+    font-family: 'Open Sans', 'Arial';    
+}
+.scanex-forestry-stand .content .label {
+    width: 300px;
+    white-space: nowrap;
+    text-align: left;    
+    font-weight: 600;    
+    line-height: 18px;
+    color: #6B707B;
+    padding-right: 10px;    
+}
+.scanex-forestry-stand .content .value {
+    text-align: right;    
+    font-weight: normal;    
+    line-height: 24px;
+    color: #000000;
+}
+.scanex-forestry-stand .scanex-stand-icon {
+    background-repeat: no-repeat;
+    background-position: center;
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    display: inline-block;
+    vertical-align: middle;
+}
+.scanex-forestry-stand .stand-doc {
+    font-family: 'Open Sans', 'Arial';
+    font-style: normal;
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 24px;
+    color: #067A57;
+    border: none;
+    background-color: transparent;
+    vertical-align: middle;    
+    margin-top: 20px;
+}
+.scanex-forestry-stand .stand-doc > * {
+    cursor: pointer;
+}
+.scanex-forestry-stand .levels > .storey .header {
+    padding: 5px 0px 5px 0px;
+    margin-top: 10px;    
+}
+.scanex-forestry-stand .levels > .storey .header label {
+    font-family: Open Sans;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 12px;
+    line-height: 16px;
+    color: #453D3D;
+    cursor: pointer;
+}
+
+.container.scanex-forestry-stand {
+    min-width: 914px;
+}
 .scanex-forestry-content [data-id=reports].component {
     height: 100vh;
     max-height: 360px;
@@ -3298,124 +3411,6 @@ hr {
 .scanex-forestry-baselayers-view .scanex-baselayers .content .baselayer.user-baselayer.current {
     border: 1px solid transparent;
 }
-.scanex-baselayers {
-    clear: left;
-}
-
-.scanex-baselayers > * {
-    float: left;
-}
-.scanex-baselayers .content {
-    background: #FFFFFF;
-    border: 1px solid #E0E0E0;
-    box-sizing: border-box;
-    border-radius: 12px;
-    padding: 5px;
-}
-
-.scanex-baselayers .hidden {
-    display: none;
-}
-
-.scanex-baselayers .scanex-baselayers-icon {
-    background-repeat: no-repeat;
-    background-position: center;
-    cursor: pointer;
-    width: 16px;
-    height: 16px;
-    display: inline-block;
-    vertical-align: middle;
-}
-
-.scanex-baselayers > .scanex-baselayers-icon {
-    padding: 12px;
-    margin-left: 10px;
-    border-radius: 10px;
-    background-color: #FFFFFF;
-    box-sizing: content-box;
-}
-
-.scanex-baselayers .content > * {    
-    float: left;
-    position: relative;      
-    margin: 5px;
-    border-radius: 12px;    
-    border: 3px solid transparent;
-}
-
-.scanex-baselayers .content .baselayer-content {
-    position: relative;    
-    border-radius: 9px;
-    width: 60px;
-    height: 60px;
-}
-
-.scanex-baselayers .content .baselayer-content {
-    border: 1px solid #C4C4C4;
-}
-.scanex-baselayers .content .baselayer.current .baselayer-content {
-    border: 1px solid transparent;
-}
-.scanex-baselayers .content .baselayer .baselayer-content > * {
-    display: block;
-}
-.scanex-baselayers .content .baselayer,
-.scanex-baselayers .content .baselayer-add {    
-    width: 62px;
-    height: 62px;    
-}
-.scanex-baselayers .content .baselayer .scanex-baselayers-icon {
-    position: absolute;
-    top: 2px;
-    right: 2px;
-    z-index: 1;
-}
-
-.scanex-baselayers .baselayer-add .scanex-baselayers-icon.add {
-    width: 24px;
-    height: 24px;
-    position: relative;
-    top: 16px;
-    left: 16px;
-}
-
-.scanex-baselayers .content .baselayer-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 9px;
-    cursor: pointer;
-}
-
-.scanex-baselayers .content .baselayer .user-baselayer-icon {
-    width: 22px;
-    height: 22px;
-    position: absolute;
-    top: 14px;
-    left: 19px;
-    border: none;
-}
-
-.scanex-baselayers .content .baselayer-title {
-    position: absolute;
-    bottom: 0;
-    z-index: 1;
-    width: 60px;
-    text-align: center;
-    background-color: #1F1F1F;
-    opacity: 0.8;
-    color: #FFFFFF;
-    border-bottom-right-radius: 9px;
-    border-bottom-left-radius: 9px;
-    pointer-events: none;    
-    overflow: hidden;    
-    text-overflow: ellipsis;
-    font-size: 11px;
-}
-
-.scanex-baselayers .content > .baselayer.current {
-    border: 3px solid #007F60;
-	box-sizing: unset;
-}
 .scanex-forestry-project .species {
     width: 715px;
     position: relative;
@@ -3707,6 +3702,124 @@ hr {
     position: relative;
     bottom: 15px;
 }
+.scanex-baselayers {
+    clear: left;
+}
+
+.scanex-baselayers > * {
+    float: left;
+}
+.scanex-baselayers .content {
+    background: #FFFFFF;
+    border: 1px solid #E0E0E0;
+    box-sizing: border-box;
+    border-radius: 12px;
+    padding: 5px;
+}
+
+.scanex-baselayers .hidden {
+    display: none;
+}
+
+.scanex-baselayers .scanex-baselayers-icon {
+    background-repeat: no-repeat;
+    background-position: center;
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.scanex-baselayers > .scanex-baselayers-icon {
+    padding: 12px;
+    margin-left: 10px;
+    border-radius: 10px;
+    background-color: #FFFFFF;
+    box-sizing: content-box;
+}
+
+.scanex-baselayers .content > * {    
+    float: left;
+    position: relative;      
+    margin: 5px;
+    border-radius: 12px;    
+    border: 3px solid transparent;
+}
+
+.scanex-baselayers .content .baselayer-content {
+    position: relative;    
+    border-radius: 9px;
+    width: 60px;
+    height: 60px;
+}
+
+.scanex-baselayers .content .baselayer-content {
+    border: 1px solid #C4C4C4;
+}
+.scanex-baselayers .content .baselayer.current .baselayer-content {
+    border: 1px solid transparent;
+}
+.scanex-baselayers .content .baselayer .baselayer-content > * {
+    display: block;
+}
+.scanex-baselayers .content .baselayer,
+.scanex-baselayers .content .baselayer-add {    
+    width: 62px;
+    height: 62px;    
+}
+.scanex-baselayers .content .baselayer .scanex-baselayers-icon {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    z-index: 1;
+}
+
+.scanex-baselayers .baselayer-add .scanex-baselayers-icon.add {
+    width: 24px;
+    height: 24px;
+    position: relative;
+    top: 16px;
+    left: 16px;
+}
+
+.scanex-baselayers .content .baselayer-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 9px;
+    cursor: pointer;
+}
+
+.scanex-baselayers .content .baselayer .user-baselayer-icon {
+    width: 22px;
+    height: 22px;
+    position: absolute;
+    top: 14px;
+    left: 19px;
+    border: none;
+}
+
+.scanex-baselayers .content .baselayer-title {
+    position: absolute;
+    bottom: 0;
+    z-index: 1;
+    width: 60px;
+    text-align: center;
+    background-color: #1F1F1F;
+    opacity: 0.8;
+    color: #FFFFFF;
+    border-bottom-right-radius: 9px;
+    border-bottom-left-radius: 9px;
+    pointer-events: none;    
+    overflow: hidden;    
+    text-overflow: ellipsis;
+    font-size: 11px;
+}
+
+.scanex-baselayers .content > .baselayer.current {
+    border: 3px solid #007F60;
+	box-sizing: unset;
+}
 .scanex-forestry-project .quadrants>.scrollable {
     overflow-y: auto;
     max-height: 185px;
@@ -3768,238 +3881,6 @@ hr {
     position: relative;
     top: 15px;
 }
-@charset "UTF-8";
-
-/*!
- * Pikaday
- * Copyright © 2014 David Bushell | BSD & MIT license | https://dbushell.com/
- */
-
-.pika-single {
-    z-index: 9999;
-    display: block;
-    position: relative;
-    color: #333;
-    background: #fff;
-    border: 1px solid #ccc;
-    border-bottom-color: #bbb;
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-}
-
-/*
-clear child float (pika-lendar), using the famous micro clearfix hack
-http://nicolasgallagher.com/micro-clearfix-hack/
-*/
-.pika-single:before,
-.pika-single:after {
-    content: " ";
-    display: table;
-}
-.pika-single:after { clear: both }
-
-.pika-single.is-hidden {
-    display: none;
-}
-
-.pika-single.is-bound {
-    position: absolute;
-    box-shadow: 0 5px 15px -5px rgba(0,0,0,.5);
-}
-
-.pika-lendar {
-    float: left;
-    width: 240px;
-    margin: 8px;
-}
-
-.pika-title {
-    position: relative;
-    text-align: center;
-}
-
-.pika-label {
-    display: inline-block;
-    position: relative;
-    z-index: 9999;
-    overflow: hidden;
-    margin: 0;
-    padding: 5px 3px;
-    font-size: 14px;
-    line-height: 20px;
-    font-weight: bold;
-    background-color: #fff;
-}
-.pika-title select {
-    cursor: pointer;
-    position: absolute;
-    z-index: 9998;
-    margin: 0;
-    left: 0;
-    top: 5px;
-    opacity: 0;
-}
-
-.pika-prev,
-.pika-next {
-    display: block;
-    cursor: pointer;
-    position: relative;
-    outline: none;
-    border: 0;
-    padding: 0;
-    width: 20px;
-    height: 30px;
-    /* hide text using text-indent trick, using width value (it's enough) */
-    text-indent: 20px;
-    white-space: nowrap;
-    overflow: hidden;
-    background-color: transparent;
-    background-position: center center;
-    background-repeat: no-repeat;
-    background-size: 75% 75%;
-    opacity: .5;
-}
-
-.pika-prev:hover,
-.pika-next:hover {
-    opacity: 1;
-}
-
-.pika-prev,
-.is-rtl .pika-next {
-    float: left;
-    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAeCAYAAAAsEj5rAAAAUklEQVR42u3VMQoAIBADQf8Pgj+OD9hG2CtONJB2ymQkKe0HbwAP0xucDiQWARITIDEBEnMgMQ8S8+AqBIl6kKgHiXqQqAeJepBo/z38J/U0uAHlaBkBl9I4GwAAAABJRU5ErkJggg==');
-}
-
-.pika-next,
-.is-rtl .pika-prev {
-    float: right;
-    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAeCAYAAAAsEj5rAAAAU0lEQVR42u3VOwoAMAgE0dwfAnNjU26bYkBCFGwfiL9VVWoO+BJ4Gf3gtsEKKoFBNTCoCAYVwaAiGNQGMUHMkjGbgjk2mIONuXo0nC8XnCf1JXgArVIZAQh5TKYAAAAASUVORK5CYII=');
-}
-
-.pika-prev.is-disabled,
-.pika-next.is-disabled {
-    cursor: default;
-    opacity: .2;
-}
-
-.pika-select {
-    display: inline-block;
-}
-
-.pika-table {
-    width: 100%;
-    border-collapse: collapse;
-    border-spacing: 0;
-    border: 0;
-}
-
-.pika-table th,
-.pika-table td {
-    width: 14.285714285714286%;
-    padding: 0;
-}
-
-.pika-table th {
-    color: #999;
-    font-size: 12px;
-    line-height: 25px;
-    font-weight: bold;
-    text-align: center;
-}
-
-.pika-button {
-    cursor: pointer;
-    display: block;
-    box-sizing: border-box;
-    -moz-box-sizing: border-box;
-    outline: none;
-    border: 0;
-    margin: 0;
-    width: 100%;
-    padding: 5px;
-    color: #666;
-    font-size: 12px;
-    line-height: 15px;
-    text-align: right;
-    background: #f5f5f5;
-    height: initial;
-}
-
-.pika-week {
-    font-size: 11px;
-    color: #999;
-}
-
-.is-today .pika-button {
-    color: #33aaff;
-    font-weight: bold;
-}
-
-.is-selected .pika-button,
-.has-event .pika-button {
-    color: #fff;
-    font-weight: bold;
-    background: #33aaff;
-    box-shadow: inset 0 1px 3px #178fe5;
-    border-radius: 3px;
-}
-
-.has-event .pika-button {
-    background: #005da9;
-    box-shadow: inset 0 1px 3px #0076c9;
-}
-
-.is-disabled .pika-button,
-.is-inrange .pika-button {
-    background: #D5E9F7;
-}
-
-.is-startrange .pika-button {
-    color: #fff;
-    background: #6CB31D;
-    box-shadow: none;
-    border-radius: 3px;
-}
-
-.is-endrange .pika-button {
-    color: #fff;
-    background: #33aaff;
-    box-shadow: none;
-    border-radius: 3px;
-}
-
-.is-disabled .pika-button {
-    pointer-events: none;
-    cursor: default;
-    color: #999;
-    opacity: .3;
-}
-
-.is-outside-current-month .pika-button {
-    color: #999;
-    opacity: .3;
-}
-
-.is-selection-disabled {
-    pointer-events: none;
-    cursor: default;
-}
-
-.pika-button:hover,
-.pika-row.pick-whole-week:hover .pika-button {
-    color: #fff;
-    background: #ff8000;
-    box-shadow: none;
-    border-radius: 3px;
-}
-
-/* styling for abbr */
-.pika-table abbr {
-    border-bottom: none;
-    cursor: help;
-}
-
 .scanex-forestry-view-project table {
     table-layout: fixed;
     border-collapse: collapse;
@@ -4804,13 +4685,238 @@ http://nicolasgallagher.com/micro-clearfix-hack/
     text-indent: 1px;
     text-overflow: '';
 }
-.scanex-component-icon.close {background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='64 64 896 896' focusable='false' class='' data-icon='close' width='1em' height='1em' fill='currentColor' aria-hidden='true'%3e%3cpath d='M563.8 512l262.5-312.9c4.4-5.2.7-13.1-6.1-13.1h-79.8c-4.7 0-9.2 2.1-12.3 5.7L511.6 449.8 295.1 191.7c-3-3.6-7.5-5.7-12.3-5.7H203c-6.8 0-10.5 7.9-6.1 13.1L459.4 512 196.9 824.9A7.95 7.95 0 00203 838h79.8c4.7 0 9.2-2.1 12.3-5.7l216.5-258.1 216.5 258.1c3 3.6 7.5 5.7 12.3 5.7h79.8c6.8 0 10.5-7.9 6.1-13.1L563.8 512z'%3e%3c/path%3e%3c/svg%3e");}
-.scanex-component-icon.down {background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='64 64 896 896' focusable='false' class='' data-icon='down' width='1em' height='1em' fill='currentColor' aria-hidden='true'%3e %3cpath d='M884 256h-75c-5.1 0-9.9 2.5-12.9 6.6L512 654.2 227.9 262.6c-3-4.1-7.8-6.6-12.9-6.6h-75c-6.5 0-10.3 7.4-6.5 12.7l352.6 486.1c12.8 17.6 39 17.6 51.7 0l352.6-486.1c3.9-5.3.1-12.7-6.4-12.7z'%3e%3c/path%3e %3c/svg%3e");}
-.scanex-component-icon.maximize {background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='64 64 896 896' focusable='false' class='' data-icon='border' width='1em' height='1em' fill='currentColor' aria-hidden='true'%3e%3cpath d='M880 112H144c-17.7 0-32 14.3-32 32v736c0 17.7 14.3 32 32 32h736c17.7 0 32-14.3 32-32V144c0-17.7-14.3-32-32-32zm-40 728H184V184h656v656z'%3e%3c/path%3e%3c/svg%3e");}
-.scanex-component-icon.minimize {background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='64 64 896 896' focusable='false' class='' data-icon='minus' width='1em' height='1em' fill='currentColor' aria-hidden='true'%3e%3cpath d='M872 474H152c-4.4 0-8 3.6-8 8v60c0 4.4 3.6 8 8 8h720c4.4 0 8-3.6 8-8v-60c0-4.4-3.6-8-8-8z'%3e%3c/path%3e%3c/svg%3e");}
-.scanex-component-icon.spinner-down {background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='64 64 896 896' focusable='false' class='' data-icon='down' width='1em' height='1em' fill='currentColor' aria-hidden='true'%3e %3cpath d='M884 256h-75c-5.1 0-9.9 2.5-12.9 6.6L512 654.2 227.9 262.6c-3-4.1-7.8-6.6-12.9-6.6h-75c-6.5 0-10.3 7.4-6.5 12.7l352.6 486.1c12.8 17.6 39 17.6 51.7 0l352.6-486.1c3.9-5.3.1-12.7-6.4-12.7z'%3e%3c/path%3e %3c/svg%3e");}
-.scanex-component-icon.spinner-up {background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='64 64 896 896' focusable='false' class='' data-icon='up' width='1em' height='1em' fill='currentColor' aria-hidden='true'%3e %3cpath d='M890.5 755.3L537.9 269.2c-12.8-17.6-39-17.6-51.7 0L133.5 755.3A8 8 0 00140 768h75c5.1 0 9.9-2.5 12.9-6.6L512 369.8l284.1 391.6c3 4.1 7.8 6.6 12.9 6.6h75c6.5 0 10.3-7.4 6.5-12.7z'%3e%3c/path%3e %3c/svg%3e");}
-.scanex-component-icon.up {background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='64 64 896 896' focusable='false' class='' data-icon='up' width='1em' height='1em' fill='currentColor' aria-hidden='true'%3e %3cpath d='M890.5 755.3L537.9 269.2c-12.8-17.6-39-17.6-51.7 0L133.5 755.3A8 8 0 00140 768h75c5.1 0 9.9-2.5 12.9-6.6L512 369.8l284.1 391.6c3 4.1 7.8 6.6 12.9 6.6h75c6.5 0 10.3-7.4 6.5-12.7z'%3e%3c/path%3e %3c/svg%3e");}
+@charset "UTF-8";
+
+/*!
+ * Pikaday
+ * Copyright © 2014 David Bushell | BSD & MIT license | https://dbushell.com/
+ */
+
+.pika-single {
+    z-index: 9999;
+    display: block;
+    position: relative;
+    color: #333;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-bottom-color: #bbb;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+/*
+clear child float (pika-lendar), using the famous micro clearfix hack
+http://nicolasgallagher.com/micro-clearfix-hack/
+*/
+.pika-single:before,
+.pika-single:after {
+    content: " ";
+    display: table;
+}
+.pika-single:after { clear: both }
+
+.pika-single.is-hidden {
+    display: none;
+}
+
+.pika-single.is-bound {
+    position: absolute;
+    box-shadow: 0 5px 15px -5px rgba(0,0,0,.5);
+}
+
+.pika-lendar {
+    float: left;
+    width: 240px;
+    margin: 8px;
+}
+
+.pika-title {
+    position: relative;
+    text-align: center;
+}
+
+.pika-label {
+    display: inline-block;
+    position: relative;
+    z-index: 9999;
+    overflow: hidden;
+    margin: 0;
+    padding: 5px 3px;
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: bold;
+    background-color: #fff;
+}
+.pika-title select {
+    cursor: pointer;
+    position: absolute;
+    z-index: 9998;
+    margin: 0;
+    left: 0;
+    top: 5px;
+    opacity: 0;
+}
+
+.pika-prev,
+.pika-next {
+    display: block;
+    cursor: pointer;
+    position: relative;
+    outline: none;
+    border: 0;
+    padding: 0;
+    width: 20px;
+    height: 30px;
+    /* hide text using text-indent trick, using width value (it's enough) */
+    text-indent: 20px;
+    white-space: nowrap;
+    overflow: hidden;
+    background-color: transparent;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: 75% 75%;
+    opacity: .5;
+}
+
+.pika-prev:hover,
+.pika-next:hover {
+    opacity: 1;
+}
+
+.pika-prev,
+.is-rtl .pika-next {
+    float: left;
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAeCAYAAAAsEj5rAAAAUklEQVR42u3VMQoAIBADQf8Pgj+OD9hG2CtONJB2ymQkKe0HbwAP0xucDiQWARITIDEBEnMgMQ8S8+AqBIl6kKgHiXqQqAeJepBo/z38J/U0uAHlaBkBl9I4GwAAAABJRU5ErkJggg==');
+}
+
+.pika-next,
+.is-rtl .pika-prev {
+    float: right;
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAeCAYAAAAsEj5rAAAAU0lEQVR42u3VOwoAMAgE0dwfAnNjU26bYkBCFGwfiL9VVWoO+BJ4Gf3gtsEKKoFBNTCoCAYVwaAiGNQGMUHMkjGbgjk2mIONuXo0nC8XnCf1JXgArVIZAQh5TKYAAAAASUVORK5CYII=');
+}
+
+.pika-prev.is-disabled,
+.pika-next.is-disabled {
+    cursor: default;
+    opacity: .2;
+}
+
+.pika-select {
+    display: inline-block;
+}
+
+.pika-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+    border: 0;
+}
+
+.pika-table th,
+.pika-table td {
+    width: 14.285714285714286%;
+    padding: 0;
+}
+
+.pika-table th {
+    color: #999;
+    font-size: 12px;
+    line-height: 25px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.pika-button {
+    cursor: pointer;
+    display: block;
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    outline: none;
+    border: 0;
+    margin: 0;
+    width: 100%;
+    padding: 5px;
+    color: #666;
+    font-size: 12px;
+    line-height: 15px;
+    text-align: right;
+    background: #f5f5f5;
+    height: initial;
+}
+
+.pika-week {
+    font-size: 11px;
+    color: #999;
+}
+
+.is-today .pika-button {
+    color: #33aaff;
+    font-weight: bold;
+}
+
+.is-selected .pika-button,
+.has-event .pika-button {
+    color: #fff;
+    font-weight: bold;
+    background: #33aaff;
+    box-shadow: inset 0 1px 3px #178fe5;
+    border-radius: 3px;
+}
+
+.has-event .pika-button {
+    background: #005da9;
+    box-shadow: inset 0 1px 3px #0076c9;
+}
+
+.is-disabled .pika-button,
+.is-inrange .pika-button {
+    background: #D5E9F7;
+}
+
+.is-startrange .pika-button {
+    color: #fff;
+    background: #6CB31D;
+    box-shadow: none;
+    border-radius: 3px;
+}
+
+.is-endrange .pika-button {
+    color: #fff;
+    background: #33aaff;
+    box-shadow: none;
+    border-radius: 3px;
+}
+
+.is-disabled .pika-button {
+    pointer-events: none;
+    cursor: default;
+    color: #999;
+    opacity: .3;
+}
+
+.is-outside-current-month .pika-button {
+    color: #999;
+    opacity: .3;
+}
+
+.is-selection-disabled {
+    pointer-events: none;
+    cursor: default;
+}
+
+.pika-button:hover,
+.pika-row.pick-whole-week:hover .pika-button {
+    color: #fff;
+    background: #ff8000;
+    box-shadow: none;
+    border-radius: 3px;
+}
+
+/* styling for abbr */
+.pika-table abbr {
+    border-bottom: none;
+    cursor: help;
+}
+
 div.timeline-frame {
     -moz-box-sizing: border-box;
     border: 1px solid #bebebe;
@@ -5023,6 +5129,15 @@ div.timeline-navigation-move-right {
     background: url('images/moveright.png') no-repeat center;
 }
 
+.scanex-component-icon.close {background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='64 64 896 896' focusable='false' class='' data-icon='close' width='1em' height='1em' fill='currentColor' aria-hidden='true'%3e%3cpath d='M563.8 512l262.5-312.9c4.4-5.2.7-13.1-6.1-13.1h-79.8c-4.7 0-9.2 2.1-12.3 5.7L511.6 449.8 295.1 191.7c-3-3.6-7.5-5.7-12.3-5.7H203c-6.8 0-10.5 7.9-6.1 13.1L459.4 512 196.9 824.9A7.95 7.95 0 00203 838h79.8c4.7 0 9.2-2.1 12.3-5.7l216.5-258.1 216.5 258.1c3 3.6 7.5 5.7 12.3 5.7h79.8c6.8 0 10.5-7.9 6.1-13.1L563.8 512z'%3e%3c/path%3e%3c/svg%3e");}
+.scanex-component-icon.controls {background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='64 64 896 896' focusable='false' data-icon='appstore' width='1em' height='1em' fill='currentColor' aria-hidden='true'%3e%3cpath d='M464 144H160c-8.8 0-16 7.2-16 16v304c0 8.8 7.2 16 16 16h304c8.8 0 16-7.2 16-16V160c0-8.8-7.2-16-16-16zm-52 268H212V212h200v200zm452-268H560c-8.8 0-16 7.2-16 16v304c0 8.8 7.2 16 16 16h304c8.8 0 16-7.2 16-16V160c0-8.8-7.2-16-16-16zm-52 268H612V212h200v200zM464 544H160c-8.8 0-16 7.2-16 16v304c0 8.8 7.2 16 16 16h304c8.8 0 16-7.2 16-16V560c0-8.8-7.2-16-16-16zm-52 268H212V612h200v200zm452-268H560c-8.8 0-16 7.2-16 16v304c0 8.8 7.2 16 16 16h304c8.8 0 16-7.2 16-16V560c0-8.8-7.2-16-16-16zm-52 268H612V612h200v200z'%3e%3c/path%3e%3c/svg%3e");}
+.scanex-component-icon.down {background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='64 64 896 896' focusable='false' class='' data-icon='down' width='1em' height='1em' fill='currentColor' aria-hidden='true'%3e %3cpath d='M884 256h-75c-5.1 0-9.9 2.5-12.9 6.6L512 654.2 227.9 262.6c-3-4.1-7.8-6.6-12.9-6.6h-75c-6.5 0-10.3 7.4-6.5 12.7l352.6 486.1c12.8 17.6 39 17.6 51.7 0l352.6-486.1c3.9-5.3.1-12.7-6.4-12.7z'%3e%3c/path%3e %3c/svg%3e");}
+.scanex-component-icon.maximize {background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='64 64 896 896' focusable='false' class='' data-icon='border' width='1em' height='1em' fill='currentColor' aria-hidden='true'%3e%3cpath d='M880 112H144c-17.7 0-32 14.3-32 32v736c0 17.7 14.3 32 32 32h736c17.7 0 32-14.3 32-32V144c0-17.7-14.3-32-32-32zm-40 728H184V184h656v656z'%3e%3c/path%3e%3c/svg%3e");}
+.scanex-component-icon.minimize {background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='64 64 896 896' focusable='false' class='' data-icon='minus' width='1em' height='1em' fill='currentColor' aria-hidden='true'%3e%3cpath d='M872 474H152c-4.4 0-8 3.6-8 8v60c0 4.4 3.6 8 8 8h720c4.4 0 8-3.6 8-8v-60c0-4.4-3.6-8-8-8z'%3e%3c/path%3e%3c/svg%3e");}
+.scanex-component-icon.spinner-down {background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='64 64 896 896' focusable='false' class='' data-icon='down' width='1em' height='1em' fill='currentColor' aria-hidden='true'%3e %3cpath d='M884 256h-75c-5.1 0-9.9 2.5-12.9 6.6L512 654.2 227.9 262.6c-3-4.1-7.8-6.6-12.9-6.6h-75c-6.5 0-10.3 7.4-6.5 12.7l352.6 486.1c12.8 17.6 39 17.6 51.7 0l352.6-486.1c3.9-5.3.1-12.7-6.4-12.7z'%3e%3c/path%3e %3c/svg%3e");}
+.scanex-component-icon.spinner-up {background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='64 64 896 896' focusable='false' class='' data-icon='up' width='1em' height='1em' fill='currentColor' aria-hidden='true'%3e %3cpath d='M890.5 755.3L537.9 269.2c-12.8-17.6-39-17.6-51.7 0L133.5 755.3A8 8 0 00140 768h75c5.1 0 9.9-2.5 12.9-6.6L512 369.8l284.1 391.6c3 4.1 7.8 6.6 12.9 6.6h75c6.5 0 10.3-7.4 6.5-12.7z'%3e%3c/path%3e %3c/svg%3e");}
+.scanex-component-icon.tabs {background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='64 64 896 896' focusable='false' data-icon='menu' width='1em' height='1em' fill='currentColor' aria-hidden='true'%3e%3cpath d='M904 160H120c-4.4 0-8 3.6-8 8v64c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-64c0-4.4-3.6-8-8-8zm0 624H120c-4.4 0-8 3.6-8 8v64c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-64c0-4.4-3.6-8-8-8zm0-312H120c-4.4 0-8 3.6-8 8v64c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-64c0-4.4-3.6-8-8-8z'%3e%3c/path%3e%3c/svg%3e");}
+.scanex-component-icon.up {background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='64 64 896 896' focusable='false' class='' data-icon='up' width='1em' height='1em' fill='currentColor' aria-hidden='true'%3e %3cpath d='M890.5 755.3L537.9 269.2c-12.8-17.6-39-17.6-51.7 0L133.5 755.3A8 8 0 00140 768h75c5.1 0 9.9-2.5 12.9-6.6L512 369.8l284.1 391.6c3 4.1 7.8 6.6 12.9 6.6h75c6.5 0 10.3-7.4 6.5-12.7z'%3e%3c/path%3e %3c/svg%3e");}
 .scanex-forestry-progress {    
     border-radius: 6px;
     width: 500px;
@@ -5226,26 +5341,8 @@ div.timeline-navigation-move-right {
     opacity: 0.5;
     z-index: 9999;    
 }
-.scanex-component-form > table,
-.scanex-component-form > table > tbody > tr > td:last-child,
-.scanex-component-form > table > tbody > tr > td > input[type=text],
-.scanex-component-form > table > tbody > tr > td > textarea {
-    width: 100%;
-}
-.scanex-component-form > table > tbody > tr > td > input[type=text] {
-    padding: 0px;
-    margin: 0px;    
-}
-.scanex-component-form > table > tbody > tr > td > textarea {
-    resize: none;
-    padding: 0px;
-    margin: 0px;    
-}
-.scanex-component-form > table > tbody > tr > td {
-    vertical-align: top;
-}
-.scanex-component-form > table > tbody > tr > td:first-child > label {
-    margin-right: 10px;
+.scanex-component.scanex-component-sidebar > * {
+    float: left;
 }
 .scanex-component-pager input[type=text],
 .scanex-component-pager button {    
@@ -5280,19 +5377,26 @@ div.timeline-navigation-move-right {
 .scanex-component-pager input[type=text] {
     border: 1px solid #6B707B;
 }
-.scanex-component-tabs > .tabs > *,
-.scanex-component-tabs > .panels > * {
-    float: left;
+.scanex-component-form > table,
+.scanex-component-form > table > tbody > tr > td:last-child,
+.scanex-component-form > table > tbody > tr > td > input[type=text],
+.scanex-component-form > table > tbody > tr > td > textarea {
+    width: 100%;
 }
-.scanex-component-tabs > .panels {
-    clear: both;
-    position: relative;
+.scanex-component-form > table > tbody > tr > td > input[type=text] {
+    padding: 0px;
+    margin: 0px;    
 }
-.scanex-component-tabs > .panels > .panel {
-    position: absolute;    
+.scanex-component-form > table > tbody > tr > td > textarea {
+    resize: none;
+    padding: 0px;
+    margin: 0px;    
 }
-.scanex-component-tabs > .panels > .hidden {
-    visibility: hidden;
+.scanex-component-form > table > tbody > tr > td {
+    vertical-align: top;
+}
+.scanex-component-form > table > tbody > tr > td:first-child > label {
+    margin-right: 10px;
 }
 .scanex-component-spinner > * {
     display: inline-block;
@@ -5335,17 +5439,19 @@ div.timeline-navigation-move-right {
     width: 15px;
     height: 15px;
 }
-.scanex-component-slider > .slider-bar > .slider-tick.slider-tick-middle {
+.scanex-component-tabs > .tabs > *,
+.scanex-component-tabs > .panels > * {
     float: left;
-    position: absolute;
 }
-.scanex-component-slider > .slider-bar > .slider-tick.slider-tick-middle > label {
-    position: absolute;
-    top: -20px;
-    background-color: #ffffff;
+.scanex-component-tabs > .panels {
+    clear: both;
+    position: relative;
 }
-.scanex-component-slider > .slider-bar >.slider-range > .slider-tick-left {
-    float: left;
+.scanex-component-tabs > .panels > .panel {
+    position: absolute;    
+}
+.scanex-component-tabs > .panels > .hidden {
+    visibility: hidden;
 }
 .scanex-component-slider {
     height: 21px;    
@@ -5381,6 +5487,9 @@ div.timeline-navigation-move-right {
 .scanex-component-slider > .slider-bar > .slider-range > .slider-tick-right {
     float: right;
 }
+.scanex-component-slider > .slider-bar >.slider-range > .slider-tick-left {
+    float: left;
+}
 .scanex-component-range > table,
 .scanex-component-range > table > tbody > tr > td:nth-child(2) {
     width: 100%;
@@ -5389,6 +5498,22 @@ div.timeline-navigation-move-right {
     width: 35px;
     text-align: center;
     border: none;
+}
+.scanex-component-slider > .slider-bar > .slider-tick.slider-tick-middle {
+    float: left;
+    position: absolute;
+}
+.scanex-component-slider > .slider-bar > .slider-tick.slider-tick-middle > label {
+    position: absolute;
+    top: -20px;
+    background-color: #ffffff;
+}
+.scanex-component-sidebar-panel.hidden {
+    display: none;
+}
+.scanex-component-sidebar-tab > div {
+    writing-mode: vertical-lr;    
+    cursor: pointer;
 }
 .scanex-component-menu .scanex-menu-group .scanex-menu-group-header > * {
     vertical-align: middle;    
