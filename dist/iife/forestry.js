@@ -39112,19 +39112,17 @@ var Forestry = (function () {
         }
       });
 
-      if (permissions.ReliefLayerView) {
-        _this._control.addItem({
-          title: translate$m('baselayers.topo'),
-          id: 'topo',
-          type: 'LayerGroup',
-          iconUrl: 'assets/images/topo.png',
-          layerGroup: L.layerGroup([L.tileLayer('//tilessputnik.ru/{z}/{x}/{y}.png?sw=1', {
-            minZoom: 0,
-            maxZoom: 20,
-            zIndex: -1000000
-          }), gmxMap.layersByID['CBEDAD75B251458199028E5B5458FAF6'].setZIndexOffset(-1000000)])
-        });
-      }
+      _this._control.addItem({
+        title: translate$m('baselayers.topo'),
+        id: 'topo',
+        type: 'LayerGroup',
+        iconUrl: 'assets/images/topo.png',
+        layerGroup: L.layerGroup([L.tileLayer('//tilessputnik.ru/{z}/{x}/{y}.png?sw=1', {
+          minZoom: 0,
+          maxZoom: 20,
+          zIndex: -1000000
+        }), gmxMap.layersByID['CBEDAD75B251458199028E5B5458FAF6'].setZIndexOffset(-1000000)])
+      });
 
       _this._control.addItem({
         title: translate$m('baselayers.map'),
@@ -74012,7 +74010,7 @@ var Forestry = (function () {
                     });
                   }
 
-                  if (this._layers.relief_hk && this._layers.relief_zk) {
+                  if (this._permissions.ReliefLayerView && this._layers.relief_hk && this._layers.relief_zk) {
                     this._controllers.relief = new Relief({
                       map: this._map,
                       layers: this._layers,
