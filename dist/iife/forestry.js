@@ -36118,8 +36118,9 @@ var Forestry = (function () {
           _this3.setTab(LayerID);
         }, this);
         layer._tabNode = tab;
-        this.setTab(LayerID);
       }
+
+      this.setTab(LayerID);
 
       this._chkTabs();
     },
@@ -71295,7 +71296,11 @@ var Forestry = (function () {
         event.initEvent('ok', false, false);
         event.detail = {
           title: _this._name.value,
-          url: _this._url.value
+          url: _this._url.value,
+          minZoom: 1,
+          maxZoom: 21,
+          transparent: true,
+          format: 'image/png'
         };
 
         _this.dispatchEvent(event);
@@ -72158,15 +72163,15 @@ var Forestry = (function () {
                               }
 
                               urlTemplate = MetaProperties.urlTemplate.Value;
-                              minZoom = parseInt(MetaProperties.minZoom.Value, 10);
-                              maxZoom = parseInt(MetaProperties.maxZoom.Value, 10);
-                              subdomains = MetaProperties.subdomains.Value;
-                              errorTileUrl = MetaProperties.errorTileUrl.Value;
-                              zoomOffset = parseInt(MetaProperties.zoomOffset.Value, 10);
-                              zoomReverse = MetaProperties.zoomReverse.Value.toLowerCase() === 'true';
-                              tileReverse = MetaProperties.tileReverse.Value.toLowerCase() === 'true';
-                              detectRetina = MetaProperties.detectRetina.Value.toLowerCase() === 'true';
-                              crossOrigin = MetaProperties.crossOrigin.Value;
+                              minZoom = MetaProperties.minZoom && parseInt(MetaProperties.minZoom.Value, 10) || 1;
+                              maxZoom = MetaProperties.maxZoom && parseInt(MetaProperties.maxZoom.Value, 10) || 21;
+                              subdomains = MetaProperties.subdomains && MetaProperties.subdomains.Value || 'abc';
+                              errorTileUrl = MetaProperties.errorTileUrl && MetaProperties.errorTileUrl.Value || '';
+                              zoomOffset = MetaProperties.zoomOffset && parseInt(MetaProperties.zoomOffset.Value, 10) || 0;
+                              zoomReverse = MetaProperties.zoomReverse && MetaProperties.zoomReverse.Value.toLowerCase() === 'true';
+                              tileReverse = MetaProperties.tileReverse && MetaProperties.tileReverse.Value.toLowerCase() === 'true';
+                              detectRetina = MetaProperties.detectRetina && MetaProperties.detectRetina.Value.toLowerCase() === 'true';
+                              crossOrigin = MetaProperties.crossOrigin && MetaProperties.crossOrigin.Value || '';
                               _layer3 = leafletSrc.tileLayer(urlTemplate, {
                                 minZoom: minZoom,
                                 maxZoom: maxZoom,
@@ -72220,14 +72225,14 @@ var Forestry = (function () {
                               }
 
                               _urlTemplate2 = MetaProperties.urlTemplate.Value;
-                              _minZoom = parseInt(MetaProperties.minZoom.Value, 10);
-                              _maxZoom = parseInt(MetaProperties.maxZoom.Value, 10);
-                              _subdomains = MetaProperties.subdomains.Value;
-                              _errorTileUrl = MetaProperties.errorTileUrl.Value;
-                              _zoomOffset = parseInt(MetaProperties.zoomOffset.Value, 10);
-                              _zoomReverse = MetaProperties.zoomReverse.Value.toLowerCase() === 'true';
-                              _detectRetina = MetaProperties.detectRetina.Value.toLowerCase() === 'true';
-                              _crossOrigin = MetaProperties.crossOrigin.Value;
+                              _minZoom = MetaProperties.minZoom && parseInt(MetaProperties.minZoom.Value, 10) || 1;
+                              _maxZoom = MetaProperties.maxZoom && parseInt(MetaProperties.maxZoom.Value, 10) || 21;
+                              _subdomains = MetaProperties.subdomains && MetaProperties.subdomains.Value || 'abc';
+                              _errorTileUrl = MetaProperties.errorTileUrl && MetaProperties.errorTileUrl.Value || '';
+                              _zoomOffset = MetaProperties.zoomOffset && parseInt(MetaProperties.zoomOffset.Value, 10) || 0;
+                              _zoomReverse = MetaProperties.zoomReverse && MetaProperties.zoomReverse.Value.toLowerCase() === 'true';
+                              _detectRetina = MetaProperties.detectRetina && MetaProperties.detectRetina.Value.toLowerCase() === 'true';
+                              _crossOrigin = MetaProperties.crossOrigin && MetaProperties.crossOrigin.Value;
                               _context8.next = 66;
                               return _this._getWmsLayers(_urlTemplate2);
 
@@ -72247,8 +72252,8 @@ var Forestry = (function () {
                               items = _layers.map(function (item) {
                                 var name = item.name,
                                     bbox = item.bbox;
-                                var format = MetaProperties.format.Value;
-                                var transparent = MetaProperties.transparent.Value.toLowerCase() === 'true';
+                                var format = MetaProperties.format && MetaProperties.format.Value || 'image/png';
+                                var transparent = MetaProperties.transparent && MetaProperties.transparent.Value.toLowerCase() === 'true';
 
                                 if (bbox) {
                                   minx = Math.min(bbox.minx, minx);
@@ -72840,7 +72845,7 @@ var Forestry = (function () {
               Type: 'String'
             },
             subdomains: {
-              Value: subdomains,
+              Value: subdomains || 'abc',
               Type: 'String'
             },
             errorTileUrl: {
@@ -72856,15 +72861,15 @@ var Forestry = (function () {
               Type: 'String'
             },
             minZoom: {
-              Value: minZoom && minZoom.toString(),
+              Value: (minZoom || 1).toString(),
               Type: 'String'
             },
             maxZoom: {
-              Value: maxZoom && maxZoom.toString(),
+              Value: (maxZoom || 21).toString(),
               Type: 'String'
             },
             zoomOffset: {
-              Value: zoomOffset.toString(),
+              Value: (typeof zoomOffset === 'number' || 0).toString(),
               Type: 'String'
             },
             tileReverse: {
@@ -72944,7 +72949,7 @@ var Forestry = (function () {
               Type: 'String'
             },
             subdomains: {
-              Value: subdomains,
+              Value: subdomains || 'abc',
               Type: 'String'
             },
             errorTileUrl: {
@@ -72960,15 +72965,15 @@ var Forestry = (function () {
               Type: 'String'
             },
             minZoom: {
-              Value: minZoom.toString(),
+              Value: (minZoom || 1).toString(),
               Type: 'String'
             },
             maxZoom: {
-              Value: maxZoom.toString(),
+              Value: (maxZoom || 21).toString(),
               Type: 'String'
             },
             zoomOffset: {
-              Value: zoomOffset.toString(),
+              Value: (typeof zoomOffset === 'number' || 0).toString(),
               Type: 'String'
             },
             tileReverse: {
@@ -72993,7 +72998,7 @@ var Forestry = (function () {
             Value: styles,
             Type: 'String'
           }), _defineProperty(_meta2, "format", {
-            Value: format,
+            Value: format || 'image/png',
             Type: 'String'
           }), _defineProperty(_meta2, "transparent", {
             Value: transparent && 'true' || 'false',
