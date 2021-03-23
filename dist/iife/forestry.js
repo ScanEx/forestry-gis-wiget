@@ -23885,60 +23885,31 @@ var Forestry = (function () {
     }
   }
 
-  var Translation$1 = /*#__PURE__*/function () {
-    function Translation() {
-      _classCallCheck(this, Translation);
+  var langs = {};
+  var language = localStorage.getItem('lang') || 'ru';
 
-      this._langs = {};
-      var current = localStorage.getItem('lang');
+  function add(lang, obj) {
+    langs[lang] = langs[lang] || {};
+    langs[lang] = merge$1(langs[lang], obj);
+  }
 
-      if (!current) {
-        current = 'ru';
-        localStorage.setItem('lang', current);
-      }
+  function get_translation(root, path) {
+    var i = path.indexOf('.');
 
-      this._current = current;
+    if (i >= 0) {
+      return get_translation(root[path.substring(0, i)], path.substring(i + 1));
+    } else {
+      return root[path];
     }
+  }
 
-    _createClass(Translation, [{
-      key: "getLanguage",
-      value: function getLanguage() {
-        return this._current;
-      }
-    }, {
-      key: "addText",
-      value: function addText(lang, obj) {
-        this._langs[lang] = this._langs[lang] || {};
-        this._langs[lang] = merge$1(this._langs[lang], obj);
-      }
-    }, {
-      key: "getText",
-      value: function getText(path) {
-        return this._translate(this._langs[this._current], path);
-      }
-    }, {
-      key: "_translate",
-      value: function _translate(root, path) {
-        var i = path.indexOf('.');
-
-        if (i >= 0) {
-          return this._translate(root[path.substring(0, i)], path.substring(i + 1));
-        } else {
-          return root[path];
-        }
-      }
-    }]);
-
-    return Translation;
-  }();
-
-  var T$1 = new Translation$1();
-
-  var _translationsHash = T$1; // Виртуальный слой для пожаров
+  function translate$t(path) {
+    return get_translation(langs[language], path);
+  }
 
   (function () {
 
-    _translationsHash.addText('ru', {
+    add('ru', {
       FireVirtualLayer: {
         LayerClusterBalloon: "<div style='margin-bottom: 5px;'><b style='color: red;'>Пожар</b></div>" + "<b>Кол-во термоточек:</b> [count]<br/>" + "<b>Время наблюдения:</b> [dateRange]<br/>" + "<div>[SUMMARY]</div>",
         LayerClusterBalloonIndustrial: "<span style='margin-bottom: 5px;'><b style='color: red;'>Пожар</b></span> (вероятный техногенный источник <a target='blank' href='http://fires.kosmosnimki.ru/help.html#techno'>?</a>) <br/>" + "<b>Кол-во термоточек:</b> [count]<br/>" + "<b>Время наблюдения:</b> [dateRange]<br/>" + "<div>[SUMMARY]</div>",
@@ -23946,8 +23917,7 @@ var Forestry = (function () {
         zoomInMessage: "Приблизьте карту, чтобы увидеть контур"
       }
     });
-
-    _translationsHash.addText('en', {
+    add('en', {
       FireVirtualLayer: {
         LayerClusterBalloon: "<div style='margin-bottom: 5px;'><b style='color: red;'>Fire</b></div>" + "<b>Number of hotspots:</b> [count]<br/>" + "<b>Observation period:</b> [dateRange]<br/>" + "<div>[SUMMARY]</div>",
         LayerClusterBalloonIndustrial: "<span style='margin-bottom: 5px;'><b style='color: red;'>Fire</b></span> (probable industrial hotspot <a target='_blank' href='http://fires.kosmosnimki.ru/help.html#techno'>?</a>)<br/>" + "<b>Number of hotspots:</b> [count]<br/>" + "<b>Observation period:</b> [dateRange]<br/>" + "<div>[SUMMARY]</div>",
@@ -23955,7 +23925,6 @@ var Forestry = (function () {
         zoomInMessage: "Zoom-in to see the outline"
       }
     }); // Lookup table for pixel dimensions based on scan index of the pixel
-
 
     var ModisPixelDimensions = [];
 
@@ -24203,14 +24172,13 @@ var Forestry = (function () {
       },
       initialize: function initialize(options) {
         L.setOptions(this, options);
-        _translationsHash.getLanguage() || 'ru';
         this._clustersLayer = L.gmx.createLayer({
           properties: {
             title: 'FireClusters',
             attributes: ['scale', 'count', 'label', 'startDate', 'endDate', 'dateRange', 'isIndustrial'],
             styles: [{
               Filter: '"isIndustrial"=0',
-              Balloon: _translationsHash.getText('FireVirtualLayer.LayerClusterBalloon'),
+              Balloon: translate$t('FireVirtualLayer.LayerClusterBalloon'),
               MinZoom: 1,
               MaxZoom: this.options.minGeomZoom - 1,
               RenderStyle: {
@@ -24231,7 +24199,7 @@ var Forestry = (function () {
               }
             }, {
               Filter: '"isIndustrial"=1',
-              Balloon: _translationsHash.getText('FireVirtualLayer.LayerClusterBalloonIndustrial'),
+              Balloon: translate$t('FireVirtualLayer.LayerClusterBalloonIndustrial'),
               MinZoom: 1,
               MaxZoom: this.options.minGeomZoom - 1,
               RenderStyle: {
@@ -24254,7 +24222,7 @@ var Forestry = (function () {
             title: 'FirePolygons',
             attributes: ['scale', 'count', 'label', 'startDate', 'endDate', 'dateRange', 'isIndustrial'],
             styles: [{
-              Balloon: _translationsHash.getText('FireVirtualLayer.LayerGeometryBalloon'),
+              Balloon: translate$t('FireVirtualLayer.LayerGeometryBalloon'),
               MinZoom: this.options.minGeomZoom,
               MaxZoom: 21,
               RenderStyle: {
@@ -24311,9 +24279,8 @@ var Forestry = (function () {
         this._clustersLayer.on('popupopen', function (event) {
           var popup = event.popup,
               html = popup.getContent(),
-              title = _translationsHash.getText('FireVirtualLayer.zoomInMessage'),
+              title = translate$t('FireVirtualLayer.zoomInMessage'),
               cont = L.DomUtil.create('div', '');
-
           cont.appendChild(html);
           var zoomLink = L.DomUtil.create('div', '', cont); // zoomLink = $('<div style="margin-top: 5px;"><a href="javascript:void(0)"><i>' + title + '</i></a></div>').click(function() {
           // _this._map.closePopup(event.popup);
@@ -35661,8 +35628,8 @@ var Forestry = (function () {
 
   L.gmx.timeline = links;
 
-  var translate$r = T$1.getText.bind(T$1);
-  T$1.addText('ru', {
+  var translate$s = translate$t;
+  add('ru', {
     DateInterval: {
       onlyChecked: 'Только отмеченные',
       onlyOne: 'Только 1 снимок',
@@ -35697,20 +35664,20 @@ var Forestry = (function () {
       this._tabs = leafletSrc.DomUtil.create('div', 'buttons', this._container);
       this._timelineNode = leafletSrc.DomUtil.create('div', 'timeline', this._container);
       this._icon = leafletSrc.DomUtil.create('div', 'icon', this._container);
-      this._icon.innerHTML = translate$r('DateInterval.title');
+      this._icon.innerHTML = translate$s('DateInterval.title');
       this._topCont = leafletSrc.DomUtil.create('div', 'top', this._container);
       this._onlyCheckedNode = leafletSrc.DomUtil.create('input', '', this._topCont);
       this._onlyCheckedNode.type = 'checkbox';
       this._onlyCheckedNode.checked = true;
       leafletSrc.DomEvent.on(this._onlyCheckedNode, 'click', this._onlyChecked, this);
       this._onlyCheckedLabel = leafletSrc.DomUtil.create('label', '', this._topCont);
-      this._onlyCheckedLabel.innerHTML = translate$r('DateInterval.onlyChecked');
+      this._onlyCheckedLabel.innerHTML = translate$s('DateInterval.onlyChecked');
       this._onlyOneNode = leafletSrc.DomUtil.create('input', '', this._topCont);
       this._onlyOneNode.type = 'checkbox';
       this._onlyOneNode.checked = true;
       leafletSrc.DomEvent.on(this._onlyOneNode, 'click', this._onlyOne, this);
       this._onlyOneLabel = leafletSrc.DomUtil.create('label', '', this._topCont);
-      this._onlyOneLabel.innerHTML = translate$r('DateInterval.onlyOne');
+      this._onlyOneLabel.innerHTML = translate$s('DateInterval.onlyOne');
       this._timeline = new links.Timeline(this._timelineNode, {
         locale: 'ru',
         width: '100%',
@@ -36409,7 +36376,7 @@ var Forestry = (function () {
     }
   });
 
-  T$1.addText('en', {
+  add('en', {
     gmxLocation: {
       locationChange: 'Сhange the map center:',
       locationTxt: 'Current center coordinates',
@@ -36421,7 +36388,7 @@ var Forestry = (function () {
       m: 'm'
     }
   });
-  T$1.addText('ru', {
+  add('ru', {
     gmxLocation: {
       locationChange: 'Переместить центр карты:',
       locationTxt: 'Текущие координаты центра карты',
@@ -36433,6 +36400,7 @@ var Forestry = (function () {
       m: 'м'
     }
   });
+  var translate$r = translate$t;
   var _mzoom = ['M 1:500 000 000', //  0   156543.03392804
   'M 1:300 000 000', //  1   78271.51696402
   'M 1:150 000 000', //  2   39135.75848201
@@ -36506,12 +36474,12 @@ var Forestry = (function () {
       }
 
       this.locationTxt = leafletSrc.DomUtil.create('span', 'leaflet-gmx-locationTxt', container);
-      this.locationTxt.title = T$1.getText('gmxLocation.locationTxt');
+      this.locationTxt.title = translate$r('gmxLocation.locationTxt');
       this.coordFormatChange = leafletSrc.DomUtil.create('span', 'leaflet-gmx-coordFormatChange', container);
-      this.coordFormatChange.title = T$1.getText('gmxLocation.coordFormatChange');
+      this.coordFormatChange.title = translate$r('gmxLocation.coordFormatChange');
       this.scaleBar = leafletSrc.DomUtil.create('span', 'leaflet-gmx-scaleBar', container);
       this.scaleBarTxt = leafletSrc.DomUtil.create('span', 'leaflet-gmx-scaleBarTxt', container);
-      this.scaleBarTxt.title = this.scaleBar.title = T$1.getText('gmxLocation.scaleBarChange');
+      this.scaleBarTxt.title = this.scaleBar.title = translate$r('gmxLocation.scaleBarChange');
       this._map = map;
       var util = {
         coordFormat: this.options.coordinatesFormat || 0,
@@ -36569,7 +36537,7 @@ var Forestry = (function () {
             leafletSrc.DomEvent.on(button, 'click', function () {
               util.goTo(input.value);
             });
-            span.innerHTML = T$1.getText('gmxLocation.locationChange');
+            span.innerHTML = translate$r('gmxLocation.locationChange');
             input.value = oldText;
             leafletSrc.DomEvent.on(input, 'keydown', function (ev) {
               if (ev.which === 13) {
@@ -36755,11 +36723,11 @@ var Forestry = (function () {
     utils.prettifyDistance = function (length) {
       var type = '',
           //map.DistanceUnit
-      txt = T$1.getText('units.km') || 'km',
+      txt = translate$r('units.km') || 'km',
           km = ' ' + txt;
 
       if (length < 2000 || type === 'm') {
-        txt = T$1.getText('units.m') || 'm';
+        txt = translate$r('units.m') || 'm';
         return Math.round(length) + ' ' + txt;
       } else if (length < 200000) {
         return Math.round(length / 10) / 100 + km;
@@ -37379,9 +37347,9 @@ var Forestry = (function () {
   };
 
   Object.keys(s).forEach(function (lang) {
-    return T$1.addText(lang, s[lang]);
+    return add(lang, s[lang]);
   });
-  var translate$q = T$1.getText.bind(T$1);
+  var translate$q = translate$t;
   var TASK_POLLING_DELAY = 3000;
   var NOTIFY_TIMEOUT = 5000;
 
@@ -38856,9 +38824,9 @@ var Forestry = (function () {
   };
 
   Object.keys(strings$b).forEach(function (lang) {
-    return T$1.addText(lang, strings$b[lang]);
+    return add(lang, strings$b[lang]);
   });
-  var translate$n = T$1.getText.bind(T$1);
+  var translate$n = translate$t;
 
   var View$1 = /*#__PURE__*/function (_Dialog) {
     _inherits(View, _Dialog);
@@ -38969,7 +38937,7 @@ var Forestry = (function () {
     return View;
   }(Dialog);
 
-  var translate$m = T$1.getText.bind(T$1);
+  var translate$m = translate$t;
 
   var BaseLayers = /*#__PURE__*/function (_Controller) {
     _inherits(BaseLayers, _Controller);
@@ -39407,8 +39375,6 @@ var Forestry = (function () {
     return BaseLayers;
   }(Controller);
 
-  T$1.getText.bind(T$1);
-
   var Cadastre = /*#__PURE__*/function (_LayerController) {
     _inherits(Cadastre, _LayerController);
 
@@ -39462,10 +39428,10 @@ var Forestry = (function () {
       });
       leafletSrc.DomEvent.disableScrollPropagation(_this._target);
       Object.keys(s).forEach(function (lang) {
-        return T$1.addText(lang, s[lang]);
+        return add(lang, s[lang]);
       });
       Object.keys(strings).forEach(function (lang) {
-        return T$1.addText(lang, strings[lang]);
+        return add(lang, strings[lang]);
       });
       return _this;
     }
@@ -39508,7 +39474,7 @@ var Forestry = (function () {
     }, {
       key: "translate",
       value: function translate(key) {
-        return T$1.getText(key);
+        return translate$t(key);
       }
     }, {
       key: "m",
@@ -39892,7 +39858,7 @@ var Forestry = (function () {
     return Fires;
   }(View);
 
-  var translate$l = T$1.getText.bind(T$1);
+  var translate$l = translate$t;
   var hotSpotLayerID = '9DC30891452449DD8D551D0AA62FFF54';
 
   var Fires = /*#__PURE__*/function (_Evented) {
@@ -46873,7 +46839,7 @@ var Forestry = (function () {
     });
   });
 
-  var translate$k = T$1.getText.bind(T$1);
+  var translate$k = translate$t;
 
   var roundBytes = function roundBytes(s) {
     if (s > 1024 * 1024 * 1024 * 1024 * 1.2) {
@@ -47054,7 +47020,7 @@ var Forestry = (function () {
     return UploadProgress;
   }(Evented);
 
-  var translate$j = T$1.getText.bind(T$1);
+  var translate$j = translate$t;
 
   var LayerProperties = /*#__PURE__*/function (_Dialog) {
     _inherits(LayerProperties, _Dialog);
@@ -47097,7 +47063,7 @@ var Forestry = (function () {
     return LayerProperties;
   }(Dialog);
 
-  var translate$i = T$1.getText.bind(T$1);
+  var translate$i = translate$t;
   var FILE_EXTENSIONS = {
     vector: ['.geojson', '.shp', '.dbf', '.prj', '.sbn', '.sbx', '.shx', '.dat', '.mif', '.mid', '.csv', '.gpx', '.kml', '.kmz', '.sxf', '.sqlite', '.geojson', '.gdbtable'].join(','),
     raster: ['.tif', '.tiff', '.tfw', '.xml', '.jpg', '.jgw', '.png', '.pgw', '.jp2', '.j2w'].join(',')
@@ -47882,7 +47848,7 @@ var Forestry = (function () {
     return FileUploader;
   }(Controller);
 
-  var translate$h = T$1.getText.bind(T$1);
+  var translate$h = translate$t;
 
   var _DAY = 60 * 60 * 24 * 1000;
 
@@ -48684,7 +48650,7 @@ var Forestry = (function () {
     return Incidents;
   }(Controller);
 
-  var translate$g = T$1.getText.bind(T$1);
+  var translate$g = translate$t;
   var ALLOWED_LAYERS$3 = ['kppo_rgb', 'kppo'];
 
   var KPPO = /*#__PURE__*/function (_Controller) {
@@ -48748,7 +48714,7 @@ var Forestry = (function () {
     return KPPO;
   }(Controller);
 
-  var translate$f = T$1.getText.bind(T$1);
+  var translate$f = translate$t;
 
   var LPO = /*#__PURE__*/function (_Controller) {
     _inherits(LPO, _Controller);
@@ -48984,7 +48950,7 @@ var Forestry = (function () {
     return Parks;
   }(View);
 
-  var translate$e = T$1.getText.bind(T$1);
+  var translate$e = translate$t;
 
   var Parks = /*#__PURE__*/function (_Controller) {
     _inherits(Parks, _Controller);
@@ -67489,7 +67455,7 @@ var Forestry = (function () {
     return Info;
   }(View);
 
-  var translate$d = T$1.getText.bind(T$1);
+  var translate$d = translate$t;
 
   var Quadrants$2 = /*#__PURE__*/function (_Evented) {
     _inherits(Quadrants, _Evented);
@@ -67592,7 +67558,7 @@ var Forestry = (function () {
     return Quadrants;
   }(Evented);
 
-  var translate$c = T$1.getText.bind(T$1);
+  var translate$c = translate$t;
 
   var SpeciesTable = /*#__PURE__*/function (_Evented) {
     _inherits(SpeciesTable, _Evented);
@@ -67637,7 +67603,7 @@ var Forestry = (function () {
     return SpeciesTable;
   }(Evented);
 
-  var translate$b = T$1.getText.bind(T$1);
+  var translate$b = translate$t;
 
   var Species = /*#__PURE__*/function () {
     function Species(container) {
@@ -68106,7 +68072,7 @@ var Forestry = (function () {
     return Project;
   }(View);
 
-  var translate$a = T$1.getText.bind(T$1);
+  var translate$a = translate$t;
 
   var indexByName = function indexByName(layer, name) {
     var _layer$getGmxProperti = layer.getGmxProperties(),
@@ -69352,7 +69318,7 @@ var Forestry = (function () {
     return Stands;
   }(View);
 
-  var translate$9 = T$1.getText.bind(T$1);
+  var translate$9 = translate$t;
   var ALLOWED_LAYERS$2 = ['forestries_local', 'forestries', 'regions', 'quadrants', 'stands'];
 
   var Quadrants = /*#__PURE__*/function (_Controller) {
@@ -69661,7 +69627,7 @@ var Forestry = (function () {
     return Quadrants;
   }(Controller);
 
-  var translate$8 = T$1.getText.bind(T$1);
+  var translate$8 = translate$t;
 
   var RasterCatalog = /*#__PURE__*/function () {
     function RasterCatalog(_ref) {
@@ -69725,7 +69691,7 @@ var Forestry = (function () {
     return RasterCatalog;
   }();
 
-  var translate$7 = T$1.getText.bind(T$1);
+  var translate$7 = translate$t;
   var ALLOWED_LAYERS$1 = ['relief_hk', 'relief_zk'];
 
   var Relief = /*#__PURE__*/function (_Controller) {
@@ -71170,7 +71136,7 @@ var Forestry = (function () {
     return Uploaded;
   }(View);
 
-  var translate$6 = T$1.getText.bind(T$1);
+  var translate$6 = translate$t;
 
   var TmsView = /*#__PURE__*/function (_Dialog) {
     _inherits(TmsView, _Dialog);
@@ -71263,7 +71229,7 @@ var Forestry = (function () {
     return TmsView;
   }(Dialog);
 
-  var translate$5 = T$1.getText.bind(T$1);
+  var translate$5 = translate$t;
 
   var WmsView = /*#__PURE__*/function (_Dialog) {
     _inherits(WmsView, _Dialog);
@@ -71312,7 +71278,7 @@ var Forestry = (function () {
     return WmsView;
   }(Dialog);
 
-  var translate$4 = T$1.getText.bind(T$1);
+  var translate$4 = translate$t;
 
   var WfsView = /*#__PURE__*/function (_Dialog) {
     _inherits(WfsView, _Dialog);
@@ -71515,14 +71481,36 @@ var Forestry = (function () {
     }
   }
 
+  function parsePoint(point) {
+    var children = point.children;
+
+    if (Array.isArray(children) && children.length === 1) {
+      var _children2 = _slicedToArray(children, 1),
+          value = _children2[0].value;
+
+      var coordinates = value.split(',').map(function (v) {
+        return parseFloat(v.trim());
+      });
+      return {
+        type: 'Point',
+        coordinates: coordinates
+      };
+    } else {
+      return null;
+    }
+  }
+
   function parseGeometry(geometry) {
     var children = geometry.children;
 
     if (Array.isArray(children) && children.length === 1) {
-      var _children2 = _slicedToArray(children, 1),
-          e = _children2[0];
+      var _children3 = _slicedToArray(children, 1),
+          e = _children3[0];
 
       switch (e.name) {
+        case 'gml:Point':
+          return parsePoint(e);
+
         case 'gml:Polygon':
           return parsePolygon(e);
 
@@ -71551,8 +71539,8 @@ var Forestry = (function () {
     var children = box.children;
 
     if (Array.isArray(children)) {
-      var _children3 = _slicedToArray(children, 1),
-          e = _children3[0];
+      var _children4 = _slicedToArray(children, 1),
+          e = _children4[0];
 
       switch (e.name) {
         case 'gml:coordinates':
@@ -71572,8 +71560,8 @@ var Forestry = (function () {
     var children = boundedBy.children;
 
     if (Array.isArray(children) && children.length === 1) {
-      var _children4 = _slicedToArray(children, 1),
-          e = _children4[0];
+      var _children5 = _slicedToArray(children, 1),
+          e = _children5[0];
 
       switch (e.name) {
         case 'gml:Box':
@@ -71632,8 +71620,8 @@ var Forestry = (function () {
     var children = featureMember.children;
 
     if (Array.isArray(children) && children.length === 1) {
-      var _children5 = _slicedToArray(children, 1),
-          e = _children5[0];
+      var _children6 = _slicedToArray(children, 1),
+          e = _children6[0];
 
       return parseFeature(e);
     } else {
@@ -71756,7 +71744,7 @@ var Forestry = (function () {
     return parse_node(xml.childNodes[0]);
   }
 
-  var translate$3 = T$1.getText.bind(T$1);
+  var translate$3 = translate$t;
 
   var Uploaded = /*#__PURE__*/function (_Controller) {
     _inherits(Uploaded, _Controller);
@@ -72205,9 +72193,12 @@ var Forestry = (function () {
 
                             case 48:
                               fs = _context8.sent;
-                              features = fs.reduce(function (a, _ref11) {
-                                var features = _ref11.features;
-                                return a.concat(features);
+                              features = fs.reduce(function (a, fc) {
+                                if (fc && fc.features) {
+                                  a = a.concat(fc.features);
+                                }
+
+                                return a;
                               }, []);
                               _layer4 = leafletSrc.geoJSON({
                                 type: 'FeatureCollection',
@@ -72351,7 +72342,7 @@ var Forestry = (function () {
       }());
 
       _this._view.on('change', /*#__PURE__*/function () {
-        var _ref12 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(e) {
+        var _ref11 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(e) {
           return regeneratorRuntime.wrap(function _callee10$(_context10) {
             while (1) {
               switch (_context10.prev = _context10.next) {
@@ -72368,7 +72359,7 @@ var Forestry = (function () {
         }));
 
         return function (_x9) {
-          return _ref12.apply(this, arguments);
+          return _ref11.apply(this, arguments);
         };
       }());
 
@@ -72814,22 +72805,22 @@ var Forestry = (function () {
       }
     }, {
       key: "_createTmsLayer",
-      value: function _createTmsLayer(_ref13) {
+      value: function _createTmsLayer(_ref12) {
         var _this3 = this;
 
-        var title = _ref13.title,
-            description = _ref13.description,
-            copyright = _ref13.copyright,
-            url = _ref13.url,
-            subdomains = _ref13.subdomains,
-            errorTileUrl = _ref13.errorTileUrl,
-            minZoom = _ref13.minZoom,
-            maxZoom = _ref13.maxZoom,
-            zoomOffset = _ref13.zoomOffset,
-            zoomReverse = _ref13.zoomReverse,
-            tileReverse = _ref13.tileReverse,
-            detectRetina = _ref13.detectRetina,
-            crossOrigin = _ref13.crossOrigin;
+        var title = _ref12.title,
+            description = _ref12.description,
+            copyright = _ref12.copyright,
+            url = _ref12.url,
+            subdomains = _ref12.subdomains,
+            errorTileUrl = _ref12.errorTileUrl,
+            minZoom = _ref12.minZoom,
+            maxZoom = _ref12.maxZoom,
+            zoomOffset = _ref12.zoomOffset,
+            zoomReverse = _ref12.zoomReverse,
+            tileReverse = _ref12.tileReverse,
+            detectRetina = _ref12.detectRetina,
+            crossOrigin = _ref12.crossOrigin;
         return new Promise(function (resolve) {
           var fd = new FormData();
           fd.append('WrapStyle', 'None');
@@ -72913,26 +72904,26 @@ var Forestry = (function () {
       }
     }, {
       key: "_createWmsLayer",
-      value: function _createWmsLayer(_ref14) {
+      value: function _createWmsLayer(_ref13) {
         var _this4 = this;
 
-        var title = _ref14.title,
-            description = _ref14.description,
-            copyright = _ref14.copyright,
-            url = _ref14.url,
-            subdomains = _ref14.subdomains,
-            errorTileUrl = _ref14.errorTileUrl,
-            minZoom = _ref14.minZoom,
-            maxZoom = _ref14.maxZoom,
-            zoomOffset = _ref14.zoomOffset,
-            zoomReverse = _ref14.zoomReverse,
-            tileReverse = _ref14.tileReverse,
-            detectRetina = _ref14.detectRetina,
-            crossOrigin = _ref14.crossOrigin,
-            layers = _ref14.layers,
-            styles = _ref14.styles,
-            format = _ref14.format,
-            transparent = _ref14.transparent;
+        var title = _ref13.title,
+            description = _ref13.description,
+            copyright = _ref13.copyright,
+            url = _ref13.url,
+            subdomains = _ref13.subdomains,
+            errorTileUrl = _ref13.errorTileUrl,
+            minZoom = _ref13.minZoom,
+            maxZoom = _ref13.maxZoom,
+            zoomOffset = _ref13.zoomOffset,
+            zoomReverse = _ref13.zoomReverse,
+            tileReverse = _ref13.tileReverse,
+            detectRetina = _ref13.detectRetina,
+            crossOrigin = _ref13.crossOrigin,
+            layers = _ref13.layers,
+            styles = _ref13.styles,
+            format = _ref13.format,
+            transparent = _ref13.transparent;
         return new Promise(function (resolve) {
           var _meta2;
 
@@ -73028,11 +73019,11 @@ var Forestry = (function () {
       }
     }, {
       key: "_createWfsLayer",
-      value: function _createWfsLayer(_ref15) {
+      value: function _createWfsLayer(_ref14) {
         var _this5 = this;
 
-        var title = _ref15.title,
-            url = _ref15.url;
+        var title = _ref14.title,
+            url = _ref14.url;
         return new Promise(function (resolve) {
           var fd = new FormData();
           fd.append('WrapStyle', 'None');
@@ -73105,7 +73096,7 @@ var Forestry = (function () {
     return Warehouses;
   }(LayerController);
 
-  T$1.addText('ru', {
+  add('ru', {
     notify: {
       error: 'Ошибка!',
       warn: 'Внимание!',
@@ -73113,7 +73104,7 @@ var Forestry = (function () {
     }
   });
 
-  var translate$2 = T$1.getText.bind(T$1);
+  var translate$2 = translate$t;
 
   var delay = function delay(timeout) {
     return new Promise(function (resolve) {
@@ -73241,7 +73232,7 @@ var Forestry = (function () {
     return Notification;
   }(Evented);
 
-  var translate$1 = T$1.getText.bind(T$1);
+  var translate$1 = translate$t;
   var ALLOWED_LAYERS = ['incidents_temporal', 'forestries_local', 'forestries', 'regions', 'fires', 'warehouses', 'roads', 'declarations', 'quadrants_editor', 'plots', 'projects', 'parks', 'stands', 'quadrants', 'sentinel', 'landsat', 'cadastre', 'plan', 'kppo', 'kppo_rgb', 'lpo', 'relief_hk', 'relief_zk'].reverse();
 
   var Map = /*#__PURE__*/function (_Evented) {
