@@ -67218,243 +67218,6 @@ var Forestry = (function () {
     return Plots;
   }(LayerController);
 
-  var strings$5 = {
-    ru: {
-      info: {
-        approve: 'Дата принятия решения о проведении аукциона',
-        available: 'Допустимые объемы изъятия (в год)',
-        cost: 'Начальная ставка',
-        period: 'Период проведения аукциона и идентификатор лота аукциона',
-        status: 'Статус аукциона'
-      },
-      project: {
-        create: 'Создать проект',
-        default: 'Проект ЛУ',
-        description: 'Описание',
-        edit: 'Редактировать проект',
-        forestry: 'Лесничество',
-        localForestry: 'Уч. лесничество',
-        quadrants: 'Кварталы',
-        request: 'Создать заявку',
-        save: 'Сохранить проект',
-        species: 'Порода',
-        stock: {
-          permitted: 'Доступный',
-          probable: 'Прогноз',
-          total: 'Таксация',
-          table: 'Данные о запасах',
-          label: 'Запас',
-          all: 'Итого',
-          general: 'всего',
-          deal: 'деловая',
-          title: 'Породный состав'
-        },
-        title: {
-          create: 'Создание проекта лесного участка',
-          edit: 'Редактирование проекта лесного участка'
-        },
-        tract: 'Урочище',
-        year: 'Год таксации'
-      }
-    }
-  };
-
-  var STYLES$2 = {
-    fillStyle: document.createElement('canvas').getContext('2d').createPattern(L.gmxUtil.getPatternIcon(null, {
-      type: '',
-      opacity: 1,
-      weight: 1,
-      fillOpacity: 1,
-      fillPattern: {
-        style: 'diagonal1',
-        width: 2,
-        step: 16,
-        colors: [parseInt('61E9F1', 16)]
-      },
-      common: true
-    }).canvas, 'repeat'),
-    strokeStyle: '#FFB701',
-    lineWidth: 2
-  };
-
-  var Info = /*#__PURE__*/function (_View) {
-    _inherits(Info, _View);
-
-    var _super = _createSuper(Info);
-
-    function Info(container) {
-      var _this;
-
-      _classCallCheck(this, Info);
-
-      _this = _super.call(this, container, strings$5);
-
-      _this._container.classList.add('scanex-forestry-view-project');
-
-      _this._container.innerHTML = "<h1>    \n            <button class=\"scanex-project-icon back\"></button>\n            <label class=\"title\"></label>\n        </h1>\n        <h2>\n            <label>".concat(_this.translate('project.forestry'), "</label>\n            <label class=\"forestry\"></label>\n        </h2>\n        <div class=\"content\">\n            <div class=\"stats scrollable\"></div>\n            <div class=\"chart\"></div>\n        </div>");
-
-      var btnBack = _this._container.querySelector('.back');
-
-      btnBack.addEventListener('click', function (e) {
-        e.stopPropagation();
-        var event = document.createEvent('Event');
-        event.initEvent('back', false, false);
-
-        _this.dispatchEvent(event);
-      });
-      _this._title = _this._container.querySelector('.title');
-      _this._forestry = _this._container.querySelector('.forestry');
-      _this._stats = _this._container.querySelector('.stats');
-      _this._chart = new apexcharts_common(_this._container.querySelector('.chart'), {
-        tooltip: {
-          x: {
-            formatter: _this.chartFormatDataLabels.bind(_assertThisInitialized(_this))
-          },
-          y: {
-            formatter: _this.chartFormatDataLabels.bind(_assertThisInitialized(_this))
-          }
-        },
-        colors: CHART_COLORS,
-        chart: {
-          type: 'donut',
-          width: '100%',
-          height: '150px',
-          fontFamily: 'Open Sans'
-        },
-        dataLabels: {
-          enabled: false
-        },
-        labels: [],
-        series: [],
-        legend: {
-          position: 'right',
-          // width: '180px',
-          fontSize: '12px',
-          formatter: _this.chartFormatLegend.bind(_assertThisInitialized(_this)),
-          horizontalAlign: 'right'
-        },
-        plotOptions: {
-          pie: {
-            donut: {
-              size: '85%',
-              labels: {
-                show: true,
-                value: {
-                  formatter: _this.chartFormatValue.bind(_assertThisInitialized(_this)),
-                  fontSize: '12px',
-                  show: true
-                },
-                total: {
-                  formatter: _this.chartFormatTotal.bind(_assertThisInitialized(_this)),
-                  label: _this.translate('quadrant.stock.all'),
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  show: true
-                }
-              }
-            }
-          }
-        }
-      });
-
-      _this._chart.render();
-
-      return _this;
-    }
-
-    _createClass(Info, [{
-      key: "getStyleHook",
-      value: function getStyleHook(kind, item) {
-        if (kind === 'projects') {
-          return item.id === this._gmx_id ? STYLES$2 : {};
-        } else {
-          return {};
-        }
-      }
-    }, {
-      key: "open",
-      value: function open(data) {
-        var _this2 = this;
-
-        _get(_getPrototypeOf(Info.prototype), "open", this).call(this);
-
-        var gmx_id = data.gmx_id;
-            data.Addres;
-            data.ApplicationForm;
-            var ApproveDate = data.ApproveDate;
-            data.ApproveName;
-            var AuctionEnd = data.AuctionEnd,
-            AuctionStart = data.AuctionStart;
-            data.AuctionURL;
-            data.CadastralNum;
-            data.Comments;
-            data.DeclineDate;
-            data.EgrFile;
-            var ForestAvailable = data.ForestAvailable,
-            ForestBlocks = data.ForestBlocks;
-            data.ForestProjectGeo;
-            data.ForestProjectID;
-            data.ForestStat;
-            var Forestry = data.Forestry;
-            data.OGRN;
-            data.Opf;
-            data.OrganizationName;
-            data.OwnerID;
-            data.PeriodUsage;
-            data.Phone;
-            data.PostAddress;
-            var RentCost = data.RentCost;
-            data.RentFile;
-            data.Square;
-            data.SquareStat;
-            var Status = data.Status;
-            data.TargetUsage;
-            var Title = data.Title;
-        this._gmx_id = gmx_id;
-        this._title.innerHTML = Title;
-        this._forestry.innerHTML = "".concat(Forestry, " ").concat(ForestBlocks);
-        var approveDate = ApproveDate && new Date(ApproveDate);
-        var start = AuctionStart && new Date(AuctionStart);
-        var end = AuctionEnd && new Date(AuctionEnd);
-        this._stats.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <tbody>\n                <tr>\n                    <td class=\"text\">".concat(this.translate('info.approve'), "</td>\n                    <td class=\"value\">").concat(approveDate && this.date(approveDate) || '', "</td>\n                </tr>\n                <tr>\n                    <td class=\"text\">").concat(this.translate('info.status'), "</td>\n                    <td class=\"value\">").concat(Status || '', "</td>\n                </tr>\n                <tr>\n                    <td class=\"text\">").concat(this.translate('info.period'), "</td>\n                    <td class=\"value\">").concat(start && end ? "".concat(this.date(start), " - ").concat(this.date(end)) : '', "</td>\n                </tr>\n                <tr>\n                    <td class=\"text\">").concat(this.translate('info.cost'), "</td>\n                    <td class=\"value\">").concat(this.rub(RentCost), "</td>\n                </tr>                \n                <tr>\n                    <td class=\"separator\" colspan=\"2\">").concat(this.translate('info.available'), ", ").concat(this.translate('units.m'), "<sup>3</sup></td>\n                </tr>\n                ").concat(Array.isArray(ForestAvailable) ? ForestAvailable.map(function (_ref) {
-          var species = _ref.species,
-              value = _ref.value;
-          return "<tr class=\"volumes\">\n                            <td class=\"text\">".concat(species, "</td>\n                            <td class=\"value\">").concat(_this2.m(value), "</td>\n                        </tr>");
-        }).join('') : '', "                \n            </tbody>\n        </table>");
-
-        if (Array.isArray(ForestAvailable)) {
-          var _ForestAvailable$redu = ForestAvailable.reduce(function (a, _ref2) {
-            var species = _ref2.species,
-                value = _ref2.value;
-            a.labels.push(species);
-            a.series.push(value);
-            return a;
-          }, {
-            labels: [],
-            series: []
-          }),
-              labels = _ForestAvailable$redu.labels,
-              series = _ForestAvailable$redu.series;
-
-          this._chart.updateOptions({
-            labels: labels
-          });
-
-          this._chart.updateSeries(series);
-        }
-      }
-    }, {
-      key: "close",
-      value: function close() {
-        this._gmx_id = null;
-
-        _get(_getPrototypeOf(Info.prototype), "close", this).call(this);
-      }
-    }]);
-
-    return Info;
-  }(View);
-
   var translate$d = translate$t;
 
   var Quadrants$2 = /*#__PURE__*/function (_Evented) {
@@ -67853,6 +67616,60 @@ var Forestry = (function () {
     }).canvas, 'repeat')
   };
 
+  var strings$5 = {
+    ru: {
+      quadrant: {
+        stock: {
+          permitted: 'Доступный',
+          probable: 'Прогноз',
+          total: 'Таксация',
+          table: 'Данные о запасах',
+          label: 'Запас (всего / деловая), м',
+          all: 'Итого',
+          general: 'всего',
+          deal: 'деловая',
+          species: 'Порода'
+        }
+      },
+      info: {
+        approve: 'Дата принятия решения о проведении аукциона',
+        available: 'Допустимые объемы изъятия (в год)',
+        cost: 'Начальная ставка',
+        period: 'Период проведения аукциона и идентификатор лота аукциона',
+        status: 'Статус аукциона'
+      },
+      project: {
+        create: 'Создать проект',
+        default: 'Проект ЛУ',
+        description: 'Описание',
+        edit: 'Редактировать проект',
+        forestry: 'Лесничество',
+        localForestry: 'Уч. лесничество',
+        quadrants: 'Кварталы',
+        request: 'Создать заявку',
+        save: 'Сохранить проект',
+        species: 'Порода',
+        stock: {
+          permitted: 'Доступный',
+          probable: 'Прогноз',
+          total: 'Таксация',
+          table: 'Данные о запасах',
+          label: 'Запас',
+          all: 'Итого',
+          general: 'всего',
+          deal: 'деловая',
+          title: 'Породный состав'
+        },
+        title: {
+          create: 'Создание проекта лесного участка',
+          edit: 'Редактирование проекта лесного участка'
+        },
+        tract: 'Урочище',
+        year: 'Год таксации'
+      }
+    }
+  };
+
   var Project = /*#__PURE__*/function (_BaseView) {
     _inherits(Project, _BaseView);
 
@@ -68070,6 +67887,202 @@ var Forestry = (function () {
     }]);
 
     return Project;
+  }(View);
+
+  var STYLES$2 = {
+    fillStyle: document.createElement('canvas').getContext('2d').createPattern(L.gmxUtil.getPatternIcon(null, {
+      type: '',
+      opacity: 1,
+      weight: 1,
+      fillOpacity: 1,
+      fillPattern: {
+        style: 'diagonal1',
+        width: 2,
+        step: 16,
+        colors: [parseInt('61E9F1', 16)]
+      },
+      common: true
+    }).canvas, 'repeat'),
+    strokeStyle: '#FFB701',
+    lineWidth: 2
+  };
+
+  var Info = /*#__PURE__*/function (_View) {
+    _inherits(Info, _View);
+
+    var _super = _createSuper(Info);
+
+    function Info(container) {
+      var _this;
+
+      _classCallCheck(this, Info);
+
+      _this = _super.call(this, container, strings$5);
+
+      _this._container.classList.add('scanex-forestry-view-project');
+
+      _this._container.innerHTML = "<h1>    \n            <button class=\"scanex-project-icon back\"></button>\n            <label class=\"title\"></label>\n        </h1>\n        <h2>\n            <label>".concat(_this.translate('project.forestry'), "</label>\n            <label class=\"forestry\"></label>\n        </h2>\n        <div class=\"content\">\n            <div class=\"stats scrollable\"></div>\n            <div class=\"chart\"></div>\n        </div>");
+
+      var btnBack = _this._container.querySelector('.back');
+
+      btnBack.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var event = document.createEvent('Event');
+        event.initEvent('back', false, false);
+
+        _this.dispatchEvent(event);
+      });
+      _this._title = _this._container.querySelector('.title');
+      _this._forestry = _this._container.querySelector('.forestry');
+      _this._stats = _this._container.querySelector('.stats');
+      _this._chart = new apexcharts_common(_this._container.querySelector('.chart'), {
+        tooltip: {
+          x: {
+            formatter: _this.chartFormatDataLabels.bind(_assertThisInitialized(_this))
+          },
+          y: {
+            formatter: _this.chartFormatDataLabels.bind(_assertThisInitialized(_this))
+          }
+        },
+        colors: CHART_COLORS,
+        chart: {
+          type: 'donut',
+          width: '100%',
+          height: '150px',
+          fontFamily: 'Open Sans'
+        },
+        dataLabels: {
+          enabled: false
+        },
+        labels: [],
+        series: [],
+        legend: {
+          position: 'right',
+          // width: '180px',
+          fontSize: '12px',
+          formatter: _this.chartFormatLegend.bind(_assertThisInitialized(_this)),
+          horizontalAlign: 'right'
+        },
+        plotOptions: {
+          pie: {
+            donut: {
+              size: '85%',
+              labels: {
+                show: true,
+                value: {
+                  formatter: _this.chartFormatValue.bind(_assertThisInitialized(_this)),
+                  fontSize: '12px',
+                  show: true
+                },
+                total: {
+                  formatter: _this.chartFormatTotal.bind(_assertThisInitialized(_this)),
+                  label: _this.translate('quadrant.stock.all'),
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  show: true
+                }
+              }
+            }
+          }
+        }
+      });
+
+      _this._chart.render();
+
+      return _this;
+    }
+
+    _createClass(Info, [{
+      key: "getStyleHook",
+      value: function getStyleHook(kind, item) {
+        if (kind === 'projects') {
+          return item.id === this._gmx_id ? STYLES$2 : {};
+        } else {
+          return {};
+        }
+      }
+    }, {
+      key: "open",
+      value: function open(data) {
+        var _this2 = this;
+
+        _get(_getPrototypeOf(Info.prototype), "open", this).call(this);
+
+        var gmx_id = data.gmx_id;
+            data.Addres;
+            data.ApplicationForm;
+            var ApproveDate = data.ApproveDate;
+            data.ApproveName;
+            var AuctionEnd = data.AuctionEnd,
+            AuctionStart = data.AuctionStart;
+            data.AuctionURL;
+            data.CadastralNum;
+            data.Comments;
+            data.DeclineDate;
+            data.EgrFile;
+            var ForestAvailable = data.ForestAvailable,
+            ForestBlocks = data.ForestBlocks;
+            data.ForestProjectGeo;
+            data.ForestProjectID;
+            data.ForestStat;
+            var Forestry = data.Forestry;
+            data.OGRN;
+            data.Opf;
+            data.OrganizationName;
+            data.OwnerID;
+            data.PeriodUsage;
+            data.Phone;
+            data.PostAddress;
+            var RentCost = data.RentCost;
+            data.RentFile;
+            data.Square;
+            data.SquareStat;
+            var Status = data.Status;
+            data.TargetUsage;
+            var Title = data.Title;
+        this._gmx_id = gmx_id;
+        this._title.innerHTML = Title;
+        this._forestry.innerHTML = "".concat(Forestry, " ").concat(ForestBlocks);
+        var approveDate = ApproveDate && new Date(ApproveDate);
+        var start = AuctionStart && new Date(AuctionStart);
+        var end = AuctionEnd && new Date(AuctionEnd);
+        this._stats.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <tbody>\n                <tr>\n                    <td class=\"text\">".concat(this.translate('info.approve'), "</td>\n                    <td class=\"value\">").concat(approveDate && this.date(approveDate) || '', "</td>\n                </tr>\n                <tr>\n                    <td class=\"text\">").concat(this.translate('info.status'), "</td>\n                    <td class=\"value\">").concat(Status || '', "</td>\n                </tr>\n                <tr>\n                    <td class=\"text\">").concat(this.translate('info.period'), "</td>\n                    <td class=\"value\">").concat(start && end ? "".concat(this.date(start), " - ").concat(this.date(end)) : '', "</td>\n                </tr>\n                <tr>\n                    <td class=\"text\">").concat(this.translate('info.cost'), "</td>\n                    <td class=\"value\">").concat(this.rub(RentCost), "</td>\n                </tr>                \n                <tr>\n                    <td class=\"separator\" colspan=\"2\">").concat(this.translate('info.available'), ", ").concat(this.translate('units.m'), "<sup>3</sup></td>\n                </tr>\n                ").concat(Array.isArray(ForestAvailable) ? ForestAvailable.map(function (_ref) {
+          var species = _ref.species,
+              value = _ref.value;
+          return "<tr class=\"volumes\">\n                            <td class=\"text\">".concat(species, "</td>\n                            <td class=\"value\">").concat(_this2.m(value), "</td>\n                        </tr>");
+        }).join('') : '', "                \n            </tbody>\n        </table>");
+
+        if (Array.isArray(ForestAvailable)) {
+          var _ForestAvailable$redu = ForestAvailable.reduce(function (a, _ref2) {
+            var species = _ref2.species,
+                value = _ref2.value;
+            a.labels.push(species);
+            a.series.push(value);
+            return a;
+          }, {
+            labels: [],
+            series: []
+          }),
+              labels = _ForestAvailable$redu.labels,
+              series = _ForestAvailable$redu.series;
+
+          this._chart.updateOptions({
+            labels: labels
+          });
+
+          this._chart.updateSeries(series);
+        }
+      }
+    }, {
+      key: "close",
+      value: function close() {
+        this._gmx_id = null;
+
+        _get(_getPrototypeOf(Info.prototype), "close", this).call(this);
+      }
+    }]);
+
+    return Info;
   }(View);
 
   var translate$a = translate$t;
