@@ -37055,7 +37055,7 @@ var Forestry = (function () {
       this._visible = false;
       this._container = leafletSrc.DomUtil.create('div', 'scanex-baselayers');
       this._content = leafletSrc.DomUtil.create('div', 'content', this._container);
-      this._icon = leafletSrc.DomUtil.create('i', 'scanex-baselayers-icon icon', this._container);
+      this._icon = leafletSrc.DomUtil.create('div', 'scanex-baselayers-icon icon', this._container);
       leafletSrc.DomEvent.on(this._icon, 'click', function (e) {
         leafletSrc.DomEvent.stopPropagation(e);
 
