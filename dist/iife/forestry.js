@@ -37056,7 +37056,7 @@ var Forestry = (function () {
       this._container = leafletSrc.DomUtil.create('div', 'scanex-baselayers');
       this._content = leafletSrc.DomUtil.create('div', 'content', this._container);
       this._icon = leafletSrc.DomUtil.create('div', 'scanex-baselayers-icon icon', this._container);
-      leafletSrc.DomEvent.on(this._icon, 'click', function (e) {
+      leafletSrc.DomEvent.on(this._icon, 'mousedown', function (e) {
         leafletSrc.DomEvent.stopPropagation(e);
 
         if (_this._visible) {
@@ -37071,7 +37071,7 @@ var Forestry = (function () {
         var addContainer = leafletSrc.DomUtil.create('div', 'baselayer-add', this._content);
         var contentContainer = leafletSrc.DomUtil.create('div', 'baselayer-content', addContainer);
         leafletSrc.DomUtil.create('i', 'scanex-baselayers-icon add', contentContainer);
-        leafletSrc.DomEvent.on(contentContainer, 'click', function (e) {
+        leafletSrc.DomEvent.on(contentContainer, 'mousedown', function (e) {
           leafletSrc.DomEvent.stopPropagation(e);
 
           _this.fire('add');
