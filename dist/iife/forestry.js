@@ -48871,7 +48871,7 @@ var Forestry = (function () {
         title: 'ООПТ',
         name: 'Наименование',
         type: 'Категория ООПТ',
-        year: 'Постановление',
+        attr: 'Постановление',
         prov: 'Уровень защиты',
         area: 'Площадь'
       }
@@ -48932,11 +48932,12 @@ var Forestry = (function () {
 
         this._gmx_id = gmx_id;
         var NAME_R = properties.NAME_R,
-            TYPE_NL = properties.TYPE_NL,
-            YEAR_ = properties.YEAR_,
-            PROV_NL = properties.PROV_NL,
+            TYPE_NL = properties.TYPE_NL;
+            properties.YEAR_;
+            var PROV_NL = properties.PROV_NL,
+            DOC_ATTR = properties.DOC_ATTR,
             AREA_DOC = properties.AREA_DOC;
-        this._container.innerHTML = "<h1>".concat(this.translate('park.title'), ": ").concat(NAME_R, "</h1>\n\t\t\t<table cellspacing=\"0\" cellpadding=\"0\">\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('park.name'), "</td>\n\t\t\t\t\t<td class=\"name value\">").concat(NAME_R, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('park.type'), "</td>\n\t\t\t\t\t<td class=\"type value\">").concat(TYPE_NL, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('park.year'), "</td>\n\t\t\t\t\t<td class=\"year value\">").concat(YEAR_, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('park.prov'), "</td>\n\t\t\t\t\t<td class=\"prov value\">").concat(PROV_NL, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('park.area'), ", ").concat(this.translate('units.ha'), "</td>\n\t\t\t\t\t<td class=\"area value\">").concat(this.m(AREA_DOC), "</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
+        this._container.innerHTML = "<h1>".concat(this.translate('park.title'), ": ").concat(NAME_R, "</h1>\n\t\t\t<table cellspacing=\"0\" cellpadding=\"0\">\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('park.name'), "</td>\n\t\t\t\t\t<td class=\"name value\">").concat(NAME_R, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('park.type'), "</td>\n\t\t\t\t\t<td class=\"type value\">").concat(TYPE_NL, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('park.attr'), "</td>\n\t\t\t\t\t<td class=\"attr value\">").concat(DOC_ATTR, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('park.prov'), "</td>\n\t\t\t\t\t<td class=\"prov value\">").concat(PROV_NL, "</td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"text\">").concat(this.translate('park.area'), ", ").concat(this.translate('units.ha'), "</td>\n\t\t\t\t\t<td class=\"area value\">").concat(this.m(AREA_DOC), "</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
       }
     }, {
       key: "close",
@@ -48964,7 +48965,7 @@ var Forestry = (function () {
           content = _ref.content,
           notification = _ref.notification,
           loading = _ref.loading,
-          layer = _ref.layer,
+          layers = _ref.layers,
           legend = _ref.legend,
           permissions = _ref.permissions;
 
@@ -48976,78 +48977,72 @@ var Forestry = (function () {
         notification: notification,
         loading: loading
       });
-      _this._layer = layer;
+      _this._layers = layers;
       _this._legend = legend;
       _this._permissions = permissions;
 
-      if (_this._permissions.FederalSPNA || _this._permissions.RegionalSPNA) {
-        _this._cache = {};
+      if (_this._layers.fed_parks && _this._permissions.FederalSPNA) {
+        _this._legend.addComponent('parks-federal', translate$e("legend.parks_federal"));
 
-        var _this$_layer$getGmxPr = _this._layer.getGmxProperties(),
-            attributes = _this$_layer$getGmxPr.attributes;
+        _this._layers.fed_parks.setStyleHook(function (item) {
+          var c = _this._content.getCurrent();
 
-        _this._tid = attributes.indexOf('oopt_type_id');
+          if (c) {
+            return c.getStyleHook('parks', item);
+          } else {
+            return {};
+          }
+        });
 
-        if (_this._tid >= 0) {
-          _this._tid += 1;
-        }
+        _this._layers.fed_parks.on('click', _this._clickFederal, _assertThisInitialized(_this));
+      }
 
-        if (_this._permissions.FederalSPNA) {
-          _this._legend.addComponent('parks-federal', translate$e("legend.parks_federal"));
-        }
+      if (_this._layers.reg_parks && _this._permissions.RegionalSPNA) {
+        _this._legend.addComponent('parks-regional', translate$e("legend.parks_regional"));
 
-        if (_this._permissions.RegionalSPNA) {
-          _this._legend.addComponent('parks-regional', translate$e("legend.parks_regional"));
-        }
+        _this._layers.reg_parks.setStyleHook(function (item) {
+          var c = _this._content.getCurrent();
 
-        _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
+          if (c) {
+            return c.getStyleHook('parks', item);
+          } else {
+            return {};
+          }
+        });
 
-        _this._layer.setFilter(_this.getFilter.bind(_assertThisInitialized(_this)));
-      } else {
+        _this._layers.reg_parks.on('click', _this._clickRegional, _assertThisInitialized(_this));
+      }
+
+      if (_this._layers.parks && _this._permissions.SPNA) {
         _this._legend.addComponent('parks', translate$e("legend.parks"));
+
+        _this._layers.parks.setStyleHook(function (item) {
+          var c = _this._content.getCurrent();
+
+          if (c) {
+            return c.getStyleHook('parks', item);
+          } else {
+            return {};
+          }
+        });
+
+        _this._layers.parks.on('click', _this._clickParks, _assertThisInitialized(_this));
       }
 
       _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
 
-      _this._layer.on('click', _this._click, _assertThisInitialized(_this));
-
-      _this._layer.setStyleHook(function (item) {
-        var c = _this._content.getCurrent();
-
-        if (c) {
-          return c.getStyleHook('parks', item);
-        } else {
-          return {};
-        }
-      });
-
       _this._view = _this._content.add('parks', Parks$1);
 
       _this._view.on('close', function () {
-        _this._layer.repaint();
+        _this._layers.fed_parks && _this._layers.fed_parks.repaint();
+        _this._layers.reg_parks && _this._layers.reg_parks.repaint();
+        _this._layers.parks && _this._layers.parks.repaint();
       });
 
       return _this;
     }
 
     _createClass(Parks, [{
-      key: "getFilter",
-      value: function getFilter(_ref2) {
-        var properties = _ref2.properties;
-        var t = properties[this._tid];
-
-        switch (t) {
-          case 1:
-            return this._cache['parks-federal'];
-
-          case 2:
-            return this._cache['parks-regional'];
-
-          default:
-            return false;
-        }
-      }
-    }, {
       key: "_toggle",
       value: function _toggle(e) {
         var id = e.id,
@@ -49055,79 +49050,111 @@ var Forestry = (function () {
 
         switch (id) {
           case 'parks-federal':
+            if (visible) {
+              this._layers.fed_parks && this._map.addLayer(this._layers.fed_parks);
+            } else {
+              this._layers.fed_parks && this._map.removeLayer(this._layers.fed_parks);
+            }
+
+            this._layers.fed_parks && this._layers.fed_parks.repaint();
+            break;
+
           case 'parks-regional':
             if (visible) {
-              this._cache[id] = true;
+              this._layers.reg_parks && this._map.addLayer(this._layers.reg_parks);
             } else {
-              delete this._cache[id];
+              this._layers.reg_parks && this._map.removeLayer(this._layers.reg_parks);
             }
 
-            if (visible) {
-              this._map.addLayer(this._layer);
-            } else if (Object.keys(this._cache).length === 0) {
-              this._map.removeLayer(this._layer);
-            }
-
-            this._layer.repaint();
-
+            this._layers.reg_parks && this._layers.reg_parks.repaint();
             break;
 
           case 'parks':
             if (visible) {
-              this._map.addLayer(this._layer);
+              this._layers.parks && this._map.addLayer(this._layers.parks);
             } else {
-              this._map.removeLayer(this._layer);
+              this._layers.parks && this._map.removeLayer(this._layers.parks);
             }
 
-            this._layer.repaint();
-
+            this._layers.parks && this._layers.parks.repaint();
             break;
         }
       }
     }, {
-      key: "_click",
-      value: function () {
-        var _click2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e) {
-          var _e$gmx, id, properties;
+      key: "_clickParks",
+      value: function _clickParks(e) {
+        if (this.canClick) {
+          L.DomEvent.stopPropagation(e);
+          var _e$gmx = e.gmx,
+              id = _e$gmx.id,
+              properties = _e$gmx.properties;
 
-          return regeneratorRuntime.wrap(function _callee$(_context) {
-            while (1) {
-              switch (_context.prev = _context.next) {
-                case 0:
-                  if (this.canClick) {
-                    L.DomEvent.stopPropagation(e);
-                    _e$gmx = e.gmx, id = _e$gmx.id, properties = _e$gmx.properties;
+          if (this._gmx_id && this._gmx_id === id) {
+            this._gmx_id = null;
 
-                    if (this._gmx_id && this._gmx_id === id) {
-                      this._gmx_id = null;
+            this._view.close();
+          } else {
+            this._gmx_id = id;
 
-                      this._view.close();
-                    } else {
-                      this._gmx_id = id;
+            this._view.open({
+              gmx_id: id,
+              properties: properties
+            });
+          }
 
-                      this._view.open({
-                        gmx_id: id,
-                        properties: properties
-                      });
-                    }
-
-                    this._layer.repaint();
-                  }
-
-                case 1:
-                case "end":
-                  return _context.stop();
-              }
-            }
-          }, _callee, this);
-        }));
-
-        function _click(_x) {
-          return _click2.apply(this, arguments);
+          this._layers.parks && this._layers.parks.repaint();
         }
+      }
+    }, {
+      key: "_clickFederal",
+      value: function _clickFederal(e) {
+        if (this.canClick) {
+          L.DomEvent.stopPropagation(e);
+          var _e$gmx2 = e.gmx,
+              id = _e$gmx2.id,
+              properties = _e$gmx2.properties;
 
-        return _click;
-      }()
+          if (this._gmx_id && this._gmx_id === id) {
+            this._gmx_id = null;
+
+            this._view.close();
+          } else {
+            this._gmx_id = id;
+
+            this._view.open({
+              gmx_id: id,
+              properties: properties
+            });
+          }
+
+          this._layers.fed_parks && this._layers.fed_parks.repaint();
+        }
+      }
+    }, {
+      key: "_clickRegional",
+      value: function _clickRegional(e) {
+        if (this.canClick) {
+          L.DomEvent.stopPropagation(e);
+          var _e$gmx3 = e.gmx,
+              id = _e$gmx3.id,
+              properties = _e$gmx3.properties;
+
+          if (this._gmx_id && this._gmx_id === id) {
+            this._gmx_id = null;
+
+            this._view.close();
+          } else {
+            this._gmx_id = id;
+
+            this._view.open({
+              gmx_id: id,
+              properties: properties
+            });
+          }
+
+          this._layers.reg_parks && this._layers.reg_parks.repaint();
+        }
+      }
     }]);
 
     return Parks;
@@ -73246,7 +73273,7 @@ var Forestry = (function () {
   }(Evented);
 
   var translate$1 = translate$t;
-  var ALLOWED_LAYERS = ['incidents_temporal', 'forestries_local', 'forestries', 'regions', 'fires', 'warehouses', 'roads', 'declarations', 'quadrants_editor', 'plots', 'projects', 'parks', 'stands', 'quadrants', 'sentinel', 'landsat', 'cadastre', 'plan', 'kppo', 'kppo_rgb', 'lpo', 'relief_hk', 'relief_zk'].reverse();
+  var ALLOWED_LAYERS = ['incidents_temporal', 'forestries_local', 'forestries', 'regions', 'fires', 'warehouses', 'roads', 'declarations', 'quadrants_editor', 'plots', 'projects', 'reg_parks', 'fed_parks', 'parks', 'stands', 'quadrants', 'sentinel', 'landsat', 'cadastre', 'plan', 'kppo', 'kppo_rgb', 'lpo', 'relief_hk', 'relief_zk'].reverse();
 
   var Map = /*#__PURE__*/function (_Evented) {
     _inherits(Map, _Evented);
@@ -73780,7 +73807,7 @@ var Forestry = (function () {
                   if (this._layers.parks && this._permissions.SPNA) {
                     this._controllers.parks = new Parks({
                       map: this._map,
-                      layer: this._layers.parks,
+                      layers: this._layers,
                       legend: this._legend,
                       content: this._content,
                       path: this._apiPath,
