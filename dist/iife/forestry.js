@@ -23903,7 +23903,7 @@ var Forestry = (function () {
     }
   }
 
-  function translate$t(path) {
+  function translate$u(path) {
     return get_translation(langs[language], path);
   }
 
@@ -24178,7 +24178,7 @@ var Forestry = (function () {
             attributes: ['scale', 'count', 'label', 'startDate', 'endDate', 'dateRange', 'isIndustrial'],
             styles: [{
               Filter: '"isIndustrial"=0',
-              Balloon: translate$t('FireVirtualLayer.LayerClusterBalloon'),
+              Balloon: translate$u('FireVirtualLayer.LayerClusterBalloon'),
               MinZoom: 1,
               MaxZoom: this.options.minGeomZoom - 1,
               RenderStyle: {
@@ -24199,7 +24199,7 @@ var Forestry = (function () {
               }
             }, {
               Filter: '"isIndustrial"=1',
-              Balloon: translate$t('FireVirtualLayer.LayerClusterBalloonIndustrial'),
+              Balloon: translate$u('FireVirtualLayer.LayerClusterBalloonIndustrial'),
               MinZoom: 1,
               MaxZoom: this.options.minGeomZoom - 1,
               RenderStyle: {
@@ -24222,7 +24222,7 @@ var Forestry = (function () {
             title: 'FirePolygons',
             attributes: ['scale', 'count', 'label', 'startDate', 'endDate', 'dateRange', 'isIndustrial'],
             styles: [{
-              Balloon: translate$t('FireVirtualLayer.LayerGeometryBalloon'),
+              Balloon: translate$u('FireVirtualLayer.LayerGeometryBalloon'),
               MinZoom: this.options.minGeomZoom,
               MaxZoom: 21,
               RenderStyle: {
@@ -24279,7 +24279,7 @@ var Forestry = (function () {
         this._clustersLayer.on('popupopen', function (event) {
           var popup = event.popup,
               html = popup.getContent(),
-              title = translate$t('FireVirtualLayer.zoomInMessage'),
+              title = translate$u('FireVirtualLayer.zoomInMessage'),
               cont = L.DomUtil.create('div', '');
           cont.appendChild(html);
           var zoomLink = L.DomUtil.create('div', '', cont); // zoomLink = $('<div style="margin-top: 5px;"><a href="javascript:void(0)"><i>' + title + '</i></a></div>').click(function() {
@@ -35628,7 +35628,7 @@ var Forestry = (function () {
 
   L.gmx.timeline = links;
 
-  var translate$s = translate$t;
+  var translate$t = translate$u;
   add('ru', {
     DateInterval: {
       onlyChecked: 'Только отмеченные',
@@ -35664,20 +35664,20 @@ var Forestry = (function () {
       this._tabs = leafletSrc.DomUtil.create('div', 'buttons', this._container);
       this._timelineNode = leafletSrc.DomUtil.create('div', 'timeline', this._container);
       this._icon = leafletSrc.DomUtil.create('div', 'icon', this._container);
-      this._icon.innerHTML = translate$s('DateInterval.title');
+      this._icon.innerHTML = translate$t('DateInterval.title');
       this._topCont = leafletSrc.DomUtil.create('div', 'top', this._container);
       this._onlyCheckedNode = leafletSrc.DomUtil.create('input', '', this._topCont);
       this._onlyCheckedNode.type = 'checkbox';
       this._onlyCheckedNode.checked = true;
       leafletSrc.DomEvent.on(this._onlyCheckedNode, 'click', this._onlyChecked, this);
       this._onlyCheckedLabel = leafletSrc.DomUtil.create('label', '', this._topCont);
-      this._onlyCheckedLabel.innerHTML = translate$s('DateInterval.onlyChecked');
+      this._onlyCheckedLabel.innerHTML = translate$t('DateInterval.onlyChecked');
       this._onlyOneNode = leafletSrc.DomUtil.create('input', '', this._topCont);
       this._onlyOneNode.type = 'checkbox';
       this._onlyOneNode.checked = true;
       leafletSrc.DomEvent.on(this._onlyOneNode, 'click', this._onlyOne, this);
       this._onlyOneLabel = leafletSrc.DomUtil.create('label', '', this._topCont);
-      this._onlyOneLabel.innerHTML = translate$s('DateInterval.onlyOne');
+      this._onlyOneLabel.innerHTML = translate$t('DateInterval.onlyOne');
       this._timeline = new links.Timeline(this._timelineNode, {
         locale: 'ru',
         width: '100%',
@@ -36400,7 +36400,7 @@ var Forestry = (function () {
       m: 'м'
     }
   });
-  var translate$r = translate$t;
+  var translate$s = translate$u;
   var _mzoom = ['M 1:500 000 000', //  0   156543.03392804
   'M 1:300 000 000', //  1   78271.51696402
   'M 1:150 000 000', //  2   39135.75848201
@@ -36474,12 +36474,12 @@ var Forestry = (function () {
       }
 
       this.locationTxt = leafletSrc.DomUtil.create('span', 'leaflet-gmx-locationTxt', container);
-      this.locationTxt.title = translate$r('gmxLocation.locationTxt');
+      this.locationTxt.title = translate$s('gmxLocation.locationTxt');
       this.coordFormatChange = leafletSrc.DomUtil.create('span', 'leaflet-gmx-coordFormatChange', container);
-      this.coordFormatChange.title = translate$r('gmxLocation.coordFormatChange');
+      this.coordFormatChange.title = translate$s('gmxLocation.coordFormatChange');
       this.scaleBar = leafletSrc.DomUtil.create('span', 'leaflet-gmx-scaleBar', container);
       this.scaleBarTxt = leafletSrc.DomUtil.create('span', 'leaflet-gmx-scaleBarTxt', container);
-      this.scaleBarTxt.title = this.scaleBar.title = translate$r('gmxLocation.scaleBarChange');
+      this.scaleBarTxt.title = this.scaleBar.title = translate$s('gmxLocation.scaleBarChange');
       this._map = map;
       var util = {
         coordFormat: this.options.coordinatesFormat || 0,
@@ -36537,7 +36537,7 @@ var Forestry = (function () {
             leafletSrc.DomEvent.on(button, 'click', function () {
               util.goTo(input.value);
             });
-            span.innerHTML = translate$r('gmxLocation.locationChange');
+            span.innerHTML = translate$s('gmxLocation.locationChange');
             input.value = oldText;
             leafletSrc.DomEvent.on(input, 'keydown', function (ev) {
               if (ev.which === 13) {
@@ -36723,11 +36723,11 @@ var Forestry = (function () {
     utils.prettifyDistance = function (length) {
       var type = '',
           //map.DistanceUnit
-      txt = translate$r('units.km') || 'km',
+      txt = translate$s('units.km') || 'km',
           km = ' ' + txt;
 
       if (length < 2000 || type === 'm') {
-        txt = translate$r('units.m') || 'm';
+        txt = translate$s('units.m') || 'm';
         return Math.round(length) + ' ' + txt;
       } else if (length < 200000) {
         return Math.round(length / 10) / 100 + km;
@@ -37311,6 +37311,8 @@ var Forestry = (function () {
         plots: 'Арендованные участки',
         projects: 'Проекты участков',
         quadrants: 'Квартальная сеть',
+        quadrants_protected: 'Особозащитные леса',
+        quadrants_reserved: 'Резервные леса',
         rasters: 'Спутниковые снимки',
         regions: 'Регионы',
         relief: 'Рельеф',
@@ -37349,7 +37351,7 @@ var Forestry = (function () {
   Object.keys(s).forEach(function (lang) {
     return add(lang, s[lang]);
   });
-  var translate$q = translate$t;
+  var translate$r = translate$u;
   var TASK_POLLING_DELAY = 3000;
   var NOTIFY_TIMEOUT = 5000;
 
@@ -37384,42 +37386,43 @@ var Forestry = (function () {
             return true;
 
           case 400:
-            this._notification.error(translate$q('error.badrequest'), NOTIFY_TIMEOUT);
+            this._notification.error(translate$r('error.badrequest'), NOTIFY_TIMEOUT);
 
             return false;
 
           case 401:
-            this._notification.error(translate$q('error.unauthorized'), NOTIFY_TIMEOUT);
+            this._notification.error(translate$r('error.unauthorized'), NOTIFY_TIMEOUT);
 
+            window.location.reload();
             return false;
 
           case 403:
-            this._notification.error(translate$q('error.forbidden'), NOTIFY_TIMEOUT);
+            this._notification.error(translate$r('error.forbidden'), NOTIFY_TIMEOUT);
 
             return false;
 
           case 404:
-            this._notification.error(translate$q('error.validation'), NOTIFY_TIMEOUT);
+            this._notification.error(translate$r('error.validation'), NOTIFY_TIMEOUT);
 
             return false;
 
           case 500:
-            this._notification.error(translate$q('error.server'), NOTIFY_TIMEOUT);
+            this._notification.error(translate$r('error.server'), NOTIFY_TIMEOUT);
 
             return false;
 
           case 502:
-            this._notification.error(translate$q('error.gateway'), NOTIFY_TIMEOUT);
+            this._notification.error(translate$r('error.gateway'), NOTIFY_TIMEOUT);
 
             return false;
 
           case 503:
-            this._notification.error(translate$q('error.unavailable'), NOTIFY_TIMEOUT);
+            this._notification.error(translate$r('error.unavailable'), NOTIFY_TIMEOUT);
 
             return false;
 
           default:
-            this._notification.error(translate$q('error.other'), NOTIFY_TIMEOUT);
+            this._notification.error(translate$r('error.other'), NOTIFY_TIMEOUT);
 
             return false;
         }
@@ -37678,7 +37681,7 @@ var Forestry = (function () {
         }
       });
 
-      _this8._legend.addComponent(_this8._kind, translate$q("legend.".concat(_this8._kind)));
+      _this8._legend.addComponent(_this8._kind, translate$r("legend.".concat(_this8._kind)));
 
       _this8._legend.on('click', _this8._toggle, _assertThisInitialized(_this8));
 
@@ -37895,7 +37898,7 @@ var Forestry = (function () {
       }
     }
   });
-  var translate$p = T.getText.bind(T);
+  var translate$q = T.getText.bind(T);
 
   var Dialog = /*#__PURE__*/function (_Component) {
     _inherits(Dialog, _Component);
@@ -38000,7 +38003,7 @@ var Forestry = (function () {
         e.stopPropagation();
 
         if (this._btnToggle.classList.contains('minimize')) {
-          this._btnToggle.setAttribute('title', translate$p('scanex.components.dialog.maximize'));
+          this._btnToggle.setAttribute('title', translate$q('scanex.components.dialog.maximize'));
 
           this._btnToggle.classList.remove('minimize');
 
@@ -38014,7 +38017,7 @@ var Forestry = (function () {
           event.initEvent('minimize', false, false);
           this.dispatchEvent(event);
         } else {
-          this._btnToggle.setAttribute('title', translate$p('scanex.components.dialog.minimize'));
+          this._btnToggle.setAttribute('title', translate$q('scanex.components.dialog.minimize'));
 
           this._btnToggle.classList.remove('maximize');
 
@@ -38086,7 +38089,7 @@ var Forestry = (function () {
         if (collapsible && !modal) {
           this._btnToggle = document.createElement('i');
 
-          this._btnToggle.setAttribute('title', translate$p('scanex.components.dialog.minimize'));
+          this._btnToggle.setAttribute('title', translate$q('scanex.components.dialog.minimize'));
 
           this._btnToggle.classList.add('scanex-component-icon');
 
@@ -38098,7 +38101,7 @@ var Forestry = (function () {
         }
 
         var btnClose = document.createElement('i');
-        btnClose.setAttribute('title', translate$p('scanex.components.dialog.close'));
+        btnClose.setAttribute('title', translate$q('scanex.components.dialog.close'));
         btnClose.classList.add('scanex-component-icon');
         btnClose.classList.add('close');
         btnClose.addEventListener('click', this._close.bind(this));
@@ -38169,7 +38172,7 @@ var Forestry = (function () {
     isInteger: isInteger
   });
 
-  var translate$o = T.getText.bind(T);
+  var translate$p = T.getText.bind(T);
   T.addText('ru', {
     pager: {
       previous: 'Предыдущая',
@@ -38194,7 +38197,7 @@ var Forestry = (function () {
         var _this = this;
 
         element.classList.add('scanex-component-pager');
-        element.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <tr>\n                <td>\n                    <button class=\"first\">1</button>\n                </td>                \n                <td>\n                    <button class=\"previous\">".concat(translate$o('pager.previous'), "</button>\n                </td>\n                <td>\n                    <input type=\"text\" value=\"\" />\n                </td>\n                <td>\n                    <button class=\"next\">").concat(translate$o('pager.next'), "</button>\n                </td>                \n                <td>\n                    <button class=\"last\"></button>\n                </td>\n            </tr>\n        </table>");
+        element.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <tr>\n                <td>\n                    <button class=\"first\">1</button>\n                </td>                \n                <td>\n                    <button class=\"previous\">".concat(translate$p('pager.previous'), "</button>\n                </td>\n                <td>\n                    <input type=\"text\" value=\"\" />\n                </td>\n                <td>\n                    <button class=\"next\">").concat(translate$p('pager.next'), "</button>\n                </td>                \n                <td>\n                    <button class=\"last\"></button>\n                </td>\n            </tr>\n        </table>");
         element.querySelector('.first').addEventListener('click', function (e) {
           e.stopPropagation();
           _this.page = 1;
@@ -38826,7 +38829,7 @@ var Forestry = (function () {
   Object.keys(strings$b).forEach(function (lang) {
     return add(lang, strings$b[lang]);
   });
-  var translate$n = translate$t;
+  var translate$o = translate$u;
 
   var View$1 = /*#__PURE__*/function (_Dialog) {
     _inherits(View, _Dialog);
@@ -38839,7 +38842,7 @@ var Forestry = (function () {
       _classCallCheck(this, View);
 
       _this = _super.call(this, {
-        title: translate$n('baselayers.title'),
+        title: translate$o('baselayers.title'),
         top: 50,
         left: 450,
         modal: true
@@ -38847,7 +38850,7 @@ var Forestry = (function () {
 
       _this._element.classList.add('scanex-forestry-baselayers-view');
 
-      _this.content.innerHTML = "\n        <div class=\"name\">\n            <div class=\"label\">".concat(translate$n('baselayers.name'), "</div>        \n            <input type=\"text\" value=\"\">        \n        </div>\n        <div class=\"url\">\n            <div class=\"label\">").concat(translate$n('baselayers.url'), "</div>        \n            <input type=\"text\" value=\"\">        \n        </div>\n        <div class=\"zoom\">\n            <div class=\"label\">").concat(translate$n('baselayers.zoom'), "</div>\n            <div></div>\n        </div>");
+      _this.content.innerHTML = "\n        <div class=\"name\">\n            <div class=\"label\">".concat(translate$o('baselayers.name'), "</div>        \n            <input type=\"text\" value=\"\">        \n        </div>\n        <div class=\"url\">\n            <div class=\"label\">").concat(translate$o('baselayers.url'), "</div>        \n            <input type=\"text\" value=\"\">        \n        </div>\n        <div class=\"zoom\">\n            <div class=\"label\">").concat(translate$o('baselayers.zoom'), "</div>\n            <div></div>\n        </div>");
       _this._name = _this.content.querySelector('.name').querySelector('input');
       _this._url = _this.content.querySelector('.url').querySelector('input');
       _this._zoom = new Interval(_this.content.querySelector('.zoom').querySelector('div'), {
@@ -38857,7 +38860,7 @@ var Forestry = (function () {
       });
       _this._zoom.lo = 1;
       _this._zoom.hi = 21;
-      _this.footer.innerHTML = "<button class=\"ok\">".concat(translate$n('baselayers.ok'), "</button>\n        <button class=\"cancel\">").concat(translate$n('baselayers.cancel'), "</button>");
+      _this.footer.innerHTML = "<button class=\"ok\">".concat(translate$o('baselayers.ok'), "</button>\n        <button class=\"cancel\">").concat(translate$o('baselayers.cancel'), "</button>");
 
       var btnOk = _this.footer.querySelector('.ok');
 
@@ -38937,7 +38940,7 @@ var Forestry = (function () {
     return View;
   }(Dialog);
 
-  var translate$m = translate$t;
+  var translate$n = translate$u;
 
   var BaseLayers = /*#__PURE__*/function (_Controller) {
     _inherits(BaseLayers, _Controller);
@@ -39066,7 +39069,7 @@ var Forestry = (function () {
       }, _assertThisInitialized(_this));
 
       _this._control.addItem({
-        title: translate$m('baselayers.satellite'),
+        title: translate$n('baselayers.satellite'),
         id: 'satellite',
         type: 'Raster',
         iconUrl: 'assets/images/hybrid.png',
@@ -39082,7 +39085,7 @@ var Forestry = (function () {
       });
 
       _this._control.addItem({
-        title: translate$m('baselayers.topo'),
+        title: translate$n('baselayers.topo'),
         id: 'topo',
         type: 'LayerGroup',
         iconUrl: 'assets/images/topo.png',
@@ -39094,7 +39097,7 @@ var Forestry = (function () {
       });
 
       _this._control.addItem({
-        title: translate$m('baselayers.map'),
+        title: translate$n('baselayers.map'),
         id: 'map',
         iconUrl: 'assets/images/map.png',
         urlTemplate: '//tilessputnik.ru/{z}/{x}/{y}.png?sw=1'
@@ -39474,7 +39477,7 @@ var Forestry = (function () {
     }, {
       key: "translate",
       value: function translate(key) {
-        return translate$t(key);
+        return translate$u(key);
       }
     }, {
       key: "m",
@@ -39858,7 +39861,7 @@ var Forestry = (function () {
     return Fires;
   }(View);
 
-  var translate$l = translate$t;
+  var translate$m = translate$u;
   var hotSpotLayerID = '9DC30891452449DD8D551D0AA62FFF54';
 
   var Fires = /*#__PURE__*/function (_Evented) {
@@ -39888,7 +39891,7 @@ var Forestry = (function () {
       _this._dateInterval = dateInterval;
       _this._permissions = permissions;
 
-      _this._legend.addComponent('fires', translate$l('legend.fires'));
+      _this._legend.addComponent('fires', translate$m('legend.fires'));
 
       _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
 
@@ -46839,34 +46842,34 @@ var Forestry = (function () {
     });
   });
 
-  var translate$k = translate$t;
+  var translate$l = translate$u;
 
   var roundBytes = function roundBytes(s) {
     if (s > 1024 * 1024 * 1024 * 1024 * 1.2) {
       return "".concat((Math.round(s / (1024 * 1024 * 1024 * 1024) * 100) / 100).toLocaleString('ru-RU', {
         minimumFractionDigits: 1,
         maximumFractionDigits: 1
-      }), " ").concat(translate$k('uploaded.units.tb'));
+      }), " ").concat(translate$l('uploaded.units.tb'));
     } else if (s > 1024 * 1024 * 1024 * 1.2) {
       return "".concat((Math.round(s / (1024 * 1024 * 1024) * 100) / 100).toLocaleString('ru-RU', {
         minimumFractionDigits: 1,
         maximumFractionDigits: 1
-      }), " ").concat(translate$k('uploaded.units.gb'));
+      }), " ").concat(translate$l('uploaded.units.gb'));
     } else if (s > 1024 * 1024 * 1.2) {
       return "".concat((Math.round(s / (1024 * 1024) * 100) / 100).toLocaleString('ru-RU', {
         minimumFractionDigits: 1,
         maximumFractionDigits: 1
-      }), " ").concat(translate$k('uploaded.units.mb'));
+      }), " ").concat(translate$l('uploaded.units.mb'));
     } else if (s > 1024 * 1.2) {
       return "".concat((Math.round(s / 1024 * 100) / 100).toLocaleString('ru-RU', {
         minimumFractionDigits: 1,
         maximumFractionDigits: 1
-      }), " ").concat(translate$k('uploaded.units.kb'));
+      }), " ").concat(translate$l('uploaded.units.kb'));
     } else {
       return "".concat(Math.round(s).toLocaleString('ru-RU', {
         minimumFractionDigits: 1,
         maximumFractionDigits: 1
-      }), " ").concat(translate$k('uploaded.units.b'));
+      }), " ").concat(translate$l('uploaded.units.b'));
     }
   };
 
@@ -46893,7 +46896,7 @@ var Forestry = (function () {
         var _this = this;
 
         this._panel = new Dialog({
-          title: translate$k('uploaded.load'),
+          title: translate$l('uploaded.load'),
           left: 500,
           top: 300,
           modal: true
@@ -46959,11 +46962,11 @@ var Forestry = (function () {
       key: "cancelled",
       value: function cancelled(index) {
         this._status = STATUS.PAUSED;
-        this._btn.innerText = translate$k('uploaded.resume');
+        this._btn.innerText = translate$l('uploaded.resume');
 
         var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
 
-        row.querySelector('.status').innerText = translate$k('uploaded.cancelled');
+        row.querySelector('.status').innerText = translate$l('uploaded.cancelled');
       }
     }, {
       key: "error",
@@ -46972,8 +46975,8 @@ var Forestry = (function () {
 
         var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
 
-        row.querySelector('.status').innerText = translate$k('uploaded.error.file');
-        this._btn.innerText = translate$k('uploaded.close');
+        row.querySelector('.status').innerText = translate$l('uploaded.error.file');
+        this._btn.innerText = translate$l('uploaded.close');
       }
     }, {
       key: "completed",
@@ -46981,7 +46984,7 @@ var Forestry = (function () {
         var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
 
         row.querySelector('.percent').innerText = percent;
-        row.querySelector('.status').innerText = translate$k('uploaded.completed');
+        row.querySelector('.status').innerText = translate$l('uploaded.completed');
       }
     }, {
       key: "waiting",
@@ -46989,17 +46992,17 @@ var Forestry = (function () {
         var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
 
         row.querySelector('.percent').innerText = percent;
-        row.querySelector('.status').innerText = translate$k('uploaded.waiting');
+        row.querySelector('.status').innerText = translate$l('uploaded.waiting');
       }
     }, {
       key: "started",
       value: function started(index) {
         this._status = STATUS.STARTED;
-        this._btn.innerText = translate$k('uploaded.pause');
+        this._btn.innerText = translate$l('uploaded.pause');
 
         var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
 
-        row.querySelector('.status').innerText = translate$k('uploaded.started');
+        row.querySelector('.status').innerText = translate$l('uploaded.started');
       }
     }, {
       key: "loading",
@@ -47007,20 +47010,20 @@ var Forestry = (function () {
         var row = this._files.querySelector("[data-id=\"".concat(index, "\"]"));
 
         row.querySelector('.percent').innerText = percent;
-        row.querySelector('.status').innerText = translate$k('uploaded.loading');
+        row.querySelector('.status').innerText = translate$l('uploaded.loading');
       }
     }, {
       key: "stats",
       value: function stats(speed, size, total) {
-        this._speed.innerText = "".concat(translate$k('uploaded.speed'), ": ").concat(roundBytes(speed), " / ").concat(translate$k('uploaded.units.s'));
-        this._progress.innerText = "".concat(translate$k('uploaded.progress'), ": ").concat(roundBytes(size), " ").concat(translate$k('uploaded.of'), " ").concat(roundBytes(total));
+        this._speed.innerText = "".concat(translate$l('uploaded.speed'), ": ").concat(roundBytes(speed), " / ").concat(translate$l('uploaded.units.s'));
+        this._progress.innerText = "".concat(translate$l('uploaded.progress'), ": ").concat(roundBytes(size), " ").concat(translate$l('uploaded.of'), " ").concat(roundBytes(total));
       }
     }]);
 
     return UploadProgress;
   }(Evented);
 
-  var translate$j = translate$t;
+  var translate$k = translate$u;
 
   var LayerProperties = /*#__PURE__*/function (_Dialog) {
     _inherits(LayerProperties, _Dialog);
@@ -47041,9 +47044,9 @@ var Forestry = (function () {
 
       _this._element.classList.add('scanex-forestry-vector-layer-properties');
 
-      _this.content.innerHTML = "<div class=\"name\">\n            <label>".concat(translate$j('uploaded.vector.name'), "</label>\n            <input type=\"text\" value=\"\">\n        </div>");
+      _this.content.innerHTML = "<div class=\"name\">\n            <label>".concat(translate$k('uploaded.vector.name'), "</label>\n            <input type=\"text\" value=\"\">\n        </div>");
       _this._name = _this.content.querySelector('.name').querySelector('input');
-      _this.footer.innerHTML = "<button>".concat(translate$j('uploaded.vector.ok'), "</button>");
+      _this.footer.innerHTML = "<button>".concat(translate$k('uploaded.vector.ok'), "</button>");
       _this._btn = _this.footer.querySelector('button');
 
       _this._btn.addEventListener('click', function (e) {
@@ -47063,7 +47066,7 @@ var Forestry = (function () {
     return LayerProperties;
   }(Dialog);
 
-  var translate$i = translate$t;
+  var translate$j = translate$u;
   var FILE_EXTENSIONS = {
     vector: ['.geojson', '.shp', '.dbf', '.prj', '.sbn', '.sbx', '.shx', '.dat', '.mif', '.mid', '.csv', '.gpx', '.kml', '.kmz', '.sxf', '.sqlite', '.geojson', '.gdbtable'].join(','),
     raster: ['.tif', '.tiff', '.tfw', '.xml', '.jpg', '.jgw', '.png', '.pgw', '.jp2', '.j2w'].join(',')
@@ -47133,7 +47136,7 @@ var Forestry = (function () {
       value: function upload(type) {
         var _this2 = this;
 
-        var title = this._title || (type === 'vector' ? translate$i('uploaded.vector.title') : translate$i('uploaded.raster.title'));
+        var title = this._title || (type === 'vector' ? translate$j('uploaded.vector.title') : translate$j('uploaded.raster.title'));
         var dlg = new LayerProperties(title);
         dlg.on('ok', function (e) {
           var title = e.detail.title;
@@ -47848,7 +47851,7 @@ var Forestry = (function () {
     return FileUploader;
   }(Controller);
 
-  var translate$h = translate$t;
+  var translate$i = translate$u;
 
   var _DAY = 60 * 60 * 24 * 1000;
 
@@ -47913,39 +47916,39 @@ var Forestry = (function () {
 
       _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
 
-      var p = _this._legend.addGroup(_this._kind, translate$h('legend.incidents'));
+      var p = _this._legend.addGroup(_this._kind, translate$i('legend.incidents'));
 
-      _this._legend.addComponent('cut-unconfirmed', translate$h('legend.cut.unconfirmed'), p);
+      _this._legend.addComponent('cut-unconfirmed', translate$i('legend.cut.unconfirmed'), p);
 
-      _this._legend.addComponent('cut-working', translate$h('legend.cut.working'), p);
+      _this._legend.addComponent('cut-working', translate$i('legend.cut.working'), p);
 
-      _this._legend.addComponent('cut-faux', translate$h('legend.cut.faux'), p);
+      _this._legend.addComponent('cut-faux', translate$i('legend.cut.faux'), p);
 
-      _this._legend.addComponent('cut-confirmed', translate$h('legend.cut.confirmed'), p);
+      _this._legend.addComponent('cut-confirmed', translate$i('legend.cut.confirmed'), p);
 
-      _this._legend.addComponent('windthrow-unconfirmed', translate$h('legend.windthrow.unconfirmed'), p);
+      _this._legend.addComponent('windthrow-unconfirmed', translate$i('legend.windthrow.unconfirmed'), p);
 
-      _this._legend.addComponent('windthrow-working', translate$h('legend.windthrow.working'), p);
+      _this._legend.addComponent('windthrow-working', translate$i('legend.windthrow.working'), p);
 
-      _this._legend.addComponent('windthrow-faux', translate$h('legend.windthrow.faux'), p);
+      _this._legend.addComponent('windthrow-faux', translate$i('legend.windthrow.faux'), p);
 
-      _this._legend.addComponent('windthrow-confirmed', translate$h('legend.windthrow.confirmed'), p);
+      _this._legend.addComponent('windthrow-confirmed', translate$i('legend.windthrow.confirmed'), p);
 
-      _this._legend.addComponent('disease-unconfirmed', translate$h('legend.disease.unconfirmed'), p);
+      _this._legend.addComponent('disease-unconfirmed', translate$i('legend.disease.unconfirmed'), p);
 
-      _this._legend.addComponent('disease-working', translate$h('legend.disease.working'), p);
+      _this._legend.addComponent('disease-working', translate$i('legend.disease.working'), p);
 
-      _this._legend.addComponent('disease-faux', translate$h('legend.disease.faux'), p);
+      _this._legend.addComponent('disease-faux', translate$i('legend.disease.faux'), p);
 
-      _this._legend.addComponent('disease-confirmed', translate$h('legend.disease.confirmed'), p);
+      _this._legend.addComponent('disease-confirmed', translate$i('legend.disease.confirmed'), p);
 
-      _this._legend.addComponent('burn-unconfirmed', translate$h('legend.burn.unconfirmed'), p);
+      _this._legend.addComponent('burn-unconfirmed', translate$i('legend.burn.unconfirmed'), p);
 
-      _this._legend.addComponent('burn-working', translate$h('legend.burn.working'), p);
+      _this._legend.addComponent('burn-working', translate$i('legend.burn.working'), p);
 
-      _this._legend.addComponent('burn-faux', translate$h('legend.burn.faux'), p);
+      _this._legend.addComponent('burn-faux', translate$i('legend.burn.faux'), p);
 
-      _this._legend.addComponent('burn-confirmed', translate$h('legend.burn.confirmed'), p);
+      _this._legend.addComponent('burn-confirmed', translate$i('legend.burn.confirmed'), p);
 
       _this._view = _this._content.add(_this._kind, Incidents$1, {
         permissions: _this._permissions
@@ -48146,7 +48149,7 @@ var Forestry = (function () {
         map: map,
         content: content,
         notification: notification,
-        title: translate$h('incident.BplaDownloadTitle'),
+        title: translate$i('incident.BplaDownloadTitle'),
         loading: loading,
         path: _this._gmxPath,
         permissions: permissions
@@ -48650,7 +48653,7 @@ var Forestry = (function () {
     return Incidents;
   }(Controller);
 
-  var translate$g = translate$t;
+  var translate$h = translate$u;
   var ALLOWED_LAYERS$3 = ['kppo_rgb', 'kppo'];
 
   var KPPO = /*#__PURE__*/function (_Controller) {
@@ -48678,7 +48681,7 @@ var Forestry = (function () {
       });
       _this._layers = layers;
       _this._legend = legend;
-      var title = translate$g('legend.kppo');
+      var title = translate$h('legend.kppo');
 
       _this._legend.addComponent('kppo', title);
 
@@ -48714,7 +48717,7 @@ var Forestry = (function () {
     return KPPO;
   }(Controller);
 
-  var translate$f = translate$t;
+  var translate$g = translate$u;
 
   var LPO = /*#__PURE__*/function (_Controller) {
     _inherits(LPO, _Controller);
@@ -48741,7 +48744,7 @@ var Forestry = (function () {
       });
       _this._layer = layer;
       _this._legend = legend;
-      var title = translate$f('legend.lpo');
+      var title = translate$g('legend.lpo');
 
       _this._legend.addComponent('lpo', title);
 
@@ -48951,7 +48954,7 @@ var Forestry = (function () {
     return Parks;
   }(View);
 
-  var translate$e = translate$t;
+  var translate$f = translate$u;
 
   var Parks = /*#__PURE__*/function (_Controller) {
     _inherits(Parks, _Controller);
@@ -48982,7 +48985,7 @@ var Forestry = (function () {
       _this._permissions = permissions;
 
       if (_this._layers.fed_parks && _this._permissions.FederalSPNA) {
-        _this._legend.addComponent('parks-federal', translate$e("legend.parks_federal"));
+        _this._legend.addComponent('parks-federal', translate$f("legend.parks_federal"));
 
         _this._layers.fed_parks.setStyleHook(function (item) {
           var c = _this._content.getCurrent();
@@ -48998,7 +49001,7 @@ var Forestry = (function () {
       }
 
       if (_this._layers.reg_parks && _this._permissions.RegionalSPNA) {
-        _this._legend.addComponent('parks-regional', translate$e("legend.parks_regional"));
+        _this._legend.addComponent('parks-regional', translate$f("legend.parks_regional"));
 
         _this._layers.reg_parks.setStyleHook(function (item) {
           var c = _this._content.getCurrent();
@@ -49014,7 +49017,7 @@ var Forestry = (function () {
       }
 
       if (_this._layers.parks && _this._permissions.SPNA) {
-        _this._legend.addComponent('parks', translate$e("legend.parks"));
+        _this._legend.addComponent('parks', translate$f("legend.parks"));
 
         _this._layers.parks.setStyleHook(function (item) {
           var c = _this._content.getCurrent();
@@ -67245,7 +67248,83 @@ var Forestry = (function () {
     return Plots;
   }(LayerController);
 
-  var translate$d = translate$t;
+  var translate$e = translate$u;
+
+  var Prohibited = /*#__PURE__*/function (_Controller) {
+    _inherits(Prohibited, _Controller);
+
+    var _super = _createSuper(Prohibited);
+
+    function Prohibited(_ref) {
+      var _this;
+
+      var map = _ref.map,
+          content = _ref.content,
+          notification = _ref.notification,
+          loading = _ref.loading,
+          layers = _ref.layers,
+          legend = _ref.legend,
+          permissions = _ref.permissions;
+
+      _classCallCheck(this, Prohibited);
+
+      _this = _super.call(this, {
+        map: map,
+        content: content,
+        notification: notification,
+        loading: loading
+      });
+      _this._layers = layers;
+      _this._legend = legend;
+      _this._permissions = permissions;
+
+      if (_this._layers.quadrants_protected && _this._permissions.ProtectedForestView) {
+        _this._legend.addComponent('quadrants-protected', translate$e("legend.quadrants_protected"));
+      }
+
+      if (_this._layers.quadrants_reserved && _this._permissions.ReservedForestView) {
+        _this._legend.addComponent('quadrants-reserved', translate$e("legend.quadrants_reserved"));
+      }
+
+      _this._legend.on('click', _this._toggle, _assertThisInitialized(_this));
+
+      return _this;
+    }
+
+    _createClass(Prohibited, [{
+      key: "_toggle",
+      value: function _toggle(e) {
+        var id = e.id,
+            visible = e.visible;
+
+        switch (id) {
+          case 'quadrants-protected':
+            if (visible) {
+              this._layers.quadrants_protected && this._map.addLayer(this._layers.quadrants_protected);
+            } else {
+              this._layers.quadrants_protected && this._map.removeLayer(this._layers.quadrants_protected);
+            }
+
+            this._layers.quadrants_protected && this._layers.quadrants_protected.repaint();
+            break;
+
+          case 'quadrants-reserved':
+            if (visible) {
+              this._layers.quadrants_reserved && this._map.addLayer(this._layers.quadrants_reserved);
+            } else {
+              this._layers.quadrants_reserved && this._map.removeLayer(this._layers.quadrants_reserved);
+            }
+
+            this._layers.quadrants_reserved && this._layers.quadrants_reserved.repaint();
+            break;
+        }
+      }
+    }]);
+
+    return Prohibited;
+  }(Controller);
+
+  var translate$d = translate$u;
 
   var Quadrants$2 = /*#__PURE__*/function (_Evented) {
     _inherits(Quadrants, _Evented);
@@ -67348,7 +67427,7 @@ var Forestry = (function () {
     return Quadrants;
   }(Evented);
 
-  var translate$c = translate$t;
+  var translate$c = translate$u;
 
   var SpeciesTable = /*#__PURE__*/function (_Evented) {
     _inherits(SpeciesTable, _Evented);
@@ -67393,7 +67472,7 @@ var Forestry = (function () {
     return SpeciesTable;
   }(Evented);
 
-  var translate$b = translate$t;
+  var translate$b = translate$u;
 
   var Species = /*#__PURE__*/function () {
     function Species(container) {
@@ -68112,7 +68191,7 @@ var Forestry = (function () {
     return Info;
   }(View);
 
-  var translate$a = translate$t;
+  var translate$a = translate$u;
 
   var indexByName = function indexByName(layer, name) {
     var _layer$getGmxProperti = layer.getGmxProperties(),
@@ -68447,6 +68526,10 @@ var Forestry = (function () {
 
           this._legend.enable('parks');
 
+          this._legend.enable('quadrants-protected');
+
+          this._legend.enable('quadrants-reserved');
+
           this._project.open();
 
           this._layers.quadrants.repaint();
@@ -68482,7 +68565,7 @@ var Forestry = (function () {
                   id = _ref6.id, forestryID = _ref6.forestryID;
 
                   if (!this._permissions.ForestProjectsEdit) {
-                    _context7.next = 26;
+                    _context7.next = 28;
                     break;
                   }
 
@@ -68492,35 +68575,39 @@ var Forestry = (function () {
 
                   this._legend.enable('parks');
 
-                  _context7.next = 7;
+                  this._legend.enable('quadrants-protected');
+
+                  this._legend.enable('quadrants-reserved');
+
+                  _context7.next = 9;
                   return this.httpGet("".concat(this._path, "/Forest/GetPlotProjectDraft"), {
                     ForestProjectID: id
                   });
 
-                case 7:
+                case 9:
                   data = _context7.sent;
 
                   if (!data) {
-                    _context7.next = 24;
+                    _context7.next = 26;
                     break;
                   }
 
                   title = data.title, gmxIds = data.gmxIds;
-                  _context7.next = 12;
+                  _context7.next = 14;
                   return this._validate(gmxIds);
 
-                case 12:
+                case 14:
                   res = _context7.sent;
 
                   if (!res) {
-                    _context7.next = 24;
+                    _context7.next = 26;
                     break;
                   }
 
                   Status = res.Status, SquareStat = res.SquareStat, ForestStat = res.ForestStat;
 
                   if (!(Status === 'valid')) {
-                    _context7.next = 22;
+                    _context7.next = 24;
                     break;
                   }
 
@@ -68538,19 +68625,19 @@ var Forestry = (function () {
 
                   return _context7.abrupt("return", true);
 
-                case 22:
+                case 24:
                   this._notification.warn(translate$a('quadrant.invalid'), NOTIFY_TIMEOUT);
 
                   return _context7.abrupt("return", false);
 
-                case 24:
-                  _context7.next = 27;
+                case 26:
+                  _context7.next = 29;
                   break;
 
-                case 26:
+                case 28:
                   this._notification.error(translate$a('forbidden.project.edit'), NOTIFY_TIMEOUT);
 
-                case 27:
+                case 29:
                 case "end":
                   return _context7.stop();
               }
@@ -69358,7 +69445,7 @@ var Forestry = (function () {
     return Stands;
   }(View);
 
-  var translate$9 = translate$t;
+  var translate$9 = translate$u;
   var ALLOWED_LAYERS$2 = ['forestries_local', 'forestries', 'regions', 'quadrants', 'stands'];
 
   var Quadrants = /*#__PURE__*/function (_Controller) {
@@ -69667,7 +69754,7 @@ var Forestry = (function () {
     return Quadrants;
   }(Controller);
 
-  var translate$8 = translate$t;
+  var translate$8 = translate$u;
 
   var RasterCatalog = /*#__PURE__*/function () {
     function RasterCatalog(_ref) {
@@ -69731,7 +69818,7 @@ var Forestry = (function () {
     return RasterCatalog;
   }();
 
-  var translate$7 = translate$t;
+  var translate$7 = translate$u;
   var ALLOWED_LAYERS$1 = ['relief_hk', 'relief_zk'];
 
   var Relief = /*#__PURE__*/function (_Controller) {
@@ -71176,7 +71263,7 @@ var Forestry = (function () {
     return Uploaded;
   }(View);
 
-  var translate$6 = translate$t;
+  var translate$6 = translate$u;
 
   var TmsView = /*#__PURE__*/function (_Dialog) {
     _inherits(TmsView, _Dialog);
@@ -71269,7 +71356,7 @@ var Forestry = (function () {
     return TmsView;
   }(Dialog);
 
-  var translate$5 = translate$t;
+  var translate$5 = translate$u;
 
   var WmsView = /*#__PURE__*/function (_Dialog) {
     _inherits(WmsView, _Dialog);
@@ -71318,7 +71405,7 @@ var Forestry = (function () {
     return WmsView;
   }(Dialog);
 
-  var translate$4 = translate$t;
+  var translate$4 = translate$u;
 
   var WfsView = /*#__PURE__*/function (_Dialog) {
     _inherits(WfsView, _Dialog);
@@ -71784,7 +71871,7 @@ var Forestry = (function () {
     return parse_node(xml.childNodes[0]);
   }
 
-  var translate$3 = translate$t;
+  var translate$3 = translate$u;
 
   var Uploaded = /*#__PURE__*/function (_Controller) {
     _inherits(Uploaded, _Controller);
@@ -73144,7 +73231,7 @@ var Forestry = (function () {
     }
   });
 
-  var translate$2 = translate$t;
+  var translate$2 = translate$u;
 
   var delay = function delay(timeout) {
     return new Promise(function (resolve) {
@@ -73272,8 +73359,8 @@ var Forestry = (function () {
     return Notification;
   }(Evented);
 
-  var translate$1 = translate$t;
-  var ALLOWED_LAYERS = ['incidents_temporal', 'forestries_local', 'forestries', 'regions', 'fires', 'warehouses', 'roads', 'declarations', 'quadrants_editor', 'plots', 'projects', 'reg_parks', 'fed_parks', 'parks', 'stands', 'quadrants', 'sentinel', 'landsat', 'cadastre', 'plan', 'kppo', 'kppo_rgb', 'lpo', 'relief_hk', 'relief_zk'].reverse();
+  var translate$1 = translate$u;
+  var ALLOWED_LAYERS = ['incidents_temporal', 'forestries_local', 'forestries', 'regions', 'fires', 'warehouses', 'roads', 'declarations', 'quadrants_editor', 'quadrants_protected', 'quadrants_reserved', 'plots', 'projects', 'reg_parks', 'fed_parks', 'parks', 'stands', 'quadrants', 'sentinel', 'landsat', 'cadastre', 'plan', 'kppo', 'kppo_rgb', 'lpo', 'relief_hk', 'relief_zk'].reverse();
 
   var Map = /*#__PURE__*/function (_Evented) {
     _inherits(Map, _Evented);
@@ -73778,6 +73865,19 @@ var Forestry = (function () {
                     // });
                   }
 
+                  if (this._permissions.ReservedForestView || this._permissions.ProtectedForestView) {
+                    this._controllers.prohibited = new Prohibited({
+                      map: this._map,
+                      layers: this._layers,
+                      legend: this._legend,
+                      path: this._gmxPath,
+                      content: this._content,
+                      notification: this._notification,
+                      loading: this._loading,
+                      permissions: this._permissions
+                    });
+                  }
+
                   if (this._layers.declarations && this._permissions.ForestDeclarations) {
                     this._controllers.declarations = new Declarations({
                       map: this._map,
@@ -74132,7 +74232,7 @@ var Forestry = (function () {
                     notification: this._notification
                   });
 
-                case 42:
+                case 43:
                 case "end":
                   return _context8.stop();
               }
