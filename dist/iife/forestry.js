@@ -67074,24 +67074,19 @@ var Forestry = (function () {
               _ref2.rent_cost;
               var value = _ref2.value;
           return "<tr class=\"volumes\">\n                            <td class=\"text\">".concat(farm, "</td>\n                            <td class=\"value\">").concat(_this2.m(value), "</td>\n                        </tr>");
-        }).join('') : '', "\n            </tbody>\n        </table>\n\t\t<div>\n\t\t\t<i class=\"scanex-view-plot-icon doc\"></i>\n\t\t\t<button class=\"open-doc\">").concat(this.translate('plot.doc'), "</button>\n\t\t</div>");
+        }).join('') : '', "\n            </tbody>\n        </table>\n\t\t").concat(Array.isArray(data.Documents) && data.Documents.length > 0 && "<div>\n\t\t\t\t<i class=\"scanex-view-plot-icon doc\"></i>\n\t\t\t\t<button class=\"open-doc\">".concat(this.translate('plot.doc'), "</button>\n\t\t\t</div>") || '');
 
         var node = this._container.querySelector('.open-doc');
 
         if (node) {
-          if (data.Documents.length) {
-            node.parentNode.classList.remove('hidden');
-            node.addEventListener('click', function (e) {
-              e.stopPropagation();
-              var event = document.createEvent('Event');
-              event.initEvent('plot:GetPlotDocument', false, false);
-              event.detail = data.Documents[0];
+          node.addEventListener('click', function (e) {
+            e.stopPropagation();
+            var event = document.createEvent('Event');
+            event.initEvent('plot:GetPlotDocument', false, false);
+            event.detail = data.Documents[0];
 
-              _this2.dispatchEvent(event);
-            });
-          } else {
-            node.parentNode.classList.add('hidden');
-          }
+            _this2.dispatchEvent(event);
+          });
         }
 
         if (Array.isArray(Volumes)) {
@@ -69020,7 +69015,7 @@ var Forestry = (function () {
 
       _this._container.classList.add('scanex-forestry-quadrant');
 
-      _this._container.innerHTML = "<h1 class=\"header1\">".concat(_this.translate('quadrant.title'), "</h1>\n\t\t<h2 class=\"header2\"></h2>\n\t\t<div class=\"scrollable\">\t\t\t\n\t\t\t<div class=\"info\">\n\t\t\t\t<div class=\"forestry\">\n\t\t\t\t\t<label class=\"label\">").concat(_this.translate('quadrant.forestry'), "</label>\n\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"forestry-local\">\n\t\t\t\t\t<label class=\"label\">").concat(_this.translate('quadrant.forestry_local'), "</label>\n\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"stow\">\n\t\t\t\t\t<label class=\"label\">").concat(_this.translate('quadrant.stow'), "</label>\n\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"number\">\n\t\t\t\t\t<label class=\"label\">").concat(_this.translate('quadrant.number'), "</label>\n\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"area\">\n\t\t\t\t\t<label class=\"label\">").concat(_this.translate('quadrant.area'), "</label>\n\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"usage\">\n\t\t\t\t\t<label class=\"label\">").concat(_this.translate('quadrant.usage'), "</label>\n\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"header3\">").concat(_this.translate('quadrant.stock.table'), "</div>\n\t\t\t<div class=\"stats\">\n\t\t\t\t<div class=\"header\">\n\t\t\t\t\t<div class=\"species\">").concat(_this.translate('quadrant.stock.species'), "</div>\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<div class=\"stock\">").concat(_this.translate('quadrant.stock.label'), "<sup>3</sup></div>\n\t\t\t\t\t\t<div class=\"details\">\n\t\t\t\t\t\t\t<div class=\"permitted\">").concat(_this.translate('quadrant.stock.permitted'), "</div>\n\t\t\t\t\t\t\t<div class=\"probable\">").concat(_this.translate('quadrant.stock.probable'), "</div>\n\t\t\t\t\t\t\t<div class=\"total\">").concat(_this.translate('quadrant.stock.total'), "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"body\"></div>\n\t\t\t</div>\n\t\t\t<div class=\"footer\">\n\t\t\t\t<div class=\"download-description\">\n\t\t\t\t\t<i class=\"scanex-quadrant-icon download\"></i>\n\t\t\t\t\t<label>").concat(_this.translate('quadrant.description'), "</label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"download-plan\">\n\t\t\t\t\t<i class=\"scanex-quadrant-icon download\"></i>\n\t\t\t\t\t<label>").concat(_this.translate('quadrant.plan'), "</label>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>");
+      _this._container.innerHTML = "<h1 class=\"header1\">".concat(_this.translate('quadrant.title'), "</h1>\n\t\t<h2 class=\"header2\"></h2>\n\t\t<div class=\"scrollable\">\t\t\t\n\t\t\t<div class=\"info\">\n\t\t\t\t<div class=\"forestry\">\n\t\t\t\t\t<label class=\"label\">").concat(_this.translate('quadrant.forestry'), "</label>\n\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"forestry-local\">\n\t\t\t\t\t<label class=\"label\">").concat(_this.translate('quadrant.forestry_local'), "</label>\n\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"stow\">\n\t\t\t\t\t<label class=\"label\">").concat(_this.translate('quadrant.stow'), "</label>\n\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"number\">\n\t\t\t\t\t<label class=\"label\">").concat(_this.translate('quadrant.number'), "</label>\n\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"area\">\n\t\t\t\t\t<label class=\"label\">").concat(_this.translate('quadrant.area'), "</label>\n\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"usage\">\n\t\t\t\t\t<label class=\"label\">").concat(_this.translate('quadrant.usage'), "</label>\n\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"header3\">").concat(_this.translate('quadrant.stock.table'), "</div>\n\t\t\t<div class=\"stats\">\n\t\t\t\t<div class=\"header\">\n\t\t\t\t\t<div class=\"species\">").concat(_this.translate('quadrant.stock.species'), "</div>\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<div class=\"stock\">").concat(_this.translate('quadrant.stock.label'), "<sup>3</sup></div>\n\t\t\t\t\t\t<div class=\"details\">\n\t\t\t\t\t\t\t<div class=\"permitted\">").concat(_this.translate('quadrant.stock.permitted'), "</div>\n\t\t\t\t\t\t\t<div class=\"probable\">").concat(_this.translate('quadrant.stock.probable'), "</div>\n\t\t\t\t\t\t\t<div class=\"total\">").concat(_this.translate('quadrant.stock.total'), "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"body\"></div>\n\t\t\t</div>\t\t\t\n\t\t\t<div class=\"footer\">\n\t\t\t\t<div class=\"download-description\">\n\t\t\t\t\t<i class=\"scanex-quadrant-icon download\"></i>\n\t\t\t\t\t<label>").concat(_this.translate('quadrant.description'), "</label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"download-plan\">\n\t\t\t\t\t<i class=\"scanex-quadrant-icon download\"></i>\n\t\t\t\t\t<label>").concat(_this.translate('quadrant.plan'), "</label>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>");
       _this._header2 = _this._container.querySelector('.header2');
       _this._body = _this._container.querySelector('.body');
 
@@ -69066,6 +69061,7 @@ var Forestry = (function () {
       _this._number = _this._container.querySelector('.info .number .value');
       _this._area = _this._container.querySelector('.info .area .value');
       _this._usage = _this._container.querySelector('.info .usage .value');
+      _this._footer = _this._container.querySelector('.footer');
       return _this;
     }
 
@@ -69095,6 +69091,8 @@ var Forestry = (function () {
         this._area.innerText = Area && this.ha(Area) || '-';
 
         if (Array.isArray(Documents)) {
+          this._footer.classList.remove('hidden');
+
           var _iterator = _createForOfIteratorHelper(Documents),
               _step;
 
@@ -69123,6 +69121,8 @@ var Forestry = (function () {
             _iterator.f();
           }
         } else {
+          this._footer.classList.add('hidden');
+
           this._descriptionDocumentID = null;
           this._planDocumentID = null;
         }
@@ -69244,8 +69244,9 @@ var Forestry = (function () {
       _this._advanceHeight = _this._container.querySelector('.advance .height .value');
       _this._advanceVolume = _this._container.querySelector('.advance .volume .value');
       _this._levels = _this._container.querySelector('.levels');
+      _this._doc = _this._container.querySelector('.stand-doc');
 
-      _this._container.querySelector('.stand-doc').addEventListener('click', function (e) {
+      _this._doc.addEventListener('click', function (e) {
         e.stopPropagation();
 
         if (_this._descriptionDocumentID) {
@@ -69396,7 +69397,9 @@ var Forestry = (function () {
           this._levels.innerHTML = '';
         }
 
-        if (Array.isArray(Documents)) {
+        if (Array.isArray(Documents) && Documents.length > 0) {
+          this._doc.classList.remove('hidden');
+
           var _iterator2 = _createForOfIteratorHelper(Documents),
               _step2;
 
@@ -69421,6 +69424,8 @@ var Forestry = (function () {
             _iterator2.f();
           }
         } else {
+          this._doc.classList.add('hidden');
+
           this._descriptionDocumentID = null;
         }
       }
