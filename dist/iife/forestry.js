@@ -73910,7 +73910,7 @@ var Forestry = (function () {
                     });
                   }
 
-                  if (this._layers.parks && (this._permissions.SPNA || this._permissions.FederalSPNA || this._permissions.RegionalSPNA)) {
+                  if (this._layers.parks && this._permissions.SPNA || this._layers.fed_parks && this._permissions.FederalSPNA || this._layers.reg_parks && this._permissions.RegionalSPNA) {
                     this._controllers.parks = new Parks({
                       map: this._map,
                       layers: this._layers,
