@@ -46371,6 +46371,7 @@ var Forestry = (function () {
       incident: {
         title: 'Рубка',
         titleFire: 'Гарь',
+        titleWind: 'Ветровал',
         quadrant: 'Квартал',
         stand: 'Выдел',
         titleDisease: 'Патология',
@@ -46494,7 +46495,7 @@ var Forestry = (function () {
 
           case 2:
             // ветровалы 
-            title = "<div class=\"header1\">".concat(this.translate('incident.titleFire'), "</div>");
+            title = "<div class=\"header1\">".concat(this.translate('incident.titleWind'), "</div>");
             break;
 
           case 3:
