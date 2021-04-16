@@ -48339,6 +48339,8 @@ var Forestry = (function () {
                       },
                       zIndex: -1000000
                     });
+                  } else {
+                    this._notification.error(translate$i('error.server'), NOTIFY_TIMEOUT);
                   }
 
                   return _context9.abrupt("return", layer);
@@ -68426,7 +68428,7 @@ var Forestry = (function () {
       key: "_click",
       value: function () {
         var _click2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(e) {
-          var _e$gmx2, properties, forestry_id, plot_project_status_id;
+          var _e$gmx2, id, properties, forestry_id, plot_project_status_id;
 
           return regeneratorRuntime.wrap(function _callee5$(_context5) {
             while (1) {
@@ -68438,7 +68440,7 @@ var Forestry = (function () {
                   }
 
                   L.DomEvent.stopPropagation(e);
-                  _e$gmx2 = e.gmx, _e$gmx2.id, properties = _e$gmx2.properties;
+                  _e$gmx2 = e.gmx, id = _e$gmx2.id, properties = _e$gmx2.properties;
                   properties.status_calc, forestry_id = properties.forestry_id, plot_project_status_id = properties.plot_project_status_id;
 
                   if (!(plot_project_status_id === 1 || plot_project_status_id === 7)) {
@@ -68459,6 +68461,7 @@ var Forestry = (function () {
                 case 9:
                   _context5.next = 11;
                   return this.view({
+                    gmx_id: id,
                     id: properties.id,
                     forestryID: forestry_id
                   });
