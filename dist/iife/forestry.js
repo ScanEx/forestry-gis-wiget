@@ -73369,7 +73369,7 @@ var Forestry = (function () {
   }(Evented);
 
   var translate$1 = translate$u;
-  var ALLOWED_LAYERS = ['incidents_temporal', 'forestries_local', 'forestries', 'regions', 'fires', 'warehouses', 'roads', 'declarations', 'quadrants_editor', 'quadrants_protected', 'quadrants_reserved', 'plots', 'projects', 'reg_parks', 'fed_parks', 'parks', 'stands', 'quadrants', 'sentinel', 'landsat', 'cadastre', 'plan', 'kppo', 'kppo_rgb', 'lpo', 'relief_hk', 'relief_zk'].reverse();
+  var ALLOWED_LAYERS = ['incidents_temporal', 'forestries_local', 'forestries', 'regions', 'fires', 'warehouses', 'roads', 'declarations', 'oil', 'quadrants_editor', 'quadrants_protected', 'quadrants_reserved', 'plots', 'dkp', 'projects', 'reg_parks', 'fed_parks', 'parks', 'stands', 'quadrants', 'sentinel', 'landsat', 'cadastre', 'plan', 'kppo', 'kppo_rgb', 'lpo', 'relief_hk', 'relief_zk'].reverse();
 
   var Map = /*#__PURE__*/function (_Evented) {
     _inherits(Map, _Evented);
@@ -73899,6 +73899,14 @@ var Forestry = (function () {
                     });
                   }
 
+                  if (this._layers.dkp && this._permissions.RawWoodAgreementView) {
+                    this._map.addLayer(this._layers.dkp);
+                  }
+
+                  if (this._layers.oil && this._permissions.WoodUsageReportView) {
+                    this._map.addLayer(this._layers.oil);
+                  }
+
                   if (this._permissions.ForestFires || this._permissions.ForestFiresTimeLine) {
                     this._controllers.fires = new Fires({
                       map: this._map,
@@ -74241,7 +74249,7 @@ var Forestry = (function () {
                     notification: this._notification
                   });
 
-                case 43:
+                case 45:
                 case "end":
                   return _context8.stop();
               }
