@@ -2283,7 +2283,7 @@ var Forestry = (function () {
   var queueMicrotaskDescriptor$1 = getOwnPropertyDescriptor$5(global$1, 'queueMicrotask');
   var queueMicrotask$1 = queueMicrotaskDescriptor$1 && queueMicrotaskDescriptor$1.value;
 
-  var flush$1, head$1, last$1, notify$3, toggle$1, node$1, promise$1, then$1;
+  var flush$1, head$1, last$1, notify$6, toggle$1, node$1, promise$1, then$1;
 
   // modern engines have queueMicrotask method
   if (!queueMicrotask$1) {
@@ -2296,7 +2296,7 @@ var Forestry = (function () {
         try {
           fn();
         } catch (error) {
-          if (head$1) notify$3();
+          if (head$1) notify$6();
           else last$1 = undefined;
           throw error;
         }
@@ -2310,7 +2310,7 @@ var Forestry = (function () {
       toggle$1 = true;
       node$1 = document$4.createTextNode('');
       new MutationObserver$2(flush$1).observe(node$1, { characterData: true });
-      notify$3 = function () {
+      notify$6 = function () {
         node$1.data = toggle$1 = !toggle$1;
       };
     // environments with maybe non-completely correct, but existent Promise
@@ -2318,12 +2318,12 @@ var Forestry = (function () {
       // Promise.resolve without an argument throws an error in LG WebOS 2
       promise$1 = Promise$2.resolve(undefined);
       then$1 = promise$1.then;
-      notify$3 = function () {
+      notify$6 = function () {
         then$1.call(promise$1, flush$1);
       };
     // Node.js without promises
     } else if (engineIsNode) {
-      notify$3 = function () {
+      notify$6 = function () {
         process$5.nextTick(flush$1);
       };
     // for other environments - macrotask based on:
@@ -2333,7 +2333,7 @@ var Forestry = (function () {
     // - onreadystatechange
     // - setTimeout
     } else {
-      notify$3 = function () {
+      notify$6 = function () {
         // strange IE + webpack dev server bug - use .call(global)
         macrotask$1.call(global$1, flush$1);
       };
@@ -2345,7 +2345,7 @@ var Forestry = (function () {
     if (last$1) last$1.next = task;
     if (!head$1) {
       head$1 = task;
-      notify$3();
+      notify$6();
     } last$1 = task;
   };
 
@@ -2462,7 +2462,7 @@ var Forestry = (function () {
     return isObject$1(it) && typeof (then = it.then) == 'function' ? then : false;
   };
 
-  var notify$2 = function (state, isReject) {
+  var notify$5 = function (state, isReject) {
     if (state.notified) return;
     state.notified = true;
     var chain = state.reactions;
@@ -2567,7 +2567,7 @@ var Forestry = (function () {
     if (unwrap) state = unwrap;
     state.value = value;
     state.state = REJECTED$1;
-    notify$2(state, true);
+    notify$5(state, true);
   };
 
   var internalResolve$1 = function (state, value, unwrap) {
@@ -2592,7 +2592,7 @@ var Forestry = (function () {
       } else {
         state.value = value;
         state.state = FULFILLED$1;
-        notify$2(state, false);
+        notify$5(state, false);
       }
     } catch (error) {
       internalReject$1({ done: false }, error, state);
@@ -2637,7 +2637,7 @@ var Forestry = (function () {
         reaction.domain = engineIsNode ? process$4.domain : undefined;
         state.parent = true;
         state.reactions.push(reaction);
-        if (state.state != PENDING$1) notify$2(state, false);
+        if (state.state != PENDING$1) notify$5(state, false);
         return reaction.promise;
       },
       // `Promise.prototype.catch` method
@@ -19172,17 +19172,17 @@ var Forestry = (function () {
     function Evented() {
       _classCallCheck(this, Evented);
 
-      this.listeners = {};
+      this._listeners = {};
     }
 
     _createClass(Evented, [{
       key: "addEventListener",
       value: function addEventListener(type, callback) {
-        if (!(type in this.listeners)) {
-          this.listeners[type] = [];
+        if (!(type in this._listeners)) {
+          this._listeners[type] = [];
         }
 
-        this.listeners[type].push(callback);
+        this._listeners[type].push(callback);
       }
     }, {
       key: "on",
@@ -19193,11 +19193,11 @@ var Forestry = (function () {
     }, {
       key: "removeEventListener",
       value: function removeEventListener(type, callback) {
-        if (!(type in this.listeners)) {
+        if (!(type in this._listeners)) {
           return;
         }
 
-        var stack = this.listeners[type];
+        var stack = this._listeners[type];
 
         for (var i = 0, l = stack.length; i < l; i++) {
           if (stack[i] === callback) {
@@ -19215,11 +19215,11 @@ var Forestry = (function () {
     }, {
       key: "dispatchEvent",
       value: function dispatchEvent(event) {
-        if (!(event.type in this.listeners)) {
+        if (!(event.type in this._listeners)) {
           return;
         }
 
-        var stack = this.listeners[event.type];
+        var stack = this._listeners[event.type];
         Object.defineProperty(event, 'target', {
           enumerable: false,
           configurable: false,
@@ -21490,19 +21490,19 @@ var Forestry = (function () {
   }else if(global_1.addEventListener&&typeof postMessage=='function'&&!global_1.importScripts&&!fails(post)&&location$1.protocol!=='file:'){defer=post;global_1.addEventListener('message',listener,false);// IE8-
   }else if(ONREADYSTATECHANGE in documentCreateElement('script')){defer=function defer(id){html.appendChild(documentCreateElement('script'))[ONREADYSTATECHANGE]=function(){html.removeChild(this);run(id);};};// Rest old browsers
   }else {defer=function defer(id){setTimeout(runner(id),0);};}}var task={set:set$2,clear:clear};var getOwnPropertyDescriptor$3=objectGetOwnPropertyDescriptor.f;var macrotask=task.set;var MutationObserver$1=global_1.MutationObserver||global_1.WebKitMutationObserver;var process$2=global_1.process;var Promise$1=global_1.Promise;var IS_NODE=classofRaw(process$2)=='process';// Node.js 11 shows ExperimentalWarning on getting `queueMicrotask`
-  var queueMicrotaskDescriptor=getOwnPropertyDescriptor$3(global_1,'queueMicrotask');var queueMicrotask=queueMicrotaskDescriptor&&queueMicrotaskDescriptor.value;var flush,head,last,notify,toggle,node,promise,then;// modern engines have queueMicrotask method
-  if(!queueMicrotask){flush=function flush(){var parent,fn;if(IS_NODE&&(parent=process$2.domain))parent.exit();while(head){fn=head.fn;head=head.next;try{fn();}catch(error){if(head)notify();else last=undefined;throw error;}}last=undefined;if(parent)parent.enter();};// Node.js
-  if(IS_NODE){notify=function notify(){process$2.nextTick(flush);};// browsers with MutationObserver, except iOS - https://github.com/zloirock/core-js/issues/339
-  }else if(MutationObserver$1&&!engineIsIos){toggle=true;node=document.createTextNode('');new MutationObserver$1(flush).observe(node,{characterData:true});notify=function notify(){node.data=toggle=!toggle;};// environments with maybe non-completely correct, but existent Promise
+  var queueMicrotaskDescriptor=getOwnPropertyDescriptor$3(global_1,'queueMicrotask');var queueMicrotask=queueMicrotaskDescriptor&&queueMicrotaskDescriptor.value;var flush,head,last,notify$4,toggle,node,promise,then;// modern engines have queueMicrotask method
+  if(!queueMicrotask){flush=function flush(){var parent,fn;if(IS_NODE&&(parent=process$2.domain))parent.exit();while(head){fn=head.fn;head=head.next;try{fn();}catch(error){if(head)notify$4();else last=undefined;throw error;}}last=undefined;if(parent)parent.enter();};// Node.js
+  if(IS_NODE){notify$4=function notify(){process$2.nextTick(flush);};// browsers with MutationObserver, except iOS - https://github.com/zloirock/core-js/issues/339
+  }else if(MutationObserver$1&&!engineIsIos){toggle=true;node=document.createTextNode('');new MutationObserver$1(flush).observe(node,{characterData:true});notify$4=function notify(){node.data=toggle=!toggle;};// environments with maybe non-completely correct, but existent Promise
   }else if(Promise$1&&Promise$1.resolve){// Promise.resolve without an argument throws an error in LG WebOS 2
-  promise=Promise$1.resolve(undefined);then=promise.then;notify=function notify(){then.call(promise,flush);};// for other environments - macrotask based on:
+  promise=Promise$1.resolve(undefined);then=promise.then;notify$4=function notify(){then.call(promise,flush);};// for other environments - macrotask based on:
   // - setImmediate
   // - MessageChannel
   // - window.postMessag
   // - onreadystatechange
   // - setTimeout
-  }else {notify=function notify(){// strange IE + webpack dev server bug - use .call(global)
-  macrotask.call(global_1,flush);};}}var microtask=queueMicrotask||function(fn){var task={fn:fn,next:undefined};if(last)last.next=task;if(!head){head=task;notify();}last=task;};var PromiseCapability=function PromiseCapability(C){var resolve,reject;this.promise=new C(function($$resolve,$$reject){if(resolve!==undefined||reject!==undefined)throw TypeError('Bad Promise constructor');resolve=$$resolve;reject=$$reject;});this.resolve=aFunction$1(resolve);this.reject=aFunction$1(reject);};// 25.4.1.5 NewPromiseCapability(C)
+  }else {notify$4=function notify(){// strange IE + webpack dev server bug - use .call(global)
+  macrotask.call(global_1,flush);};}}var microtask=queueMicrotask||function(fn){var task={fn:fn,next:undefined};if(last)last.next=task;if(!head){head=task;notify$4();}last=task;};var PromiseCapability=function PromiseCapability(C){var resolve,reject;this.promise=new C(function($$resolve,$$reject){if(resolve!==undefined||reject!==undefined)throw TypeError('Bad Promise constructor');resolve=$$resolve;reject=$$reject;});this.resolve=aFunction$1(resolve);this.reject=aFunction$1(reject);};// 25.4.1.5 NewPromiseCapability(C)
   var f$5=function f$5(C){return new PromiseCapability(C);};var newPromiseCapability={f:f$5};var promiseResolve=function promiseResolve(C,x){anObject(C);if(isObject(x)&&x.constructor===C)return x;var promiseCapability=newPromiseCapability.f(C);var resolve=promiseCapability.resolve;resolve(x);return promiseCapability.promise;};var hostReportErrors=function hostReportErrors(a,b){var console=global_1.console;if(console&&console.error){arguments.length===1?console.error(a):console.error(a,b);}};var perform=function perform(exec){try{return {error:false,value:exec()};}catch(error){return {error:true,value:error};}};var task$1=task.set;var SPECIES$5=wellKnownSymbol('species');var PROMISE='Promise';var getInternalState$2=internalState.get;var setInternalState$2=internalState.set;var getInternalPromiseState=internalState.getterFor(PROMISE);var PromiseConstructor=nativePromiseConstructor;var TypeError$1=global_1.TypeError;var document$2=global_1.document;var process$3=global_1.process;var $fetch=getBuiltIn('fetch');var newPromiseCapability$1=newPromiseCapability.f;var newGenericPromiseCapability=newPromiseCapability$1;var IS_NODE$1=classofRaw(process$3)=='process';var DISPATCH_EVENT=!!(document$2&&document$2.createEvent&&global_1.dispatchEvent);var UNHANDLED_REJECTION='unhandledrejection';var REJECTION_HANDLED='rejectionhandled';var PENDING=0;var FULFILLED=1;var REJECTED=2;var HANDLED=1;var UNHANDLED=2;var Internal,OwnPromiseCapability,PromiseWrapper,nativeThen;var FORCED$3=isForced_1(PROMISE,function(){var GLOBAL_CORE_JS_PROMISE=inspectSource(PromiseConstructor)!==String(PromiseConstructor);if(!GLOBAL_CORE_JS_PROMISE){// V8 6.6 (Node 10 and Chrome 66) have a bug with resolving custom thenables
   // https://bugs.chromium.org/p/chromium/issues/detail?id=830565
   // We can't detect it synchronously, so just check versions
@@ -21512,15 +21512,15 @@ var Forestry = (function () {
   // https://github.com/zloirock/core-js/issues/679
   if(engineV8Version>=51&&/native code/.test(PromiseConstructor))return false;// Detect correctness of subclassing with @@species support
   var promise=PromiseConstructor.resolve(1);var FakePromise=function FakePromise(exec){exec(function(){/* empty */},function(){/* empty */});};var constructor=promise.constructor={};constructor[SPECIES$5]=FakePromise;return !(promise.then(function(){/* empty */})instanceof FakePromise);});var INCORRECT_ITERATION=FORCED$3||!checkCorrectnessOfIteration(function(iterable){PromiseConstructor.all(iterable)['catch'](function(){/* empty */});});// helpers
-  var isThenable=function isThenable(it){var then;return isObject(it)&&typeof(then=it.then)=='function'?then:false;};var notify$1=function notify$1(promise,state,isReject){if(state.notified)return;state.notified=true;var chain=state.reactions;microtask(function(){var value=state.value;var ok=state.state==FULFILLED;var index=0;// variable length - can't use forEach
+  var isThenable=function isThenable(it){var then;return isObject(it)&&typeof(then=it.then)=='function'?then:false;};var notify$1$1=function notify$1(promise,state,isReject){if(state.notified)return;state.notified=true;var chain=state.reactions;microtask(function(){var value=state.value;var ok=state.state==FULFILLED;var index=0;// variable length - can't use forEach
   while(chain.length>index){var reaction=chain[index++];var handler=ok?reaction.ok:reaction.fail;var resolve=reaction.resolve;var reject=reaction.reject;var domain=reaction.domain;var result,then,exited;try{if(handler){if(!ok){if(state.rejection===UNHANDLED)onHandleUnhandled(promise,state);state.rejection=HANDLED;}if(handler===true)result=value;else {if(domain)domain.enter();result=handler(value);// can throw
   if(domain){domain.exit();exited=true;}}if(result===reaction.promise){reject(TypeError$1('Promise-chain cycle'));}else if(then=isThenable(result)){then.call(result,resolve,reject);}else resolve(result);}else reject(value);}catch(error){if(domain&&!exited)domain.exit();reject(error);}}state.reactions=[];state.notified=false;if(isReject&&!state.rejection)onUnhandled(promise,state);});};var dispatchEvent=function dispatchEvent(name,promise,reason){var event,handler;if(DISPATCH_EVENT){event=document$2.createEvent('Event');event.promise=promise;event.reason=reason;event.initEvent(name,false,true);global_1.dispatchEvent(event);}else event={promise:promise,reason:reason};if(handler=global_1['on'+name])handler(event);else if(name===UNHANDLED_REJECTION)hostReportErrors('Unhandled promise rejection',reason);};var onUnhandled=function onUnhandled(promise,state){task$1.call(global_1,function(){var value=state.value;var IS_UNHANDLED=isUnhandled(state);var result;if(IS_UNHANDLED){result=perform(function(){if(IS_NODE$1){process$3.emit('unhandledRejection',value,promise);}else dispatchEvent(UNHANDLED_REJECTION,promise,value);});// Browsers should not trigger `rejectionHandled` event if it was handled here, NodeJS - should
-  state.rejection=IS_NODE$1||isUnhandled(state)?UNHANDLED:HANDLED;if(result.error)throw result.value;}});};var isUnhandled=function isUnhandled(state){return state.rejection!==HANDLED&&!state.parent;};var onHandleUnhandled=function onHandleUnhandled(promise,state){task$1.call(global_1,function(){if(IS_NODE$1){process$3.emit('rejectionHandled',promise);}else dispatchEvent(REJECTION_HANDLED,promise,state.value);});};var bind=function bind(fn,promise,state,unwrap){return function(value){fn(promise,state,value,unwrap);};};var internalReject=function internalReject(promise,state,value,unwrap){if(state.done)return;state.done=true;if(unwrap)state=unwrap;state.value=value;state.state=REJECTED;notify$1(promise,state,true);};var internalResolve=function internalResolve(promise,state,value,unwrap){if(state.done)return;state.done=true;if(unwrap)state=unwrap;try{if(promise===value)throw TypeError$1("Promise can't be resolved itself");var then=isThenable(value);if(then){microtask(function(){var wrapper={done:false};try{then.call(value,bind(internalResolve,promise,wrapper,state),bind(internalReject,promise,wrapper,state));}catch(error){internalReject(promise,wrapper,error,state);}});}else {state.value=value;state.state=FULFILLED;notify$1(promise,state,false);}}catch(error){internalReject(promise,{done:false},error,state);}};// constructor polyfill
+  state.rejection=IS_NODE$1||isUnhandled(state)?UNHANDLED:HANDLED;if(result.error)throw result.value;}});};var isUnhandled=function isUnhandled(state){return state.rejection!==HANDLED&&!state.parent;};var onHandleUnhandled=function onHandleUnhandled(promise,state){task$1.call(global_1,function(){if(IS_NODE$1){process$3.emit('rejectionHandled',promise);}else dispatchEvent(REJECTION_HANDLED,promise,state.value);});};var bind=function bind(fn,promise,state,unwrap){return function(value){fn(promise,state,value,unwrap);};};var internalReject=function internalReject(promise,state,value,unwrap){if(state.done)return;state.done=true;if(unwrap)state=unwrap;state.value=value;state.state=REJECTED;notify$1$1(promise,state,true);};var internalResolve=function internalResolve(promise,state,value,unwrap){if(state.done)return;state.done=true;if(unwrap)state=unwrap;try{if(promise===value)throw TypeError$1("Promise can't be resolved itself");var then=isThenable(value);if(then){microtask(function(){var wrapper={done:false};try{then.call(value,bind(internalResolve,promise,wrapper,state),bind(internalReject,promise,wrapper,state));}catch(error){internalReject(promise,wrapper,error,state);}});}else {state.value=value;state.state=FULFILLED;notify$1$1(promise,state,false);}}catch(error){internalReject(promise,{done:false},error,state);}};// constructor polyfill
   if(FORCED$3){// 25.4.3.1 Promise(executor)
   PromiseConstructor=function Promise(executor){anInstance(this,PromiseConstructor,PROMISE);aFunction$1(executor);Internal.call(this);var state=getInternalState$2(this);try{executor(bind(internalResolve,this,state),bind(internalReject,this,state));}catch(error){internalReject(this,state,error);}};// eslint-disable-next-line no-unused-vars
   Internal=function Promise(executor){setInternalState$2(this,{type:PROMISE,done:false,notified:false,parent:false,reactions:[],rejection:false,state:PENDING,value:undefined});};Internal.prototype=redefineAll(PromiseConstructor.prototype,{// `Promise.prototype.then` method
   // https://tc39.github.io/ecma262/#sec-promise.prototype.then
-  then:function then(onFulfilled,onRejected){var state=getInternalPromiseState(this);var reaction=newPromiseCapability$1(speciesConstructor(this,PromiseConstructor));reaction.ok=typeof onFulfilled=='function'?onFulfilled:true;reaction.fail=typeof onRejected=='function'&&onRejected;reaction.domain=IS_NODE$1?process$3.domain:undefined;state.parent=true;state.reactions.push(reaction);if(state.state!=PENDING)notify$1(this,state,false);return reaction.promise;},// `Promise.prototype.catch` method
+  then:function then(onFulfilled,onRejected){var state=getInternalPromiseState(this);var reaction=newPromiseCapability$1(speciesConstructor(this,PromiseConstructor));reaction.ok=typeof onFulfilled=='function'?onFulfilled:true;reaction.fail=typeof onRejected=='function'&&onRejected;reaction.domain=IS_NODE$1?process$3.domain:undefined;state.parent=true;state.reactions.push(reaction);if(state.state!=PENDING)notify$1$1(this,state,false);return reaction.promise;},// `Promise.prototype.catch` method
   // https://tc39.github.io/ecma262/#sec-promise.prototype.catch
   'catch':function _catch(onRejected){return this.then(undefined,onRejected);}});OwnPromiseCapability=function OwnPromiseCapability(){var promise=new Internal();var state=getInternalState$2(promise);this.promise=promise;this.resolve=bind(internalResolve,promise,state);this.reject=bind(internalReject,promise,state);};newPromiseCapability.f=newPromiseCapability$1=function newPromiseCapability$1(C){return C===PromiseConstructor||C===PromiseWrapper?new OwnPromiseCapability(C):newGenericPromiseCapability(C);};if(typeof nativePromiseConstructor=='function'){nativeThen=nativePromiseConstructor.prototype.then;// wrap native Promise#then for native async functions
   redefine(nativePromiseConstructor.prototype,'then',function then(onFulfilled,onRejected){var that=this;return new PromiseConstructor(function(resolve,reject){nativeThen.call(that,resolve,reject);}).then(onFulfilled,onRejected);// https://github.com/zloirock/core-js/issues/640
@@ -23885,31 +23885,31 @@ var Forestry = (function () {
     }
   }
 
-  var langs = {};
-  var language = localStorage.getItem('lang') || 'ru';
+  var langs$1 = {};
+  var language$1 = localStorage.getItem('lang') || 'ru';
 
-  function add(lang, obj) {
-    langs[lang] = langs[lang] || {};
-    langs[lang] = merge$1(langs[lang], obj);
+  function add$1(lang, obj) {
+    langs$1[lang] = langs$1[lang] || {};
+    langs$1[lang] = merge$1(langs$1[lang], obj);
   }
 
-  function get_translation(root, path) {
+  function get_translation$1(root, path) {
     var i = path.indexOf('.');
 
     if (i >= 0) {
-      return get_translation(root[path.substring(0, i)], path.substring(i + 1));
+      return get_translation$1(root[path.substring(0, i)], path.substring(i + 1));
     } else {
       return root[path];
     }
   }
 
-  function translate$u(path) {
-    return get_translation(langs[language], path);
+  function translate$v(path) {
+    return get_translation$1(langs$1[language$1], path);
   }
 
   (function () {
 
-    add('ru', {
+    add$1('ru', {
       FireVirtualLayer: {
         LayerClusterBalloon: "<div style='margin-bottom: 5px;'><b style='color: red;'>Пожар</b></div>" + "<b>Кол-во термоточек:</b> [count]<br/>" + "<b>Время наблюдения:</b> [dateRange]<br/>" + "<div>[SUMMARY]</div>",
         LayerClusterBalloonIndustrial: "<span style='margin-bottom: 5px;'><b style='color: red;'>Пожар</b></span> (вероятный техногенный источник <a target='blank' href='http://fires.kosmosnimki.ru/help.html#techno'>?</a>) <br/>" + "<b>Кол-во термоточек:</b> [count]<br/>" + "<b>Время наблюдения:</b> [dateRange]<br/>" + "<div>[SUMMARY]</div>",
@@ -23917,7 +23917,7 @@ var Forestry = (function () {
         zoomInMessage: "Приблизьте карту, чтобы увидеть контур"
       }
     });
-    add('en', {
+    add$1('en', {
       FireVirtualLayer: {
         LayerClusterBalloon: "<div style='margin-bottom: 5px;'><b style='color: red;'>Fire</b></div>" + "<b>Number of hotspots:</b> [count]<br/>" + "<b>Observation period:</b> [dateRange]<br/>" + "<div>[SUMMARY]</div>",
         LayerClusterBalloonIndustrial: "<span style='margin-bottom: 5px;'><b style='color: red;'>Fire</b></span> (probable industrial hotspot <a target='_blank' href='http://fires.kosmosnimki.ru/help.html#techno'>?</a>)<br/>" + "<b>Number of hotspots:</b> [count]<br/>" + "<b>Observation period:</b> [dateRange]<br/>" + "<div>[SUMMARY]</div>",
@@ -24178,7 +24178,7 @@ var Forestry = (function () {
             attributes: ['scale', 'count', 'label', 'startDate', 'endDate', 'dateRange', 'isIndustrial'],
             styles: [{
               Filter: '"isIndustrial"=0',
-              Balloon: translate$u('FireVirtualLayer.LayerClusterBalloon'),
+              Balloon: translate$v('FireVirtualLayer.LayerClusterBalloon'),
               MinZoom: 1,
               MaxZoom: this.options.minGeomZoom - 1,
               RenderStyle: {
@@ -24199,7 +24199,7 @@ var Forestry = (function () {
               }
             }, {
               Filter: '"isIndustrial"=1',
-              Balloon: translate$u('FireVirtualLayer.LayerClusterBalloonIndustrial'),
+              Balloon: translate$v('FireVirtualLayer.LayerClusterBalloonIndustrial'),
               MinZoom: 1,
               MaxZoom: this.options.minGeomZoom - 1,
               RenderStyle: {
@@ -24222,7 +24222,7 @@ var Forestry = (function () {
             title: 'FirePolygons',
             attributes: ['scale', 'count', 'label', 'startDate', 'endDate', 'dateRange', 'isIndustrial'],
             styles: [{
-              Balloon: translate$u('FireVirtualLayer.LayerGeometryBalloon'),
+              Balloon: translate$v('FireVirtualLayer.LayerGeometryBalloon'),
               MinZoom: this.options.minGeomZoom,
               MaxZoom: 21,
               RenderStyle: {
@@ -24279,7 +24279,7 @@ var Forestry = (function () {
         this._clustersLayer.on('popupopen', function (event) {
           var popup = event.popup,
               html = popup.getContent(),
-              title = translate$u('FireVirtualLayer.zoomInMessage'),
+              title = translate$v('FireVirtualLayer.zoomInMessage'),
               cont = L.DomUtil.create('div', '');
           cont.appendChild(html);
           var zoomLink = L.DomUtil.create('div', '', cont); // zoomLink = $('<div style="margin-top: 5px;"><a href="javascript:void(0)"><i>' + title + '</i></a></div>').click(function() {
@@ -35628,8 +35628,8 @@ var Forestry = (function () {
 
   L.gmx.timeline = links;
 
-  var translate$t = translate$u;
-  add('ru', {
+  var translate$u = translate$v;
+  add$1('ru', {
     DateInterval: {
       onlyChecked: 'Только отмеченные',
       onlyOne: 'Только 1 снимок',
@@ -35664,20 +35664,20 @@ var Forestry = (function () {
       this._tabs = leafletSrc.DomUtil.create('div', 'buttons', this._container);
       this._timelineNode = leafletSrc.DomUtil.create('div', 'timeline', this._container);
       this._icon = leafletSrc.DomUtil.create('div', 'icon', this._container);
-      this._icon.innerHTML = translate$t('DateInterval.title');
+      this._icon.innerHTML = translate$u('DateInterval.title');
       this._topCont = leafletSrc.DomUtil.create('div', 'top', this._container);
       this._onlyCheckedNode = leafletSrc.DomUtil.create('input', '', this._topCont);
       this._onlyCheckedNode.type = 'checkbox';
       this._onlyCheckedNode.checked = true;
       leafletSrc.DomEvent.on(this._onlyCheckedNode, 'click', this._onlyChecked, this);
       this._onlyCheckedLabel = leafletSrc.DomUtil.create('label', '', this._topCont);
-      this._onlyCheckedLabel.innerHTML = translate$t('DateInterval.onlyChecked');
+      this._onlyCheckedLabel.innerHTML = translate$u('DateInterval.onlyChecked');
       this._onlyOneNode = leafletSrc.DomUtil.create('input', '', this._topCont);
       this._onlyOneNode.type = 'checkbox';
       this._onlyOneNode.checked = true;
       leafletSrc.DomEvent.on(this._onlyOneNode, 'click', this._onlyOne, this);
       this._onlyOneLabel = leafletSrc.DomUtil.create('label', '', this._topCont);
-      this._onlyOneLabel.innerHTML = translate$t('DateInterval.onlyOne');
+      this._onlyOneLabel.innerHTML = translate$u('DateInterval.onlyOne');
       this._timeline = new links.Timeline(this._timelineNode, {
         locale: 'ru',
         width: '100%',
@@ -36376,7 +36376,7 @@ var Forestry = (function () {
     }
   });
 
-  add('en', {
+  add$1('en', {
     gmxLocation: {
       locationChange: 'Сhange the map center:',
       locationTxt: 'Current center coordinates',
@@ -36388,7 +36388,7 @@ var Forestry = (function () {
       m: 'm'
     }
   });
-  add('ru', {
+  add$1('ru', {
     gmxLocation: {
       locationChange: 'Переместить центр карты:',
       locationTxt: 'Текущие координаты центра карты',
@@ -36400,7 +36400,7 @@ var Forestry = (function () {
       m: 'м'
     }
   });
-  var translate$s = translate$u;
+  var translate$t = translate$v;
   var _mzoom = ['M 1:500 000 000', //  0   156543.03392804
   'M 1:300 000 000', //  1   78271.51696402
   'M 1:150 000 000', //  2   39135.75848201
@@ -36474,12 +36474,12 @@ var Forestry = (function () {
       }
 
       this.locationTxt = leafletSrc.DomUtil.create('span', 'leaflet-gmx-locationTxt', container);
-      this.locationTxt.title = translate$s('gmxLocation.locationTxt');
+      this.locationTxt.title = translate$t('gmxLocation.locationTxt');
       this.coordFormatChange = leafletSrc.DomUtil.create('span', 'leaflet-gmx-coordFormatChange', container);
-      this.coordFormatChange.title = translate$s('gmxLocation.coordFormatChange');
+      this.coordFormatChange.title = translate$t('gmxLocation.coordFormatChange');
       this.scaleBar = leafletSrc.DomUtil.create('span', 'leaflet-gmx-scaleBar', container);
       this.scaleBarTxt = leafletSrc.DomUtil.create('span', 'leaflet-gmx-scaleBarTxt', container);
-      this.scaleBarTxt.title = this.scaleBar.title = translate$s('gmxLocation.scaleBarChange');
+      this.scaleBarTxt.title = this.scaleBar.title = translate$t('gmxLocation.scaleBarChange');
       this._map = map;
       var util = {
         coordFormat: this.options.coordinatesFormat || 0,
@@ -36537,7 +36537,7 @@ var Forestry = (function () {
             leafletSrc.DomEvent.on(button, 'click', function () {
               util.goTo(input.value);
             });
-            span.innerHTML = translate$s('gmxLocation.locationChange');
+            span.innerHTML = translate$t('gmxLocation.locationChange');
             input.value = oldText;
             leafletSrc.DomEvent.on(input, 'keydown', function (ev) {
               if (ev.which === 13) {
@@ -36723,11 +36723,11 @@ var Forestry = (function () {
     utils.prettifyDistance = function (length) {
       var type = '',
           //map.DistanceUnit
-      txt = translate$s('units.km') || 'km',
+      txt = translate$t('units.km') || 'km',
           km = ' ' + txt;
 
       if (length < 2000 || type === 'm') {
-        txt = translate$s('units.m') || 'm';
+        txt = translate$t('units.m') || 'm';
         return Math.round(length) + ' ' + txt;
       } else if (length < 200000) {
         return Math.round(length / 10) / 100 + km;
@@ -37297,6 +37297,7 @@ var Forestry = (function () {
         borders: 'Административные границы',
         cadastre: 'Кадастровая карта',
         declarations: 'Декларации',
+        dkp: 'ДКП',
         fires: 'Пожары',
         forestries: 'Лесничества',
         forestries_local: 'Участковые лесничества',
@@ -37304,6 +37305,7 @@ var Forestry = (function () {
         kppo: 'Классы пожарной опасности',
         lpo: 'Акты ЛПО',
         landsat: 'Landsat-8',
+        oil: 'ОИЛ',
         parks: 'ООПТ',
         parks_federal: 'Федеральные ООПТ',
         parks_regional: 'Региональные ООПТ',
@@ -37349,9 +37351,9 @@ var Forestry = (function () {
   };
 
   Object.keys(s).forEach(function (lang) {
-    return add(lang, s[lang]);
+    return add$1(lang, s[lang]);
   });
-  var translate$r = translate$u;
+  var translate$s = translate$v;
   var TASK_POLLING_DELAY = 3000;
   var NOTIFY_TIMEOUT = 5000;
 
@@ -37386,43 +37388,43 @@ var Forestry = (function () {
             return true;
 
           case 400:
-            this._notification.error(translate$r('error.badrequest'), NOTIFY_TIMEOUT);
+            this._notification.error(translate$s('error.badrequest'), NOTIFY_TIMEOUT);
 
             return false;
 
           case 401:
-            this._notification.error(translate$r('error.unauthorized'), NOTIFY_TIMEOUT);
+            this._notification.error(translate$s('error.unauthorized'), NOTIFY_TIMEOUT);
 
             window.location.reload();
             return false;
 
           case 403:
-            this._notification.error(translate$r('error.forbidden'), NOTIFY_TIMEOUT);
+            this._notification.error(translate$s('error.forbidden'), NOTIFY_TIMEOUT);
 
             return false;
 
           case 404:
-            this._notification.error(translate$r('error.validation'), NOTIFY_TIMEOUT);
+            this._notification.error(translate$s('error.validation'), NOTIFY_TIMEOUT);
 
             return false;
 
           case 500:
-            this._notification.error(translate$r('error.server'), NOTIFY_TIMEOUT);
+            this._notification.error(translate$s('error.server'), NOTIFY_TIMEOUT);
 
             return false;
 
           case 502:
-            this._notification.error(translate$r('error.gateway'), NOTIFY_TIMEOUT);
+            this._notification.error(translate$s('error.gateway'), NOTIFY_TIMEOUT);
 
             return false;
 
           case 503:
-            this._notification.error(translate$r('error.unavailable'), NOTIFY_TIMEOUT);
+            this._notification.error(translate$s('error.unavailable'), NOTIFY_TIMEOUT);
 
             return false;
 
           default:
-            this._notification.error(translate$r('error.other'), NOTIFY_TIMEOUT);
+            this._notification.error(translate$s('error.other'), NOTIFY_TIMEOUT);
 
             return false;
         }
@@ -37681,7 +37683,7 @@ var Forestry = (function () {
         }
       });
 
-      _this8._legend.addComponent(_this8._kind, translate$r("legend.".concat(_this8._kind)));
+      _this8._legend.addComponent(_this8._kind, translate$s("legend.".concat(_this8._kind)));
 
       _this8._legend.on('click', _this8._toggle, _assertThisInitialized(_this8));
 
@@ -37733,55 +37735,6 @@ var Forestry = (function () {
     return LayerController;
   }(Controller);
 
-  var Component = /*#__PURE__*/function (_Evented) {
-    _inherits(Component, _Evented);
-
-    var _super = _createSuper(Component);
-
-    function Component(container, options) {
-      var _this;
-
-      _classCallCheck(this, Component);
-
-      _this = _super.call(this);
-      _this._element = document.createElement('div');
-
-      _this._element.classList.add('scanex-component');
-
-      container.appendChild(_this._element);
-
-      _this._render(_this._element, options);
-
-      return _this;
-    }
-
-    _createClass(Component, [{
-      key: "destroy",
-      value: function destroy() {
-        this._element.remove();
-      }
-    }, {
-      key: "forwardEvent",
-      value: function forwardEvent(e) {
-        e.stopPropagation();
-        var event = document.createEvent('Event');
-        event.initEvent(e.type, false, false);
-        event.detail = e.detail;
-        this.dispatchEvent(event);
-      }
-    }, {
-      key: "element",
-      get: function get() {
-        return this._element;
-      }
-    }, {
-      key: "_render",
-      value: function _render(element, options) {}
-    }]);
-
-    return Component;
-  }(Evented);
-
   function copy(source) {
     switch (_typeof$1(source)) {
       case 'number':
@@ -37827,78 +37780,141 @@ var Forestry = (function () {
     }
   }
 
-  var Translation = /*#__PURE__*/function () {
-    function Translation() {
-      _classCallCheck(this, Translation);
+  var langs = {};
+  var language = localStorage.getItem('lang') || 'ru';
 
-      this._langs = {};
-      var current = localStorage.getItem('lang');
+  function add(lang, obj) {
+    langs[lang] = langs[lang] || {};
+    langs[lang] = merge(langs[lang], obj);
+  }
 
-      if (!current) {
-        current = 'ru';
-        localStorage.setItem('lang', current);
-      }
+  function get_translation(root, path) {
+    var i = path.indexOf('.');
 
-      this._current = current;
+    if (i >= 0) {
+      return get_translation(root[path.substring(0, i)], path.substring(i + 1));
+    } else {
+      return root[path];
+    }
+  }
+
+  function translate$r(path) {
+    return get_translation(langs[language], path);
+  }
+
+  var notify$3 = {
+  	error: {
+  		badrequest: "Bad request",
+  		unauthorized: "Unauthorized",
+  		forbidden: "Forbidden",
+  		notfound: "Not found",
+  		server: "Internal server error",
+  		gateway: "Bad gateway",
+  		unavailable: "Service unavailable",
+  		other: "Other errors"
+  	}
+  };
+  var en$3 = {
+  	notify: notify$3
+  };
+
+  var notify$2 = {
+  	error: {
+  		badrequest: "Неправильный запрос",
+  		unauthorized: "Не авторизован",
+  		forbidden: "Нет разрешения",
+  		notfound: "Не найдено",
+  		server: "Внутренняя ошибка сервера",
+  		gateway: "Неправильный шлюз",
+  		unavailable: "Сервис недоступен",
+  		other: "Прочие ошибки"
+  	}
+  };
+  var ru$3 = {
+  	notify: notify$2
+  };
+
+  add('ru', ru$3);
+  add('en', en$3);
+
+  var Component = /*#__PURE__*/function (_Evented) {
+    _inherits(Component, _Evented);
+
+    var _super = _createSuper(Component);
+
+    function Component(container, options) {
+      var _this;
+
+      _classCallCheck(this, Component);
+
+      _this = _super.call(this);
+      _this._element = document.createElement('div');
+
+      _this._element.classList.add('scanex-component');
+
+      container.appendChild(_this._element);
+
+      _this.render(_this._element, options);
+
+      return _this;
     }
 
-    _createClass(Translation, [{
-      key: "getLanguage",
-      value: function getLanguage() {
-        return this._current;
+    _createClass(Component, [{
+      key: "destroy",
+      value: function destroy() {
+        this._element.remove();
       }
     }, {
-      key: "addText",
-      value: function addText(lang, obj) {
-        this._langs[lang] = this._langs[lang] || {};
-        this._langs[lang] = merge(this._langs[lang], obj);
+      key: "forwardEvent",
+      value: function forwardEvent(e) {
+        e.stopPropagation();
+        var event = document.createEvent('Event');
+        event.initEvent(e.type, false, false);
+        event.detail = e.detail;
+        this.dispatchEvent(event);
       }
     }, {
-      key: "getText",
-      value: function getText(path) {
-        return this._translate(this._langs[this._current], path);
+      key: "element",
+      get: function get() {
+        return this._element;
       }
     }, {
-      key: "_translate",
-      value: function _translate(root, path) {
-        var i = path.indexOf('.');
-
-        if (i >= 0) {
-          return this._translate(root[path.substring(0, i)], path.substring(i + 1));
-        } else {
-          return root[path];
-        }
-      }
+      key: "render",
+      value: function render(element, options) {}
     }]);
 
-    return Translation;
-  }();
+    return Component;
+  }(Evented);
 
-  var T = new Translation();
+  var scanex$1 = {
+  	components: {
+  		dialog: {
+  			close: "Close",
+  			maximize: "Maximize",
+  			minimize: "Minimize"
+  		}
+  	}
+  };
+  var en$2 = {
+  	scanex: scanex$1
+  };
 
-  T.addText('ru', {
-    scanex: {
-      components: {
-        dialog: {
-          close: 'Закрыть',
-          maximize: 'Развернуть',
-          minimize: 'Свернуть'
-        }
-      }
-    }
-  });
-  T.addText('en', {
-    scanex: {
-      components: {
-        dialog: {
-          close: 'Close',
-          maximize: 'Maximize',
-          minimize: 'Minimize'
-        }
-      }
-    }
-  });
-  var translate$q = T.getText.bind(T);
+  var scanex = {
+  	components: {
+  		dialog: {
+  			close: "Закрыть",
+  			maximize: "Развернуть",
+  			minimize: "Свернуть"
+  		}
+  	}
+  };
+  var ru$2 = {
+  	scanex: scanex
+  };
+
+  add('ru', ru$2);
+  add('en', en$2);
+  var translate$q = translate$r;
 
   var Dialog = /*#__PURE__*/function (_Component) {
     _inherits(Dialog, _Component);
@@ -37927,19 +37943,16 @@ var Forestry = (function () {
         left: left
       });
       _this._titleElement.innerText = title;
+      _this._moving = false;
 
       if (!modal) {
         if (_this._id) {
-          _this._element.setAttribute('id', _this._id);
+          _this.element.setAttribute('id', _this._id);
         }
-
-        _this._moving = false;
-        _this._offsetX;
-        _this._offsetY;
 
         _this._header.addEventListener('mousedown', _this._start.bind(_assertThisInitialized(_this)));
 
-        _this._element.addEventListener('mousemove', _this._move.bind(_assertThisInitialized(_this)));
+        _this.element.addEventListener('mousemove', _this._move.bind(_assertThisInitialized(_this)));
 
         window.addEventListener('mouseup', _this._stop.bind(_assertThisInitialized(_this)));
       }
@@ -37969,9 +37982,9 @@ var Forestry = (function () {
         var clientX = e.clientX,
             clientY = e.clientY;
 
-        var _this$_element$getBou = this._element.getBoundingClientRect(),
-            top = _this$_element$getBou.top,
-            left = _this$_element$getBou.left;
+        var _this$element$getBoun = this.element.getBoundingClientRect(),
+            top = _this$element$getBoun.top,
+            left = _this$element$getBoun.left;
 
         this._offsetX = clientX - left;
         this._offsetY = clientY - top;
@@ -37983,7 +37996,7 @@ var Forestry = (function () {
         if (this._moving) {
           this._moving = false;
 
-          this._savePosition(this._element);
+          this._savePosition(this.element);
         }
       }
     }, {
@@ -37993,8 +38006,8 @@ var Forestry = (function () {
           e.stopPropagation();
           var clientX = e.clientX,
               clientY = e.clientY;
-          this._element.style.left = "".concat(clientX - this._offsetX, "px");
-          this._element.style.top = "".concat(clientY - this._offsetY, "px");
+          this.element.style.left = "".concat(clientX - this._offsetX, "px");
+          this.element.style.top = "".concat(clientY - this._offsetY, "px");
         }
       }
     }, {
@@ -38035,8 +38048,8 @@ var Forestry = (function () {
         }
       }
     }, {
-      key: "_close",
-      value: function _close(e) {
+      key: "close",
+      value: function close(e) {
         e.stopPropagation();
         var event = document.createEvent('Event');
         event.initEvent('close', false, false);
@@ -38052,8 +38065,8 @@ var Forestry = (function () {
         _get(_getPrototypeOf(Dialog.prototype), "destroy", this).call(this);
       }
     }, {
-      key: "_render",
-      value: function _render(element, _ref2) {
+      key: "render",
+      value: function render(element, _ref2) {
         var id = _ref2.id,
             collapsible = _ref2.collapsible,
             modal = _ref2.modal,
@@ -38104,7 +38117,7 @@ var Forestry = (function () {
         btnClose.setAttribute('title', translate$q('scanex.components.dialog.close'));
         btnClose.classList.add('scanex-component-icon');
         btnClose.classList.add('close');
-        btnClose.addEventListener('click', this._close.bind(this));
+        btnClose.addEventListener('click', this.close.bind(this));
         buttons.appendChild(btnClose);
 
         this._header.appendChild(buttons);
@@ -38158,6 +38171,27 @@ var Forestry = (function () {
     return Dialog;
   }(Component);
 
+  var notify$1 = {
+  	error: "Error!",
+  	warn: "Warning",
+  	info: "Information"
+  };
+  var en$1 = {
+  	notify: notify$1
+  };
+
+  var notify = {
+  	error: "Ошибка!",
+  	warn: "Внимание!",
+  	info: "Информация"
+  };
+  var ru$1 = {
+  	notify: notify
+  };
+
+  add('ru', ru$1);
+  add('en', en$1);
+
   var floor = Math.floor;
 
   // `Number.isInteger` method implementation
@@ -38172,28 +38206,40 @@ var Forestry = (function () {
     isInteger: isInteger
   });
 
-  var translate$p = T.getText.bind(T);
-  T.addText('ru', {
-    pager: {
-      previous: 'Предыдущая',
-      next: 'Следующая'
-    }
-  });
+  var pager$1 = {
+  	previous: "Previous",
+  	next: "Next"
+  };
+  var en = {
+  	pager: pager$1
+  };
+
+  var pager = {
+  	previous: "Предыдущая",
+  	next: "Следующая"
+  };
+  var ru = {
+  	pager: pager
+  };
+
+  var translate$p = translate$r;
+  add('ru', ru);
+  add('en', en);
 
   var Pager = /*#__PURE__*/function (_Component) {
     _inherits(Pager, _Component);
 
     var _super = _createSuper(Pager);
 
-    function Pager(container) {
+    function Pager() {
       _classCallCheck(this, Pager);
 
-      return _super.call(this, container);
+      return _super.apply(this, arguments);
     }
 
     _createClass(Pager, [{
-      key: "_render",
-      value: function _render(element) {
+      key: "render",
+      value: function render(element) {
         var _this = this;
 
         element.classList.add('scanex-component-pager');
@@ -38222,8 +38268,6 @@ var Forestry = (function () {
         });
 
         this._last = element.querySelector('.last');
-        this._pages = 1;
-        this.page = 1;
       }
     }, {
       key: "page",
@@ -38231,7 +38275,7 @@ var Forestry = (function () {
         return this._page;
       },
       set: function set(page) {
-        if (Number.isInteger(page) && 1 <= page && page <= this.pages) {
+        if (Number.isInteger(page) && 1 <= page && page <= this.pages && this._page !== page) {
           this._page = page;
           this._current.value = this._page;
           var event = document.createEvent('Event');
@@ -38247,7 +38291,7 @@ var Forestry = (function () {
         return this._pages;
       },
       set: function set(pages) {
-        if (Number.isInteger(pages) && 1 <= this.page && this.page <= pages) {
+        if (pages && Number.isInteger(pages)) {
           this._pages = pages;
           this._last.innerText = pages;
         }
@@ -38276,14 +38320,14 @@ var Forestry = (function () {
 
       _this._down.addEventListener('click', _this.decrement.bind(_assertThisInitialized(_this)));
 
-      _this._input.addEventListener('change', _this._onChange.bind(_assertThisInitialized(_this)));
+      _this._input.addEventListener('change', _this._change.bind(_assertThisInitialized(_this)));
 
       return _this;
     }
 
     _createClass(Spinner, [{
-      key: "_onChange",
-      value: function _onChange(e) {
+      key: "_change",
+      value: function _change(e) {
         e.stopPropagation();
         this.value = parseInt(this._input.value, 10);
       }
@@ -38341,8 +38385,8 @@ var Forestry = (function () {
         this.value = this._value - 1;
       }
     }, {
-      key: "_render",
-      value: function _render(element) {
+      key: "render",
+      value: function render(element) {
         element.classList.add('scanex-component-spinner');
         element.innerHTML = "<input type=\"text\" value=\"0\"/>\n        <div class=\"buttons\">\n            <i class=\"scanex-component-icon spinner-up\"></i>            \n            <i class=\"scanex-component-icon spinner-down\"></i>\n        </div>";
         this._input = element.querySelector('input');
@@ -38531,8 +38575,8 @@ var Forestry = (function () {
         this.dispatchEvent(event);
       }
     }, {
-      key: "_render",
-      value: function _render(element) {
+      key: "render",
+      value: function render(element) {
         element.classList.add('scanex-component-slider');
         element.classList.add('no-select');
         element.innerHTML = "<div class=\"slider-bar\">\n                <div class=\"slider-range\">\n                    <div class=\"slider-tick slider-tick-right\">\n                        <label></label>\n                        <i></i>\n                    </div>\n                </div>\n            </div>";
@@ -38702,9 +38746,9 @@ var Forestry = (function () {
         this.dispatchEvent(event);
       }
     }, {
-      key: "_render",
-      value: function _render(element) {
-        _get(_getPrototypeOf(Slider2.prototype), "_render", this).call(this, element);
+      key: "render",
+      value: function render(element) {
+        _get(_getPrototypeOf(Slider2.prototype), "render", this).call(this, element);
 
         element.classList.add('scanex-component-two-tick-slider');
         this._leftTick = document.createElement('div');
@@ -38750,14 +38794,14 @@ var Forestry = (function () {
         max: max
       });
 
-      _this._slider.on('change', _this._onChange.bind(_assertThisInitialized(_this)));
+      _this._slider.on('change', _this._change.bind(_assertThisInitialized(_this)));
 
       return _this;
     }
 
     _createClass(Interval, [{
-      key: "_onChange",
-      value: function _onChange(e) {
+      key: "_change",
+      value: function _change(e) {
         this._lo.value = this._slider.lo.toString();
         this._hi.value = this._slider.hi.toString();
         var event = document.createEvent('Event');
@@ -38797,8 +38841,8 @@ var Forestry = (function () {
         this._slider.hi = hi;
       }
     }, {
-      key: "_render",
-      value: function _render(element) {
+      key: "render",
+      value: function render(element) {
         element.classList.add('scanex-component-range');
         element.innerHTML = "<table>\n            <tr>\n                <td>\n                    <input class=\"lo\" type=\"text\" />\n                </td>\n                <td>\n                    <div class=\"slider\"></div>\n                </td>\n                <td>\n                    <input class=\"hi\" type=\"text\" />\n                </td>\n            </tr>\n        </table>";
         this._lo = element.querySelector('.lo');
@@ -38827,9 +38871,9 @@ var Forestry = (function () {
   };
 
   Object.keys(strings$b).forEach(function (lang) {
-    return add(lang, strings$b[lang]);
+    return add$1(lang, strings$b[lang]);
   });
-  var translate$o = translate$u;
+  var translate$o = translate$v;
 
   var View$1 = /*#__PURE__*/function (_Dialog) {
     _inherits(View, _Dialog);
@@ -38940,7 +38984,7 @@ var Forestry = (function () {
     return View;
   }(Dialog);
 
-  var translate$n = translate$u;
+  var translate$n = translate$v;
 
   var BaseLayers = /*#__PURE__*/function (_Controller) {
     _inherits(BaseLayers, _Controller);
@@ -39407,6 +39451,35 @@ var Forestry = (function () {
     return Cadastre;
   }(LayerController);
 
+  var DKP = /*#__PURE__*/function (_LayerController) {
+    _inherits(DKP, _LayerController);
+
+    var _super = _createSuper(DKP);
+
+    function DKP(_ref) {
+      var map = _ref.map,
+          content = _ref.content,
+          notification = _ref.notification,
+          loading = _ref.loading,
+          layer = _ref.layer,
+          legend = _ref.legend;
+
+      _classCallCheck(this, DKP);
+
+      return _super.call(this, {
+        kind: 'dkp',
+        map: map,
+        content: content,
+        notification: notification,
+        loading: loading,
+        layer: layer,
+        legend: legend
+      });
+    }
+
+    return DKP;
+  }(LayerController);
+
   var View = /*#__PURE__*/function (_Evented) {
     _inherits(View, _Evented);
 
@@ -39416,25 +39489,26 @@ var Forestry = (function () {
       var _this;
 
       var strings = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+      var closable = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
 
       _classCallCheck(this, View);
 
       _this = _super.call(this);
       _this._target = container;
-      _this._target.innerHTML = "<div class=\"container\"></div>\n        <i class=\"scanex-component-icon close\"></i>";
+      _this._target.innerHTML = "<div class=\"container\"></div>".concat(closable ? '<i class="scanex-component-icon close"></i>' : '');
       _this._container = _this._target.querySelector('.container');
-      var btn = container.querySelector('.scanex-component-icon');
-      btn.addEventListener('click', function (e) {
+      var btn = closable && container.querySelector('.scanex-component-icon');
+      btn && btn.addEventListener('click', function (e) {
         e.stopPropagation();
 
         _this.close();
       });
       leafletSrc.DomEvent.disableScrollPropagation(_this._target);
       Object.keys(s).forEach(function (lang) {
-        return add(lang, s[lang]);
+        return add$1(lang, s[lang]);
       });
       Object.keys(strings).forEach(function (lang) {
-        return add(lang, strings[lang]);
+        return add$1(lang, strings[lang]);
       });
       return _this;
     }
@@ -39477,7 +39551,7 @@ var Forestry = (function () {
     }, {
       key: "translate",
       value: function translate(key) {
-        return translate$u(key);
+        return translate$v(key);
       }
     }, {
       key: "m",
@@ -39861,7 +39935,7 @@ var Forestry = (function () {
     return Fires;
   }(View);
 
-  var translate$m = translate$u;
+  var translate$m = translate$v;
   var hotSpotLayerID = '9DC30891452449DD8D551D0AA62FFF54';
 
   var Fires = /*#__PURE__*/function (_Evented) {
@@ -46843,7 +46917,7 @@ var Forestry = (function () {
     });
   });
 
-  var translate$l = translate$u;
+  var translate$l = translate$v;
 
   var roundBytes = function roundBytes(s) {
     if (s > 1024 * 1024 * 1024 * 1024 * 1.2) {
@@ -47024,7 +47098,7 @@ var Forestry = (function () {
     return UploadProgress;
   }(Evented);
 
-  var translate$k = translate$u;
+  var translate$k = translate$v;
 
   var LayerProperties = /*#__PURE__*/function (_Dialog) {
     _inherits(LayerProperties, _Dialog);
@@ -47067,7 +47141,7 @@ var Forestry = (function () {
     return LayerProperties;
   }(Dialog);
 
-  var translate$j = translate$u;
+  var translate$j = translate$v;
   var FILE_EXTENSIONS = {
     vector: ['.geojson', '.shp', '.dbf', '.prj', '.sbn', '.sbx', '.shx', '.dat', '.mif', '.mid', '.csv', '.gpx', '.kml', '.kmz', '.sxf', '.sqlite', '.geojson', '.gdbtable'].join(','),
     raster: ['.tif', '.tiff', '.tfw', '.xml', '.jpg', '.jgw', '.png', '.pgw', '.jp2', '.j2w'].join(',')
@@ -47852,7 +47926,7 @@ var Forestry = (function () {
     return FileUploader;
   }(Controller);
 
-  var translate$i = translate$u;
+  var translate$i = translate$v;
 
   var _DAY = 60 * 60 * 24 * 1000;
 
@@ -48656,7 +48730,7 @@ var Forestry = (function () {
     return Incidents;
   }(Controller);
 
-  var translate$h = translate$u;
+  var translate$h = translate$v;
   var ALLOWED_LAYERS$3 = ['kppo_rgb', 'kppo'];
 
   var KPPO = /*#__PURE__*/function (_Controller) {
@@ -48720,7 +48794,7 @@ var Forestry = (function () {
     return KPPO;
   }(Controller);
 
-  var translate$g = translate$u;
+  var translate$g = translate$v;
 
   var LPO = /*#__PURE__*/function (_Controller) {
     _inherits(LPO, _Controller);
@@ -48871,6 +48945,35 @@ var Forestry = (function () {
     return Loading;
   }(Evented);
 
+  var OIL = /*#__PURE__*/function (_LayerController) {
+    _inherits(OIL, _LayerController);
+
+    var _super = _createSuper(OIL);
+
+    function OIL(_ref) {
+      var map = _ref.map,
+          content = _ref.content,
+          notification = _ref.notification,
+          loading = _ref.loading,
+          layer = _ref.layer,
+          legend = _ref.legend;
+
+      _classCallCheck(this, OIL);
+
+      return _super.call(this, {
+        kind: 'oil',
+        map: map,
+        content: content,
+        notification: notification,
+        loading: loading,
+        layer: layer,
+        legend: legend
+      });
+    }
+
+    return OIL;
+  }(LayerController);
+
   var strings$7 = {
     ru: {
       park: {
@@ -48957,7 +49060,7 @@ var Forestry = (function () {
     return Parks;
   }(View);
 
-  var translate$f = translate$u;
+  var translate$f = translate$v;
 
   var Parks = /*#__PURE__*/function (_Controller) {
     _inherits(Parks, _Controller);
@@ -67246,7 +67349,7 @@ var Forestry = (function () {
     return Plots;
   }(LayerController);
 
-  var translate$e = translate$u;
+  var translate$e = translate$v;
 
   var Prohibited = /*#__PURE__*/function (_Controller) {
     _inherits(Prohibited, _Controller);
@@ -67322,7 +67425,7 @@ var Forestry = (function () {
     return Prohibited;
   }(Controller);
 
-  var translate$d = translate$u;
+  var translate$d = translate$v;
 
   var Quadrants$2 = /*#__PURE__*/function (_Evented) {
     _inherits(Quadrants, _Evented);
@@ -67425,7 +67528,7 @@ var Forestry = (function () {
     return Quadrants;
   }(Evented);
 
-  var translate$c = translate$u;
+  var translate$c = translate$v;
 
   var SpeciesTable = /*#__PURE__*/function (_Evented) {
     _inherits(SpeciesTable, _Evented);
@@ -67470,7 +67573,7 @@ var Forestry = (function () {
     return SpeciesTable;
   }(Evented);
 
-  var translate$b = translate$u;
+  var translate$b = translate$v;
 
   var Species = /*#__PURE__*/function () {
     function Species(container) {
@@ -68189,7 +68292,7 @@ var Forestry = (function () {
     return Info;
   }(View);
 
-  var translate$a = translate$u;
+  var translate$a = translate$v;
 
   var indexByName = function indexByName(layer, name) {
     var _layer$getGmxProperti = layer.getGmxProperties(),
@@ -69454,7 +69557,7 @@ var Forestry = (function () {
     return Stands;
   }(View);
 
-  var translate$9 = translate$u;
+  var translate$9 = translate$v;
   var ALLOWED_LAYERS$2 = ['forestries_local', 'forestries', 'regions', 'quadrants', 'stands'];
 
   var Quadrants = /*#__PURE__*/function (_Controller) {
@@ -69763,7 +69866,7 @@ var Forestry = (function () {
     return Quadrants;
   }(Controller);
 
-  var translate$8 = translate$u;
+  var translate$8 = translate$v;
 
   var RasterCatalog = /*#__PURE__*/function () {
     function RasterCatalog(_ref) {
@@ -69827,7 +69930,7 @@ var Forestry = (function () {
     return RasterCatalog;
   }();
 
-  var translate$7 = translate$u;
+  var translate$7 = translate$v;
   var ALLOWED_LAYERS$1 = ['relief_hk', 'relief_zk'];
 
   var Relief = /*#__PURE__*/function (_Controller) {
@@ -69934,7 +70037,7 @@ var Forestry = (function () {
 
       _classCallCheck(this, Reports);
 
-      _this = _super.call(this, container, strings$3);
+      _this = _super.call(this, container, strings$3, false);
 
       _this._container.classList.add('scanex-forestry-analytics', 'scrollable');
 
@@ -70028,12 +70131,25 @@ var Forestry = (function () {
                     d1 = _this2._lo.getDate();
                     d2 = _this2._hi.getDate();
                     pdata = {
-                      RegionID: _this2.currentRegion,
-                      ForestryID: _this2.currentForestry,
-                      LocalForestryID: _this2.currentLocalForestry,
-                      DateBegin: d1 ? d1.toISOString() : '',
-                      DateEnd: d2 ? d2.toISOString() : ''
-                    }; // let url = '';
+                      RegionID: _this2.currentRegion
+                    };
+
+                    if (_this2.currentForestry) {
+                      pdata.ForestryID = _this2.currentForestry;
+                    }
+
+                    if (_this2.currentLocalForestry) {
+                      pdata.LocalForestryID = _this2.currentLocalForestry;
+                    }
+
+                    if (d1) {
+                      pdata.DateBegin = d1.toISOString();
+                    }
+
+                    if (d2) {
+                      pdata.DateEnd = d2.toISOString();
+                    } // let url = '';
+
 
                     url = _this2._path;
 
@@ -70062,7 +70178,7 @@ var Forestry = (function () {
 
                     _this2._save(url);
 
-                  case 8:
+                  case 12:
                   case "end":
                     return _context.stop();
                 }
@@ -70143,11 +70259,12 @@ var Forestry = (function () {
         var cont = this._container.querySelector('.localForestry');
 
         cont.options.length = 0;
-
-        var arr = this._headerData.localForestries.filter(function (it) {
+        var arr = [{
+          id: '',
+          name: this.translate('report.all')
+        }].concat(this._headerData.localForestries.filter(function (it) {
           return it.forestry == _this3.currentForestry;
-        });
-
+        }));
         arr.forEach(function (it) {
           var opt = document.createElement('option');
           opt.value = it.id;
@@ -70166,11 +70283,12 @@ var Forestry = (function () {
         var cont = this._container.querySelector('.forestry');
 
         cont.options.length = 0;
-
-        var arr = this._headerData.forestries.filter(function (it) {
+        var arr = [{
+          id: '',
+          name: this.translate('report.all')
+        }].concat(this._headerData.forestries.filter(function (it) {
           return it.region == _this4.currentRegion;
-        });
-
+        }));
         arr.forEach(function (it) {
           var opt = document.createElement('option');
           opt.value = it.id;
@@ -70271,88 +70389,100 @@ var Forestry = (function () {
       });
       _this._path = path;
       _this._permissions = permissions;
-      _this._view = _this._content.add('reports', Reports$1, {
-        path: path
-      }).on('reports:save', function (e) {
-        _this._save(e.detail);
-      });
       return _this;
     }
 
     _createClass(Reports, [{
       key: "view",
       value: function () {
-        var _view = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
-          var data;
-          return regeneratorRuntime.wrap(function _callee$(_context) {
-            while (1) {
-              switch (_context.prev = _context.next) {
-                case 0:
-                  if (!this._permissions.AnaliticData) {
-                    _context.next = 9;
-                    break;
-                  }
+        var _view = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
+          var _this2 = this;
 
-                  _context.next = 3;
-                  return this.httpGet("".concat(this._path, "/Forest/GetReportHeaderData"));
+          var data, dlg, _view2;
 
-                case 3:
-                  data = _context.sent;
-
-                  if (!data) {
-                    _context.next = 7;
-                    break;
-                  }
-
-                  _context.next = 7;
-                  return this._view.open(data);
-
-                case 7:
-                  _context.next = 10;
-                  break;
-
-                case 9:
-                  this._notification.error(translate('forbidden.analytics'), NOTIFY_TIMEOUT);
-
-                case 10:
-                case "end":
-                  return _context.stop();
-              }
-            }
-          }, _callee, this);
-        }));
-
-        function view() {
-          return _view.apply(this, arguments);
-        }
-
-        return view;
-      }()
-    }, {
-      key: "_save",
-      value: function () {
-        var _save2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(opt) {
-          var data;
           return regeneratorRuntime.wrap(function _callee2$(_context2) {
             while (1) {
               switch (_context2.prev = _context2.next) {
                 case 0:
-                  console.log('reports:save', opt);
+                  if (!this._permissions.AnaliticData) {
+                    _context2.next = 13;
+                    break;
+                  }
+
                   _context2.next = 3;
-                  return this.httpGet("".concat(this._path, "/").concat(opt.url));
+                  return this.httpGet("".concat(this._path, "/Forest/GetReportHeaderData"));
 
                 case 3:
                   data = _context2.sent;
 
                   if (!data) {
-                    _context2.next = 7;
+                    _context2.next = 11;
                     break;
                   }
 
-                  _context2.next = 7;
-                  return this._view.parseResult(data);
+                  dlg = new Dialog({
+                    id: 'report-dialog',
+                    title: '',
+                    top: 50,
+                    left: 20,
+                    modal: true
+                  });
+                  _view2 = new Reports$1(dlg.content, {
+                    path: this._path
+                  });
 
-                case 7:
+                  _view2.on('reports:save', /*#__PURE__*/function () {
+                    var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e) {
+                      var url, data;
+                      return regeneratorRuntime.wrap(function _callee$(_context) {
+                        while (1) {
+                          switch (_context.prev = _context.next) {
+                            case 0:
+                              url = e.detail.url;
+                              console.log('reports:save', e.detail);
+                              _context.next = 4;
+                              return _this2.httpGet("".concat(_this2._path, "/").concat(url));
+
+                            case 4:
+                              data = _context.sent;
+
+                              if (!data) {
+                                _context.next = 8;
+                                break;
+                              }
+
+                              _context.next = 8;
+                              return _view2.parseResult(data);
+
+                            case 8:
+                            case "end":
+                              return _context.stop();
+                          }
+                        }
+                      }, _callee);
+                    }));
+
+                    return function (_x) {
+                      return _ref2.apply(this, arguments);
+                    };
+                  }());
+
+                  dlg.on('close', function () {
+                    dlg.destroy();
+                    dlg = null;
+                    _view2 = null;
+                  });
+                  _context2.next = 11;
+                  return _view2.open(data);
+
+                case 11:
+                  _context2.next = 14;
+                  break;
+
+                case 13:
+                  this._notification.error(translate('forbidden.analytics'), NOTIFY_TIMEOUT);
+
+                case 14:
                 case "end":
                   return _context2.stop();
               }
@@ -70360,11 +70490,11 @@ var Forestry = (function () {
           }, _callee2, this);
         }));
 
-        function _save(_x) {
-          return _save2.apply(this, arguments);
+        function view() {
+          return _view.apply(this, arguments);
         }
 
-        return _save;
+        return view;
       }()
     }]);
 
@@ -71272,7 +71402,7 @@ var Forestry = (function () {
     return Uploaded;
   }(View);
 
-  var translate$6 = translate$u;
+  var translate$6 = translate$v;
 
   var TmsView = /*#__PURE__*/function (_Dialog) {
     _inherits(TmsView, _Dialog);
@@ -71365,7 +71495,7 @@ var Forestry = (function () {
     return TmsView;
   }(Dialog);
 
-  var translate$5 = translate$u;
+  var translate$5 = translate$v;
 
   var WmsView = /*#__PURE__*/function (_Dialog) {
     _inherits(WmsView, _Dialog);
@@ -71414,7 +71544,7 @@ var Forestry = (function () {
     return WmsView;
   }(Dialog);
 
-  var translate$4 = translate$u;
+  var translate$4 = translate$v;
 
   var WfsView = /*#__PURE__*/function (_Dialog) {
     _inherits(WfsView, _Dialog);
@@ -71880,7 +72010,7 @@ var Forestry = (function () {
     return parse_node(xml.childNodes[0]);
   }
 
-  var translate$3 = translate$u;
+  var translate$3 = translate$v;
 
   var Uploaded = /*#__PURE__*/function (_Controller) {
     _inherits(Uploaded, _Controller);
@@ -73232,7 +73362,7 @@ var Forestry = (function () {
     return Warehouses;
   }(LayerController);
 
-  add('ru', {
+  add$1('ru', {
     notify: {
       error: 'Ошибка!',
       warn: 'Внимание!',
@@ -73240,7 +73370,7 @@ var Forestry = (function () {
     }
   });
 
-  var translate$2 = translate$u;
+  var translate$2 = translate$v;
 
   var delay = function delay(timeout) {
     return new Promise(function (resolve) {
@@ -73368,7 +73498,7 @@ var Forestry = (function () {
     return Notification;
   }(Evented);
 
-  var translate$1 = translate$u;
+  var translate$1 = translate$v;
   var ALLOWED_LAYERS = ['incidents_temporal', 'forestries_local', 'forestries', 'regions', 'fires', 'warehouses', 'roads', 'declarations', 'oil', 'quadrants_editor', 'quadrants_protected', 'quadrants_reserved', 'plots', 'dkp', 'projects', 'reg_parks', 'fed_parks', 'parks', 'stands', 'quadrants', 'sentinel', 'landsat', 'cadastre', 'plan', 'kppo', 'kppo_rgb', 'lpo', 'relief_hk', 'relief_zk'].reverse();
 
   var Map = /*#__PURE__*/function (_Evented) {
@@ -73899,12 +74029,13 @@ var Forestry = (function () {
                     });
                   }
 
-                  if (this._layers.dkp && this._permissions.RawWoodAgreementView) {
-                    this._map.addLayer(this._layers.dkp);
-                  }
-
                   if (this._layers.oil && this._permissions.WoodUsageReportView) {
-                    this._map.addLayer(this._layers.oil);
+                    this._controllers.oil = new OIL({
+                      map: this._map,
+                      content: this._content,
+                      layer: this._layers.oil,
+                      legend: this._legend
+                    });
                   }
 
                   if (this._permissions.ForestFires || this._permissions.ForestFiresTimeLine) {
@@ -73983,6 +74114,15 @@ var Forestry = (function () {
                       permissions: this._permissions,
                       notification: this._notification,
                       loading: this._loading
+                    });
+                  }
+
+                  if (this._layers.dkp && this._permissions.RawWoodAgreementView) {
+                    this._controllers.dkp = new DKP({
+                      map: this._map,
+                      content: this._content,
+                      layer: this._layers.dkp,
+                      legend: this._legend
                     });
                   }
 
