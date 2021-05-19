@@ -48373,7 +48373,7 @@ var Forestry = (function () {
         var map = this._layer._map;
 
         if (rastr._map) {
-          map.removeLayer(rastr);
+          rastr._map.removeLayer(rastr);
         } else {
           map.addLayer(rastr);
         }
@@ -48411,7 +48411,7 @@ var Forestry = (function () {
                         tileProps: "".concat(this._gmxPath, "/TileSender.ashx"),
                         mapProps: "".concat(this._gmxPath, "/TileSender.ashx")
                       },
-                      zIndex: -1000000
+                      zIndex: -200000
                     });
                   } else {
                     this._notification.error(translate$i('error.server'), NOTIFY_TIMEOUT);
