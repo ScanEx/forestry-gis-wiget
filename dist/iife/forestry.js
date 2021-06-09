@@ -70413,7 +70413,7 @@ var Forestry = (function () {
               switch (_context2.prev = _context2.next) {
                 case 0:
                   if (!this._permissions.AnaliticData) {
-                    _context2.next = 13;
+                    _context2.next = 14;
                     break;
                   }
 
@@ -70424,17 +70424,18 @@ var Forestry = (function () {
                   data = _context2.sent;
 
                   if (!data) {
-                    _context2.next = 11;
+                    _context2.next = 12;
                     break;
                   }
 
                   dlg = new Dialog({
                     id: 'report-dialog',
                     title: '',
-                    top: 50,
-                    left: 20,
+                    top: 0,
+                    left: 0,
                     modal: true
                   });
+                  dlg.element.classList.add('forestry-report-dialog');
                   _view2 = new Reports$1(dlg.content, {
                     path: this._path
                   });
@@ -70480,17 +70481,17 @@ var Forestry = (function () {
                     dlg = null;
                     _view2 = null;
                   });
-                  _context2.next = 11;
+                  _context2.next = 12;
                   return _view2.open(data);
 
-                case 11:
-                  _context2.next = 14;
+                case 12:
+                  _context2.next = 15;
                   break;
 
-                case 13:
+                case 14:
                   this._notification.error(translate('forbidden.analytics'), NOTIFY_TIMEOUT);
 
-                case 14:
+                case 15:
                 case "end":
                   return _context2.stop();
               }
