@@ -48318,7 +48318,7 @@ var Forestry = (function () {
                   if (this._drawingObj) {
                     out.wkbGeometry = JSON.stringify(this._drawingObj[0].toGeoJSON().geometry);
 
-                    this._removeDrawing();
+                    this._layer.once('versionchange', this._removeDrawing, this);
                   }
 
                   _context8.next = 3;
@@ -48348,7 +48348,7 @@ var Forestry = (function () {
         var map = this._layer._map;
 
         if (rastr._map) {
-          map.removeLayer(rastr);
+          rastr._map.removeLayer(rastr);
         } else {
           map.addLayer(rastr);
         }
@@ -48386,7 +48386,7 @@ var Forestry = (function () {
                         tileProps: "".concat(this._gmxPath, "/TileSender.ashx"),
                         mapProps: "".concat(this._gmxPath, "/TileSender.ashx")
                       },
-                      zIndex: -1000000
+                      zIndex: -200000
                     });
                   } else {
                     this._notification.error(translate$i('error.server'), NOTIFY_TIMEOUT);
@@ -70441,7 +70441,7 @@ var Forestry = (function () {
             return Math.max(p, c.payed, c.cutDown);
           }, 0);
           var str = data.map(function (it) {
-            return "<div class=\"chart-row__left-el\">\n\t\t\t\t\t<div class=\"chart-row__left-el-chart\">\n\t\t\t\t\t\t<div class=\"chart-row__left-el-chart__text\">".concat(_this5._fmt(it.payed), " \u043C<sup>3</sup></div>\n\t\t\t\t\t\t<div class=\"chart-row__left-el-chart__arrow green-bg\" style=\"height: ").concat(Math.floor(maxHeight * Math.min(it.payed, maxValue) / maxValue), "px\"></div>\n\t\t\t\t\t\t<div class=\"chart-row__left-el-chart__text_bot\">").concat(it.organization || it.species, "</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"chart-row__left-el-chart\">\n\t\t\t\t\t\t<div class=\"chart-row__left-el-chart__text\">").concat(_this5._fmt(it.cutDown), " \u043C<sup>3</sup></div>\n\t\t\t\t\t\t<div class=\"chart-row__left-el-chart__arrow blue-bg\" style=\"height: ").concat(Math.floor(maxHeight * Math.min(it.cutDown, maxValue) / maxValue), "px\"></div>\n\t\t\t\t\t\t<div class=\"chart-row__left-el-chart__text_bot\">&nbsp;</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>");
+            return "<div class=\"chart-row__left-el\">\n\t\t\t\t\t<div class=\"chart-row__left-el-chart\">\n\t\t\t\t\t\t<div class=\"chart-row__left-el-chart__text\">".concat(_this5.m(it.payed), " \u043C<sup>3</sup></div>\n\t\t\t\t\t\t<div class=\"chart-row__left-el-chart__arrow green-bg\" style=\"height: ").concat(Math.floor(maxHeight * Math.min(it.payed, maxValue) / maxValue), "px\"></div>\n\t\t\t\t\t\t<div class=\"chart-row__left-el-chart__text_bot\">").concat(it.organization || it.species, "</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"chart-row__left-el-chart\">\n\t\t\t\t\t\t<div class=\"chart-row__left-el-chart__text\">").concat(_this5.m(it.cutDown), " \u043C<sup>3</sup></div>\n\t\t\t\t\t\t<div class=\"chart-row__left-el-chart__arrow blue-bg\" style=\"height: ").concat(Math.floor(maxHeight * Math.min(it.cutDown, maxValue) / maxValue), "px\"></div>\n\t\t\t\t\t\t<div class=\"chart-row__left-el-chart__text_bot\">&nbsp;</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>");
           }).join('\n');
           this._chartCont.innerHTML = "<div class=\"line\">\n\t\t\t\t<div class=\"chart-header black\">".concat(this.translate('report.sootn'), "&nbsp;<span class=\"green\">").concat(this.translate('report.oplach'), "</span>&nbsp;\u0438&nbsp;<span class=\"blue\">").concat(this.translate('report.vyrub'), "</span>&nbsp;").concat(this.translate('report.dreves'), "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"chart-row\">\n\t\t\t\t<div class=\"chart-row__left\">\n\t\t\t\t\t").concat(str, "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"chart-row__right\">\n\t\t\t\t\t<div class=\"chart-row__right_line\">\n\t\t\t\t\t\t<div class=\"rec green-bg\"></div>\n\t\t\t\t\t\t<div class=\"rec-text\">").concat(this.translate('report.opl'), "</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"chart-row__right_line\">\n\t\t\t\t\t\t<div class=\"rec blue-bg\"></div>\n\t\t\t\t\t\t<div class=\"rec-text\">").concat(this.translate('report.vyr'), "</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>");
         } else {
@@ -70460,7 +70460,7 @@ var Forestry = (function () {
         if (data) {
           var maxValue = data.total;
           var maxWidth = 220;
-          this._chartCont.innerHTML = "<table class=\"line\">\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"first\">".concat(this.translate('report.growth'), "</td>\n\t\t\t\t\t<td class=\"sec\"><div class=\"horizont-sec-act green-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.growth.quantity, maxValue) / maxValue), "px\"></div></td>\n\t\t\t\t\t<td class=\"third green\">").concat(data.growth.quantity, " \u043C<sup>3</sup></td>\n\t\t\t\t\t<td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"green\">").concat(this._fmt(data.growth.summa), " ").concat(this.translate('report.milr'), "</span></td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"first\">").concat(this.translate('report.burntOut'), "</td>\n\t\t\t\t\t<td class=\"sec\"><div class=\"horizont-sec-act red-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.burntOut.quantity, maxValue) / maxValue), "px\"></div></td>\n\t\t\t\t\t<td class=\"third red\">").concat(data.burntOut.quantity, " \u043C<sup>3</sup></td>\n\t\t\t\t\t<td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"red\">").concat(this._fmt(data.burntOut.summa), " ").concat(this.translate('report.milr'), "</span></td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"first\">").concat(this.translate('report.cutDown'), "</td>\n\t\t\t\t\t<td class=\"sec\"><div class=\"horizont-sec-act red-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.cutDown.quantity, maxValue) / maxValue), "px\"></div></td>\n\t\t\t\t\t<td class=\"third red\">").concat(data.cutDown.quantity, " \u043C<sup>3</sup></td>\n\t\t\t\t\t<td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"red\">").concat(this._fmt(data.cutDown.summa), " ").concat(this.translate('report.milr'), "</span></td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"first\">").concat(this.translate('report.ballanceChanges'), "</td>\n\t\t\t\t\t<td class=\"sec\"><div class=\"horizont-sec-act red-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.ballanceChanges.quantity, maxValue) / maxValue), "px\"></div></td>\n\t\t\t\t\t<td class=\"third red\">").concat(data.ballanceChanges.quantity, " \u043C<sup>3</sup></td>\n\t\t\t\t\t<td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"red\">").concat(this._fmt(data.ballanceChanges.summa), " ").concat(this.translate('report.milr'), "</span></td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"first\">").concat(this.translate('report.total'), "</td>\n\t\t\t\t\t<td class=\"sec\"><div class=\"horizont-sec-act green-bg\" style=\"width: 100%\"></div></td>\n\t\t\t\t\t<td class=\"third gray\">").concat(maxValue, " \u043C<sup>3</sup></td>\n\t\t\t\t\t<td class=\"last\"></td>\n\t\t\t\t</tr>\n\t\t\t</table>");
+          this._chartCont.innerHTML = "<table class=\"line\">\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"first\">".concat(this.translate('report.growth'), "</td>\n\t\t\t\t\t<td class=\"sec\"><div class=\"horizont-sec-act green-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.growth.quantity, maxValue) / maxValue), "px\"></div></td>\n\t\t\t\t\t<td class=\"third green\">").concat(this.m(data.growth.quantity), " \u043C<sup>3</sup></td>\n\t\t\t\t\t<td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"green\">").concat(this.m(data.growth.summa), " ").concat(this.translate('report.milr'), "</span></td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"first\">").concat(this.translate('report.burntOut'), "</td>\n\t\t\t\t\t<td class=\"sec\"><div class=\"horizont-sec-act red-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.burntOut.quantity, maxValue) / maxValue), "px\"></div></td>\n\t\t\t\t\t<td class=\"third red\">").concat(this.m(data.burntOut.quantity), " \u043C<sup>3</sup></td>\n\t\t\t\t\t<td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"red\">").concat(this.m(data.burntOut.summa), " ").concat(this.translate('report.milr'), "</span></td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"first\">").concat(this.translate('report.cutDown'), "</td>\n\t\t\t\t\t<td class=\"sec\"><div class=\"horizont-sec-act red-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.cutDown.quantity, maxValue) / maxValue), "px\"></div></td>\n\t\t\t\t\t<td class=\"third red\">").concat(this.m(data.cutDown.quantity), " \u043C<sup>3</sup></td>\n\t\t\t\t\t<td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"red\">").concat(this.m(data.cutDown.summa), " ").concat(this.translate('report.milr'), "</span></td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"first\">").concat(this.translate('report.ballanceChanges'), "</td>\n\t\t\t\t\t<td class=\"sec\"><div class=\"horizont-sec-act red-bg\" style=\"width: ").concat(Math.floor(maxWidth * Math.min(data.ballanceChanges.quantity, maxValue) / maxValue), "px\"></div></td>\n\t\t\t\t\t<td class=\"third red\">").concat(this.m(data.ballanceChanges.quantity), " \u043C<sup>3</sup></td>\n\t\t\t\t\t<td class=\"last\">\u043D\u0430 \u0441\u0443\u043C\u043C\u0443&nbsp;&nbsp;<span class=\"red\">").concat(this.m(data.ballanceChanges.summa), " ").concat(this.translate('report.milr'), "</span></td>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<td class=\"first\">").concat(this.translate('report.total'), "</td>\n\t\t\t\t\t<td class=\"sec\"><div class=\"horizont-sec-act green-bg\" style=\"width: 100%\"></div></td>\n\t\t\t\t\t<td class=\"third gray\">").concat(this.m(maxValue), " \u043C<sup>3</sup></td>\n\t\t\t\t\t<td class=\"last\"></td>\n\t\t\t\t</tr>\n\t\t\t</table>");
         } else {
           this._chartCont.innerHTML = "<div class=\"line nodata\">".concat(this.translate('report.nodata'), "</div>");
         }
@@ -70511,7 +70511,7 @@ var Forestry = (function () {
               switch (_context2.prev = _context2.next) {
                 case 0:
                   if (!this._permissions.AnaliticData) {
-                    _context2.next = 13;
+                    _context2.next = 14;
                     break;
                   }
 
@@ -70522,17 +70522,18 @@ var Forestry = (function () {
                   data = _context2.sent;
 
                   if (!data) {
-                    _context2.next = 11;
+                    _context2.next = 12;
                     break;
                   }
 
                   dlg = new Dialog({
                     id: 'report-dialog',
                     title: '',
-                    top: 50,
-                    left: 20,
+                    top: 0,
+                    left: 0,
                     modal: true
                   });
+                  dlg.element.classList.add('forestry-report-dialog');
                   _view2 = new Reports$1(dlg.content, {
                     path: this._path
                   });
@@ -70578,17 +70579,17 @@ var Forestry = (function () {
                     dlg = null;
                     _view2 = null;
                   });
-                  _context2.next = 11;
+                  _context2.next = 12;
                   return _view2.open(data);
 
-                case 11:
-                  _context2.next = 14;
+                case 12:
+                  _context2.next = 15;
                   break;
 
-                case 13:
+                case 14:
                   this._notification.error(translate('forbidden.analytics'), NOTIFY_TIMEOUT);
 
-                case 14:
+                case 15:
                 case "end":
                   return _context2.stop();
               }
@@ -71300,6 +71301,7 @@ var Forestry = (function () {
       })));
 
       _this._pager.pages = 1;
+      _this._pager.page = 1;
 
       var btnAdd = _this._container.querySelector('.add-button');
 
