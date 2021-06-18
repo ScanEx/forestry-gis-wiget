@@ -48325,10 +48325,13 @@ var Forestry = (function () {
                   return this.httpPost("".concat(this._path, "/Monitoring/SaveIncident"), out);
 
                 case 3:
-                  this._redrawLayer(); // L.gmx.layersVersion.now();
+                  this._redrawLayer();
 
+                  setTimeout(function () {
+                    L.gmx.layersVersion.now();
+                  }, 2000);
 
-                case 4:
+                case 5:
                 case "end":
                   return _context8.stop();
               }
@@ -48411,7 +48414,7 @@ var Forestry = (function () {
     }, {
       key: "_removeDrawing",
       value: function _removeDrawing() {
-        this._layer._map.gmxDrawing.remove(this._drawingObj[0]);
+        this._layer._map.gmxDrawing.clear();
 
         this._drawingObj = null;
       }
