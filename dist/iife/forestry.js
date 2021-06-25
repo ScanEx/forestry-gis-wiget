@@ -42129,11 +42129,11 @@ var Forestry = (function () {
     _createClass$1(Cadastre, [{
       key: "_toggle",
       value: function _toggle(e) {
-        e.id;
-            var visible = e.visible;
+        var id = e.id,
+            visible = e.visible;
         var layer = this._layer;
 
-        if (layer) {
+        if (layer && id === 'cadastre') {
           if (visible) {
             this._map.addLayer(layer);
           } else {
