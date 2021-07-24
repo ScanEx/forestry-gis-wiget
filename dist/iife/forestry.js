@@ -746,13 +746,13 @@ var Forestry = (function () {
       : path$1[namespace] && path$1[namespace][method] || global$1[namespace] && global$1[namespace][method];
   };
 
-  var ceil$2 = Math.ceil;
+  var ceil$3 = Math.ceil;
   var floor$f = Math.floor;
 
   // `ToInteger` abstract operation
   // https://tc39.es/ecma262/#sec-tointeger
   var toInteger$1 = function (argument) {
-    return isNaN(argument = +argument) ? 0 : (argument > 0 ? floor$f : ceil$2)(argument);
+    return isNaN(argument = +argument) ? 0 : (argument > 0 ? floor$f : ceil$3)(argument);
   };
 
   var min$d = Math.min;
@@ -4485,14 +4485,14 @@ var Forestry = (function () {
     }
   });
 
-  var ceil$1 = Math.ceil;
+  var ceil$2 = Math.ceil;
   var floor$d = Math.floor;
 
   // `Math.trunc` method
   // https://tc39.es/ecma262/#sec-math.trunc
   _export$1({ target: 'Math', stat: true }, {
     trunc: function trunc(it) {
-      return (it > 0 ? floor$d : ceil$1)(it);
+      return (it > 0 ? floor$d : ceil$2)(it);
     }
   });
 
@@ -21640,24 +21640,24 @@ var Forestry = (function () {
   // https://tc39.github.io/ecma262/#sec-object.defineproperty
   var f$2=descriptors?nativeDefineProperty:function defineProperty(O,P,Attributes){anObject(O);P=toPrimitive(P,true);anObject(Attributes);if(ie8DomDefine)try{return nativeDefineProperty(O,P,Attributes);}catch(error){/* empty */}if('get'in Attributes||'set'in Attributes)throw TypeError('Accessors not supported');if('value'in Attributes)O[P]=Attributes.value;return O;};var objectDefineProperty={f:f$2};var createNonEnumerableProperty=descriptors?function(object,key,value){return objectDefineProperty.f(object,key,createPropertyDescriptor(1,value));}:function(object,key,value){object[key]=value;return object;};var setGlobal=function setGlobal(key,value){try{createNonEnumerableProperty(global_1,key,value);}catch(error){global_1[key]=value;}return value;};var SHARED='__core-js_shared__';var store=global_1[SHARED]||setGlobal(SHARED,{});var sharedStore=store;var functionToString=Function.toString;// this helper broken in `3.4.1-3.4.4`, so we can't use `shared` helper
   if(typeof sharedStore.inspectSource!='function'){sharedStore.inspectSource=function(it){return functionToString.call(it);};}var inspectSource=sharedStore.inspectSource;var WeakMap=global_1.WeakMap;var nativeWeakMap=typeof WeakMap==='function'&&/native code/.test(inspectSource(WeakMap));var isPure=false;var shared=createCommonjsModule(function(module){(module.exports=function(key,value){return sharedStore[key]||(sharedStore[key]=value!==undefined?value:{});})('versions',[]).push({version:'3.6.5',mode:'global',copyright:'© 2020 Denis Pushkarev (zloirock.ru)'});});var id=0;var postfix=Math.random();var uid=function uid(key){return 'Symbol('+String(key===undefined?'':key)+')_'+(++id+postfix).toString(36);};var keys=shared('keys');var sharedKey=function sharedKey(key){return keys[key]||(keys[key]=uid(key));};var hiddenKeys={};var WeakMap$1=global_1.WeakMap;var set,get,has$1;var enforce=function enforce(it){return has$1(it)?get(it):set(it,{});};var getterFor=function getterFor(TYPE){return function(it){var state;if(!isObject(it)||(state=get(it)).type!==TYPE){throw TypeError('Incompatible receiver, '+TYPE+' required');}return state;};};if(nativeWeakMap){var store$1=new WeakMap$1();var wmget=store$1.get;var wmhas=store$1.has;var wmset=store$1.set;set=function set(it,metadata){wmset.call(store$1,it,metadata);return metadata;};get=function get(it){return wmget.call(store$1,it)||{};};has$1=function has$1(it){return wmhas.call(store$1,it);};}else {var STATE=sharedKey('state');hiddenKeys[STATE]=true;set=function set(it,metadata){createNonEnumerableProperty(it,STATE,metadata);return metadata;};get=function get(it){return has(it,STATE)?it[STATE]:{};};has$1=function has$1(it){return has(it,STATE);};}var internalState={set:set,get:get,has:has$1,enforce:enforce,getterFor:getterFor};var redefine=createCommonjsModule(function(module){var getInternalState=internalState.get;var enforceInternalState=internalState.enforce;var TEMPLATE=String(String).split('String');(module.exports=function(O,key,value,options){var unsafe=options?!!options.unsafe:false;var simple=options?!!options.enumerable:false;var noTargetGet=options?!!options.noTargetGet:false;if(typeof value=='function'){if(typeof key=='string'&&!has(value,'name'))createNonEnumerableProperty(value,'name',key);enforceInternalState(value).source=TEMPLATE.join(typeof key=='string'?key:'');}if(O===global_1){if(simple)O[key]=value;else setGlobal(key,value);return;}else if(!unsafe){delete O[key];}else if(!noTargetGet&&O[key]){simple=true;}if(simple)O[key]=value;else createNonEnumerableProperty(O,key,value);// add fake Function#toString for correct work wrapped methods / constructors with methods like LoDash isNative
-  })(Function.prototype,'toString',function toString(){return typeof this=='function'&&getInternalState(this).source||inspectSource(this);});});var path=global_1;var aFunction=function aFunction(variable){return typeof variable=='function'?variable:undefined;};var getBuiltIn=function getBuiltIn(namespace,method){return arguments.length<2?aFunction(path[namespace])||aFunction(global_1[namespace]):path[namespace]&&path[namespace][method]||global_1[namespace]&&global_1[namespace][method];};var ceil=Math.ceil;var floor$1=Math.floor;// `ToInteger` abstract operation
+  })(Function.prototype,'toString',function toString(){return typeof this=='function'&&getInternalState(this).source||inspectSource(this);});});var path=global_1;var aFunction=function aFunction(variable){return typeof variable=='function'?variable:undefined;};var getBuiltIn=function getBuiltIn(namespace,method){return arguments.length<2?aFunction(path[namespace])||aFunction(global_1[namespace]):path[namespace]&&path[namespace][method]||global_1[namespace]&&global_1[namespace][method];};var ceil$1=Math.ceil;var floor$1=Math.floor;// `ToInteger` abstract operation
   // https://tc39.github.io/ecma262/#sec-tointeger
-  var toInteger=function toInteger(argument){return isNaN(argument=+argument)?0:(argument>0?floor$1:ceil)(argument);};var min=Math.min;// `ToLength` abstract operation
+  var toInteger=function toInteger(argument){return isNaN(argument=+argument)?0:(argument>0?floor$1:ceil$1)(argument);};var min=Math.min;// `ToLength` abstract operation
   // https://tc39.github.io/ecma262/#sec-tolength
   var toLength=function toLength(argument){return argument>0?min(toInteger(argument),0x1FFFFFFFFFFFFF):0;// 2 ** 53 - 1 == 9007199254740991
   };var max=Math.max;var min$1=Math.min;// Helper for a popular repeating case of the spec:
   // Let integer be ? ToInteger(index).
   // If integer < 0, let result be max((length + integer), 0); else let result be min(integer, length).
   var toAbsoluteIndex=function toAbsoluteIndex(index,length){var integer=toInteger(index);return integer<0?max(integer+length,0):min$1(integer,length);};// `Array.prototype.{ indexOf, includes }` methods implementation
-  var createMethod=function createMethod(IS_INCLUDES){return function($this,el,fromIndex){var O=toIndexedObject($this);var length=toLength(O.length);var index=toAbsoluteIndex(fromIndex,length);var value;// Array#includes uses SameValueZero equality algorithm
+  var createMethod$1=function createMethod(IS_INCLUDES){return function($this,el,fromIndex){var O=toIndexedObject($this);var length=toLength(O.length);var index=toAbsoluteIndex(fromIndex,length);var value;// Array#includes uses SameValueZero equality algorithm
   // eslint-disable-next-line no-self-compare
   if(IS_INCLUDES&&el!=el)while(length>index){value=O[index++];// eslint-disable-next-line no-self-compare
   if(value!=value)return true;// Array#indexOf ignores holes, Array#includes - not
   }else for(;length>index;index++){if((IS_INCLUDES||index in O)&&O[index]===el)return IS_INCLUDES||index||0;}return !IS_INCLUDES&&-1;};};var arrayIncludes={// `Array.prototype.includes` method
   // https://tc39.github.io/ecma262/#sec-array.prototype.includes
-  includes:createMethod(true),// `Array.prototype.indexOf` method
+  includes:createMethod$1(true),// `Array.prototype.indexOf` method
   // https://tc39.github.io/ecma262/#sec-array.prototype.indexof
-  indexOf:createMethod(false)};var indexOf=arrayIncludes.indexOf;var objectKeysInternal=function objectKeysInternal(object,names){var O=toIndexedObject(object);var i=0;var result=[];var key;for(key in O){!has(hiddenKeys,key)&&has(O,key)&&result.push(key);}// Don't enum bug & hidden keys
+  indexOf:createMethod$1(false)};var indexOf=arrayIncludes.indexOf;var objectKeysInternal=function objectKeysInternal(object,names){var O=toIndexedObject(object);var i=0;var result=[];var key;for(key in O){!has(hiddenKeys,key)&&has(O,key)&&result.push(key);}// Don't enum bug & hidden keys
   while(names.length>i){if(has(O,key=names[i++])){~indexOf(result,key)||result.push(key);}}return result;};// IE8- don't enum bug keys
   var enumBugKeys=['constructor','hasOwnProperty','isPrototypeOf','propertyIsEnumerable','toLocaleString','toString','valueOf'];var hiddenKeys$1=enumBugKeys.concat('length','prototype');// `Object.getOwnPropertyNames` method
   // https://tc39.github.io/ecma262/#sec-object.getownpropertynames
@@ -21726,7 +21726,7 @@ var Forestry = (function () {
   _export({target:'Array',proto:true},{fill:arrayFill});// https://tc39.github.io/ecma262/#sec-array.prototype-@@unscopables
   addToUnscopables('fill');var aFunction$1=function aFunction$1(it){if(typeof it!='function'){throw TypeError(String(it)+' is not a function');}return it;};// optional / simple context binding
   var functionBindContext=function functionBindContext(fn,that,length){aFunction$1(fn);if(that===undefined)return fn;switch(length){case 0:return function(){return fn.call(that);};case 1:return function(a){return fn.call(that,a);};case 2:return function(a,b){return fn.call(that,a,b);};case 3:return function(a,b,c){return fn.call(that,a,b,c);};}return function()/* ...args */{return fn.apply(that,arguments);};};var push=[].push;// `Array.prototype.{ forEach, map, filter, some, every, find, findIndex }` methods implementation
-  var createMethod$1=function createMethod$1(TYPE){var IS_MAP=TYPE==1;var IS_FILTER=TYPE==2;var IS_SOME=TYPE==3;var IS_EVERY=TYPE==4;var IS_FIND_INDEX=TYPE==6;var NO_HOLES=TYPE==5||IS_FIND_INDEX;return function($this,callbackfn,that,specificCreate){var O=toObject($this);var self=indexedObject(O);var boundFunction=functionBindContext(callbackfn,that,3);var length=toLength(self.length);var index=0;var create=specificCreate||arraySpeciesCreate;var target=IS_MAP?create($this,length):IS_FILTER?create($this,0):undefined;var value,result;for(;length>index;index++){if(NO_HOLES||index in self){value=self[index];result=boundFunction(value,index,O);if(TYPE){if(IS_MAP)target[index]=result;// map
+  var createMethod$1$1=function createMethod$1(TYPE){var IS_MAP=TYPE==1;var IS_FILTER=TYPE==2;var IS_SOME=TYPE==3;var IS_EVERY=TYPE==4;var IS_FIND_INDEX=TYPE==6;var NO_HOLES=TYPE==5||IS_FIND_INDEX;return function($this,callbackfn,that,specificCreate){var O=toObject($this);var self=indexedObject(O);var boundFunction=functionBindContext(callbackfn,that,3);var length=toLength(self.length);var index=0;var create=specificCreate||arraySpeciesCreate;var target=IS_MAP?create($this,length):IS_FILTER?create($this,0):undefined;var value,result;for(;length>index;index++){if(NO_HOLES||index in self){value=self[index];result=boundFunction(value,index,O);if(TYPE){if(IS_MAP)target[index]=result;// map
   else if(result)switch(TYPE){case 3:return true;// some
   case 5:return value;// find
   case 6:return index;// findIndex
@@ -21734,19 +21734,19 @@ var Forestry = (function () {
   }else if(IS_EVERY)return false;// every
   }}}return IS_FIND_INDEX?-1:IS_SOME||IS_EVERY?IS_EVERY:target;};};var arrayIteration={// `Array.prototype.forEach` method
   // https://tc39.github.io/ecma262/#sec-array.prototype.foreach
-  forEach:createMethod$1(0),// `Array.prototype.map` method
+  forEach:createMethod$1$1(0),// `Array.prototype.map` method
   // https://tc39.github.io/ecma262/#sec-array.prototype.map
-  map:createMethod$1(1),// `Array.prototype.filter` method
+  map:createMethod$1$1(1),// `Array.prototype.filter` method
   // https://tc39.github.io/ecma262/#sec-array.prototype.filter
-  filter:createMethod$1(2),// `Array.prototype.some` method
+  filter:createMethod$1$1(2),// `Array.prototype.some` method
   // https://tc39.github.io/ecma262/#sec-array.prototype.some
-  some:createMethod$1(3),// `Array.prototype.every` method
+  some:createMethod$1$1(3),// `Array.prototype.every` method
   // https://tc39.github.io/ecma262/#sec-array.prototype.every
-  every:createMethod$1(4),// `Array.prototype.find` method
+  every:createMethod$1$1(4),// `Array.prototype.find` method
   // https://tc39.github.io/ecma262/#sec-array.prototype.find
-  find:createMethod$1(5),// `Array.prototype.findIndex` method
+  find:createMethod$1$1(5),// `Array.prototype.findIndex` method
   // https://tc39.github.io/ecma262/#sec-array.prototype.findIndex
-  findIndex:createMethod$1(6)};var arrayMethodIsStrict=function arrayMethodIsStrict(METHOD_NAME,argument){var method=[][METHOD_NAME];return !!method&&fails(function(){// eslint-disable-next-line no-useless-call,no-throw-literal
+  findIndex:createMethod$1$1(6)};var arrayMethodIsStrict=function arrayMethodIsStrict(METHOD_NAME,argument){var method=[][METHOD_NAME];return !!method&&fails(function(){// eslint-disable-next-line no-useless-call,no-throw-literal
   method.call(null,argument||function(){throw 1;},1);});};var defineProperty=Object.defineProperty;var cache={};var thrower=function thrower(it){throw it;};var arrayMethodUsesToLength=function arrayMethodUsesToLength(METHOD_NAME,options){if(has(cache,METHOD_NAME))return cache[METHOD_NAME];if(!options)options={};var method=[][METHOD_NAME];var ACCESSORS=has(options,'ACCESSORS')?options.ACCESSORS:false;var argument0=has(options,0)?options[0]:thrower;var argument1=has(options,1)?options[1]:undefined;return cache[METHOD_NAME]=!!method&&!fails(function(){if(ACCESSORS&&!descriptors)return true;var O={length:-1};if(ACCESSORS)defineProperty(O,1,{enumerable:true,get:thrower});else O[1]=1;method.call(O,argument0,argument1);});};var $forEach=arrayIteration.forEach;var STRICT_METHOD=arrayMethodIsStrict('forEach');var USES_TO_LENGTH=arrayMethodUsesToLength('forEach');// `Array.prototype.forEach` method implementation
   // https://tc39.github.io/ecma262/#sec-array.prototype.foreach
   var arrayForEach=!STRICT_METHOD||!USES_TO_LENGTH?function forEach(callbackfn/* , thisArg */){return $forEach(this,callbackfn,arguments.length>1?arguments[1]:undefined);}:[].forEach;// `Array.prototype.forEach` method
@@ -49160,7 +49160,7 @@ var Forestry = (function () {
         CheckingExpert: 'Ответственный за проверку инцидента',
         Probability: 'Процент вероятности инцидента',
         Intensity: 'Интесивность',
-        date: 'Дата обнаружения',
+        date: 'Дата инцидента',
         vNewId: 'ID снимка обнаружения',
         vNewIdButton: 'Включить',
         dateInspect: 'Дата обследования',
@@ -72002,10 +72002,60 @@ var Forestry = (function () {
     return Projects;
   }(LayerController);
 
+  // https://github.com/tc39/proposal-string-pad-start-end
+
+
+
+
+  var ceil = Math.ceil;
+
+  // `String.prototype.{ padStart, padEnd }` methods implementation
+  var createMethod = function (IS_END) {
+    return function ($this, maxLength, fillString) {
+      var S = String(requireObjectCoercible$1($this));
+      var stringLength = S.length;
+      var fillStr = fillString === undefined ? ' ' : String(fillString);
+      var intMaxLength = toLength$1(maxLength);
+      var fillLen, stringFiller;
+      if (intMaxLength <= stringLength || fillStr == '') return S;
+      fillLen = intMaxLength - stringLength;
+      stringFiller = stringRepeat$1.call(fillStr, ceil(fillLen / fillStr.length));
+      if (stringFiller.length > fillLen) stringFiller = stringFiller.slice(0, fillLen);
+      return IS_END ? S + stringFiller : stringFiller + S;
+    };
+  };
+
+  var stringPad = {
+    // `String.prototype.padStart` method
+    // https://tc39.es/ecma262/#sec-string.prototype.padstart
+    start: createMethod(false),
+    // `String.prototype.padEnd` method
+    // https://tc39.es/ecma262/#sec-string.prototype.padend
+    end: createMethod(true)
+  };
+
+  // https://github.com/zloirock/core-js/issues/280
+
+
+  // eslint-disable-next-line unicorn/no-unsafe-regex -- safe
+  var stringPadWebkitBug = /Version\/10(?:\.\d+){1,2}(?: [\w./]+)?(?: Mobile\/\w+)? Safari\//.test(engineUserAgent$1);
+
+  var $padStart = stringPad.start;
+
+
+  // `String.prototype.padStart` method
+  // https://tc39.es/ecma262/#sec-string.prototype.padstart
+  _export$1({ target: 'String', proto: true, forced: stringPadWebkitBug }, {
+    padStart: function padStart(maxLength /* , fillString = ' ' */) {
+      return $padStart(this, maxLength, arguments.length > 1 ? arguments[1] : undefined);
+    }
+  });
+
   var strings$4 = {
     ru: {
       quadrant: {
         stock: {
+          title: 'Структура запаса на квартале',
           permitted: 'Доступный',
           probable: 'Прогноз',
           total: 'Таксация',
@@ -72017,17 +72067,22 @@ var Forestry = (function () {
           species: 'Порода'
         },
         total: 'Итого',
-        description: 'Книга таксационных описаний',
-        plan: 'Лесоустроительные планшеты',
+        description: 'ТО',
+        plan: 'ЛП',
         about: 'На основании данных лесоустройства',
         title: 'Квартал',
-        stow: 'Урочище (при наличии)',
+        stow: 'Урочище',
         forestry: 'Лесничество',
         forestry_local: 'Уч. лесничество',
         number: 'Номер квартала',
         area: 'Площадь, га',
         usage: 'Целевое назначение',
-        invalid: 'Недопустимый состав участка'
+        usage_arr: ['Эксплуатационные', 'Защитные', 'Резервные'],
+        invalid: 'Недопустимый состав участка',
+        add_quadrant: 'Выбор участка',
+        CarbonStock: 'Запас углерода, тонн С',
+        TaxYear: 'Год лесоустройства',
+        TaxRate: 'Разряд такс'
       },
       stand: {
         age: 'Группа возраста',
@@ -72113,7 +72168,7 @@ var Forestry = (function () {
 
       _this._container.classList.add('scanex-forestry-quadrant');
 
-      _this._container.innerHTML = "<h1 class=\"header1\">".concat(_this.translate('quadrant.title'), "</h1>\n\t\t<h2 class=\"header2\"></h2>\n\t\t<div class=\"scrollable\">\t\t\t\n\t\t\t<div class=\"info\">\n\t\t\t\t<div class=\"forestry\">\n\t\t\t\t\t<label class=\"label\">").concat(_this.translate('quadrant.forestry'), "</label>\n\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"forestry-local\">\n\t\t\t\t\t<label class=\"label\">").concat(_this.translate('quadrant.forestry_local'), "</label>\n\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"stow\">\n\t\t\t\t\t<label class=\"label\">").concat(_this.translate('quadrant.stow'), "</label>\n\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"number\">\n\t\t\t\t\t<label class=\"label\">").concat(_this.translate('quadrant.number'), "</label>\n\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"area\">\n\t\t\t\t\t<label class=\"label\">").concat(_this.translate('quadrant.area'), "</label>\n\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"usage\">\n\t\t\t\t\t<label class=\"label\">").concat(_this.translate('quadrant.usage'), "</label>\n\t\t\t\t\t<label class=\"value\"></label>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"header3\">").concat(_this.translate('quadrant.stock.table'), "</div>\n\t\t\t<div class=\"stats\">\n\t\t\t\t<div class=\"header\">\n\t\t\t\t\t<div class=\"species\">").concat(_this.translate('quadrant.stock.species'), "</div>\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<div class=\"stock\">").concat(_this.translate('quadrant.stock.label'), "<sup>3</sup></div>\n\t\t\t\t\t\t<div class=\"details\">\n\t\t\t\t\t\t\t<div class=\"permitted\">").concat(_this.translate('quadrant.stock.permitted'), "</div>\n\t\t\t\t\t\t\t<div class=\"probable\">").concat(_this.translate('quadrant.stock.probable'), "</div>\n\t\t\t\t\t\t\t<div class=\"total\">").concat(_this.translate('quadrant.stock.total'), "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"body\"></div>\n\t\t\t</div>\t\t\t\n\t\t\t<div class=\"footer\">\n\t\t\t\t<div class=\"download-description\">\n\t\t\t\t\t<i class=\"scanex-quadrant-icon download\"></i>\n\t\t\t\t\t<label>").concat(_this.translate('quadrant.description'), "</label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"download-plan\">\n\t\t\t\t\t<i class=\"scanex-quadrant-icon download\"></i>\n\t\t\t\t\t<label>").concat(_this.translate('quadrant.plan'), "</label>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>");
+      _this._container.innerHTML = "<h1 class=\"header1\"><span>".concat(_this.translate('quadrant.title'), " \u2116 <span class=\"number\"></span></span> <span><button class=\"add-quadrant\">").concat(_this.translate('quadrant.add_quadrant'), "</button>\n\t\t\t<span class=\"downloads\">\n\t\t\t\t<span class=\"download-description\">\n\t\t\t\t\t<i class=\"scanex-quadrant-icon download\"></i>\n\t\t\t\t\t<label>").concat(_this.translate('quadrant.description'), "</label>\n\t\t\t\t</span>\n\t\t\t\t<span class=\"download-plan\">\n\t\t\t\t\t<i class=\"scanex-quadrant-icon download\"></i>\n\t\t\t\t\t<label>").concat(_this.translate('quadrant.plan'), "</label>\n\t\t\t\t</span>\n\t\t\t</span>\n\t\t\t</span>\n\t\t</h1>\n\t\t<h2 class=\"header2\"></h2>\n\t\t<div class=\"scrollable\">\t\t\t\n\t\t\t<div class=\"table_graph\">\n\t\t\t\t<div class=\"info\"></div>\n\t\t\t\t<div class=\"graph\">\n\t\t\t\t\t<div class=\"label\">").concat(_this.translate('quadrant.stock.title'), "</div>\n\t\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"header3\">").concat(_this.translate('quadrant.stock.table'), "</div>\n\t\t\t<div class=\"stats\">\n\t\t\t\t<div class=\"header\">\n\t\t\t\t\t<div class=\"species\">").concat(_this.translate('quadrant.stock.species'), "</div>\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<div class=\"stock\">").concat(_this.translate('quadrant.stock.label'), "<sup>3</sup></div>\n\t\t\t\t\t\t<div class=\"details\">\n\t\t\t\t\t\t\t<div class=\"permitted\">").concat(_this.translate('quadrant.stock.permitted'), "</div>\n\t\t\t\t\t\t\t<div class=\"probable\">").concat(_this.translate('quadrant.stock.probable'), "</div>\n\t\t\t\t\t\t\t<div class=\"total\">").concat(_this.translate('quadrant.stock.total'), "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"body\"></div>\n\n\t\t\t</div>\t\t\t\n\t\t\t<div class=\"footer\">\n\t\t\t</div>\n\t\t</div>");
       _this._header2 = _this._container.querySelector('.header2');
       _this._body = _this._container.querySelector('.body');
 
@@ -72153,13 +72208,19 @@ var Forestry = (function () {
         }
       });
 
-      _this._forestry = _this._container.querySelector('.info .forestry .value');
-      _this._forestryLocal = _this._container.querySelector('.info .forestry-local .value');
-      _this._stow = _this._container.querySelector('.info .stow .value');
-      _this._number = _this._container.querySelector('.info .number .value');
-      _this._area = _this._container.querySelector('.info .area .value');
-      _this._usage = _this._container.querySelector('.info .usage .value');
-      _this._footer = _this._container.querySelector('.footer');
+      _this._container.querySelector('.add-quadrant').addEventListener('click', function (e) {
+        e.stopPropagation();
+        var event = document.createEvent('Event');
+        event.initEvent('project', false, false);
+        event.detail = _this._gmx_id;
+
+        _this.dispatchEvent(event);
+      });
+
+      _this._downloads = _this._container.querySelector('.downloads');
+      _this._num = _this._container.querySelector('.header1 .number');
+      _this._info = _this._container.querySelector('.info');
+      _this._chart = _this._container.querySelector('.chart');
       return _this;
     }
 
@@ -72178,18 +72239,21 @@ var Forestry = (function () {
             SpecialPurpose = data.SpecialPurpose,
             Stock = data.Stock,
             Stow = data.Stow,
-            Documents = data.Documents;
+            Documents = data.Documents,
+            CarbonStock = data.CarbonStock,
+            TaxYear = data.TaxYear,
+            TaxRate = data.TaxRate;
         this._gmx_id = gmx_id;
-        this._header2.innerHTML = "".concat(this.translate('quadrant.forestry'), ": ").concat(Forestry, ", ").concat(this.translate('quadrant.forestry_local'), ": ").concat(LocalForestry).concat(Stow ? ", ".concat(this.translate('quadrant.stow'), ": ").concat(Stow) : '', ", ").concat(this.translate('quadrant.title'), " \u2116").concat(Num);
-        this._forestry.innerText = Forestry || '-';
-        this._forestryLocal.innerText = LocalForestry || '-';
-        this._stow.innerText = Stow || '-';
-        this._number.innerText = Num || '-';
-        this._usage.innerText = SpecialPurpose || '-';
-        this._area.innerText = Area && this.ha(Area) || '-';
+        var radio = this.translate('quadrant.usage_arr').map(function (it) {
+          return "\n\t\t\t\t<input type=\"radio\" disabled id=\"".concat(it, "\" name=\"").concat(it, "\" ").concat(SpecialPurpose.indexOf(it) > -1 ? 'checked' : '', ">\n\t\t\t\t<label for=\"").concat(it, "\">").concat(it, "</label><br>\n\t\t\t");
+        }).join('\n');
+        this._info.innerHTML = "\n\t\t\t<div class=\"area\">\n\t\t\t\t<label class=\"label\">".concat(this.translate('quadrant.area'), "</label>\n\t\t\t\t<label class=\"value\">").concat(Area && this.ha(Area) || '-', "</label>\n\t\t\t</div>\n\t\t\t<div class=\"usage\">\n\t\t\t\t<label class=\"label\">").concat(this.translate('quadrant.usage'), "</label>\n\t\t\t\t<label class=\"value\">").concat(radio, "</label>\n\t\t\t</div>\n\t\t\t<div class=\"CarbonStock\">\n\t\t\t\t<label class=\"label\">").concat(this.translate('quadrant.CarbonStock'), "</label>\n\t\t\t\t<label class=\"value\">").concat(CarbonStock || '-', "</label>\n\t\t\t</div>\n\t\t\t<div class=\"TaxYear\">\n\t\t\t\t<label class=\"label\">").concat(this.translate('quadrant.TaxYear'), "</label>\n\t\t\t\t<label class=\"value\">").concat(TaxYear || '-', "</label>\n\t\t\t</div>\n\t\t\t<div class=\"TaxRate\">\n\t\t\t\t<label class=\"label\">").concat(this.translate('quadrant.TaxRate'), "</label>\n\t\t\t\t<label class=\"value\">").concat(TaxRate || '-', "</label>\n\t\t\t</div>");
+        this._num.innerText = Num || '';
+        this._chart.innerText = '';
+        this._header2.innerHTML = "".concat(this.translate('quadrant.forestry'), ": <span class=\"green\">").concat(Forestry, ",</span> ").concat(this.translate('quadrant.forestry_local'), ": <span class=\"green\">").concat(LocalForestry, ",</span> ").concat(this.translate('quadrant.stow'), ": <span class=\"green\">").concat(Stow || '-', "</span>");
 
         if (Array.isArray(Documents)) {
-          this._footer.classList.remove('hidden');
+          this._downloads.classList.remove('hidden');
 
           var _iterator = _createForOfIteratorHelper(Documents),
               _step;
@@ -72219,29 +72283,35 @@ var Forestry = (function () {
             _iterator.f();
           }
         } else {
-          this._footer.classList.add('hidden');
+          this._downloads.classList.add('hidden');
 
           this._descriptionDocumentID = null;
           this._planDocumentID = null;
         }
 
         if (Array.isArray(Stock)) {
-          var total = Stock.reduce(function (a, _ref) {
-            var permitted_stock = _ref.permitted_stock,
-                permitted_stock_deal = _ref.permitted_stock_deal,
-                probable_stock = _ref.probable_stock,
-                probable_stock_deal = _ref.probable_stock_deal;
-                _ref.species;
-                var total_stock = _ref.total_stock,
-                total_stock_deal = _ref.total_stock_deal;
-            a.permitted_stock += permitted_stock;
-            a.permitted_stock_deal += permitted_stock_deal;
-            a.probable_stock += probable_stock;
-            a.probable_stock_deal += probable_stock_deal;
-            a.total_stock += total_stock;
+          var total = Stock.reduce(function (a, _ref, i) {
+            _ref.permitted_stock;
+                _ref.permitted_stock_deal;
+                _ref.probable_stock;
+                _ref.probable_stock_deal;
+                var species = _ref.species,
+                total_stock = _ref.total_stock,
+                total_stock_deal = _ref.total_stock_deal,
+                species_colour = _ref.species_colour;
+            a.labels.push(species); // species_colour = 255;
+            // let color = species_colour ? '#' + species_colour.toString(16).padStart(6, '0').substr(0, 6).toUpperCase() : CHART_COLORS[i];
+
+            var color = species_colour ? '#' + species_colour.toString(16).padStart(6, '0').substr(0, 6).toUpperCase() : CHART_COLORS[i]; // let color = '#' + (species_colour || Math.floor(Math.random(1) * 0xff5577)).toString(16).toUpperCase();
+
+            a.colors.push(color);
+            a.series.push(total_stock);
             a.total_stock_deal += total_stock_deal;
             return a;
           }, {
+            labels: [],
+            series: [],
+            colors: [],
             permitted_stock: 0,
             permitted_stock_deal: 0,
             probable_stock: 0,
@@ -72259,6 +72329,87 @@ var Forestry = (function () {
                 total_stock_deal = _ref2.total_stock_deal;
             return "<div class=\"row\">\n\t\t\t\t\t<div class=\"label\">".concat(species, "</div>\n\t\t\t\t\t<div class=\"value\">").concat(_this2.m(permitted_stock), "</div>\n\t\t\t\t\t<div class=\"value\">").concat(_this2.m(permitted_stock_deal), "</div>\n\t\t\t\t\t<div class=\"value\">").concat(_this2.m(probable_stock), "</div>\n\t\t\t\t\t<div class=\"value\">").concat(_this2.m(probable_stock_deal), "</div>\n\t\t\t\t\t<div class=\"value\">").concat(_this2.m(total_stock), "</div>\n\t\t\t\t\t<div class=\"value\">").concat(_this2.m(total_stock_deal), "</div>\n\t\t\t\t</div>");
           }).join(''), "\n\t\t\t<div class=\"row total\">\n\t\t\t\t<div class=\"label\">").concat(this.translate('quadrant.total').toUpperCase(), "</div>\n\t\t\t\t<div class=\"value\">").concat(this.m(total.permitted_stock), "</div>\n\t\t\t\t<div class=\"value\">").concat(this.m(total.permitted_stock_deal), "</div>\n\t\t\t\t<div class=\"value\">").concat(this.m(total.probable_stock), "</div>\n\t\t\t\t<div class=\"value\">").concat(this.m(total.probable_stock_deal), "</div>\n\t\t\t\t<div class=\"value\">").concat(this.m(total.total_stock), "</div>\n\t\t\t\t<div class=\"value\">").concat(this.m(total.total_stock_deal), "</div>\n\t\t\t</div>");
+
+          var fmt = function fmt(n, s, d) {
+            return [n, s ? "- ".concat(m(s)) : '', d ? "/ ".concat(m(d)) : ''];
+          };
+
+          var fmt_legend = function fmt_legend(name, opts) {
+            var i = opts.seriesIndex;
+            var s = Stock[i] || {};
+            var total_stock = s.total_stock,
+                total_stock_deal = s.total_stock_deal;
+            return fmt(name, total_stock, total_stock_deal);
+          };
+
+          var fmt_labels = function fmt_labels(val) {
+            return "".concat(m(parseFloat(val)), " ").concat(_this2.translate('units.m3'));
+          };
+
+          var fmt_value = function fmt_value(val) {
+            return "".concat(m(parseFloat(val)), " ").concat(_this2.translate('units.m3'));
+          };
+
+          var fmt_total = function fmt_total(w) {
+            return fmt_value(w.globals.seriesTotals.reduce(function (a, b) {
+              return a + b;
+            }, 0));
+          };
+
+          var opt = {
+            tooltip: {
+              x: {
+                formatter: fmt_labels
+              },
+              y: {
+                formatter: fmt_labels
+              }
+            },
+            colors: total.colors,
+            chart: {
+              type: 'donut',
+              width: '500px',
+              height: '160px'
+            },
+            dataLabels: {
+              enabled: false
+            },
+            labels: total.labels || [],
+            series: total.series || [],
+            legend: {
+              position: 'right',
+              fontSize: '12px',
+              horizontalAlign: 'left',
+              formatter: fmt_legend
+            },
+            plotOptions: {
+              pie: {
+                expandOnClick: false,
+                donut: {
+                  size: '85%',
+                  labels: {
+                    show: true,
+                    name: {
+                      show: true
+                    },
+                    value: {
+                      show: true,
+                      formatter: fmt_value,
+                      fontSize: '12px'
+                    },
+                    total: {
+                      show: true,
+                      formatter: fmt_total,
+                      label: this.translate('quadrant.stock.all'),
+                      fontSize: '12px',
+                      fontWeight: 600
+                    }
+                  }
+                }
+              }
+            }
+          };
+          new apexcharts_common(this._chart, opt).render();
         } else {
           this._body.innerHTML = '';
         }
@@ -72622,6 +72773,17 @@ var Forestry = (function () {
         _this._quadrantView.on('notavailable', function (e) {
           _this._notification.warn(translate$8('warn.notavailable'), NOTIFY_TIMEOUT);
         });
+
+        _this._quadrantView.on('project', function (e) {
+          var event = document.createEvent('Event');
+          event.initEvent('quadrant:toggle', false, false);
+          event.detail = {
+            gmx_id: _this._gmx_id,
+            forestryID: _this._forestry_id
+          };
+
+          _this.dispatchEvent(event);
+        });
       }
 
       if (_this._layers.stands && _this._permissions.ForestStands) {
@@ -72752,7 +72914,7 @@ var Forestry = (function () {
                   // else {
 
                   _context2.next = 4;
-                  return this._toggleQuadrant(id, properties.id);
+                  return this._toggleQuadrant(id, properties.id, properties.forestry_id);
 
                 case 4:
                 case "end":
@@ -72793,32 +72955,34 @@ var Forestry = (function () {
     }, {
       key: "_toggleQuadrant",
       value: function () {
-        var _toggleQuadrant2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(gmx_id, id) {
+        var _toggleQuadrant2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(gmx_id, id, forestry_id) {
           var data;
           return regeneratorRuntime.wrap(function _callee3$(_context3) {
             while (1) {
               switch (_context3.prev = _context3.next) {
                 case 0:
                   if (!(this._gmx_id && this._gmx_id === gmx_id)) {
-                    _context3.next = 5;
+                    _context3.next = 6;
                     break;
                   }
 
                   this._gmx_id = null;
+                  this._forestry_id = null;
 
                   this._content.close();
 
-                  _context3.next = 10;
+                  _context3.next = 12;
                   break;
 
-                case 5:
+                case 6:
                   this._gmx_id = gmx_id;
-                  _context3.next = 8;
+                  this._forestry_id = forestry_id;
+                  _context3.next = 10;
                   return this.httpGet("".concat(this._path, "/Forest/GetQuadrantInformation"), {
                     QuadrantID: id
                   });
 
-                case 8:
+                case 10:
                   data = _context3.sent;
 
                   if (data) {
@@ -72835,10 +72999,10 @@ var Forestry = (function () {
                     this._quadrantView.close();
                   }
 
-                case 10:
+                case 12:
                   this._layers.quadrants.repaint();
 
-                case 11:
+                case 13:
                 case "end":
                   return _context3.stop();
               }
@@ -72846,7 +73010,7 @@ var Forestry = (function () {
           }, _callee3, this);
         }));
 
-        function _toggleQuadrant(_x3, _x4) {
+        function _toggleQuadrant(_x3, _x4, _x5) {
           return _toggleQuadrant2.apply(this, arguments);
         }
 
@@ -76696,17 +76860,17 @@ var Forestry = (function () {
     }, {
       key: "load",
       value: function () {
-        var _load = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8() {
+        var _load = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9() {
           var _this3 = this;
 
           var mapId, apk, currentBaseLayer;
-          return regeneratorRuntime.wrap(function _callee8$(_context8) {
+          return regeneratorRuntime.wrap(function _callee9$(_context9) {
             while (1) {
-              switch (_context8.prev = _context8.next) {
+              switch (_context9.prev = _context9.next) {
                 case 0:
                   window.SELF = this;
                   mapId = 'default';
-                  _context8.next = 4;
+                  _context9.next = 4;
                   return leafletSrc.gmx.loadMap(mapId, {
                     leafletMap: this._map,
                     hostName: '/',
@@ -76722,7 +76886,7 @@ var Forestry = (function () {
                   });
 
                 case 4:
-                  this._gmxMap = _context8.sent;
+                  this._gmxMap = _context9.sent;
 
                   this._map.on('zoomend', function (e) {
                     if (_this3._grid) {
@@ -76732,11 +76896,11 @@ var Forestry = (function () {
 
                   this._controllers = {};
                   this._zoom = new Zoom();
-                  _context8.next = 10;
+                  _context9.next = 10;
                   return leafletSrc.gmx.gmxSessionManager.requestSessionKey('maps.kosmosnimki.ru', this._apiKey);
 
                 case 10:
-                  apk = _context8.sent;
+                  apk = _context9.sent;
                   this._legend = new Legend$1();
 
                   this._legend.addTo(this._map);
@@ -76774,7 +76938,7 @@ var Forestry = (function () {
                     _this3._controllers.baseLayers.hide();
                   });
 
-                  _context8.next = 20;
+                  _context9.next = 20;
                   return this._controllers.baseLayers.load();
 
                 case 20:
@@ -76862,11 +77026,38 @@ var Forestry = (function () {
                       permissions: this._permissions,
                       notification: this._notification,
                       loading: this._loading
-                    }); // this._controllers.quadrants.on('quadrant:toggle', async e => {
-                    //     const {gmx_id, forestryID} = e.detail;
-                    //     await this._controllers.projects.toggleQuadrant({gmx_id, forestryID});
-                    //     this._layers.quadrants.repaint();
-                    // });
+                    });
+
+                    this._controllers.quadrants.on('quadrant:toggle', /*#__PURE__*/function () {
+                      var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(e) {
+                        var _e$detail, gmx_id, forestryID;
+
+                        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+                          while (1) {
+                            switch (_context5.prev = _context5.next) {
+                              case 0:
+                                _e$detail = e.detail, gmx_id = _e$detail.gmx_id, forestryID = _e$detail.forestryID;
+                                _context5.next = 3;
+                                return _this3._controllers.projects.toggleQuadrant({
+                                  gmx_id: gmx_id,
+                                  forestryID: forestryID
+                                });
+
+                              case 3:
+                                _this3._layers.quadrants.repaint();
+
+                              case 4:
+                              case "end":
+                                return _context5.stop();
+                            }
+                          }
+                        }, _callee5);
+                      }));
+
+                      return function (_x2) {
+                        return _ref4.apply(this, arguments);
+                      };
+                    }());
                   }
 
                   if (this._permissions.ReservedForestView || this._permissions.ProtectedForestView) {
@@ -76952,20 +77143,20 @@ var Forestry = (function () {
                       _this3._layers.projects.repaint();
                     });
 
-                    this._controllers.projects.on('back', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5() {
-                      return regeneratorRuntime.wrap(function _callee5$(_context5) {
+                    this._controllers.projects.on('back', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6() {
+                      return regeneratorRuntime.wrap(function _callee6$(_context6) {
                         while (1) {
-                          switch (_context5.prev = _context5.next) {
+                          switch (_context6.prev = _context6.next) {
                             case 0:
-                              _context5.next = 2;
+                              _context6.next = 2;
                               return _this3.showRequests();
 
                             case 2:
                             case "end":
-                              return _context5.stop();
+                              return _context6.stop();
                           }
                         }
-                      }, _callee5);
+                      }, _callee6);
                     })));
                   }
 
@@ -77004,60 +77195,8 @@ var Forestry = (function () {
                     });
 
                     this._controllers.requests.on('view', /*#__PURE__*/function () {
-                      var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(e) {
-                        var _e$detail, id, forestryID, _this3$_layers$projec, LayerID, c, z;
-
-                        return regeneratorRuntime.wrap(function _callee6$(_context6) {
-                          while (1) {
-                            switch (_context6.prev = _context6.next) {
-                              case 0:
-                                _e$detail = e.detail, id = _e$detail.id, forestryID = _e$detail.forestryID;
-                                _context6.next = 3;
-                                return _this3._controllers.projects.view({
-                                  id: id,
-                                  forestryID: forestryID
-                                });
-
-                              case 3:
-                                _this3$_layers$projec = _this3._layers.projects.getGmxProperties(), LayerID = _this3$_layers$projec.LayerID;
-                                _context6.prev = 4;
-                                _context6.next = 7;
-                                return getObjectCenter(_this3._gmxPath, LayerID, id);
-
-                              case 7:
-                                c = _context6.sent;
-                                z = 10;
-
-                                _this3._map.setView(c, z);
-
-                                _context6.next = 15;
-                                break;
-
-                              case 12:
-                                _context6.prev = 12;
-                                _context6.t0 = _context6["catch"](4);
-                                console.log(_context6.t0);
-
-                              case 15:
-                              case "end":
-                                return _context6.stop();
-                            }
-                          }
-                        }, _callee6, null, [[4, 12]]);
-                      }));
-
-                      return function (_x2) {
-                        return _ref5.apply(this, arguments);
-                      };
-                    }());
-
-                    this._controllers.requests.on('create', function () {
-                      _this3._controllers.projects.create();
-                    });
-
-                    this._controllers.requests.on('edit', /*#__PURE__*/function () {
                       var _ref6 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(e) {
-                        var _e$detail2, id, forestryID, _this3$_layers$projec2, LayerID, c, z;
+                        var _e$detail2, id, forestryID, _this3$_layers$projec, LayerID, c, z;
 
                         return regeneratorRuntime.wrap(function _callee7$(_context7) {
                           while (1) {
@@ -77065,13 +77204,13 @@ var Forestry = (function () {
                               case 0:
                                 _e$detail2 = e.detail, id = _e$detail2.id, forestryID = _e$detail2.forestryID;
                                 _context7.next = 3;
-                                return _this3._controllers.projects.edit({
+                                return _this3._controllers.projects.view({
                                   id: id,
                                   forestryID: forestryID
                                 });
 
                               case 3:
-                                _this3$_layers$projec2 = _this3._layers.projects.getGmxProperties(), LayerID = _this3$_layers$projec2.LayerID;
+                                _this3$_layers$projec = _this3._layers.projects.getGmxProperties(), LayerID = _this3$_layers$projec.LayerID;
                                 _context7.prev = 4;
                                 _context7.next = 7;
                                 return getObjectCenter(_this3._gmxPath, LayerID, id);
@@ -77100,6 +77239,58 @@ var Forestry = (function () {
 
                       return function (_x3) {
                         return _ref6.apply(this, arguments);
+                      };
+                    }());
+
+                    this._controllers.requests.on('create', function () {
+                      _this3._controllers.projects.create();
+                    });
+
+                    this._controllers.requests.on('edit', /*#__PURE__*/function () {
+                      var _ref7 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(e) {
+                        var _e$detail3, id, forestryID, _this3$_layers$projec2, LayerID, c, z;
+
+                        return regeneratorRuntime.wrap(function _callee8$(_context8) {
+                          while (1) {
+                            switch (_context8.prev = _context8.next) {
+                              case 0:
+                                _e$detail3 = e.detail, id = _e$detail3.id, forestryID = _e$detail3.forestryID;
+                                _context8.next = 3;
+                                return _this3._controllers.projects.edit({
+                                  id: id,
+                                  forestryID: forestryID
+                                });
+
+                              case 3:
+                                _this3$_layers$projec2 = _this3._layers.projects.getGmxProperties(), LayerID = _this3$_layers$projec2.LayerID;
+                                _context8.prev = 4;
+                                _context8.next = 7;
+                                return getObjectCenter(_this3._gmxPath, LayerID, id);
+
+                              case 7:
+                                c = _context8.sent;
+                                z = 10;
+
+                                _this3._map.setView(c, z);
+
+                                _context8.next = 15;
+                                break;
+
+                              case 12:
+                                _context8.prev = 12;
+                                _context8.t0 = _context8["catch"](4);
+                                console.log(_context8.t0);
+
+                              case 15:
+                              case "end":
+                                return _context8.stop();
+                            }
+                          }
+                        }, _callee8, null, [[4, 12]]);
+                      }));
+
+                      return function (_x4) {
+                        return _ref7.apply(this, arguments);
                       };
                     }());
                   }
@@ -77256,10 +77447,10 @@ var Forestry = (function () {
 
                 case 45:
                 case "end":
-                  return _context8.stop();
+                  return _context9.stop();
               }
             }
-          }, _callee8, this);
+          }, _callee9, this);
         }));
 
         function load() {
