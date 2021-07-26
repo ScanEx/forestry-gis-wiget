@@ -72159,7 +72159,7 @@ var Forestry = (function () {
 
     var _super = _createSuper(Quadrants);
 
-    function Quadrants(container) {
+    function Quadrants(container, permissions) {
       var _this;
 
       _classCallCheck$1(this, Quadrants);
@@ -72208,14 +72208,20 @@ var Forestry = (function () {
         }
       });
 
-      _this._container.querySelector('.add-quadrant').addEventListener('click', function (e) {
-        e.stopPropagation();
-        var event = document.createEvent('Event');
-        event.initEvent('project', false, false);
-        event.detail = _this._gmx_id;
+      var add_quadrant = _this._container.querySelector('.add-quadrant');
 
-        _this.dispatchEvent(event);
-      });
+      if (permissions.ApplicationMake) {
+        add_quadrant.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var event = document.createEvent('Event');
+          event.initEvent('project', false, false);
+          event.detail = _this._gmx_id;
+
+          _this.dispatchEvent(event);
+        });
+      } else {
+        add_quadrant.classList.add('hidden');
+      }
 
       _this._downloads = _this._container.querySelector('.downloads');
       _this._num = _this._container.querySelector('.header1 .number');
@@ -72245,9 +72251,9 @@ var Forestry = (function () {
             TaxRate = data.TaxRate;
         this._gmx_id = gmx_id;
         var radio = this.translate('quadrant.usage_arr').map(function (it) {
-          return "\n\t\t\t\t<input type=\"radio\" disabled id=\"".concat(it, "\" name=\"").concat(it, "\" ").concat(SpecialPurpose.indexOf(it) > -1 ? 'checked' : '', ">\n\t\t\t\t<label for=\"").concat(it, "\">").concat(it, "</label><br>\n\t\t\t");
+          return "\n\t\t\t\t<input type=\"checkbox\" disabled id=\"".concat(it, "\" name=\"").concat(it, "\" ").concat(SpecialPurpose.indexOf(it) > -1 ? 'checked' : '', ">\n\t\t\t\t<label for=\"").concat(it, "\">").concat(it, "</label><br>\n\t\t\t");
         }).join('\n');
-        this._info.innerHTML = "\n\t\t\t<div class=\"area\">\n\t\t\t\t<label class=\"label\">".concat(this.translate('quadrant.area'), "</label>\n\t\t\t\t<label class=\"value\">").concat(Area && this.ha(Area) || '-', "</label>\n\t\t\t</div>\n\t\t\t<div class=\"usage\">\n\t\t\t\t<label class=\"label\">").concat(this.translate('quadrant.usage'), "</label>\n\t\t\t\t<label class=\"value\">").concat(radio, "</label>\n\t\t\t</div>\n\t\t\t<div class=\"CarbonStock\">\n\t\t\t\t<label class=\"label\">").concat(this.translate('quadrant.CarbonStock'), "</label>\n\t\t\t\t<label class=\"value\">").concat(CarbonStock || '-', "</label>\n\t\t\t</div>\n\t\t\t<div class=\"TaxYear\">\n\t\t\t\t<label class=\"label\">").concat(this.translate('quadrant.TaxYear'), "</label>\n\t\t\t\t<label class=\"value\">").concat(TaxYear || '-', "</label>\n\t\t\t</div>\n\t\t\t<div class=\"TaxRate\">\n\t\t\t\t<label class=\"label\">").concat(this.translate('quadrant.TaxRate'), "</label>\n\t\t\t\t<label class=\"value\">").concat(TaxRate || '-', "</label>\n\t\t\t</div>");
+        this._info.innerHTML = "\n\t\t\t<div class=\"area\">\n\t\t\t\t<label class=\"label\">".concat(this.translate('quadrant.area'), "</label>\n\t\t\t\t<label class=\"value\">").concat(Area && this.ha(Area) || '-', "</label>\n\t\t\t</div>\n\t\t\t<div class=\"usage\">\n\t\t\t\t<label class=\"label\">").concat(this.translate('quadrant.usage'), "</label>\n\t\t\t\t<label class=\"value\">").concat(radio, "</label>\n\t\t\t</div>\n\t\t\t<div class=\"CarbonStock\">\n\t\t\t\t<label class=\"label\">").concat(this.translate('quadrant.CarbonStock'), "</label>\n\t\t\t\t<label class=\"value\">").concat(CarbonStock ? CarbonStock.toFixed(3) : '-', "</label>\n\t\t\t</div>\n\t\t\t<div class=\"TaxYear\">\n\t\t\t\t<label class=\"label\">").concat(this.translate('quadrant.TaxYear'), "</label>\n\t\t\t\t<label class=\"value\">").concat(TaxYear || '-', "</label>\n\t\t\t</div>\n\t\t\t<div class=\"TaxRate\">\n\t\t\t\t<label class=\"label\">").concat(this.translate('quadrant.TaxRate'), "</label>\n\t\t\t\t<label class=\"value\">").concat(TaxRate || '-', "</label>\n\t\t\t</div>");
         this._num.innerText = Num || '';
         this._chart.innerText = '';
         this._header2.innerHTML = "".concat(this.translate('quadrant.forestry'), ": <span class=\"green\">").concat(Forestry, ",</span> ").concat(this.translate('quadrant.forestry_local'), ": <span class=\"green\">").concat(LocalForestry, ",</span> ").concat(this.translate('quadrant.stow'), ": <span class=\"green\">").concat(Stow || '-', "</span>");
@@ -72291,21 +72297,22 @@ var Forestry = (function () {
 
         if (Array.isArray(Stock)) {
           var total = Stock.reduce(function (a, _ref, i) {
-            _ref.permitted_stock;
-                _ref.permitted_stock_deal;
-                _ref.probable_stock;
-                _ref.probable_stock_deal;
-                var species = _ref.species,
+            var permitted_stock = _ref.permitted_stock,
+                permitted_stock_deal = _ref.permitted_stock_deal,
+                probable_stock = _ref.probable_stock,
+                probable_stock_deal = _ref.probable_stock_deal,
+                species = _ref.species,
                 total_stock = _ref.total_stock,
                 total_stock_deal = _ref.total_stock_deal,
                 species_colour = _ref.species_colour;
-            a.labels.push(species); // species_colour = 255;
-            // let color = species_colour ? '#' + species_colour.toString(16).padStart(6, '0').substr(0, 6).toUpperCase() : CHART_COLORS[i];
-
-            var color = species_colour ? '#' + species_colour.toString(16).padStart(6, '0').substr(0, 6).toUpperCase() : CHART_COLORS[i]; // let color = '#' + (species_colour || Math.floor(Math.random(1) * 0xff5577)).toString(16).toUpperCase();
-
-            a.colors.push(color);
+            a.labels.push(species);
+            a.colors.push(species_colour ? '#' + species_colour.toString(16).padStart(6, '0').substr(0, 6).toUpperCase() : CHART_COLORS[i]);
             a.series.push(total_stock);
+            a.permitted_stock += permitted_stock;
+            a.permitted_stock_deal += permitted_stock_deal;
+            a.probable_stock += probable_stock;
+            a.probable_stock_deal += probable_stock_deal;
+            a.total_stock += total_stock;
             a.total_stock_deal += total_stock_deal;
             return a;
           }, {
@@ -72760,7 +72767,7 @@ var Forestry = (function () {
           }
         });
 
-        _this._quadrantView = _this._content.add('quadrants', Quadrants$1);
+        _this._quadrantView = _this._content.add('quadrants', Quadrants$1, permissions);
 
         _this._quadrantView.on('close', function () {
           _this._layers.quadrants && _this._layers.quadrants.repaint();
