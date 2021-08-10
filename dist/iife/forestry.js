@@ -37886,7 +37886,8 @@ var Forestry = (function () {
           faux: 'Патология ложная',
           confirmed: 'Патология подтвержденная'
         }
-      }
+      },
+      nodata: 'Нет данных'
     }
   };
 
@@ -70749,49 +70750,24 @@ var Forestry = (function () {
     }
 
     _createClass$1(Quadrants, [{
-      key: "items",
-      get: function get() {
-        return this._items;
-      } // hilite(id){
-      //     let rows = this._container.querySelectorAll('tbody > tr');
-      //     for (let i = 0; i < rows.length; ++i) {
-      //         const item = this._items[i];
-      //         if(item.gmx_id === id) {
-      //             rows[i].classList.add('hilite');
-      //             let event = document.createEvent('Event');            
-      //             event.initEvent('item:over', false, false);
-      //             event.detail = item;
-      //             this.dispatchEvent(event);
-      //             break;
-      //         }
-      //     }
-      // }
-      // unhilite(id){
-      //     let rows = this._container.querySelectorAll('tbody > tr');
-      //     for (let i = 0; i < rows.length; ++i) {
-      //         const item = this._items[i];
-      //         if(item.gmx_id === id) {
-      //             rows[i].classList.remove('hilite');
-      //             let event = document.createEvent('Event');            
-      //             event.initEvent('item:out', false, false);
-      //             event.detail = item;
-      //             this.dispatchEvent(event);
-      //             break;
-      //         }
-      //     }
-      // }
-      ,
-      set: function set(items) {
+      key: "open",
+      value: function open(items) {
         var _this2 = this;
 
         this._items = Array.isArray(items) && items || [];
-        this._container.innerHTML = this._items.length ? "<table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th>".concat(translate$c('project.localForestry'), " / ").concat(translate$c('project.tract'), "</th>                    \n                    <th>").concat(translate$c('project.quadrants'), "</th>\n                    <th>").concat(translate$c('project.year'), "</th>                    \n                </tr>\n            </thead>\n        </table>\n        <div class=\"scrollable\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody>").concat(this._items.map(function (_ref) {
-          var local_forestry = _ref.local_forestry,
-              stow = _ref.stow,
-              num = _ref.num,
-              taxation_year = _ref.taxation_year;
+
+        var carbon = this._items.reduce(function (a, _ref) {
+          var carbon_stock = _ref.carbon_stock;
+          return a + carbon_stock;
+        }, 0);
+
+        this._container.innerHTML = this._items.length ? "<div class=\"carbon\">\n            <span class=\"label\">".concat(translate$c('project.carbon'), ", ").concat(translate$c('units.t'), ":</span>\n            <span class=\"value\">").concat(carbon && int(carbon) || '-', "</span>\n        </div>\n        <table cellpadding=\"0\" cellspacing=\"0\">\n            <tr>\n                <td>").concat(translate$c('project.localForestry'), " / ").concat(translate$c('project.tract'), "</td>\n                <td>").concat(translate$c('project.quadrants'), "</td>\n                <td>").concat(translate$c('project.year'), "</td>\n            </tr>            \n        </table>\n        <div class=\"scrollable\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                ").concat(this._items.map(function (_ref2) {
+          var local_forestry = _ref2.local_forestry,
+              stow = _ref2.stow,
+              num = _ref2.num,
+              taxation_year = _ref2.taxation_year;
           return "<tr class=\"quadrant\">\n                        <td class=\"text\">".concat(local_forestry).concat(stow ? " / ".concat(stow) : '', "</td>                        \n                        <td class=\"value\">").concat(num, "</td>\n                        <td class=\"value\">").concat(taxation_year, "</td>\n                        <td>\n                            <i class=\"scanex-project-icon remove\"></i>\n                        </td>\n                    </tr>");
-        }).join(''), "</tbody>\n            </table>\n        </div>") : '';
+        }).join(''), "\n            </table>\n        </div>") : '';
 
         var rows = this._container.querySelectorAll('tbody > tr');
 
@@ -70825,6 +70801,39 @@ var Forestry = (function () {
           _loop(i);
         }
       }
+    }, {
+      key: "items",
+      get: function get() {
+        return this._items;
+      } // hilite(id){
+      //     let rows = this._container.querySelectorAll('tbody > tr');
+      //     for (let i = 0; i < rows.length; ++i) {
+      //         const item = this._items[i];
+      //         if(item.gmx_id === id) {
+      //             rows[i].classList.add('hilite');
+      //             let event = document.createEvent('Event');            
+      //             event.initEvent('item:over', false, false);
+      //             event.detail = item;
+      //             this.dispatchEvent(event);
+      //             break;
+      //         }
+      //     }
+      // }
+      // unhilite(id){
+      //     let rows = this._container.querySelectorAll('tbody > tr');
+      //     for (let i = 0; i < rows.length; ++i) {
+      //         const item = this._items[i];
+      //         if(item.gmx_id === id) {
+      //             rows[i].classList.remove('hilite');
+      //             let event = document.createEvent('Event');            
+      //             event.initEvent('item:out', false, false);
+      //             event.detail = item;
+      //             this.dispatchEvent(event);
+      //             break;
+      //         }
+      //     }
+      // }
+
     }]);
 
     return Quadrants;
@@ -70866,9 +70875,39 @@ var Forestry = (function () {
               species = _ref.species,
               total_stock = _ref.total_stock,
               total_stock_deal = _ref.total_stock_deal;
-          return "<tr class=\"type\">\n                <td class=\"text\">".concat(species, "</td>\n                <td class=\"value\">").concat(m(permitted_stock), "</td>\n                <td class=\"value\">").concat(m(permitted_stock_deal), "</td>\n                <td class=\"value\">").concat(m(probable_stock), "</td>\n                <td class=\"value\">").concat(m(probable_stock_deal), "</td>\n                <td class=\"value\">").concat(m(total_stock), "</td>\n                <td class=\"value\">").concat(m(total_stock_deal), "</td>\n            </tr>");
+          return "<tr class=\"type\">\n                <td class=\"text\">".concat(species, "</td>\n                <td class=\"value\">").concat(m(permitted_stock), " / ").concat(m(permitted_stock_deal), "</td>                \n                <td class=\"value\">").concat(m(probable_stock), " / ").concat(m(probable_stock_deal), "</td>                \n                <td class=\"value\">").concat(m(total_stock), " / ").concat(m(total_stock_deal), "</td>                \n            </tr>");
         }).join('');
-        this._container.innerHTML = rows ? "<div class=\"title\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>                 \n                        <tr>\n                            <td class=\"text\" rowspan=\"2\">".concat(translate$b('project.species'), "</td>\n                            <td class=\"text\" colspan=\"3\">").concat(translate$b('project.stock.label'), " (").concat(translate$b('project.stock.general'), " / ").concat(translate$b('project.stock.deal'), "), ").concat(translate$b('units.m'), "<sup>3</sup></td>\n                        </tr>\n                        <tr>                            \n                            <td class=\"text text-top\">").concat(translate$b('project.stock.permitted'), "</td>                        \n                            <td class=\"text text-top\">").concat(translate$b('project.stock.probable'), "</td>\n                            <td class=\"text text-top\">").concat(translate$b('project.stock.total'), "</td>\n                        </tr>\n                    </tbody>\n                </table>\n            </div>\n            <div class=\"content scrollable\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>").concat(rows, "</tbody>\n                </table>\n            </div>") : '';
+
+        var _species$reduce = species.reduce(function (a, _ref2) {
+          var permitted_stock = _ref2.permitted_stock,
+              permitted_stock_deal = _ref2.permitted_stock_deal,
+              probable_stock = _ref2.probable_stock,
+              probable_stock_deal = _ref2.probable_stock_deal,
+              total_stock = _ref2.total_stock,
+              total_stock_deal = _ref2.total_stock_deal;
+          a.permitted_stock += permitted_stock;
+          a.permitted_stock_deal += permitted_stock_deal;
+          a.probable_stock += probable_stock;
+          a.probable_stock_deal += probable_stock_deal;
+          a.total_stock += total_stock;
+          a.total_stock_deal += total_stock_deal;
+          return a;
+        }, {
+          permitted_stock: 0,
+          permitted_stock_deal: 0,
+          probable_stock: 0,
+          probable_stock_deal: 0,
+          total_stock: 0,
+          total_stock_deal: 0
+        }),
+            permitted_stock = _species$reduce.permitted_stock,
+            permitted_stock_deal = _species$reduce.permitted_stock_deal,
+            probable_stock = _species$reduce.probable_stock,
+            probable_stock_deal = _species$reduce.probable_stock_deal,
+            total_stock = _species$reduce.total_stock,
+            total_stock_deal = _species$reduce.total_stock_deal;
+
+        this._container.innerHTML = rows ? "<div class=\"title\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>                 \n                        <tr>\n                            <td class=\"text\" rowspan=\"2\">".concat(translate$b('project.species'), "</td>\n                            <td class=\"text\" colspan=\"3\">").concat(translate$b('project.stock.label'), " (").concat(translate$b('project.stock.general'), " / ").concat(translate$b('project.stock.deal'), "), ").concat(translate$b('units.m'), "<sup>3</sup></td>\n                        </tr>\n                        <tr>                            \n                            <td class=\"text text-top\">").concat(translate$b('project.stock.permitted'), "</td>                        \n                            <td class=\"text text-top\">").concat(translate$b('project.stock.probable'), "</td>\n                            <td class=\"text text-top\">").concat(translate$b('project.stock.total'), "</td>\n                        </tr>\n                    </tbody>\n                </table>\n            </div>\n            <div class=\"content scrollable\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tbody>").concat(rows, "</tbody>\n                </table>                \n            </div>\n            <div class=\"total\">\n                <table cellpadding=\"0\" cellspacing=\"0\">\n                    <tr>\n                        <td class=\"text\">").concat(translate$b('project.stock.all'), "</td>\n                        <td class=\"value\">").concat(m(permitted_stock), " / ").concat(m(permitted_stock_deal), "</td>                \n                        <td class=\"value\">").concat(m(probable_stock), " / ").concat(m(probable_stock_deal), "</td>                \n                        <td class=\"value\">").concat(m(total_stock), " / ").concat(m(total_stock_deal), "</td>\n                    </tr>\n                </table>\n            </div>") : '';
       }
     }]);
 
@@ -70885,7 +70924,7 @@ var Forestry = (function () {
 
       this._species = [];
       this._container = container;
-      this._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<thead class=\"menu\">\n\t\t\t\t<tr>\n\t\t\t\t\t<th colspan=\"3\">\n\t\t\t\t\t\t<button class=\"stock active\">".concat(translate$a('project.stock.table'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t</tr>\n\t\t\t\t<tr>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"permitted\">").concat(translate$a('project.stock.permitted'), "</button>\n\t\t\t\t\t</th>\t\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"probable\">").concat(translate$a('project.stock.probable'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"total\">").concat(translate$a('project.stock.total'), "</button>\n\t\t\t\t\t</th>\t\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td colspan=\"3\">\n\t\t\t\t\t\t<div class=\"table\"></div>\n\t\t\t\t\t\t<div class=\"graph\">\n\t\t\t\t\t\t\t<div class=\"label\">").concat(translate$a('project.stock.title'), " (").concat(translate$a('project.stock.general'), " / ").concat(translate$a('project.stock.deal'), ")</div>\n\t\t\t\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t\t\t</div>\t\t\t\t\t\t\n\t\t\t\t\t</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
+      this._container.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t<thead class=\"menu\">\t\t\t\t\n\t\t\t\t<tr>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"stock active\">".concat(translate$a('project.stock.table'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"permitted\">").concat(translate$a('project.stock.permitted'), "</button>\n\t\t\t\t\t</th>\t\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"probable\">").concat(translate$a('project.stock.probable'), "</button>\n\t\t\t\t\t</th>\n\t\t\t\t\t<th>\n\t\t\t\t\t\t<button class=\"total\">").concat(translate$a('project.stock.total'), "</button>\n\t\t\t\t\t</th>\t\t\t\t\t\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td colspan=\"4\">\n\t\t\t\t\t\t<div class=\"table\"></div>\n\t\t\t\t\t\t<div class=\"graph\">\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t\t\t</div>\t\t\t\t\t\t\n\t\t\t\t\t</td>\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>");
       this._buttons = this._container.querySelectorAll('button');
 
       var btnStock = this._container.querySelector('.stock');
@@ -70962,10 +71001,17 @@ var Forestry = (function () {
             formatter: fmt_labels
           }
         },
+        noData: {
+          text: translate$a('nodata'),
+          style: {
+            color: '#000000',
+            fontFamily: 'Open Sans'
+          }
+        },
         colors: CHART_COLORS,
         chart: {
           type: 'donut',
-          width: '700px',
+          width: '660px',
           height: '160px'
         },
         dataLabels: {
@@ -70975,9 +71021,7 @@ var Forestry = (function () {
         series: [],
         legend: {
           position: 'right',
-          // width: '200px',
           fontSize: '12px',
-          // offsetY: -10,
           horizontalAlign: 'left',
           formatter: fmt_legend
         },
@@ -70985,7 +71029,7 @@ var Forestry = (function () {
           pie: {
             expandOnClick: false,
             donut: {
-              size: '85%',
+              size: '75%',
               labels: {
                 show: true,
                 name: {
@@ -71001,7 +71045,8 @@ var Forestry = (function () {
                   formatter: fmt_total,
                   label: translate$a('project.stock.all'),
                   fontSize: '12px',
-                  fontWeight: 600
+                  fontWeight: 600,
+                  color: '#000000'
                 }
               }
             }
@@ -71148,6 +71193,7 @@ var Forestry = (function () {
         status: 'Статус аукциона'
       },
       project: {
+        carbon: 'Запас углерода',
         create: 'Создать проект',
         default: 'Проект ЛУ',
         description: 'Описание',
@@ -71162,7 +71208,7 @@ var Forestry = (function () {
           permitted: 'Доступный',
           probable: 'Прогноз',
           total: 'Таксация',
-          table: 'Данные о запасах',
+          table: 'Свод',
           label: 'Запас',
           all: 'Итого',
           general: 'всего',
@@ -71174,7 +71220,7 @@ var Forestry = (function () {
           edit: 'Редактирование проекта лесного участка'
         },
         tract: 'Урочище',
-        year: 'Год таксации'
+        year: 'Год лесоустройства'
       }
     }
   };
@@ -71198,7 +71244,7 @@ var Forestry = (function () {
 
       _this._container.classList.add('scanex-forestry-project');
 
-      _this._container.innerHTML = "<div class=\"header\">\n            <div class=\"header-left\">\n                <button class=\"scanex-project-icon back\"></button>\n                <label class=\"head\">".concat(_this.translate('project.title.edit'), "</label>\n                <input class=\"description\" type=\"text\" value=\"\"></input>\n            </div>\n            <div class=\"header-right\">                                \n                <button class=\"request\">").concat(_this.translate('project.request'), "</button>\n                <button class=\"save\">").concat(_this.translate('project.save'), "</button>\n            </div>\n        </div>\n        <div class=\"content\">\n            <div class=\"species\"></div>\n            <div class=\"quadrants\"></div>            \n        </div>");
+      _this._container.innerHTML = "<div class=\"header\">\n            <div class=\"header-left\">\n                <button class=\"scanex-project-icon back\"></button>\n                <label class=\"head\">".concat(_this.translate('project.title.edit'), "</label>\n                <input class=\"description\" type=\"text\" value=\"\"></input>\n            </div>\n            <div class=\"header-right\">\n                <button class=\"save\">").concat(_this.translate('project.save'), "</button>\n                <button class=\"request\">").concat(_this.translate('project.request'), "</button>                \n            </div>\n        </div>\n        <div class=\"content\">\n            <div class=\"species\"></div>\n            <div class=\"quadrants\"></div>            \n        </div>");
       _this._description = _this._container.querySelector('.description');
 
       var btnBack = _this._container.querySelector('.back');
@@ -71269,7 +71315,8 @@ var Forestry = (function () {
     _createClass$1(Project, [{
       key: "clear",
       value: function clear() {
-        this._quadrants.items = [];
+        this._quadrants.open([]);
+
         this._species.items = [];
         this._gmx_id = null;
         this._id = null;
@@ -71367,7 +71414,9 @@ var Forestry = (function () {
         this._id = forestProjectID;
         this._description.value = title || "".concat(this.translate('project.default'), " - ").concat(new Date().toLocaleDateString());
         this._forestryID = forestryID;
-        this._quadrants.items = quadrants;
+
+        this._quadrants.open(quadrants);
+
         this._species.items = species;
 
         this._checkQuadrants();
@@ -72571,7 +72620,7 @@ var Forestry = (function () {
         this._info.innerHTML = "\n\t\t\t<div class=\"area\">\n\t\t\t\t<label class=\"label\">".concat(this.translate('quadrant.area'), "</label>\n\t\t\t\t<label class=\"value\">").concat(Area && this.ha(Area) || '-', "</label>\n\t\t\t</div>\n\t\t\t<div class=\"usage\">\n\t\t\t\t<label class=\"label\">").concat(this.translate('quadrant.usage'), "</label>\n\t\t\t\t<label class=\"value\">").concat(radio, "</label>\n\t\t\t</div>\n\t\t\t<div class=\"CarbonStock\">\n\t\t\t\t<label class=\"label\">").concat(this.translate('quadrant.CarbonStock'), "</label>\n\t\t\t\t<label class=\"value\">").concat(CarbonStock ? m(CarbonStock) : '-', "</label>\n\t\t\t</div>\n\t\t\t<div class=\"TaxYear\">\n\t\t\t\t<label class=\"label\">").concat(this.translate('quadrant.TaxYear'), "</label>\n\t\t\t\t<label class=\"value\">").concat(TaxYear || '-', "</label>\n\t\t\t</div>\n\t\t\t<div class=\"TaxRate\">\n\t\t\t\t<label class=\"label\">").concat(this.translate('quadrant.TaxRate'), "</label>\n\t\t\t\t<label class=\"value\">").concat(TaxRate || '-', "</label>\n\t\t\t</div>");
         this._num.innerText = Num || '';
         this._chart.innerText = '';
-        this._header2.innerHTML = "".concat(this.translate('quadrant.forestry'), ": <span class=\"green\">").concat(Forestry, ",</span> ").concat(this.translate('quadrant.forestry_local'), ": <span class=\"green\">").concat(LocalForestry, ",</span> ").concat(this.translate('quadrant.stow'), ": <span class=\"green\">").concat(Stow || '-', "</span>");
+        this._header2.innerHTML = "".concat(this.translate('quadrant.forestry'), ": <span class=\"green\">").concat(Forestry, "</span> ").concat(this.translate('quadrant.forestry_local'), ": <span class=\"green\">").concat(LocalForestry, "</span> ").concat(this.translate('quadrant.stow'), ": <span class=\"green\">").concat(Stow || '-', "</span> ").concat(this.translate('quadrant.title'), ": <span class=\"green\">").concat(Num, "</span>");
 
         if (Array.isArray(Documents)) {
           this._downloads.classList.remove('hidden');
