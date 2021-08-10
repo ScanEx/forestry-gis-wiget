@@ -74106,13 +74106,14 @@ var Forestry = (function () {
   var strings$2 = {
     ru: {
       request: {
-        id: '#',
+        id: '№',
+        carbon: 'Углерод',
         status: 'Статус',
         title: 'Название',
-        area: 'Площадь, га',
-        amount: 'Общий запас, м',
+        area: 'Площадь',
+        amount: 'Запас',
         forestry: 'Лесничество',
-        local_forestry: 'Уч. лесничество, квартал',
+        local_forestry: 'Номера кварталов',
         header: 'Выбор проекта лесного участка',
         edit: 'Редактировать',
         create: 'Создать проект'
@@ -74134,7 +74135,7 @@ var Forestry = (function () {
 
       _this._container.classList.add('scanex-forestry-requests');
 
-      _this._container.innerHTML = "<h1 class=\"header\">           \n            <label class=\"title\">".concat(_this.translate('request.header'), "</label>                   \n            <button class=\"create\">").concat(_this.translate('request.create'), "</button>                              \n        </h1>\n        <table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th data-id=\"id\">").concat(_this.translate('request.id'), "</th>\n                    <th data-id=\"title\">").concat(_this.translate('request.title'), "</th>\n                    <th data-id=\"status\">").concat(_this.translate('request.status'), "</th>\n                    <th data-id=\"forestry\">").concat(_this.translate('request.forestry'), "</th>\n                    <th data-id=\"local_forestry\">").concat(_this.translate('request.local_forestry'), "</th>\n                    <th data-id=\"area\">").concat(_this.translate('request.area'), "</th>\n                    <th data-id=\"amount\">").concat(_this.translate('request.amount'), "<sup>3</sup></th>\n                    <th data-id=\"remove\"></th>\n                </tr>\n            </thead>\n        </table> \n        <div class=\"content scrollable\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody class=\"items\"></tbody>\n            </table>\n        </div>");
+      _this._container.innerHTML = "<h1 class=\"header\">           \n            <label class=\"title\">".concat(_this.translate('request.header'), "</label>                   \n            <button class=\"create\">").concat(_this.translate('request.create'), "</button>                              \n        </h1>\n        <table cellpadding=\"0\" cellspacing=\"0\">\n            <thead>\n                <tr>\n                    <th data-id=\"id\">").concat(_this.translate('request.id'), "</th>\n                    <th data-id=\"title\">").concat(_this.translate('request.title'), "</th>\n                    <th data-id=\"status\">").concat(_this.translate('request.status'), "</th>\n                    <th data-id=\"forestry\">").concat(_this.translate('request.forestry'), "</th>\n                    <th data-id=\"local_forestry\">").concat(_this.translate('request.local_forestry'), "</th>\n                    <th data-id=\"area\">").concat(_this.translate('request.area'), ", ").concat(_this.translate('units.ha'), "</th>\n                    <th data-id=\"amount\">").concat(_this.translate('request.amount'), ", ").concat(_this.translate('units.m'), "<sup>3</sup></th>\n                    <th data-id=\"carbon\">").concat(_this.translate('request.carbon'), ", ").concat(_this.translate('units.t'), "</th>\n                    <th data-id=\"remove\"></th>\n                </tr>\n            </thead>\n        </table> \n        <div class=\"content scrollable\">\n            <table cellpadding=\"0\" cellspacing=\"0\">\n                <tbody class=\"items\"></tbody>\n            </table>\n        </div>");
       _this._content = _this._container.querySelector('.items');
 
       _this._container.querySelector('.create').addEventListener('click', function (e) {
@@ -74181,8 +74182,10 @@ var Forestry = (function () {
               statusID = _ref2.statusID,
               forestry = _ref2.forestry,
               localForestries = _ref2.localForestries,
-              totalSquare = _ref2.totalSquare;
-          return "<tr class=\"request\">\n                <td class=\"value\" data-id=\"id\">".concat(number, "</td>\n                <td class=\"value\" data-id=\"title\">").concat(title, "</td>\n                <td class=\"value\" data-id=\"status\">").concat(status, "</td>\n                <td class=\"value\" data-id=\"forestry\">").concat(forestry, "</td>\n                <td class=\"value\" data-id=\"local_forestry\">").concat(localForestries, "</td>\n                <td class=\"value\" data-id=\"area\">").concat(_this2.ha(totalSquare), "</td>\n                <td class=\"value\" data-id=\"amount\"></td>\n                <td class=\"value\" data-id=\"remove\">").concat(_this2.isEditable(statusID) ? '<i class="scanex-requests-icon remove"></i>' : '', "</td>\n            </tr>");
+              totalSquare = _ref2.totalSquare,
+              totalVolume = _ref2.totalVolume,
+              carbonStock = _ref2.carbonStock;
+          return "<tr class=\"request\">\n                <td class=\"value\" data-id=\"id\">".concat(number, "</td>\n                <td class=\"value\" data-id=\"title\">").concat(title, "</td>\n                <td class=\"value\" data-id=\"status\">").concat(status, "</td>\n                <td class=\"value\" data-id=\"forestry\">").concat(forestry, "</td>\n                <td class=\"value\" data-id=\"local_forestry\">").concat(localForestries, "</td>\n                <td class=\"value\" data-id=\"area\">").concat(_this2.ha(totalSquare), "</td>\n                <td class=\"value\" data-id=\"amount\">").concat(totalVolume && _this2.m(totalVolume) || '', "</td>\n                <td class=\"value\" data-id=\"carbon\">").concat(carbonStock && _this2.m(carbonStock) || '', "</td>\n                <td class=\"value\" data-id=\"remove\">").concat(_this2.isEditable(statusID) ? '<i class="scanex-requests-icon remove"></i>' : '', "</td>\n            </tr>");
         }).join('');
 
         var rows = this._content.querySelectorAll('.request');
