@@ -38281,47 +38281,6 @@ var Forestry = (function () {
     return LayerController;
   }(Controller);
 
-  var notify$3 = {
-  	info: {
-  		ok: "Request Completed"
-  	},
-  	error: {
-  		badrequest: "Bad request",
-  		unauthorized: "Unauthorized",
-  		forbidden: "Forbidden",
-  		notfound: "Not found",
-  		server: "Internal server error",
-  		gateway: "Bad gateway",
-  		unavailable: "Service unavailable",
-  		other: "Other errors"
-  	}
-  };
-  var en$3 = {
-  	notify: notify$3
-  };
-
-  var notify$2 = {
-  	info: {
-  		ok: "Запрос выполнен"
-  	},
-  	error: {
-  		badrequest: "Неправильный запрос",
-  		unauthorized: "Не авторизован",
-  		forbidden: "Нет разрешения",
-  		notfound: "Не найдено",
-  		server: "Внутренняя ошибка сервера",
-  		gateway: "Неправильный шлюз",
-  		unavailable: "Сервис недоступен",
-  		other: "Прочие ошибки"
-  	}
-  };
-  var ru$3 = {
-  	notify: notify$2
-  };
-
-  add('ru', ru$3);
-  add('en', en$3);
-
   var Component = /*#__PURE__*/function (_Evented) {
     _inherits(Component, _Evented);
 
@@ -38382,6 +38341,122 @@ var Forestry = (function () {
 
     return Component;
   }(Evented);
+
+  var Checkbox = /*#__PURE__*/function (_Component) {
+    _inherits(Checkbox, _Component);
+
+    var _super = _createSuper(Checkbox);
+
+    function Checkbox(container, options) {
+      var _this;
+
+      _classCallCheck$1(this, Checkbox);
+
+      _this = _super.call(this, container, options);
+      _this._checked = false;
+      _this._disabled = false;
+      return _this;
+    }
+
+    _createClass$1(Checkbox, [{
+      key: "checked",
+      get: function get() {
+        return this._checked;
+      },
+      set: function set(checked) {
+        this._checked = checked;
+
+        if (this._checked) {
+          this._element.classList.add('check');
+        } else {
+          this._element.classList.remove('check');
+        }
+      }
+    }, {
+      key: "disabled",
+      get: function get() {
+        return this._disabled;
+      },
+      set: function set(disabled) {
+        this._disabled = disabled;
+
+        if (this._disabled) {
+          this._element.classList.add('disabled');
+        } else {
+          this._element.classList.remove('disabled');
+        }
+      }
+    }, {
+      key: "id",
+      get: function get() {
+        return this._id;
+      }
+    }, {
+      key: "_click",
+      value: function _click(e) {
+        e.stopPropagation();
+
+        if (!this.disabled) {
+          this.checked = !this.checked;
+        }
+      }
+    }, {
+      key: "render",
+      value: function render(element, id) {
+        element.classList.add('scanex-component-checkbox');
+        element.classList.add('scanex-component-icon');
+        element.addEventListener('click', this._click.bind(this));
+
+        if (id) {
+          this._id = id;
+          element.setAttribute('id', this._id);
+        }
+      }
+    }]);
+
+    return Checkbox;
+  }(Component);
+
+  var notify$3 = {
+  	info: {
+  		ok: "Request Completed"
+  	},
+  	error: {
+  		badrequest: "Bad request",
+  		unauthorized: "Unauthorized",
+  		forbidden: "Forbidden",
+  		notfound: "Not found",
+  		server: "Internal server error",
+  		gateway: "Bad gateway",
+  		unavailable: "Service unavailable",
+  		other: "Other errors"
+  	}
+  };
+  var en$3 = {
+  	notify: notify$3
+  };
+
+  var notify$2 = {
+  	info: {
+  		ok: "Запрос выполнен"
+  	},
+  	error: {
+  		badrequest: "Неправильный запрос",
+  		unauthorized: "Не авторизован",
+  		forbidden: "Нет разрешения",
+  		notfound: "Не найдено",
+  		server: "Внутренняя ошибка сервера",
+  		gateway: "Неправильный шлюз",
+  		unavailable: "Сервис недоступен",
+  		other: "Прочие ошибки"
+  	}
+  };
+  var ru$3 = {
+  	notify: notify$2
+  };
+
+  add('ru', ru$3);
+  add('en', en$3);
 
   var scanex$1 = {
   	components: {
@@ -72566,8 +72641,14 @@ var Forestry = (function () {
 
       _this._container.classList.add('scanex-forestry-quadrant');
 
-      _this._container.innerHTML = "<h1 class=\"header1\"><span>".concat(_this.translate('quadrant.title'), " \u2116 <span class=\"number\"></span></span> <span><button class=\"add-quadrant\">").concat(_this.translate('quadrant.add_quadrant'), "</button>\n\t\t\t<span class=\"downloads\">\n\t\t\t\t<span class=\"download-description\" title=\"").concat(_this.translate('quadrant.description'), "\">\n\t\t\t\t\t<i class=\"scanex-quadrant-icon lp\"></i>\n\t\t\t\t</span>\n\t\t\t\t<span class=\"download-plan\" title=\"").concat(_this.translate('quadrant.plan'), "\">\n\t\t\t\t\t<i class=\"scanex-quadrant-icon to\"></i>\n\t\t\t\t</span>\n\t\t\t</span>\n\t\t\t</span>\n\t\t</h1>\n\t\t<h2 class=\"header2\"></h2>\n\t\t<div class=\"scrollable\">\t\t\t\n\t\t\t<div class=\"table_graph\">\n\t\t\t\t<div class=\"info\"></div>\n\t\t\t\t<div class=\"graph\">\n\t\t\t\t\t<div class=\"label\">").concat(_this.translate('quadrant.stock.title'), "</div>\n\t\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"header3\">").concat(_this.translate('quadrant.stock.table'), "</div>\n\t\t\t<div class=\"stats\">\n\t\t\t\t<div class=\"header\">\n\t\t\t\t\t<div class=\"species\">").concat(_this.translate('quadrant.stock.species'), "</div>\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<div class=\"stock\">").concat(_this.translate('quadrant.stock.label'), "<sup>3</sup></div>\n\t\t\t\t\t\t<div class=\"details\">\n\t\t\t\t\t\t\t<div class=\"permitted\">").concat(_this.translate('quadrant.stock.permitted'), "</div>\n\t\t\t\t\t\t\t<div class=\"probable\">").concat(_this.translate('quadrant.stock.probable'), "</div>\n\t\t\t\t\t\t\t<div class=\"total\">").concat(_this.translate('quadrant.stock.total'), "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"body\">\n\t\t\t\t</div>\n\n\t\t\t</div>\t\t\t\n\t\t\t<div class=\"footer\">\n\t\t\t</div>\n\t\t</div>");
+      _this._container.innerHTML = "<h1 class=\"header1\"><span>".concat(_this.translate('quadrant.title'), " \u2116 <span class=\"number\"></span></span> <span><button class=\"add-quadrant\">").concat(_this.translate('quadrant.add_quadrant'), "</button>\n\t\t\t<span class=\"downloads\">\n\t\t\t\t<span class=\"download-description\" title=\"").concat(_this.translate('quadrant.description'), "\">\n\t\t\t\t\t<i class=\"scanex-quadrant-icon lp\"></i>\n\t\t\t\t</span>\n\t\t\t\t<span class=\"download-plan\" title=\"").concat(_this.translate('quadrant.plan'), "\">\n\t\t\t\t\t<i class=\"scanex-quadrant-icon to\"></i>\n\t\t\t\t</span>\n\t\t\t</span>\n\t\t\t</span>\n\t\t</h1>\n\t\t<h2 class=\"header2\"></h2>\n\t\t<div class=\"scrollable\">\t\t\t\n\t\t\t<div class=\"table_graph\">\n\t\t\t\t<table class=\"info\">\n\t\t\t\t\t<tr class=\"area\">\n\t\t\t\t\t\t<td class=\"label\">").concat(_this.translate('quadrant.area'), "</td>\n\t\t\t\t\t\t<td class=\"value\"></td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr class=\"usage\">\n\t\t\t\t\t\t<td class=\"label\">").concat(_this.translate('quadrant.usage'), "</td>\n\t\t\t\t\t\t<td class=\"value\"></td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr class=\"CarbonStock\">\n\t\t\t\t\t\t<td class=\"label\">").concat(_this.translate('quadrant.CarbonStock'), "</td>\n\t\t\t\t\t\t<td class=\"value\"></td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr class=\"TaxYear\">\n\t\t\t\t\t\t<td class=\"label\">").concat(_this.translate('quadrant.TaxYear'), "</td>\n\t\t\t\t\t\t<td class=\"value\"></td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr class=\"TaxRate\">\n\t\t\t\t\t\t<td class=\"label\">").concat(_this.translate('quadrant.TaxRate'), "</td>\n\t\t\t\t\t\t<td class=\"value\"></td>\n\t\t\t\t\t</tr>\n\t\t\t\t</table>\n\t\t\t\t<div class=\"graph\">\n\t\t\t\t\t<div class=\"label\">").concat(_this.translate('quadrant.stock.title'), "</div>\n\t\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\t\t\t\n\t\t\t<table class=\"stats\" cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t\t<thead>\n\t\t\t\t\t<tr class=\"header\">\n\t\t\t\t\t\t<th rowspan=\"2\" class=\"species\">").concat(_this.translate('quadrant.stock.species'), "</th>\n\t\t\t\t\t\t<th class=\"stock\" colspan=\"3\">").concat(_this.translate('quadrant.stock.label'), "<sup>3</sup></th>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr class=\"details\">\n\t\t\t\t\t\t<th class=\"permitted\">").concat(_this.translate('quadrant.stock.permitted'), "</th>\n\t\t\t\t\t\t<th class=\"probable\">").concat(_this.translate('quadrant.stock.probable'), "</th>\n\t\t\t\t\t\t<th class=\"total\">").concat(_this.translate('quadrant.stock.total'), "</th>\n\t\t\t\t\t</tr>\n\t\t\t\t</thead>\n\t\t\t\t<tbody class=\"body\"><tbody>\n\t\t\t</table>\n\t\t\t<div class=\"footer\"></div>\n\t\t</div>");
       _this._header2 = _this._container.querySelector('.header2');
+      _this._info = _this._container.querySelector('.info');
+      _this._area = _this._info.querySelector('.area .value');
+      _this._usage = _this._info.querySelector('.usage .value');
+      _this._carbonStock = _this._info.querySelector('.CarbonStock .value');
+      _this._taxYear = _this._info.querySelector('.TaxYear .value');
+      _this._taxRate = _this._info.querySelector('.TaxRate .value');
       _this._body = _this._container.querySelector('.body');
 
       _this._container.querySelector('.download-description').addEventListener('click', function (e) {
@@ -72623,7 +72704,6 @@ var Forestry = (function () {
 
       _this._downloads = _this._container.querySelector('.downloads');
       _this._num = _this._container.querySelector('.header1 .number');
-      _this._info = _this._container.querySelector('.info');
       _this._chart = _this._container.querySelector('.chart');
       return _this;
     }
@@ -72648,10 +72728,28 @@ var Forestry = (function () {
             TaxYear = data.TaxYear,
             TaxRate = data.TaxRate;
         this._gmx_id = gmx_id;
-        var radio = this.translate('quadrant.usage_arr').map(function (it) {
-          return "\n\t\t\t\t<input type=\"checkbox\" disabled id=\"".concat(it, "\" name=\"").concat(it, "\" ").concat(SpecialPurpose.indexOf(it) > -1 ? 'checked' : '', ">\n\t\t\t\t<label for=\"").concat(it, "\">").concat(it, "</label><br>\n\t\t\t");
-        }).join('\n');
-        this._info.innerHTML = "\n\t\t\t<div class=\"area\">\n\t\t\t\t<label class=\"label\">".concat(this.translate('quadrant.area'), "</label>\n\t\t\t\t<label class=\"value\">").concat(Area && this.ha(Area) || '-', "</label>\n\t\t\t</div>\n\t\t\t<div class=\"usage\">\n\t\t\t\t<label class=\"label\">").concat(this.translate('quadrant.usage'), "</label>\n\t\t\t\t<label class=\"value\">").concat(radio, "</label>\n\t\t\t</div>\n\t\t\t<div class=\"CarbonStock\">\n\t\t\t\t<label class=\"label\">").concat(this.translate('quadrant.CarbonStock'), "</label>\n\t\t\t\t<label class=\"value\">").concat(CarbonStock ? m(CarbonStock) : '-', "</label>\n\t\t\t</div>\n\t\t\t<div class=\"TaxYear\">\n\t\t\t\t<label class=\"label\">").concat(this.translate('quadrant.TaxYear'), "</label>\n\t\t\t\t<label class=\"value\">").concat(TaxYear || '-', "</label>\n\t\t\t</div>\n\t\t\t<div class=\"TaxRate\">\n\t\t\t\t<label class=\"label\">").concat(this.translate('quadrant.TaxRate'), "</label>\n\t\t\t\t<label class=\"value\">").concat(TaxRate || '-', "</label>\n\t\t\t</div>");
+        this._area.innerText = Area && this.ha(Area) || '-';
+        this._usage.innerHTML = '';
+        this.translate('quadrant.usage_arr').forEach(function (k) {
+          var div = document.createElement('div');
+
+          _this2._usage.appendChild(div);
+
+          var checkbox = new Checkbox(div, k);
+          checkbox.disabled = true;
+          checkbox.checked = SpecialPurpose.indexOf(k) >= 0;
+          var label = document.createElement('label');
+
+          if (checkbox.checked) {
+            label.classList.add('selected');
+          }
+
+          label.innerText = k;
+          div.appendChild(label);
+        });
+        this._carbonStock.innerText = CarbonStock ? m(CarbonStock) : '-';
+        this._taxYear.innerText = TaxYear || '-';
+        this._taxRate.innerText = TaxRate || '-';
         this._num.innerText = Num || '';
         this._chart.innerText = '';
         this._header2.innerHTML = "".concat(this.translate('quadrant.forestry'), ": <span class=\"green\">").concat(Forestry, "</span> ").concat(this.translate('quadrant.forestry_local'), ": <span class=\"green\">").concat(LocalForestry, "</span> ").concat(this.translate('quadrant.stow'), ": <span class=\"green\">").concat(Stow || '-', "</span> ").concat(this.translate('quadrant.title'), ": <span class=\"green\">").concat(Num, "</span>");
@@ -72732,8 +72830,8 @@ var Forestry = (function () {
                 species = _ref2.species,
                 total_stock = _ref2.total_stock,
                 total_stock_deal = _ref2.total_stock_deal;
-            return "<div class=\"row\">\n\t\t\t\t\t<div class=\"label\">".concat(species, "</div>\n\t\t\t\t\t<div class=\"value\">").concat(_this2.m(permitted_stock), " / ").concat(_this2.m(permitted_stock_deal), "</div>\n\t\t\t\t\t<div class=\"value\">").concat(_this2.m(probable_stock), " / ").concat(_this2.m(probable_stock_deal), "</div>\n\t\t\t\t\t<div class=\"value\">").concat(_this2.m(total_stock), " / ").concat(_this2.m(total_stock_deal), "</div>\n\t\t\t\t</div>");
-          }).join(''), "\n\t\t\t<div class=\"row total\">\n\t\t\t\t<div class=\"label\">").concat(this.translate('quadrant.total').toUpperCase(), "</div>\n\t\t\t\t<div class=\"value\">").concat(this.m(total.permitted_stock), " / ").concat(this.m(total.permitted_stock_deal), "</div>\n\t\t\t\t<div class=\"value\">").concat(this.m(total.probable_stock), " / ").concat(this.m(total.probable_stock_deal), "</div>\n\t\t\t\t<div class=\"value\">").concat(this.m(total.total_stock), " / ").concat(this.m(total.total_stock_deal), "</div>\n\t\t\t</div>");
+            return "<tr class=\"row\">\n\t\t\t\t\t<td class=\"label\">".concat(species, "</td>\n\t\t\t\t\t<td class=\"value\">").concat(_this2.m(permitted_stock), " / ").concat(_this2.m(permitted_stock_deal), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(_this2.m(probable_stock), " / ").concat(_this2.m(probable_stock_deal), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(_this2.m(total_stock), " / ").concat(_this2.m(total_stock_deal), "</td>\n\t\t\t\t</tr>");
+          }).join(''), "\n\t\t\t<tr class=\"row total\">\n\t\t\t\t<td class=\"label\">").concat(this.translate('quadrant.total').toUpperCase(), "</td>\n\t\t\t\t<td class=\"value\">").concat(this.m(total.permitted_stock), " / ").concat(this.m(total.permitted_stock_deal), "</td>\n\t\t\t\t<td class=\"value\">").concat(this.m(total.probable_stock), " / ").concat(this.m(total.probable_stock_deal), "</td>\n\t\t\t\t<td class=\"value\">").concat(this.m(total.total_stock), " / ").concat(this.m(total.total_stock_deal), "</td>\n\t\t\t</tr>");
 
           var fmt = function fmt(n, s, d) {
             return [n, s ? "- ".concat(m(s)) : '', d ? "/ ".concat(m(d)) : ''];
