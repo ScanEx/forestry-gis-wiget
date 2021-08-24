@@ -70846,7 +70846,8 @@ var Forestry = (function () {
               stow = _ref2.stow,
               num = _ref2.num,
               taxation_year = _ref2.taxation_year;
-          return "<tr class=\"quadrant\">\n                        <td class=\"text\">".concat(local_forestry).concat(stow ? " / ".concat(stow) : '', "</td>                        \n                        <td class=\"value\">").concat(num, "</td>\n                        <td class=\"value\">").concat(taxation_year, "</td>\n                        <td>\n                            <i class=\"scanex-project-icon remove\"></i>\n                        </td>\n                    </tr>");
+          var t = "".concat(local_forestry).concat(stow ? " / ".concat(stow) : '');
+          return "<tr class=\"quadrant\">\n                        <td class=\"text\"><div title=\"".concat(t, "\">").concat(t, "</div></td>\n                        <td class=\"value\">").concat(num, "</td>\n                        <td class=\"value\">").concat(taxation_year, "</td>\n                        <td>\n                            <i class=\"scanex-project-icon remove\"></i>\n                        </td>\n                    </tr>");
         }).join(''), "\n            </table>\n        </div>") : '';
 
         var rows = this._container.querySelectorAll('tbody > tr');
