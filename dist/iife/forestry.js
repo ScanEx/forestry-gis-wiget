@@ -37836,7 +37836,8 @@ var Forestry = (function () {
         ha: 'га',
         m3: 'куб. м',
         m2: 'кв. м',
-        t: 'т'
+        t: 'т',
+        co: 'CO'
       },
       legend: {
         borders: 'Административные границы',
@@ -70850,7 +70851,7 @@ var Forestry = (function () {
           return "<tr class=\"quadrant\">\n                        <td class=\"text\"><div title=\"".concat(t, "\">").concat(t, "</div></td>\n                        <td class=\"value\">").concat(num, "</td>\n                        <td class=\"value\">").concat(taxation_year, "</td>\n                        <td>\n                            <i class=\"scanex-project-icon remove\"></i>\n                        </td>\n                    </tr>");
         }).join(''), "\n            </table>\n        </div>") : '';
 
-        var rows = this._container.querySelectorAll('tbody > tr');
+        var rows = this._container.querySelectorAll('.quadrant');
 
         var _loop = function _loop(i) {
           var row = rows[i];
@@ -72552,6 +72553,7 @@ var Forestry = (function () {
         invalid: 'Недопустимый состав участка',
         add_quadrant: 'Выбор участка',
         CarbonStock: 'Запас углерода, тонн С',
+        CarbonDioxideAvailable: 'Доступная квота',
         TaxYear: 'Год лесоустройства',
         TaxRate: 'Разряд такс'
       },
@@ -72642,12 +72644,13 @@ var Forestry = (function () {
 
       _this._container.classList.add('scanex-forestry-quadrant');
 
-      _this._container.innerHTML = "<h1 class=\"header1\"><span>".concat(_this.translate('quadrant.title'), " \u2116 <span class=\"number\"></span></span> <span><button class=\"add-quadrant\">").concat(_this.translate('quadrant.add_quadrant'), "</button>\n\t\t\t<span class=\"downloads\">\n\t\t\t\t<span class=\"download-description\" title=\"").concat(_this.translate('quadrant.description'), "\">\n\t\t\t\t\t<i class=\"scanex-quadrant-icon lp\"></i>\n\t\t\t\t</span>\n\t\t\t\t<span class=\"download-plan\" title=\"").concat(_this.translate('quadrant.plan'), "\">\n\t\t\t\t\t<i class=\"scanex-quadrant-icon to\"></i>\n\t\t\t\t</span>\n\t\t\t</span>\n\t\t\t</span>\n\t\t</h1>\n\t\t<h2 class=\"header2\"></h2>\n\t\t<div class=\"scrollable\">\t\t\t\n\t\t\t<div class=\"table_graph\">\n\t\t\t\t<table class=\"info\">\n\t\t\t\t\t<tr class=\"area\">\n\t\t\t\t\t\t<td class=\"label\">").concat(_this.translate('quadrant.area'), "</td>\n\t\t\t\t\t\t<td class=\"value\"></td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr class=\"usage\">\n\t\t\t\t\t\t<td class=\"label\">").concat(_this.translate('quadrant.usage'), "</td>\n\t\t\t\t\t\t<td class=\"value\"></td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr class=\"CarbonStock\">\n\t\t\t\t\t\t<td class=\"label\">").concat(_this.translate('quadrant.CarbonStock'), "</td>\n\t\t\t\t\t\t<td class=\"value\"></td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr class=\"TaxYear\">\n\t\t\t\t\t\t<td class=\"label\">").concat(_this.translate('quadrant.TaxYear'), "</td>\n\t\t\t\t\t\t<td class=\"value\"></td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr class=\"TaxRate\">\n\t\t\t\t\t\t<td class=\"label\">").concat(_this.translate('quadrant.TaxRate'), "</td>\n\t\t\t\t\t\t<td class=\"value\"></td>\n\t\t\t\t\t</tr>\n\t\t\t\t</table>\n\t\t\t\t<div class=\"graph\">\n\t\t\t\t\t<div class=\"label\">").concat(_this.translate('quadrant.stock.title'), "</div>\n\t\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\t\t\t\n\t\t\t<table class=\"stats\" cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t\t<thead>\n\t\t\t\t\t<tr class=\"header\">\n\t\t\t\t\t\t<th rowspan=\"2\" class=\"species\">").concat(_this.translate('quadrant.stock.species'), "</th>\n\t\t\t\t\t\t<th class=\"stock\" colspan=\"3\">").concat(_this.translate('quadrant.stock.label'), "<sup>3</sup></th>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr class=\"details\">\n\t\t\t\t\t\t<th class=\"permitted\">").concat(_this.translate('quadrant.stock.permitted'), "</th>\n\t\t\t\t\t\t<th class=\"probable\">").concat(_this.translate('quadrant.stock.probable'), "</th>\n\t\t\t\t\t\t<th class=\"total\">").concat(_this.translate('quadrant.stock.total'), "</th>\n\t\t\t\t\t</tr>\n\t\t\t\t</thead>\n\t\t\t\t<tbody class=\"body\"><tbody>\n\t\t\t</table>\n\t\t\t<div class=\"footer\"></div>\n\t\t</div>");
+      _this._container.innerHTML = "<h1 class=\"header1\"><span>".concat(_this.translate('quadrant.title'), " \u2116 <span class=\"number\"></span></span> <span><button class=\"add-quadrant\">").concat(_this.translate('quadrant.add_quadrant'), "</button>\n\t\t\t<span class=\"downloads\">\n\t\t\t\t<span class=\"download-description\" title=\"").concat(_this.translate('quadrant.description'), "\">\n\t\t\t\t\t<i class=\"scanex-quadrant-icon lp\"></i>\n\t\t\t\t</span>\n\t\t\t\t<span class=\"download-plan\" title=\"").concat(_this.translate('quadrant.plan'), "\">\n\t\t\t\t\t<i class=\"scanex-quadrant-icon to\"></i>\n\t\t\t\t</span>\n\t\t\t</span>\n\t\t\t</span>\n\t\t</h1>\n\t\t<h2 class=\"header2\"></h2>\n\t\t<div class=\"scrollable\">\t\t\t\n\t\t\t<div class=\"table_graph\">\n\t\t\t\t<table class=\"info\">\n\t\t\t\t\t<tr class=\"area\">\n\t\t\t\t\t\t<td class=\"label\">").concat(_this.translate('quadrant.area'), "</td>\n\t\t\t\t\t\t<td class=\"value\"></td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr class=\"usage\">\n\t\t\t\t\t\t<td class=\"label\">").concat(_this.translate('quadrant.usage'), "</td>\n\t\t\t\t\t\t<td class=\"value\"></td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr class=\"CarbonStock\">\n\t\t\t\t\t\t<td class=\"label\">").concat(_this.translate('quadrant.CarbonStock'), "</td>\n\t\t\t\t\t\t<td class=\"value\"></td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr class=\"CarbonDioxideAvailable\">\n\t\t\t\t\t\t<td class=\"label\">").concat(_this.translate('quadrant.CarbonDioxideAvailable'), " ").concat(_this.translate('units.co'), "<sub>2</sub></td>\n\t\t\t\t\t\t<td class=\"value\"></td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr class=\"TaxYear\">\n\t\t\t\t\t\t<td class=\"label\">").concat(_this.translate('quadrant.TaxYear'), "</td>\n\t\t\t\t\t\t<td class=\"value\"></td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr class=\"TaxRate\">\n\t\t\t\t\t\t<td class=\"label\">").concat(_this.translate('quadrant.TaxRate'), "</td>\n\t\t\t\t\t\t<td class=\"value\"></td>\n\t\t\t\t\t</tr>\n\t\t\t\t</table>\n\t\t\t\t<div class=\"graph\">\n\t\t\t\t\t<div class=\"label\">").concat(_this.translate('quadrant.stock.title'), "</div>\n\t\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\t\t\t\n\t\t\t<table class=\"stats\" cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t\t<thead>\n\t\t\t\t\t<tr class=\"header\">\n\t\t\t\t\t\t<th rowspan=\"2\" class=\"species\">").concat(_this.translate('quadrant.stock.species'), "</th>\n\t\t\t\t\t\t<th class=\"stock\" colspan=\"3\">").concat(_this.translate('quadrant.stock.label'), "<sup>3</sup></th>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr class=\"details\">\n\t\t\t\t\t\t<th class=\"permitted\">").concat(_this.translate('quadrant.stock.permitted'), "</th>\n\t\t\t\t\t\t<th class=\"probable\">").concat(_this.translate('quadrant.stock.probable'), "</th>\n\t\t\t\t\t\t<th class=\"total\">").concat(_this.translate('quadrant.stock.total'), "</th>\n\t\t\t\t\t</tr>\n\t\t\t\t</thead>\n\t\t\t\t<tbody class=\"body\"><tbody>\n\t\t\t</table>\n\t\t\t<div class=\"footer\"></div>\n\t\t</div>");
       _this._header2 = _this._container.querySelector('.header2');
       _this._info = _this._container.querySelector('.info');
       _this._area = _this._info.querySelector('.area .value');
       _this._usage = _this._info.querySelector('.usage .value');
       _this._carbonStock = _this._info.querySelector('.CarbonStock .value');
+      _this._carbonDioxideAvailable = _this._info.querySelector('.CarbonDioxideAvailable .value');
       _this._taxYear = _this._info.querySelector('.TaxYear .value');
       _this._taxRate = _this._info.querySelector('.TaxRate .value');
       _this._body = _this._container.querySelector('.body');
@@ -72726,6 +72729,7 @@ var Forestry = (function () {
             Stow = data.Stow,
             Documents = data.Documents,
             CarbonStock = data.CarbonStock,
+            CarbonDioxideAvailable = data.CarbonDioxideAvailable,
             TaxYear = data.TaxYear,
             TaxRate = data.TaxRate;
         this._gmx_id = gmx_id;
@@ -72749,6 +72753,7 @@ var Forestry = (function () {
           div.appendChild(label);
         });
         this._carbonStock.innerText = CarbonStock ? m(CarbonStock) : '-';
+        this._carbonDioxideAvailable.innerText = CarbonDioxideAvailable ? m(CarbonDioxideAvailable) : '-';
         this._taxYear.innerText = TaxYear || '-';
         this._taxRate.innerText = TaxRate || '-';
         this._num.innerText = Num || '';
@@ -77617,16 +77622,27 @@ var Forestry = (function () {
                             switch (_context5.prev = _context5.next) {
                               case 0:
                                 _e$detail = e.detail, gmx_id = _e$detail.gmx_id, forestryID = _e$detail.forestryID;
-                                _context5.next = 3;
+
+                                _this3._legend.enable('projects');
+
+                                _this3._legend.enable('plots');
+
+                                _this3._legend.enable('parks');
+
+                                _this3._legend.enable('quadrants-protected');
+
+                                _this3._legend.enable('quadrants-reserved');
+
+                                _context5.next = 8;
                                 return _this3._controllers.projects.toggleQuadrant({
                                   gmx_id: gmx_id,
                                   forestryID: forestryID
                                 });
 
-                              case 3:
+                              case 8:
                                 _this3._layers.quadrants.repaint();
 
-                              case 4:
+                              case 9:
                               case "end":
                                 return _context5.stop();
                             }
