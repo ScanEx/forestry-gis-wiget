@@ -72138,7 +72138,7 @@ var Forestry = (function () {
       value: function enableQuadrantsEditor() {
         var _this2 = this;
 
-        this._quadrantsActive = this._legend.state('quadrants');
+        this._editorActive = this._legend.state('quadrants');
 
         this._legend.disable('quadrants');
 
@@ -72152,7 +72152,12 @@ var Forestry = (function () {
       value: function disableQuadrantsEditor() {
         var _this3 = this;
 
-        this._quadrantsActive && this._legend.enable('quadrants');
+        if (this._editorActive) {
+          this._editorActive = false;
+
+          this._legend.enable('quadrants');
+        }
+
         EDITOR_LAYERS.forEach(function (k) {
           var layer = _this3._layers[k];
           layer && _this3._map.removeLayer(layer);
