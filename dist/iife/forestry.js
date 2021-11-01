@@ -37831,7 +37831,8 @@ var Forestry = (function () {
         ha: 'га',
         m3: 'куб. м',
         m2: 'кв. м',
-        t: 'т'
+        t: 'т',
+        co: 'CO'
       },
       legend: {
         borders: 'Административные границы',
@@ -38276,6 +38277,150 @@ var Forestry = (function () {
     return LayerController;
   }(Controller);
 
+  var Component = /*#__PURE__*/function (_Evented) {
+    _inherits(Component, _Evented);
+
+    var _super = _createSuper(Component);
+
+    function Component(container, options) {
+      var _this;
+
+      _classCallCheck$1(this, Component);
+
+      _this = _super.call(this);
+      _this._container = container;
+
+      _this.render(options);
+
+      _this.element.classList.add('scanex-component');
+
+      return _this;
+    }
+
+    _createClass$1(Component, [{
+      key: "destroy",
+      value: function destroy() {
+        this.element.classList.remove('scanex-component');
+      } // Должен устанавливать корневой элемент
+
+    }, {
+      key: "render",
+      value: function render(options) {
+        this._element = this._container;
+      }
+    }, {
+      key: "element",
+      get: function get() {
+        return this._element;
+      }
+    }, {
+      key: "forwardEvent",
+      value: function forwardEvent(e) {
+        e.stopPropagation();
+        var event = document.createEvent('Event');
+        event.initEvent(e.type, false, false);
+        event.detail = e.detail;
+        this.dispatchEvent(event);
+      }
+    }, {
+      key: "disabled",
+      get: function get() {
+        return this.element.classList.contains('disabled');
+      },
+      set: function set(disabled) {
+        if (disabled) {
+          this.element.classList.add('disabled');
+        } else {
+          this.element.classList.remove('disabled');
+        }
+      }
+    }]);
+
+    return Component;
+  }(Evented);
+
+  var Checkbox = /*#__PURE__*/function (_Component) {
+    _inherits(Checkbox, _Component);
+
+    var _super = _createSuper(Checkbox);
+
+    function Checkbox() {
+      _classCallCheck$1(this, Checkbox);
+
+      return _super.apply(this, arguments);
+    }
+
+    _createClass$1(Checkbox, [{
+      key: "render",
+      value: function render(id) {
+        _get(_getPrototypeOf(Checkbox.prototype), "render", this).call(this);
+
+        this._checked = false;
+        this._disabled = false;
+        this.element.classList.add('scanex-component-checkbox');
+        this.element.classList.add('scanex-component-icon');
+        this._click = this._click.bind(this);
+        this.element.addEventListener('click', this._click);
+
+        if (id) {
+          this._id = id;
+          this.element.setAttribute('id', this._id);
+        }
+      }
+    }, {
+      key: "destroy",
+      value: function destroy() {
+        _get(_getPrototypeOf(Checkbox.prototype), "destroy", this).call(this);
+
+        this.element.classList.remove('scanex-component-checkbox');
+        this.element.classList.remove('scanex-component-icon');
+        this.element.removeEventListener('click', this._click);
+
+        if (this._id) {
+          this.element.removeAttribute('id');
+        }
+
+        if (this._checked) {
+          this.element.classList.remove('check');
+        }
+      }
+    }, {
+      key: "checked",
+      get: function get() {
+        return this._checked;
+      },
+      set: function set(checked) {
+        this._checked = checked;
+
+        if (this._checked) {
+          this.element.classList.add('check');
+        } else {
+          this.element.classList.remove('check');
+        }
+
+        var event = document.createEvent('Event');
+        event.initEvent('click', false, false);
+        this.dispatchEvent(event);
+      }
+    }, {
+      key: "id",
+      get: function get() {
+        return this._id;
+      }
+    }, {
+      key: "_click",
+      value: function _click(e) {
+        e.stopPropagation();
+
+        if (!this.disabled) {
+          this.checked = !this.checked;
+        }
+      }
+    }]);
+
+    return Checkbox;
+  }(Component);
+
   var notify$3 = {
   	info: {
   		ok: "Request Completed"
@@ -38317,67 +38462,6 @@ var Forestry = (function () {
   add('ru', ru$3);
   add('en', en$3);
 
-  var Component = /*#__PURE__*/function (_Evented) {
-    _inherits(Component, _Evented);
-
-    var _super = _createSuper(Component);
-
-    function Component(container, options) {
-      var _this;
-
-      _classCallCheck$1(this, Component);
-
-      _this = _super.call(this);
-      _this._element = document.createElement('div');
-
-      _this._element.classList.add('scanex-component');
-
-      container.appendChild(_this._element);
-
-      _this.render(_this._element, options);
-
-      return _this;
-    }
-
-    _createClass$1(Component, [{
-      key: "destroy",
-      value: function destroy() {
-        this._element.remove();
-      }
-    }, {
-      key: "forwardEvent",
-      value: function forwardEvent(e) {
-        e.stopPropagation();
-        var event = document.createEvent('Event');
-        event.initEvent(e.type, false, false);
-        event.detail = e.detail;
-        this.dispatchEvent(event);
-      }
-    }, {
-      key: "element",
-      get: function get() {
-        return this._element;
-      }
-    }, {
-      key: "disabled",
-      get: function get() {
-        return this.element.classList.contains('disabled');
-      },
-      set: function set(disabled) {
-        if (disabled) {
-          this.element.classList.add('disabled');
-        } else {
-          this.element.classList.remove('disabled');
-        }
-      }
-    }, {
-      key: "render",
-      value: function render(element, options) {}
-    }]);
-
-    return Component;
-  }(Evented);
-
   var scanex$1 = {
   	components: {
   		dialog: {
@@ -38413,46 +38497,144 @@ var Forestry = (function () {
 
     var _super = _createSuper(Dialog);
 
-    function Dialog(_ref) {
-      var _this;
-
-      var title = _ref.title,
-          id = _ref.id,
-          _ref$collapsible = _ref.collapsible,
-          collapsible = _ref$collapsible === void 0 ? false : _ref$collapsible,
-          _ref$modal = _ref.modal,
-          modal = _ref$modal === void 0 ? false : _ref$modal,
-          top = _ref.top,
-          left = _ref.left;
-
+    function Dialog(options) {
       _classCallCheck$1(this, Dialog);
 
-      _this = _super.call(this, document.body, {
-        id: id,
-        collapsible: collapsible,
-        modal: modal,
-        top: top,
-        left: left
-      });
-      _this._titleElement.innerText = title;
-      _this._moving = false;
-
-      if (!modal) {
-        if (_this._id) {
-          _this.element.setAttribute('id', _this._id);
-        }
-
-        _this._header.addEventListener('mousedown', _this._start.bind(_assertThisInitialized(_this)));
-
-        _this.element.addEventListener('mousemove', _this._move.bind(_assertThisInitialized(_this)));
-
-        window.addEventListener('mouseup', _this._stop.bind(_assertThisInitialized(_this)));
-      }
-
-      return _this;
+      return _super.call(this, document.body, options);
     }
 
     _createClass$1(Dialog, [{
+      key: "destroy",
+      value: function destroy() {
+        if (this._overlay) {
+          this._overlay.remove();
+        }
+
+        this.element.remove();
+      }
+    }, {
+      key: "render",
+      value: function render(_ref) {
+        var title = _ref.title,
+            id = _ref.id,
+            _ref$collapsible = _ref.collapsible,
+            collapsible = _ref$collapsible === void 0 ? false : _ref$collapsible,
+            _ref$modal = _ref.modal,
+            modal = _ref$modal === void 0 ? false : _ref$modal,
+            top = _ref.top,
+            left = _ref.left;
+        this._element = document.createElement('div');
+
+        this._container.appendChild(this._element);
+
+        if (modal) {
+          this._overlay = document.createElement('div');
+
+          this._overlay.classList.add('scanex-dialog-overlay');
+
+          this._overlay.addEventListener('click', function (e) {
+            return e.stopPropagation();
+          });
+
+          document.body.appendChild(this._overlay);
+        } else {
+          this._id = id;
+        }
+
+        this.element.classList.add('scanex-component-dialog');
+        this._header = document.createElement('div');
+
+        this._header.classList.add('header');
+
+        this._titleElement = document.createElement('label');
+
+        this._header.appendChild(this._titleElement);
+
+        var buttons = document.createElement('div');
+        buttons.classList.add('header-buttons');
+
+        if (collapsible && !modal) {
+          this._btnToggle = document.createElement('i');
+
+          this._btnToggle.setAttribute('title', translate$r('scanex.components.dialog.minimize'));
+
+          this._btnToggle.classList.add('scanex-component-icon');
+
+          this._btnToggle.classList.add('minimize');
+
+          this._btnToggle.addEventListener('click', this._toggle.bind(this));
+
+          buttons.appendChild(this._btnToggle);
+        }
+
+        var btnClose = document.createElement('i');
+        btnClose.setAttribute('title', translate$r('scanex.components.dialog.close'));
+        btnClose.classList.add('scanex-component-icon');
+        btnClose.classList.add('close');
+        btnClose.addEventListener('click', this.close.bind(this));
+        buttons.appendChild(btnClose);
+
+        this._header.appendChild(buttons);
+
+        this.element.appendChild(this._header);
+        this._content = document.createElement('div');
+
+        this._content.classList.add('content');
+
+        this.element.appendChild(this._content);
+        this._footer = document.createElement('div');
+
+        this._footer.classList.add('footer');
+
+        this.element.appendChild(this._footer);
+
+        this._restorePosition(this.element, top, left);
+
+        this._titleElement.innerText = title;
+        this._moving = false;
+
+        if (!modal) {
+          if (this._id) {
+            this._element.setAttribute('id', this._id);
+          }
+
+          this._header.addEventListener('mousedown', this._start.bind(this));
+
+          this.element.addEventListener('mousemove', this._move.bind(this));
+          window.addEventListener('mouseup', this._stop.bind(this));
+        }
+      }
+    }, {
+      key: "_restorePosition",
+      value: function _restorePosition(el, top, left) {
+        if (typeof this._id === 'string' && this._id != '') {
+          var pos = window.localStorage.getItem("".concat(this._id, ".position"));
+
+          var _ref2 = pos && pos.split(',') || [0, 0],
+              _ref3 = _slicedToArray(_ref2, 2),
+              x = _ref3[0],
+              y = _ref3[1];
+
+          el.style.top = "".concat(y || top || Math.round(window.innerHeight / 2), "px");
+          el.style.left = "".concat(x || left || Math.round(window.innerWidth / 2), "px");
+        } else {
+          var r = el.getBoundingClientRect();
+          el.style.top = "".concat(top || Math.round(window.innerHeight / 2 - r.height), "px");
+          el.style.left = "".concat(left || Math.round(window.innerWidth / 2 - r.width), "px");
+        }
+      }
+    }, {
+      key: "_savePosition",
+      value: function _savePosition(el) {
+        if (typeof this._id === 'string' && this._id != '') {
+          var _el$getBoundingClient = el.getBoundingClientRect(),
+              top = _el$getBoundingClient.top,
+              left = _el$getBoundingClient.left;
+
+          window.localStorage.setItem("".concat(this._id, ".position"), [left, top].join(','));
+        }
+      }
+    }, {
       key: "header",
       get: function get() {
         return this._header;
@@ -38474,9 +38656,9 @@ var Forestry = (function () {
         var clientX = e.clientX,
             clientY = e.clientY;
 
-        var _this$element$getBoun = this.element.getBoundingClientRect(),
-            top = _this$element$getBoun.top,
-            left = _this$element$getBoun.left;
+        var _this$_element$getBou = this._element.getBoundingClientRect(),
+            top = _this$_element$getBou.top,
+            left = _this$_element$getBou.left;
 
         this._offsetX = clientX - left;
         this._offsetY = clientY - top;
@@ -38546,117 +38728,6 @@ var Forestry = (function () {
         var event = document.createEvent('Event');
         event.initEvent('close', false, false);
         this.dispatchEvent(event);
-      }
-    }, {
-      key: "destroy",
-      value: function destroy() {
-        if (this._overlay) {
-          this._overlay.remove();
-        }
-
-        _get(_getPrototypeOf(Dialog.prototype), "destroy", this).call(this);
-      }
-    }, {
-      key: "render",
-      value: function render(element, _ref2) {
-        var id = _ref2.id,
-            collapsible = _ref2.collapsible,
-            modal = _ref2.modal,
-            top = _ref2.top,
-            left = _ref2.left;
-
-        if (modal) {
-          this._overlay = document.createElement('div');
-
-          this._overlay.classList.add('scanex-dialog-overlay');
-
-          this._overlay.addEventListener('click', function (e) {
-            return e.stopPropagation();
-          });
-
-          document.body.appendChild(this._overlay);
-        } else {
-          this._id = id;
-        }
-
-        element.classList.add('scanex-component-dialog');
-        this._header = document.createElement('div');
-
-        this._header.classList.add('header');
-
-        this._titleElement = document.createElement('label');
-
-        this._header.appendChild(this._titleElement);
-
-        var buttons = document.createElement('div');
-        buttons.classList.add('header-buttons');
-
-        if (collapsible && !modal) {
-          this._btnToggle = document.createElement('i');
-
-          this._btnToggle.setAttribute('title', translate$r('scanex.components.dialog.minimize'));
-
-          this._btnToggle.classList.add('scanex-component-icon');
-
-          this._btnToggle.classList.add('minimize');
-
-          this._btnToggle.addEventListener('click', this._toggle.bind(this));
-
-          buttons.appendChild(this._btnToggle);
-        }
-
-        var btnClose = document.createElement('i');
-        btnClose.setAttribute('title', translate$r('scanex.components.dialog.close'));
-        btnClose.classList.add('scanex-component-icon');
-        btnClose.classList.add('close');
-        btnClose.addEventListener('click', this.close.bind(this));
-        buttons.appendChild(btnClose);
-
-        this._header.appendChild(buttons);
-
-        element.appendChild(this._header);
-        this._content = document.createElement('div');
-
-        this._content.classList.add('content');
-
-        element.appendChild(this._content);
-        this._footer = document.createElement('div');
-
-        this._footer.classList.add('footer');
-
-        element.appendChild(this._footer);
-
-        this._restorePosition(element, top, left);
-      }
-    }, {
-      key: "_restorePosition",
-      value: function _restorePosition(el, top, left) {
-        if (typeof this._id === 'string' && this._id != '') {
-          var pos = window.localStorage.getItem("".concat(this._id, ".position"));
-
-          var _ref3 = pos && pos.split(',') || [0, 0],
-              _ref4 = _slicedToArray(_ref3, 2),
-              x = _ref4[0],
-              y = _ref4[1];
-
-          el.style.top = "".concat(y || top || Math.round(window.innerHeight / 2), "px");
-          el.style.left = "".concat(x || left || Math.round(window.innerWidth / 2), "px");
-        } else {
-          var r = el.getBoundingClientRect();
-          el.style.top = "".concat(top || Math.round(window.innerHeight / 2 - r.height), "px");
-          el.style.left = "".concat(left || Math.round(window.innerWidth / 2 - r.width), "px");
-        }
-      }
-    }, {
-      key: "_savePosition",
-      value: function _savePosition(el) {
-        if (typeof this._id === 'string' && this._id != '') {
-          var _el$getBoundingClient = el.getBoundingClientRect(),
-              top = _el$getBoundingClient.top,
-              left = _el$getBoundingClient.left;
-
-          window.localStorage.setItem("".concat(this._id, ".position"), [left, top].join(','));
-        }
       }
     }]);
 
@@ -38862,35 +38933,39 @@ var Forestry = (function () {
 
     _createClass$1(Pager, [{
       key: "render",
-      value: function render(element) {
+      value: function render() {
         var _this = this;
 
-        element.classList.add('scanex-component-pager');
-        element.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <tr>\n                <td>\n                    <button class=\"first\">1</button>\n                </td>                \n                <td>\n                    <button class=\"previous\">".concat(translate$p('pager.previous'), "</button>\n                </td>\n                <td>\n                    <input type=\"text\" value=\"\" />\n                </td>\n                <td>\n                    <button class=\"next\">").concat(translate$p('pager.next'), "</button>\n                </td>                \n                <td>\n                    <button class=\"last\"></button>\n                </td>\n            </tr>\n        </table>");
-        element.querySelector('.first').addEventListener('click', function (e) {
+        this._element = document.createElement('div');
+
+        this._container.appendChild(this.element);
+
+        this.element.classList.add('scanex-component-pager');
+        this.element.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <tr>\n                <td>\n                    <button class=\"first\">1</button>\n                </td>                \n                <td>\n                    <button class=\"previous\">".concat(translate$p('pager.previous'), "</button>\n                </td>\n                <td>\n                    <input type=\"text\" value=\"\" />\n                </td>\n                <td>\n                    <button class=\"next\">").concat(translate$p('pager.next'), "</button>\n                </td>                \n                <td>\n                    <button class=\"last\"></button>\n                </td>\n            </tr>\n        </table>");
+        this.element.querySelector('.first').addEventListener('click', function (e) {
           e.stopPropagation();
           _this.page = 1;
         });
-        element.querySelector('.previous').addEventListener('click', function (e) {
+        this.element.querySelector('.previous').addEventListener('click', function (e) {
           e.stopPropagation();
           _this.page -= 1;
         });
-        element.querySelector('.next').addEventListener('click', function (e) {
+        this.element.querySelector('.next').addEventListener('click', function (e) {
           e.stopPropagation();
           _this.page += 1;
         });
-        element.querySelector('.last').addEventListener('click', function (e) {
+        this.element.querySelector('.last').addEventListener('click', function (e) {
           e.stopPropagation();
           _this.page = _this.pages;
         });
-        this._current = element.querySelector('input');
+        this._current = this.element.querySelector('input');
 
         this._current.addEventListener('change', function (e) {
           e.stopPropagation();
           _this.page = parseInt(_this._current.value, 10);
         });
 
-        this._last = element.querySelector('.last');
+        this._last = this.element.querySelector('.last');
       }
     }, {
       key: "page",
@@ -38929,26 +39004,40 @@ var Forestry = (function () {
 
     var _super = _createSuper(Spinner);
 
-    function Spinner(container) {
-      var _this;
-
+    function Spinner() {
       _classCallCheck$1(this, Spinner);
 
-      _this = _super.call(this, container);
-      _this._value = 0;
-      _this._min = 0;
-      _this._max = 0;
-
-      _this._up.addEventListener('click', _this.increment.bind(_assertThisInitialized(_this)));
-
-      _this._down.addEventListener('click', _this.decrement.bind(_assertThisInitialized(_this)));
-
-      _this._input.addEventListener('change', _this._change.bind(_assertThisInitialized(_this)));
-
-      return _this;
+      return _super.apply(this, arguments);
     }
 
     _createClass$1(Spinner, [{
+      key: "render",
+      value: function render() {
+        this._value = 0;
+        this._min = 0;
+        this._max = 0;
+        this._element = document.createElement('div');
+
+        this._container.appendChild(this.element);
+
+        this.element.classList.add('scanex-component-spinner');
+        this.element.innerHTML = "<input type=\"text\" value=\"0\"/>\n        <div class=\"buttons\">\n            <i class=\"scanex-component-icon spinner-up\"></i>            \n            <i class=\"scanex-component-icon spinner-down\"></i>\n        </div>";
+        this._input = this.element.querySelector('input');
+        this._up = this.element.querySelector('.spinner-up');
+        this._down = this.element.querySelector('.spinner-down');
+
+        this._up.addEventListener('click', this.increment.bind(this));
+
+        this._down.addEventListener('click', this.decrement.bind(this));
+
+        this._input.addEventListener('change', this._change.bind(this));
+      }
+    }, {
+      key: "destroy",
+      value: function destroy() {
+        this.element.remove();
+      }
+    }, {
       key: "_change",
       value: function _change(e) {
         e.stopPropagation();
@@ -38993,7 +39082,7 @@ var Forestry = (function () {
     }, {
       key: "_validate",
       value: function _validate(value) {
-        return !isNaN(value) && this._min <= value && value <= this._max;
+        return !this.disabled && !isNaN(value) && this._min <= value && value <= this._max;
       }
     }, {
       key: "increment",
@@ -39007,15 +39096,6 @@ var Forestry = (function () {
         e.stopPropagation();
         this.value = this._value - 1;
       }
-    }, {
-      key: "render",
-      value: function render(element) {
-        element.classList.add('scanex-component-spinner');
-        element.innerHTML = "<input type=\"text\" value=\"0\"/>\n        <div class=\"buttons\">\n            <i class=\"scanex-component-icon spinner-up\"></i>            \n            <i class=\"scanex-component-icon spinner-down\"></i>\n        </div>";
-        this._input = element.querySelector('input');
-        this._up = element.querySelector('.spinner-up');
-        this._down = element.querySelector('.spinner-down');
-      }
     }]);
 
     return Spinner;
@@ -39026,37 +39106,56 @@ var Forestry = (function () {
 
     var _super = _createSuper(Slider1);
 
-    function Slider1(container, _ref) {
-      var _this;
-
-      var min = _ref.min,
-          max = _ref.max;
-
+    function Slider1() {
       _classCallCheck$1(this, Slider1);
 
-      _this = _super.call(this, container);
-      _this._delay = 50;
-      _this._tick = null;
-      _this._offset = 0;
-
-      if (!isNaN(min) && !isNaN(max)) {
-        _this._min = min;
-        _this._max = max;
-      } else {
-        throw "min or max not set";
-      }
-
-      _this._rightTick.addEventListener('mousedown', _this._start.bind(_assertThisInitialized(_this), _this._rightTick));
-
-      document.body.addEventListener('mousemove', _this._slide.bind(_assertThisInitialized(_this)));
-      document.body.addEventListener('mouseup', _this._stop.bind(_assertThisInitialized(_this)));
-
-      _this._bar.addEventListener('click', _this._click.bind(_assertThisInitialized(_this)));
-
-      return _this;
+      return _super.apply(this, arguments);
     }
 
     _createClass$1(Slider1, [{
+      key: "render",
+      value: function render(_ref) {
+        var min = _ref.min,
+            max = _ref.max;
+        this._delay = 50;
+        this._tick = null;
+        this._offset = 0;
+
+        if (!isNaN(min) && !isNaN(max)) {
+          this._min = min;
+          this._max = max;
+        } else {
+          throw "min or max not set";
+        }
+
+        this._element = document.createElement('div');
+
+        this._container.appendChild(this.element);
+
+        this.element.classList.add('scanex-component-slider');
+        this.element.classList.add('no-select');
+        this.element.innerHTML = "<div class=\"slider-bar\">\n                <div class=\"slider-range\">\n                    <div class=\"slider-tick slider-tick-right\">\n                        <label></label>\n                        <i></i>\n                    </div>\n                </div>\n            </div>";
+        this._rightLabel = this.element.querySelector('.slider-tick label');
+
+        this._rightLabel.classList.add('hidden');
+
+        this._bar = this.element.querySelector('.slider-bar');
+        this._rightTick = this.element.querySelector('.slider-tick-right');
+        this._range = this.element.querySelector('.slider-range');
+
+        this._rightTick.addEventListener('mousedown', this._start.bind(this, this._rightTick));
+
+        document.body.addEventListener('mousemove', this._slide.bind(this));
+        document.body.addEventListener('mouseup', this._stop.bind(this));
+
+        this._bar.addEventListener('click', this._click.bind(this));
+      }
+    }, {
+      key: "destroy",
+      value: function destroy() {
+        this.element.remove();
+      }
+    }, {
       key: "mode",
       get: function get() {
         return this._mode;
@@ -39137,24 +39236,24 @@ var Forestry = (function () {
     }, {
       key: "_slide",
       value: function _slide(e) {
-        var _this2 = this;
+        var _this = this;
 
         e.stopPropagation();
         e.preventDefault();
         var tid = window.setTimeout(function () {
           window.clearTimeout(tid);
 
-          if (_this2._tick) {
-            var t = _this2._tick.getBoundingClientRect();
+          if (_this._tick) {
+            var t = _this._tick.getBoundingClientRect();
 
-            var b = _this2._bar.getBoundingClientRect();
+            var b = _this._bar.getBoundingClientRect();
 
-            var x = e.clientX - _this2._offset;
+            var x = e.clientX - _this._offset;
 
             if (b.left <= x && x + t.width <= b.right) {
-              _this2._range.style.width = "".concat(e.clientX - _this2._offset + t.width - b.left, "px");
+              _this._range.style.width = "".concat(e.clientX - _this._offset + t.width - b.left, "px");
 
-              _this2._updateBounds();
+              _this._updateBounds();
             }
           }
         }, this._delay);
@@ -39197,20 +39296,6 @@ var Forestry = (function () {
         event.initEvent('change', false, false);
         this.dispatchEvent(event);
       }
-    }, {
-      key: "render",
-      value: function render(element) {
-        element.classList.add('scanex-component-slider');
-        element.classList.add('no-select');
-        element.innerHTML = "<div class=\"slider-bar\">\n                <div class=\"slider-range\">\n                    <div class=\"slider-tick slider-tick-right\">\n                        <label></label>\n                        <i></i>\n                    </div>\n                </div>\n            </div>";
-        this._rightLabel = element.querySelector('.slider-tick label');
-
-        this._rightLabel.classList.add('hidden');
-
-        this._bar = element.querySelector('.slider-bar');
-        this._rightTick = element.querySelector('.slider-tick-right');
-        this._range = element.querySelector('.slider-range');
-      }
     }]);
 
     return Slider1;
@@ -39221,25 +39306,39 @@ var Forestry = (function () {
 
     var _super = _createSuper(Slider2);
 
-    function Slider2(container, _ref) {
-      var _this;
-
-      var min = _ref.min,
-          max = _ref.max;
-
+    function Slider2() {
       _classCallCheck$1(this, Slider2);
 
-      _this = _super.call(this, container, {
-        min: min,
-        max: max
-      });
-
-      _this._leftTick.addEventListener('mousedown', _this._start.bind(_assertThisInitialized(_this), _this._leftTick));
-
-      return _this;
+      return _super.apply(this, arguments);
     }
 
     _createClass$1(Slider2, [{
+      key: "render",
+      value: function render(options) {
+        _get(_getPrototypeOf(Slider2.prototype), "render", this).call(this, options);
+
+        this.element.classList.add('scanex-component-two-tick-slider');
+        this._leftTick = document.createElement('div');
+
+        this._leftTick.classList.add('slider-tick');
+
+        this._leftTick.classList.add('slider-tick-left');
+
+        this._leftLabel = document.createElement('label');
+
+        this._leftTick.appendChild(this._leftLabel);
+
+        this._leftLabel.classList.add('hidden');
+
+        var icn = document.createElement('i');
+
+        this._leftTick.appendChild(icn);
+
+        this._range.insertBefore(this._leftTick, this._rightTick);
+
+        this._leftTick.addEventListener('mousedown', this._start.bind(this, this._leftTick));
+      }
+    }, {
       key: "lo",
       get: function get() {
         return this._lo;
@@ -39266,46 +39365,46 @@ var Forestry = (function () {
     }, {
       key: "_slide",
       value: function _slide(e) {
-        var _this2 = this;
+        var _this = this;
 
         e.stopPropagation();
         e.preventDefault();
         var tid = window.setTimeout(function () {
           window.clearTimeout(tid);
 
-          if (_this2._tick) {
-            var lt = _this2._leftTick.getBoundingClientRect();
+          if (_this._tick) {
+            var lt = _this._leftTick.getBoundingClientRect();
 
-            var rt = _this2._rightTick.getBoundingClientRect();
+            var rt = _this._rightTick.getBoundingClientRect();
 
             var w = lt.width + rt.width;
 
-            var b = _this2._bar.getBoundingClientRect();
+            var b = _this._bar.getBoundingClientRect();
 
-            var x = e.clientX - _this2._offset;
+            var x = e.clientX - _this._offset;
 
-            if (_this2._tick === _this2._leftTick) {
+            if (_this._tick === _this._leftTick) {
               if (x > b.left) {
                 if (x + lt.width < rt.left) {
-                  _this2._range.style.left = "".concat(x - b.left, "px");
-                  _this2._range.style.width = "".concat(rt.right - x, "px");
+                  _this._range.style.left = "".concat(x - b.left, "px");
+                  _this._range.style.width = "".concat(rt.right - x, "px");
                 } else {
-                  _this2._range.style.left = "".concat(rt.left - lt.width - b.left, "px");
-                  _this2._range.style.width = "".concat(w, "px");
+                  _this._range.style.left = "".concat(rt.left - lt.width - b.left, "px");
+                  _this._range.style.width = "".concat(w, "px");
                 }
               }
 
-              _this2._updateBounds();
-            } else if (_this2._tick === _this2._rightTick) {
+              _this._updateBounds();
+            } else if (_this._tick === _this._rightTick) {
               if (x < b.right - rt.width) {
                 if (lt.right < x) {
-                  _this2._range.style.width = "".concat(x - lt.right + w, "px");
+                  _this._range.style.width = "".concat(x - lt.right + w, "px");
                 } else {
-                  _this2._range.style.width = "".concat(w, "px");
+                  _this._range.style.width = "".concat(w, "px");
                 }
               }
 
-              _this2._updateBounds();
+              _this._updateBounds();
             }
           }
         }, this._delay);
@@ -39368,30 +39467,6 @@ var Forestry = (function () {
         event.initEvent('change', false, false);
         this.dispatchEvent(event);
       }
-    }, {
-      key: "render",
-      value: function render(element) {
-        _get(_getPrototypeOf(Slider2.prototype), "render", this).call(this, element);
-
-        element.classList.add('scanex-component-two-tick-slider');
-        this._leftTick = document.createElement('div');
-
-        this._leftTick.classList.add('slider-tick');
-
-        this._leftTick.classList.add('slider-tick-left');
-
-        this._leftLabel = document.createElement('label');
-
-        this._leftTick.appendChild(this._leftLabel);
-
-        this._leftLabel.classList.add('hidden');
-
-        var icn = document.createElement('i');
-
-        this._leftTick.appendChild(icn);
-
-        this._range.insertBefore(this._leftTick, this._rightTick);
-      }
     }]);
 
     return Slider2;
@@ -39402,27 +39477,40 @@ var Forestry = (function () {
 
     var _super = _createSuper(Interval);
 
-    function Interval(container, _ref) {
-      var _this;
-
-      var min = _ref.min,
-          max = _ref.max,
-          slider = _ref.slider;
-
+    function Interval() {
       _classCallCheck$1(this, Interval);
 
-      _this = _super.call(this, container);
-      _this._slider = new slider(_this._sliderElement, {
-        min: min,
-        max: max
-      });
-
-      _this._slider.on('change', _this._change.bind(_assertThisInitialized(_this)));
-
-      return _this;
+      return _super.apply(this, arguments);
     }
 
     _createClass$1(Interval, [{
+      key: "render",
+      value: function render(_ref) {
+        var min = _ref.min,
+            max = _ref.max,
+            slider = _ref.slider;
+        this._element = document.createElement('div');
+
+        this._container.appendChild(this.element);
+
+        this.element.classList.add('scanex-component-range');
+        this.element.innerHTML = "<table>\n            <tr>\n                <td>\n                    <input class=\"lo\" type=\"text\" />\n                </td>\n                <td>\n                    <div class=\"slider\"></div>\n                </td>\n                <td>\n                    <input class=\"hi\" type=\"text\" />\n                </td>\n            </tr>\n        </table>";
+        this._lo = this.element.querySelector('.lo');
+        this._hi = this.element.querySelector('.hi');
+        this._sliderElement = this.element.querySelector('.slider');
+        this._slider = new slider(this._sliderElement, {
+          min: min,
+          max: max
+        });
+
+        this._slider.on('change', this._change.bind(this));
+      }
+    }, {
+      key: "destroy",
+      value: function destroy() {
+        this.element.remove();
+      }
+    }, {
       key: "_change",
       value: function _change(e) {
         this._lo.value = this._slider.lo.toString();
@@ -39463,15 +39551,6 @@ var Forestry = (function () {
       set: function set(hi) {
         this._slider.hi = hi;
       }
-    }, {
-      key: "render",
-      value: function render(element) {
-        element.classList.add('scanex-component-range');
-        element.innerHTML = "<table>\n            <tr>\n                <td>\n                    <input class=\"lo\" type=\"text\" />\n                </td>\n                <td>\n                    <div class=\"slider\"></div>\n                </td>\n                <td>\n                    <input class=\"hi\" type=\"text\" />\n                </td>\n            </tr>\n        </table>";
-        this._lo = element.querySelector('.lo');
-        this._hi = element.querySelector('.hi');
-        this._sliderElement = element.querySelector('.slider');
-      }
     }]);
 
     return Interval;
@@ -39482,31 +39561,37 @@ var Forestry = (function () {
 
     var _super = _createSuper(Tabs);
 
-    function Tabs(container) {
-      var _this;
-
+    function Tabs() {
       _classCallCheck$1(this, Tabs);
 
-      _this = _super.call(this, container);
-      _this._tabs = {};
-      _this._panels = {};
-      return _this;
+      return _super.apply(this, arguments);
     }
 
     _createClass$1(Tabs, [{
       key: "render",
-      value: function render(container) {
-        container.classList.add('scanex-component-tabs');
+      value: function render() {
+        this._tabs = {};
+        this._panels = {};
+        this._element = document.createElement('div');
+
+        this._container.appendChild(this.element);
+
+        this.element.classList.add('scanex-component-tabs');
         this._tabsContainer = document.createElement('div');
 
         this._tabsContainer.classList.add('tabs');
 
-        container.appendChild(this._tabsContainer);
+        this.element.appendChild(this._tabsContainer);
         this._panelsContainer = document.createElement('div');
 
         this._panelsContainer.classList.add('panels');
 
-        container.appendChild(this._panelsContainer);
+        this.element.appendChild(this._panelsContainer);
+      }
+    }, {
+      key: "destroy",
+      value: function destroy() {
+        this.element.remove();
       }
     }, {
       key: "_click",
@@ -39520,18 +39605,18 @@ var Forestry = (function () {
         return this._selected;
       },
       set: function set(selected) {
-        var _this2 = this;
+        var _this = this;
 
         if (this.selected !== selected) {
           Object.keys(this._tabs).forEach(function (id) {
             if (id === selected) {
-              _this2._tabs[id].classList.add('selected');
+              _this._tabs[id].classList.add('selected');
 
-              _this2._panels[id].classList.remove('hidden');
+              _this._panels[id].classList.remove('hidden');
             } else {
-              _this2._tabs[id].classList.remove('selected');
+              _this._tabs[id].classList.remove('selected');
 
-              _this2._panels[id].classList.add('hidden');
+              _this._panels[id].classList.add('hidden');
             }
           });
           this._selected = selected;
@@ -39597,10 +39682,10 @@ var Forestry = (function () {
     }, {
       key: "clear",
       value: function clear() {
-        var _this3 = this;
+        var _this2 = this;
 
         Object.keys(this._tabs).forEach(function (id) {
-          _this3.remove(id);
+          _this2.remove(id);
         });
       }
     }]);
@@ -39898,7 +39983,7 @@ var Forestry = (function () {
         title: translate$n('baselayers.map'),
         id: 'map',
         iconUrl: 'assets/images/map.png',
-        urlTemplate: '//tilessputnik.ru/{z}/{x}/{y}.png?sw=1'
+        urlTemplate: '//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
       });
 
       return _this;
@@ -70766,10 +70851,11 @@ var Forestry = (function () {
               stow = _ref2.stow,
               num = _ref2.num,
               taxation_year = _ref2.taxation_year;
-          return "<tr class=\"quadrant\">\n                        <td class=\"text\">".concat(local_forestry).concat(stow ? " / ".concat(stow) : '', "</td>                        \n                        <td class=\"value\">").concat(num, "</td>\n                        <td class=\"value\">").concat(taxation_year, "</td>\n                        <td>\n                            <i class=\"scanex-project-icon remove\"></i>\n                        </td>\n                    </tr>");
+          var t = "".concat(local_forestry).concat(stow ? " / ".concat(stow) : '');
+          return "<tr class=\"quadrant\">\n                        <td class=\"text\"><div title=\"".concat(t, "\">").concat(t, "</div></td>\n                        <td class=\"value\">").concat(num, "</td>\n                        <td class=\"value\">").concat(taxation_year, "</td>\n                        <td>\n                            <i class=\"scanex-project-icon remove\"></i>\n                        </td>\n                    </tr>");
         }).join(''), "\n            </table>\n        </div>") : '';
 
-        var rows = this._container.querySelectorAll('tbody > tr');
+        var rows = this._container.querySelectorAll('.quadrant');
 
         var _loop = function _loop(i) {
           var row = rows[i];
@@ -70838,6 +70924,56 @@ var Forestry = (function () {
 
     return Quadrants;
   }(Evented);
+
+  // https://github.com/tc39/proposal-string-pad-start-end
+
+
+
+
+
+  var ceil = Math.ceil;
+
+  // `String.prototype.{ padStart, padEnd }` methods implementation
+  var createMethod = function (IS_END) {
+    return function ($this, maxLength, fillString) {
+      var S = toString$2(requireObjectCoercible$1($this));
+      var stringLength = S.length;
+      var fillStr = fillString === undefined ? ' ' : toString$2(fillString);
+      var intMaxLength = toLength$1(maxLength);
+      var fillLen, stringFiller;
+      if (intMaxLength <= stringLength || fillStr == '') return S;
+      fillLen = intMaxLength - stringLength;
+      stringFiller = stringRepeat$1.call(fillStr, ceil(fillLen / fillStr.length));
+      if (stringFiller.length > fillLen) stringFiller = stringFiller.slice(0, fillLen);
+      return IS_END ? S + stringFiller : stringFiller + S;
+    };
+  };
+
+  var stringPad = {
+    // `String.prototype.padStart` method
+    // https://tc39.es/ecma262/#sec-string.prototype.padstart
+    start: createMethod(false),
+    // `String.prototype.padEnd` method
+    // https://tc39.es/ecma262/#sec-string.prototype.padend
+    end: createMethod(true)
+  };
+
+  // https://github.com/zloirock/core-js/issues/280
+
+
+  // eslint-disable-next-line unicorn/no-unsafe-regex -- safe
+  var stringPadWebkitBug = /Version\/10(?:\.\d+){1,2}(?: [\w./]+)?(?: Mobile\/\w+)? Safari\//.test(engineUserAgent$1);
+
+  var $padStart = stringPad.start;
+
+
+  // `String.prototype.padStart` method
+  // https://tc39.es/ecma262/#sec-string.prototype.padstart
+  _export$1({ target: 'String', proto: true, forced: stringPadWebkitBug }, {
+    padStart: function padStart(maxLength /* , fillString = ' ' */) {
+      return $padStart(this, maxLength, arguments.length > 1 ? arguments[1] : undefined);
+    }
+  });
 
   var translate$b = translate$v;
 
@@ -71116,33 +71252,42 @@ var Forestry = (function () {
 
           this._chart.render();
 
-          var _this$_species$reduce = this._species.reduce(function (a, s) {
-            a.labels.push(s.species);
+          var _this$_species$reduce = this._species.reduce(function (a, _ref, i) {
+            var species = _ref.species,
+                species_colour = _ref.species_colour,
+                permitted_stock = _ref.permitted_stock,
+                probable_stock = _ref.probable_stock,
+                total_stock = _ref.total_stock;
+            a.labels.push(species);
+            a.colors.push(species_colour ? "#".concat(species_colour.toString(16).padStart(6, '0').substr(0, 6).toUpperCase()) : CHART_COLORS[i]);
 
             switch (_this2.mode) {
               case 'permitted':
-                a.series.push(s.permitted_stock);
+                a.series.push(permitted_stock);
                 break;
 
               case 'probable':
-                a.series.push(s.probable_stock);
+                a.series.push(probable_stock);
                 break;
 
               default:
-                a.series.push(s.total_stock);
+                a.series.push(total_stock);
                 break;
             }
 
             return a;
           }, {
             labels: [],
-            series: []
+            series: [],
+            colors: []
           }),
               labels = _this$_species$reduce.labels,
-              series = _this$_species$reduce.series;
+              series = _this$_species$reduce.series,
+              colors = _this$_species$reduce.colors;
 
           this._chart.updateOptions({
-            labels: labels
+            labels: labels,
+            colors: colors
           });
 
           this._chart.updateSeries(series);
@@ -71658,6 +71803,8 @@ var Forestry = (function () {
     return i;
   };
 
+  var EDITOR_LAYERS = ['forestries_local', 'forestries', 'regions', 'quadrants_editor'];
+
   var Projects = /*#__PURE__*/function (_LayerController) {
     _inherits(Projects, _LayerController);
 
@@ -71993,17 +72140,32 @@ var Forestry = (function () {
     }, {
       key: "enableQuadrantsEditor",
       value: function enableQuadrantsEditor() {
-        this._quadrantsActive = this._legend.state('quadrants');
+        var _this2 = this;
+
+        this._editorActive = this._legend.state('quadrants');
 
         this._legend.disable('quadrants');
 
-        this._layers.quadrants_editor && this._map.addLayer(this._layers.quadrants_editor);
+        EDITOR_LAYERS.forEach(function (k) {
+          var layer = _this2._layers[k];
+          layer && _this2._map.addLayer(layer);
+        });
       }
     }, {
       key: "disableQuadrantsEditor",
       value: function disableQuadrantsEditor() {
-        this._quadrantsActive && this._legend.enable('quadrants');
-        this._layers.quadrants_editor && this._map.removeLayer(this._layers.quadrants_editor);
+        var _this3 = this;
+
+        if (this._editorActive) {
+          this._editorActive = false;
+
+          this._legend.enable('quadrants');
+        }
+
+        EDITOR_LAYERS.forEach(function (k) {
+          var layer = _this3._layers[k];
+          layer && _this3._map.removeLayer(layer);
+        });
       } // draft
 
     }, {
@@ -72018,7 +72180,7 @@ var Forestry = (function () {
                   id = _ref6.id, forestryID = _ref6.forestryID;
 
                   if (!this._permissions.ForestProjectsEdit) {
-                    _context7.next = 28;
+                    _context7.next = 25;
                     break;
                   }
 
@@ -72041,7 +72203,7 @@ var Forestry = (function () {
                   data = _context7.sent;
 
                   if (!data) {
-                    _context7.next = 26;
+                    _context7.next = 23;
                     break;
                   }
 
@@ -72053,15 +72215,15 @@ var Forestry = (function () {
                   res = _context7.sent;
 
                   if (!res) {
-                    _context7.next = 26;
+                    _context7.next = 23;
                     break;
                   }
 
                   Status = res.Status, SquareStat = res.SquareStat, ForestStat = res.ForestStat;
+                  this._isValid = Status === 'valid';
 
-                  if (!(Status === 'valid')) {
-                    _context7.next = 24;
-                    break;
+                  if (!this._isValid) {
+                    this._notification.warn(translate$9('quadrant.invalid'), NOTIFY_TIMEOUT);
                   }
 
                   this._valid = {
@@ -72078,19 +72240,14 @@ var Forestry = (function () {
 
                   return _context7.abrupt("return", true);
 
-                case 24:
-                  this._notification.warn(translate$9('quadrant.invalid'), NOTIFY_TIMEOUT);
-
-                  return _context7.abrupt("return", false);
-
-                case 26:
-                  _context7.next = 29;
+                case 23:
+                  _context7.next = 26;
                   break;
 
-                case 28:
+                case 25:
                   this._notification.error(translate$9('forbidden.project.edit'), NOTIFY_TIMEOUT);
 
-                case 29:
+                case 26:
                 case "end":
                   return _context7.stop();
               }
@@ -72164,17 +72321,28 @@ var Forestry = (function () {
               switch (_context9.prev = _context9.next) {
                 case 0:
                   forestProjectID = _ref8.forestProjectID, title = _ref8.title, forestQs = _ref8.forestQs;
-                  _context9.next = 3;
+
+                  if (!this._isValid) {
+                    _context9.next = 7;
+                    break;
+                  }
+
+                  _context9.next = 4;
                   return this.httpPost("".concat(this._path, "/Forest/StoreDraftForestProjectGmxIds"), {
                     forestProjectID: forestProjectID,
                     title: title,
                     forestQs: forestQs
                   });
 
-                case 3:
+                case 4:
                   return _context9.abrupt("return", _context9.sent);
 
-                case 4:
+                case 7:
+                  this._notification.warn(translate$9('quadrant.invalid'), NOTIFY_TIMEOUT);
+
+                  return _context9.abrupt("return", false);
+
+                case 9:
                 case "end":
                   return _context9.stop();
               }
@@ -72261,8 +72429,9 @@ var Forestry = (function () {
 
                   if (data) {
                     Status = data.Status, SquareStat = data.SquareStat, ForestStat = data.ForestStat;
+                    this._isValid = Status === 'valid';
 
-                    if (Status === 'valid') {
+                    if (this._isValid) {
                       this._valid = {
                         gmx_id: this._project.gmx_id,
                         forestProjectID: this._project.forestProjectID,
@@ -72326,8 +72495,9 @@ var Forestry = (function () {
 
                   if (data) {
                     Status = data.Status, SquareStat = data.SquareStat, ForestStat = data.ForestStat;
+                    this._isValid = Status === 'valid';
 
-                    if (Status === 'valid') {
+                    if (this._isValid) {
                       this._valid = {
                         forestProjectID: this._project.forestProjectID,
                         forestryID: forestryID,
@@ -72362,56 +72532,6 @@ var Forestry = (function () {
     return Projects;
   }(LayerController);
 
-  // https://github.com/tc39/proposal-string-pad-start-end
-
-
-
-
-
-  var ceil = Math.ceil;
-
-  // `String.prototype.{ padStart, padEnd }` methods implementation
-  var createMethod = function (IS_END) {
-    return function ($this, maxLength, fillString) {
-      var S = toString$2(requireObjectCoercible$1($this));
-      var stringLength = S.length;
-      var fillStr = fillString === undefined ? ' ' : toString$2(fillString);
-      var intMaxLength = toLength$1(maxLength);
-      var fillLen, stringFiller;
-      if (intMaxLength <= stringLength || fillStr == '') return S;
-      fillLen = intMaxLength - stringLength;
-      stringFiller = stringRepeat$1.call(fillStr, ceil(fillLen / fillStr.length));
-      if (stringFiller.length > fillLen) stringFiller = stringFiller.slice(0, fillLen);
-      return IS_END ? S + stringFiller : stringFiller + S;
-    };
-  };
-
-  var stringPad = {
-    // `String.prototype.padStart` method
-    // https://tc39.es/ecma262/#sec-string.prototype.padstart
-    start: createMethod(false),
-    // `String.prototype.padEnd` method
-    // https://tc39.es/ecma262/#sec-string.prototype.padend
-    end: createMethod(true)
-  };
-
-  // https://github.com/zloirock/core-js/issues/280
-
-
-  // eslint-disable-next-line unicorn/no-unsafe-regex -- safe
-  var stringPadWebkitBug = /Version\/10(?:\.\d+){1,2}(?: [\w./]+)?(?: Mobile\/\w+)? Safari\//.test(engineUserAgent$1);
-
-  var $padStart = stringPad.start;
-
-
-  // `String.prototype.padStart` method
-  // https://tc39.es/ecma262/#sec-string.prototype.padstart
-  _export$1({ target: 'String', proto: true, forced: stringPadWebkitBug }, {
-    padStart: function padStart(maxLength /* , fillString = ' ' */) {
-      return $padStart(this, maxLength, arguments.length > 1 ? arguments[1] : undefined);
-    }
-  });
-
   var strings$4 = {
     ru: {
       quadrant: {
@@ -72442,6 +72562,7 @@ var Forestry = (function () {
         invalid: 'Недопустимый состав участка',
         add_quadrant: 'Выбор участка',
         CarbonStock: 'Запас углерода, тонн С',
+        CarbonDioxideAvailable: 'Доступная квота',
         TaxYear: 'Год лесоустройства',
         TaxRate: 'Разряд такс'
       },
@@ -72532,8 +72653,15 @@ var Forestry = (function () {
 
       _this._container.classList.add('scanex-forestry-quadrant');
 
-      _this._container.innerHTML = "<h1 class=\"header1\"><span>".concat(_this.translate('quadrant.title'), " \u2116 <span class=\"number\"></span></span> <span><button class=\"add-quadrant\">").concat(_this.translate('quadrant.add_quadrant'), "</button>\n\t\t\t<span class=\"downloads\">\n\t\t\t\t<span class=\"download-description\" title=\"").concat(_this.translate('quadrant.description'), "\">\n\t\t\t\t\t<i class=\"scanex-quadrant-icon lp\"></i>\n\t\t\t\t</span>\n\t\t\t\t<span class=\"download-plan\" title=\"").concat(_this.translate('quadrant.plan'), "\">\n\t\t\t\t\t<i class=\"scanex-quadrant-icon to\"></i>\n\t\t\t\t</span>\n\t\t\t</span>\n\t\t\t</span>\n\t\t</h1>\n\t\t<h2 class=\"header2\"></h2>\n\t\t<div class=\"scrollable\">\t\t\t\n\t\t\t<div class=\"table_graph\">\n\t\t\t\t<div class=\"info\"></div>\n\t\t\t\t<div class=\"graph\">\n\t\t\t\t\t<div class=\"label\">").concat(_this.translate('quadrant.stock.title'), "</div>\n\t\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"header3\">").concat(_this.translate('quadrant.stock.table'), "</div>\n\t\t\t<div class=\"stats\">\n\t\t\t\t<div class=\"header\">\n\t\t\t\t\t<div class=\"species\">").concat(_this.translate('quadrant.stock.species'), "</div>\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<div class=\"stock\">").concat(_this.translate('quadrant.stock.label'), "<sup>3</sup></div>\n\t\t\t\t\t\t<div class=\"details\">\n\t\t\t\t\t\t\t<div class=\"permitted\">").concat(_this.translate('quadrant.stock.permitted'), "</div>\n\t\t\t\t\t\t\t<div class=\"probable\">").concat(_this.translate('quadrant.stock.probable'), "</div>\n\t\t\t\t\t\t\t<div class=\"total\">").concat(_this.translate('quadrant.stock.total'), "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"body\">\n\t\t\t\t</div>\n\n\t\t\t</div>\t\t\t\n\t\t\t<div class=\"footer\">\n\t\t\t</div>\n\t\t</div>");
+      _this._container.innerHTML = "<h1 class=\"header1\"><span>".concat(_this.translate('quadrant.title'), " \u2116 <span class=\"number\"></span></span> <span><button class=\"add-quadrant\">").concat(_this.translate('quadrant.add_quadrant'), "</button>\n\t\t\t<span class=\"downloads\">\n\t\t\t\t<span class=\"download-description\" title=\"").concat(_this.translate('quadrant.description'), "\">\n\t\t\t\t\t<i class=\"scanex-quadrant-icon lp\"></i>\n\t\t\t\t</span>\n\t\t\t\t<span class=\"download-plan\" title=\"").concat(_this.translate('quadrant.plan'), "\">\n\t\t\t\t\t<i class=\"scanex-quadrant-icon to\"></i>\n\t\t\t\t</span>\n\t\t\t</span>\n\t\t\t</span>\n\t\t</h1>\n\t\t<h2 class=\"header2\"></h2>\n\t\t<div class=\"scrollable\">\t\t\t\n\t\t\t<div class=\"table_graph\">\n\t\t\t\t<table class=\"info\">\n\t\t\t\t\t<tr class=\"area\">\n\t\t\t\t\t\t<td class=\"label\">").concat(_this.translate('quadrant.area'), "</td>\n\t\t\t\t\t\t<td class=\"value\"></td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr class=\"usage\">\n\t\t\t\t\t\t<td class=\"label\">").concat(_this.translate('quadrant.usage'), "</td>\n\t\t\t\t\t\t<td class=\"value\"></td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr class=\"CarbonStock\">\n\t\t\t\t\t\t<td class=\"label\">").concat(_this.translate('quadrant.CarbonStock'), "</td>\n\t\t\t\t\t\t<td class=\"value\"></td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr class=\"CarbonDioxideAvailable\">\n\t\t\t\t\t\t<td class=\"label\">").concat(_this.translate('quadrant.CarbonDioxideAvailable'), " ").concat(_this.translate('units.co'), "<sub>2</sub></td>\n\t\t\t\t\t\t<td class=\"value\"></td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr class=\"TaxYear\">\n\t\t\t\t\t\t<td class=\"label\">").concat(_this.translate('quadrant.TaxYear'), "</td>\n\t\t\t\t\t\t<td class=\"value\"></td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr class=\"TaxRate\">\n\t\t\t\t\t\t<td class=\"label\">").concat(_this.translate('quadrant.TaxRate'), "</td>\n\t\t\t\t\t\t<td class=\"value\"></td>\n\t\t\t\t\t</tr>\n\t\t\t\t</table>\n\t\t\t\t<div class=\"graph\">\n\t\t\t\t\t<div class=\"label\">").concat(_this.translate('quadrant.stock.title'), "</div>\n\t\t\t\t\t<div class=\"chart\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\t\t\t\n\t\t\t<table class=\"stats\" cellpadding=\"0\" cellspacing=\"0\">\n\t\t\t\t<thead>\n\t\t\t\t\t<tr class=\"header\">\n\t\t\t\t\t\t<th rowspan=\"2\" class=\"species\">").concat(_this.translate('quadrant.stock.species'), "</th>\n\t\t\t\t\t\t<th class=\"stock\" colspan=\"3\">").concat(_this.translate('quadrant.stock.label'), "<sup>3</sup></th>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr class=\"details\">\n\t\t\t\t\t\t<th class=\"permitted\">").concat(_this.translate('quadrant.stock.permitted'), "</th>\n\t\t\t\t\t\t<th class=\"probable\">").concat(_this.translate('quadrant.stock.probable'), "</th>\n\t\t\t\t\t\t<th class=\"total\">").concat(_this.translate('quadrant.stock.total'), "</th>\n\t\t\t\t\t</tr>\n\t\t\t\t</thead>\n\t\t\t\t<tbody class=\"body\"><tbody>\n\t\t\t</table>\n\t\t\t<div class=\"footer\"></div>\n\t\t</div>");
       _this._header2 = _this._container.querySelector('.header2');
+      _this._info = _this._container.querySelector('.info');
+      _this._area = _this._info.querySelector('.area .value');
+      _this._usage = _this._info.querySelector('.usage .value');
+      _this._carbonStock = _this._info.querySelector('.CarbonStock .value');
+      _this._carbonDioxideAvailable = _this._info.querySelector('.CarbonDioxideAvailable .value');
+      _this._taxYear = _this._info.querySelector('.TaxYear .value');
+      _this._taxRate = _this._info.querySelector('.TaxRate .value');
       _this._body = _this._container.querySelector('.body');
 
       _this._container.querySelector('.download-description').addEventListener('click', function (e) {
@@ -72589,7 +72717,6 @@ var Forestry = (function () {
 
       _this._downloads = _this._container.querySelector('.downloads');
       _this._num = _this._container.querySelector('.header1 .number');
-      _this._info = _this._container.querySelector('.info');
       _this._chart = _this._container.querySelector('.chart');
       return _this;
     }
@@ -72611,13 +72738,35 @@ var Forestry = (function () {
             Stow = data.Stow,
             Documents = data.Documents,
             CarbonStock = data.CarbonStock,
+            CarbonDioxideAvailable = data.CarbonDioxideAvailable,
             TaxYear = data.TaxYear,
             TaxRate = data.TaxRate;
         this._gmx_id = gmx_id;
-        var radio = this.translate('quadrant.usage_arr').map(function (it) {
-          return "\n\t\t\t\t<input type=\"checkbox\" disabled id=\"".concat(it, "\" name=\"").concat(it, "\" ").concat(SpecialPurpose.indexOf(it) > -1 ? 'checked' : '', ">\n\t\t\t\t<label for=\"").concat(it, "\">").concat(it, "</label><br>\n\t\t\t");
-        }).join('\n');
-        this._info.innerHTML = "\n\t\t\t<div class=\"area\">\n\t\t\t\t<label class=\"label\">".concat(this.translate('quadrant.area'), "</label>\n\t\t\t\t<label class=\"value\">").concat(Area && this.ha(Area) || '-', "</label>\n\t\t\t</div>\n\t\t\t<div class=\"usage\">\n\t\t\t\t<label class=\"label\">").concat(this.translate('quadrant.usage'), "</label>\n\t\t\t\t<label class=\"value\">").concat(radio, "</label>\n\t\t\t</div>\n\t\t\t<div class=\"CarbonStock\">\n\t\t\t\t<label class=\"label\">").concat(this.translate('quadrant.CarbonStock'), "</label>\n\t\t\t\t<label class=\"value\">").concat(CarbonStock ? m(CarbonStock) : '-', "</label>\n\t\t\t</div>\n\t\t\t<div class=\"TaxYear\">\n\t\t\t\t<label class=\"label\">").concat(this.translate('quadrant.TaxYear'), "</label>\n\t\t\t\t<label class=\"value\">").concat(TaxYear || '-', "</label>\n\t\t\t</div>\n\t\t\t<div class=\"TaxRate\">\n\t\t\t\t<label class=\"label\">").concat(this.translate('quadrant.TaxRate'), "</label>\n\t\t\t\t<label class=\"value\">").concat(TaxRate || '-', "</label>\n\t\t\t</div>");
+        this._area.innerText = Area && this.ha(Area) || '-';
+        this._usage.innerHTML = '';
+        this.translate('quadrant.usage_arr').forEach(function (k) {
+          var div = document.createElement('div');
+
+          _this2._usage.appendChild(div);
+
+          var icon = document.createElement('i');
+          div.appendChild(icon);
+          var checkbox = new Checkbox(icon);
+          checkbox.disabled = true;
+          checkbox.checked = SpecialPurpose.indexOf(k) >= 0;
+          var label = document.createElement('label');
+
+          if (checkbox.checked) {
+            label.classList.add('selected');
+          }
+
+          label.innerText = k;
+          div.appendChild(label);
+        });
+        this._carbonStock.innerText = CarbonStock ? m(CarbonStock) : '-';
+        this._carbonDioxideAvailable.innerText = CarbonDioxideAvailable ? m(CarbonDioxideAvailable) : '-';
+        this._taxYear.innerText = TaxYear || '-';
+        this._taxRate.innerText = TaxRate || '-';
         this._num.innerText = Num || '';
         this._chart.innerText = '';
         this._header2.innerHTML = "".concat(this.translate('quadrant.forestry'), ": <span class=\"green\">").concat(Forestry, "</span> ").concat(this.translate('quadrant.forestry_local'), ": <span class=\"green\">").concat(LocalForestry, "</span> ").concat(this.translate('quadrant.stow'), ": <span class=\"green\">").concat(Stow || '-', "</span> ").concat(this.translate('quadrant.title'), ": <span class=\"green\">").concat(Num, "</span>");
@@ -72698,8 +72847,8 @@ var Forestry = (function () {
                 species = _ref2.species,
                 total_stock = _ref2.total_stock,
                 total_stock_deal = _ref2.total_stock_deal;
-            return "<div class=\"row\">\n\t\t\t\t\t<div class=\"label\">".concat(species, "</div>\n\t\t\t\t\t<div class=\"value\">").concat(_this2.m(permitted_stock), " / ").concat(_this2.m(permitted_stock_deal), "</div>\n\t\t\t\t\t<div class=\"value\">").concat(_this2.m(probable_stock), " / ").concat(_this2.m(probable_stock_deal), "</div>\n\t\t\t\t\t<div class=\"value\">").concat(_this2.m(total_stock), " / ").concat(_this2.m(total_stock_deal), "</div>\n\t\t\t\t</div>");
-          }).join(''), "\n\t\t\t<div class=\"row total\">\n\t\t\t\t<div class=\"label\">").concat(this.translate('quadrant.total').toUpperCase(), "</div>\n\t\t\t\t<div class=\"value\">").concat(this.m(total.permitted_stock), " / ").concat(this.m(total.permitted_stock_deal), "</div>\n\t\t\t\t<div class=\"value\">").concat(this.m(total.probable_stock), " / ").concat(this.m(total.probable_stock_deal), "</div>\n\t\t\t\t<div class=\"value\">").concat(this.m(total.total_stock), " / ").concat(this.m(total.total_stock_deal), "</div>\n\t\t\t</div>");
+            return "<tr class=\"row\">\n\t\t\t\t\t<td class=\"label\">".concat(species, "</td>\n\t\t\t\t\t<td class=\"value\">").concat(_this2.m(permitted_stock), " / ").concat(_this2.m(permitted_stock_deal), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(_this2.m(probable_stock), " / ").concat(_this2.m(probable_stock_deal), "</td>\n\t\t\t\t\t<td class=\"value\">").concat(_this2.m(total_stock), " / ").concat(_this2.m(total_stock_deal), "</td>\n\t\t\t\t</tr>");
+          }).join(''), "\n\t\t\t<tr class=\"row total\">\n\t\t\t\t<td class=\"label\">").concat(this.translate('quadrant.total').toUpperCase(), "</td>\n\t\t\t\t<td class=\"value\">").concat(this.m(total.permitted_stock), " / ").concat(this.m(total.permitted_stock_deal), "</td>\n\t\t\t\t<td class=\"value\">").concat(this.m(total.probable_stock), " / ").concat(this.m(total.probable_stock_deal), "</td>\n\t\t\t\t<td class=\"value\">").concat(this.m(total.total_stock), " / ").concat(this.m(total.total_stock_deal), "</td>\n\t\t\t</tr>");
 
           var fmt = function fmt(n, s, d) {
             return [n, s ? "- ".concat(m(s)) : '', d ? "/ ".concat(m(d)) : ''];
@@ -77484,16 +77633,27 @@ var Forestry = (function () {
                             switch (_context5.prev = _context5.next) {
                               case 0:
                                 _e$detail = e.detail, gmx_id = _e$detail.gmx_id, forestryID = _e$detail.forestryID;
-                                _context5.next = 3;
+
+                                _this3._legend.enable('projects');
+
+                                _this3._legend.enable('plots');
+
+                                _this3._legend.enable('parks');
+
+                                _this3._legend.enable('quadrants-protected');
+
+                                _this3._legend.enable('quadrants-reserved');
+
+                                _context5.next = 8;
                                 return _this3._controllers.projects.toggleQuadrant({
                                   gmx_id: gmx_id,
                                   forestryID: forestryID
                                 });
 
-                              case 3:
+                              case 8:
                                 _this3._layers.quadrants.repaint();
 
-                              case 4:
+                              case 9:
                               case "end":
                                 return _context5.stop();
                             }
