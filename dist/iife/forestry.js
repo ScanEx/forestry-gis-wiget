@@ -71552,7 +71552,8 @@ var Forestry = (function () {
             title = _ref6.title,
             forestryID = _ref6.forestryID,
             quadrants = _ref6.quadrants,
-            species = _ref6.species;
+            species = _ref6.species,
+            valid = _ref6.valid;
 
         _get(_getPrototypeOf(Project.prototype), "open", this).call(this);
 
@@ -71564,12 +71565,12 @@ var Forestry = (function () {
 
         this._species.items = species;
 
-        this._checkQuadrants();
+        this._checkQuadrants(valid);
       }
     }, {
       key: "_checkQuadrants",
-      value: function _checkQuadrants() {
-        if (this._quadrants.items.length === 0) {
+      value: function _checkQuadrants(valid) {
+        if (!valid || this._quadrants.items.length === 0) {
           this.disableSave();
         } else {
           this.enableSave();
@@ -72231,7 +72232,8 @@ var Forestry = (function () {
                     title: title,
                     forestryID: forestryID,
                     quadrants: SquareStat,
-                    species: ForestStat
+                    species: ForestStat,
+                    valid: this._isValid
                   };
 
                   this._project.open(this._valid);
@@ -72431,17 +72433,18 @@ var Forestry = (function () {
                     Status = data.Status, SquareStat = data.SquareStat, ForestStat = data.ForestStat;
                     this._isValid = Status === 'valid';
 
-                    if (this._isValid) {
-                      this._valid = {
-                        gmx_id: this._project.gmx_id,
-                        forestProjectID: this._project.forestProjectID,
-                        forestryID: forestryID,
-                        quadrants: SquareStat,
-                        species: ForestStat
-                      };
-                    } else {
+                    if (!this._isValid) {
                       this._notification.warn(translate$9('quadrant.invalid'), NOTIFY_TIMEOUT);
                     }
+
+                    this._valid = {
+                      gmx_id: this._project.gmx_id,
+                      forestProjectID: this._project.forestProjectID,
+                      forestryID: forestryID,
+                      quadrants: SquareStat,
+                      species: ForestStat,
+                      valid: this._isValid
+                    };
 
                     this._project.open(this._valid);
 
@@ -72497,16 +72500,17 @@ var Forestry = (function () {
                     Status = data.Status, SquareStat = data.SquareStat, ForestStat = data.ForestStat;
                     this._isValid = Status === 'valid';
 
-                    if (this._isValid) {
-                      this._valid = {
-                        forestProjectID: this._project.forestProjectID,
-                        forestryID: forestryID,
-                        quadrants: SquareStat,
-                        species: ForestStat
-                      };
-                    } else {
+                    if (!this._isValid) {
                       this._notification.warn(translate$9('quadrant.invalid'), NOTIFY_TIMEOUT);
                     }
+
+                    this._valid = {
+                      forestProjectID: this._project.forestProjectID,
+                      forestryID: forestryID,
+                      quadrants: SquareStat,
+                      species: ForestStat,
+                      valid: this._isValid
+                    };
 
                     this._project.open(this._valid);
 
