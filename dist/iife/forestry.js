@@ -6,14 +6,9 @@ var Forestry = (function () {
 
     if (Object.getOwnPropertySymbols) {
       var symbols = Object.getOwnPropertySymbols(object);
-
-      if (enumerableOnly) {
-        symbols = symbols.filter(function (sym) {
-          return Object.getOwnPropertyDescriptor(object, sym).enumerable;
-        });
-      }
-
-      keys.push.apply(keys, symbols);
+      enumerableOnly && (symbols = symbols.filter(function (sym) {
+        return Object.getOwnPropertyDescriptor(object, sym).enumerable;
+      })), keys.push.apply(keys, symbols);
     }
 
     return keys;
@@ -21,19 +16,12 @@ var Forestry = (function () {
 
   function _objectSpread2(target) {
     for (var i = 1; i < arguments.length; i++) {
-      var source = arguments[i] != null ? arguments[i] : {};
-
-      if (i % 2) {
-        ownKeys$2(Object(source), true).forEach(function (key) {
-          _defineProperty(target, key, source[key]);
-        });
-      } else if (Object.getOwnPropertyDescriptors) {
-        Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
-      } else {
-        ownKeys$2(Object(source)).forEach(function (key) {
-          Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
-        });
-      }
+      var source = null != arguments[i] ? arguments[i] : {};
+      i % 2 ? ownKeys$2(Object(source), !0).forEach(function (key) {
+        _defineProperty(target, key, source[key]);
+      }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$2(Object(source)).forEach(function (key) {
+        Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
+      });
     }
 
     return target;
@@ -42,17 +30,11 @@ var Forestry = (function () {
   function _typeof$1(obj) {
     "@babel/helpers - typeof";
 
-    if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
-      _typeof$1 = function (obj) {
-        return typeof obj;
-      };
-    } else {
-      _typeof$1 = function (obj) {
-        return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
-      };
-    }
-
-    return _typeof$1(obj);
+    return _typeof$1 = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) {
+      return typeof obj;
+    } : function (obj) {
+      return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+    }, _typeof$1(obj);
   }
 
   function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) {
@@ -110,6 +92,9 @@ var Forestry = (function () {
   function _createClass$1(Constructor, protoProps, staticProps) {
     if (protoProps) _defineProperties$1(Constructor.prototype, protoProps);
     if (staticProps) _defineProperties$1(Constructor, staticProps);
+    Object.defineProperty(Constructor, "prototype", {
+      writable: false
+    });
     return Constructor;
   }
 
@@ -139,6 +124,9 @@ var Forestry = (function () {
         writable: true,
         configurable: true
       }
+    });
+    Object.defineProperty(subClass, "prototype", {
+      writable: false
     });
     if (superClass) _setPrototypeOf(subClass, superClass);
   }
@@ -219,6 +207,8 @@ var Forestry = (function () {
   function _possibleConstructorReturn(self, call) {
     if (call && (typeof call === "object" || typeof call === "function")) {
       return call;
+    } else if (call !== void 0) {
+      throw new TypeError("Derived constructors may only return object or undefined");
     }
 
     return _assertThisInitialized(self);
@@ -252,7 +242,7 @@ var Forestry = (function () {
     return object;
   }
 
-  function _get(target, property, receiver) {
+  function _get() {
     if (typeof Reflect !== "undefined" && Reflect.get) {
       _get = Reflect.get;
     } else {
@@ -263,14 +253,14 @@ var Forestry = (function () {
         var desc = Object.getOwnPropertyDescriptor(base, property);
 
         if (desc.get) {
-          return desc.get.call(receiver);
+          return desc.get.call(arguments.length < 3 ? target : receiver);
         }
 
         return desc.value;
       };
     }
 
-    return _get(target, property, receiver || target);
+    return _get.apply(this, arguments);
   }
 
   function _slicedToArray(arr, i) {
@@ -429,6 +419,18 @@ var Forestry = (function () {
     return Object.defineProperty({}, 1, { get: function () { return 7; } })[1] != 7;
   });
 
+  var functionBindNative = !fails$1(function () {
+    var test = (function () { /* empty */ }).bind();
+    // eslint-disable-next-line no-prototype-builtins -- safe
+    return typeof test != 'function' || test.hasOwnProperty('prototype');
+  });
+
+  var call$2 = Function.prototype.call;
+
+  var functionCall = functionBindNative ? call$2.bind(call$2) : function () {
+    return call$2.apply(call$2, arguments);
+  };
+
   var $propertyIsEnumerable$1 = {}.propertyIsEnumerable;
   // eslint-disable-next-line es/no-object-getownpropertydescriptor -- safe
   var getOwnPropertyDescriptor$7 = Object.getOwnPropertyDescriptor;
@@ -438,13 +440,13 @@ var Forestry = (function () {
 
   // `Object.prototype.propertyIsEnumerable` method implementation
   // https://tc39.es/ecma262/#sec-object.prototype.propertyisenumerable
-  var f$d = NASHORN_BUG$1 ? function propertyIsEnumerable(V) {
+  var f$e = NASHORN_BUG$1 ? function propertyIsEnumerable(V) {
     var descriptor = getOwnPropertyDescriptor$7(this, V);
     return !!descriptor && descriptor.enumerable;
   } : $propertyIsEnumerable$1;
 
   var objectPropertyIsEnumerable$1 = {
-  	f: f$d
+  	f: f$e
   };
 
   var createPropertyDescriptor$1 = function (bitmap, value) {
@@ -456,27 +458,44 @@ var Forestry = (function () {
     };
   };
 
-  var toString$3 = {}.toString;
+  var FunctionPrototype$4 = Function.prototype;
+  var bind$3 = FunctionPrototype$4.bind;
+  var call$1 = FunctionPrototype$4.call;
+  var uncurryThis = functionBindNative && bind$3.bind(call$1, call$1);
 
-  var classofRaw$1 = function (it) {
-    return toString$3.call(it).slice(8, -1);
+  var functionUncurryThis = functionBindNative ? function (fn) {
+    return fn && uncurryThis(fn);
+  } : function (fn) {
+    return fn && function () {
+      return call$1.apply(fn, arguments);
+    };
   };
 
-  var split$1 = ''.split;
+  var toString$3 = functionUncurryThis({}.toString);
+  var stringSlice$b = functionUncurryThis(''.slice);
+
+  var classofRaw$1 = function (it) {
+    return stringSlice$b(toString$3(it), 8, -1);
+  };
+
+  var Object$5 = global$1.Object;
+  var split$4 = functionUncurryThis(''.split);
 
   // fallback for non-array-like ES3 and non-enumerable old V8 strings
   var indexedObject$1 = fails$1(function () {
     // throws an error in rhino, see https://github.com/mozilla/rhino/issues/346
     // eslint-disable-next-line no-prototype-builtins -- safe
-    return !Object('z').propertyIsEnumerable(0);
+    return !Object$5('z').propertyIsEnumerable(0);
   }) ? function (it) {
-    return classofRaw$1(it) == 'String' ? split$1.call(it, '') : Object(it);
-  } : Object;
+    return classofRaw$1(it) == 'String' ? split$4(it, '') : Object$5(it);
+  } : Object$5;
+
+  var TypeError$q = global$1.TypeError;
 
   // `RequireObjectCoercible` abstract operation
   // https://tc39.es/ecma262/#sec-requireobjectcoercible
   var requireObjectCoercible$1 = function (it) {
-    if (it == undefined) throw TypeError("Can't call method on " + it);
+    if (it == undefined) throw TypeError$q("Can't call method on " + it);
     return it;
   };
 
@@ -488,17 +507,25 @@ var Forestry = (function () {
     return indexedObject$1(requireObjectCoercible$1(it));
   };
 
-  var isObject$1 = function (it) {
-    return typeof it === 'object' ? it !== null : typeof it === 'function';
+  // `IsCallable` abstract operation
+  // https://tc39.es/ecma262/#sec-iscallable
+  var isCallable = function (argument) {
+    return typeof argument == 'function';
   };
 
-  var aFunction$3 = function (variable) {
-    return typeof variable == 'function' ? variable : undefined;
+  var isObject$1 = function (it) {
+    return typeof it == 'object' ? it !== null : isCallable(it);
+  };
+
+  var aFunction$2 = function (argument) {
+    return isCallable(argument) ? argument : undefined;
   };
 
   var getBuiltIn$1 = function (namespace, method) {
-    return arguments.length < 2 ? aFunction$3(global$1[namespace]) : global$1[namespace] && global$1[namespace][method];
+    return arguments.length < 2 ? aFunction$2(global$1[namespace]) : global$1[namespace] && global$1[namespace][method];
   };
+
+  var objectIsPrototypeOf = functionUncurryThis({}.isPrototypeOf);
 
   var engineUserAgent$1 = getBuiltIn$1('navigator', 'userAgent') || '';
 
@@ -510,16 +537,22 @@ var Forestry = (function () {
 
   if (v8$1) {
     match$1 = v8$1.split('.');
-    version$1 = match$1[0] < 4 ? 1 : match$1[0] + match$1[1];
-  } else if (engineUserAgent$1) {
+    // in old Chrome, versions of V8 isn't V8 = Chrome / 10
+    // but their correct versions are not interesting for us
+    version$1 = match$1[0] > 0 && match$1[0] < 4 ? 1 : +(match$1[0] + match$1[1]);
+  }
+
+  // BrowserFS NodeJS `process` polyfill incorrectly set `.v8` to `0.0`
+  // so check `userAgent` even if `.v8` exists, but 0
+  if (!version$1 && engineUserAgent$1) {
     match$1 = engineUserAgent$1.match(/Edge\/(\d+)/);
     if (!match$1 || match$1[1] >= 74) {
       match$1 = engineUserAgent$1.match(/Chrome\/(\d+)/);
-      if (match$1) version$1 = match$1[1];
+      if (match$1) version$1 = +match$1[1];
     }
   }
 
-  var engineV8Version$1 = version$1 && +version$1;
+  var engineV8Version$1 = version$1;
 
   /* eslint-disable es/no-symbol -- required for testing */
 
@@ -539,29 +572,60 @@ var Forestry = (function () {
     && !Symbol.sham
     && typeof Symbol.iterator == 'symbol';
 
+  var Object$4 = global$1.Object;
+
   var isSymbol = useSymbolAsUid$1 ? function (it) {
     return typeof it == 'symbol';
   } : function (it) {
     var $Symbol = getBuiltIn$1('Symbol');
-    return typeof $Symbol == 'function' && Object(it) instanceof $Symbol;
+    return isCallable($Symbol) && objectIsPrototypeOf($Symbol.prototype, Object$4(it));
   };
+
+  var String$6 = global$1.String;
+
+  var tryToString = function (argument) {
+    try {
+      return String$6(argument);
+    } catch (error) {
+      return 'Object';
+    }
+  };
+
+  var TypeError$p = global$1.TypeError;
+
+  // `Assert: IsCallable(argument) is true`
+  var aCallable = function (argument) {
+    if (isCallable(argument)) return argument;
+    throw TypeError$p(tryToString(argument) + ' is not a function');
+  };
+
+  // `GetMethod` abstract operation
+  // https://tc39.es/ecma262/#sec-getmethod
+  var getMethod = function (V, P) {
+    var func = V[P];
+    return func == null ? undefined : aCallable(func);
+  };
+
+  var TypeError$o = global$1.TypeError;
 
   // `OrdinaryToPrimitive` abstract operation
   // https://tc39.es/ecma262/#sec-ordinarytoprimitive
   var ordinaryToPrimitive = function (input, pref) {
     var fn, val;
-    if (pref === 'string' && typeof (fn = input.toString) == 'function' && !isObject$1(val = fn.call(input))) return val;
-    if (typeof (fn = input.valueOf) == 'function' && !isObject$1(val = fn.call(input))) return val;
-    if (pref !== 'string' && typeof (fn = input.toString) == 'function' && !isObject$1(val = fn.call(input))) return val;
-    throw TypeError("Can't convert object to primitive value");
+    if (pref === 'string' && isCallable(fn = input.toString) && !isObject$1(val = functionCall(fn, input))) return val;
+    if (isCallable(fn = input.valueOf) && !isObject$1(val = functionCall(fn, input))) return val;
+    if (pref !== 'string' && isCallable(fn = input.toString) && !isObject$1(val = functionCall(fn, input))) return val;
+    throw TypeError$o("Can't convert object to primitive value");
   };
 
   var isPure$1 = false;
 
+  // eslint-disable-next-line es/no-object-defineproperty -- safe
+  var defineProperty$j = Object.defineProperty;
+
   var setGlobal$1 = function (key, value) {
     try {
-      // eslint-disable-next-line es/no-object-defineproperty -- safe
-      Object.defineProperty(global$1, key, { value: value, configurable: true, writable: true });
+      defineProperty$j(global$1, key, { value: value, configurable: true, writable: true });
     } catch (error) {
       global$1[key] = value;
     } return value;
@@ -576,58 +640,70 @@ var Forestry = (function () {
   (module.exports = function (key, value) {
     return sharedStore$1[key] || (sharedStore$1[key] = value !== undefined ? value : {});
   })('versions', []).push({
-    version: '3.16.0',
+    version: '3.20.3',
     mode: 'global',
-    copyright: '© 2021 Denis Pushkarev (zloirock.ru)'
+    copyright: '© 2014-2022 Denis Pushkarev (zloirock.ru)',
+    license: 'https://github.com/zloirock/core-js/blob/v3.20.3/LICENSE',
+    source: 'https://github.com/zloirock/core-js'
   });
   });
+
+  var Object$3 = global$1.Object;
 
   // `ToObject` abstract operation
   // https://tc39.es/ecma262/#sec-toobject
   var toObject$1 = function (argument) {
-    return Object(requireObjectCoercible$1(argument));
+    return Object$3(requireObjectCoercible$1(argument));
   };
 
-  var hasOwnProperty$1 = {}.hasOwnProperty;
+  var hasOwnProperty$1 = functionUncurryThis({}.hasOwnProperty);
 
-  var has$3 = Object.hasOwn || function hasOwn(it, key) {
-    return hasOwnProperty$1.call(toObject$1(it), key);
+  // `HasOwnProperty` abstract operation
+  // https://tc39.es/ecma262/#sec-hasownproperty
+  var hasOwnProperty_1 = Object.hasOwn || function hasOwn(it, key) {
+    return hasOwnProperty$1(toObject$1(it), key);
   };
 
-  var id$1 = 0;
+  var id$2 = 0;
   var postfix$1 = Math.random();
+  var toString$2 = functionUncurryThis(1.0.toString);
 
   var uid$1 = function (key) {
-    return 'Symbol(' + String(key === undefined ? '' : key) + ')_' + (++id$1 + postfix$1).toString(36);
+    return 'Symbol(' + (key === undefined ? '' : key) + ')_' + toString$2(++id$2 + postfix$1, 36);
   };
 
   var WellKnownSymbolsStore$2 = shared$1('wks');
   var Symbol$2 = global$1.Symbol;
+  var symbolFor = Symbol$2 && Symbol$2['for'];
   var createWellKnownSymbol$1 = useSymbolAsUid$1 ? Symbol$2 : Symbol$2 && Symbol$2.withoutSetter || uid$1;
 
   var wellKnownSymbol$1 = function (name) {
-    if (!has$3(WellKnownSymbolsStore$2, name) || !(nativeSymbol$1 || typeof WellKnownSymbolsStore$2[name] == 'string')) {
-      if (nativeSymbol$1 && has$3(Symbol$2, name)) {
+    if (!hasOwnProperty_1(WellKnownSymbolsStore$2, name) || !(nativeSymbol$1 || typeof WellKnownSymbolsStore$2[name] == 'string')) {
+      var description = 'Symbol.' + name;
+      if (nativeSymbol$1 && hasOwnProperty_1(Symbol$2, name)) {
         WellKnownSymbolsStore$2[name] = Symbol$2[name];
+      } else if (useSymbolAsUid$1 && symbolFor) {
+        WellKnownSymbolsStore$2[name] = symbolFor(description);
       } else {
-        WellKnownSymbolsStore$2[name] = createWellKnownSymbol$1('Symbol.' + name);
+        WellKnownSymbolsStore$2[name] = createWellKnownSymbol$1(description);
       }
     } return WellKnownSymbolsStore$2[name];
   };
 
+  var TypeError$n = global$1.TypeError;
   var TO_PRIMITIVE$1 = wellKnownSymbol$1('toPrimitive');
 
   // `ToPrimitive` abstract operation
   // https://tc39.es/ecma262/#sec-toprimitive
   var toPrimitive$1 = function (input, pref) {
     if (!isObject$1(input) || isSymbol(input)) return input;
-    var exoticToPrim = input[TO_PRIMITIVE$1];
+    var exoticToPrim = getMethod(input, TO_PRIMITIVE$1);
     var result;
-    if (exoticToPrim !== undefined) {
+    if (exoticToPrim) {
       if (pref === undefined) pref = 'default';
-      result = exoticToPrim.call(input, pref);
+      result = functionCall(exoticToPrim, input, pref);
       if (!isObject$1(result) || isSymbol(result)) return result;
-      throw TypeError("Can't convert object to primitive value");
+      throw TypeError$n("Can't convert object to primitive value");
     }
     if (pref === undefined) pref = 'number';
     return ordinaryToPrimitive(input, pref);
@@ -637,68 +713,102 @@ var Forestry = (function () {
   // https://tc39.es/ecma262/#sec-topropertykey
   var toPropertyKey = function (argument) {
     var key = toPrimitive$1(argument, 'string');
-    return isSymbol(key) ? key : String(key);
+    return isSymbol(key) ? key : key + '';
   };
 
   var document$5 = global$1.document;
   // typeof document.createElement is 'object' in old IE
-  var EXISTS$1 = isObject$1(document$5) && isObject$1(document$5.createElement);
+  var EXISTS$2 = isObject$1(document$5) && isObject$1(document$5.createElement);
 
   var documentCreateElement$1 = function (it) {
-    return EXISTS$1 ? document$5.createElement(it) : {};
+    return EXISTS$2 ? document$5.createElement(it) : {};
   };
 
-  // Thank's IE8 for his funny defineProperty
+  // Thanks to IE8 for its funny defineProperty
   var ie8DomDefine$1 = !descriptors$1 && !fails$1(function () {
-    // eslint-disable-next-line es/no-object-defineproperty -- requied for testing
+    // eslint-disable-next-line es/no-object-defineproperty -- required for testing
     return Object.defineProperty(documentCreateElement$1('div'), 'a', {
       get: function () { return 7; }
     }).a != 7;
   });
 
   // eslint-disable-next-line es/no-object-getownpropertydescriptor -- safe
-  var $getOwnPropertyDescriptor$1 = Object.getOwnPropertyDescriptor;
+  var $getOwnPropertyDescriptor$2 = Object.getOwnPropertyDescriptor;
 
   // `Object.getOwnPropertyDescriptor` method
   // https://tc39.es/ecma262/#sec-object.getownpropertydescriptor
-  var f$c = descriptors$1 ? $getOwnPropertyDescriptor$1 : function getOwnPropertyDescriptor(O, P) {
+  var f$d = descriptors$1 ? $getOwnPropertyDescriptor$2 : function getOwnPropertyDescriptor(O, P) {
     O = toIndexedObject$1(O);
     P = toPropertyKey(P);
     if (ie8DomDefine$1) try {
-      return $getOwnPropertyDescriptor$1(O, P);
+      return $getOwnPropertyDescriptor$2(O, P);
     } catch (error) { /* empty */ }
-    if (has$3(O, P)) return createPropertyDescriptor$1(!objectPropertyIsEnumerable$1.f.call(O, P), O[P]);
+    if (hasOwnProperty_1(O, P)) return createPropertyDescriptor$1(!functionCall(objectPropertyIsEnumerable$1.f, O, P), O[P]);
   };
 
   var objectGetOwnPropertyDescriptor$1 = {
-  	f: f$c
+  	f: f$d
   };
 
-  var anObject$1 = function (it) {
-    if (!isObject$1(it)) {
-      throw TypeError(String(it) + ' is not an object');
-    } return it;
+  // V8 ~ Chrome 36-
+  // https://bugs.chromium.org/p/v8/issues/detail?id=3334
+  var v8PrototypeDefineBug = descriptors$1 && fails$1(function () {
+    // eslint-disable-next-line es/no-object-defineproperty -- required for testing
+    return Object.defineProperty(function () { /* empty */ }, 'prototype', {
+      value: 42,
+      writable: false
+    }).prototype != 42;
+  });
+
+  var String$5 = global$1.String;
+  var TypeError$m = global$1.TypeError;
+
+  // `Assert: Type(argument) is Object`
+  var anObject$1 = function (argument) {
+    if (isObject$1(argument)) return argument;
+    throw TypeError$m(String$5(argument) + ' is not an object');
   };
 
+  var TypeError$l = global$1.TypeError;
   // eslint-disable-next-line es/no-object-defineproperty -- safe
   var $defineProperty$1 = Object.defineProperty;
+  // eslint-disable-next-line es/no-object-getownpropertydescriptor -- safe
+  var $getOwnPropertyDescriptor$1 = Object.getOwnPropertyDescriptor;
+  var ENUMERABLE = 'enumerable';
+  var CONFIGURABLE$1 = 'configurable';
+  var WRITABLE = 'writable';
 
   // `Object.defineProperty` method
   // https://tc39.es/ecma262/#sec-object.defineproperty
-  var f$b = descriptors$1 ? $defineProperty$1 : function defineProperty(O, P, Attributes) {
+  var f$c = descriptors$1 ? v8PrototypeDefineBug ? function defineProperty(O, P, Attributes) {
+    anObject$1(O);
+    P = toPropertyKey(P);
+    anObject$1(Attributes);
+    if (typeof O === 'function' && P === 'prototype' && 'value' in Attributes && WRITABLE in Attributes && !Attributes[WRITABLE]) {
+      var current = $getOwnPropertyDescriptor$1(O, P);
+      if (current && current[WRITABLE]) {
+        O[P] = Attributes.value;
+        Attributes = {
+          configurable: CONFIGURABLE$1 in Attributes ? Attributes[CONFIGURABLE$1] : current[CONFIGURABLE$1],
+          enumerable: ENUMERABLE in Attributes ? Attributes[ENUMERABLE] : current[ENUMERABLE],
+          writable: false
+        };
+      }
+    } return $defineProperty$1(O, P, Attributes);
+  } : $defineProperty$1 : function defineProperty(O, P, Attributes) {
     anObject$1(O);
     P = toPropertyKey(P);
     anObject$1(Attributes);
     if (ie8DomDefine$1) try {
       return $defineProperty$1(O, P, Attributes);
     } catch (error) { /* empty */ }
-    if ('get' in Attributes || 'set' in Attributes) throw TypeError('Accessors not supported');
+    if ('get' in Attributes || 'set' in Attributes) throw TypeError$l('Accessors not supported');
     if ('value' in Attributes) O[P] = Attributes.value;
     return O;
   };
 
   var objectDefineProperty$1 = {
-  	f: f$b
+  	f: f$c
   };
 
   var createNonEnumerableProperty$1 = descriptors$1 ? function (object, key, value) {
@@ -708,12 +818,12 @@ var Forestry = (function () {
     return object;
   };
 
-  var functionToString$1 = Function.toString;
+  var functionToString$2 = functionUncurryThis(Function.toString);
 
   // this helper broken in `core-js@3.4.1-3.4.4`, so we can't use `shared` helper
-  if (typeof sharedStore$1.inspectSource != 'function') {
+  if (!isCallable(sharedStore$1.inspectSource)) {
     sharedStore$1.inspectSource = function (it) {
-      return functionToString$1.call(it);
+      return functionToString$2(it);
     };
   }
 
@@ -721,7 +831,7 @@ var Forestry = (function () {
 
   var WeakMap$3 = global$1.WeakMap;
 
-  var nativeWeakMap$1 = typeof WeakMap$3 === 'function' && /native code/.test(inspectSource$1(WeakMap$3));
+  var nativeWeakMap$1 = isCallable(WeakMap$3) && /native code/.test(inspectSource$1(WeakMap$3));
 
   var keys$7 = shared$1('keys');
 
@@ -732,6 +842,7 @@ var Forestry = (function () {
   var hiddenKeys$3 = {};
 
   var OBJECT_ALREADY_INITIALIZED = 'Object already initialized';
+  var TypeError$k = global$1.TypeError;
   var WeakMap$2 = global$1.WeakMap;
   var set$5, get$3, has$2;
 
@@ -743,42 +854,42 @@ var Forestry = (function () {
     return function (it) {
       var state;
       if (!isObject$1(it) || (state = get$3(it)).type !== TYPE) {
-        throw TypeError('Incompatible receiver, ' + TYPE + ' required');
+        throw TypeError$k('Incompatible receiver, ' + TYPE + ' required');
       } return state;
     };
   };
 
   if (nativeWeakMap$1 || sharedStore$1.state) {
     var store$2 = sharedStore$1.state || (sharedStore$1.state = new WeakMap$2());
-    var wmget$1 = store$2.get;
-    var wmhas$1 = store$2.has;
-    var wmset$1 = store$2.set;
+    var wmget$1 = functionUncurryThis(store$2.get);
+    var wmhas$1 = functionUncurryThis(store$2.has);
+    var wmset$1 = functionUncurryThis(store$2.set);
     set$5 = function (it, metadata) {
-      if (wmhas$1.call(store$2, it)) throw new TypeError(OBJECT_ALREADY_INITIALIZED);
+      if (wmhas$1(store$2, it)) throw new TypeError$k(OBJECT_ALREADY_INITIALIZED);
       metadata.facade = it;
-      wmset$1.call(store$2, it, metadata);
+      wmset$1(store$2, it, metadata);
       return metadata;
     };
     get$3 = function (it) {
-      return wmget$1.call(store$2, it) || {};
+      return wmget$1(store$2, it) || {};
     };
     has$2 = function (it) {
-      return wmhas$1.call(store$2, it);
+      return wmhas$1(store$2, it);
     };
   } else {
     var STATE$1 = sharedKey$1('state');
     hiddenKeys$3[STATE$1] = true;
     set$5 = function (it, metadata) {
-      if (has$3(it, STATE$1)) throw new TypeError(OBJECT_ALREADY_INITIALIZED);
+      if (hasOwnProperty_1(it, STATE$1)) throw new TypeError$k(OBJECT_ALREADY_INITIALIZED);
       metadata.facade = it;
       createNonEnumerableProperty$1(it, STATE$1, metadata);
       return metadata;
     };
     get$3 = function (it) {
-      return has$3(it, STATE$1) ? it[STATE$1] : {};
+      return hasOwnProperty_1(it, STATE$1) ? it[STATE$1] : {};
     };
     has$2 = function (it) {
-      return has$3(it, STATE$1);
+      return hasOwnProperty_1(it, STATE$1);
     };
   }
 
@@ -790,7 +901,24 @@ var Forestry = (function () {
     getterFor: getterFor$1
   };
 
+  var FunctionPrototype$3 = Function.prototype;
+  // eslint-disable-next-line es/no-object-getownpropertydescriptor -- safe
+  var getDescriptor = descriptors$1 && Object.getOwnPropertyDescriptor;
+
+  var EXISTS$1 = hasOwnProperty_1(FunctionPrototype$3, 'name');
+  // additional protection from minified / mangled / dropped function names
+  var PROPER = EXISTS$1 && (function something() { /* empty */ }).name === 'something';
+  var CONFIGURABLE = EXISTS$1 && (!descriptors$1 || (descriptors$1 && getDescriptor(FunctionPrototype$3, 'name').configurable));
+
+  var functionName = {
+    EXISTS: EXISTS$1,
+    PROPER: PROPER,
+    CONFIGURABLE: CONFIGURABLE
+  };
+
   var redefine$1 = createCommonjsModule$1(function (module) {
+  var CONFIGURABLE_FUNCTION_NAME = functionName.CONFIGURABLE;
+
   var getInternalState = internalState$1.get;
   var enforceInternalState = internalState$1.enforce;
   var TEMPLATE = String(String).split('String');
@@ -799,14 +927,18 @@ var Forestry = (function () {
     var unsafe = options ? !!options.unsafe : false;
     var simple = options ? !!options.enumerable : false;
     var noTargetGet = options ? !!options.noTargetGet : false;
+    var name = options && options.name !== undefined ? options.name : key;
     var state;
-    if (typeof value == 'function') {
-      if (typeof key == 'string' && !has$3(value, 'name')) {
-        createNonEnumerableProperty$1(value, 'name', key);
+    if (isCallable(value)) {
+      if (String(name).slice(0, 7) === 'Symbol(') {
+        name = '[' + String(name).replace(/^Symbol\(([^)]*)\)/, '$1') + ']';
+      }
+      if (!hasOwnProperty_1(value, 'name') || (CONFIGURABLE_FUNCTION_NAME && value.name !== name)) {
+        createNonEnumerableProperty$1(value, 'name', name);
       }
       state = enforceInternalState(value);
       if (!state.source) {
-        state.source = TEMPLATE.join(typeof key == 'string' ? key : '');
+        state.source = TEMPLATE.join(typeof name == 'string' ? name : '');
       }
     }
     if (O === global$1) {
@@ -822,43 +954,51 @@ var Forestry = (function () {
     else createNonEnumerableProperty$1(O, key, value);
   // add fake Function#toString for correct work wrapped methods / constructors with methods like LoDash isNative
   })(Function.prototype, 'toString', function toString() {
-    return typeof this == 'function' && getInternalState(this).source || inspectSource$1(this);
+    return isCallable(this) && getInternalState(this).source || inspectSource$1(this);
   });
   });
 
   var ceil$3 = Math.ceil;
   var floor$g = Math.floor;
 
-  // `ToInteger` abstract operation
-  // https://tc39.es/ecma262/#sec-tointeger
-  var toInteger$1 = function (argument) {
-    return isNaN(argument = +argument) ? 0 : (argument > 0 ? floor$g : ceil$3)(argument);
+  // `ToIntegerOrInfinity` abstract operation
+  // https://tc39.es/ecma262/#sec-tointegerorinfinity
+  var toIntegerOrInfinity = function (argument) {
+    var number = +argument;
+    // eslint-disable-next-line no-self-compare -- safe
+    return number !== number || number === 0 ? 0 : (number > 0 ? floor$g : ceil$3)(number);
   };
 
+  var max$8 = Math.max;
   var min$d = Math.min;
-
-  // `ToLength` abstract operation
-  // https://tc39.es/ecma262/#sec-tolength
-  var toLength$1 = function (argument) {
-    return argument > 0 ? min$d(toInteger$1(argument), 0x1FFFFFFFFFFFFF) : 0; // 2 ** 53 - 1 == 9007199254740991
-  };
-
-  var max$7 = Math.max;
-  var min$c = Math.min;
 
   // Helper for a popular repeating case of the spec:
   // Let integer be ? ToInteger(index).
   // If integer < 0, let result be max((length + integer), 0); else let result be min(integer, length).
   var toAbsoluteIndex$1 = function (index, length) {
-    var integer = toInteger$1(index);
-    return integer < 0 ? max$7(integer + length, 0) : min$c(integer, length);
+    var integer = toIntegerOrInfinity(index);
+    return integer < 0 ? max$8(integer + length, 0) : min$d(integer, length);
+  };
+
+  var min$c = Math.min;
+
+  // `ToLength` abstract operation
+  // https://tc39.es/ecma262/#sec-tolength
+  var toLength$1 = function (argument) {
+    return argument > 0 ? min$c(toIntegerOrInfinity(argument), 0x1FFFFFFFFFFFFF) : 0; // 2 ** 53 - 1 == 9007199254740991
+  };
+
+  // `LengthOfArrayLike` abstract operation
+  // https://tc39.es/ecma262/#sec-lengthofarraylike
+  var lengthOfArrayLike = function (obj) {
+    return toLength$1(obj.length);
   };
 
   // `Array.prototype.{ indexOf, includes }` methods implementation
   var createMethod$9 = function (IS_INCLUDES) {
     return function ($this, el, fromIndex) {
       var O = toIndexedObject$1($this);
-      var length = toLength$1(O.length);
+      var length = lengthOfArrayLike(O);
       var index = toAbsoluteIndex$1(fromIndex, length);
       var value;
       // Array#includes uses SameValueZero equality algorithm
@@ -883,18 +1023,20 @@ var Forestry = (function () {
     indexOf: createMethod$9(false)
   };
 
-  var indexOf$1 = arrayIncludes$1.indexOf;
+  var indexOf$2 = arrayIncludes$1.indexOf;
 
+
+  var push$a = functionUncurryThis([].push);
 
   var objectKeysInternal$1 = function (object, names) {
     var O = toIndexedObject$1(object);
     var i = 0;
     var result = [];
     var key;
-    for (key in O) !has$3(hiddenKeys$3, key) && has$3(O, key) && result.push(key);
+    for (key in O) !hasOwnProperty_1(hiddenKeys$3, key) && hasOwnProperty_1(O, key) && push$a(result, key);
     // Don't enum bug & hidden keys
-    while (names.length > i) if (has$3(O, key = names[i++])) {
-      ~indexOf$1(result, key) || result.push(key);
+    while (names.length > i) if (hasOwnProperty_1(O, key = names[i++])) {
+      ~indexOf$2(result, key) || push$a(result, key);
     }
     return result;
   };
@@ -915,35 +1057,39 @@ var Forestry = (function () {
   // `Object.getOwnPropertyNames` method
   // https://tc39.es/ecma262/#sec-object.getownpropertynames
   // eslint-disable-next-line es/no-object-getownpropertynames -- safe
-  var f$a = Object.getOwnPropertyNames || function getOwnPropertyNames(O) {
+  var f$b = Object.getOwnPropertyNames || function getOwnPropertyNames(O) {
     return objectKeysInternal$1(O, hiddenKeys$2);
   };
 
   var objectGetOwnPropertyNames$1 = {
-  	f: f$a
+  	f: f$b
   };
 
   // eslint-disable-next-line es/no-object-getownpropertysymbols -- safe
-  var f$9 = Object.getOwnPropertySymbols;
+  var f$a = Object.getOwnPropertySymbols;
 
   var objectGetOwnPropertySymbols$1 = {
-  	f: f$9
+  	f: f$a
   };
+
+  var concat$3 = functionUncurryThis([].concat);
 
   // all object keys, includes non-enumerable and symbols
   var ownKeys$1 = getBuiltIn$1('Reflect', 'ownKeys') || function ownKeys(it) {
     var keys = objectGetOwnPropertyNames$1.f(anObject$1(it));
     var getOwnPropertySymbols = objectGetOwnPropertySymbols$1.f;
-    return getOwnPropertySymbols ? keys.concat(getOwnPropertySymbols(it)) : keys;
+    return getOwnPropertySymbols ? concat$3(keys, getOwnPropertySymbols(it)) : keys;
   };
 
-  var copyConstructorProperties$1 = function (target, source) {
+  var copyConstructorProperties$1 = function (target, source, exceptions) {
     var keys = ownKeys$1(source);
     var defineProperty = objectDefineProperty$1.f;
     var getOwnPropertyDescriptor = objectGetOwnPropertyDescriptor$1.f;
     for (var i = 0; i < keys.length; i++) {
       var key = keys[i];
-      if (!has$3(target, key)) defineProperty(target, key, getOwnPropertyDescriptor(source, key));
+      if (!hasOwnProperty_1(target, key) && !(exceptions && hasOwnProperty_1(exceptions, key))) {
+        defineProperty(target, key, getOwnPropertyDescriptor(source, key));
+      }
     }
   };
 
@@ -953,7 +1099,7 @@ var Forestry = (function () {
     var value = data$1[normalize$1(feature)];
     return value == POLYFILL$1 ? true
       : value == NATIVE$1 ? false
-      : typeof detection == 'function' ? fails$1(detection)
+      : isCallable(detection) ? fails$1(detection)
       : !!detection;
   };
 
@@ -987,6 +1133,7 @@ var Forestry = (function () {
     options.sham        - add a flag to not completely full polyfills
     options.enumerable  - export as enumerable property
     options.noTargetGet - prevent calling a getter on target
+    options.name        - the .name of the function if it does not match the key
   */
   var _export$1 = function (options, source) {
     var TARGET = options.target;
@@ -1009,7 +1156,7 @@ var Forestry = (function () {
       FORCED = isForced_1$1(GLOBAL ? key : TARGET + (STATIC ? '.' : '#') + key, options.forced);
       // contained in target
       if (!FORCED && targetProperty !== undefined) {
-        if (typeof sourceProperty === typeof targetProperty) continue;
+        if (typeof sourceProperty == typeof targetProperty) continue;
         copyConstructorProperties$1(sourceProperty, targetProperty);
       }
       // add a flag to not completely full polyfills
@@ -1021,16 +1168,59 @@ var Forestry = (function () {
     }
   };
 
+  var FunctionPrototype$2 = Function.prototype;
+  var apply = FunctionPrototype$2.apply;
+  var call = FunctionPrototype$2.call;
+
+  // eslint-disable-next-line es/no-reflect -- safe
+  var functionApply = typeof Reflect == 'object' && Reflect.apply || (functionBindNative ? call.bind(apply) : function () {
+    return call.apply(apply, arguments);
+  });
+
   // `IsArray` abstract operation
   // https://tc39.es/ecma262/#sec-isarray
   // eslint-disable-next-line es/no-array-isarray -- safe
-  var isArray$1 = Array.isArray || function isArray(arg) {
-    return classofRaw$1(arg) == 'Array';
+  var isArray$1 = Array.isArray || function isArray(argument) {
+    return classofRaw$1(argument) == 'Array';
   };
 
-  var toString$2 = function (argument) {
-    if (isSymbol(argument)) throw TypeError('Cannot convert a Symbol value to a string');
-    return String(argument);
+  var TO_STRING_TAG$9 = wellKnownSymbol$1('toStringTag');
+  var test$4 = {};
+
+  test$4[TO_STRING_TAG$9] = 'z';
+
+  var toStringTagSupport$1 = String(test$4) === '[object z]';
+
+  var TO_STRING_TAG$8 = wellKnownSymbol$1('toStringTag');
+  var Object$2 = global$1.Object;
+
+  // ES3 wrong here
+  var CORRECT_ARGUMENTS$1 = classofRaw$1(function () { return arguments; }()) == 'Arguments';
+
+  // fallback for IE11 Script Access Denied error
+  var tryGet$1 = function (it, key) {
+    try {
+      return it[key];
+    } catch (error) { /* empty */ }
+  };
+
+  // getting tag from ES6+ `Object.prototype.toString`
+  var classof$1 = toStringTagSupport$1 ? classofRaw$1 : function (it) {
+    var O, tag, result;
+    return it === undefined ? 'Undefined' : it === null ? 'Null'
+      // @@toStringTag case
+      : typeof (tag = tryGet$1(O = Object$2(it), TO_STRING_TAG$8)) == 'string' ? tag
+      // builtinTag case
+      : CORRECT_ARGUMENTS$1 ? classofRaw$1(O)
+      // ES3 arguments fallback
+      : (result = classofRaw$1(O)) == 'Object' && isCallable(O.callee) ? 'Arguments' : result;
+  };
+
+  var String$4 = global$1.String;
+
+  var toString$1 = function (argument) {
+    if (classof$1(argument) === 'Symbol') throw TypeError('Cannot convert a Symbol value to a string');
+    return String$4(argument);
   };
 
   // `Object.keys` method
@@ -1043,14 +1233,19 @@ var Forestry = (function () {
   // `Object.defineProperties` method
   // https://tc39.es/ecma262/#sec-object.defineproperties
   // eslint-disable-next-line es/no-object-defineproperties -- safe
-  var objectDefineProperties$1 = descriptors$1 ? Object.defineProperties : function defineProperties(O, Properties) {
+  var f$9 = descriptors$1 && !v8PrototypeDefineBug ? Object.defineProperties : function defineProperties(O, Properties) {
     anObject$1(O);
+    var props = toIndexedObject$1(Properties);
     var keys = objectKeys$1(Properties);
     var length = keys.length;
     var index = 0;
     var key;
-    while (length > index) objectDefineProperty$1.f(O, key = keys[index++], Properties[key]);
+    while (length > index) objectDefineProperty$1.f(O, key = keys[index++], props[key]);
     return O;
+  };
+
+  var objectDefineProperties$1 = {
+  	f: f$9
   };
 
   var html$1 = getBuiltIn$1('document', 'documentElement');
@@ -1084,17 +1279,15 @@ var Forestry = (function () {
     var iframe = documentCreateElement$1('iframe');
     var JS = 'java' + SCRIPT$1 + ':';
     var iframeDocument;
-    if (iframe.style) {
-      iframe.style.display = 'none';
-      html$1.appendChild(iframe);
-      // https://github.com/zloirock/core-js/issues/475
-      iframe.src = String(JS);
-      iframeDocument = iframe.contentWindow.document;
-      iframeDocument.open();
-      iframeDocument.write(scriptTag$1('document.F=Object'));
-      iframeDocument.close();
-      return iframeDocument.F;
-    }
+    iframe.style.display = 'none';
+    html$1.appendChild(iframe);
+    // https://github.com/zloirock/core-js/issues/475
+    iframe.src = String(JS);
+    iframeDocument = iframe.contentWindow.document;
+    iframeDocument.open();
+    iframeDocument.write(scriptTag$1('document.F=Object'));
+    iframeDocument.close();
+    return iframeDocument.F;
   };
 
   // Check for document.domain and active x support
@@ -1107,10 +1300,11 @@ var Forestry = (function () {
     try {
       activeXDocument$1 = new ActiveXObject('htmlfile');
     } catch (error) { /* ignore */ }
-    NullProtoObject = document.domain && activeXDocument$1 ?
-      NullProtoObjectViaActiveX$1(activeXDocument$1) : // old IE
-      NullProtoObjectViaIFrame$1() ||
-      NullProtoObjectViaActiveX$1(activeXDocument$1); // WSH
+    NullProtoObject = typeof document != 'undefined'
+      ? document.domain && activeXDocument$1
+        ? NullProtoObjectViaActiveX$1(activeXDocument$1) // old IE
+        : NullProtoObjectViaIFrame$1()
+      : NullProtoObjectViaActiveX$1(activeXDocument$1); // WSH
     var length = enumBugKeys$1.length;
     while (length--) delete NullProtoObject[PROTOTYPE$4][enumBugKeys$1[length]];
     return NullProtoObject();
@@ -1129,14 +1323,32 @@ var Forestry = (function () {
       // add "__proto__" for Object.getPrototypeOf polyfill
       result[IE_PROTO$3] = O;
     } else result = NullProtoObject();
-    return Properties === undefined ? result : objectDefineProperties$1(result, Properties);
+    return Properties === undefined ? result : objectDefineProperties$1.f(result, Properties);
+  };
+
+  var createProperty$1 = function (object, key, value) {
+    var propertyKey = toPropertyKey(key);
+    if (propertyKey in object) objectDefineProperty$1.f(object, propertyKey, createPropertyDescriptor$1(0, value));
+    else object[propertyKey] = value;
+  };
+
+  var Array$8 = global$1.Array;
+  var max$7 = Math.max;
+
+  var arraySliceSimple = function (O, start, end) {
+    var length = lengthOfArrayLike(O);
+    var k = toAbsoluteIndex$1(start, length);
+    var fin = toAbsoluteIndex$1(end === undefined ? length : end, length);
+    var result = Array$8(max$7(fin - k, 0));
+    for (var n = 0; k < fin; k++, n++) createProperty$1(result, n, O[k]);
+    result.length = n;
+    return result;
   };
 
   /* eslint-disable es/no-object-getownpropertynames -- safe */
 
   var $getOwnPropertyNames$1 = objectGetOwnPropertyNames$1.f;
 
-  var toString$1 = {}.toString;
 
   var windowNames = typeof window == 'object' && window && Object.getOwnPropertyNames
     ? Object.getOwnPropertyNames(window) : [];
@@ -1145,13 +1357,13 @@ var Forestry = (function () {
     try {
       return $getOwnPropertyNames$1(it);
     } catch (error) {
-      return windowNames.slice();
+      return arraySliceSimple(windowNames);
     }
   };
 
   // fallback for IE11 buggy Object.getOwnPropertyNames with iframe and window
   var f$8 = function getOwnPropertyNames(it) {
-    return windowNames && toString$1.call(it) == '[object Window]'
+    return windowNames && classofRaw$1(it) == 'Window'
       ? getWindowNames(it)
       : $getOwnPropertyNames$1(toIndexedObject$1(it));
   };
@@ -1159,6 +1371,8 @@ var Forestry = (function () {
   var objectGetOwnPropertyNamesExternal = {
   	f: f$8
   };
+
+  var arraySlice$1 = functionUncurryThis([].slice);
 
   var f$7 = wellKnownSymbol$1;
 
@@ -1168,57 +1382,86 @@ var Forestry = (function () {
 
   var path$1 = global$1;
 
-  var defineProperty$g = objectDefineProperty$1.f;
+  var defineProperty$i = objectDefineProperty$1.f;
 
   var defineWellKnownSymbol = function (NAME) {
     var Symbol = path$1.Symbol || (path$1.Symbol = {});
-    if (!has$3(Symbol, NAME)) defineProperty$g(Symbol, NAME, {
+    if (!hasOwnProperty_1(Symbol, NAME)) defineProperty$i(Symbol, NAME, {
       value: wellKnownSymbolWrapped.f(NAME)
     });
   };
 
-  var defineProperty$f = objectDefineProperty$1.f;
+  var defineProperty$h = objectDefineProperty$1.f;
 
 
 
-  var TO_STRING_TAG$9 = wellKnownSymbol$1('toStringTag');
+  var TO_STRING_TAG$7 = wellKnownSymbol$1('toStringTag');
 
-  var setToStringTag$1 = function (it, TAG, STATIC) {
-    if (it && !has$3(it = STATIC ? it : it.prototype, TO_STRING_TAG$9)) {
-      defineProperty$f(it, TO_STRING_TAG$9, { configurable: true, value: TAG });
+  var setToStringTag$1 = function (target, TAG, STATIC) {
+    if (target && !STATIC) target = target.prototype;
+    if (target && !hasOwnProperty_1(target, TO_STRING_TAG$7)) {
+      defineProperty$h(target, TO_STRING_TAG$7, { configurable: true, value: TAG });
     }
   };
 
-  var aFunction$2 = function (it) {
-    if (typeof it != 'function') {
-      throw TypeError(String(it) + ' is not a function');
-    } return it;
-  };
+  var bind$2 = functionUncurryThis(functionUncurryThis.bind);
 
   // optional / simple context binding
-  var functionBindContext$1 = function (fn, that, length) {
-    aFunction$2(fn);
-    if (that === undefined) return fn;
-    switch (length) {
-      case 0: return function () {
-        return fn.call(that);
-      };
-      case 1: return function (a) {
-        return fn.call(that, a);
-      };
-      case 2: return function (a, b) {
-        return fn.call(that, a, b);
-      };
-      case 3: return function (a, b, c) {
-        return fn.call(that, a, b, c);
-      };
-    }
-    return function (/* ...args */) {
+  var functionBindContext$1 = function (fn, that) {
+    aCallable(fn);
+    return that === undefined ? fn : functionBindNative ? bind$2(fn, that) : function (/* ...args */) {
       return fn.apply(that, arguments);
     };
   };
 
+  var noop = function () { /* empty */ };
+  var empty = [];
+  var construct$1 = getBuiltIn$1('Reflect', 'construct');
+  var constructorRegExp = /^\s*(?:class|function)\b/;
+  var exec$5 = functionUncurryThis(constructorRegExp.exec);
+  var INCORRECT_TO_STRING = !constructorRegExp.exec(noop);
+
+  var isConstructorModern = function isConstructor(argument) {
+    if (!isCallable(argument)) return false;
+    try {
+      construct$1(noop, empty, argument);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  };
+
+  var isConstructorLegacy = function isConstructor(argument) {
+    if (!isCallable(argument)) return false;
+    switch (classof$1(argument)) {
+      case 'AsyncFunction':
+      case 'GeneratorFunction':
+      case 'AsyncGeneratorFunction': return false;
+    }
+    try {
+      // we can't check .prototype since constructors produced by .bind haven't it
+      // `Function#toString` throws on some built-it function in some legacy engines
+      // (for example, `DOMQuad` and similar in FF41-)
+      return INCORRECT_TO_STRING || !!exec$5(constructorRegExp, inspectSource$1(argument));
+    } catch (error) {
+      return true;
+    }
+  };
+
+  isConstructorLegacy.sham = true;
+
+  // `IsConstructor` abstract operation
+  // https://tc39.es/ecma262/#sec-isconstructor
+  var isConstructor = !construct$1 || fails$1(function () {
+    var called;
+    return isConstructorModern(isConstructorModern.call)
+      || !isConstructorModern(Object)
+      || !isConstructorModern(function () { called = true; })
+      || called;
+  }) ? isConstructorLegacy : isConstructorModern;
+
   var SPECIES$d = wellKnownSymbol$1('species');
+  var Array$7 = global$1.Array;
 
   // a part of `ArraySpeciesCreate` abstract operation
   // https://tc39.es/ecma262/#sec-arrayspeciescreate
@@ -1227,12 +1470,12 @@ var Forestry = (function () {
     if (isArray$1(originalArray)) {
       C = originalArray.constructor;
       // cross-realm fallback
-      if (typeof C == 'function' && (C === Array || isArray$1(C.prototype))) C = undefined;
+      if (isConstructor(C) && (C === Array$7 || isArray$1(C.prototype))) C = undefined;
       else if (isObject$1(C)) {
         C = C[SPECIES$d];
         if (C === null) C = undefined;
       }
-    } return C === undefined ? Array : C;
+    } return C === undefined ? Array$7 : C;
   };
 
   // `ArraySpeciesCreate` abstract operation
@@ -1241,7 +1484,7 @@ var Forestry = (function () {
     return new (arraySpeciesConstructor(originalArray))(length === 0 ? 0 : length);
   };
 
-  var push$1 = [].push;
+  var push$9 = functionUncurryThis([].push);
 
   // `Array.prototype.{ forEach, map, filter, some, every, find, findIndex, filterReject }` methods implementation
   var createMethod$8 = function (TYPE) {
@@ -1255,8 +1498,8 @@ var Forestry = (function () {
     return function ($this, callbackfn, that, specificCreate) {
       var O = toObject$1($this);
       var self = indexedObject$1(O);
-      var boundFunction = functionBindContext$1(callbackfn, that, 3);
-      var length = toLength$1(self.length);
+      var boundFunction = functionBindContext$1(callbackfn, that);
+      var length = lengthOfArrayLike(self);
       var index = 0;
       var create = specificCreate || arraySpeciesCreate$1;
       var target = IS_MAP ? create($this, length) : IS_FILTER || IS_FILTER_REJECT ? create($this, 0) : undefined;
@@ -1270,10 +1513,10 @@ var Forestry = (function () {
             case 3: return true;              // some
             case 5: return value;             // find
             case 6: return index;             // findIndex
-            case 2: push$1.call(target, value); // filter
+            case 2: push$9(target, value);      // filter
           } else switch (TYPE) {
             case 4: return false;             // every
-            case 7: push$1.call(target, value); // filterReject
+            case 7: push$9(target, value);      // filterReject
           }
         }
       }
@@ -1314,21 +1557,28 @@ var Forestry = (function () {
   var SYMBOL = 'Symbol';
   var PROTOTYPE$3 = 'prototype';
   var TO_PRIMITIVE = wellKnownSymbol$1('toPrimitive');
+
   var setInternalState$d = internalState$1.set;
-  var getInternalState$9 = internalState$1.getterFor(SYMBOL);
+  var getInternalState$a = internalState$1.getterFor(SYMBOL);
+
   var ObjectPrototype$6 = Object[PROTOTYPE$3];
   var $Symbol = global$1.Symbol;
-  var $stringify = getBuiltIn$1('JSON', 'stringify');
+  var SymbolPrototype$1 = $Symbol && $Symbol[PROTOTYPE$3];
+  var TypeError$j = global$1.TypeError;
+  var QObject = global$1.QObject;
+  var $stringify$1 = getBuiltIn$1('JSON', 'stringify');
   var nativeGetOwnPropertyDescriptor$2 = objectGetOwnPropertyDescriptor$1.f;
   var nativeDefineProperty$1 = objectDefineProperty$1.f;
   var nativeGetOwnPropertyNames = objectGetOwnPropertyNamesExternal.f;
   var nativePropertyIsEnumerable$1 = objectPropertyIsEnumerable$1.f;
+  var push$8 = functionUncurryThis([].push);
+
   var AllSymbols = shared$1('symbols');
   var ObjectPrototypeSymbols = shared$1('op-symbols');
   var StringToSymbolRegistry = shared$1('string-to-symbol-registry');
   var SymbolToStringRegistry = shared$1('symbol-to-string-registry');
   var WellKnownSymbolsStore$1 = shared$1('wks');
-  var QObject = global$1.QObject;
+
   // Don't use setters in Qt Script, https://github.com/zloirock/core-js/issues/173
   var USE_SETTER = !QObject || !QObject[PROTOTYPE$3] || !QObject[PROTOTYPE$3].findChild;
 
@@ -1347,7 +1597,7 @@ var Forestry = (function () {
   } : nativeDefineProperty$1;
 
   var wrap = function (tag, description) {
-    var symbol = AllSymbols[tag] = objectCreate$1($Symbol[PROTOTYPE$3]);
+    var symbol = AllSymbols[tag] = objectCreate$1(SymbolPrototype$1);
     setInternalState$d(symbol, {
       type: SYMBOL,
       tag: tag,
@@ -1362,12 +1612,12 @@ var Forestry = (function () {
     anObject$1(O);
     var key = toPropertyKey(P);
     anObject$1(Attributes);
-    if (has$3(AllSymbols, key)) {
+    if (hasOwnProperty_1(AllSymbols, key)) {
       if (!Attributes.enumerable) {
-        if (!has$3(O, HIDDEN)) nativeDefineProperty$1(O, HIDDEN, createPropertyDescriptor$1(1, {}));
+        if (!hasOwnProperty_1(O, HIDDEN)) nativeDefineProperty$1(O, HIDDEN, createPropertyDescriptor$1(1, {}));
         O[HIDDEN][key] = true;
       } else {
-        if (has$3(O, HIDDEN) && O[HIDDEN][key]) O[HIDDEN][key] = false;
+        if (hasOwnProperty_1(O, HIDDEN) && O[HIDDEN][key]) O[HIDDEN][key] = false;
         Attributes = objectCreate$1(Attributes, { enumerable: createPropertyDescriptor$1(0, false) });
       } return setSymbolDescriptor(O, key, Attributes);
     } return nativeDefineProperty$1(O, key, Attributes);
@@ -1378,7 +1628,7 @@ var Forestry = (function () {
     var properties = toIndexedObject$1(Properties);
     var keys = objectKeys$1(properties).concat($getOwnPropertySymbols(properties));
     $forEach$4(keys, function (key) {
-      if (!descriptors$1 || $propertyIsEnumerable.call(properties, key)) $defineProperty(O, key, properties[key]);
+      if (!descriptors$1 || functionCall($propertyIsEnumerable, properties, key)) $defineProperty(O, key, properties[key]);
     });
     return O;
   };
@@ -1389,17 +1639,18 @@ var Forestry = (function () {
 
   var $propertyIsEnumerable = function propertyIsEnumerable(V) {
     var P = toPropertyKey(V);
-    var enumerable = nativePropertyIsEnumerable$1.call(this, P);
-    if (this === ObjectPrototype$6 && has$3(AllSymbols, P) && !has$3(ObjectPrototypeSymbols, P)) return false;
-    return enumerable || !has$3(this, P) || !has$3(AllSymbols, P) || has$3(this, HIDDEN) && this[HIDDEN][P] ? enumerable : true;
+    var enumerable = functionCall(nativePropertyIsEnumerable$1, this, P);
+    if (this === ObjectPrototype$6 && hasOwnProperty_1(AllSymbols, P) && !hasOwnProperty_1(ObjectPrototypeSymbols, P)) return false;
+    return enumerable || !hasOwnProperty_1(this, P) || !hasOwnProperty_1(AllSymbols, P) || hasOwnProperty_1(this, HIDDEN) && this[HIDDEN][P]
+      ? enumerable : true;
   };
 
   var $getOwnPropertyDescriptor = function getOwnPropertyDescriptor(O, P) {
     var it = toIndexedObject$1(O);
     var key = toPropertyKey(P);
-    if (it === ObjectPrototype$6 && has$3(AllSymbols, key) && !has$3(ObjectPrototypeSymbols, key)) return;
+    if (it === ObjectPrototype$6 && hasOwnProperty_1(AllSymbols, key) && !hasOwnProperty_1(ObjectPrototypeSymbols, key)) return;
     var descriptor = nativeGetOwnPropertyDescriptor$2(it, key);
-    if (descriptor && has$3(AllSymbols, key) && !(has$3(it, HIDDEN) && it[HIDDEN][key])) {
+    if (descriptor && hasOwnProperty_1(AllSymbols, key) && !(hasOwnProperty_1(it, HIDDEN) && it[HIDDEN][key])) {
       descriptor.enumerable = true;
     }
     return descriptor;
@@ -1409,7 +1660,7 @@ var Forestry = (function () {
     var names = nativeGetOwnPropertyNames(toIndexedObject$1(O));
     var result = [];
     $forEach$4(names, function (key) {
-      if (!has$3(AllSymbols, key) && !has$3(hiddenKeys$3, key)) result.push(key);
+      if (!hasOwnProperty_1(AllSymbols, key) && !hasOwnProperty_1(hiddenKeys$3, key)) push$8(result, key);
     });
     return result;
   };
@@ -1419,8 +1670,8 @@ var Forestry = (function () {
     var names = nativeGetOwnPropertyNames(IS_OBJECT_PROTOTYPE ? ObjectPrototypeSymbols : toIndexedObject$1(O));
     var result = [];
     $forEach$4(names, function (key) {
-      if (has$3(AllSymbols, key) && (!IS_OBJECT_PROTOTYPE || has$3(ObjectPrototype$6, key))) {
-        result.push(AllSymbols[key]);
+      if (hasOwnProperty_1(AllSymbols, key) && (!IS_OBJECT_PROTOTYPE || hasOwnProperty_1(ObjectPrototype$6, key))) {
+        push$8(result, AllSymbols[key]);
       }
     });
     return result;
@@ -1430,20 +1681,22 @@ var Forestry = (function () {
   // https://tc39.es/ecma262/#sec-symbol-constructor
   if (!nativeSymbol$1) {
     $Symbol = function Symbol() {
-      if (this instanceof $Symbol) throw TypeError('Symbol is not a constructor');
-      var description = !arguments.length || arguments[0] === undefined ? undefined : toString$2(arguments[0]);
+      if (objectIsPrototypeOf(SymbolPrototype$1, this)) throw TypeError$j('Symbol is not a constructor');
+      var description = !arguments.length || arguments[0] === undefined ? undefined : toString$1(arguments[0]);
       var tag = uid$1(description);
       var setter = function (value) {
-        if (this === ObjectPrototype$6) setter.call(ObjectPrototypeSymbols, value);
-        if (has$3(this, HIDDEN) && has$3(this[HIDDEN], tag)) this[HIDDEN][tag] = false;
+        if (this === ObjectPrototype$6) functionCall(setter, ObjectPrototypeSymbols, value);
+        if (hasOwnProperty_1(this, HIDDEN) && hasOwnProperty_1(this[HIDDEN], tag)) this[HIDDEN][tag] = false;
         setSymbolDescriptor(this, tag, createPropertyDescriptor$1(1, value));
       };
       if (descriptors$1 && USE_SETTER) setSymbolDescriptor(ObjectPrototype$6, tag, { configurable: true, set: setter });
       return wrap(tag, description);
     };
 
-    redefine$1($Symbol[PROTOTYPE$3], 'toString', function toString() {
-      return getInternalState$9(this).tag;
+    SymbolPrototype$1 = $Symbol[PROTOTYPE$3];
+
+    redefine$1(SymbolPrototype$1, 'toString', function toString() {
+      return getInternalState$a(this).tag;
     });
 
     redefine$1($Symbol, 'withoutSetter', function (description) {
@@ -1452,6 +1705,7 @@ var Forestry = (function () {
 
     objectPropertyIsEnumerable$1.f = $propertyIsEnumerable;
     objectDefineProperty$1.f = $defineProperty;
+    objectDefineProperties$1.f = $defineProperties;
     objectGetOwnPropertyDescriptor$1.f = $getOwnPropertyDescriptor;
     objectGetOwnPropertyNames$1.f = objectGetOwnPropertyNamesExternal.f = $getOwnPropertyNames;
     objectGetOwnPropertySymbols$1.f = $getOwnPropertySymbols;
@@ -1462,10 +1716,10 @@ var Forestry = (function () {
 
     if (descriptors$1) {
       // https://github.com/tc39/proposal-Symbol-description
-      nativeDefineProperty$1($Symbol[PROTOTYPE$3], 'description', {
+      nativeDefineProperty$1(SymbolPrototype$1, 'description', {
         configurable: true,
         get: function description() {
-          return getInternalState$9(this).description;
+          return getInternalState$a(this).description;
         }
       });
       {
@@ -1486,8 +1740,8 @@ var Forestry = (function () {
     // `Symbol.for` method
     // https://tc39.es/ecma262/#sec-symbol.for
     'for': function (key) {
-      var string = toString$2(key);
-      if (has$3(StringToSymbolRegistry, string)) return StringToSymbolRegistry[string];
+      var string = toString$1(key);
+      if (hasOwnProperty_1(StringToSymbolRegistry, string)) return StringToSymbolRegistry[string];
       var symbol = $Symbol(string);
       StringToSymbolRegistry[string] = symbol;
       SymbolToStringRegistry[symbol] = string;
@@ -1496,8 +1750,8 @@ var Forestry = (function () {
     // `Symbol.keyFor` method
     // https://tc39.es/ecma262/#sec-symbol.keyfor
     keyFor: function keyFor(sym) {
-      if (!isSymbol(sym)) throw TypeError(sym + ' is not a symbol');
-      if (has$3(SymbolToStringRegistry, sym)) return SymbolToStringRegistry[sym];
+      if (!isSymbol(sym)) throw TypeError$j(sym + ' is not a symbol');
+      if (hasOwnProperty_1(SymbolToStringRegistry, sym)) return SymbolToStringRegistry[sym];
     },
     useSetter: function () { USE_SETTER = true; },
     useSimple: function () { USE_SETTER = false; }
@@ -1537,40 +1791,42 @@ var Forestry = (function () {
 
   // `JSON.stringify` method behavior with symbols
   // https://tc39.es/ecma262/#sec-json.stringify
-  if ($stringify) {
+  if ($stringify$1) {
     var FORCED_JSON_STRINGIFY = !nativeSymbol$1 || fails$1(function () {
       var symbol = $Symbol();
       // MS Edge converts symbol values to JSON as {}
-      return $stringify([symbol]) != '[null]'
+      return $stringify$1([symbol]) != '[null]'
         // WebKit converts symbol values to JSON as null
-        || $stringify({ a: symbol }) != '{}'
+        || $stringify$1({ a: symbol }) != '{}'
         // V8 throws on boxed symbols
-        || $stringify(Object(symbol)) != '{}';
+        || $stringify$1(Object(symbol)) != '{}';
     });
 
     _export$1({ target: 'JSON', stat: true, forced: FORCED_JSON_STRINGIFY }, {
       // eslint-disable-next-line no-unused-vars -- required for `.length`
       stringify: function stringify(it, replacer, space) {
-        var args = [it];
-        var index = 1;
-        var $replacer;
-        while (arguments.length > index) args.push(arguments[index++]);
-        $replacer = replacer;
+        var args = arraySlice$1(arguments);
+        var $replacer = replacer;
         if (!isObject$1(replacer) && it === undefined || isSymbol(it)) return; // IE8 returns string on undefined
         if (!isArray$1(replacer)) replacer = function (key, value) {
-          if (typeof $replacer == 'function') value = $replacer.call(this, key, value);
+          if (isCallable($replacer)) value = functionCall($replacer, this, key, value);
           if (!isSymbol(value)) return value;
         };
         args[1] = replacer;
-        return $stringify.apply(null, args);
+        return functionApply($stringify$1, null, args);
       }
     });
   }
 
   // `Symbol.prototype[@@toPrimitive]` method
   // https://tc39.es/ecma262/#sec-symbol.prototype-@@toprimitive
-  if (!$Symbol[PROTOTYPE$3][TO_PRIMITIVE]) {
-    createNonEnumerableProperty$1($Symbol[PROTOTYPE$3], TO_PRIMITIVE, $Symbol[PROTOTYPE$3].valueOf);
+  if (!SymbolPrototype$1[TO_PRIMITIVE]) {
+    var valueOf = SymbolPrototype$1.valueOf;
+    // eslint-disable-next-line no-unused-vars -- required for .length
+    redefine$1(SymbolPrototype$1, TO_PRIMITIVE, function (hint) {
+      // TODO: improve hint logic
+      return functionCall(valueOf, this);
+    });
   }
   // `Symbol.prototype[@@toStringTag]` property
   // https://tc39.es/ecma262/#sec-symbol.prototype-@@tostringtag
@@ -1578,40 +1834,46 @@ var Forestry = (function () {
 
   hiddenKeys$3[HIDDEN] = true;
 
-  var defineProperty$e = objectDefineProperty$1.f;
+  var defineProperty$g = objectDefineProperty$1.f;
 
 
   var NativeSymbol = global$1.Symbol;
+  var SymbolPrototype = NativeSymbol && NativeSymbol.prototype;
 
-  if (descriptors$1 && typeof NativeSymbol == 'function' && (!('description' in NativeSymbol.prototype) ||
+  if (descriptors$1 && isCallable(NativeSymbol) && (!('description' in SymbolPrototype) ||
     // Safari 12 bug
     NativeSymbol().description !== undefined
   )) {
     var EmptyStringDescriptionStore = {};
     // wrap Symbol constructor for correct work with undefined description
     var SymbolWrapper = function Symbol() {
-      var description = arguments.length < 1 || arguments[0] === undefined ? undefined : String(arguments[0]);
-      var result = this instanceof SymbolWrapper
+      var description = arguments.length < 1 || arguments[0] === undefined ? undefined : toString$1(arguments[0]);
+      var result = objectIsPrototypeOf(SymbolPrototype, this)
         ? new NativeSymbol(description)
         // in Edge 13, String(Symbol(undefined)) === 'Symbol(undefined)'
         : description === undefined ? NativeSymbol() : NativeSymbol(description);
       if (description === '') EmptyStringDescriptionStore[result] = true;
       return result;
     };
-    copyConstructorProperties$1(SymbolWrapper, NativeSymbol);
-    var symbolPrototype = SymbolWrapper.prototype = NativeSymbol.prototype;
-    symbolPrototype.constructor = SymbolWrapper;
 
-    var symbolToString = symbolPrototype.toString;
-    var native = String(NativeSymbol('test')) == 'Symbol(test)';
+    copyConstructorProperties$1(SymbolWrapper, NativeSymbol);
+    SymbolWrapper.prototype = SymbolPrototype;
+    SymbolPrototype.constructor = SymbolWrapper;
+
+    var NATIVE_SYMBOL = String(NativeSymbol('test')) == 'Symbol(test)';
+    var symbolToString = functionUncurryThis(SymbolPrototype.toString);
+    var symbolValueOf = functionUncurryThis(SymbolPrototype.valueOf);
     var regexp = /^Symbol\((.*)\)[^)]+$/;
-    defineProperty$e(symbolPrototype, 'description', {
+    var replace$a = functionUncurryThis(''.replace);
+    var stringSlice$a = functionUncurryThis(''.slice);
+
+    defineProperty$g(SymbolPrototype, 'description', {
       configurable: true,
       get: function description() {
-        var symbol = isObject$1(this) ? this.valueOf() : this;
-        var string = symbolToString.call(symbol);
-        if (has$3(EmptyStringDescriptionStore, symbol)) return '';
-        var desc = native ? string.slice(7, -1) : string.replace(regexp, '$1');
+        var symbol = symbolValueOf(this);
+        var string = symbolToString(symbol);
+        if (hasOwnProperty_1(EmptyStringDescriptionStore, symbol)) return '';
+        var desc = NATIVE_SYMBOL ? stringSlice$a(string, 7, -1) : replace$a(string, regexp, '$1');
         return desc === '' ? undefined : desc;
       }
     });
@@ -1620,36 +1882,6 @@ var Forestry = (function () {
       Symbol: SymbolWrapper
     });
   }
-
-  var TO_STRING_TAG$8 = wellKnownSymbol$1('toStringTag');
-  var test$4 = {};
-
-  test$4[TO_STRING_TAG$8] = 'z';
-
-  var toStringTagSupport$1 = String(test$4) === '[object z]';
-
-  var TO_STRING_TAG$7 = wellKnownSymbol$1('toStringTag');
-  // ES3 wrong here
-  var CORRECT_ARGUMENTS$1 = classofRaw$1(function () { return arguments; }()) == 'Arguments';
-
-  // fallback for IE11 Script Access Denied error
-  var tryGet$1 = function (it, key) {
-    try {
-      return it[key];
-    } catch (error) { /* empty */ }
-  };
-
-  // getting tag from ES6+ `Object.prototype.toString`
-  var classof$1 = toStringTagSupport$1 ? classofRaw$1 : function (it) {
-    var O, tag, result;
-    return it === undefined ? 'Undefined' : it === null ? 'Null'
-      // @@toStringTag case
-      : typeof (tag = tryGet$1(O = Object(it), TO_STRING_TAG$7)) == 'string' ? tag
-      // builtinTag case
-      : CORRECT_ARGUMENTS$1 ? classofRaw$1(O)
-      // ES3 arguments fallback
-      : (result = classofRaw$1(O)) == 'Object' && typeof O.callee == 'function' ? 'Arguments' : result;
-  };
 
   // `Object.prototype.toString` method implementation
   // https://tc39.es/ecma262/#sec-object.prototype.tostring
@@ -1694,23 +1926,22 @@ var Forestry = (function () {
   });
 
   var IE_PROTO$2 = sharedKey$1('IE_PROTO');
-  var ObjectPrototype$5 = Object.prototype;
+  var Object$1 = global$1.Object;
+  var ObjectPrototype$5 = Object$1.prototype;
 
   // `Object.getPrototypeOf` method
   // https://tc39.es/ecma262/#sec-object.getprototypeof
-  // eslint-disable-next-line es/no-object-getprototypeof -- safe
-  var objectGetPrototypeOf$1 = correctPrototypeGetter$1 ? Object.getPrototypeOf : function (O) {
-    O = toObject$1(O);
-    if (has$3(O, IE_PROTO$2)) return O[IE_PROTO$2];
-    if (typeof O.constructor == 'function' && O instanceof O.constructor) {
-      return O.constructor.prototype;
-    } return O instanceof Object ? ObjectPrototype$5 : null;
+  var objectGetPrototypeOf$1 = correctPrototypeGetter$1 ? Object$1.getPrototypeOf : function (O) {
+    var object = toObject$1(O);
+    if (hasOwnProperty_1(object, IE_PROTO$2)) return object[IE_PROTO$2];
+    var constructor = object.constructor;
+    if (isCallable(constructor) && object instanceof constructor) {
+      return constructor.prototype;
+    } return object instanceof Object$1 ? ObjectPrototype$5 : null;
   };
 
   var ITERATOR$h = wellKnownSymbol$1('iterator');
   var BUGGY_SAFARI_ITERATORS$3 = false;
-
-  var returnThis$5 = function () { return this; };
 
   // `%IteratorPrototype%` object
   // https://tc39.es/ecma262/#sec-%iteratorprototype%-object
@@ -1737,8 +1968,10 @@ var Forestry = (function () {
 
   // `%IteratorPrototype%[@@iterator]()` method
   // https://tc39.es/ecma262/#sec-%iteratorprototype%-@@iterator
-  if (!has$3(IteratorPrototype$5, ITERATOR$h)) {
-    createNonEnumerableProperty$1(IteratorPrototype$5, ITERATOR$h, returnThis$5);
+  if (!isCallable(IteratorPrototype$5[ITERATOR$h])) {
+    redefine$1(IteratorPrototype$5, ITERATOR$h, function () {
+      return this;
+    });
   }
 
   var iteratorsCore$1 = {
@@ -1754,18 +1987,20 @@ var Forestry = (function () {
 
   var returnThis$4 = function () { return this; };
 
-  var createIteratorConstructor$1 = function (IteratorConstructor, NAME, next) {
+  var createIteratorConstructor$1 = function (IteratorConstructor, NAME, next, ENUMERABLE_NEXT) {
     var TO_STRING_TAG = NAME + ' Iterator';
-    IteratorConstructor.prototype = objectCreate$1(IteratorPrototype$4, { next: createPropertyDescriptor$1(1, next) });
+    IteratorConstructor.prototype = objectCreate$1(IteratorPrototype$4, { next: createPropertyDescriptor$1(+!ENUMERABLE_NEXT, next) });
     setToStringTag$1(IteratorConstructor, TO_STRING_TAG, false);
     iterators$1[TO_STRING_TAG] = returnThis$4;
     return IteratorConstructor;
   };
 
-  var aPossiblePrototype$1 = function (it) {
-    if (!isObject$1(it) && it !== null) {
-      throw TypeError("Can't set " + String(it) + ' as a prototype');
-    } return it;
+  var String$3 = global$1.String;
+  var TypeError$i = global$1.TypeError;
+
+  var aPossiblePrototype$1 = function (argument) {
+    if (typeof argument == 'object' || isCallable(argument)) return argument;
+    throw TypeError$i("Can't set " + String$3(argument) + ' as a prototype');
   };
 
   /* eslint-disable no-proto -- safe */
@@ -1780,19 +2015,21 @@ var Forestry = (function () {
     var setter;
     try {
       // eslint-disable-next-line es/no-object-getownpropertydescriptor -- safe
-      setter = Object.getOwnPropertyDescriptor(Object.prototype, '__proto__').set;
-      setter.call(test, []);
+      setter = functionUncurryThis(Object.getOwnPropertyDescriptor(Object.prototype, '__proto__').set);
+      setter(test, []);
       CORRECT_SETTER = test instanceof Array;
     } catch (error) { /* empty */ }
     return function setPrototypeOf(O, proto) {
       anObject$1(O);
       aPossiblePrototype$1(proto);
-      if (CORRECT_SETTER) setter.call(O, proto);
+      if (CORRECT_SETTER) setter(O, proto);
       else O.__proto__ = proto;
       return O;
     };
   }() : undefined);
 
+  var PROPER_FUNCTION_NAME$3 = functionName.PROPER;
+  var CONFIGURABLE_FUNCTION_NAME$1 = functionName.CONFIGURABLE;
   var IteratorPrototype$3 = iteratorsCore$1.IteratorPrototype;
   var BUGGY_SAFARI_ITERATORS$2 = iteratorsCore$1.BUGGY_SAFARI_ITERATORS;
   var ITERATOR$g = wellKnownSymbol$1('iterator');
@@ -1828,12 +2065,12 @@ var Forestry = (function () {
     // fix native
     if (anyNativeIterator) {
       CurrentIteratorPrototype = objectGetPrototypeOf$1(anyNativeIterator.call(new Iterable()));
-      if (IteratorPrototype$3 !== Object.prototype && CurrentIteratorPrototype.next) {
+      if (CurrentIteratorPrototype !== Object.prototype && CurrentIteratorPrototype.next) {
         if (objectGetPrototypeOf$1(CurrentIteratorPrototype) !== IteratorPrototype$3) {
           if (objectSetPrototypeOf$1) {
             objectSetPrototypeOf$1(CurrentIteratorPrototype, IteratorPrototype$3);
-          } else if (typeof CurrentIteratorPrototype[ITERATOR$g] != 'function') {
-            createNonEnumerableProperty$1(CurrentIteratorPrototype, ITERATOR$g, returnThis$3);
+          } else if (!isCallable(CurrentIteratorPrototype[ITERATOR$g])) {
+            redefine$1(CurrentIteratorPrototype, ITERATOR$g, returnThis$3);
           }
         }
         // Set @@toStringTag to native iterators
@@ -1842,16 +2079,14 @@ var Forestry = (function () {
     }
 
     // fix Array.prototype.{ values, @@iterator }.name in V8 / FF
-    if (DEFAULT == VALUES$1 && nativeIterator && nativeIterator.name !== VALUES$1) {
-      INCORRECT_VALUES_NAME = true;
-      defaultIterator = function values() { return nativeIterator.call(this); };
+    if (PROPER_FUNCTION_NAME$3 && DEFAULT == VALUES$1 && nativeIterator && nativeIterator.name !== VALUES$1) {
+      if (CONFIGURABLE_FUNCTION_NAME$1) {
+        createNonEnumerableProperty$1(IterablePrototype, 'name', VALUES$1);
+      } else {
+        INCORRECT_VALUES_NAME = true;
+        defaultIterator = function values() { return functionCall(nativeIterator, this); };
+      }
     }
-
-    // define iterator
-    if (IterablePrototype[ITERATOR$g] !== defaultIterator) {
-      createNonEnumerableProperty$1(IterablePrototype, ITERATOR$g, defaultIterator);
-    }
-    iterators$1[NAME] = defaultIterator;
 
     // export additional methods
     if (DEFAULT) {
@@ -1867,12 +2102,23 @@ var Forestry = (function () {
       } else _export$1({ target: NAME, proto: true, forced: BUGGY_SAFARI_ITERATORS$2 || INCORRECT_VALUES_NAME }, methods);
     }
 
+    // define iterator
+    if (IterablePrototype[ITERATOR$g] !== defaultIterator) {
+      redefine$1(IterablePrototype, ITERATOR$g, defaultIterator, { name: DEFAULT });
+    }
+    iterators$1[NAME] = defaultIterator;
+
     return methods;
   };
 
+  var defineProperty$f = objectDefineProperty$1.f;
+
+
+
+
   var ARRAY_ITERATOR$1 = 'Array Iterator';
   var setInternalState$c = internalState$1.set;
-  var getInternalState$8 = internalState$1.getterFor(ARRAY_ITERATOR$1);
+  var getInternalState$9 = internalState$1.getterFor(ARRAY_ITERATOR$1);
 
   // `Array.prototype.entries` method
   // https://tc39.es/ecma262/#sec-array.prototype.entries
@@ -1894,7 +2140,7 @@ var Forestry = (function () {
   // `%ArrayIteratorPrototype%.next` method
   // https://tc39.es/ecma262/#sec-%arrayiteratorprototype%.next
   }, function () {
-    var state = getInternalState$8(this);
+    var state = getInternalState$9(this);
     var target = state.target;
     var kind = state.kind;
     var index = state.index++;
@@ -1910,26 +2156,38 @@ var Forestry = (function () {
   // argumentsList[@@iterator] is %ArrayProto_values%
   // https://tc39.es/ecma262/#sec-createunmappedargumentsobject
   // https://tc39.es/ecma262/#sec-createmappedargumentsobject
-  iterators$1.Arguments = iterators$1.Array;
+  var values = iterators$1.Arguments = iterators$1.Array;
 
   // https://tc39.es/ecma262/#sec-array.prototype-@@unscopables
   addToUnscopables$1('keys');
   addToUnscopables$1('values');
   addToUnscopables$1('entries');
 
-  // `String.prototype.codePointAt` methods implementation
+  // V8 ~ Chrome 45- bug
+  if (descriptors$1 && values.name !== 'values') try {
+    defineProperty$f(values, 'name', { value: 'values' });
+  } catch (error) { /* empty */ }
+
+  var charAt$a = functionUncurryThis(''.charAt);
+  var charCodeAt$3 = functionUncurryThis(''.charCodeAt);
+  var stringSlice$9 = functionUncurryThis(''.slice);
+
   var createMethod$7 = function (CONVERT_TO_STRING) {
     return function ($this, pos) {
-      var S = toString$2(requireObjectCoercible$1($this));
-      var position = toInteger$1(pos);
+      var S = toString$1(requireObjectCoercible$1($this));
+      var position = toIntegerOrInfinity(pos);
       var size = S.length;
       var first, second;
       if (position < 0 || position >= size) return CONVERT_TO_STRING ? '' : undefined;
-      first = S.charCodeAt(position);
+      first = charCodeAt$3(S, position);
       return first < 0xD800 || first > 0xDBFF || position + 1 === size
-        || (second = S.charCodeAt(position + 1)) < 0xDC00 || second > 0xDFFF
-          ? CONVERT_TO_STRING ? S.charAt(position) : first
-          : CONVERT_TO_STRING ? S.slice(position, position + 2) : (first - 0xD800 << 10) + (second - 0xDC00) + 0x10000;
+        || (second = charCodeAt$3(S, position + 1)) < 0xDC00 || second > 0xDFFF
+          ? CONVERT_TO_STRING
+            ? charAt$a(S, position)
+            : first
+          : CONVERT_TO_STRING
+            ? stringSlice$9(S, position, position + 2)
+            : (first - 0xD800 << 10) + (second - 0xDC00) + 0x10000;
     };
   };
 
@@ -1942,32 +2200,32 @@ var Forestry = (function () {
     charAt: createMethod$7(true)
   };
 
-  var charAt$3 = stringMultibyte$1.charAt;
+  var charAt$9 = stringMultibyte$1.charAt;
 
 
 
 
   var STRING_ITERATOR$1 = 'String Iterator';
   var setInternalState$b = internalState$1.set;
-  var getInternalState$7 = internalState$1.getterFor(STRING_ITERATOR$1);
+  var getInternalState$8 = internalState$1.getterFor(STRING_ITERATOR$1);
 
   // `String.prototype[@@iterator]` method
   // https://tc39.es/ecma262/#sec-string.prototype-@@iterator
   defineIterator$1(String, 'String', function (iterated) {
     setInternalState$b(this, {
       type: STRING_ITERATOR$1,
-      string: toString$2(iterated),
+      string: toString$1(iterated),
       index: 0
     });
   // `%StringIteratorPrototype%.next` method
   // https://tc39.es/ecma262/#sec-%stringiteratorprototype%.next
   }, function next() {
-    var state = getInternalState$7(this);
+    var state = getInternalState$8(this);
     var string = state.string;
     var index = state.index;
     var point;
     if (index >= string.length) return { value: undefined, done: true };
-    point = charAt$3(string, index);
+    point = charAt$9(string, index);
     state.index += point.length;
     return { value: point, done: false };
   });
@@ -2008,33 +2266,45 @@ var Forestry = (function () {
     TouchList: 0
   };
 
+  // in old WebKit versions, `element.classList` is not an instance of global `DOMTokenList`
+
+
+  var classList = documentCreateElement$1('span').classList;
+  var DOMTokenListPrototype = classList && classList.constructor && classList.constructor.prototype;
+
+  var domTokenListPrototype = DOMTokenListPrototype === Object.prototype ? undefined : DOMTokenListPrototype;
+
   var ITERATOR$f = wellKnownSymbol$1('iterator');
   var TO_STRING_TAG$6 = wellKnownSymbol$1('toStringTag');
   var ArrayValues$1 = es_array_iterator$1.values;
 
-  for (var COLLECTION_NAME$3 in domIterables$1) {
-    var Collection$3 = global$1[COLLECTION_NAME$3];
-    var CollectionPrototype$3 = Collection$3 && Collection$3.prototype;
-    if (CollectionPrototype$3) {
+  var handlePrototype$1 = function (CollectionPrototype, COLLECTION_NAME) {
+    if (CollectionPrototype) {
       // some Chrome versions have non-configurable methods on DOMTokenList
-      if (CollectionPrototype$3[ITERATOR$f] !== ArrayValues$1) try {
-        createNonEnumerableProperty$1(CollectionPrototype$3, ITERATOR$f, ArrayValues$1);
+      if (CollectionPrototype[ITERATOR$f] !== ArrayValues$1) try {
+        createNonEnumerableProperty$1(CollectionPrototype, ITERATOR$f, ArrayValues$1);
       } catch (error) {
-        CollectionPrototype$3[ITERATOR$f] = ArrayValues$1;
+        CollectionPrototype[ITERATOR$f] = ArrayValues$1;
       }
-      if (!CollectionPrototype$3[TO_STRING_TAG$6]) {
-        createNonEnumerableProperty$1(CollectionPrototype$3, TO_STRING_TAG$6, COLLECTION_NAME$3);
+      if (!CollectionPrototype[TO_STRING_TAG$6]) {
+        createNonEnumerableProperty$1(CollectionPrototype, TO_STRING_TAG$6, COLLECTION_NAME);
       }
-      if (domIterables$1[COLLECTION_NAME$3]) for (var METHOD_NAME$1 in es_array_iterator$1) {
+      if (domIterables$1[COLLECTION_NAME]) for (var METHOD_NAME in es_array_iterator$1) {
         // some Chrome versions have non-configurable methods on DOMTokenList
-        if (CollectionPrototype$3[METHOD_NAME$1] !== es_array_iterator$1[METHOD_NAME$1]) try {
-          createNonEnumerableProperty$1(CollectionPrototype$3, METHOD_NAME$1, es_array_iterator$1[METHOD_NAME$1]);
+        if (CollectionPrototype[METHOD_NAME] !== es_array_iterator$1[METHOD_NAME]) try {
+          createNonEnumerableProperty$1(CollectionPrototype, METHOD_NAME, es_array_iterator$1[METHOD_NAME]);
         } catch (error) {
-          CollectionPrototype$3[METHOD_NAME$1] = es_array_iterator$1[METHOD_NAME$1];
+          CollectionPrototype[METHOD_NAME] = es_array_iterator$1[METHOD_NAME];
         }
       }
     }
+  };
+
+  for (var COLLECTION_NAME$3 in domIterables$1) {
+    handlePrototype$1(global$1[COLLECTION_NAME$3] && global$1[COLLECTION_NAME$3].prototype, COLLECTION_NAME$3);
   }
+
+  handlePrototype$1(domTokenListPrototype, 'DOMTokenList');
 
   // `Symbol.asyncIterator` well-known symbol
   // https://tc39.es/ecma262/#sec-symbol.asynciterator
@@ -2052,31 +2322,34 @@ var Forestry = (function () {
   // https://tc39.es/ecma262/#sec-math-@@tostringtag
   setToStringTag$1(Math, 'Math', true);
 
-  var FAILS_ON_PRIMITIVES$5 = fails$1(function () { objectGetPrototypeOf$1(1); });
+  var FAILS_ON_PRIMITIVES$7 = fails$1(function () { objectGetPrototypeOf$1(1); });
 
   // `Object.getPrototypeOf` method
   // https://tc39.es/ecma262/#sec-object.getprototypeof
-  _export$1({ target: 'Object', stat: true, forced: FAILS_ON_PRIMITIVES$5, sham: !correctPrototypeGetter$1 }, {
+  _export$1({ target: 'Object', stat: true, forced: FAILS_ON_PRIMITIVES$7, sham: !correctPrototypeGetter$1 }, {
     getPrototypeOf: function getPrototypeOf(it) {
       return objectGetPrototypeOf$1(toObject$1(it));
     }
   });
 
-  var defineProperty$d = objectDefineProperty$1.f;
+  var FUNCTION_NAME_EXISTS = functionName.EXISTS;
+
+  var defineProperty$e = objectDefineProperty$1.f;
 
   var FunctionPrototype$1 = Function.prototype;
-  var FunctionPrototypeToString$1 = FunctionPrototype$1.toString;
-  var nameRE$1 = /^\s*function ([^ (]*)/;
+  var functionToString$1 = functionUncurryThis(FunctionPrototype$1.toString);
+  var nameRE$1 = /function\b(?:\s|\/\*[\S\s]*?\*\/|\/\/[^\n\r]*[\n\r]+)*([^\s(/]*)/;
+  var regExpExec = functionUncurryThis(nameRE$1.exec);
   var NAME$3 = 'name';
 
   // Function instances `.name` property
   // https://tc39.es/ecma262/#sec-function-instances-name
-  if (descriptors$1 && !(NAME$3 in FunctionPrototype$1)) {
-    defineProperty$d(FunctionPrototype$1, NAME$3, {
+  if (descriptors$1 && !FUNCTION_NAME_EXISTS) {
+    defineProperty$e(FunctionPrototype$1, NAME$3, {
       configurable: true,
       get: function () {
         try {
-          return FunctionPrototypeToString$1.call(this).match(nameRE$1)[1];
+          return regExpExec(nameRE$1, functionToString$1(this))[1];
         } catch (error) {
           return '';
         }
@@ -2111,10 +2384,11 @@ var Forestry = (function () {
     }
   };
 
-  var anInstance$1 = function (it, Constructor, name) {
-    if (!(it instanceof Constructor)) {
-      throw TypeError('Incorrect ' + (name ? name + ' ' : '') + 'invocation');
-    } return it;
+  var TypeError$h = global$1.TypeError;
+
+  var anInstance$1 = function (it, Prototype) {
+    if (objectIsPrototypeOf(Prototype, it)) return it;
+    throw TypeError$h('Incorrect invocation');
   };
 
   var ITERATOR$e = wellKnownSymbol$1('iterator');
@@ -2128,33 +2402,58 @@ var Forestry = (function () {
   var ITERATOR$d = wellKnownSymbol$1('iterator');
 
   var getIteratorMethod$1 = function (it) {
-    if (it != undefined) return it[ITERATOR$d]
-      || it['@@iterator']
+    if (it != undefined) return getMethod(it, ITERATOR$d)
+      || getMethod(it, '@@iterator')
       || iterators$1[classof$1(it)];
   };
 
-  var iteratorClose = function (iterator) {
-    var returnMethod = iterator['return'];
-    if (returnMethod !== undefined) {
-      return anObject$1(returnMethod.call(iterator)).value;
-    }
+  var TypeError$g = global$1.TypeError;
+
+  var getIterator$1 = function (argument, usingIterator) {
+    var iteratorMethod = arguments.length < 2 ? getIteratorMethod$1(argument) : usingIterator;
+    if (aCallable(iteratorMethod)) return anObject$1(functionCall(iteratorMethod, argument));
+    throw TypeError$g(tryToString(argument) + ' is not iterable');
   };
+
+  var iteratorClose = function (iterator, kind, value) {
+    var innerResult, innerError;
+    anObject$1(iterator);
+    try {
+      innerResult = getMethod(iterator, 'return');
+      if (!innerResult) {
+        if (kind === 'throw') throw value;
+        return value;
+      }
+      innerResult = functionCall(innerResult, iterator);
+    } catch (error) {
+      innerError = true;
+      innerResult = error;
+    }
+    if (kind === 'throw') throw value;
+    if (innerError) throw innerResult;
+    anObject$1(innerResult);
+    return value;
+  };
+
+  var TypeError$f = global$1.TypeError;
 
   var Result = function (stopped, result) {
     this.stopped = stopped;
     this.result = result;
   };
 
+  var ResultPrototype = Result.prototype;
+
   var iterate = function (iterable, unboundFunction, options) {
     var that = options && options.that;
     var AS_ENTRIES = !!(options && options.AS_ENTRIES);
     var IS_ITERATOR = !!(options && options.IS_ITERATOR);
     var INTERRUPTED = !!(options && options.INTERRUPTED);
-    var fn = functionBindContext$1(unboundFunction, that, 1 + AS_ENTRIES + INTERRUPTED);
+    var fn = functionBindContext$1(unboundFunction, that);
     var iterator, iterFn, index, length, result, next, step;
 
     var stop = function (condition) {
-      if (iterator) iteratorClose(iterator);
+      if (iterator) iteratorClose(iterator, 'normal', condition);
       return new Result(true, condition);
     };
 
@@ -2169,26 +2468,25 @@ var Forestry = (function () {
       iterator = iterable;
     } else {
       iterFn = getIteratorMethod$1(iterable);
-      if (typeof iterFn != 'function') throw TypeError('Target is not iterable');
+      if (!iterFn) throw TypeError$f(tryToString(iterable) + ' is not iterable');
       // optimisation for array iterators
       if (isArrayIteratorMethod$1(iterFn)) {
-        for (index = 0, length = toLength$1(iterable.length); length > index; index++) {
+        for (index = 0, length = lengthOfArrayLike(iterable); length > index; index++) {
           result = callFn(iterable[index]);
-          if (result && result instanceof Result) return result;
+          if (result && objectIsPrototypeOf(ResultPrototype, result)) return result;
         } return new Result(false);
       }
-      iterator = iterFn.call(iterable);
+      iterator = getIterator$1(iterable, iterFn);
     }
 
     next = iterator.next;
-    while (!(step = next.call(iterator)).done) {
+    while (!(step = functionCall(next, iterator)).done) {
       try {
         result = callFn(step.value);
       } catch (error) {
-        iteratorClose(iterator);
-        throw error;
+        iteratorClose(iterator, 'throw', error);
       }
-      if (typeof result == 'object' && result && result instanceof Result) return result;
+      if (typeof result == 'object' && result && objectIsPrototypeOf(ResultPrototype, result)) return result;
     } return new Result(false);
   };
 
@@ -2229,6 +2527,14 @@ var Forestry = (function () {
     return ITERATION_SUPPORT;
   };
 
+  var TypeError$e = global$1.TypeError;
+
+  // `Assert: IsConstructor(argument) is true`
+  var aConstructor = function (argument) {
+    if (isConstructor(argument)) return argument;
+    throw TypeError$e(tryToString(argument) + ' is not a constructor');
+  };
+
   var SPECIES$b = wellKnownSymbol$1('species');
 
   // `SpeciesConstructor` abstract operation
@@ -2236,20 +2542,22 @@ var Forestry = (function () {
   var speciesConstructor$1 = function (O, defaultConstructor) {
     var C = anObject$1(O).constructor;
     var S;
-    return C === undefined || (S = anObject$1(C)[SPECIES$b]) == undefined ? defaultConstructor : aFunction$2(S);
+    return C === undefined || (S = anObject$1(C)[SPECIES$b]) == undefined ? defaultConstructor : aConstructor(S);
   };
 
-  var engineIsIos$1 = /(?:iphone|ipod|ipad).*applewebkit/i.test(engineUserAgent$1);
+  var engineIsIos$1 = /(?:ipad|iphone|ipod).*applewebkit/i.test(engineUserAgent$1);
 
   var engineIsNode = classofRaw$1(global$1.process) == 'process';
 
   var set$4 = global$1.setImmediate;
   var clear$1 = global$1.clearImmediate;
   var process$6 = global$1.process;
-  var MessageChannel$1 = global$1.MessageChannel;
   var Dispatch$1 = global$1.Dispatch;
+  var Function$2 = global$1.Function;
+  var MessageChannel$1 = global$1.MessageChannel;
+  var String$2 = global$1.String;
   var counter$1 = 0;
-  var queue$1 = {};
+  var queue$2 = {};
   var ONREADYSTATECHANGE$1 = 'onreadystatechange';
   var location$2, defer$1, channel$1, port$1;
 
@@ -2259,10 +2567,9 @@ var Forestry = (function () {
   } catch (error) { /* empty */ }
 
   var run$1 = function (id) {
-    // eslint-disable-next-line no-prototype-builtins -- safe
-    if (queue$1.hasOwnProperty(id)) {
-      var fn = queue$1[id];
-      delete queue$1[id];
+    if (hasOwnProperty_1(queue$2, id)) {
+      var fn = queue$2[id];
+      delete queue$2[id];
       fn();
     }
   };
@@ -2279,25 +2586,21 @@ var Forestry = (function () {
 
   var post$1 = function (id) {
     // old engines have not location.origin
-    global$1.postMessage(String(id), location$2.protocol + '//' + location$2.host);
+    global$1.postMessage(String$2(id), location$2.protocol + '//' + location$2.host);
   };
 
   // Node.js 0.9+ & IE10+ has setImmediate, otherwise:
   if (!set$4 || !clear$1) {
     set$4 = function setImmediate(fn) {
-      var args = [];
-      var argumentsLength = arguments.length;
-      var i = 1;
-      while (argumentsLength > i) args.push(arguments[i++]);
-      queue$1[++counter$1] = function () {
-        // eslint-disable-next-line no-new-func -- spec requirement
-        (typeof fn == 'function' ? fn : Function(fn)).apply(undefined, args);
+      var args = arraySlice$1(arguments, 1);
+      queue$2[++counter$1] = function () {
+        functionApply(isCallable(fn) ? fn : Function$2(fn), undefined, args);
       };
       defer$1(counter$1);
       return counter$1;
     };
     clear$1 = function clearImmediate(id) {
-      delete queue$1[id];
+      delete queue$2[id];
     };
     // Node.js 0.8-
     if (engineIsNode) {
@@ -2315,12 +2618,12 @@ var Forestry = (function () {
       channel$1 = new MessageChannel$1();
       port$1 = channel$1.port2;
       channel$1.port1.onmessage = listener$1;
-      defer$1 = functionBindContext$1(port$1.postMessage, port$1, 1);
+      defer$1 = functionBindContext$1(port$1.postMessage, port$1);
     // Browsers with postMessage, skip WebWorkers
     // IE8 has postMessage, but it's sync & typeof its postMessage is 'object'
     } else if (
       global$1.addEventListener &&
-      typeof postMessage == 'function' &&
+      isCallable(global$1.postMessage) &&
       !global$1.importScripts &&
       location$2 && location$2.protocol !== 'file:' &&
       !fails$1(post$1)
@@ -2348,10 +2651,13 @@ var Forestry = (function () {
     clear: clear$1
   };
 
+  var engineIsIosPebble = /ipad|iphone|ipod/i.test(engineUserAgent$1) && global$1.Pebble !== undefined;
+
   var engineIsWebosWebkit = /web0s(?!.*chrome)/i.test(engineUserAgent$1);
 
   var getOwnPropertyDescriptor$5 = objectGetOwnPropertyDescriptor$1.f;
   var macrotask$1 = task$3.set;
+
 
 
 
@@ -2364,7 +2670,7 @@ var Forestry = (function () {
   var queueMicrotaskDescriptor$1 = getOwnPropertyDescriptor$5(global$1, 'queueMicrotask');
   var queueMicrotask$1 = queueMicrotaskDescriptor$1 && queueMicrotaskDescriptor$1.value;
 
-  var flush$1, head$1, last$1, notify$6, toggle$1, node$1, promise$1, then$1;
+  var flush$1, head$1, last$1, notify$4, toggle$1, node$1, promise$1, then$1;
 
   // modern engines have queueMicrotask method
   if (!queueMicrotask$1) {
@@ -2377,7 +2683,7 @@ var Forestry = (function () {
         try {
           fn();
         } catch (error) {
-          if (head$1) notify$6();
+          if (head$1) notify$4();
           else last$1 = undefined;
           throw error;
         }
@@ -2391,22 +2697,22 @@ var Forestry = (function () {
       toggle$1 = true;
       node$1 = document$4.createTextNode('');
       new MutationObserver$2(flush$1).observe(node$1, { characterData: true });
-      notify$6 = function () {
+      notify$4 = function () {
         node$1.data = toggle$1 = !toggle$1;
       };
     // environments with maybe non-completely correct, but existent Promise
-    } else if (Promise$2 && Promise$2.resolve) {
+    } else if (!engineIsIosPebble && Promise$2 && Promise$2.resolve) {
       // Promise.resolve without an argument throws an error in LG WebOS 2
       promise$1 = Promise$2.resolve(undefined);
       // workaround of WebKit ~ iOS Safari 10.1 bug
       promise$1.constructor = Promise$2;
-      then$1 = promise$1.then;
-      notify$6 = function () {
-        then$1.call(promise$1, flush$1);
+      then$1 = functionBindContext$1(promise$1.then, promise$1);
+      notify$4 = function () {
+        then$1(flush$1);
       };
     // Node.js without promises
     } else if (engineIsNode) {
-      notify$6 = function () {
+      notify$4 = function () {
         process$5.nextTick(flush$1);
       };
     // for other environments - macrotask based on:
@@ -2416,9 +2722,10 @@ var Forestry = (function () {
     // - onreadystatechange
     // - setTimeout
     } else {
-      notify$6 = function () {
-        // strange IE + webpack dev server bug - use .call(global)
-        macrotask$1.call(global$1, flush$1);
+      // strange IE + webpack dev server bug - use .bind(global)
+      macrotask$1 = functionBindContext$1(macrotask$1, global$1);
+      notify$4 = function () {
+        macrotask$1(flush$1);
       };
     }
   }
@@ -2428,7 +2735,7 @@ var Forestry = (function () {
     if (last$1) last$1.next = task;
     if (!head$1) {
       head$1 = task;
-      notify$6();
+      notify$4();
     } last$1 = task;
   };
 
@@ -2439,8 +2746,8 @@ var Forestry = (function () {
       resolve = $$resolve;
       reject = $$reject;
     });
-    this.resolve = aFunction$2(resolve);
-    this.reject = aFunction$2(reject);
+    this.resolve = aCallable(resolve);
+    this.reject = aCallable(reject);
   };
 
   // `NewPromiseCapability` abstract operation
@@ -2465,7 +2772,7 @@ var Forestry = (function () {
   var hostReportErrors$1 = function (a, b) {
     var console = global$1.console;
     if (console && console.error) {
-      arguments.length === 1 ? console.error(a) : console.error(a, b);
+      arguments.length == 1 ? console.error(a) : console.error(a, b);
     }
   };
 
@@ -2476,6 +2783,30 @@ var Forestry = (function () {
       return { error: true, value: error };
     }
   };
+
+  var Queue = function () {
+    this.head = null;
+    this.tail = null;
+  };
+
+  Queue.prototype = {
+    add: function (item) {
+      var entry = { item: item, next: null };
+      if (this.head) this.tail.next = entry;
+      else this.head = entry;
+      this.tail = entry;
+    },
+    get: function () {
+      var entry = this.head;
+      if (entry) {
+        this.head = entry.next;
+        if (this.tail === entry) this.tail = null;
+        return entry.item;
+      }
+    }
+  };
+
+  var queue$1 = Queue;
 
   var engineIsBrowser = typeof window == 'object';
 
@@ -2492,21 +2823,24 @@ var Forestry = (function () {
 
 
 
+
   var SPECIES$a = wellKnownSymbol$1('species');
   var PROMISE$1 = 'Promise';
-  var getInternalState$6 = internalState$1.get;
+
+  var getInternalState$7 = internalState$1.getterFor(PROMISE$1);
   var setInternalState$a = internalState$1.set;
   var getInternalPromiseState$1 = internalState$1.getterFor(PROMISE$1);
   var NativePromisePrototype = nativePromiseConstructor$1 && nativePromiseConstructor$1.prototype;
   var PromiseConstructor$1 = nativePromiseConstructor$1;
-  var PromiseConstructorPrototype = NativePromisePrototype;
-  var TypeError$2 = global$1.TypeError;
+  var PromisePrototype = NativePromisePrototype;
+  var TypeError$d = global$1.TypeError;
   var document$3 = global$1.document;
   var process$4 = global$1.process;
   var newPromiseCapability$2 = newPromiseCapability$3.f;
   var newGenericPromiseCapability$1 = newPromiseCapability$2;
+
   var DISPATCH_EVENT$1 = !!(document$3 && document$3.createEvent && global$1.dispatchEvent);
-  var NATIVE_REJECTION_EVENT = typeof PromiseRejectionEvent == 'function';
+  var NATIVE_REJECTION_EVENT = isCallable(global$1.PromiseRejectionEvent);
   var UNHANDLED_REJECTION$1 = 'unhandledrejection';
   var REJECTION_HANDLED$1 = 'rejectionhandled';
   var PENDING$1 = 0;
@@ -2515,6 +2849,7 @@ var Forestry = (function () {
   var HANDLED$1 = 1;
   var UNHANDLED$1 = 2;
   var SUBCLASSING = false;
+
   var Internal$1, OwnPromiseCapability$1, PromiseWrapper$1, nativeThen$1;
 
   var FORCED$i = isForced_1$1(PROMISE$1, function () {
@@ -2548,52 +2883,53 @@ var Forestry = (function () {
   // helpers
   var isThenable$1 = function (it) {
     var then;
-    return isObject$1(it) && typeof (then = it.then) == 'function' ? then : false;
+    return isObject$1(it) && isCallable(then = it.then) ? then : false;
   };
 
-  var notify$5 = function (state, isReject) {
+  var callReaction = function (reaction, state) {
+    var value = state.value;
+    var ok = state.state == FULFILLED$1;
+    var handler = ok ? reaction.ok : reaction.fail;
+    var resolve = reaction.resolve;
+    var reject = reaction.reject;
+    var domain = reaction.domain;
+    var result, then, exited;
+    try {
+      if (handler) {
+        if (!ok) {
+          if (state.rejection === UNHANDLED$1) onHandleUnhandled$1(state);
+          state.rejection = HANDLED$1;
+        }
+        if (handler === true) result = value;
+        else {
+          if (domain) domain.enter();
+          result = handler(value); // can throw
+          if (domain) {
+            domain.exit();
+            exited = true;
+          }
+        }
+        if (result === reaction.promise) {
+          reject(TypeError$d('Promise-chain cycle'));
+        } else if (then = isThenable$1(result)) {
+          functionCall(then, result, resolve, reject);
+        } else resolve(result);
+      } else reject(value);
+    } catch (error) {
+      if (domain && !exited) domain.exit();
+      reject(error);
+    }
+  };
+
+  var notify$3 = function (state, isReject) {
     if (state.notified) return;
     state.notified = true;
-    var chain = state.reactions;
     microtask$1(function () {
-      var value = state.value;
-      var ok = state.state == FULFILLED$1;
-      var index = 0;
-      // variable length - can't use forEach
-      while (chain.length > index) {
-        var reaction = chain[index++];
-        var handler = ok ? reaction.ok : reaction.fail;
-        var resolve = reaction.resolve;
-        var reject = reaction.reject;
-        var domain = reaction.domain;
-        var result, then, exited;
-        try {
-          if (handler) {
-            if (!ok) {
-              if (state.rejection === UNHANDLED$1) onHandleUnhandled$1(state);
-              state.rejection = HANDLED$1;
-            }
-            if (handler === true) result = value;
-            else {
-              if (domain) domain.enter();
-              result = handler(value); // can throw
-              if (domain) {
-                domain.exit();
-                exited = true;
-              }
-            }
-            if (result === reaction.promise) {
-              reject(TypeError$2('Promise-chain cycle'));
-            } else if (then = isThenable$1(result)) {
-              then.call(result, resolve, reject);
-            } else resolve(result);
-          } else reject(value);
-        } catch (error) {
-          if (domain && !exited) domain.exit();
-          reject(error);
-        }
+      var reactions = state.reactions;
+      var reaction;
+      while (reaction = reactions.get()) {
+        callReaction(reaction, state);
       }
-      state.reactions = [];
       state.notified = false;
       if (isReject && !state.rejection) onUnhandled$1(state);
     });
@@ -2613,7 +2949,7 @@ var Forestry = (function () {
   };
 
   var onUnhandled$1 = function (state) {
-    task$2.call(global$1, function () {
+    functionCall(task$2, global$1, function () {
       var promise = state.facade;
       var value = state.value;
       var IS_UNHANDLED = isUnhandled$1(state);
@@ -2636,7 +2972,7 @@ var Forestry = (function () {
   };
 
   var onHandleUnhandled$1 = function (state) {
-    task$2.call(global$1, function () {
+    functionCall(task$2, global$1, function () {
       var promise = state.facade;
       if (engineIsNode) {
         process$4.emit('rejectionHandled', promise);
@@ -2656,7 +2992,7 @@ var Forestry = (function () {
     if (unwrap) state = unwrap;
     state.value = value;
     state.state = REJECTED$1;
-    notify$5(state, true);
+    notify$3(state, true);
   };
 
   var internalResolve$1 = function (state, value, unwrap) {
@@ -2664,13 +3000,13 @@ var Forestry = (function () {
     state.done = true;
     if (unwrap) state = unwrap;
     try {
-      if (state.facade === value) throw TypeError$2("Promise can't be resolved itself");
+      if (state.facade === value) throw TypeError$d("Promise can't be resolved itself");
       var then = isThenable$1(value);
       if (then) {
         microtask$1(function () {
           var wrapper = { done: false };
           try {
-            then.call(value,
+            functionCall(then, value,
               bind$1(internalResolve$1, wrapper, state),
               bind$1(internalReject$1, wrapper, state)
             );
@@ -2681,7 +3017,7 @@ var Forestry = (function () {
       } else {
         state.value = value;
         state.state = FULFILLED$1;
-        notify$5(state, false);
+        notify$3(state, false);
       }
     } catch (error) {
       internalReject$1({ done: false }, error, state);
@@ -2692,17 +3028,17 @@ var Forestry = (function () {
   if (FORCED$i) {
     // 25.4.3.1 Promise(executor)
     PromiseConstructor$1 = function Promise(executor) {
-      anInstance$1(this, PromiseConstructor$1, PROMISE$1);
-      aFunction$2(executor);
-      Internal$1.call(this);
-      var state = getInternalState$6(this);
+      anInstance$1(this, PromisePrototype);
+      aCallable(executor);
+      functionCall(Internal$1, this);
+      var state = getInternalState$7(this);
       try {
         executor(bind$1(internalResolve$1, state), bind$1(internalReject$1, state));
       } catch (error) {
         internalReject$1(state, error);
       }
     };
-    PromiseConstructorPrototype = PromiseConstructor$1.prototype;
+    PromisePrototype = PromiseConstructor$1.prototype;
     // eslint-disable-next-line no-unused-vars -- required for `.length`
     Internal$1 = function Promise(executor) {
       setInternalState$a(this, {
@@ -2710,24 +3046,27 @@ var Forestry = (function () {
         done: false,
         notified: false,
         parent: false,
-        reactions: [],
+        reactions: new queue$1(),
         rejection: false,
         state: PENDING$1,
         value: undefined
       });
     };
-    Internal$1.prototype = redefineAll$1(PromiseConstructorPrototype, {
+    Internal$1.prototype = redefineAll$1(PromisePrototype, {
       // `Promise.prototype.then` method
       // https://tc39.es/ecma262/#sec-promise.prototype.then
+      // eslint-disable-next-line unicorn/no-thenable -- safe
       then: function then(onFulfilled, onRejected) {
         var state = getInternalPromiseState$1(this);
         var reaction = newPromiseCapability$2(speciesConstructor$1(this, PromiseConstructor$1));
-        reaction.ok = typeof onFulfilled == 'function' ? onFulfilled : true;
-        reaction.fail = typeof onRejected == 'function' && onRejected;
-        reaction.domain = engineIsNode ? process$4.domain : undefined;
         state.parent = true;
-        state.reactions.push(reaction);
-        if (state.state != PENDING$1) notify$5(state, false);
+        reaction.ok = isCallable(onFulfilled) ? onFulfilled : true;
+        reaction.fail = isCallable(onRejected) && onRejected;
+        reaction.domain = engineIsNode ? process$4.domain : undefined;
+        if (state.state == PENDING$1) state.reactions.add(reaction);
+        else microtask$1(function () {
+          callReaction(reaction, state);
+        });
         return reaction.promise;
       },
       // `Promise.prototype.catch` method
@@ -2738,7 +3077,7 @@ var Forestry = (function () {
     });
     OwnPromiseCapability$1 = function () {
       var promise = new Internal$1();
-      var state = getInternalState$6(promise);
+      var state = getInternalState$7(promise);
       this.promise = promise;
       this.resolve = bind$1(internalResolve$1, state);
       this.reject = bind$1(internalReject$1, state);
@@ -2749,7 +3088,7 @@ var Forestry = (function () {
         : newGenericPromiseCapability$1(C);
     };
 
-    if (typeof nativePromiseConstructor$1 == 'function' && NativePromisePrototype !== Object.prototype) {
+    if (isCallable(nativePromiseConstructor$1) && NativePromisePrototype !== Object.prototype) {
       nativeThen$1 = NativePromisePrototype.then;
 
       if (!SUBCLASSING) {
@@ -2757,13 +3096,13 @@ var Forestry = (function () {
         redefine$1(NativePromisePrototype, 'then', function then(onFulfilled, onRejected) {
           var that = this;
           return new PromiseConstructor$1(function (resolve, reject) {
-            nativeThen$1.call(that, resolve, reject);
+            functionCall(nativeThen$1, that, resolve, reject);
           }).then(onFulfilled, onRejected);
         // https://github.com/zloirock/core-js/issues/640
         }, { unsafe: true });
 
         // makes sure that native promise-based APIs `Promise#catch` properly works with patched `Promise#then`
-        redefine$1(NativePromisePrototype, 'catch', PromiseConstructorPrototype['catch'], { unsafe: true });
+        redefine$1(NativePromisePrototype, 'catch', PromisePrototype['catch'], { unsafe: true });
       }
 
       // make `.constructor === Promise` work for native promise-based APIs
@@ -2773,7 +3112,7 @@ var Forestry = (function () {
 
       // make `instanceof Promise` work for native promise-based APIs
       if (objectSetPrototypeOf$1) {
-        objectSetPrototypeOf$1(NativePromisePrototype, PromiseConstructorPrototype);
+        objectSetPrototypeOf$1(NativePromisePrototype, PromisePrototype);
       }
     }
   }
@@ -2793,7 +3132,7 @@ var Forestry = (function () {
     // https://tc39.es/ecma262/#sec-promise.reject
     reject: function reject(r) {
       var capability = newPromiseCapability$2(this);
-      capability.reject.call(undefined, r);
+      functionCall(capability.reject, undefined, r);
       return capability.promise;
     }
   });
@@ -2815,16 +3154,15 @@ var Forestry = (function () {
       var resolve = capability.resolve;
       var reject = capability.reject;
       var result = perform$1(function () {
-        var $promiseResolve = aFunction$2(C.resolve);
+        var $promiseResolve = aCallable(C.resolve);
         var values = [];
         var counter = 0;
         var remaining = 1;
         iterate(iterable, function (promise) {
           var index = counter++;
           var alreadyCalled = false;
-          values.push(undefined);
           remaining++;
-          $promiseResolve.call(C, promise).then(function (value) {
+          functionCall($promiseResolve, C, promise).then(function (value) {
             if (alreadyCalled) return;
             alreadyCalled = true;
             values[index] = value;
@@ -2843,9 +3181,9 @@ var Forestry = (function () {
       var capability = newPromiseCapability$2(C);
       var reject = capability.reject;
       var result = perform$1(function () {
-        var $promiseResolve = aFunction$2(C.resolve);
+        var $promiseResolve = aCallable(C.resolve);
         iterate(iterable, function (promise) {
-          $promiseResolve.call(C, promise).then(capability.resolve, reject);
+          functionCall($promiseResolve, C, promise).then(capability.resolve, reject);
         });
       });
       if (result.error) reject(result.value);
@@ -2873,22 +3211,22 @@ var Forestry = (function () {
   // eslint-disable-next-line es/no-array-prototype-foreach -- safe
   } : [].forEach;
 
-  for (var COLLECTION_NAME$2 in domIterables$1) {
-    var Collection$2 = global$1[COLLECTION_NAME$2];
-    var CollectionPrototype$2 = Collection$2 && Collection$2.prototype;
+  var handlePrototype = function (CollectionPrototype) {
     // some Chrome versions have non-configurable methods on DOMTokenList
-    if (CollectionPrototype$2 && CollectionPrototype$2.forEach !== arrayForEach$1) try {
-      createNonEnumerableProperty$1(CollectionPrototype$2, 'forEach', arrayForEach$1);
+    if (CollectionPrototype && CollectionPrototype.forEach !== arrayForEach$1) try {
+      createNonEnumerableProperty$1(CollectionPrototype, 'forEach', arrayForEach$1);
     } catch (error) {
-      CollectionPrototype$2.forEach = arrayForEach$1;
+      CollectionPrototype.forEach = arrayForEach$1;
+    }
+  };
+
+  for (var COLLECTION_NAME$2 in domIterables$1) {
+    if (domIterables$1[COLLECTION_NAME$2]) {
+      handlePrototype(global$1[COLLECTION_NAME$2] && global$1[COLLECTION_NAME$2].prototype);
     }
   }
 
-  var createProperty$1 = function (object, key, value) {
-    var propertyKey = toPropertyKey(key);
-    if (propertyKey in object) objectDefineProperty$1.f(object, propertyKey, createPropertyDescriptor$1(0, value));
-    else object[propertyKey] = value;
-  };
+  handlePrototype(domTokenListPrototype);
 
   var SPECIES$9 = wellKnownSymbol$1('species');
 
@@ -2909,7 +3247,7 @@ var Forestry = (function () {
   var HAS_SPECIES_SUPPORT$7 = arrayMethodHasSpeciesSupport$1('slice');
 
   var SPECIES$8 = wellKnownSymbol$1('species');
-  var nativeSlice$1 = [].slice;
+  var Array$6 = global$1.Array;
   var max$6 = Math.max;
 
   // `Array.prototype.slice` method
@@ -2918,7 +3256,7 @@ var Forestry = (function () {
   _export$1({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT$7 }, {
     slice: function slice(start, end) {
       var O = toIndexedObject$1(this);
-      var length = toLength$1(O.length);
+      var length = lengthOfArrayLike(O);
       var k = toAbsoluteIndex$1(start, length);
       var fin = toAbsoluteIndex$1(end === undefined ? length : end, length);
       // inline `ArraySpeciesCreate` for usage native `Array#slice` where it's possible
@@ -2926,17 +3264,17 @@ var Forestry = (function () {
       if (isArray$1(O)) {
         Constructor = O.constructor;
         // cross-realm fallback
-        if (typeof Constructor == 'function' && (Constructor === Array || isArray$1(Constructor.prototype))) {
+        if (isConstructor(Constructor) && (Constructor === Array$6 || isArray$1(Constructor.prototype))) {
           Constructor = undefined;
         } else if (isObject$1(Constructor)) {
           Constructor = Constructor[SPECIES$8];
           if (Constructor === null) Constructor = undefined;
         }
-        if (Constructor === Array || Constructor === undefined) {
-          return nativeSlice$1.call(O, k, fin);
+        if (Constructor === Array$6 || Constructor === undefined) {
+          return arraySlice$1(O, k, fin);
         }
       }
-      result = new (Constructor === undefined ? Array : Constructor)(max$6(fin - k, 0));
+      result = new (Constructor === undefined ? Array$6 : Constructor)(max$6(fin - k, 0));
       for (n = 0; k < fin; k++, n++) if (k in O) createProperty$1(result, n, O[k]);
       result.length = n;
       return result;
@@ -3682,15 +4020,54 @@ var Forestry = (function () {
     }
   });
 
-  var FAILS_ON_PRIMITIVES$4 = fails$1(function () { objectKeys$1(1); });
+  var FAILS_ON_PRIMITIVES$6 = fails$1(function () { objectKeys$1(1); });
 
   // `Object.keys` method
   // https://tc39.es/ecma262/#sec-object.keys
-  _export$1({ target: 'Object', stat: true, forced: FAILS_ON_PRIMITIVES$4 }, {
+  _export$1({ target: 'Object', stat: true, forced: FAILS_ON_PRIMITIVES$6 }, {
     keys: function keys(it) {
       return objectKeys$1(toObject$1(it));
     }
   });
+
+  var Array$5 = global$1.Array;
+  var $stringify = getBuiltIn$1('JSON', 'stringify');
+  var exec$4 = functionUncurryThis(/./.exec);
+  var charAt$8 = functionUncurryThis(''.charAt);
+  var charCodeAt$2 = functionUncurryThis(''.charCodeAt);
+  var replace$9 = functionUncurryThis(''.replace);
+  var numberToString$1 = functionUncurryThis(1.0.toString);
+
+  var tester = /[\uD800-\uDFFF]/g;
+  var low = /^[\uD800-\uDBFF]$/;
+  var hi = /^[\uDC00-\uDFFF]$/;
+
+  var fix = function (match, offset, string) {
+    var prev = charAt$8(string, offset - 1);
+    var next = charAt$8(string, offset + 1);
+    if ((exec$4(low, match) && !exec$4(hi, next)) || (exec$4(hi, match) && !exec$4(low, prev))) {
+      return '\\u' + numberToString$1(charCodeAt$2(match, 0), 16);
+    } return match;
+  };
+
+  var FORCED$h = fails$1(function () {
+    return $stringify('\uDF06\uD834') !== '"\\udf06\\ud834"'
+      || $stringify('\uDEAD') !== '"\\udead"';
+  });
+
+  if ($stringify) {
+    // `JSON.stringify` method
+    // https://tc39.es/ecma262/#sec-json.stringify
+    // https://github.com/tc39/proposal-well-formed-stringify
+    _export$1({ target: 'JSON', stat: true, forced: FORCED$h }, {
+      // eslint-disable-next-line no-unused-vars -- required for `.length`
+      stringify: function stringify(it, replacer, space) {
+        for (var i = 0, l = arguments.length, args = Array$5(l); i < l; i++) args[i] = arguments[i];
+        var result = functionApply($stringify, null, args);
+        return typeof result == 'string' ? replace$9(result, tester, fix) : result;
+      }
+    });
+  }
 
   // `RegExp.prototype.flags` getter implementation
   // https://tc39.es/ecma262/#sec-get-regexp.prototype.flags
@@ -3706,87 +4083,110 @@ var Forestry = (function () {
     return result;
   };
 
-  var TO_STRING$1 = 'toString';
-  var RegExpPrototype$4 = RegExp.prototype;
-  var nativeToString$1 = RegExpPrototype$4[TO_STRING$1];
+  var PROPER_FUNCTION_NAME$2 = functionName.PROPER;
 
-  var NOT_GENERIC$1 = fails$1(function () { return nativeToString$1.call({ source: 'a', flags: 'b' }) != '/a/b'; });
+
+
+
+
+
+
+  var TO_STRING$1 = 'toString';
+  var RegExpPrototype$6 = RegExp.prototype;
+  var n$ToString = RegExpPrototype$6[TO_STRING$1];
+  var getFlags$1 = functionUncurryThis(regexpFlags$1);
+
+  var NOT_GENERIC$1 = fails$1(function () { return n$ToString.call({ source: 'a', flags: 'b' }) != '/a/b'; });
   // FF44- RegExp#toString has a wrong name
-  var INCORRECT_NAME$1 = nativeToString$1.name != TO_STRING$1;
+  var INCORRECT_NAME$1 = PROPER_FUNCTION_NAME$2 && n$ToString.name != TO_STRING$1;
 
   // `RegExp.prototype.toString` method
   // https://tc39.es/ecma262/#sec-regexp.prototype.tostring
   if (NOT_GENERIC$1 || INCORRECT_NAME$1) {
     redefine$1(RegExp.prototype, TO_STRING$1, function toString() {
       var R = anObject$1(this);
-      var p = toString$2(R.source);
+      var p = toString$1(R.source);
       var rf = R.flags;
-      var f = toString$2(rf === undefined && R instanceof RegExp && !('flags' in RegExpPrototype$4) ? regexpFlags$1.call(R) : rf);
+      var f = toString$1(rf === undefined && objectIsPrototypeOf(RegExpPrototype$6, R) && !('flags' in RegExpPrototype$6) ? getFlags$1(R) : rf);
       return '/' + p + '/' + f;
     }, { unsafe: true });
   }
 
-  // babel-minify transpiles RegExp('a', 'y') -> /a/y and it causes SyntaxError,
-  var RE$1 = function (s, f) {
-    return RegExp(s, f);
-  };
+  // babel-minify and Closure Compiler transpiles RegExp('a', 'y') -> /a/y and it causes SyntaxError
+  var $RegExp$2 = global$1.RegExp;
 
   var UNSUPPORTED_Y$6 = fails$1(function () {
-    var re = RE$1('a', 'y');
+    var re = $RegExp$2('a', 'y');
     re.lastIndex = 2;
     return re.exec('abcd') != null;
   });
 
-  var BROKEN_CARET$1 = fails$1(function () {
+  // UC Browser bug
+  // https://github.com/zloirock/core-js/issues/1008
+  var MISSED_STICKY$2 = UNSUPPORTED_Y$6 || fails$1(function () {
+    return !$RegExp$2('a', 'y').sticky;
+  });
+
+  var BROKEN_CARET$1 = UNSUPPORTED_Y$6 || fails$1(function () {
     // https://bugzilla.mozilla.org/show_bug.cgi?id=773687
-    var re = RE$1('^r', 'gy');
+    var re = $RegExp$2('^r', 'gy');
     re.lastIndex = 2;
     return re.exec('str') != null;
   });
 
   var regexpStickyHelpers$1 = {
-  	UNSUPPORTED_Y: UNSUPPORTED_Y$6,
-  	BROKEN_CARET: BROKEN_CARET$1
+    BROKEN_CARET: BROKEN_CARET$1,
+    MISSED_STICKY: MISSED_STICKY$2,
+    UNSUPPORTED_Y: UNSUPPORTED_Y$6
   };
 
+  // babel-minify and Closure Compiler transpiles RegExp('.', 's') -> /./s and it causes SyntaxError
+  var $RegExp$1 = global$1.RegExp;
+
   var regexpUnsupportedDotAll = fails$1(function () {
-    // babel-minify transpiles RegExp('.', 's') -> /./s and it causes SyntaxError
-    var re = RegExp('.', (typeof '').charAt(0));
+    var re = $RegExp$1('.', 's');
     return !(re.dotAll && re.exec('\n') && re.flags === 's');
   });
 
+  // babel-minify and Closure Compiler transpiles RegExp('(?<a>b)', 'g') -> /(?<a>b)/g and it causes SyntaxError
+  var $RegExp = global$1.RegExp;
+
   var regexpUnsupportedNcg = fails$1(function () {
-    // babel-minify transpiles RegExp('.', 'g') -> /./g and it causes SyntaxError
-    var re = RegExp('(?<a>b)', (typeof '').charAt(5));
+    var re = $RegExp('(?<a>b)', 'g');
     return re.exec('b').groups.a !== 'b' ||
       'b'.replace(re, '$<a>c') !== 'bc';
   });
 
-  /* eslint-disable regexp/no-assertion-capturing-group, regexp/no-empty-group, regexp/no-lazy-ends -- testing */
+  /* eslint-disable regexp/no-empty-capturing-group, regexp/no-empty-group, regexp/no-lazy-ends -- testing */
   /* eslint-disable regexp/no-useless-quantifier -- testing */
 
 
 
 
 
-  var getInternalState$5 = internalState$1.get;
+
+
+  var getInternalState$6 = internalState$1.get;
 
 
 
-  var nativeExec$1 = RegExp.prototype.exec;
   var nativeReplace$1 = shared$1('native-string-replace', String.prototype.replace);
-
+  var nativeExec$1 = RegExp.prototype.exec;
   var patchedExec$1 = nativeExec$1;
+  var charAt$7 = functionUncurryThis(''.charAt);
+  var indexOf$1 = functionUncurryThis(''.indexOf);
+  var replace$8 = functionUncurryThis(''.replace);
+  var stringSlice$8 = functionUncurryThis(''.slice);
 
   var UPDATES_LAST_INDEX_WRONG$1 = (function () {
     var re1 = /a/;
     var re2 = /b*/g;
-    nativeExec$1.call(re1, 'a');
-    nativeExec$1.call(re2, 'a');
+    functionCall(nativeExec$1, re1, 'a');
+    functionCall(nativeExec$1, re2, 'a');
     return re1.lastIndex !== 0 || re2.lastIndex !== 0;
   })();
 
-  var UNSUPPORTED_Y$5 = regexpStickyHelpers$1.UNSUPPORTED_Y || regexpStickyHelpers$1.BROKEN_CARET;
+  var UNSUPPORTED_Y$5 = regexpStickyHelpers$1.BROKEN_CARET;
 
   // nonparticipating capturing group, copied from es5-shim's String#split patch.
   var NPCG_INCLUDED$1 = /()??/.exec('')[1] !== undefined;
@@ -3794,37 +4194,36 @@ var Forestry = (function () {
   var PATCH$1 = UPDATES_LAST_INDEX_WRONG$1 || NPCG_INCLUDED$1 || UNSUPPORTED_Y$5 || regexpUnsupportedDotAll || regexpUnsupportedNcg;
 
   if (PATCH$1) {
-    // eslint-disable-next-line max-statements -- TODO
     patchedExec$1 = function exec(string) {
       var re = this;
-      var state = getInternalState$5(re);
-      var str = toString$2(string);
+      var state = getInternalState$6(re);
+      var str = toString$1(string);
       var raw = state.raw;
       var result, reCopy, lastIndex, match, i, object, group;
 
       if (raw) {
         raw.lastIndex = re.lastIndex;
-        result = patchedExec$1.call(raw, str);
+        result = functionCall(patchedExec$1, raw, str);
         re.lastIndex = raw.lastIndex;
         return result;
       }
 
       var groups = state.groups;
       var sticky = UNSUPPORTED_Y$5 && re.sticky;
-      var flags = regexpFlags$1.call(re);
+      var flags = functionCall(regexpFlags$1, re);
       var source = re.source;
       var charsAdded = 0;
       var strCopy = str;
 
       if (sticky) {
-        flags = flags.replace('y', '');
-        if (flags.indexOf('g') === -1) {
+        flags = replace$8(flags, 'y', '');
+        if (indexOf$1(flags, 'g') === -1) {
           flags += 'g';
         }
 
-        strCopy = str.slice(re.lastIndex);
+        strCopy = stringSlice$8(str, re.lastIndex);
         // Support anchored sticky behavior.
-        if (re.lastIndex > 0 && (!re.multiline || re.multiline && str.charAt(re.lastIndex - 1) !== '\n')) {
+        if (re.lastIndex > 0 && (!re.multiline || re.multiline && charAt$7(str, re.lastIndex - 1) !== '\n')) {
           source = '(?: ' + source + ')';
           strCopy = ' ' + strCopy;
           charsAdded++;
@@ -3839,12 +4238,12 @@ var Forestry = (function () {
       }
       if (UPDATES_LAST_INDEX_WRONG$1) lastIndex = re.lastIndex;
 
-      match = nativeExec$1.call(sticky ? reCopy : re, strCopy);
+      match = functionCall(nativeExec$1, sticky ? reCopy : re, strCopy);
 
       if (sticky) {
         if (match) {
-          match.input = match.input.slice(charsAdded);
-          match[0] = match[0].slice(charsAdded);
+          match.input = stringSlice$8(match.input, charsAdded);
+          match[0] = stringSlice$8(match[0], charsAdded);
           match.index = re.lastIndex;
           re.lastIndex += match[0].length;
         } else re.lastIndex = 0;
@@ -3854,7 +4253,7 @@ var Forestry = (function () {
       if (NPCG_INCLUDED$1 && match && match.length > 1) {
         // Fix browsers whose `exec` methods don't consistently return `undefined`
         // for NPCG, like IE8. NOTE: This doesn' work for /(.?)?/
-        nativeReplace$1.call(match[0], reCopy, function () {
+        functionCall(nativeReplace$1, match[0], reCopy, function () {
           for (i = 1; i < arguments.length - 2; i++) {
             if (arguments[i] === undefined) match[i] = undefined;
           }
@@ -3889,8 +4288,9 @@ var Forestry = (function () {
 
 
 
+
   var SPECIES$7 = wellKnownSymbol$1('species');
-  var RegExpPrototype$3 = RegExp.prototype;
+  var RegExpPrototype$5 = RegExp.prototype;
 
   var fixRegexpWellKnownSymbolLogic$1 = function (KEY, exec, FORCED, SHAM) {
     var SYMBOL = wellKnownSymbol$1(KEY);
@@ -3931,26 +4331,27 @@ var Forestry = (function () {
       !DELEGATES_TO_EXEC ||
       FORCED
     ) {
-      var nativeRegExpMethod = /./[SYMBOL];
+      var uncurriedNativeRegExpMethod = functionUncurryThis(/./[SYMBOL]);
       var methods = exec(SYMBOL, ''[KEY], function (nativeMethod, regexp, str, arg2, forceStringMethod) {
+        var uncurriedNativeMethod = functionUncurryThis(nativeMethod);
         var $exec = regexp.exec;
-        if ($exec === regexpExec$1 || $exec === RegExpPrototype$3.exec) {
+        if ($exec === regexpExec$1 || $exec === RegExpPrototype$5.exec) {
           if (DELEGATES_TO_SYMBOL && !forceStringMethod) {
             // The native String method already delegates to @@method (this
             // polyfilled function), leasing to infinite recursion.
             // We avoid it by directly calling the native @@method method.
-            return { done: true, value: nativeRegExpMethod.call(regexp, str, arg2) };
+            return { done: true, value: uncurriedNativeRegExpMethod(regexp, str, arg2) };
           }
-          return { done: true, value: nativeMethod.call(str, regexp, arg2) };
+          return { done: true, value: uncurriedNativeMethod(str, regexp, arg2) };
         }
         return { done: false };
       });
 
       redefine$1(String.prototype, KEY, methods[0]);
-      redefine$1(RegExpPrototype$3, SYMBOL, methods[1]);
+      redefine$1(RegExpPrototype$5, SYMBOL, methods[1]);
     }
 
-    if (SHAM) createNonEnumerableProperty$1(RegExpPrototype$3[SYMBOL], 'sham', true);
+    if (SHAM) createNonEnumerableProperty$1(RegExpPrototype$5[SYMBOL], 'sham', true);
   };
 
   // `SameValue` abstract operation
@@ -3961,23 +4362,19 @@ var Forestry = (function () {
     return x === y ? x !== 0 || 1 / x === 1 / y : x != x && y != y;
   };
 
+  var TypeError$c = global$1.TypeError;
+
   // `RegExpExec` abstract operation
   // https://tc39.es/ecma262/#sec-regexpexec
   var regexpExecAbstract$1 = function (R, S) {
     var exec = R.exec;
-    if (typeof exec === 'function') {
-      var result = exec.call(R, S);
-      if (typeof result !== 'object') {
-        throw TypeError('RegExp exec method returned something other than an Object or null');
-      }
+    if (isCallable(exec)) {
+      var result = functionCall(exec, R, S);
+      if (result !== null) anObject$1(result);
       return result;
     }
-
-    if (classofRaw$1(R) !== 'RegExp') {
-      throw TypeError('RegExp#exec called on incompatible receiver');
-    }
-
-    return regexpExec$1.call(R, S);
+    if (classofRaw$1(R) === 'RegExp') return functionCall(regexpExec$1, R, S);
+    throw TypeError$c('RegExp#exec called on incompatible receiver');
   };
 
   // @@search logic
@@ -3987,14 +4384,14 @@ var Forestry = (function () {
       // https://tc39.es/ecma262/#sec-string.prototype.search
       function search(regexp) {
         var O = requireObjectCoercible$1(this);
-        var searcher = regexp == undefined ? undefined : regexp[SEARCH];
-        return searcher !== undefined ? searcher.call(regexp, O) : new RegExp(regexp)[SEARCH](toString$2(O));
+        var searcher = regexp == undefined ? undefined : getMethod(regexp, SEARCH);
+        return searcher ? functionCall(searcher, regexp, O) : new RegExp(regexp)[SEARCH](toString$1(O));
       },
       // `RegExp.prototype[@@search]` method
       // https://tc39.es/ecma262/#sec-regexp.prototype-@@search
       function (string) {
         var rx = anObject$1(this);
-        var S = toString$2(string);
+        var S = toString$1(string);
         var res = maybeCallNative(nativeSearch, rx, S);
 
         if (res.done) return res.value;
@@ -4025,6 +4422,7 @@ var Forestry = (function () {
   var IS_CONCAT_SPREADABLE$1 = wellKnownSymbol$1('isConcatSpreadable');
   var MAX_SAFE_INTEGER$3 = 0x1FFFFFFFFFFFFF;
   var MAXIMUM_ALLOWED_INDEX_EXCEEDED$1 = 'Maximum allowed index exceeded';
+  var TypeError$b = global$1.TypeError;
 
   // We can't use this feature detection in V8 since it causes
   // deoptimization and serious performance degradation
@@ -4043,12 +4441,12 @@ var Forestry = (function () {
     return spreadable !== undefined ? !!spreadable : isArray$1(O);
   };
 
-  var FORCED$h = !IS_CONCAT_SPREADABLE_SUPPORT$1 || !SPECIES_SUPPORT$1;
+  var FORCED$g = !IS_CONCAT_SPREADABLE_SUPPORT$1 || !SPECIES_SUPPORT$1;
 
   // `Array.prototype.concat` method
   // https://tc39.es/ecma262/#sec-array.prototype.concat
   // with adding support of @@isConcatSpreadable and @@species
-  _export$1({ target: 'Array', proto: true, forced: FORCED$h }, {
+  _export$1({ target: 'Array', proto: true, forced: FORCED$g }, {
     // eslint-disable-next-line no-unused-vars -- required for `.length`
     concat: function concat(arg) {
       var O = toObject$1(this);
@@ -4058,11 +4456,11 @@ var Forestry = (function () {
       for (i = -1, length = arguments.length; i < length; i++) {
         E = i === -1 ? O : arguments[i];
         if (isConcatSpreadable$1(E)) {
-          len = toLength$1(E.length);
-          if (n + len > MAX_SAFE_INTEGER$3) throw TypeError(MAXIMUM_ALLOWED_INDEX_EXCEEDED$1);
+          len = lengthOfArrayLike(E);
+          if (n + len > MAX_SAFE_INTEGER$3) throw TypeError$b(MAXIMUM_ALLOWED_INDEX_EXCEEDED$1);
           for (k = 0; k < len; k++, n++) if (k in E) createProperty$1(A, n, E[k]);
         } else {
-          if (n >= MAX_SAFE_INTEGER$3) throw TypeError(MAXIMUM_ALLOWED_INDEX_EXCEEDED$1);
+          if (n >= MAX_SAFE_INTEGER$3) throw TypeError$b(MAXIMUM_ALLOWED_INDEX_EXCEEDED$1);
           createProperty$1(A, n++, E);
         }
       }
@@ -4075,6 +4473,7 @@ var Forestry = (function () {
   var whitespaces$1 = '\u0009\u000A\u000B\u000C\u000D\u0020\u00A0\u1680\u2000\u2001\u2002' +
     '\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u3000\u2028\u2029\uFEFF';
 
+  var replace$7 = functionUncurryThis(''.replace);
   var whitespace$1 = '[' + whitespaces$1 + ']';
   var ltrim$1 = RegExp('^' + whitespace$1 + whitespace$1 + '*');
   var rtrim$1 = RegExp(whitespace$1 + whitespace$1 + '*$');
@@ -4082,9 +4481,9 @@ var Forestry = (function () {
   // `String.prototype.{ trim, trimStart, trimEnd, trimLeft, trimRight }` methods implementation
   var createMethod$6 = function (TYPE) {
     return function ($this) {
-      var string = toString$2(requireObjectCoercible$1($this));
-      if (TYPE & 1) string = string.replace(ltrim$1, '');
-      if (TYPE & 2) string = string.replace(rtrim$1, '');
+      var string = toString$1(requireObjectCoercible$1($this));
+      if (TYPE & 1) string = replace$7(string, ltrim$1, '');
+      if (TYPE & 2) string = replace$7(string, rtrim$1, '');
       return string;
     };
   };
@@ -4101,13 +4500,19 @@ var Forestry = (function () {
     trim: createMethod$6(3)
   };
 
+  var PROPER_FUNCTION_NAME$1 = functionName.PROPER;
+
+
+
   var non$1 = '\u200B\u0085\u180E';
 
   // check that a method works with the correct list
   // of whitespaces and has a correct name
   var stringTrimForced$1 = function (METHOD_NAME) {
     return fails$1(function () {
-      return !!whitespaces$1[METHOD_NAME]() || non$1[METHOD_NAME]() != non$1 || whitespaces$1[METHOD_NAME].name !== METHOD_NAME;
+      return !!whitespaces$1[METHOD_NAME]()
+        || non$1[METHOD_NAME]() !== non$1
+        || (PROPER_FUNCTION_NAME$1 && whitespaces$1[METHOD_NAME].name !== METHOD_NAME);
     });
   };
 
@@ -4122,16 +4527,18 @@ var Forestry = (function () {
     }
   });
 
-  var charAt$2 = stringMultibyte$1.charAt;
+  var charAt$6 = stringMultibyte$1.charAt;
 
   // `AdvanceStringIndex` abstract operation
   // https://tc39.es/ecma262/#sec-advancestringindex
   var advanceStringIndex$1 = function (S, index, unicode) {
-    return index + (unicode ? charAt$2(S, index).length : 1);
+    return index + (unicode ? charAt$6(S, index).length : 1);
   };
 
   var floor$f = Math.floor;
-  var replace$2 = ''.replace;
+  var charAt$5 = functionUncurryThis(''.charAt);
+  var replace$6 = functionUncurryThis(''.replace);
+  var stringSlice$7 = functionUncurryThis(''.slice);
   var SUBSTITUTION_SYMBOLS$1 = /\$([$&'`]|\d{1,2}|<[^>]*>)/g;
   var SUBSTITUTION_SYMBOLS_NO_NAMED$1 = /\$([$&'`]|\d{1,2})/g;
 
@@ -4145,15 +4552,15 @@ var Forestry = (function () {
       namedCaptures = toObject$1(namedCaptures);
       symbols = SUBSTITUTION_SYMBOLS$1;
     }
-    return replace$2.call(replacement, symbols, function (match, ch) {
+    return replace$6(replacement, symbols, function (match, ch) {
       var capture;
-      switch (ch.charAt(0)) {
+      switch (charAt$5(ch, 0)) {
         case '$': return '$';
         case '&': return matched;
-        case '`': return str.slice(0, position);
-        case "'": return str.slice(tailPos);
+        case '`': return stringSlice$7(str, 0, position);
+        case "'": return stringSlice$7(str, tailPos);
         case '<':
-          capture = namedCaptures[ch.slice(1, -1)];
+          capture = namedCaptures[stringSlice$7(ch, 1, -1)];
           break;
         default: // \d\d?
           var n = +ch;
@@ -4161,7 +4568,7 @@ var Forestry = (function () {
           if (n > m) {
             var f = floor$f(n / 10);
             if (f === 0) return match;
-            if (f <= m) return captures[f - 1] === undefined ? ch.charAt(1) : captures[f - 1] + ch.charAt(1);
+            if (f <= m) return captures[f - 1] === undefined ? charAt$5(ch, 1) : captures[f - 1] + charAt$5(ch, 1);
             return match;
           }
           capture = captures[n - 1];
@@ -4173,6 +4580,10 @@ var Forestry = (function () {
   var REPLACE$1 = wellKnownSymbol$1('replace');
   var max$5 = Math.max;
   var min$b = Math.min;
+  var concat$2 = functionUncurryThis([].concat);
+  var push$7 = functionUncurryThis([].push);
+  var stringIndexOf$2 = functionUncurryThis(''.indexOf);
+  var stringSlice$6 = functionUncurryThis(''.slice);
 
   var maybeToString$1 = function (it) {
     return it === undefined ? it : String(it);
@@ -4200,6 +4611,7 @@ var Forestry = (function () {
       result.groups = { a: '7' };
       return result;
     };
+    // eslint-disable-next-line regexp/no-useless-dollar-replacements -- false positive
     return ''.replace(re, '$<a>') !== '7';
   });
 
@@ -4212,28 +4624,28 @@ var Forestry = (function () {
       // https://tc39.es/ecma262/#sec-string.prototype.replace
       function replace(searchValue, replaceValue) {
         var O = requireObjectCoercible$1(this);
-        var replacer = searchValue == undefined ? undefined : searchValue[REPLACE$1];
-        return replacer !== undefined
-          ? replacer.call(searchValue, O, replaceValue)
-          : nativeReplace.call(toString$2(O), searchValue, replaceValue);
+        var replacer = searchValue == undefined ? undefined : getMethod(searchValue, REPLACE$1);
+        return replacer
+          ? functionCall(replacer, searchValue, O, replaceValue)
+          : functionCall(nativeReplace, toString$1(O), searchValue, replaceValue);
       },
       // `RegExp.prototype[@@replace]` method
       // https://tc39.es/ecma262/#sec-regexp.prototype-@@replace
       function (string, replaceValue) {
         var rx = anObject$1(this);
-        var S = toString$2(string);
+        var S = toString$1(string);
 
         if (
-          typeof replaceValue === 'string' &&
-          replaceValue.indexOf(UNSAFE_SUBSTITUTE) === -1 &&
-          replaceValue.indexOf('$<') === -1
+          typeof replaceValue == 'string' &&
+          stringIndexOf$2(replaceValue, UNSAFE_SUBSTITUTE) === -1 &&
+          stringIndexOf$2(replaceValue, '$<') === -1
         ) {
           var res = maybeCallNative(nativeReplace, rx, S, replaceValue);
           if (res.done) return res.value;
         }
 
-        var functionalReplace = typeof replaceValue === 'function';
-        if (!functionalReplace) replaceValue = toString$2(replaceValue);
+        var functionalReplace = isCallable(replaceValue);
+        if (!functionalReplace) replaceValue = toString$1(replaceValue);
 
         var global = rx.global;
         if (global) {
@@ -4245,10 +4657,10 @@ var Forestry = (function () {
           var result = regexpExecAbstract$1(rx, S);
           if (result === null) break;
 
-          results.push(result);
+          push$7(results, result);
           if (!global) break;
 
-          var matchStr = toString$2(result[0]);
+          var matchStr = toString$1(result[0]);
           if (matchStr === '') rx.lastIndex = advanceStringIndex$1(S, toLength$1(rx.lastIndex), fullUnicode);
         }
 
@@ -4257,29 +4669,29 @@ var Forestry = (function () {
         for (var i = 0; i < results.length; i++) {
           result = results[i];
 
-          var matched = toString$2(result[0]);
-          var position = max$5(min$b(toInteger$1(result.index), S.length), 0);
+          var matched = toString$1(result[0]);
+          var position = max$5(min$b(toIntegerOrInfinity(result.index), S.length), 0);
           var captures = [];
           // NOTE: This is equivalent to
           //   captures = result.slice(1).map(maybeToString)
           // but for some reason `nativeSlice.call(result, 1, result.length)` (called in
           // the slice polyfill when slicing native arrays) "doesn't work" in safari 9 and
           // causes a crash (https://pastebin.com/N21QzeQA) when trying to debug it.
-          for (var j = 1; j < result.length; j++) captures.push(maybeToString$1(result[j]));
+          for (var j = 1; j < result.length; j++) push$7(captures, maybeToString$1(result[j]));
           var namedCaptures = result.groups;
           if (functionalReplace) {
-            var replacerArgs = [matched].concat(captures, position, S);
-            if (namedCaptures !== undefined) replacerArgs.push(namedCaptures);
-            var replacement = toString$2(replaceValue.apply(undefined, replacerArgs));
+            var replacerArgs = concat$2([matched], captures, position, S);
+            if (namedCaptures !== undefined) push$7(replacerArgs, namedCaptures);
+            var replacement = toString$1(functionApply(replaceValue, undefined, replacerArgs));
           } else {
             replacement = getSubstitution(matched, S, position, captures, namedCaptures, replaceValue);
           }
           if (position >= nextSourcePosition) {
-            accumulatedResult += S.slice(nextSourcePosition, position) + replacement;
+            accumulatedResult += stringSlice$6(S, nextSourcePosition, position) + replacement;
             nextSourcePosition = position + matched.length;
           }
         }
-        return accumulatedResult + S.slice(nextSourcePosition);
+        return accumulatedResult + stringSlice$6(S, nextSourcePosition);
       }
     ];
   }, !REPLACE_SUPPORTS_NAMED_GROUPS$1 || !REPLACE_KEEPS_$0$1 || REGEXP_REPLACE_SUBSTITUTES_UNDEFINED_CAPTURE$1);
@@ -4294,9 +4706,12 @@ var Forestry = (function () {
   };
 
   var UNSUPPORTED_Y$4 = regexpStickyHelpers$1.UNSUPPORTED_Y;
-  var arrayPush$1 = [].push;
-  var min$a = Math.min;
   var MAX_UINT32$1 = 0xFFFFFFFF;
+  var min$a = Math.min;
+  var $push = [].push;
+  var exec$3 = functionUncurryThis(/./.exec);
+  var push$6 = functionUncurryThis($push);
+  var stringSlice$5 = functionUncurryThis(''.slice);
 
   // Chrome 51 has a buggy "split" implementation when RegExp#exec !== nativeExec
   // Weex JS has frozen built-in prototypes, so use try / catch wrapper
@@ -4318,19 +4733,19 @@ var Forestry = (function () {
       'test'.split(/(?:)/, -1).length != 4 ||
       'ab'.split(/(?:ab)*/).length != 2 ||
       '.'.split(/(.?)(.?)/).length != 4 ||
-      // eslint-disable-next-line regexp/no-assertion-capturing-group, regexp/no-empty-group -- required for testing
+      // eslint-disable-next-line regexp/no-empty-capturing-group, regexp/no-empty-group -- required for testing
       '.'.split(/()()/).length > 1 ||
       ''.split(/.?/).length
     ) {
       // based on es5-shim implementation, need to rework it
       internalSplit = function (separator, limit) {
-        var string = toString$2(requireObjectCoercible$1(this));
+        var string = toString$1(requireObjectCoercible$1(this));
         var lim = limit === undefined ? MAX_UINT32$1 : limit >>> 0;
         if (lim === 0) return [];
         if (separator === undefined) return [string];
         // If `separator` is not a regex, use native split
         if (!isRegexp$1(separator)) {
-          return nativeSplit.call(string, separator, lim);
+          return functionCall(nativeSplit, string, separator, lim);
         }
         var output = [];
         var flags = (separator.ignoreCase ? 'i' : '') +
@@ -4341,11 +4756,11 @@ var Forestry = (function () {
         // Make `global` and avoid `lastIndex` issues by working with a copy
         var separatorCopy = new RegExp(separator.source, flags + 'g');
         var match, lastIndex, lastLength;
-        while (match = regexpExec$1.call(separatorCopy, string)) {
+        while (match = functionCall(regexpExec$1, separatorCopy, string)) {
           lastIndex = separatorCopy.lastIndex;
           if (lastIndex > lastLastIndex) {
-            output.push(string.slice(lastLastIndex, match.index));
-            if (match.length > 1 && match.index < string.length) arrayPush$1.apply(output, match.slice(1));
+            push$6(output, stringSlice$5(string, lastLastIndex, match.index));
+            if (match.length > 1 && match.index < string.length) functionApply($push, output, arraySliceSimple(match, 1));
             lastLength = match[0].length;
             lastLastIndex = lastIndex;
             if (output.length >= lim) break;
@@ -4353,14 +4768,14 @@ var Forestry = (function () {
           if (separatorCopy.lastIndex === match.index) separatorCopy.lastIndex++; // Avoid an infinite loop
         }
         if (lastLastIndex === string.length) {
-          if (lastLength || !separatorCopy.test('')) output.push('');
-        } else output.push(string.slice(lastLastIndex));
-        return output.length > lim ? output.slice(0, lim) : output;
+          if (lastLength || !exec$3(separatorCopy, '')) push$6(output, '');
+        } else push$6(output, stringSlice$5(string, lastLastIndex));
+        return output.length > lim ? arraySliceSimple(output, 0, lim) : output;
       };
     // Chakra, V8
     } else if ('0'.split(undefined, 0).length) {
       internalSplit = function (separator, limit) {
-        return separator === undefined && limit === 0 ? [] : nativeSplit.call(this, separator, limit);
+        return separator === undefined && limit === 0 ? [] : functionCall(nativeSplit, this, separator, limit);
       };
     } else internalSplit = nativeSplit;
 
@@ -4369,10 +4784,10 @@ var Forestry = (function () {
       // https://tc39.es/ecma262/#sec-string.prototype.split
       function split(separator, limit) {
         var O = requireObjectCoercible$1(this);
-        var splitter = separator == undefined ? undefined : separator[SPLIT];
-        return splitter !== undefined
-          ? splitter.call(separator, O, limit)
-          : internalSplit.call(toString$2(O), separator, limit);
+        var splitter = separator == undefined ? undefined : getMethod(separator, SPLIT);
+        return splitter
+          ? functionCall(splitter, separator, O, limit)
+          : functionCall(internalSplit, toString$1(O), separator, limit);
       },
       // `RegExp.prototype[@@split]` method
       // https://tc39.es/ecma262/#sec-regexp.prototype-@@split
@@ -4381,7 +4796,7 @@ var Forestry = (function () {
       // the 'y' flag.
       function (string, limit) {
         var rx = anObject$1(this);
-        var S = toString$2(string);
+        var S = toString$1(string);
         var res = maybeCallNative(internalSplit, rx, S, limit, internalSplit !== nativeSplit);
 
         if (res.done) return res.value;
@@ -4405,7 +4820,7 @@ var Forestry = (function () {
         var A = [];
         while (q < S.length) {
           splitter.lastIndex = UNSUPPORTED_Y$4 ? 0 : q;
-          var z = regexpExecAbstract$1(splitter, UNSUPPORTED_Y$4 ? S.slice(q) : S);
+          var z = regexpExecAbstract$1(splitter, UNSUPPORTED_Y$4 ? stringSlice$5(S, q) : S);
           var e;
           if (
             z === null ||
@@ -4413,22 +4828,22 @@ var Forestry = (function () {
           ) {
             q = advanceStringIndex$1(S, q, unicodeMatching);
           } else {
-            A.push(S.slice(p, q));
+            push$6(A, stringSlice$5(S, p, q));
             if (A.length === lim) return A;
             for (var i = 1; i <= z.length - 1; i++) {
-              A.push(z[i]);
+              push$6(A, z[i]);
               if (A.length === lim) return A;
             }
             q = p = e;
           }
         }
-        A.push(S.slice(p));
+        push$6(A, stringSlice$5(S, p));
         return A;
       }
     ];
   }, !SPLIT_WORKS_WITH_OVERWRITTEN_EXEC$1, UNSUPPORTED_Y$4);
 
-  var nativeJoin$1 = [].join;
+  var un$Join = functionUncurryThis([].join);
 
   var ES3_STRINGS$1 = indexedObject$1 != Object;
   var STRICT_METHOD$8 = arrayMethodIsStrict$1('join', ',');
@@ -4437,7 +4852,7 @@ var Forestry = (function () {
   // https://tc39.es/ecma262/#sec-array.prototype.join
   _export$1({ target: 'Array', proto: true, forced: ES3_STRINGS$1 || !STRICT_METHOD$8 }, {
     join: function join(separator) {
-      return nativeJoin$1.call(toIndexedObject$1(this), separator === undefined ? ',' : separator);
+      return un$Join(toIndexedObject$1(this), separator === undefined ? ',' : separator);
     }
   });
 
@@ -4455,9 +4870,11 @@ var Forestry = (function () {
   // https://tc39.es/ecma262/#sec-array.prototype-@@unscopables
   addToUnscopables$1('includes');
 
+  var TypeError$a = global$1.TypeError;
+
   var notARegexp = function (it) {
     if (isRegexp$1(it)) {
-      throw TypeError("The method doesn't accept regular expressions");
+      throw TypeError$a("The method doesn't accept regular expressions");
     } return it;
   };
 
@@ -4475,17 +4892,23 @@ var Forestry = (function () {
     } return false;
   };
 
+  var stringIndexOf$1 = functionUncurryThis(''.indexOf);
+
   // `String.prototype.includes` method
   // https://tc39.es/ecma262/#sec-string.prototype.includes
   _export$1({ target: 'String', proto: true, forced: !correctIsRegexpLogic('includes') }, {
     includes: function includes(searchString /* , position = 0 */) {
-      return !!~toString$2(requireObjectCoercible$1(this))
-        .indexOf(toString$2(notARegexp(searchString)), arguments.length > 1 ? arguments[1] : undefined);
+      return !!~stringIndexOf$1(
+        toString$1(requireObjectCoercible$1(this)),
+        toString$1(notARegexp(searchString)),
+        arguments.length > 1 ? arguments[1] : undefined
+      );
     }
   });
 
   var HAS_SPECIES_SUPPORT$4 = arrayMethodHasSpeciesSupport$1('splice');
 
+  var TypeError$9 = global$1.TypeError;
   var max$4 = Math.max;
   var min$9 = Math.min;
   var MAX_SAFE_INTEGER$2 = 0x1FFFFFFFFFFFFF;
@@ -4497,7 +4920,7 @@ var Forestry = (function () {
   _export$1({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT$4 }, {
     splice: function splice(start, deleteCount /* , ...items */) {
       var O = toObject$1(this);
-      var len = toLength$1(O.length);
+      var len = lengthOfArrayLike(O);
       var actualStart = toAbsoluteIndex$1(start, len);
       var argumentsLength = arguments.length;
       var insertCount, actualDeleteCount, A, k, from, to;
@@ -4508,10 +4931,10 @@ var Forestry = (function () {
         actualDeleteCount = len - actualStart;
       } else {
         insertCount = argumentsLength - 2;
-        actualDeleteCount = min$9(max$4(toInteger$1(deleteCount), 0), len - actualStart);
+        actualDeleteCount = min$9(max$4(toIntegerOrInfinity(deleteCount), 0), len - actualStart);
       }
       if (len + insertCount - actualDeleteCount > MAX_SAFE_INTEGER$2) {
-        throw TypeError(MAXIMUM_ALLOWED_LENGTH_EXCEEDED$1);
+        throw TypeError$9(MAXIMUM_ALLOWED_LENGTH_EXCEEDED$1);
       }
       A = arraySpeciesCreate$1(O, actualDeleteCount);
       for (k = 0; k < actualDeleteCount; k++) {
@@ -4554,6 +4977,42 @@ var Forestry = (function () {
     }
   });
 
+  // TODO: Remove from `core-js@4` since it's moved to entry points
+
+
+
+
+
+
+
+
+  var DELEGATES_TO_EXEC = function () {
+    var execCalled = false;
+    var re = /[ac]/;
+    re.exec = function () {
+      execCalled = true;
+      return /./.exec.apply(this, arguments);
+    };
+    return re.test('abc') === true && execCalled;
+  }();
+
+  var Error$1 = global$1.Error;
+  var un$Test = functionUncurryThis(/./.test);
+
+  // `RegExp.prototype.test` method
+  // https://tc39.es/ecma262/#sec-regexp.prototype.test
+  _export$1({ target: 'RegExp', proto: true, forced: !DELEGATES_TO_EXEC }, {
+    test: function (str) {
+      var exec = this.exec;
+      if (!isCallable(exec)) return un$Test(this, str);
+      var result = functionCall(exec, this, str);
+      if (result !== null && !isObject$1(result)) {
+        throw new Error$1('RegExp exec method returned something other than an Object or null');
+      }
+      return !!result;
+    }
+  });
+
   // makes subclassing work correct for wrapped built-ins
   var inheritIfRequired$1 = function ($this, dummy, Wrapper) {
     var NewTarget, NewTargetPrototype;
@@ -4561,7 +5020,7 @@ var Forestry = (function () {
       // it can work only with native `setPrototypeOf`
       objectSetPrototypeOf$1 &&
       // we haven't completely correct pre-ES6 way for getting `new.target`, so use this
-      typeof (NewTarget = dummy.constructor) == 'function' &&
+      isCallable(NewTarget = dummy.constructor) &&
       NewTarget !== Wrapper &&
       isObject$1(NewTargetPrototype = NewTarget.prototype) &&
       NewTargetPrototype !== Wrapper.prototype
@@ -4569,7 +5028,7 @@ var Forestry = (function () {
     return $this;
   };
 
-  var defineProperty$c = objectDefineProperty$1.f;
+  var defineProperty$d = objectDefineProperty$1.f;
   var getOwnPropertyNames$6 = objectGetOwnPropertyNames$1.f;
 
 
@@ -4578,7 +5037,8 @@ var Forestry = (function () {
 
 
 
-  var enforceInternalState = internalState$1.enforce;
+
+  var enforceInternalState$1 = internalState$1.enforce;
 
 
 
@@ -4586,7 +5046,14 @@ var Forestry = (function () {
 
   var MATCH$2 = wellKnownSymbol$1('match');
   var NativeRegExp$1 = global$1.RegExp;
-  var RegExpPrototype$2 = NativeRegExp$1.prototype;
+  var RegExpPrototype$4 = NativeRegExp$1.prototype;
+  var SyntaxError = global$1.SyntaxError;
+  var getFlags = functionUncurryThis(regexpFlags$1);
+  var exec$2 = functionUncurryThis(RegExpPrototype$4.exec);
+  var charAt$4 = functionUncurryThis(''.charAt);
+  var replace$5 = functionUncurryThis(''.replace);
+  var stringIndexOf = functionUncurryThis(''.indexOf);
+  var stringSlice$4 = functionUncurryThis(''.slice);
   // TODO: Use only propper RegExpIdentifierName
   var IS_NCG = /^\?<[^\s\d!#%&*+<=>@^][^\s!#%&*+<=>@^]*>/;
   var re1$1 = /a/g;
@@ -4595,10 +5062,11 @@ var Forestry = (function () {
   // "new" should create a new object, old webkit bug
   var CORRECT_NEW$1 = new NativeRegExp$1(re1$1) !== re1$1;
 
+  var MISSED_STICKY$1 = regexpStickyHelpers$1.MISSED_STICKY;
   var UNSUPPORTED_Y$3 = regexpStickyHelpers$1.UNSUPPORTED_Y;
 
   var BASE_FORCED = descriptors$1 &&
-    (!CORRECT_NEW$1 || UNSUPPORTED_Y$3 || regexpUnsupportedDotAll || regexpUnsupportedNcg || fails$1(function () {
+    (!CORRECT_NEW$1 || MISSED_STICKY$1 || regexpUnsupportedDotAll || regexpUnsupportedNcg || fails$1(function () {
       re2$1[MATCH$2] = false;
       // RegExp constructor can alter flags and IsRegExp works correct with @@match
       return NativeRegExp$1(re1$1) != re1$1 || NativeRegExp$1(re2$1) == re2$1 || NativeRegExp$1(re1$1, 'i') != '/a/i';
@@ -4611,9 +5079,9 @@ var Forestry = (function () {
     var brackets = false;
     var chr;
     for (; index <= length; index++) {
-      chr = string.charAt(index);
+      chr = charAt$4(string, index);
       if (chr === '\\') {
-        result += chr + string.charAt(++index);
+        result += chr + charAt$4(string, ++index);
         continue;
       }
       if (!brackets && chr === '.') {
@@ -4640,9 +5108,9 @@ var Forestry = (function () {
     var groupname = '';
     var chr;
     for (; index <= length; index++) {
-      chr = string.charAt(index);
+      chr = charAt$4(string, index);
       if (chr === '\\') {
-        chr = chr + string.charAt(++index);
+        chr = chr + charAt$4(string, ++index);
       } else if (chr === ']') {
         brackets = false;
       } else if (!brackets) switch (true) {
@@ -4650,7 +5118,7 @@ var Forestry = (function () {
           brackets = true;
           break;
         case chr === '(':
-          if (IS_NCG.test(string.slice(index + 1))) {
+          if (exec$2(IS_NCG, stringSlice$4(string, index + 1))) {
             index += 2;
             ncg = true;
           }
@@ -4658,11 +5126,11 @@ var Forestry = (function () {
           groupid++;
           continue;
         case chr === '>' && ncg:
-          if (groupname === '' || has$3(names, groupname)) {
+          if (groupname === '' || hasOwnProperty_1(names, groupname)) {
             throw new SyntaxError('Invalid capture group name');
           }
           names[groupname] = true;
-          named.push([groupname, groupid]);
+          named[named.length] = [groupname, groupid];
           ncg = false;
           groupname = '';
           continue;
@@ -4676,7 +5144,7 @@ var Forestry = (function () {
   // https://tc39.es/ecma262/#sec-regexp-constructor
   if (isForced_1$1('RegExp', BASE_FORCED)) {
     var RegExpWrapper$1 = function RegExp(pattern, flags) {
-      var thisIsRegExp = this instanceof RegExpWrapper$1;
+      var thisIsRegExp = objectIsPrototypeOf(RegExpPrototype$4, this);
       var patternIsRegExp = isRegexp$1(pattern);
       var flagsAreUndefined = flags === undefined;
       var groups = [];
@@ -4687,25 +5155,25 @@ var Forestry = (function () {
         return pattern;
       }
 
-      if (patternIsRegExp || pattern instanceof RegExpWrapper$1) {
+      if (patternIsRegExp || objectIsPrototypeOf(RegExpPrototype$4, pattern)) {
         pattern = pattern.source;
-        if (flagsAreUndefined) flags = 'flags' in rawPattern ? rawPattern.flags : regexpFlags$1.call(rawPattern);
+        if (flagsAreUndefined) flags = 'flags' in rawPattern ? rawPattern.flags : getFlags(rawPattern);
       }
 
-      pattern = pattern === undefined ? '' : toString$2(pattern);
-      flags = flags === undefined ? '' : toString$2(flags);
+      pattern = pattern === undefined ? '' : toString$1(pattern);
+      flags = flags === undefined ? '' : toString$1(flags);
       rawPattern = pattern;
 
       if (regexpUnsupportedDotAll && 'dotAll' in re1$1) {
-        dotAll = !!flags && flags.indexOf('s') > -1;
-        if (dotAll) flags = flags.replace(/s/g, '');
+        dotAll = !!flags && stringIndexOf(flags, 's') > -1;
+        if (dotAll) flags = replace$5(flags, /s/g, '');
       }
 
       rawFlags = flags;
 
-      if (UNSUPPORTED_Y$3 && 'sticky' in re1$1) {
-        sticky = !!flags && flags.indexOf('y') > -1;
-        if (sticky) flags = flags.replace(/y/g, '');
+      if (MISSED_STICKY$1 && 'sticky' in re1$1) {
+        sticky = !!flags && stringIndexOf(flags, 'y') > -1;
+        if (sticky && UNSUPPORTED_Y$3) flags = replace$5(flags, /y/g, '');
       }
 
       if (regexpUnsupportedNcg) {
@@ -4714,10 +5182,10 @@ var Forestry = (function () {
         groups = handled[1];
       }
 
-      result = inheritIfRequired$1(NativeRegExp$1(pattern, flags), thisIsRegExp ? this : RegExpPrototype$2, RegExpWrapper$1);
+      result = inheritIfRequired$1(NativeRegExp$1(pattern, flags), thisIsRegExp ? this : RegExpPrototype$4, RegExpWrapper$1);
 
       if (dotAll || sticky || groups.length) {
-        state = enforceInternalState(result);
+        state = enforceInternalState$1(result);
         if (dotAll) {
           state.dotAll = true;
           state.raw = RegExpWrapper$1(handleDotAll(pattern), rawFlags);
@@ -4735,7 +5203,7 @@ var Forestry = (function () {
     };
 
     var proxy$1 = function (key) {
-      key in RegExpWrapper$1 || defineProperty$c(RegExpWrapper$1, key, {
+      key in RegExpWrapper$1 || defineProperty$d(RegExpWrapper$1, key, {
         configurable: true,
         get: function () { return NativeRegExp$1[key]; },
         set: function (it) { NativeRegExp$1[key] = it; }
@@ -4746,23 +5214,48 @@ var Forestry = (function () {
       proxy$1(keys$6[index$1++]);
     }
 
-    RegExpPrototype$2.constructor = RegExpWrapper$1;
-    RegExpWrapper$1.prototype = RegExpPrototype$2;
+    RegExpPrototype$4.constructor = RegExpWrapper$1;
+    RegExpWrapper$1.prototype = RegExpPrototype$4;
     redefine$1(global$1, 'RegExp', RegExpWrapper$1);
   }
 
   // https://tc39.es/ecma262/#sec-get-regexp-@@species
   setSpecies$1('RegExp');
 
-  // TODO: use something more complex like timsort?
+  var MISSED_STICKY = regexpStickyHelpers$1.MISSED_STICKY;
+
+  var defineProperty$c = objectDefineProperty$1.f;
+  var getInternalState$5 = internalState$1.get;
+
+  var RegExpPrototype$3 = RegExp.prototype;
+  var TypeError$8 = global$1.TypeError;
+
+  // `RegExp.prototype.sticky` getter
+  // https://tc39.es/ecma262/#sec-get-regexp.prototype.sticky
+  if (descriptors$1 && MISSED_STICKY) {
+    defineProperty$c(RegExpPrototype$3, 'sticky', {
+      configurable: true,
+      get: function () {
+        if (this === RegExpPrototype$3) return undefined;
+        // We can't use InternalStateModule.getterFor because
+        // we don't add metadata for regexps created by a literal.
+        if (classofRaw$1(this) === 'RegExp') {
+          return !!getInternalState$5(this).sticky;
+        }
+        throw TypeError$8('Incompatible receiver, RegExp required');
+      }
+    });
+  }
+
   var floor$d = Math.floor;
 
   var mergeSort = function (array, comparefn) {
     var length = array.length;
     var middle = floor$d(length / 2);
-    return length < 8 ? insertionSort(array, comparefn) : merge$1(
-      mergeSort(array.slice(0, middle), comparefn),
-      mergeSort(array.slice(middle), comparefn),
+    return length < 8 ? insertionSort(array, comparefn) : merge$2(
+      array,
+      mergeSort(arraySliceSimple(array, 0, middle), comparefn),
+      mergeSort(arraySliceSimple(array, middle), comparefn),
       comparefn
     );
   };
@@ -4782,20 +5275,17 @@ var Forestry = (function () {
     } return array;
   };
 
-  var merge$1 = function (left, right, comparefn) {
+  var merge$2 = function (array, left, right, comparefn) {
     var llength = left.length;
     var rlength = right.length;
     var lindex = 0;
     var rindex = 0;
-    var result = [];
 
     while (lindex < llength || rindex < rlength) {
-      if (lindex < llength && rindex < rlength) {
-        result.push(comparefn(left[lindex], right[rindex]) <= 0 ? left[lindex++] : right[rindex++]);
-      } else {
-        result.push(lindex < llength ? left[lindex++] : right[rindex++]);
-      }
-    } return result;
+      array[lindex + rindex] = (lindex < llength && rindex < rlength)
+        ? comparefn(left[lindex], right[rindex]) <= 0 ? left[lindex++] : right[rindex++]
+        : lindex < llength ? left[lindex++] : right[rindex++];
+    } return array;
   };
 
   var arraySort = mergeSort;
@@ -4811,7 +5301,8 @@ var Forestry = (function () {
   var engineWebkitVersion = !!webkit && +webkit[1];
 
   var test$3 = [];
-  var nativeSort$2 = test$3.sort;
+  var un$Sort$1 = functionUncurryThis(test$3.sort);
+  var push$5 = functionUncurryThis(test$3.push);
 
   // IE8-
   var FAILS_ON_UNDEFINED$1 = fails$1(function () {
@@ -4859,36 +5350,37 @@ var Forestry = (function () {
     return result !== 'DGBEFHACIJK';
   });
 
-  var FORCED$g = FAILS_ON_UNDEFINED$1 || !FAILS_ON_NULL$1 || !STRICT_METHOD$7 || !STABLE_SORT$1;
+  var FORCED$f = FAILS_ON_UNDEFINED$1 || !FAILS_ON_NULL$1 || !STRICT_METHOD$7 || !STABLE_SORT$1;
 
   var getSortCompare$1 = function (comparefn) {
     return function (x, y) {
       if (y === undefined) return -1;
       if (x === undefined) return 1;
       if (comparefn !== undefined) return +comparefn(x, y) || 0;
-      return toString$2(x) > toString$2(y) ? 1 : -1;
+      return toString$1(x) > toString$1(y) ? 1 : -1;
     };
   };
 
   // `Array.prototype.sort` method
   // https://tc39.es/ecma262/#sec-array.prototype.sort
-  _export$1({ target: 'Array', proto: true, forced: FORCED$g }, {
+  _export$1({ target: 'Array', proto: true, forced: FORCED$f }, {
     sort: function sort(comparefn) {
-      if (comparefn !== undefined) aFunction$2(comparefn);
+      if (comparefn !== undefined) aCallable(comparefn);
 
       var array = toObject$1(this);
 
-      if (STABLE_SORT$1) return comparefn === undefined ? nativeSort$2.call(array) : nativeSort$2.call(array, comparefn);
+      if (STABLE_SORT$1) return comparefn === undefined ? un$Sort$1(array) : un$Sort$1(array, comparefn);
 
       var items = [];
-      var arrayLength = toLength$1(array.length);
+      var arrayLength = lengthOfArrayLike(array);
       var itemsLength, index;
 
       for (index = 0; index < arrayLength; index++) {
-        if (index in array) items.push(array[index]);
+        if (index in array) push$5(items, array[index]);
       }
 
-      items = arraySort(items, getSortCompare$1(comparefn));
+      arraySort(items, getSortCompare$1(comparefn));
+
       itemsLength = items.length;
       index = 0;
 
@@ -4900,19 +5392,24 @@ var Forestry = (function () {
   });
 
   // eslint-disable-next-line es/no-typed-arrays -- safe
-  var arrayBufferNative$1 = typeof ArrayBuffer !== 'undefined' && typeof DataView !== 'undefined';
+  var arrayBufferNative$1 = typeof ArrayBuffer != 'undefined' && typeof DataView != 'undefined';
+
+  var RangeError$9 = global$1.RangeError;
 
   // `ToIndex` abstract operation
   // https://tc39.es/ecma262/#sec-toindex
   var toIndex$1 = function (it) {
     if (it === undefined) return 0;
-    var number = toInteger$1(it);
+    var number = toIntegerOrInfinity(it);
     var length = toLength$1(number);
-    if (number !== length) throw RangeError('Wrong length or index');
+    if (number !== length) throw RangeError$9('Wrong length or index');
     return length;
   };
 
   // IEEE754 conversions based on https://github.com/feross/ieee754
+
+
+  var Array$4 = global$1.Array;
   var abs$1 = Math.abs;
   var pow$5 = Math.pow;
   var floor$c = Math.floor;
@@ -4920,7 +5417,7 @@ var Forestry = (function () {
   var LN2$1 = Math.LN2;
 
   var pack$1 = function (number, mantissaLength, bytes) {
-    var buffer = new Array(bytes);
+    var buffer = Array$4(bytes);
     var exponentLength = bytes * 8 - mantissaLength - 1;
     var eMax = (1 << exponentLength) - 1;
     var eBias = eMax >> 1;
@@ -4936,7 +5433,8 @@ var Forestry = (function () {
       exponent = eMax;
     } else {
       exponent = floor$c(log$3(number) / LN2$1);
-      if (number * (c = pow$5(2, -exponent)) < 1) {
+      c = pow$5(2, -exponent);
+      if (number * c < 1) {
         exponent--;
         c *= 2;
       }
@@ -4960,10 +5458,18 @@ var Forestry = (function () {
         exponent = 0;
       }
     }
-    for (; mantissaLength >= 8; buffer[index++] = mantissa & 255, mantissa /= 256, mantissaLength -= 8);
+    while (mantissaLength >= 8) {
+      buffer[index++] = mantissa & 255;
+      mantissa /= 256;
+      mantissaLength -= 8;
+    }
     exponent = exponent << mantissaLength | mantissa;
     exponentLength += mantissaLength;
-    for (; exponentLength > 0; buffer[index++] = exponent & 255, exponent /= 256, exponentLength -= 8);
+    while (exponentLength > 0) {
+      buffer[index++] = exponent & 255;
+      exponent /= 256;
+      exponentLength -= 8;
+    }
     buffer[--index] |= sign * 128;
     return buffer;
   };
@@ -4979,11 +5485,17 @@ var Forestry = (function () {
     var exponent = sign & 127;
     var mantissa;
     sign >>= 7;
-    for (; nBits > 0; exponent = exponent * 256 + buffer[index], index--, nBits -= 8);
+    while (nBits > 0) {
+      exponent = exponent * 256 + buffer[index--];
+      nBits -= 8;
+    }
     mantissa = exponent & (1 << -nBits) - 1;
     exponent >>= -nBits;
     nBits += mantissaLength;
-    for (; nBits > 0; mantissa = mantissa * 256 + buffer[index], index--, nBits -= 8);
+    while (nBits > 0) {
+      mantissa = mantissa * 256 + buffer[index--];
+      nBits -= 8;
+    }
     if (exponent === 0) {
       exponent = 1 - eBias;
     } else if (exponent === eMax) {
@@ -5003,7 +5515,7 @@ var Forestry = (function () {
   // https://tc39.es/ecma262/#sec-array.prototype.fill
   var arrayFill$1 = function fill(value /* , start = 0, end = @length */) {
     var O = toObject$1(this);
-    var length = toLength$1(O.length);
+    var length = lengthOfArrayLike(O);
     var argumentsLength = arguments.length;
     var index = toAbsoluteIndex$1(argumentsLength > 1 ? arguments[1] : undefined, length);
     var end = argumentsLength > 2 ? arguments[2] : undefined;
@@ -5018,6 +5530,9 @@ var Forestry = (function () {
 
 
 
+
+  var PROPER_FUNCTION_NAME = functionName.PROPER;
+  var CONFIGURABLE_FUNCTION_NAME = functionName.CONFIGURABLE;
   var getInternalState$4 = internalState$1.get;
   var setInternalState$9 = internalState$1.set;
   var ARRAY_BUFFER$2 = 'ArrayBuffer';
@@ -5027,10 +5542,14 @@ var Forestry = (function () {
   var WRONG_INDEX$1 = 'Wrong index';
   var NativeArrayBuffer$2 = global$1[ARRAY_BUFFER$2];
   var $ArrayBuffer$1 = NativeArrayBuffer$2;
+  var ArrayBufferPrototype$1 = $ArrayBuffer$1 && $ArrayBuffer$1[PROTOTYPE$2];
   var $DataView$1 = global$1[DATA_VIEW$1];
-  var $DataViewPrototype$1 = $DataView$1 && $DataView$1[PROTOTYPE$2];
+  var DataViewPrototype$1 = $DataView$1 && $DataView$1[PROTOTYPE$2];
   var ObjectPrototype$4 = Object.prototype;
-  var RangeError$2 = global$1.RangeError;
+  var Array$3 = global$1.Array;
+  var RangeError$8 = global$1.RangeError;
+  var fill = functionUncurryThis(arrayFill$1);
+  var reverse = functionUncurryThis([].reverse);
 
   var packIEEE754$1 = ieee754$2.pack;
   var unpackIEEE754$1 = ieee754$2.unpack;
@@ -5066,17 +5585,17 @@ var Forestry = (function () {
   var get$2 = function (view, count, index, isLittleEndian) {
     var intIndex = toIndex$1(index);
     var store = getInternalState$4(view);
-    if (intIndex + count > store.byteLength) throw RangeError$2(WRONG_INDEX$1);
+    if (intIndex + count > store.byteLength) throw RangeError$8(WRONG_INDEX$1);
     var bytes = getInternalState$4(store.buffer).bytes;
     var start = intIndex + store.byteOffset;
-    var pack = bytes.slice(start, start + count);
-    return isLittleEndian ? pack : pack.reverse();
+    var pack = arraySliceSimple(bytes, start, start + count);
+    return isLittleEndian ? pack : reverse(pack);
   };
 
   var set$3 = function (view, count, index, conversion, value, isLittleEndian) {
     var intIndex = toIndex$1(index);
     var store = getInternalState$4(view);
-    if (intIndex + count > store.byteLength) throw RangeError$2(WRONG_INDEX$1);
+    if (intIndex + count > store.byteLength) throw RangeError$8(WRONG_INDEX$1);
     var bytes = getInternalState$4(store.buffer).bytes;
     var start = intIndex + store.byteOffset;
     var pack = conversion(+value);
@@ -5085,23 +5604,25 @@ var Forestry = (function () {
 
   if (!arrayBufferNative$1) {
     $ArrayBuffer$1 = function ArrayBuffer(length) {
-      anInstance$1(this, $ArrayBuffer$1, ARRAY_BUFFER$2);
+      anInstance$1(this, ArrayBufferPrototype$1);
       var byteLength = toIndex$1(length);
       setInternalState$9(this, {
-        bytes: arrayFill$1.call(new Array(byteLength), 0),
+        bytes: fill(Array$3(byteLength), 0),
         byteLength: byteLength
       });
       if (!descriptors$1) this.byteLength = byteLength;
     };
 
+    ArrayBufferPrototype$1 = $ArrayBuffer$1[PROTOTYPE$2];
+
     $DataView$1 = function DataView(buffer, byteOffset, byteLength) {
-      anInstance$1(this, $DataView$1, DATA_VIEW$1);
-      anInstance$1(buffer, $ArrayBuffer$1, DATA_VIEW$1);
+      anInstance$1(this, DataViewPrototype$1);
+      anInstance$1(buffer, ArrayBufferPrototype$1);
       var bufferLength = getInternalState$4(buffer).byteLength;
-      var offset = toInteger$1(byteOffset);
-      if (offset < 0 || offset > bufferLength) throw RangeError$2('Wrong offset');
+      var offset = toIntegerOrInfinity(byteOffset);
+      if (offset < 0 || offset > bufferLength) throw RangeError$8('Wrong offset');
       byteLength = byteLength === undefined ? bufferLength - offset : toLength$1(byteLength);
-      if (offset + byteLength > bufferLength) throw RangeError$2(WRONG_LENGTH$1);
+      if (offset + byteLength > bufferLength) throw RangeError$8(WRONG_LENGTH$1);
       setInternalState$9(this, {
         buffer: buffer,
         byteLength: byteLength,
@@ -5114,6 +5635,8 @@ var Forestry = (function () {
       }
     };
 
+    DataViewPrototype$1 = $DataView$1[PROTOTYPE$2];
+
     if (descriptors$1) {
       addGetter$1($ArrayBuffer$1, 'byteLength');
       addGetter$1($DataView$1, 'buffer');
@@ -5121,7 +5644,7 @@ var Forestry = (function () {
       addGetter$1($DataView$1, 'byteOffset');
     }
 
-    redefineAll$1($DataView$1[PROTOTYPE$2], {
+    redefineAll$1(DataViewPrototype$1, {
       getInt8: function getInt8(byteOffset) {
         return get$2(this, 1, byteOffset)[0] << 24 >> 24;
       },
@@ -5174,6 +5697,7 @@ var Forestry = (function () {
       }
     });
   } else {
+    var INCORRECT_ARRAY_BUFFER_NAME = PROPER_FUNCTION_NAME && NativeArrayBuffer$2.name !== ARRAY_BUFFER$2;
     /* eslint-disable no-new -- required for testing */
     if (!fails$1(function () {
       NativeArrayBuffer$2(1);
@@ -5183,38 +5707,43 @@ var Forestry = (function () {
       new NativeArrayBuffer$2();
       new NativeArrayBuffer$2(1.5);
       new NativeArrayBuffer$2(NaN);
-      return NativeArrayBuffer$2.name != ARRAY_BUFFER$2;
+      return INCORRECT_ARRAY_BUFFER_NAME && !CONFIGURABLE_FUNCTION_NAME;
     })) {
     /* eslint-enable no-new -- required for testing */
       $ArrayBuffer$1 = function ArrayBuffer(length) {
-        anInstance$1(this, $ArrayBuffer$1);
+        anInstance$1(this, ArrayBufferPrototype$1);
         return new NativeArrayBuffer$2(toIndex$1(length));
       };
-      var ArrayBufferPrototype$1 = $ArrayBuffer$1[PROTOTYPE$2] = NativeArrayBuffer$2[PROTOTYPE$2];
+
+      $ArrayBuffer$1[PROTOTYPE$2] = ArrayBufferPrototype$1;
+
       for (var keys$5 = getOwnPropertyNames$5(NativeArrayBuffer$2), j$3 = 0, key$3; keys$5.length > j$3;) {
         if (!((key$3 = keys$5[j$3++]) in $ArrayBuffer$1)) {
           createNonEnumerableProperty$1($ArrayBuffer$1, key$3, NativeArrayBuffer$2[key$3]);
         }
       }
+
       ArrayBufferPrototype$1.constructor = $ArrayBuffer$1;
+    } else if (INCORRECT_ARRAY_BUFFER_NAME && CONFIGURABLE_FUNCTION_NAME) {
+      createNonEnumerableProperty$1(NativeArrayBuffer$2, 'name', ARRAY_BUFFER$2);
     }
 
     // WebKit bug - the same parent prototype for typed arrays and data view
-    if (objectSetPrototypeOf$1 && objectGetPrototypeOf$1($DataViewPrototype$1) !== ObjectPrototype$4) {
-      objectSetPrototypeOf$1($DataViewPrototype$1, ObjectPrototype$4);
+    if (objectSetPrototypeOf$1 && objectGetPrototypeOf$1(DataViewPrototype$1) !== ObjectPrototype$4) {
+      objectSetPrototypeOf$1(DataViewPrototype$1, ObjectPrototype$4);
     }
 
     // iOS Safari 7.x bug
     var testView$1 = new $DataView$1(new $ArrayBuffer$1(2));
-    var $setInt8 = $DataViewPrototype$1.setInt8;
+    var $setInt8 = functionUncurryThis(DataViewPrototype$1.setInt8);
     testView$1.setInt8(0, 2147483648);
     testView$1.setInt8(1, 2147483649);
-    if (testView$1.getInt8(0) || !testView$1.getInt8(1)) redefineAll$1($DataViewPrototype$1, {
+    if (testView$1.getInt8(0) || !testView$1.getInt8(1)) redefineAll$1(DataViewPrototype$1, {
       setInt8: function setInt8(byteOffset, value) {
-        $setInt8.call(this, byteOffset, value << 24 >> 24);
+        $setInt8(this, byteOffset, value << 24 >> 24);
       },
       setUint8: function setUint8(byteOffset, value) {
-        $setInt8.call(this, byteOffset, value << 24 >> 24);
+        $setInt8(this, byteOffset, value << 24 >> 24);
       }
     }, { unsafe: true });
   }
@@ -5229,7 +5758,10 @@ var Forestry = (function () {
 
   var ArrayBuffer$5 = arrayBuffer$1.ArrayBuffer;
   var DataView$2 = arrayBuffer$1.DataView;
-  var nativeArrayBufferSlice$1 = ArrayBuffer$5.prototype.slice;
+  var DataViewPrototype = DataView$2.prototype;
+  var un$ArrayBufferSlice = functionUncurryThis(ArrayBuffer$5.prototype.slice);
+  var getUint8 = functionUncurryThis(DataViewPrototype.getUint8);
+  var setUint8 = functionUncurryThis(DataViewPrototype.setUint8);
 
   var INCORRECT_SLICE$1 = fails$1(function () {
     return !new ArrayBuffer$5(2).slice(1, undefined).byteLength;
@@ -5239,8 +5771,8 @@ var Forestry = (function () {
   // https://tc39.es/ecma262/#sec-arraybuffer.prototype.slice
   _export$1({ target: 'ArrayBuffer', proto: true, unsafe: true, forced: INCORRECT_SLICE$1 }, {
     slice: function slice(start, end) {
-      if (nativeArrayBufferSlice$1 !== undefined && end === undefined) {
-        return nativeArrayBufferSlice$1.call(anObject$1(this), start); // FF fix
+      if (un$ArrayBufferSlice && end === undefined) {
+        return un$ArrayBufferSlice(anObject$1(this), start); // FF fix
       }
       var length = anObject$1(this).byteLength;
       var first = toAbsoluteIndex$1(start, length);
@@ -5250,7 +5782,7 @@ var Forestry = (function () {
       var viewTarget = new DataView$2(result);
       var index = 0;
       while (first < fin) {
-        viewTarget.setUint8(index++, viewSource.getUint8(first++));
+        setUint8(viewTarget, index++, getUint8(viewSource, first++));
       } return result;
     }
   });
@@ -5261,21 +5793,22 @@ var Forestry = (function () {
 
 
 
-  var Int8Array$6 = global$1.Int8Array;
-  var Int8ArrayPrototype$1 = Int8Array$6 && Int8Array$6.prototype;
-  var Uint8ClampedArray$1 = global$1.Uint8ClampedArray;
-  var Uint8ClampedArrayPrototype$1 = Uint8ClampedArray$1 && Uint8ClampedArray$1.prototype;
-  var TypedArray$1 = Int8Array$6 && objectGetPrototypeOf$1(Int8Array$6);
-  var TypedArrayPrototype$1 = Int8ArrayPrototype$1 && objectGetPrototypeOf$1(Int8ArrayPrototype$1);
+
+  var Int8Array$7 = global$1.Int8Array;
+  var Int8ArrayPrototype$2 = Int8Array$7 && Int8Array$7.prototype;
+  var Uint8ClampedArray$2 = global$1.Uint8ClampedArray;
+  var Uint8ClampedArrayPrototype$1 = Uint8ClampedArray$2 && Uint8ClampedArray$2.prototype;
+  var TypedArray$1 = Int8Array$7 && objectGetPrototypeOf$1(Int8Array$7);
+  var TypedArrayPrototype$2 = Int8ArrayPrototype$2 && objectGetPrototypeOf$1(Int8ArrayPrototype$2);
   var ObjectPrototype$3 = Object.prototype;
-  var isPrototypeOf$1 = ObjectPrototype$3.isPrototypeOf;
+  var TypeError$7 = global$1.TypeError;
 
   var TO_STRING_TAG$5 = wellKnownSymbol$1('toStringTag');
   var TYPED_ARRAY_TAG$1 = uid$1('TYPED_ARRAY_TAG');
   var TYPED_ARRAY_CONSTRUCTOR$1 = uid$1('TYPED_ARRAY_CONSTRUCTOR');
   // Fixing native typed arrays in Opera Presto crashes the browser, see #595
   var NATIVE_ARRAY_BUFFER_VIEWS$3 = arrayBufferNative$1 && !!objectSetPrototypeOf$1 && classof$1(global$1.opera) !== 'Opera';
-  var TYPED_ARRAY_TAG_REQIRED$1 = false;
+  var TYPED_ARRAY_TAG_REQUIRED = false;
   var NAME$2, Constructor, Prototype;
 
   var TypedArrayConstructorsList$1 = {
@@ -5299,39 +5832,43 @@ var Forestry = (function () {
     if (!isObject$1(it)) return false;
     var klass = classof$1(it);
     return klass === 'DataView'
-      || has$3(TypedArrayConstructorsList$1, klass)
-      || has$3(BigIntArrayConstructorsList, klass);
+      || hasOwnProperty_1(TypedArrayConstructorsList$1, klass)
+      || hasOwnProperty_1(BigIntArrayConstructorsList, klass);
   };
 
   var isTypedArray$1 = function (it) {
     if (!isObject$1(it)) return false;
     var klass = classof$1(it);
-    return has$3(TypedArrayConstructorsList$1, klass)
-      || has$3(BigIntArrayConstructorsList, klass);
+    return hasOwnProperty_1(TypedArrayConstructorsList$1, klass)
+      || hasOwnProperty_1(BigIntArrayConstructorsList, klass);
   };
 
-  var aTypedArray$J = function (it) {
+  var aTypedArray$K = function (it) {
     if (isTypedArray$1(it)) return it;
-    throw TypeError('Target is not a typed array');
+    throw TypeError$7('Target is not a typed array');
   };
 
   var aTypedArrayConstructor$7 = function (C) {
-    if (objectSetPrototypeOf$1 && !isPrototypeOf$1.call(TypedArray$1, C)) {
-      throw TypeError('Target is not a typed array constructor');
-    } return C;
+    if (isCallable(C) && (!objectSetPrototypeOf$1 || objectIsPrototypeOf(TypedArray$1, C))) return C;
+    throw TypeError$7(tryToString(C) + ' is not a typed array constructor');
   };
 
-  var exportTypedArrayMethod$L = function (KEY, property, forced) {
+  var exportTypedArrayMethod$M = function (KEY, property, forced, options) {
     if (!descriptors$1) return;
     if (forced) for (var ARRAY in TypedArrayConstructorsList$1) {
       var TypedArrayConstructor = global$1[ARRAY];
-      if (TypedArrayConstructor && has$3(TypedArrayConstructor.prototype, KEY)) try {
+      if (TypedArrayConstructor && hasOwnProperty_1(TypedArrayConstructor.prototype, KEY)) try {
         delete TypedArrayConstructor.prototype[KEY];
-      } catch (error) { /* empty */ }
+      } catch (error) {
+        // old WebKit bug - some methods are non-configurable
+        try {
+          TypedArrayConstructor.prototype[KEY] = property;
+        } catch (error2) { /* empty */ }
+      }
     }
-    if (!TypedArrayPrototype$1[KEY] || forced) {
-      redefine$1(TypedArrayPrototype$1, KEY, forced ? property
-        : NATIVE_ARRAY_BUFFER_VIEWS$3 && Int8ArrayPrototype$1[KEY] || property);
+    if (!TypedArrayPrototype$2[KEY] || forced) {
+      redefine$1(TypedArrayPrototype$2, KEY, forced ? property
+        : NATIVE_ARRAY_BUFFER_VIEWS$3 && Int8ArrayPrototype$2[KEY] || property, options);
     }
   };
 
@@ -5341,7 +5878,7 @@ var Forestry = (function () {
     if (objectSetPrototypeOf$1) {
       if (forced) for (ARRAY in TypedArrayConstructorsList$1) {
         TypedArrayConstructor = global$1[ARRAY];
-        if (TypedArrayConstructor && has$3(TypedArrayConstructor, KEY)) try {
+        if (TypedArrayConstructor && hasOwnProperty_1(TypedArrayConstructor, KEY)) try {
           delete TypedArrayConstructor[KEY];
         } catch (error) { /* empty */ }
       }
@@ -5374,31 +5911,31 @@ var Forestry = (function () {
   }
 
   // WebKit bug - typed arrays constructors prototype is Object.prototype
-  if (!NATIVE_ARRAY_BUFFER_VIEWS$3 || typeof TypedArray$1 != 'function' || TypedArray$1 === Function.prototype) {
+  if (!NATIVE_ARRAY_BUFFER_VIEWS$3 || !isCallable(TypedArray$1) || TypedArray$1 === Function.prototype) {
     // eslint-disable-next-line no-shadow -- safe
     TypedArray$1 = function TypedArray() {
-      throw TypeError('Incorrect invocation');
+      throw TypeError$7('Incorrect invocation');
     };
     if (NATIVE_ARRAY_BUFFER_VIEWS$3) for (NAME$2 in TypedArrayConstructorsList$1) {
       if (global$1[NAME$2]) objectSetPrototypeOf$1(global$1[NAME$2], TypedArray$1);
     }
   }
 
-  if (!NATIVE_ARRAY_BUFFER_VIEWS$3 || !TypedArrayPrototype$1 || TypedArrayPrototype$1 === ObjectPrototype$3) {
-    TypedArrayPrototype$1 = TypedArray$1.prototype;
+  if (!NATIVE_ARRAY_BUFFER_VIEWS$3 || !TypedArrayPrototype$2 || TypedArrayPrototype$2 === ObjectPrototype$3) {
+    TypedArrayPrototype$2 = TypedArray$1.prototype;
     if (NATIVE_ARRAY_BUFFER_VIEWS$3) for (NAME$2 in TypedArrayConstructorsList$1) {
-      if (global$1[NAME$2]) objectSetPrototypeOf$1(global$1[NAME$2].prototype, TypedArrayPrototype$1);
+      if (global$1[NAME$2]) objectSetPrototypeOf$1(global$1[NAME$2].prototype, TypedArrayPrototype$2);
     }
   }
 
   // WebKit bug - one more object in Uint8ClampedArray prototype chain
-  if (NATIVE_ARRAY_BUFFER_VIEWS$3 && objectGetPrototypeOf$1(Uint8ClampedArrayPrototype$1) !== TypedArrayPrototype$1) {
-    objectSetPrototypeOf$1(Uint8ClampedArrayPrototype$1, TypedArrayPrototype$1);
+  if (NATIVE_ARRAY_BUFFER_VIEWS$3 && objectGetPrototypeOf$1(Uint8ClampedArrayPrototype$1) !== TypedArrayPrototype$2) {
+    objectSetPrototypeOf$1(Uint8ClampedArrayPrototype$1, TypedArrayPrototype$2);
   }
 
-  if (descriptors$1 && !has$3(TypedArrayPrototype$1, TO_STRING_TAG$5)) {
-    TYPED_ARRAY_TAG_REQIRED$1 = true;
-    defineProperty$a(TypedArrayPrototype$1, TO_STRING_TAG$5, { get: function () {
+  if (descriptors$1 && !hasOwnProperty_1(TypedArrayPrototype$2, TO_STRING_TAG$5)) {
+    TYPED_ARRAY_TAG_REQUIRED = true;
+    defineProperty$a(TypedArrayPrototype$2, TO_STRING_TAG$5, { get: function () {
       return isObject$1(this) ? this[TYPED_ARRAY_TAG$1] : undefined;
     } });
     for (NAME$2 in TypedArrayConstructorsList$1) if (global$1[NAME$2]) {
@@ -5409,15 +5946,15 @@ var Forestry = (function () {
   var arrayBufferViewCore$1 = {
     NATIVE_ARRAY_BUFFER_VIEWS: NATIVE_ARRAY_BUFFER_VIEWS$3,
     TYPED_ARRAY_CONSTRUCTOR: TYPED_ARRAY_CONSTRUCTOR$1,
-    TYPED_ARRAY_TAG: TYPED_ARRAY_TAG_REQIRED$1 && TYPED_ARRAY_TAG$1,
-    aTypedArray: aTypedArray$J,
+    TYPED_ARRAY_TAG: TYPED_ARRAY_TAG_REQUIRED && TYPED_ARRAY_TAG$1,
+    aTypedArray: aTypedArray$K,
     aTypedArrayConstructor: aTypedArrayConstructor$7,
-    exportTypedArrayMethod: exportTypedArrayMethod$L,
+    exportTypedArrayMethod: exportTypedArrayMethod$M,
     exportTypedArrayStaticMethod: exportTypedArrayStaticMethod$1,
     isView: isView$1,
     isTypedArray: isTypedArray$1,
     TypedArray: TypedArray$1,
-    TypedArrayPrototype: TypedArrayPrototype$1
+    TypedArrayPrototype: TypedArrayPrototype$2
   };
 
   /* eslint-disable no-new -- required for testing */
@@ -5425,64 +5962,70 @@ var Forestry = (function () {
   var NATIVE_ARRAY_BUFFER_VIEWS$2 = arrayBufferViewCore$1.NATIVE_ARRAY_BUFFER_VIEWS;
 
   var ArrayBuffer$4 = global$1.ArrayBuffer;
-  var Int8Array$5 = global$1.Int8Array;
+  var Int8Array$6 = global$1.Int8Array;
 
   var typedArrayConstructorsRequireWrappers$1 = !NATIVE_ARRAY_BUFFER_VIEWS$2 || !fails$1(function () {
-    Int8Array$5(1);
+    Int8Array$6(1);
   }) || !fails$1(function () {
-    new Int8Array$5(-1);
+    new Int8Array$6(-1);
   }) || !checkCorrectnessOfIteration$1(function (iterable) {
-    new Int8Array$5();
-    new Int8Array$5(null);
-    new Int8Array$5(1.5);
-    new Int8Array$5(iterable);
+    new Int8Array$6();
+    new Int8Array$6(null);
+    new Int8Array$6(1.5);
+    new Int8Array$6(iterable);
   }, true) || fails$1(function () {
     // Safari (11+) bug - a reason why even Safari 13 should load a typed array polyfill
-    return new Int8Array$5(new ArrayBuffer$4(2), 1, undefined).length !== 1;
+    return new Int8Array$6(new ArrayBuffer$4(2), 1, undefined).length !== 1;
   });
 
   var floor$b = Math.floor;
 
-  // `Number.isInteger` method implementation
-  // https://tc39.es/ecma262/#sec-number.isinteger
-  var isInteger = function isInteger(it) {
+  // `IsIntegralNumber` abstract operation
+  // https://tc39.es/ecma262/#sec-isintegralnumber
+  // eslint-disable-next-line es/no-number-isinteger -- safe
+  var isIntegralNumber = Number.isInteger || function isInteger(it) {
     return !isObject$1(it) && isFinite(it) && floor$b(it) === it;
   };
 
+  var RangeError$7 = global$1.RangeError;
+
   var toPositiveInteger$1 = function (it) {
-    var result = toInteger$1(it);
-    if (result < 0) throw RangeError("The argument can't be less than 0");
+    var result = toIntegerOrInfinity(it);
+    if (result < 0) throw RangeError$7("The argument can't be less than 0");
     return result;
   };
 
+  var RangeError$6 = global$1.RangeError;
+
   var toOffset$1 = function (it, BYTES) {
     var offset = toPositiveInteger$1(it);
-    if (offset % BYTES) throw RangeError('Wrong offset');
+    if (offset % BYTES) throw RangeError$6('Wrong offset');
     return offset;
   };
 
   var aTypedArrayConstructor$6 = arrayBufferViewCore$1.aTypedArrayConstructor;
 
   var typedArrayFrom$1 = function from(source /* , mapfn, thisArg */) {
+    var C = aConstructor(this);
     var O = toObject$1(source);
     var argumentsLength = arguments.length;
     var mapfn = argumentsLength > 1 ? arguments[1] : undefined;
     var mapping = mapfn !== undefined;
     var iteratorMethod = getIteratorMethod$1(O);
     var i, length, result, step, iterator, next;
-    if (iteratorMethod != undefined && !isArrayIteratorMethod$1(iteratorMethod)) {
-      iterator = iteratorMethod.call(O);
+    if (iteratorMethod && !isArrayIteratorMethod$1(iteratorMethod)) {
+      iterator = getIterator$1(O, iteratorMethod);
       next = iterator.next;
       O = [];
-      while (!(step = next.call(iterator)).done) {
+      while (!(step = functionCall(next, iterator)).done) {
         O.push(step.value);
       }
     }
     if (mapping && argumentsLength > 2) {
-      mapfn = functionBindContext$1(mapfn, arguments[2], 2);
+      mapfn = functionBindContext$1(mapfn, arguments[2]);
     }
-    length = toLength$1(O.length);
-    result = new (aTypedArrayConstructor$6(this))(length);
+    length = lengthOfArrayLike(O);
+    result = new (aTypedArrayConstructor$6(C))(length);
     for (i = 0; length > i; i++) {
       result[i] = mapping ? mapfn(O[i], i) : O[i];
     }
@@ -5490,6 +6033,8 @@ var Forestry = (function () {
   };
 
   var typedArrayConstructor$1 = createCommonjsModule$1(function (module) {
+
+
 
 
 
@@ -5526,6 +6071,7 @@ var Forestry = (function () {
   var round = Math.round;
   var RangeError = global$1.RangeError;
   var ArrayBuffer = arrayBuffer$1.ArrayBuffer;
+  var ArrayBufferPrototype = ArrayBuffer.prototype;
   var DataView = arrayBuffer$1.DataView;
   var NATIVE_ARRAY_BUFFER_VIEWS = arrayBufferViewCore$1.NATIVE_ARRAY_BUFFER_VIEWS;
   var TYPED_ARRAY_CONSTRUCTOR = arrayBufferViewCore$1.TYPED_ARRAY_CONSTRUCTOR;
@@ -5538,9 +6084,10 @@ var Forestry = (function () {
   var WRONG_LENGTH = 'Wrong length';
 
   var fromList = function (C, list) {
+    aTypedArrayConstructor(C);
     var index = 0;
     var length = list.length;
-    var result = new (aTypedArrayConstructor(C))(length);
+    var result = new C(length);
     while (length > index) result[index] = list[index++];
     return result;
   };
@@ -5553,14 +6100,14 @@ var Forestry = (function () {
 
   var isArrayBuffer = function (it) {
     var klass;
-    return it instanceof ArrayBuffer || (klass = classof$1(it)) == 'ArrayBuffer' || klass == 'SharedArrayBuffer';
+    return objectIsPrototypeOf(ArrayBufferPrototype, it) || (klass = classof$1(it)) == 'ArrayBuffer' || klass == 'SharedArrayBuffer';
   };
 
   var isTypedArrayIndex = function (target, key) {
     return isTypedArray(target)
       && !isSymbol(key)
       && key in target
-      && isInteger(+key)
+      && isIntegralNumber(+key)
       && key >= 0;
   };
 
@@ -5575,13 +6122,13 @@ var Forestry = (function () {
     key = toPropertyKey(key);
     if (isTypedArrayIndex(target, key)
       && isObject$1(descriptor)
-      && has$3(descriptor, 'value')
-      && !has$3(descriptor, 'get')
-      && !has$3(descriptor, 'set')
+      && hasOwnProperty_1(descriptor, 'value')
+      && !hasOwnProperty_1(descriptor, 'get')
+      && !hasOwnProperty_1(descriptor, 'set')
       // TODO: add validation descriptor w/o calling accessors
       && !descriptor.configurable
-      && (!has$3(descriptor, 'writable') || descriptor.writable)
-      && (!has$3(descriptor, 'enumerable') || descriptor.enumerable)
+      && (!hasOwnProperty_1(descriptor, 'writable') || descriptor.writable)
+      && (!hasOwnProperty_1(descriptor, 'enumerable') || descriptor.enumerable)
     ) {
       target[key] = descriptor.value;
       return target;
@@ -5638,7 +6185,7 @@ var Forestry = (function () {
 
       if (!NATIVE_ARRAY_BUFFER_VIEWS) {
         TypedArrayConstructor = wrapper(function (that, data, offset, $length) {
-          anInstance$1(that, TypedArrayConstructor, CONSTRUCTOR_NAME);
+          anInstance$1(that, TypedArrayConstructorPrototype);
           var index = 0;
           var byteOffset = 0;
           var buffer, byteLength, length;
@@ -5662,7 +6209,7 @@ var Forestry = (function () {
           } else if (isTypedArray(data)) {
             return fromList(TypedArrayConstructor, data);
           } else {
-            return typedArrayFrom$1.call(TypedArrayConstructor, data);
+            return functionCall(typedArrayFrom$1, TypedArrayConstructor, data);
           }
           setInternalState(that, {
             buffer: buffer,
@@ -5678,7 +6225,7 @@ var Forestry = (function () {
         TypedArrayConstructorPrototype = TypedArrayConstructor.prototype = objectCreate$1(TypedArrayPrototype);
       } else if (typedArrayConstructorsRequireWrappers$1) {
         TypedArrayConstructor = wrapper(function (dummy, data, typedArrayOffset, $length) {
-          anInstance$1(dummy, TypedArrayConstructor, CONSTRUCTOR_NAME);
+          anInstance$1(dummy, TypedArrayConstructorPrototype);
           return inheritIfRequired$1(function () {
             if (!isObject$1(data)) return new NativeTypedArrayConstructor(toIndex$1(data));
             if (isArrayBuffer(data)) return $length !== undefined
@@ -5687,7 +6234,7 @@ var Forestry = (function () {
                 ? new NativeTypedArrayConstructor(data, toOffset$1(typedArrayOffset, BYTES))
                 : new NativeTypedArrayConstructor(data);
             if (isTypedArray(data)) return fromList(TypedArrayConstructor, data);
-            return typedArrayFrom$1.call(TypedArrayConstructor, data);
+            return functionCall(typedArrayFrom$1, TypedArrayConstructor, data);
           }(), dummy, TypedArrayConstructor);
         });
 
@@ -5737,6 +6284,19 @@ var Forestry = (function () {
     };
   });
 
+  var aTypedArray$J = arrayBufferViewCore$1.aTypedArray;
+  var exportTypedArrayMethod$L = arrayBufferViewCore$1.exportTypedArrayMethod;
+
+  // `%TypedArray%.prototype.at` method
+  // https://github.com/tc39/proposal-relative-indexing-method
+  exportTypedArrayMethod$L('at', function at(index) {
+    var O = aTypedArray$J(this);
+    var len = lengthOfArrayLike(O);
+    var relativeIndex = toIntegerOrInfinity(index);
+    var k = relativeIndex >= 0 ? relativeIndex : len + relativeIndex;
+    return (k < 0 || k >= len) ? undefined : O[k];
+  });
+
   var min$8 = Math.min;
 
   // `Array.prototype.copyWithin` method implementation
@@ -5744,7 +6304,7 @@ var Forestry = (function () {
   // eslint-disable-next-line es/no-array-prototype-copywithin -- safe
   var arrayCopyWithin$1 = [].copyWithin || function copyWithin(target /* = 0 */, start /* = 0, end = @length */) {
     var O = toObject$1(this);
-    var len = toLength$1(O.length);
+    var len = lengthOfArrayLike(O);
     var to = toAbsoluteIndex$1(target, len);
     var from = toAbsoluteIndex$1(start, len);
     var end = arguments.length > 2 ? arguments[2] : undefined;
@@ -5763,13 +6323,14 @@ var Forestry = (function () {
     } return O;
   };
 
+  var u$ArrayCopyWithin = functionUncurryThis(arrayCopyWithin$1);
   var aTypedArray$I = arrayBufferViewCore$1.aTypedArray;
   var exportTypedArrayMethod$K = arrayBufferViewCore$1.exportTypedArrayMethod;
 
   // `%TypedArray%.prototype.copyWithin` method
   // https://tc39.es/ecma262/#sec-%typedarray%.prototype.copywithin
   exportTypedArrayMethod$K('copyWithin', function copyWithin(target, start /* , end */) {
-    return arrayCopyWithin$1.call(aTypedArray$I(this), target, start, arguments.length > 2 ? arguments[2] : undefined);
+    return u$ArrayCopyWithin(aTypedArray$I(this), target, start, arguments.length > 2 ? arguments[2] : undefined);
   });
 
   var $every$1 = arrayIteration$1.every;
@@ -5788,14 +6349,20 @@ var Forestry = (function () {
 
   // `%TypedArray%.prototype.fill` method
   // https://tc39.es/ecma262/#sec-%typedarray%.prototype.fill
-  // eslint-disable-next-line no-unused-vars -- required for `.length`
   exportTypedArrayMethod$I('fill', function fill(value /* , start, end */) {
-    return arrayFill$1.apply(aTypedArray$G(this), arguments);
+    var length = arguments.length;
+    return functionCall(
+      arrayFill$1,
+      aTypedArray$G(this),
+      value,
+      length > 1 ? arguments[1] : undefined,
+      length > 2 ? arguments[2] : undefined
+    );
   });
 
   var arrayFromConstructorAndList = function (Constructor, list) {
     var index = 0;
-    var length = list.length;
+    var length = lengthOfArrayLike(list);
     var result = new Constructor(length);
     while (length > index) result[index] = list[index++];
     return result;
@@ -5884,49 +6451,55 @@ var Forestry = (function () {
 
   var ITERATOR$b = wellKnownSymbol$1('iterator');
   var Uint8Array$3 = global$1.Uint8Array;
-  var arrayValues$1 = es_array_iterator$1.values;
-  var arrayKeys$1 = es_array_iterator$1.keys;
-  var arrayEntries$1 = es_array_iterator$1.entries;
+  var arrayValues$1 = functionUncurryThis(es_array_iterator$1.values);
+  var arrayKeys$1 = functionUncurryThis(es_array_iterator$1.keys);
+  var arrayEntries$1 = functionUncurryThis(es_array_iterator$1.entries);
   var aTypedArray$z = arrayBufferViewCore$1.aTypedArray;
   var exportTypedArrayMethod$B = arrayBufferViewCore$1.exportTypedArrayMethod;
-  var nativeTypedArrayIterator$1 = Uint8Array$3 && Uint8Array$3.prototype[ITERATOR$b];
+  var TypedArrayPrototype$1 = Uint8Array$3 && Uint8Array$3.prototype;
 
-  var CORRECT_ITER_NAME$1 = !!nativeTypedArrayIterator$1
-    && (nativeTypedArrayIterator$1.name == 'values' || nativeTypedArrayIterator$1.name == undefined);
+  var GENERIC = !fails$1(function () {
+    TypedArrayPrototype$1[ITERATOR$b].call([1]);
+  });
+
+  var ITERATOR_IS_VALUES = !!TypedArrayPrototype$1
+    && TypedArrayPrototype$1.values
+    && TypedArrayPrototype$1[ITERATOR$b] === TypedArrayPrototype$1.values
+    && TypedArrayPrototype$1.values.name === 'values';
 
   var typedArrayValues$1 = function values() {
-    return arrayValues$1.call(aTypedArray$z(this));
+    return arrayValues$1(aTypedArray$z(this));
   };
 
   // `%TypedArray%.prototype.entries` method
   // https://tc39.es/ecma262/#sec-%typedarray%.prototype.entries
   exportTypedArrayMethod$B('entries', function entries() {
-    return arrayEntries$1.call(aTypedArray$z(this));
-  });
+    return arrayEntries$1(aTypedArray$z(this));
+  }, GENERIC);
   // `%TypedArray%.prototype.keys` method
   // https://tc39.es/ecma262/#sec-%typedarray%.prototype.keys
   exportTypedArrayMethod$B('keys', function keys() {
-    return arrayKeys$1.call(aTypedArray$z(this));
-  });
+    return arrayKeys$1(aTypedArray$z(this));
+  }, GENERIC);
   // `%TypedArray%.prototype.values` method
   // https://tc39.es/ecma262/#sec-%typedarray%.prototype.values
-  exportTypedArrayMethod$B('values', typedArrayValues$1, !CORRECT_ITER_NAME$1);
+  exportTypedArrayMethod$B('values', typedArrayValues$1, GENERIC || !ITERATOR_IS_VALUES, { name: 'values' });
   // `%TypedArray%.prototype[@@iterator]` method
   // https://tc39.es/ecma262/#sec-%typedarray%.prototype-@@iterator
-  exportTypedArrayMethod$B(ITERATOR$b, typedArrayValues$1, !CORRECT_ITER_NAME$1);
+  exportTypedArrayMethod$B(ITERATOR$b, typedArrayValues$1, GENERIC || !ITERATOR_IS_VALUES, { name: 'values' });
 
   var aTypedArray$y = arrayBufferViewCore$1.aTypedArray;
   var exportTypedArrayMethod$A = arrayBufferViewCore$1.exportTypedArrayMethod;
-  var $join$1 = [].join;
+  var $join$1 = functionUncurryThis([].join);
 
   // `%TypedArray%.prototype.join` method
   // https://tc39.es/ecma262/#sec-%typedarray%.prototype.join
-  // eslint-disable-next-line no-unused-vars -- required for `.length`
   exportTypedArrayMethod$A('join', function join(separator) {
-    return $join$1.apply(aTypedArray$y(this), arguments);
+    return $join$1(aTypedArray$y(this), separator);
   });
 
   /* eslint-disable es/no-array-prototype-lastindexof -- safe */
+
 
 
 
@@ -5936,17 +6509,17 @@ var Forestry = (function () {
   var $lastIndexOf = [].lastIndexOf;
   var NEGATIVE_ZERO$2 = !!$lastIndexOf && 1 / [1].lastIndexOf(1, -0) < 0;
   var STRICT_METHOD$6 = arrayMethodIsStrict$1('lastIndexOf');
-  var FORCED$f = NEGATIVE_ZERO$2 || !STRICT_METHOD$6;
+  var FORCED$e = NEGATIVE_ZERO$2 || !STRICT_METHOD$6;
 
   // `Array.prototype.lastIndexOf` method implementation
   // https://tc39.es/ecma262/#sec-array.prototype.lastindexof
-  var arrayLastIndexOf$1 = FORCED$f ? function lastIndexOf(searchElement /* , fromIndex = @[*-1] */) {
+  var arrayLastIndexOf$1 = FORCED$e ? function lastIndexOf(searchElement /* , fromIndex = @[*-1] */) {
     // convert -0 to +0
-    if (NEGATIVE_ZERO$2) return $lastIndexOf.apply(this, arguments) || 0;
+    if (NEGATIVE_ZERO$2) return functionApply($lastIndexOf, this, arguments) || 0;
     var O = toIndexedObject$1(this);
-    var length = toLength$1(O.length);
+    var length = lengthOfArrayLike(O);
     var index = length - 1;
-    if (arguments.length > 1) index = min$7(index, toInteger$1(arguments[1]));
+    if (arguments.length > 1) index = min$7(index, toIntegerOrInfinity(arguments[1]));
     if (index < 0) index = length + index;
     for (;index >= 0; index--) if (index in O && O[index] === searchElement) return index || 0;
     return -1;
@@ -5957,9 +6530,9 @@ var Forestry = (function () {
 
   // `%TypedArray%.prototype.lastIndexOf` method
   // https://tc39.es/ecma262/#sec-%typedarray%.prototype.lastindexof
-  // eslint-disable-next-line no-unused-vars -- required for `.length`
   exportTypedArrayMethod$z('lastIndexOf', function lastIndexOf(searchElement /* , fromIndex */) {
-    return arrayLastIndexOf$1.apply(aTypedArray$x(this), arguments);
+    var length = arguments.length;
+    return functionApply(arrayLastIndexOf$1, aTypedArray$x(this), length > 1 ? [searchElement, arguments[1]] : [searchElement]);
   });
 
   var $map$2 = arrayIteration$1.map;
@@ -5976,13 +6549,15 @@ var Forestry = (function () {
     });
   });
 
+  var TypeError$6 = global$1.TypeError;
+
   // `Array.prototype.{ reduce, reduceRight }` methods implementation
   var createMethod$5 = function (IS_RIGHT) {
     return function (that, callbackfn, argumentsLength, memo) {
-      aFunction$2(callbackfn);
+      aCallable(callbackfn);
       var O = toObject$1(that);
       var self = indexedObject$1(O);
-      var length = toLength$1(O.length);
+      var length = lengthOfArrayLike(O);
       var index = IS_RIGHT ? length - 1 : 0;
       var i = IS_RIGHT ? -1 : 1;
       if (argumentsLength < 2) while (true) {
@@ -5993,7 +6568,7 @@ var Forestry = (function () {
         }
         index += i;
         if (IS_RIGHT ? index < 0 : length <= index) {
-          throw TypeError('Reduce of empty array with no initial value');
+          throw TypeError$6('Reduce of empty array with no initial value');
         }
       }
       for (;IS_RIGHT ? index >= 0 : length > index; index += i) if (index in self) {
@@ -6020,7 +6595,8 @@ var Forestry = (function () {
   // `%TypedArray%.prototype.reduce` method
   // https://tc39.es/ecma262/#sec-%typedarray%.prototype.reduce
   exportTypedArrayMethod$x('reduce', function reduce(callbackfn /* , initialValue */) {
-    return $reduce$2(aTypedArray$v(this), callbackfn, arguments.length, arguments.length > 1 ? arguments[1] : undefined);
+    var length = arguments.length;
+    return $reduce$2(aTypedArray$v(this), callbackfn, length, length > 1 ? arguments[1] : undefined);
   });
 
   var $reduceRight$1 = arrayReduce$1.right;
@@ -6031,7 +6607,8 @@ var Forestry = (function () {
   // `%TypedArray%.prototype.reduceRicht` method
   // https://tc39.es/ecma262/#sec-%typedarray%.prototype.reduceright
   exportTypedArrayMethod$w('reduceRight', function reduceRight(callbackfn /* , initialValue */) {
-    return $reduceRight$1(aTypedArray$u(this), callbackfn, arguments.length, arguments.length > 1 ? arguments[1] : undefined);
+    var length = arguments.length;
+    return $reduceRight$1(aTypedArray$u(this), callbackfn, length, length > 1 ? arguments[1] : undefined);
   });
 
   var aTypedArray$t = arrayBufferViewCore$1.aTypedArray;
@@ -6053,12 +6630,26 @@ var Forestry = (function () {
     } return that;
   });
 
+  var RangeError$5 = global$1.RangeError;
+  var Int8Array$5 = global$1.Int8Array;
+  var Int8ArrayPrototype$1 = Int8Array$5 && Int8Array$5.prototype;
+  var $set = Int8ArrayPrototype$1 && Int8ArrayPrototype$1.set;
   var aTypedArray$s = arrayBufferViewCore$1.aTypedArray;
   var exportTypedArrayMethod$u = arrayBufferViewCore$1.exportTypedArrayMethod;
 
-  var FORCED$e = fails$1(function () {
+  var WORKS_WITH_OBJECTS_AND_GEERIC_ON_TYPED_ARRAYS = !fails$1(function () {
     // eslint-disable-next-line es/no-typed-arrays -- required for testing
-    new Int8Array(1).set({});
+    var array = new Uint8ClampedArray(2);
+    functionCall($set, array, { length: 1, 0: 3 }, 1);
+    return array[1] !== 3;
+  });
+
+  // https://bugs.chromium.org/p/v8/issues/detail?id=11294 and other
+  var TO_OBJECT_BUG = WORKS_WITH_OBJECTS_AND_GEERIC_ON_TYPED_ARRAYS && arrayBufferViewCore$1.NATIVE_ARRAY_BUFFER_VIEWS && fails$1(function () {
+    var array = new Int8Array$5(2);
+    array.set(1);
+    array.set('2', 1);
+    return array[0] !== 0 || array[1] !== 2;
   });
 
   // `%TypedArray%.prototype.set` method
@@ -6066,17 +6657,17 @@ var Forestry = (function () {
   exportTypedArrayMethod$u('set', function set(arrayLike /* , offset */) {
     aTypedArray$s(this);
     var offset = toOffset$1(arguments.length > 1 ? arguments[1] : undefined, 1);
-    var length = this.length;
     var src = toObject$1(arrayLike);
-    var len = toLength$1(src.length);
+    if (WORKS_WITH_OBJECTS_AND_GEERIC_ON_TYPED_ARRAYS) return functionCall($set, this, src, offset);
+    var length = this.length;
+    var len = lengthOfArrayLike(src);
     var index = 0;
-    if (len + offset > length) throw RangeError('Wrong length');
+    if (len + offset > length) throw RangeError$5('Wrong length');
     while (index < len) this[offset + index] = src[index++];
-  }, FORCED$e);
+  }, !WORKS_WITH_OBJECTS_AND_GEERIC_ON_TYPED_ARRAYS || TO_OBJECT_BUG);
 
   var aTypedArray$r = arrayBufferViewCore$1.aTypedArray;
   var exportTypedArrayMethod$t = arrayBufferViewCore$1.exportTypedArrayMethod;
-  var $slice$3 = [].slice;
 
   var FORCED$d = fails$1(function () {
     // eslint-disable-next-line es/no-typed-arrays -- required for testing
@@ -6086,7 +6677,7 @@ var Forestry = (function () {
   // `%TypedArray%.prototype.slice` method
   // https://tc39.es/ecma262/#sec-%typedarray%.prototype.slice
   exportTypedArrayMethod$t('slice', function slice(start, end) {
-    var list = $slice$3.call(aTypedArray$r(this), start, end);
+    var list = arraySlice$1(aTypedArray$r(this), start, end);
     var C = typedArraySpeciesConstructor(this);
     var index = 0;
     var length = list.length;
@@ -6106,19 +6697,20 @@ var Forestry = (function () {
     return $some$1(aTypedArray$q(this), callbackfn, arguments.length > 1 ? arguments[1] : undefined);
   });
 
+  var Array$2 = global$1.Array;
   var aTypedArray$p = arrayBufferViewCore$1.aTypedArray;
   var exportTypedArrayMethod$r = arrayBufferViewCore$1.exportTypedArrayMethod;
   var Uint16Array = global$1.Uint16Array;
-  var nativeSort$1 = Uint16Array && Uint16Array.prototype.sort;
+  var un$Sort = Uint16Array && functionUncurryThis(Uint16Array.prototype.sort);
 
   // WebKit
-  var ACCEPT_INCORRECT_ARGUMENTS = !!nativeSort$1 && !fails$1(function () {
-    var array = new Uint16Array(2);
-    array.sort(null);
-    array.sort({});
-  });
+  var ACCEPT_INCORRECT_ARGUMENTS = !!un$Sort && !(fails$1(function () {
+    un$Sort(new Uint16Array(2), null);
+  }) && fails$1(function () {
+    un$Sort(new Uint16Array(2), {});
+  }));
 
-  var STABLE_SORT = !!nativeSort$1 && !fails$1(function () {
+  var STABLE_SORT = !!un$Sort && !fails$1(function () {
     // feature detection can be too slow, so check engines versions
     if (engineV8Version$1) return engineV8Version$1 < 74;
     if (engineFfVersion) return engineFfVersion < 67;
@@ -6126,7 +6718,7 @@ var Forestry = (function () {
     if (engineWebkitVersion) return engineWebkitVersion < 602;
 
     var array = new Uint16Array(516);
-    var expected = Array(516);
+    var expected = Array$2(516);
     var index, mod;
 
     for (index = 0; index < 516; index++) {
@@ -6135,7 +6727,7 @@ var Forestry = (function () {
       expected[index] = index - 2 * mod + 3;
     }
 
-    array.sort(function (a, b) {
+    un$Sort(array, function (a, b) {
       return (a / 4 | 0) - (b / 4 | 0);
     });
 
@@ -6159,26 +6751,10 @@ var Forestry = (function () {
   // `%TypedArray%.prototype.sort` method
   // https://tc39.es/ecma262/#sec-%typedarray%.prototype.sort
   exportTypedArrayMethod$r('sort', function sort(comparefn) {
-    var array = this;
-    if (comparefn !== undefined) aFunction$2(comparefn);
-    if (STABLE_SORT) return nativeSort$1.call(array, comparefn);
+    if (comparefn !== undefined) aCallable(comparefn);
+    if (STABLE_SORT) return un$Sort(this, comparefn);
 
-    aTypedArray$p(array);
-    var arrayLength = toLength$1(array.length);
-    var items = Array(arrayLength);
-    var index;
-
-    for (index = 0; index < arrayLength; index++) {
-      items[index] = array[index];
-    }
-
-    items = arraySort(array, getSortCompare(comparefn));
-
-    for (index = 0; index < arrayLength; index++) {
-      array[index] = items[index];
-    }
-
-    return array;
+    return arraySort(aTypedArray$p(this), getSortCompare(comparefn));
   }, !STABLE_SORT || ACCEPT_INCORRECT_ARGUMENTS);
 
   var aTypedArray$o = arrayBufferViewCore$1.aTypedArray;
@@ -6202,7 +6778,6 @@ var Forestry = (function () {
   var aTypedArray$n = arrayBufferViewCore$1.aTypedArray;
   var exportTypedArrayMethod$p = arrayBufferViewCore$1.exportTypedArrayMethod;
   var $toLocaleString$1 = [].toLocaleString;
-  var $slice$2 = [].slice;
 
   // iOS Safari 6.x fails here
   var TO_LOCALE_STRING_BUG$1 = !!Int8Array$4 && fails$1(function () {
@@ -6218,21 +6793,26 @@ var Forestry = (function () {
   // `%TypedArray%.prototype.toLocaleString` method
   // https://tc39.es/ecma262/#sec-%typedarray%.prototype.tolocalestring
   exportTypedArrayMethod$p('toLocaleString', function toLocaleString() {
-    return $toLocaleString$1.apply(TO_LOCALE_STRING_BUG$1 ? $slice$2.call(aTypedArray$n(this)) : aTypedArray$n(this), arguments);
+    return functionApply(
+      $toLocaleString$1,
+      TO_LOCALE_STRING_BUG$1 ? arraySlice$1(aTypedArray$n(this)) : aTypedArray$n(this),
+      arraySlice$1(arguments)
+    );
   }, FORCED$c);
 
   var exportTypedArrayMethod$o = arrayBufferViewCore$1.exportTypedArrayMethod;
 
 
 
+
   var Uint8Array$2 = global$1.Uint8Array;
   var Uint8ArrayPrototype$1 = Uint8Array$2 && Uint8Array$2.prototype || {};
   var arrayToString$1 = [].toString;
-  var arrayJoin$1 = [].join;
+  var join$4 = functionUncurryThis([].join);
 
   if (fails$1(function () { arrayToString$1.call({}); })) {
     arrayToString$1 = function toString() {
-      return arrayJoin$1.call(this);
+      return join$4(this);
     };
   }
 
@@ -6242,40 +6822,52 @@ var Forestry = (function () {
   // https://tc39.es/ecma262/#sec-%typedarray%.prototype.tostring
   exportTypedArrayMethod$o('toString', arrayToString$1, IS_NOT_ARRAY_METHOD$1);
 
+  // `thisNumberValue` abstract operation
+  // https://tc39.es/ecma262/#sec-thisnumbervalue
+  var thisNumberValue$1 = functionUncurryThis(1.0.valueOf);
+
   var getOwnPropertyNames$4 = objectGetOwnPropertyNames$1.f;
   var getOwnPropertyDescriptor$4 = objectGetOwnPropertyDescriptor$1.f;
   var defineProperty$9 = objectDefineProperty$1.f;
+
   var trim$1 = stringTrim$1.trim;
 
   var NUMBER$2 = 'Number';
   var NativeNumber$1 = global$1[NUMBER$2];
   var NumberPrototype$1 = NativeNumber$1.prototype;
+  var TypeError$5 = global$1.TypeError;
+  var arraySlice = functionUncurryThis(''.slice);
+  var charCodeAt$1 = functionUncurryThis(''.charCodeAt);
 
-  // Opera ~12 has broken Object#toString
-  var BROKEN_CLASSOF$1 = classofRaw$1(objectCreate$1(NumberPrototype$1)) == NUMBER$2;
+  // `ToNumeric` abstract operation
+  // https://tc39.es/ecma262/#sec-tonumeric
+  var toNumeric = function (value) {
+    var primValue = toPrimitive$1(value, 'number');
+    return typeof primValue == 'bigint' ? primValue : toNumber$1(primValue);
+  };
 
   // `ToNumber` abstract operation
   // https://tc39.es/ecma262/#sec-tonumber
   var toNumber$1 = function (argument) {
-    if (isSymbol(argument)) throw TypeError('Cannot convert a Symbol value to a number');
     var it = toPrimitive$1(argument, 'number');
     var first, third, radix, maxCode, digits, length, index, code;
+    if (isSymbol(it)) throw TypeError$5('Cannot convert a Symbol value to a number');
     if (typeof it == 'string' && it.length > 2) {
       it = trim$1(it);
-      first = it.charCodeAt(0);
+      first = charCodeAt$1(it, 0);
       if (first === 43 || first === 45) {
-        third = it.charCodeAt(2);
+        third = charCodeAt$1(it, 2);
         if (third === 88 || third === 120) return NaN; // Number('+0x1') should be NaN, old V8 fix
       } else if (first === 48) {
-        switch (it.charCodeAt(1)) {
+        switch (charCodeAt$1(it, 1)) {
           case 66: case 98: radix = 2; maxCode = 49; break; // fast equal of /^0b[01]+$/i
           case 79: case 111: radix = 8; maxCode = 55; break; // fast equal of /^0o[0-7]+$/i
           default: return +it;
         }
-        digits = it.slice(2);
+        digits = arraySlice(it, 2);
         length = digits.length;
         for (index = 0; index < length; index++) {
-          code = digits.charCodeAt(index);
+          code = charCodeAt$1(digits, index);
           // parseInt parses a string to a first unavailable symbol
           // but ToNumber should return NaN if a string contains unavailable symbols
           if (code < 48 || code > maxCode) return NaN;
@@ -6288,23 +6880,21 @@ var Forestry = (function () {
   // https://tc39.es/ecma262/#sec-number-constructor
   if (isForced_1$1(NUMBER$2, !NativeNumber$1(' 0o1') || !NativeNumber$1('0b1') || NativeNumber$1('+0x1'))) {
     var NumberWrapper$1 = function Number(value) {
-      var it = arguments.length < 1 ? 0 : value;
+      var n = arguments.length < 1 ? 0 : NativeNumber$1(toNumeric(value));
       var dummy = this;
-      return dummy instanceof NumberWrapper$1
-        // check on 1..constructor(foo) case
-        && (BROKEN_CLASSOF$1 ? fails$1(function () { NumberPrototype$1.valueOf.call(dummy); }) : classofRaw$1(dummy) != NUMBER$2)
-          ? inheritIfRequired$1(new NativeNumber$1(toNumber$1(it)), dummy, NumberWrapper$1) : toNumber$1(it);
+      // check on 1..constructor(foo) case
+      return objectIsPrototypeOf(NumberPrototype$1, dummy) && fails$1(function () { thisNumberValue$1(dummy); })
+        ? inheritIfRequired$1(Object(n), dummy, NumberWrapper$1) : n;
     };
     for (var keys$4 = descriptors$1 ? getOwnPropertyNames$4(NativeNumber$1) : (
       // ES3:
       'MAX_VALUE,MIN_VALUE,NaN,NEGATIVE_INFINITY,POSITIVE_INFINITY,' +
       // ES2015 (in case, if modules with ES2015 Number statics required before):
-      'EPSILON,isFinite,isInteger,isNaN,isSafeInteger,MAX_SAFE_INTEGER,' +
-      'MIN_SAFE_INTEGER,parseFloat,parseInt,isInteger,' +
+      'EPSILON,MAX_SAFE_INTEGER,MIN_SAFE_INTEGER,isFinite,isInteger,isNaN,isSafeInteger,parseFloat,parseInt,' +
       // ESNext
       'fromString,range'
     ).split(','), j$2 = 0, key$2; keys$4.length > j$2; j$2++) {
-      if (has$3(NativeNumber$1, key$2 = keys$4[j$2]) && !has$3(NumberWrapper$1, key$2)) {
+      if (hasOwnProperty_1(NativeNumber$1, key$2 = keys$4[j$2]) && !hasOwnProperty_1(NumberWrapper$1, key$2)) {
         defineProperty$9(NumberWrapper$1, key$2, getOwnPropertyDescriptor$4(NativeNumber$1, key$2));
       }
     }
@@ -19648,79 +20238,74 @@ var Forestry = (function () {
     });
   });
 
-  var Evented = /*#__PURE__*/function () {
-    function Evented() {
-      _classCallCheck$1(this, Evented);
-
-      this._listeners = {};
+  var Events$1 =
+  /** @class */
+  function () {
+    function Events() {
+      this.listeners = {};
     }
 
-    _createClass$1(Evented, [{
-      key: "addEventListener",
-      value: function addEventListener(type, callback) {
-        if (!(type in this._listeners)) {
-          this._listeners[type] = [];
-        }
-
-        this._listeners[type].push(callback);
+    Events.prototype.addEventListener = function (type, callback) {
+      if (!this.listeners[type]) {
+        this.listeners[type] = [];
       }
-    }, {
-      key: "on",
-      value: function on(type, callback) {
-        this.addEventListener(type, callback);
-        return this;
+
+      this.listeners[type].push(callback);
+    };
+
+    Events.prototype.on = function (type, callback) {
+      this.addEventListener(type, callback);
+      return this;
+    };
+
+    Events.prototype.removeEventListener = function (type, callback) {
+      if (!this.listeners[type]) {
+        return;
       }
-    }, {
-      key: "removeEventListener",
-      value: function removeEventListener(type, callback) {
-        if (!(type in this._listeners)) {
-          return;
-        }
 
-        var stack = this._listeners[type];
+      var stack = this.listeners[type];
 
-        for (var i = 0, l = stack.length; i < l; i++) {
-          if (stack[i] === callback) {
-            stack.splice(i, 1);
-            return this.removeEventListener(type, callback);
-          }
+      for (var i = 0, l = stack.length; i < l; i++) {
+        if (stack[i] === callback) {
+          stack.splice(i, 1);
+          return this.removeEventListener(type, callback);
         }
       }
-    }, {
-      key: "off",
-      value: function off(type, callback) {
-        this.removeEventListener(type, callback);
-        return this;
+    };
+
+    Events.prototype.off = function (type, callback) {
+      this.removeEventListener(type, callback);
+      return this;
+    };
+
+    Events.prototype.dispatchEvent = function (event) {
+      if (!this.listeners[event.type]) {
+        return false;
       }
-    }, {
-      key: "dispatchEvent",
-      value: function dispatchEvent(event) {
-        if (!(event.type in this._listeners)) {
-          return;
-        }
 
-        var stack = this._listeners[event.type];
-        Object.defineProperty(event, 'target', {
-          enumerable: false,
-          configurable: false,
-          writable: false,
-          value: this
-        });
+      var stack = this.listeners[event.type];
+      Object.defineProperty(event, 'target', {
+        enumerable: false,
+        configurable: false,
+        writable: false,
+        value: this
+      });
 
-        for (var i = 0, l = stack.length; i < l; i++) {
-          stack[i].call(this, event);
-        }
+      for (var i = 0, len = stack.length; i < len; i++) {
+        stack[i].call(this, event);
       }
-    }]);
 
-    return Evented;
+      return true;
+    };
+
+    return Events;
   }();
 
   var nativeGetOwnPropertyDescriptor$1 = objectGetOwnPropertyDescriptor$1.f;
 
 
-  var FAILS_ON_PRIMITIVES$3 = fails$1(function () { nativeGetOwnPropertyDescriptor$1(1); });
-  var FORCED$b = !descriptors$1 || FAILS_ON_PRIMITIVES$3;
+  var FAILS_ON_PRIMITIVES$5 = fails$1(function () { nativeGetOwnPropertyDescriptor$1(1); });
+  var FORCED$b = !descriptors$1 || FAILS_ON_PRIMITIVES$5;
 
   // `Object.getOwnPropertyDescriptor` method
   // https://tc39.es/ecma262/#sec-object.getownpropertydescriptor
@@ -19733,11 +20318,11 @@ var Forestry = (function () {
   var getOwnPropertyNames$3 = objectGetOwnPropertyNamesExternal.f;
 
   // eslint-disable-next-line es/no-object-getownpropertynames -- required for testing
-  var FAILS_ON_PRIMITIVES$2 = fails$1(function () { return !Object.getOwnPropertyNames(1); });
+  var FAILS_ON_PRIMITIVES$4 = fails$1(function () { return !Object.getOwnPropertyNames(1); });
 
   // `Object.getOwnPropertyNames` method
   // https://tc39.es/ecma262/#sec-object.getownpropertynames
-  _export$1({ target: 'Object', stat: true, forced: FAILS_ON_PRIMITIVES$2 }, {
+  _export$1({ target: 'Object', stat: true, forced: FAILS_ON_PRIMITIVES$4 }, {
     getOwnPropertyNames: getOwnPropertyNames$3
   });
 
@@ -19748,14 +20333,14 @@ var Forestry = (function () {
       // https://tc39.es/ecma262/#sec-string.prototype.match
       function match(regexp) {
         var O = requireObjectCoercible$1(this);
-        var matcher = regexp == undefined ? undefined : regexp[MATCH];
-        return matcher !== undefined ? matcher.call(regexp, O) : new RegExp(regexp)[MATCH](toString$2(O));
+        var matcher = regexp == undefined ? undefined : getMethod(regexp, MATCH);
+        return matcher ? functionCall(matcher, regexp, O) : new RegExp(regexp)[MATCH](toString$1(O));
       },
       // `RegExp.prototype[@@match]` method
       // https://tc39.es/ecma262/#sec-regexp.prototype-@@match
       function (string) {
         var rx = anObject$1(this);
-        var S = toString$2(string);
+        var S = toString$1(string);
         var res = maybeCallNative(nativeMatch, rx, S);
 
         if (res.done) return res.value;
@@ -19768,7 +20353,7 @@ var Forestry = (function () {
         var n = 0;
         var result;
         while ((result = regexpExecAbstract$1(rx, S)) !== null) {
-          var matchStr = toString$2(result[0]);
+          var matchStr = toString$1(result[0]);
           A[n] = matchStr;
           if (matchStr === '') rx.lastIndex = advanceStringIndex$1(S, toLength$1(rx.lastIndex), fullUnicode);
           n++;
@@ -19795,35 +20380,36 @@ var Forestry = (function () {
     try {
       return ENTRIES ? fn(anObject$1(value)[0], value[1]) : fn(value);
     } catch (error) {
-      iteratorClose(iterator);
-      throw error;
+      iteratorClose(iterator, 'throw', error);
     }
   };
+
+  var Array$1 = global$1.Array;
 
   // `Array.from` method implementation
   // https://tc39.es/ecma262/#sec-array.from
   var arrayFrom$1 = function from(arrayLike /* , mapfn = undefined, thisArg = undefined */) {
     var O = toObject$1(arrayLike);
-    var C = typeof this == 'function' ? this : Array;
+    var IS_CONSTRUCTOR = isConstructor(this);
     var argumentsLength = arguments.length;
     var mapfn = argumentsLength > 1 ? arguments[1] : undefined;
     var mapping = mapfn !== undefined;
+    if (mapping) mapfn = functionBindContext$1(mapfn, argumentsLength > 2 ? arguments[2] : undefined);
     var iteratorMethod = getIteratorMethod$1(O);
     var index = 0;
     var length, result, step, iterator, next, value;
-    if (mapping) mapfn = functionBindContext$1(mapfn, argumentsLength > 2 ? arguments[2] : undefined, 2);
     // if the target is not iterable or it's an array with the default iterator - use a simple case
-    if (iteratorMethod != undefined && !(C == Array && isArrayIteratorMethod$1(iteratorMethod))) {
-      iterator = iteratorMethod.call(O);
+    if (iteratorMethod && !(this == Array$1 && isArrayIteratorMethod$1(iteratorMethod))) {
+      iterator = getIterator$1(O, iteratorMethod);
       next = iterator.next;
-      result = new C();
-      for (;!(step = next.call(iterator)).done; index++) {
+      result = IS_CONSTRUCTOR ? new this() : [];
+      for (;!(step = functionCall(next, iterator)).done; index++) {
         value = mapping ? callWithSafeIterationClosing$1(iterator, mapfn, [step.value, index], true) : step.value;
         createProperty$1(result, index, value);
       }
     } else {
-      length = toLength$1(O.length);
-      result = new C(length);
+      length = lengthOfArrayLike(O);
+      result = IS_CONSTRUCTOR ? new this(length) : Array$1(length);
       for (;length > index; index++) {
         value = mapping ? mapfn(O[index], index) : O[index];
         createProperty$1(result, index, value);
@@ -19844,14 +20430,16 @@ var Forestry = (function () {
     from: arrayFrom$1
   });
 
+  var RegExpPrototype$2 = RegExp.prototype;
+
   var FORCED$a = descriptors$1 && fails$1(function () {
     // eslint-disable-next-line es/no-object-getownpropertydescriptor -- safe
-    return Object.getOwnPropertyDescriptor(RegExp.prototype, 'flags').get.call({ dotAll: true, sticky: true }) !== 'sy';
+    return Object.getOwnPropertyDescriptor(RegExpPrototype$2, 'flags').get.call({ dotAll: true, sticky: true }) !== 'sy';
   });
 
   // `RegExp.prototype.flags` getter
   // https://tc39.es/ecma262/#sec-get-regexp.prototype.flags
-  if (FORCED$a) objectDefineProperty$1.f(RegExp.prototype, 'flags', {
+  if (FORCED$a) objectDefineProperty$1.f(RegExpPrototype$2, 'flags', {
     configurable: true,
     get: regexpFlags$1
   });
@@ -19922,6 +20510,7 @@ var Forestry = (function () {
   var ITERATOR$a = wellKnownSymbol$1('iterator');
 
   var nativeUrl$1 = !fails$1(function () {
+    // eslint-disable-next-line unicorn/relative-url-style -- required for testing
     var url = new URL('b?a=1&b=2&c=3', 'http://a');
     var searchParams = url.searchParams;
     var result = '';
@@ -19953,6 +20542,7 @@ var Forestry = (function () {
   var $assign = Object.assign;
   // eslint-disable-next-line es/no-object-defineproperty -- required for testing
   var defineProperty$8 = Object.defineProperty;
+  var concat$1 = functionUncurryThis([].concat);
 
   // `Object.assign` method
   // https://tc39.es/ecma262/#sec-object.assign
@@ -19984,18 +20574,21 @@ var Forestry = (function () {
     var propertyIsEnumerable = objectPropertyIsEnumerable$1.f;
     while (argumentsLength > index) {
       var S = indexedObject$1(arguments[index++]);
-      var keys = getOwnPropertySymbols ? objectKeys$1(S).concat(getOwnPropertySymbols(S)) : objectKeys$1(S);
+      var keys = getOwnPropertySymbols ? concat$1(objectKeys$1(S), getOwnPropertySymbols(S)) : objectKeys$1(S);
       var length = keys.length;
       var j = 0;
       var key;
       while (length > j) {
         key = keys[j++];
-        if (!descriptors$1 || propertyIsEnumerable.call(S, key)) T[key] = S[key];
+        if (!descriptors$1 || functionCall(propertyIsEnumerable, S, key)) T[key] = S[key];
       }
     } return T;
   } : $assign;
 
   // based on https://github.com/bestiejs/punycode.js/blob/master/punycode.js
+
+
+
   var maxInt$1 = 2147483647; // aka. 0x7FFFFFFF or 2^31-1
   var base$1 = 36;
   var tMin$1 = 1;
@@ -20009,8 +20602,17 @@ var Forestry = (function () {
   var regexSeparators$1 = /[.\u3002\uFF0E\uFF61]/g; // RFC 3490 separators
   var OVERFLOW_ERROR$1 = 'Overflow: input needs wider integers to process';
   var baseMinusTMin$1 = base$1 - tMin$1;
+
+  var RangeError$4 = global$1.RangeError;
+  var exec$1 = functionUncurryThis(regexSeparators$1.exec);
   var floor$9 = Math.floor;
-  var stringFromCharCode$1 = String.fromCharCode;
+  var fromCharCode = String.fromCharCode;
+  var charCodeAt = functionUncurryThis(''.charCodeAt);
+  var join$3 = functionUncurryThis([].join);
+  var push$4 = functionUncurryThis([].push);
+  var replace$4 = functionUncurryThis(''.replace);
+  var split$3 = functionUncurryThis(''.split);
+  var toLowerCase$1 = functionUncurryThis(''.toLowerCase);
 
   /**
    * Creates an array containing the numeric code points of each Unicode
@@ -20024,20 +20626,20 @@ var Forestry = (function () {
     var counter = 0;
     var length = string.length;
     while (counter < length) {
-      var value = string.charCodeAt(counter++);
+      var value = charCodeAt(string, counter++);
       if (value >= 0xD800 && value <= 0xDBFF && counter < length) {
         // It's a high surrogate, and there is a next character.
-        var extra = string.charCodeAt(counter++);
+        var extra = charCodeAt(string, counter++);
         if ((extra & 0xFC00) == 0xDC00) { // Low surrogate.
-          output.push(((value & 0x3FF) << 10) + (extra & 0x3FF) + 0x10000);
+          push$4(output, ((value & 0x3FF) << 10) + (extra & 0x3FF) + 0x10000);
         } else {
           // It's an unmatched surrogate; only append this code unit, in case the
           // next code unit is the high surrogate of a surrogate pair.
-          output.push(value);
+          push$4(output, value);
           counter--;
         }
       } else {
-        output.push(value);
+        push$4(output, value);
       }
     }
     return output;
@@ -20060,8 +20662,9 @@ var Forestry = (function () {
     var k = 0;
     delta = firstTime ? floor$9(delta / damp$1) : delta >> 1;
     delta += floor$9(delta / numPoints);
-    for (; delta > baseMinusTMin$1 * tMax$1 >> 1; k += base$1) {
+    while (delta > baseMinusTMin$1 * tMax$1 >> 1) {
       delta = floor$9(delta / baseMinusTMin$1);
+      k += base$1;
     }
     return floor$9(k + (baseMinusTMin$1 + 1) * delta / (delta + skew$1));
   };
@@ -20070,7 +20673,6 @@ var Forestry = (function () {
    * Converts a string of Unicode symbols (e.g. a domain name label) to a
    * Punycode string of ASCII-only symbols.
    */
-  // eslint-disable-next-line max-statements -- TODO
   var encode$1 = function (input) {
     var output = [];
 
@@ -20090,7 +20692,7 @@ var Forestry = (function () {
     for (i = 0; i < input.length; i++) {
       currentValue = input[i];
       if (currentValue < 0x80) {
-        output.push(stringFromCharCode$1(currentValue));
+        push$4(output, fromCharCode(currentValue));
       }
     }
 
@@ -20099,7 +20701,7 @@ var Forestry = (function () {
 
     // Finish the basic string with a delimiter unless it's empty.
     if (basicLength) {
-      output.push(delimiter$1);
+      push$4(output, delimiter$1);
     }
 
     // Main encoding loop:
@@ -20116,7 +20718,7 @@ var Forestry = (function () {
       // Increase `delta` enough to advance the decoder's <n,i> state to <m,0>, but guard against overflow.
       var handledCPCountPlusOne = handledCPCount + 1;
       if (m - n > floor$9((maxInt$1 - delta) / handledCPCountPlusOne)) {
-        throw RangeError(OVERFLOW_ERROR$1);
+        throw RangeError$4(OVERFLOW_ERROR$1);
       }
 
       delta += (m - n) * handledCPCountPlusOne;
@@ -20125,49 +20727,51 @@ var Forestry = (function () {
       for (i = 0; i < input.length; i++) {
         currentValue = input[i];
         if (currentValue < n && ++delta > maxInt$1) {
-          throw RangeError(OVERFLOW_ERROR$1);
+          throw RangeError$4(OVERFLOW_ERROR$1);
         }
         if (currentValue == n) {
           // Represent delta as a generalized variable-length integer.
           var q = delta;
-          for (var k = base$1; /* no condition */; k += base$1) {
+          var k = base$1;
+          while (true) {
             var t = k <= bias ? tMin$1 : (k >= bias + tMax$1 ? tMax$1 : k - bias);
             if (q < t) break;
             var qMinusT = q - t;
             var baseMinusT = base$1 - t;
-            output.push(stringFromCharCode$1(digitToBasic$1(t + qMinusT % baseMinusT)));
+            push$4(output, fromCharCode(digitToBasic$1(t + qMinusT % baseMinusT)));
             q = floor$9(qMinusT / baseMinusT);
+            k += base$1;
           }
 
-          output.push(stringFromCharCode$1(digitToBasic$1(q)));
+          push$4(output, fromCharCode(digitToBasic$1(q)));
           bias = adapt$1(delta, handledCPCountPlusOne, handledCPCount == basicLength);
           delta = 0;
-          ++handledCPCount;
+          handledCPCount++;
         }
       }
 
-      ++delta;
-      ++n;
+      delta++;
+      n++;
     }
-    return output.join('');
+    return join$3(output, '');
   };
 
   var stringPunycodeToAscii$1 = function (input) {
     var encoded = [];
-    var labels = input.toLowerCase().replace(regexSeparators$1, '\u002E').split('.');
+    var labels = split$3(replace$4(toLowerCase$1(input), regexSeparators$1, '\u002E'), '.');
     var i, label;
     for (i = 0; i < labels.length; i++) {
       label = labels[i];
-      encoded.push(regexNonASCII$1.test(label) ? 'xn--' + encode$1(label) : label);
+      push$4(encoded, exec$1(regexNonASCII$1, label) ? 'xn--' + encode$1(label) : label);
     }
-    return encoded.join('.');
+    return join$3(encoded, '.');
   };
 
-  var getIterator$1 = function (it) {
-    var iteratorMethod = getIteratorMethod$1(it);
-    if (typeof iteratorMethod != 'function') {
-      throw TypeError(String(it) + ' is not iterable');
-    } return anObject$1(iteratorMethod.call(it));
+  var TypeError$4 = global$1.TypeError;
+
+  var validateArgumentsLength$1 = function (passed, required) {
+    if (passed < required) throw TypeError$4('Not enough arguments');
+    return passed;
   };
 
   // TODO: in core-js@4, move /modules/ dependencies to public entries for better optimization by tools like `preset-env`
@@ -20193,10 +20797,12 @@ var Forestry = (function () {
 
 
 
-  var nativeFetch = getBuiltIn$1('fetch');
-  var NativeRequest = getBuiltIn$1('Request');
-  var RequestPrototype = NativeRequest && NativeRequest.prototype;
-  var Headers$1 = getBuiltIn$1('Headers');
+
+
+
+
+
+
   var ITERATOR$9 = wellKnownSymbol$1('iterator');
   var URL_SEARCH_PARAMS$1 = 'URLSearchParams';
   var URL_SEARCH_PARAMS_ITERATOR$1 = URL_SEARCH_PARAMS$1 + 'Iterator';
@@ -20204,37 +20810,55 @@ var Forestry = (function () {
   var getInternalParamsState$1 = internalState$1.getterFor(URL_SEARCH_PARAMS$1);
   var getInternalIteratorState$1 = internalState$1.getterFor(URL_SEARCH_PARAMS_ITERATOR$1);
 
+  var n$Fetch = getBuiltIn$1('fetch');
+  var N$Request = getBuiltIn$1('Request');
+  var Headers$1 = getBuiltIn$1('Headers');
+  var RequestPrototype = N$Request && N$Request.prototype;
+  var HeadersPrototype = Headers$1 && Headers$1.prototype;
+  var RegExp$1 = global$1.RegExp;
+  var TypeError$3 = global$1.TypeError;
+  var decodeURIComponent$1 = global$1.decodeURIComponent;
+  var encodeURIComponent$1 = global$1.encodeURIComponent;
+  var charAt$3 = functionUncurryThis(''.charAt);
+  var join$2 = functionUncurryThis([].join);
+  var push$3 = functionUncurryThis([].push);
+  var replace$3 = functionUncurryThis(''.replace);
+  var shift$1 = functionUncurryThis([].shift);
+  var splice$1 = functionUncurryThis([].splice);
+  var split$2 = functionUncurryThis(''.split);
+  var stringSlice$3 = functionUncurryThis(''.slice);
+
   var plus$1 = /\+/g;
   var sequences$1 = Array(4);
 
   var percentSequence$1 = function (bytes) {
-    return sequences$1[bytes - 1] || (sequences$1[bytes - 1] = RegExp('((?:%[\\da-f]{2}){' + bytes + '})', 'gi'));
+    return sequences$1[bytes - 1] || (sequences$1[bytes - 1] = RegExp$1('((?:%[\\da-f]{2}){' + bytes + '})', 'gi'));
   };
 
   var percentDecode$1 = function (sequence) {
     try {
-      return decodeURIComponent(sequence);
+      return decodeURIComponent$1(sequence);
     } catch (error) {
       return sequence;
     }
   };
 
   var deserialize$1 = function (it) {
-    var result = it.replace(plus$1, ' ');
+    var result = replace$3(it, plus$1, ' ');
     var bytes = 4;
     try {
-      return decodeURIComponent(result);
+      return decodeURIComponent$1(result);
     } catch (error) {
       while (bytes) {
-        result = result.replace(percentSequence$1(bytes--), percentDecode$1);
+        result = replace$3(result, percentSequence$1(bytes--), percentDecode$1);
       }
       return result;
     }
   };
 
-  var find$1 = /[!'()~]|%20/g;
+  var find$2 = /[!'()~]|%20/g;
 
-  var replace$1 = {
+  var replacements = {
     '!': '%21',
     "'": '%27',
     '(': '%28',
@@ -20244,38 +20868,11 @@ var Forestry = (function () {
   };
 
   var replacer$1 = function (match) {
-    return replace$1[match];
+    return replacements[match];
   };
 
   var serialize$1 = function (it) {
-    return encodeURIComponent(it).replace(find$1, replacer$1);
-  };
-
-  var parseSearchParams$1 = function (result, query) {
-    if (query) {
-      var attributes = query.split('&');
-      var index = 0;
-      var attribute, entry;
-      while (index < attributes.length) {
-        attribute = attributes[index++];
-        if (attribute.length) {
-          entry = attribute.split('=');
-          result.push({
-            key: deserialize$1(entry.shift()),
-            value: deserialize$1(entry.join('='))
-          });
-        }
-      }
-    }
-  };
-
-  var updateSearchParams$1 = function (query) {
-    this.entries.length = 0;
-    parseSearchParams$1(this.entries, query);
-  };
-
-  var validateArgumentsLength$1 = function (passed, required) {
-    if (passed < required) throw TypeError('Not enough arguments');
+    return replace$3(encodeURIComponent$1(it), find$2, replacer$1);
   };
 
   var URLSearchParamsIterator$1 = createIteratorConstructor$1(function Iterator(params, kind) {
@@ -20292,48 +20889,87 @@ var Forestry = (function () {
     if (!step.done) {
       step.value = kind === 'keys' ? entry.key : kind === 'values' ? entry.value : [entry.key, entry.value];
     } return step;
-  });
+  }, true);
+
+  var URLSearchParamsState = function (init) {
+    this.entries = [];
+    this.url = null;
+
+    if (init !== undefined) {
+      if (isObject$1(init)) this.parseObject(init);
+      else this.parseQuery(typeof init == 'string' ? charAt$3(init, 0) === '?' ? stringSlice$3(init, 1) : init : toString$1(init));
+    }
+  };
+
+  URLSearchParamsState.prototype = {
+    type: URL_SEARCH_PARAMS$1,
+    bindURL: function (url) {
+      this.url = url;
+      this.update();
+    },
+    parseObject: function (object) {
+      var iteratorMethod = getIteratorMethod$1(object);
+      var iterator, next, step, entryIterator, entryNext, first, second;
+
+      if (iteratorMethod) {
+        iterator = getIterator$1(object, iteratorMethod);
+        next = iterator.next;
+        while (!(step = functionCall(next, iterator)).done) {
+          entryIterator = getIterator$1(anObject$1(step.value));
+          entryNext = entryIterator.next;
+          if (
+            (first = functionCall(entryNext, entryIterator)).done ||
+            (second = functionCall(entryNext, entryIterator)).done ||
+            !functionCall(entryNext, entryIterator).done
+          ) throw TypeError$3('Expected sequence with length 2');
+          push$3(this.entries, { key: toString$1(first.value), value: toString$1(second.value) });
+        }
+      } else for (var key in object) if (hasOwnProperty_1(object, key)) {
+        push$3(this.entries, { key: key, value: toString$1(object[key]) });
+      }
+    },
+    parseQuery: function (query) {
+      if (query) {
+        var attributes = split$2(query, '&');
+        var index = 0;
+        var attribute, entry;
+        while (index < attributes.length) {
+          attribute = attributes[index++];
+          if (attribute.length) {
+            entry = split$2(attribute, '=');
+            push$3(this.entries, {
+              key: deserialize$1(shift$1(entry)),
+              value: deserialize$1(join$2(entry, '='))
+            });
+          }
+        }
+      }
+    },
+    serialize: function () {
+      var entries = this.entries;
+      var result = [];
+      var index = 0;
+      var entry;
+      while (index < entries.length) {
+        entry = entries[index++];
+        push$3(result, serialize$1(entry.key) + '=' + serialize$1(entry.value));
+      } return join$2(result, '&');
+    },
+    update: function () {
+      this.entries.length = 0;
+      this.parseQuery(this.url.query);
+    },
+    updateURL: function () {
+      if (this.url) this.url.update();
+    }
+  };
 
   // `URLSearchParams` constructor
   // https://url.spec.whatwg.org/#interface-urlsearchparams
   var URLSearchParamsConstructor$1 = function URLSearchParams(/* init */) {
-    anInstance$1(this, URLSearchParamsConstructor$1, URL_SEARCH_PARAMS$1);
+    anInstance$1(this, URLSearchParamsPrototype$1);
     var init = arguments.length > 0 ? arguments[0] : undefined;
-    var that = this;
-    var entries = [];
-    var iteratorMethod, iterator, next, step, entryIterator, entryNext, first, second, key;
-
-    setInternalState$8(that, {
-      type: URL_SEARCH_PARAMS$1,
-      entries: entries,
-      updateURL: function () { /* empty */ },
-      updateSearchParams: updateSearchParams$1
-    });
-
-    if (init !== undefined) {
-      if (isObject$1(init)) {
-        iteratorMethod = getIteratorMethod$1(init);
-        if (typeof iteratorMethod === 'function') {
-          iterator = iteratorMethod.call(init);
-          next = iterator.next;
-          while (!(step = next.call(iterator)).done) {
-            entryIterator = getIterator$1(anObject$1(step.value));
-            entryNext = entryIterator.next;
-            if (
-              (first = entryNext.call(entryIterator)).done ||
-              (second = entryNext.call(entryIterator)).done ||
-              !entryNext.call(entryIterator).done
-            ) throw TypeError('Expected sequence with length 2');
-            entries.push({ key: toString$2(first.value), value: toString$2(second.value) });
-          }
-        } else for (key in init) if (has$3(init, key)) entries.push({ key: key, value: toString$2(init[key]) });
-      } else {
-        parseSearchParams$1(
-          entries,
-          typeof init === 'string' ? init.charAt(0) === '?' ? init.slice(1) : init : toString$2(init)
-        );
-      }
-    }
+    setInternalState$8(this, new URLSearchParamsState(init));
   };
 
   var URLSearchParamsPrototype$1 = URLSearchParamsConstructor$1.prototype;
@@ -20344,7 +20980,7 @@ var Forestry = (function () {
     append: function append(name, value) {
       validateArgumentsLength$1(arguments.length, 2);
       var state = getInternalParamsState$1(this);
-      state.entries.push({ key: toString$2(name), value: toString$2(value) });
+      push$3(state.entries, { key: toString$1(name), value: toString$1(value) });
       state.updateURL();
     },
     // `URLSearchParams.prototype.delete` method
@@ -20353,10 +20989,10 @@ var Forestry = (function () {
       validateArgumentsLength$1(arguments.length, 1);
       var state = getInternalParamsState$1(this);
       var entries = state.entries;
-      var key = toString$2(name);
+      var key = toString$1(name);
       var index = 0;
       while (index < entries.length) {
-        if (entries[index].key === key) entries.splice(index, 1);
+        if (entries[index].key === key) splice$1(entries, index, 1);
         else index++;
       }
       state.updateURL();
@@ -20366,7 +21002,7 @@ var Forestry = (function () {
     get: function get(name) {
       validateArgumentsLength$1(arguments.length, 1);
       var entries = getInternalParamsState$1(this).entries;
-      var key = toString$2(name);
+      var key = toString$1(name);
       var index = 0;
       for (; index < entries.length; index++) {
         if (entries[index].key === key) return entries[index].value;
@@ -20378,11 +21014,11 @@ var Forestry = (function () {
     getAll: function getAll(name) {
       validateArgumentsLength$1(arguments.length, 1);
       var entries = getInternalParamsState$1(this).entries;
-      var key = toString$2(name);
+      var key = toString$1(name);
       var result = [];
       var index = 0;
       for (; index < entries.length; index++) {
-        if (entries[index].key === key) result.push(entries[index].value);
+        if (entries[index].key === key) push$3(result, entries[index].value);
       }
       return result;
     },
@@ -20391,7 +21027,7 @@ var Forestry = (function () {
     has: function has(name) {
       validateArgumentsLength$1(arguments.length, 1);
       var entries = getInternalParamsState$1(this).entries;
-      var key = toString$2(name);
+      var key = toString$1(name);
       var index = 0;
       while (index < entries.length) {
         if (entries[index++].key === key) return true;
@@ -20405,48 +21041,36 @@ var Forestry = (function () {
       var state = getInternalParamsState$1(this);
       var entries = state.entries;
       var found = false;
-      var key = toString$2(name);
-      var val = toString$2(value);
+      var key = toString$1(name);
+      var val = toString$1(value);
       var index = 0;
       var entry;
       for (; index < entries.length; index++) {
         entry = entries[index];
         if (entry.key === key) {
-          if (found) entries.splice(index--, 1);
+          if (found) splice$1(entries, index--, 1);
           else {
             found = true;
             entry.value = val;
           }
         }
       }
-      if (!found) entries.push({ key: key, value: val });
+      if (!found) push$3(entries, { key: key, value: val });
       state.updateURL();
     },
     // `URLSearchParams.prototype.sort` method
     // https://url.spec.whatwg.org/#dom-urlsearchparams-sort
     sort: function sort() {
       var state = getInternalParamsState$1(this);
-      var entries = state.entries;
-      // Array#sort is not stable in some engines
-      var slice = entries.slice();
-      var entry, entriesIndex, sliceIndex;
-      entries.length = 0;
-      for (sliceIndex = 0; sliceIndex < slice.length; sliceIndex++) {
-        entry = slice[sliceIndex];
-        for (entriesIndex = 0; entriesIndex < sliceIndex; entriesIndex++) {
-          if (entries[entriesIndex].key > entry.key) {
-            entries.splice(entriesIndex, 0, entry);
-            break;
-          }
-        }
-        if (entriesIndex === sliceIndex) entries.push(entry);
-      }
+      arraySort(state.entries, function (a, b) {
+        return a.key > b.key ? 1 : -1;
+      });
       state.updateURL();
     },
     // `URLSearchParams.prototype.forEach` method
     forEach: function forEach(callback /* , thisArg */) {
       var entries = getInternalParamsState$1(this).entries;
-      var boundFunction = functionBindContext$1(callback, arguments.length > 1 ? arguments[1] : undefined, 3);
+      var boundFunction = functionBindContext$1(callback, arguments.length > 1 ? arguments[1] : undefined);
       var index = 0;
       var entry;
       while (index < entries.length) {
@@ -20469,19 +21093,12 @@ var Forestry = (function () {
   }, { enumerable: true });
 
   // `URLSearchParams.prototype[@@iterator]` method
-  redefine$1(URLSearchParamsPrototype$1, ITERATOR$9, URLSearchParamsPrototype$1.entries);
+  redefine$1(URLSearchParamsPrototype$1, ITERATOR$9, URLSearchParamsPrototype$1.entries, { name: 'entries' });
 
   // `URLSearchParams.prototype.toString` method
   // https://url.spec.whatwg.org/#urlsearchparams-stringification-behavior
   redefine$1(URLSearchParamsPrototype$1, 'toString', function toString() {
-    var entries = getInternalParamsState$1(this).entries;
-    var result = [];
-    var index = 0;
-    var entry;
-    while (index < entries.length) {
-      entry = entries[index++];
-      result.push(serialize$1(entry.key) + '=' + serialize$1(entry.value));
-    } return result.join('&');
+    return getInternalParamsState$1(this).serialize();
   }, { enumerable: true });
 
   setToStringTag$1(URLSearchParamsConstructor$1, URL_SEARCH_PARAMS$1);
@@ -20491,36 +21108,39 @@ var Forestry = (function () {
   });
 
   // Wrap `fetch` and `Request` for correct work with polyfilled `URLSearchParams`
-  if (!nativeUrl$1 && typeof Headers$1 == 'function') {
+  if (!nativeUrl$1 && isCallable(Headers$1)) {
+    var headersHas = functionUncurryThis(HeadersPrototype.has);
+    var headersSet = functionUncurryThis(HeadersPrototype.set);
+
     var wrapRequestOptions = function (init) {
       if (isObject$1(init)) {
         var body = init.body;
         var headers;
         if (classof$1(body) === URL_SEARCH_PARAMS$1) {
           headers = init.headers ? new Headers$1(init.headers) : new Headers$1();
-          if (!headers.has('content-type')) {
-            headers.set('content-type', 'application/x-www-form-urlencoded;charset=UTF-8');
+          if (!headersHas(headers, 'content-type')) {
+            headersSet(headers, 'content-type', 'application/x-www-form-urlencoded;charset=UTF-8');
           }
           return objectCreate$1(init, {
-            body: createPropertyDescriptor$1(0, String(body)),
+            body: createPropertyDescriptor$1(0, toString$1(body)),
             headers: createPropertyDescriptor$1(0, headers)
           });
         }
       } return init;
     };
 
-    if (typeof nativeFetch == 'function') {
+    if (isCallable(n$Fetch)) {
       _export$1({ global: true, enumerable: true, forced: true }, {
         fetch: function fetch(input /* , init */) {
-          return nativeFetch(input, arguments.length > 1 ? wrapRequestOptions(arguments[1]) : {});
+          return n$Fetch(input, arguments.length > 1 ? wrapRequestOptions(arguments[1]) : {});
         }
       });
     }
 
-    if (typeof NativeRequest == 'function') {
+    if (isCallable(N$Request)) {
       var RequestConstructor = function Request(input /* , init */) {
-        anInstance$1(this, RequestConstructor, 'Request');
-        return new NativeRequest(input, arguments.length > 1 ? wrapRequestOptions(arguments[1]) : {});
+        anInstance$1(this, RequestPrototype);
+        return new N$Request(input, arguments.length > 1 ? wrapRequestOptions(arguments[1]) : {});
       };
 
       RequestPrototype.constructor = RequestConstructor;
@@ -20545,6 +21165,9 @@ var Forestry = (function () {
 
 
 
+  var defineProperties = objectDefineProperties$1.f;
+
+
 
 
 
@@ -20556,65 +21179,56 @@ var Forestry = (function () {
 
 
 
-  var NativeURL$1 = global$1.URL;
-  var URLSearchParams$2 = web_urlSearchParams$1.URLSearchParams;
-  var getInternalSearchParamsState$1 = web_urlSearchParams$1.getState;
   var setInternalState$7 = internalState$1.set;
   var getInternalURLState$1 = internalState$1.getterFor('URL');
+  var URLSearchParams$2 = web_urlSearchParams$1.URLSearchParams;
+  var getInternalSearchParamsState$1 = web_urlSearchParams$1.getState;
+
+  var NativeURL$1 = global$1.URL;
+  var TypeError$2 = global$1.TypeError;
+  var parseInt$1 = global$1.parseInt;
   var floor$8 = Math.floor;
   var pow$4 = Math.pow;
+  var charAt$2 = functionUncurryThis(''.charAt);
+  var exec = functionUncurryThis(/./.exec);
+  var join$1 = functionUncurryThis([].join);
+  var numberToString = functionUncurryThis(1.0.toString);
+  var pop = functionUncurryThis([].pop);
+  var push$2 = functionUncurryThis([].push);
+  var replace$2 = functionUncurryThis(''.replace);
+  var shift = functionUncurryThis([].shift);
+  var split$1 = functionUncurryThis(''.split);
+  var stringSlice$2 = functionUncurryThis(''.slice);
+  var toLowerCase = functionUncurryThis(''.toLowerCase);
+  var unshift = functionUncurryThis([].unshift);
 
   var INVALID_AUTHORITY$1 = 'Invalid authority';
   var INVALID_SCHEME$1 = 'Invalid scheme';
   var INVALID_HOST$1 = 'Invalid host';
   var INVALID_PORT$1 = 'Invalid port';
 
-  var ALPHA$1 = /[A-Za-z]/;
+  var ALPHA$1 = /[a-z]/i;
   // eslint-disable-next-line regexp/no-obscure-range -- safe
-  var ALPHANUMERIC$1 = /[\d+-.A-Za-z]/;
+  var ALPHANUMERIC$1 = /[\d+-.a-z]/i;
   var DIGIT$1 = /\d/;
   var HEX_START$1 = /^0x/i;
   var OCT$1 = /^[0-7]+$/;
   var DEC$1 = /^\d+$/;
-  var HEX$1 = /^[\dA-Fa-f]+$/;
-  /* eslint-disable no-control-regex -- safe */
+  var HEX$1 = /^[\da-f]+$/i;
+  /* eslint-disable regexp/no-control-character -- safe */
   var FORBIDDEN_HOST_CODE_POINT$1 = /[\0\t\n\r #%/:<>?@[\\\]^|]/;
   var FORBIDDEN_HOST_CODE_POINT_EXCLUDING_PERCENT$1 = /[\0\t\n\r #/:<>?@[\\\]^|]/;
   var LEADING_AND_TRAILING_C0_CONTROL_OR_SPACE$1 = /^[\u0000-\u0020]+|[\u0000-\u0020]+$/g;
   var TAB_AND_NEW_LINE$1 = /[\t\n\r]/g;
-  /* eslint-enable no-control-regex -- safe */
+  /* eslint-enable regexp/no-control-character -- safe */
   var EOF$1;
 
-  var parseHost$1 = function (url, input) {
-    var result, codePoints, index;
-    if (input.charAt(0) == '[') {
-      if (input.charAt(input.length - 1) != ']') return INVALID_HOST$1;
-      result = parseIPv6$1(input.slice(1, -1));
-      if (!result) return INVALID_HOST$1;
-      url.host = result;
-    // opaque host
-    } else if (!isSpecial$1(url)) {
-      if (FORBIDDEN_HOST_CODE_POINT_EXCLUDING_PERCENT$1.test(input)) return INVALID_HOST$1;
-      result = '';
-      codePoints = arrayFrom$1(input);
-      for (index = 0; index < codePoints.length; index++) {
-        result += percentEncode$1(codePoints[index], C0ControlPercentEncodeSet$1);
-      }
-      url.host = result;
-    } else {
-      input = stringPunycodeToAscii$1(input);
-      if (FORBIDDEN_HOST_CODE_POINT$1.test(input)) return INVALID_HOST$1;
-      result = parseIPv4$1(input);
-      if (result === null) return INVALID_HOST$1;
-      url.host = result;
-    }
-  };
-
+  // https://url.spec.whatwg.org/#ipv4-number-parser
   var parseIPv4$1 = function (input) {
-    var parts = input.split('.');
+    var parts = split$1(input, '.');
     var partsLength, numbers, index, part, radix, number, ipv4;
     if (parts.length && parts[parts.length - 1] == '') {
-      parts.pop();
+      parts.length--;
     }
     partsLength = parts.length;
     if (partsLength > 4) return input;
@@ -20623,17 +21237,17 @@ var Forestry = (function () {
       part = parts[index];
       if (part == '') return input;
       radix = 10;
-      if (part.length > 1 && part.charAt(0) == '0') {
-        radix = HEX_START$1.test(part) ? 16 : 8;
-        part = part.slice(radix == 8 ? 1 : 2);
+      if (part.length > 1 && charAt$2(part, 0) == '0') {
+        radix = exec(HEX_START$1, part) ? 16 : 8;
+        part = stringSlice$2(part, radix == 8 ? 1 : 2);
       }
       if (part === '') {
         number = 0;
       } else {
-        if (!(radix == 10 ? DEC$1 : radix == 8 ? OCT$1 : HEX$1).test(part)) return input;
-        number = parseInt(part, radix);
+        if (!exec(radix == 10 ? DEC$1 : radix == 8 ? OCT$1 : HEX$1, part)) return input;
+        number = parseInt$1(part, radix);
       }
-      numbers.push(number);
+      push$2(numbers, number);
     }
     for (index = 0; index < partsLength; index++) {
       number = numbers[index];
@@ -20641,13 +21255,14 @@ var Forestry = (function () {
         if (number >= pow$4(256, 5 - partsLength)) return null;
       } else if (number > 255) return null;
     }
-    ipv4 = numbers.pop();
+    ipv4 = pop(numbers);
     for (index = 0; index < numbers.length; index++) {
       ipv4 += numbers[index] * pow$4(256, 3 - index);
     }
     return ipv4;
   };
 
+  // https://url.spec.whatwg.org/#concept-ipv6-parser
   // eslint-disable-next-line max-statements -- TODO
   var parseIPv6$1 = function (input) {
     var address = [0, 0, 0, 0, 0, 0, 0, 0];
@@ -20656,19 +21271,19 @@ var Forestry = (function () {
     var pointer = 0;
     var value, length, numbersSeen, ipv4Piece, number, swaps, swap;
 
-    var char = function () {
-      return input.charAt(pointer);
+    var chr = function () {
+      return charAt$2(input, pointer);
     };
 
-    if (char() == ':') {
-      if (input.charAt(1) != ':') return;
+    if (chr() == ':') {
+      if (charAt$2(input, 1) != ':') return;
       pointer += 2;
       pieceIndex++;
       compress = pieceIndex;
     }
-    while (char()) {
+    while (chr()) {
       if (pieceIndex == 8) return;
-      if (char() == ':') {
+      if (chr() == ':') {
         if (compress !== null) return;
         pointer++;
         pieceIndex++;
@@ -20676,25 +21291,25 @@ var Forestry = (function () {
         continue;
       }
       value = length = 0;
-      while (length < 4 && HEX$1.test(char())) {
-        value = value * 16 + parseInt(char(), 16);
+      while (length < 4 && exec(HEX$1, chr())) {
+        value = value * 16 + parseInt$1(chr(), 16);
         pointer++;
         length++;
       }
-      if (char() == '.') {
+      if (chr() == '.') {
         if (length == 0) return;
         pointer -= length;
         if (pieceIndex > 6) return;
         numbersSeen = 0;
-        while (char()) {
+        while (chr()) {
           ipv4Piece = null;
           if (numbersSeen > 0) {
-            if (char() == '.' && numbersSeen < 4) pointer++;
+            if (chr() == '.' && numbersSeen < 4) pointer++;
             else return;
           }
-          if (!DIGIT$1.test(char())) return;
-          while (DIGIT$1.test(char())) {
-            number = parseInt(char(), 10);
+          if (!exec(DIGIT$1, chr())) return;
+          while (exec(DIGIT$1, chr())) {
+            number = parseInt$1(chr(), 10);
             if (ipv4Piece === null) ipv4Piece = number;
             else if (ipv4Piece == 0) return;
             else ipv4Piece = ipv4Piece * 10 + number;
@@ -20707,10 +21322,10 @@ var Forestry = (function () {
         }
         if (numbersSeen != 4) return;
         break;
-      } else if (char() == ':') {
+      } else if (chr() == ':') {
         pointer++;
-        if (!char()) return;
-      } else if (char()) return;
+        if (!chr()) return;
+      } else if (chr()) return;
       address[pieceIndex++] = value;
     }
     if (compress !== null) {
@@ -20751,15 +21366,16 @@ var Forestry = (function () {
     return maxIndex;
   };
 
+  // https://url.spec.whatwg.org/#host-serializing
   var serializeHost$1 = function (host) {
     var result, index, compress, ignore0;
     // ipv4
     if (typeof host == 'number') {
       result = [];
       for (index = 0; index < 4; index++) {
-        result.unshift(host % 256);
+        unshift(result, host % 256);
         host = floor$8(host / 256);
-      } return result.join('.');
+      } return join$1(result, '.');
     // ipv6
     } else if (typeof host == 'object') {
       result = '';
@@ -20771,7 +21387,7 @@ var Forestry = (function () {
           result += index ? ':' : '::';
           ignore0 = true;
         } else {
-          result += host[index].toString(16);
+          result += numberToString(host[index], 16);
           if (index < 7) result += ':';
         }
       }
@@ -20790,11 +21406,12 @@ var Forestry = (function () {
     '/': 1, ':': 1, ';': 1, '=': 1, '@': 1, '[': 1, '\\': 1, ']': 1, '^': 1, '|': 1
   });
 
-  var percentEncode$1 = function (char, set) {
-    var code = codeAt$1(char, 0);
-    return code > 0x20 && code < 0x7F && !has$3(set, char) ? char : encodeURIComponent(char);
+  var percentEncode$1 = function (chr, set) {
+    var code = codeAt$1(chr, 0);
+    return code > 0x20 && code < 0x7F && !hasOwnProperty_1(set, chr) ? chr : encodeURIComponent(chr);
   };
 
+  // https://url.spec.whatwg.org/#special-scheme
   var specialSchemes$1 = {
     ftp: 21,
     file: null,
@@ -20804,46 +21421,30 @@ var Forestry = (function () {
     wss: 443
   };
 
-  var isSpecial$1 = function (url) {
-    return has$3(specialSchemes$1, url.scheme);
-  };
-
-  var includesCredentials$1 = function (url) {
-    return url.username != '' || url.password != '';
-  };
-
-  var cannotHaveUsernamePasswordPort$1 = function (url) {
-    return !url.host || url.cannotBeABaseURL || url.scheme == 'file';
-  };
-
+  // https://url.spec.whatwg.org/#windows-drive-letter
   var isWindowsDriveLetter$1 = function (string, normalized) {
     var second;
-    return string.length == 2 && ALPHA$1.test(string.charAt(0))
-      && ((second = string.charAt(1)) == ':' || (!normalized && second == '|'));
+    return string.length == 2 && exec(ALPHA$1, charAt$2(string, 0))
+      && ((second = charAt$2(string, 1)) == ':' || (!normalized && second == '|'));
   };
 
+  // https://url.spec.whatwg.org/#start-with-a-windows-drive-letter
   var startsWithWindowsDriveLetter$1 = function (string) {
     var third;
-    return string.length > 1 && isWindowsDriveLetter$1(string.slice(0, 2)) && (
+    return string.length > 1 && isWindowsDriveLetter$1(stringSlice$2(string, 0, 2)) && (
       string.length == 2 ||
-      ((third = string.charAt(2)) === '/' || third === '\\' || third === '?' || third === '#')
+      ((third = charAt$2(string, 2)) === '/' || third === '\\' || third === '?' || third === '#')
     );
   };
 
-  var shortenURLsPath$1 = function (url) {
-    var path = url.path;
-    var pathSize = path.length;
-    if (pathSize && (url.scheme != 'file' || pathSize != 1 || !isWindowsDriveLetter$1(path[0], true))) {
-      path.pop();
-    }
-  };
-
+  // https://url.spec.whatwg.org/#single-dot-path-segment
   var isSingleDot$1 = function (segment) {
-    return segment === '.' || segment.toLowerCase() === '%2e';
+    return segment === '.' || toLowerCase(segment) === '%2e';
   };
 
+  // https://url.spec.whatwg.org/#double-dot-path-segment
   var isDoubleDot$1 = function (segment) {
-    segment = segment.toLowerCase();
+    segment = toLowerCase(segment);
     return segment === '..' || segment === '%2e.' || segment === '.%2e' || segment === '%2e%2e';
   };
 
@@ -20870,655 +21471,716 @@ var Forestry = (function () {
   var QUERY$1 = {};
   var FRAGMENT$1 = {};
 
-  // eslint-disable-next-line max-statements -- TODO
-  var parseURL$1 = function (url, input, stateOverride, base) {
-    var state = stateOverride || SCHEME_START$1;
-    var pointer = 0;
-    var buffer = '';
-    var seenAt = false;
-    var seenBracket = false;
-    var seenPasswordToken = false;
-    var codePoints, char, bufferCodePoints, failure;
-
-    if (!stateOverride) {
-      url.scheme = '';
-      url.username = '';
-      url.password = '';
-      url.host = null;
-      url.port = null;
-      url.path = [];
-      url.query = null;
-      url.fragment = null;
-      url.cannotBeABaseURL = false;
-      input = input.replace(LEADING_AND_TRAILING_C0_CONTROL_OR_SPACE$1, '');
+  var URLState = function (url, isBase, base) {
+    var urlString = toString$1(url);
+    var baseState, failure, searchParams;
+    if (isBase) {
+      failure = this.parse(urlString);
+      if (failure) throw TypeError$2(failure);
+      this.searchParams = null;
+    } else {
+      if (base !== undefined) baseState = new URLState(base, true);
+      failure = this.parse(urlString, null, baseState);
+      if (failure) throw TypeError$2(failure);
+      searchParams = getInternalSearchParamsState$1(new URLSearchParams$2());
+      searchParams.bindURL(this);
+      this.searchParams = searchParams;
     }
+  };
 
-    input = input.replace(TAB_AND_NEW_LINE$1, '');
+  URLState.prototype = {
+    type: 'URL',
+    // https://url.spec.whatwg.org/#url-parsing
+    // eslint-disable-next-line max-statements -- TODO
+    parse: function (input, stateOverride, base) {
+      var url = this;
+      var state = stateOverride || SCHEME_START$1;
+      var pointer = 0;
+      var buffer = '';
+      var seenAt = false;
+      var seenBracket = false;
+      var seenPasswordToken = false;
+      var codePoints, chr, bufferCodePoints, failure;
 
-    codePoints = arrayFrom$1(input);
+      input = toString$1(input);
 
-    while (pointer <= codePoints.length) {
-      char = codePoints[pointer];
-      switch (state) {
-        case SCHEME_START$1:
-          if (char && ALPHA$1.test(char)) {
-            buffer += char.toLowerCase();
-            state = SCHEME$1;
-          } else if (!stateOverride) {
-            state = NO_SCHEME$1;
-            continue;
-          } else return INVALID_SCHEME$1;
-          break;
+      if (!stateOverride) {
+        url.scheme = '';
+        url.username = '';
+        url.password = '';
+        url.host = null;
+        url.port = null;
+        url.path = [];
+        url.query = null;
+        url.fragment = null;
+        url.cannotBeABaseURL = false;
+        input = replace$2(input, LEADING_AND_TRAILING_C0_CONTROL_OR_SPACE$1, '');
+      }
 
-        case SCHEME$1:
-          if (char && (ALPHANUMERIC$1.test(char) || char == '+' || char == '-' || char == '.')) {
-            buffer += char.toLowerCase();
-          } else if (char == ':') {
-            if (stateOverride && (
-              (isSpecial$1(url) != has$3(specialSchemes$1, buffer)) ||
-              (buffer == 'file' && (includesCredentials$1(url) || url.port !== null)) ||
-              (url.scheme == 'file' && !url.host)
-            )) return;
-            url.scheme = buffer;
-            if (stateOverride) {
-              if (isSpecial$1(url) && specialSchemes$1[url.scheme] == url.port) url.port = null;
-              return;
-            }
-            buffer = '';
-            if (url.scheme == 'file') {
-              state = FILE$1;
-            } else if (isSpecial$1(url) && base && base.scheme == url.scheme) {
-              state = SPECIAL_RELATIVE_OR_AUTHORITY$1;
-            } else if (isSpecial$1(url)) {
-              state = SPECIAL_AUTHORITY_SLASHES$1;
-            } else if (codePoints[pointer + 1] == '/') {
-              state = PATH_OR_AUTHORITY$1;
-              pointer++;
-            } else {
-              url.cannotBeABaseURL = true;
-              url.path.push('');
-              state = CANNOT_BE_A_BASE_URL_PATH$1;
-            }
-          } else if (!stateOverride) {
-            buffer = '';
-            state = NO_SCHEME$1;
-            pointer = 0;
-            continue;
-          } else return INVALID_SCHEME$1;
-          break;
+      input = replace$2(input, TAB_AND_NEW_LINE$1, '');
 
-        case NO_SCHEME$1:
-          if (!base || (base.cannotBeABaseURL && char != '#')) return INVALID_SCHEME$1;
-          if (base.cannotBeABaseURL && char == '#') {
-            url.scheme = base.scheme;
-            url.path = base.path.slice();
-            url.query = base.query;
-            url.fragment = '';
-            url.cannotBeABaseURL = true;
-            state = FRAGMENT$1;
+      codePoints = arrayFrom$1(input);
+
+      while (pointer <= codePoints.length) {
+        chr = codePoints[pointer];
+        switch (state) {
+          case SCHEME_START$1:
+            if (chr && exec(ALPHA$1, chr)) {
+              buffer += toLowerCase(chr);
+              state = SCHEME$1;
+            } else if (!stateOverride) {
+              state = NO_SCHEME$1;
+              continue;
+            } else return INVALID_SCHEME$1;
             break;
-          }
-          state = base.scheme == 'file' ? FILE$1 : RELATIVE$1;
-          continue;
 
-        case SPECIAL_RELATIVE_OR_AUTHORITY$1:
-          if (char == '/' && codePoints[pointer + 1] == '/') {
-            state = SPECIAL_AUTHORITY_IGNORE_SLASHES$1;
-            pointer++;
-          } else {
-            state = RELATIVE$1;
-            continue;
-          } break;
-
-        case PATH_OR_AUTHORITY$1:
-          if (char == '/') {
-            state = AUTHORITY$1;
-            break;
-          } else {
-            state = PATH$1;
-            continue;
-          }
-
-        case RELATIVE$1:
-          url.scheme = base.scheme;
-          if (char == EOF$1) {
-            url.username = base.username;
-            url.password = base.password;
-            url.host = base.host;
-            url.port = base.port;
-            url.path = base.path.slice();
-            url.query = base.query;
-          } else if (char == '/' || (char == '\\' && isSpecial$1(url))) {
-            state = RELATIVE_SLASH$1;
-          } else if (char == '?') {
-            url.username = base.username;
-            url.password = base.password;
-            url.host = base.host;
-            url.port = base.port;
-            url.path = base.path.slice();
-            url.query = '';
-            state = QUERY$1;
-          } else if (char == '#') {
-            url.username = base.username;
-            url.password = base.password;
-            url.host = base.host;
-            url.port = base.port;
-            url.path = base.path.slice();
-            url.query = base.query;
-            url.fragment = '';
-            state = FRAGMENT$1;
-          } else {
-            url.username = base.username;
-            url.password = base.password;
-            url.host = base.host;
-            url.port = base.port;
-            url.path = base.path.slice();
-            url.path.pop();
-            state = PATH$1;
-            continue;
-          } break;
-
-        case RELATIVE_SLASH$1:
-          if (isSpecial$1(url) && (char == '/' || char == '\\')) {
-            state = SPECIAL_AUTHORITY_IGNORE_SLASHES$1;
-          } else if (char == '/') {
-            state = AUTHORITY$1;
-          } else {
-            url.username = base.username;
-            url.password = base.password;
-            url.host = base.host;
-            url.port = base.port;
-            state = PATH$1;
-            continue;
-          } break;
-
-        case SPECIAL_AUTHORITY_SLASHES$1:
-          state = SPECIAL_AUTHORITY_IGNORE_SLASHES$1;
-          if (char != '/' || buffer.charAt(pointer + 1) != '/') continue;
-          pointer++;
-          break;
-
-        case SPECIAL_AUTHORITY_IGNORE_SLASHES$1:
-          if (char != '/' && char != '\\') {
-            state = AUTHORITY$1;
-            continue;
-          } break;
-
-        case AUTHORITY$1:
-          if (char == '@') {
-            if (seenAt) buffer = '%40' + buffer;
-            seenAt = true;
-            bufferCodePoints = arrayFrom$1(buffer);
-            for (var i = 0; i < bufferCodePoints.length; i++) {
-              var codePoint = bufferCodePoints[i];
-              if (codePoint == ':' && !seenPasswordToken) {
-                seenPasswordToken = true;
-                continue;
+          case SCHEME$1:
+            if (chr && (exec(ALPHANUMERIC$1, chr) || chr == '+' || chr == '-' || chr == '.')) {
+              buffer += toLowerCase(chr);
+            } else if (chr == ':') {
+              if (stateOverride && (
+                (url.isSpecial() != hasOwnProperty_1(specialSchemes$1, buffer)) ||
+                (buffer == 'file' && (url.includesCredentials() || url.port !== null)) ||
+                (url.scheme == 'file' && !url.host)
+              )) return;
+              url.scheme = buffer;
+              if (stateOverride) {
+                if (url.isSpecial() && specialSchemes$1[url.scheme] == url.port) url.port = null;
+                return;
               }
-              var encodedCodePoints = percentEncode$1(codePoint, userinfoPercentEncodeSet$1);
-              if (seenPasswordToken) url.password += encodedCodePoints;
-              else url.username += encodedCodePoints;
-            }
-            buffer = '';
-          } else if (
-            char == EOF$1 || char == '/' || char == '?' || char == '#' ||
-            (char == '\\' && isSpecial$1(url))
-          ) {
-            if (seenAt && buffer == '') return INVALID_AUTHORITY$1;
-            pointer -= arrayFrom$1(buffer).length + 1;
-            buffer = '';
-            state = HOST$1;
-          } else buffer += char;
-          break;
-
-        case HOST$1:
-        case HOSTNAME$1:
-          if (stateOverride && url.scheme == 'file') {
-            state = FILE_HOST$1;
-            continue;
-          } else if (char == ':' && !seenBracket) {
-            if (buffer == '') return INVALID_HOST$1;
-            failure = parseHost$1(url, buffer);
-            if (failure) return failure;
-            buffer = '';
-            state = PORT$1;
-            if (stateOverride == HOSTNAME$1) return;
-          } else if (
-            char == EOF$1 || char == '/' || char == '?' || char == '#' ||
-            (char == '\\' && isSpecial$1(url))
-          ) {
-            if (isSpecial$1(url) && buffer == '') return INVALID_HOST$1;
-            if (stateOverride && buffer == '' && (includesCredentials$1(url) || url.port !== null)) return;
-            failure = parseHost$1(url, buffer);
-            if (failure) return failure;
-            buffer = '';
-            state = PATH_START$1;
-            if (stateOverride) return;
-            continue;
-          } else {
-            if (char == '[') seenBracket = true;
-            else if (char == ']') seenBracket = false;
-            buffer += char;
-          } break;
-
-        case PORT$1:
-          if (DIGIT$1.test(char)) {
-            buffer += char;
-          } else if (
-            char == EOF$1 || char == '/' || char == '?' || char == '#' ||
-            (char == '\\' && isSpecial$1(url)) ||
-            stateOverride
-          ) {
-            if (buffer != '') {
-              var port = parseInt(buffer, 10);
-              if (port > 0xFFFF) return INVALID_PORT$1;
-              url.port = (isSpecial$1(url) && port === specialSchemes$1[url.scheme]) ? null : port;
               buffer = '';
-            }
-            if (stateOverride) return;
-            state = PATH_START$1;
-            continue;
-          } else return INVALID_PORT$1;
-          break;
+              if (url.scheme == 'file') {
+                state = FILE$1;
+              } else if (url.isSpecial() && base && base.scheme == url.scheme) {
+                state = SPECIAL_RELATIVE_OR_AUTHORITY$1;
+              } else if (url.isSpecial()) {
+                state = SPECIAL_AUTHORITY_SLASHES$1;
+              } else if (codePoints[pointer + 1] == '/') {
+                state = PATH_OR_AUTHORITY$1;
+                pointer++;
+              } else {
+                url.cannotBeABaseURL = true;
+                push$2(url.path, '');
+                state = CANNOT_BE_A_BASE_URL_PATH$1;
+              }
+            } else if (!stateOverride) {
+              buffer = '';
+              state = NO_SCHEME$1;
+              pointer = 0;
+              continue;
+            } else return INVALID_SCHEME$1;
+            break;
 
-        case FILE$1:
-          url.scheme = 'file';
-          if (char == '/' || char == '\\') state = FILE_SLASH$1;
-          else if (base && base.scheme == 'file') {
-            if (char == EOF$1) {
-              url.host = base.host;
-              url.path = base.path.slice();
-              url.query = base.query;
-            } else if (char == '?') {
-              url.host = base.host;
-              url.path = base.path.slice();
-              url.query = '';
-              state = QUERY$1;
-            } else if (char == '#') {
-              url.host = base.host;
-              url.path = base.path.slice();
+          case NO_SCHEME$1:
+            if (!base || (base.cannotBeABaseURL && chr != '#')) return INVALID_SCHEME$1;
+            if (base.cannotBeABaseURL && chr == '#') {
+              url.scheme = base.scheme;
+              url.path = arraySliceSimple(base.path);
               url.query = base.query;
               url.fragment = '';
+              url.cannotBeABaseURL = true;
               state = FRAGMENT$1;
+              break;
+            }
+            state = base.scheme == 'file' ? FILE$1 : RELATIVE$1;
+            continue;
+
+          case SPECIAL_RELATIVE_OR_AUTHORITY$1:
+            if (chr == '/' && codePoints[pointer + 1] == '/') {
+              state = SPECIAL_AUTHORITY_IGNORE_SLASHES$1;
+              pointer++;
             } else {
-              if (!startsWithWindowsDriveLetter$1(codePoints.slice(pointer).join(''))) {
-                url.host = base.host;
-                url.path = base.path.slice();
-                shortenURLsPath$1(url);
-              }
+              state = RELATIVE$1;
+              continue;
+            } break;
+
+          case PATH_OR_AUTHORITY$1:
+            if (chr == '/') {
+              state = AUTHORITY$1;
+              break;
+            } else {
               state = PATH$1;
               continue;
             }
-          } else {
-            state = PATH$1;
-            continue;
-          } break;
 
-        case FILE_SLASH$1:
-          if (char == '/' || char == '\\') {
-            state = FILE_HOST$1;
-            break;
-          }
-          if (base && base.scheme == 'file' && !startsWithWindowsDriveLetter$1(codePoints.slice(pointer).join(''))) {
-            if (isWindowsDriveLetter$1(base.path[0], true)) url.path.push(base.path[0]);
-            else url.host = base.host;
-          }
-          state = PATH$1;
-          continue;
-
-        case FILE_HOST$1:
-          if (char == EOF$1 || char == '/' || char == '\\' || char == '?' || char == '#') {
-            if (!stateOverride && isWindowsDriveLetter$1(buffer)) {
-              state = PATH$1;
-            } else if (buffer == '') {
-              url.host = '';
-              if (stateOverride) return;
-              state = PATH_START$1;
-            } else {
-              failure = parseHost$1(url, buffer);
-              if (failure) return failure;
-              if (url.host == 'localhost') url.host = '';
-              if (stateOverride) return;
-              buffer = '';
-              state = PATH_START$1;
-            } continue;
-          } else buffer += char;
-          break;
-
-        case PATH_START$1:
-          if (isSpecial$1(url)) {
-            state = PATH$1;
-            if (char != '/' && char != '\\') continue;
-          } else if (!stateOverride && char == '?') {
-            url.query = '';
-            state = QUERY$1;
-          } else if (!stateOverride && char == '#') {
-            url.fragment = '';
-            state = FRAGMENT$1;
-          } else if (char != EOF$1) {
-            state = PATH$1;
-            if (char != '/') continue;
-          } break;
-
-        case PATH$1:
-          if (
-            char == EOF$1 || char == '/' ||
-            (char == '\\' && isSpecial$1(url)) ||
-            (!stateOverride && (char == '?' || char == '#'))
-          ) {
-            if (isDoubleDot$1(buffer)) {
-              shortenURLsPath$1(url);
-              if (char != '/' && !(char == '\\' && isSpecial$1(url))) {
-                url.path.push('');
-              }
-            } else if (isSingleDot$1(buffer)) {
-              if (char != '/' && !(char == '\\' && isSpecial$1(url))) {
-                url.path.push('');
-              }
-            } else {
-              if (url.scheme == 'file' && !url.path.length && isWindowsDriveLetter$1(buffer)) {
-                if (url.host) url.host = '';
-                buffer = buffer.charAt(0) + ':'; // normalize windows drive letter
-              }
-              url.path.push(buffer);
-            }
-            buffer = '';
-            if (url.scheme == 'file' && (char == EOF$1 || char == '?' || char == '#')) {
-              while (url.path.length > 1 && url.path[0] === '') {
-                url.path.shift();
-              }
-            }
-            if (char == '?') {
+          case RELATIVE$1:
+            url.scheme = base.scheme;
+            if (chr == EOF$1) {
+              url.username = base.username;
+              url.password = base.password;
+              url.host = base.host;
+              url.port = base.port;
+              url.path = arraySliceSimple(base.path);
+              url.query = base.query;
+            } else if (chr == '/' || (chr == '\\' && url.isSpecial())) {
+              state = RELATIVE_SLASH$1;
+            } else if (chr == '?') {
+              url.username = base.username;
+              url.password = base.password;
+              url.host = base.host;
+              url.port = base.port;
+              url.path = arraySliceSimple(base.path);
               url.query = '';
               state = QUERY$1;
-            } else if (char == '#') {
+            } else if (chr == '#') {
+              url.username = base.username;
+              url.password = base.password;
+              url.host = base.host;
+              url.port = base.port;
+              url.path = arraySliceSimple(base.path);
+              url.query = base.query;
               url.fragment = '';
               state = FRAGMENT$1;
+            } else {
+              url.username = base.username;
+              url.password = base.password;
+              url.host = base.host;
+              url.port = base.port;
+              url.path = arraySliceSimple(base.path);
+              url.path.length--;
+              state = PATH$1;
+              continue;
+            } break;
+
+          case RELATIVE_SLASH$1:
+            if (url.isSpecial() && (chr == '/' || chr == '\\')) {
+              state = SPECIAL_AUTHORITY_IGNORE_SLASHES$1;
+            } else if (chr == '/') {
+              state = AUTHORITY$1;
+            } else {
+              url.username = base.username;
+              url.password = base.password;
+              url.host = base.host;
+              url.port = base.port;
+              state = PATH$1;
+              continue;
+            } break;
+
+          case SPECIAL_AUTHORITY_SLASHES$1:
+            state = SPECIAL_AUTHORITY_IGNORE_SLASHES$1;
+            if (chr != '/' || charAt$2(buffer, pointer + 1) != '/') continue;
+            pointer++;
+            break;
+
+          case SPECIAL_AUTHORITY_IGNORE_SLASHES$1:
+            if (chr != '/' && chr != '\\') {
+              state = AUTHORITY$1;
+              continue;
+            } break;
+
+          case AUTHORITY$1:
+            if (chr == '@') {
+              if (seenAt) buffer = '%40' + buffer;
+              seenAt = true;
+              bufferCodePoints = arrayFrom$1(buffer);
+              for (var i = 0; i < bufferCodePoints.length; i++) {
+                var codePoint = bufferCodePoints[i];
+                if (codePoint == ':' && !seenPasswordToken) {
+                  seenPasswordToken = true;
+                  continue;
+                }
+                var encodedCodePoints = percentEncode$1(codePoint, userinfoPercentEncodeSet$1);
+                if (seenPasswordToken) url.password += encodedCodePoints;
+                else url.username += encodedCodePoints;
+              }
+              buffer = '';
+            } else if (
+              chr == EOF$1 || chr == '/' || chr == '?' || chr == '#' ||
+              (chr == '\\' && url.isSpecial())
+            ) {
+              if (seenAt && buffer == '') return INVALID_AUTHORITY$1;
+              pointer -= arrayFrom$1(buffer).length + 1;
+              buffer = '';
+              state = HOST$1;
+            } else buffer += chr;
+            break;
+
+          case HOST$1:
+          case HOSTNAME$1:
+            if (stateOverride && url.scheme == 'file') {
+              state = FILE_HOST$1;
+              continue;
+            } else if (chr == ':' && !seenBracket) {
+              if (buffer == '') return INVALID_HOST$1;
+              failure = url.parseHost(buffer);
+              if (failure) return failure;
+              buffer = '';
+              state = PORT$1;
+              if (stateOverride == HOSTNAME$1) return;
+            } else if (
+              chr == EOF$1 || chr == '/' || chr == '?' || chr == '#' ||
+              (chr == '\\' && url.isSpecial())
+            ) {
+              if (url.isSpecial() && buffer == '') return INVALID_HOST$1;
+              if (stateOverride && buffer == '' && (url.includesCredentials() || url.port !== null)) return;
+              failure = url.parseHost(buffer);
+              if (failure) return failure;
+              buffer = '';
+              state = PATH_START$1;
+              if (stateOverride) return;
+              continue;
+            } else {
+              if (chr == '[') seenBracket = true;
+              else if (chr == ']') seenBracket = false;
+              buffer += chr;
+            } break;
+
+          case PORT$1:
+            if (exec(DIGIT$1, chr)) {
+              buffer += chr;
+            } else if (
+              chr == EOF$1 || chr == '/' || chr == '?' || chr == '#' ||
+              (chr == '\\' && url.isSpecial()) ||
+              stateOverride
+            ) {
+              if (buffer != '') {
+                var port = parseInt$1(buffer, 10);
+                if (port > 0xFFFF) return INVALID_PORT$1;
+                url.port = (url.isSpecial() && port === specialSchemes$1[url.scheme]) ? null : port;
+                buffer = '';
+              }
+              if (stateOverride) return;
+              state = PATH_START$1;
+              continue;
+            } else return INVALID_PORT$1;
+            break;
+
+          case FILE$1:
+            url.scheme = 'file';
+            if (chr == '/' || chr == '\\') state = FILE_SLASH$1;
+            else if (base && base.scheme == 'file') {
+              if (chr == EOF$1) {
+                url.host = base.host;
+                url.path = arraySliceSimple(base.path);
+                url.query = base.query;
+              } else if (chr == '?') {
+                url.host = base.host;
+                url.path = arraySliceSimple(base.path);
+                url.query = '';
+                state = QUERY$1;
+              } else if (chr == '#') {
+                url.host = base.host;
+                url.path = arraySliceSimple(base.path);
+                url.query = base.query;
+                url.fragment = '';
+                state = FRAGMENT$1;
+              } else {
+                if (!startsWithWindowsDriveLetter$1(join$1(arraySliceSimple(codePoints, pointer), ''))) {
+                  url.host = base.host;
+                  url.path = arraySliceSimple(base.path);
+                  url.shortenPath();
+                }
+                state = PATH$1;
+                continue;
+              }
+            } else {
+              state = PATH$1;
+              continue;
+            } break;
+
+          case FILE_SLASH$1:
+            if (chr == '/' || chr == '\\') {
+              state = FILE_HOST$1;
+              break;
             }
-          } else {
-            buffer += percentEncode$1(char, pathPercentEncodeSet$1);
-          } break;
+            if (base && base.scheme == 'file' && !startsWithWindowsDriveLetter$1(join$1(arraySliceSimple(codePoints, pointer), ''))) {
+              if (isWindowsDriveLetter$1(base.path[0], true)) push$2(url.path, base.path[0]);
+              else url.host = base.host;
+            }
+            state = PATH$1;
+            continue;
 
-        case CANNOT_BE_A_BASE_URL_PATH$1:
-          if (char == '?') {
-            url.query = '';
-            state = QUERY$1;
-          } else if (char == '#') {
-            url.fragment = '';
-            state = FRAGMENT$1;
-          } else if (char != EOF$1) {
-            url.path[0] += percentEncode$1(char, C0ControlPercentEncodeSet$1);
-          } break;
+          case FILE_HOST$1:
+            if (chr == EOF$1 || chr == '/' || chr == '\\' || chr == '?' || chr == '#') {
+              if (!stateOverride && isWindowsDriveLetter$1(buffer)) {
+                state = PATH$1;
+              } else if (buffer == '') {
+                url.host = '';
+                if (stateOverride) return;
+                state = PATH_START$1;
+              } else {
+                failure = url.parseHost(buffer);
+                if (failure) return failure;
+                if (url.host == 'localhost') url.host = '';
+                if (stateOverride) return;
+                buffer = '';
+                state = PATH_START$1;
+              } continue;
+            } else buffer += chr;
+            break;
 
-        case QUERY$1:
-          if (!stateOverride && char == '#') {
-            url.fragment = '';
-            state = FRAGMENT$1;
-          } else if (char != EOF$1) {
-            if (char == "'" && isSpecial$1(url)) url.query += '%27';
-            else if (char == '#') url.query += '%23';
-            else url.query += percentEncode$1(char, C0ControlPercentEncodeSet$1);
-          } break;
+          case PATH_START$1:
+            if (url.isSpecial()) {
+              state = PATH$1;
+              if (chr != '/' && chr != '\\') continue;
+            } else if (!stateOverride && chr == '?') {
+              url.query = '';
+              state = QUERY$1;
+            } else if (!stateOverride && chr == '#') {
+              url.fragment = '';
+              state = FRAGMENT$1;
+            } else if (chr != EOF$1) {
+              state = PATH$1;
+              if (chr != '/') continue;
+            } break;
 
-        case FRAGMENT$1:
-          if (char != EOF$1) url.fragment += percentEncode$1(char, fragmentPercentEncodeSet$1);
-          break;
+          case PATH$1:
+            if (
+              chr == EOF$1 || chr == '/' ||
+              (chr == '\\' && url.isSpecial()) ||
+              (!stateOverride && (chr == '?' || chr == '#'))
+            ) {
+              if (isDoubleDot$1(buffer)) {
+                url.shortenPath();
+                if (chr != '/' && !(chr == '\\' && url.isSpecial())) {
+                  push$2(url.path, '');
+                }
+              } else if (isSingleDot$1(buffer)) {
+                if (chr != '/' && !(chr == '\\' && url.isSpecial())) {
+                  push$2(url.path, '');
+                }
+              } else {
+                if (url.scheme == 'file' && !url.path.length && isWindowsDriveLetter$1(buffer)) {
+                  if (url.host) url.host = '';
+                  buffer = charAt$2(buffer, 0) + ':'; // normalize windows drive letter
+                }
+                push$2(url.path, buffer);
+              }
+              buffer = '';
+              if (url.scheme == 'file' && (chr == EOF$1 || chr == '?' || chr == '#')) {
+                while (url.path.length > 1 && url.path[0] === '') {
+                  shift(url.path);
+                }
+              }
+              if (chr == '?') {
+                url.query = '';
+                state = QUERY$1;
+              } else if (chr == '#') {
+                url.fragment = '';
+                state = FRAGMENT$1;
+              }
+            } else {
+              buffer += percentEncode$1(chr, pathPercentEncodeSet$1);
+            } break;
+
+          case CANNOT_BE_A_BASE_URL_PATH$1:
+            if (chr == '?') {
+              url.query = '';
+              state = QUERY$1;
+            } else if (chr == '#') {
+              url.fragment = '';
+              state = FRAGMENT$1;
+            } else if (chr != EOF$1) {
+              url.path[0] += percentEncode$1(chr, C0ControlPercentEncodeSet$1);
+            } break;
+
+          case QUERY$1:
+            if (!stateOverride && chr == '#') {
+              url.fragment = '';
+              state = FRAGMENT$1;
+            } else if (chr != EOF$1) {
+              if (chr == "'" && url.isSpecial()) url.query += '%27';
+              else if (chr == '#') url.query += '%23';
+              else url.query += percentEncode$1(chr, C0ControlPercentEncodeSet$1);
+            } break;
+
+          case FRAGMENT$1:
+            if (chr != EOF$1) url.fragment += percentEncode$1(chr, fragmentPercentEncodeSet$1);
+            break;
+        }
+
+        pointer++;
       }
-
-      pointer++;
+    },
+    // https://url.spec.whatwg.org/#host-parsing
+    parseHost: function (input) {
+      var result, codePoints, index;
+      if (charAt$2(input, 0) == '[') {
+        if (charAt$2(input, input.length - 1) != ']') return INVALID_HOST$1;
+        result = parseIPv6$1(stringSlice$2(input, 1, -1));
+        if (!result) return INVALID_HOST$1;
+        this.host = result;
+      // opaque host
+      } else if (!this.isSpecial()) {
+        if (exec(FORBIDDEN_HOST_CODE_POINT_EXCLUDING_PERCENT$1, input)) return INVALID_HOST$1;
+        result = '';
+        codePoints = arrayFrom$1(input);
+        for (index = 0; index < codePoints.length; index++) {
+          result += percentEncode$1(codePoints[index], C0ControlPercentEncodeSet$1);
+        }
+        this.host = result;
+      } else {
+        input = stringPunycodeToAscii$1(input);
+        if (exec(FORBIDDEN_HOST_CODE_POINT$1, input)) return INVALID_HOST$1;
+        result = parseIPv4$1(input);
+        if (result === null) return INVALID_HOST$1;
+        this.host = result;
+      }
+    },
+    // https://url.spec.whatwg.org/#cannot-have-a-username-password-port
+    cannotHaveUsernamePasswordPort: function () {
+      return !this.host || this.cannotBeABaseURL || this.scheme == 'file';
+    },
+    // https://url.spec.whatwg.org/#include-credentials
+    includesCredentials: function () {
+      return this.username != '' || this.password != '';
+    },
+    // https://url.spec.whatwg.org/#is-special
+    isSpecial: function () {
+      return hasOwnProperty_1(specialSchemes$1, this.scheme);
+    },
+    // https://url.spec.whatwg.org/#shorten-a-urls-path
+    shortenPath: function () {
+      var path = this.path;
+      var pathSize = path.length;
+      if (pathSize && (this.scheme != 'file' || pathSize != 1 || !isWindowsDriveLetter$1(path[0], true))) {
+        path.length--;
+      }
+    },
+    // https://url.spec.whatwg.org/#concept-url-serializer
+    serialize: function () {
+      var url = this;
+      var scheme = url.scheme;
+      var username = url.username;
+      var password = url.password;
+      var host = url.host;
+      var port = url.port;
+      var path = url.path;
+      var query = url.query;
+      var fragment = url.fragment;
+      var output = scheme + ':';
+      if (host !== null) {
+        output += '//';
+        if (url.includesCredentials()) {
+          output += username + (password ? ':' + password : '') + '@';
+        }
+        output += serializeHost$1(host);
+        if (port !== null) output += ':' + port;
+      } else if (scheme == 'file') output += '//';
+      output += url.cannotBeABaseURL ? path[0] : path.length ? '/' + join$1(path, '/') : '';
+      if (query !== null) output += '?' + query;
+      if (fragment !== null) output += '#' + fragment;
+      return output;
+    },
+    // https://url.spec.whatwg.org/#dom-url-href
+    setHref: function (href) {
+      var failure = this.parse(href);
+      if (failure) throw TypeError$2(failure);
+      this.searchParams.update();
+    },
+    // https://url.spec.whatwg.org/#dom-url-origin
+    getOrigin: function () {
+      var scheme = this.scheme;
+      var port = this.port;
+      if (scheme == 'blob') try {
+        return new URLConstructor$1(scheme.path[0]).origin;
+      } catch (error) {
+        return 'null';
+      }
+      if (scheme == 'file' || !this.isSpecial()) return 'null';
+      return scheme + '://' + serializeHost$1(this.host) + (port !== null ? ':' + port : '');
+    },
+    // https://url.spec.whatwg.org/#dom-url-protocol
+    getProtocol: function () {
+      return this.scheme + ':';
+    },
+    setProtocol: function (protocol) {
+      this.parse(toString$1(protocol) + ':', SCHEME_START$1);
+    },
+    // https://url.spec.whatwg.org/#dom-url-username
+    getUsername: function () {
+      return this.username;
+    },
+    setUsername: function (username) {
+      var codePoints = arrayFrom$1(toString$1(username));
+      if (this.cannotHaveUsernamePasswordPort()) return;
+      this.username = '';
+      for (var i = 0; i < codePoints.length; i++) {
+        this.username += percentEncode$1(codePoints[i], userinfoPercentEncodeSet$1);
+      }
+    },
+    // https://url.spec.whatwg.org/#dom-url-password
+    getPassword: function () {
+      return this.password;
+    },
+    setPassword: function (password) {
+      var codePoints = arrayFrom$1(toString$1(password));
+      if (this.cannotHaveUsernamePasswordPort()) return;
+      this.password = '';
+      for (var i = 0; i < codePoints.length; i++) {
+        this.password += percentEncode$1(codePoints[i], userinfoPercentEncodeSet$1);
+      }
+    },
+    // https://url.spec.whatwg.org/#dom-url-host
+    getHost: function () {
+      var host = this.host;
+      var port = this.port;
+      return host === null ? ''
+        : port === null ? serializeHost$1(host)
+        : serializeHost$1(host) + ':' + port;
+    },
+    setHost: function (host) {
+      if (this.cannotBeABaseURL) return;
+      this.parse(host, HOST$1);
+    },
+    // https://url.spec.whatwg.org/#dom-url-hostname
+    getHostname: function () {
+      var host = this.host;
+      return host === null ? '' : serializeHost$1(host);
+    },
+    setHostname: function (hostname) {
+      if (this.cannotBeABaseURL) return;
+      this.parse(hostname, HOSTNAME$1);
+    },
+    // https://url.spec.whatwg.org/#dom-url-port
+    getPort: function () {
+      var port = this.port;
+      return port === null ? '' : toString$1(port);
+    },
+    setPort: function (port) {
+      if (this.cannotHaveUsernamePasswordPort()) return;
+      port = toString$1(port);
+      if (port == '') this.port = null;
+      else this.parse(port, PORT$1);
+    },
+    // https://url.spec.whatwg.org/#dom-url-pathname
+    getPathname: function () {
+      var path = this.path;
+      return this.cannotBeABaseURL ? path[0] : path.length ? '/' + join$1(path, '/') : '';
+    },
+    setPathname: function (pathname) {
+      if (this.cannotBeABaseURL) return;
+      this.path = [];
+      this.parse(pathname, PATH_START$1);
+    },
+    // https://url.spec.whatwg.org/#dom-url-search
+    getSearch: function () {
+      var query = this.query;
+      return query ? '?' + query : '';
+    },
+    setSearch: function (search) {
+      search = toString$1(search);
+      if (search == '') {
+        this.query = null;
+      } else {
+        if ('?' == charAt$2(search, 0)) search = stringSlice$2(search, 1);
+        this.query = '';
+        this.parse(search, QUERY$1);
+      }
+      this.searchParams.update();
+    },
+    // https://url.spec.whatwg.org/#dom-url-searchparams
+    getSearchParams: function () {
+      return this.searchParams.facade;
+    },
+    // https://url.spec.whatwg.org/#dom-url-hash
+    getHash: function () {
+      var fragment = this.fragment;
+      return fragment ? '#' + fragment : '';
+    },
+    setHash: function (hash) {
+      hash = toString$1(hash);
+      if (hash == '') {
+        this.fragment = null;
+        return;
+      }
+      if ('#' == charAt$2(hash, 0)) hash = stringSlice$2(hash, 1);
+      this.fragment = '';
+      this.parse(hash, FRAGMENT$1);
+    },
+    update: function () {
+      this.query = this.searchParams.serialize() || null;
     }
   };
 
   // `URL` constructor
   // https://url.spec.whatwg.org/#url-class
   var URLConstructor$1 = function URL(url /* , base */) {
-    var that = anInstance$1(this, URLConstructor$1, 'URL');
+    var that = anInstance$1(this, URLPrototype$1);
     var base = arguments.length > 1 ? arguments[1] : undefined;
-    var urlString = toString$2(url);
-    var state = setInternalState$7(that, { type: 'URL' });
-    var baseState, failure;
-    if (base !== undefined) {
-      if (base instanceof URLConstructor$1) baseState = getInternalURLState$1(base);
-      else {
-        failure = parseURL$1(baseState = {}, toString$2(base));
-        if (failure) throw TypeError(failure);
-      }
-    }
-    failure = parseURL$1(state, urlString, null, baseState);
-    if (failure) throw TypeError(failure);
-    var searchParams = state.searchParams = new URLSearchParams$2();
-    var searchParamsState = getInternalSearchParamsState$1(searchParams);
-    searchParamsState.updateSearchParams(state.query);
-    searchParamsState.updateURL = function () {
-      state.query = String(searchParams) || null;
-    };
+    var state = setInternalState$7(that, new URLState(url, false, base));
     if (!descriptors$1) {
-      that.href = serializeURL$1.call(that);
-      that.origin = getOrigin$1.call(that);
-      that.protocol = getProtocol$1.call(that);
-      that.username = getUsername$1.call(that);
-      that.password = getPassword$1.call(that);
-      that.host = getHost$1.call(that);
-      that.hostname = getHostname$1.call(that);
-      that.port = getPort$1.call(that);
-      that.pathname = getPathname$1.call(that);
-      that.search = getSearch$1.call(that);
-      that.searchParams = getSearchParams$1.call(that);
-      that.hash = getHash$1.call(that);
+      that.href = state.serialize();
+      that.origin = state.getOrigin();
+      that.protocol = state.getProtocol();
+      that.username = state.getUsername();
+      that.password = state.getPassword();
+      that.host = state.getHost();
+      that.hostname = state.getHostname();
+      that.port = state.getPort();
+      that.pathname = state.getPathname();
+      that.search = state.getSearch();
+      that.searchParams = state.getSearchParams();
+      that.hash = state.getHash();
     }
   };
 
   var URLPrototype$1 = URLConstructor$1.prototype;
 
-  var serializeURL$1 = function () {
-    var url = getInternalURLState$1(this);
-    var scheme = url.scheme;
-    var username = url.username;
-    var password = url.password;
-    var host = url.host;
-    var port = url.port;
-    var path = url.path;
-    var query = url.query;
-    var fragment = url.fragment;
-    var output = scheme + ':';
-    if (host !== null) {
-      output += '//';
-      if (includesCredentials$1(url)) {
-        output += username + (password ? ':' + password : '') + '@';
-      }
-      output += serializeHost$1(host);
-      if (port !== null) output += ':' + port;
-    } else if (scheme == 'file') output += '//';
-    output += url.cannotBeABaseURL ? path[0] : path.length ? '/' + path.join('/') : '';
-    if (query !== null) output += '?' + query;
-    if (fragment !== null) output += '#' + fragment;
-    return output;
-  };
-
-  var getOrigin$1 = function () {
-    var url = getInternalURLState$1(this);
-    var scheme = url.scheme;
-    var port = url.port;
-    if (scheme == 'blob') try {
-      return new URLConstructor$1(scheme.path[0]).origin;
-    } catch (error) {
-      return 'null';
-    }
-    if (scheme == 'file' || !isSpecial$1(url)) return 'null';
-    return scheme + '://' + serializeHost$1(url.host) + (port !== null ? ':' + port : '');
-  };
-
-  var getProtocol$1 = function () {
-    return getInternalURLState$1(this).scheme + ':';
-  };
-
-  var getUsername$1 = function () {
-    return getInternalURLState$1(this).username;
-  };
-
-  var getPassword$1 = function () {
-    return getInternalURLState$1(this).password;
-  };
-
-  var getHost$1 = function () {
-    var url = getInternalURLState$1(this);
-    var host = url.host;
-    var port = url.port;
-    return host === null ? ''
-      : port === null ? serializeHost$1(host)
-      : serializeHost$1(host) + ':' + port;
-  };
-
-  var getHostname$1 = function () {
-    var host = getInternalURLState$1(this).host;
-    return host === null ? '' : serializeHost$1(host);
-  };
-
-  var getPort$1 = function () {
-    var port = getInternalURLState$1(this).port;
-    return port === null ? '' : String(port);
-  };
-
-  var getPathname$1 = function () {
-    var url = getInternalURLState$1(this);
-    var path = url.path;
-    return url.cannotBeABaseURL ? path[0] : path.length ? '/' + path.join('/') : '';
-  };
-
-  var getSearch$1 = function () {
-    var query = getInternalURLState$1(this).query;
-    return query ? '?' + query : '';
-  };
-
-  var getSearchParams$1 = function () {
-    return getInternalURLState$1(this).searchParams;
-  };
-
-  var getHash$1 = function () {
-    var fragment = getInternalURLState$1(this).fragment;
-    return fragment ? '#' + fragment : '';
-  };
-
   var accessorDescriptor$1 = function (getter, setter) {
-    return { get: getter, set: setter, configurable: true, enumerable: true };
+    return {
+      get: function () {
+        return getInternalURLState$1(this)[getter]();
+      },
+      set: setter && function (value) {
+        return getInternalURLState$1(this)[setter](value);
+      },
+      configurable: true,
+      enumerable: true
+    };
   };
 
   if (descriptors$1) {
-    objectDefineProperties$1(URLPrototype$1, {
+    defineProperties(URLPrototype$1, {
       // `URL.prototype.href` accessors pair
       // https://url.spec.whatwg.org/#dom-url-href
-      href: accessorDescriptor$1(serializeURL$1, function (href) {
-        var url = getInternalURLState$1(this);
-        var urlString = toString$2(href);
-        var failure = parseURL$1(url, urlString);
-        if (failure) throw TypeError(failure);
-        getInternalSearchParamsState$1(url.searchParams).updateSearchParams(url.query);
-      }),
+      href: accessorDescriptor$1('serialize', 'setHref'),
       // `URL.prototype.origin` getter
       // https://url.spec.whatwg.org/#dom-url-origin
-      origin: accessorDescriptor$1(getOrigin$1),
+      origin: accessorDescriptor$1('getOrigin'),
       // `URL.prototype.protocol` accessors pair
       // https://url.spec.whatwg.org/#dom-url-protocol
-      protocol: accessorDescriptor$1(getProtocol$1, function (protocol) {
-        var url = getInternalURLState$1(this);
-        parseURL$1(url, toString$2(protocol) + ':', SCHEME_START$1);
-      }),
+      protocol: accessorDescriptor$1('getProtocol', 'setProtocol'),
       // `URL.prototype.username` accessors pair
       // https://url.spec.whatwg.org/#dom-url-username
-      username: accessorDescriptor$1(getUsername$1, function (username) {
-        var url = getInternalURLState$1(this);
-        var codePoints = arrayFrom$1(toString$2(username));
-        if (cannotHaveUsernamePasswordPort$1(url)) return;
-        url.username = '';
-        for (var i = 0; i < codePoints.length; i++) {
-          url.username += percentEncode$1(codePoints[i], userinfoPercentEncodeSet$1);
-        }
-      }),
+      username: accessorDescriptor$1('getUsername', 'setUsername'),
       // `URL.prototype.password` accessors pair
       // https://url.spec.whatwg.org/#dom-url-password
-      password: accessorDescriptor$1(getPassword$1, function (password) {
-        var url = getInternalURLState$1(this);
-        var codePoints = arrayFrom$1(toString$2(password));
-        if (cannotHaveUsernamePasswordPort$1(url)) return;
-        url.password = '';
-        for (var i = 0; i < codePoints.length; i++) {
-          url.password += percentEncode$1(codePoints[i], userinfoPercentEncodeSet$1);
-        }
-      }),
+      password: accessorDescriptor$1('getPassword', 'setPassword'),
       // `URL.prototype.host` accessors pair
       // https://url.spec.whatwg.org/#dom-url-host
-      host: accessorDescriptor$1(getHost$1, function (host) {
-        var url = getInternalURLState$1(this);
-        if (url.cannotBeABaseURL) return;
-        parseURL$1(url, toString$2(host), HOST$1);
-      }),
+      host: accessorDescriptor$1('getHost', 'setHost'),
       // `URL.prototype.hostname` accessors pair
       // https://url.spec.whatwg.org/#dom-url-hostname
-      hostname: accessorDescriptor$1(getHostname$1, function (hostname) {
-        var url = getInternalURLState$1(this);
-        if (url.cannotBeABaseURL) return;
-        parseURL$1(url, toString$2(hostname), HOSTNAME$1);
-      }),
+      hostname: accessorDescriptor$1('getHostname', 'setHostname'),
       // `URL.prototype.port` accessors pair
       // https://url.spec.whatwg.org/#dom-url-port
-      port: accessorDescriptor$1(getPort$1, function (port) {
-        var url = getInternalURLState$1(this);
-        if (cannotHaveUsernamePasswordPort$1(url)) return;
-        port = toString$2(port);
-        if (port == '') url.port = null;
-        else parseURL$1(url, port, PORT$1);
-      }),
+      port: accessorDescriptor$1('getPort', 'setPort'),
       // `URL.prototype.pathname` accessors pair
       // https://url.spec.whatwg.org/#dom-url-pathname
-      pathname: accessorDescriptor$1(getPathname$1, function (pathname) {
-        var url = getInternalURLState$1(this);
-        if (url.cannotBeABaseURL) return;
-        url.path = [];
-        parseURL$1(url, toString$2(pathname), PATH_START$1);
-      }),
+      pathname: accessorDescriptor$1('getPathname', 'setPathname'),
       // `URL.prototype.search` accessors pair
       // https://url.spec.whatwg.org/#dom-url-search
-      search: accessorDescriptor$1(getSearch$1, function (search) {
-        var url = getInternalURLState$1(this);
-        search = toString$2(search);
-        if (search == '') {
-          url.query = null;
-        } else {
-          if ('?' == search.charAt(0)) search = search.slice(1);
-          url.query = '';
-          parseURL$1(url, search, QUERY$1);
-        }
-        getInternalSearchParamsState$1(url.searchParams).updateSearchParams(url.query);
-      }),
+      search: accessorDescriptor$1('getSearch', 'setSearch'),
       // `URL.prototype.searchParams` getter
       // https://url.spec.whatwg.org/#dom-url-searchparams
-      searchParams: accessorDescriptor$1(getSearchParams$1),
+      searchParams: accessorDescriptor$1('getSearchParams'),
       // `URL.prototype.hash` accessors pair
       // https://url.spec.whatwg.org/#dom-url-hash
-      hash: accessorDescriptor$1(getHash$1, function (hash) {
-        var url = getInternalURLState$1(this);
-        hash = toString$2(hash);
-        if (hash == '') {
-          url.fragment = null;
-          return;
-        }
-        if ('#' == hash.charAt(0)) hash = hash.slice(1);
-        url.fragment = '';
-        parseURL$1(url, hash, FRAGMENT$1);
-      })
+      hash: accessorDescriptor$1('getHash', 'setHash')
     });
   }
 
   // `URL.prototype.toJSON` method
   // https://url.spec.whatwg.org/#dom-url-tojson
   redefine$1(URLPrototype$1, 'toJSON', function toJSON() {
-    return serializeURL$1.call(this);
+    return getInternalURLState$1(this).serialize();
   }, { enumerable: true });
 
   // `URL.prototype.toString` method
   // https://url.spec.whatwg.org/#URL-stringification-behavior
   redefine$1(URLPrototype$1, 'toString', function toString() {
-    return serializeURL$1.call(this);
+    return getInternalURLState$1(this).serialize();
   }, { enumerable: true });
 
   if (NativeURL$1) {
@@ -21526,16 +22188,10 @@ var Forestry = (function () {
     var nativeRevokeObjectURL$1 = NativeURL$1.revokeObjectURL;
     // `URL.createObjectURL` method
     // https://developer.mozilla.org/en-US/docs/Web/API/URL/createObjectURL
-    // eslint-disable-next-line no-unused-vars -- required for `.length`
-    if (nativeCreateObjectURL$1) redefine$1(URLConstructor$1, 'createObjectURL', function createObjectURL(blob) {
-      return nativeCreateObjectURL$1.apply(NativeURL$1, arguments);
-    });
+    if (nativeCreateObjectURL$1) redefine$1(URLConstructor$1, 'createObjectURL', functionBindContext$1(nativeCreateObjectURL$1, NativeURL$1));
     // `URL.revokeObjectURL` method
     // https://developer.mozilla.org/en-US/docs/Web/API/URL/revokeObjectURL
-    // eslint-disable-next-line no-unused-vars -- required for `.length`
-    if (nativeRevokeObjectURL$1) redefine$1(URLConstructor$1, 'revokeObjectURL', function revokeObjectURL(url) {
-      return nativeRevokeObjectURL$1.apply(NativeURL$1, arguments);
-    });
+    if (nativeRevokeObjectURL$1) redefine$1(URLConstructor$1, 'revokeObjectURL', functionBindContext$1(nativeRevokeObjectURL$1, NativeURL$1));
   }
 
   setToStringTag$1(URLConstructor$1, 'URL');
@@ -21548,7 +22204,7 @@ var Forestry = (function () {
   // https://url.spec.whatwg.org/#dom-url-tojson
   _export$1({ target: 'URL', proto: true, enumerable: true }, {
     toJSON: function toJSON() {
-      return URL.prototype.toString.call(this);
+      return functionCall(URL.prototype.toString, this);
     }
   });
 
@@ -21567,13 +22223,15 @@ var Forestry = (function () {
     };
   });
 
+  var RangeError$3 = global$1.RangeError;
+
   // `String.prototype.repeat` method implementation
   // https://tc39.es/ecma262/#sec-string.prototype.repeat
   var stringRepeat$1 = function repeat(count) {
-    var str = toString$2(requireObjectCoercible$1(this));
+    var str = toString$1(requireObjectCoercible$1(this));
     var result = '';
-    var n = toInteger$1(count);
-    if (n < 0 || n == Infinity) throw RangeError('Wrong number of repetitions');
+    var n = toIntegerOrInfinity(count);
+    if (n < 0 || n == Infinity) throw RangeError$3('Wrong number of repetitions');
     for (;n > 0; (n >>>= 1) && (str += str)) if (n & 1) result += str;
     return result;
   };
@@ -21584,17 +22242,12 @@ var Forestry = (function () {
     repeat: stringRepeat$1
   });
 
-  // `thisNumberValue` abstract operation
-  // https://tc39.es/ecma262/#sec-thisnumbervalue
-  var thisNumberValue$1 = function (value) {
-    if (typeof value != 'number' && classofRaw$1(value) != 'Number') {
-      throw TypeError('Incorrect invocation');
-    }
-    return +value;
-  };
-
-  var nativeToFixed$1 = 1.0.toFixed;
+  var RangeError$2 = global$1.RangeError;
+  var String$1 = global$1.String;
   var floor$7 = Math.floor;
+  var repeat$1 = functionUncurryThis(stringRepeat$1);
+  var stringSlice$1 = functionUncurryThis(''.slice);
+  var un$ToFixed = functionUncurryThis(1.0.toFixed);
 
   var pow$3 = function (x, n, acc) {
     return n === 0 ? acc : n % 2 === 1 ? pow$3(x, n - 1, acc * x) : pow$3(x * x, n / 2, acc);
@@ -21638,20 +22291,20 @@ var Forestry = (function () {
     var s = '';
     while (--index >= 0) {
       if (s !== '' || index === 0 || data[index] !== 0) {
-        var t = String(data[index]);
-        s = s === '' ? t : s + stringRepeat$1.call('0', 7 - t.length) + t;
+        var t = String$1(data[index]);
+        s = s === '' ? t : s + repeat$1('0', 7 - t.length) + t;
       }
     } return s;
   };
 
-  var FORCED$9 = nativeToFixed$1 && (
-    0.00008.toFixed(3) !== '0.000' ||
-    0.9.toFixed(0) !== '1' ||
-    1.255.toFixed(2) !== '1.25' ||
-    1000000000000000128.0.toFixed(0) !== '1000000000000000128'
-  ) || !fails$1(function () {
+  var FORCED$9 = fails$1(function () {
+    return un$ToFixed(0.00008, 3) !== '0.000' ||
+      un$ToFixed(0.9, 0) !== '1' ||
+      un$ToFixed(1.255, 2) !== '1.25' ||
+      un$ToFixed(1000000000000000128.0, 0) !== '1000000000000000128';
+  }) || !fails$1(function () {
     // V8 ~ Android 4.3-
-    nativeToFixed$1.call({});
+    un$ToFixed({});
   });
 
   // `Number.prototype.toFixed` method
@@ -21659,16 +22312,17 @@ var Forestry = (function () {
   _export$1({ target: 'Number', proto: true, forced: FORCED$9 }, {
     toFixed: function toFixed(fractionDigits) {
       var number = thisNumberValue$1(this);
-      var fractDigits = toInteger$1(fractionDigits);
+      var fractDigits = toIntegerOrInfinity(fractionDigits);
       var data = [0, 0, 0, 0, 0, 0];
       var sign = '';
       var result = '0';
       var e, z, j, k;
 
-      if (fractDigits < 0 || fractDigits > 20) throw RangeError('Incorrect fraction digits');
+      // TODO: ES2018 increased the maximum number of fraction digits to 100, need to improve the implementation
+      if (fractDigits < 0 || fractDigits > 20) throw RangeError$2('Incorrect fraction digits');
       // eslint-disable-next-line no-self-compare -- NaN check
       if (number != number) return 'NaN';
-      if (number <= -1e21 || number >= 1e21) return String(number);
+      if (number <= -1e21 || number >= 1e21) return String$1(number);
       if (number < 0) {
         sign = '-';
         number = -number;
@@ -21698,14 +22352,14 @@ var Forestry = (function () {
         } else {
           multiply(data, 0, z);
           multiply(data, 1 << -e, 0);
-          result = dataToString(data) + stringRepeat$1.call('0', fractDigits);
+          result = dataToString(data) + repeat$1('0', fractDigits);
         }
       }
       if (fractDigits > 0) {
         k = result.length;
         result = sign + (k <= fractDigits
-          ? '0.' + stringRepeat$1.call('0', fractDigits - k) + result
-          : result.slice(0, k - fractDigits) + '.' + result.slice(k - fractDigits));
+          ? '0.' + repeat$1('0', fractDigits - k) + result
+          : stringSlice$1(result, 0, k - fractDigits) + '.' + stringSlice$1(result, k - fractDigits));
       } else {
         result = sign + result;
       } return result;
@@ -21744,7 +22398,7 @@ var Forestry = (function () {
   var f$1=descriptors?nativeGetOwnPropertyDescriptor:function getOwnPropertyDescriptor(O,P){O=toIndexedObject(O);P=toPrimitive(P,true);if(ie8DomDefine)try{return nativeGetOwnPropertyDescriptor(O,P);}catch(error){/* empty */}if(has(O,P))return createPropertyDescriptor(!objectPropertyIsEnumerable.f.call(O,P),O[P]);};var objectGetOwnPropertyDescriptor={f:f$1};var anObject=function anObject(it){if(!isObject(it)){throw TypeError(String(it)+' is not an object');}return it;};var nativeDefineProperty=Object.defineProperty;// `Object.defineProperty` method
   // https://tc39.github.io/ecma262/#sec-object.defineproperty
   var f$2=descriptors?nativeDefineProperty:function defineProperty(O,P,Attributes){anObject(O);P=toPrimitive(P,true);anObject(Attributes);if(ie8DomDefine)try{return nativeDefineProperty(O,P,Attributes);}catch(error){/* empty */}if('get'in Attributes||'set'in Attributes)throw TypeError('Accessors not supported');if('value'in Attributes)O[P]=Attributes.value;return O;};var objectDefineProperty={f:f$2};var createNonEnumerableProperty=descriptors?function(object,key,value){return objectDefineProperty.f(object,key,createPropertyDescriptor(1,value));}:function(object,key,value){object[key]=value;return object;};var setGlobal=function setGlobal(key,value){try{createNonEnumerableProperty(global_1,key,value);}catch(error){global_1[key]=value;}return value;};var SHARED='__core-js_shared__';var store=global_1[SHARED]||setGlobal(SHARED,{});var sharedStore=store;var functionToString=Function.toString;// this helper broken in `3.4.1-3.4.4`, so we can't use `shared` helper
-  if(typeof sharedStore.inspectSource!='function'){sharedStore.inspectSource=function(it){return functionToString.call(it);};}var inspectSource=sharedStore.inspectSource;var WeakMap=global_1.WeakMap;var nativeWeakMap=typeof WeakMap==='function'&&/native code/.test(inspectSource(WeakMap));var isPure=false;var shared=createCommonjsModule(function(module){(module.exports=function(key,value){return sharedStore[key]||(sharedStore[key]=value!==undefined?value:{});})('versions',[]).push({version:'3.6.5',mode:'global',copyright:'© 2020 Denis Pushkarev (zloirock.ru)'});});var id=0;var postfix=Math.random();var uid=function uid(key){return 'Symbol('+String(key===undefined?'':key)+')_'+(++id+postfix).toString(36);};var keys=shared('keys');var sharedKey=function sharedKey(key){return keys[key]||(keys[key]=uid(key));};var hiddenKeys={};var WeakMap$1=global_1.WeakMap;var set,get,has$1;var enforce=function enforce(it){return has$1(it)?get(it):set(it,{});};var getterFor=function getterFor(TYPE){return function(it){var state;if(!isObject(it)||(state=get(it)).type!==TYPE){throw TypeError('Incompatible receiver, '+TYPE+' required');}return state;};};if(nativeWeakMap){var store$1=new WeakMap$1();var wmget=store$1.get;var wmhas=store$1.has;var wmset=store$1.set;set=function set(it,metadata){wmset.call(store$1,it,metadata);return metadata;};get=function get(it){return wmget.call(store$1,it)||{};};has$1=function has$1(it){return wmhas.call(store$1,it);};}else {var STATE=sharedKey('state');hiddenKeys[STATE]=true;set=function set(it,metadata){createNonEnumerableProperty(it,STATE,metadata);return metadata;};get=function get(it){return has(it,STATE)?it[STATE]:{};};has$1=function has$1(it){return has(it,STATE);};}var internalState={set:set,get:get,has:has$1,enforce:enforce,getterFor:getterFor};var redefine=createCommonjsModule(function(module){var getInternalState=internalState.get;var enforceInternalState=internalState.enforce;var TEMPLATE=String(String).split('String');(module.exports=function(O,key,value,options){var unsafe=options?!!options.unsafe:false;var simple=options?!!options.enumerable:false;var noTargetGet=options?!!options.noTargetGet:false;if(typeof value=='function'){if(typeof key=='string'&&!has(value,'name'))createNonEnumerableProperty(value,'name',key);enforceInternalState(value).source=TEMPLATE.join(typeof key=='string'?key:'');}if(O===global_1){if(simple)O[key]=value;else setGlobal(key,value);return;}else if(!unsafe){delete O[key];}else if(!noTargetGet&&O[key]){simple=true;}if(simple)O[key]=value;else createNonEnumerableProperty(O,key,value);// add fake Function#toString for correct work wrapped methods / constructors with methods like LoDash isNative
+  if(typeof sharedStore.inspectSource!='function'){sharedStore.inspectSource=function(it){return functionToString.call(it);};}var inspectSource=sharedStore.inspectSource;var WeakMap$1=global_1.WeakMap;var nativeWeakMap=typeof WeakMap$1==='function'&&/native code/.test(inspectSource(WeakMap$1));var isPure=false;var shared=createCommonjsModule(function(module){(module.exports=function(key,value){return sharedStore[key]||(sharedStore[key]=value!==undefined?value:{});})('versions',[]).push({version:'3.6.5',mode:'global',copyright:'© 2020 Denis Pushkarev (zloirock.ru)'});});var id$1=0;var postfix=Math.random();var uid=function uid(key){return 'Symbol('+String(key===undefined?'':key)+')_'+(++id$1+postfix).toString(36);};var keys=shared('keys');var sharedKey=function sharedKey(key){return keys[key]||(keys[key]=uid(key));};var hiddenKeys={};var WeakMap$1$1=global_1.WeakMap;var set,get,has$1;var enforce=function enforce(it){return has$1(it)?get(it):set(it,{});};var getterFor=function getterFor(TYPE){return function(it){var state;if(!isObject(it)||(state=get(it)).type!==TYPE){throw TypeError('Incompatible receiver, '+TYPE+' required');}return state;};};if(nativeWeakMap){var store$1=new WeakMap$1$1();var wmget=store$1.get;var wmhas=store$1.has;var wmset=store$1.set;set=function set(it,metadata){wmset.call(store$1,it,metadata);return metadata;};get=function get(it){return wmget.call(store$1,it)||{};};has$1=function has$1(it){return wmhas.call(store$1,it);};}else {var STATE=sharedKey('state');hiddenKeys[STATE]=true;set=function set(it,metadata){createNonEnumerableProperty(it,STATE,metadata);return metadata;};get=function get(it){return has(it,STATE)?it[STATE]:{};};has$1=function has$1(it){return has(it,STATE);};}var internalState={set:set,get:get,has:has$1,enforce:enforce,getterFor:getterFor};var redefine=createCommonjsModule(function(module){var getInternalState=internalState.get;var enforceInternalState=internalState.enforce;var TEMPLATE=String(String).split('String');(module.exports=function(O,key,value,options){var unsafe=options?!!options.unsafe:false;var simple=options?!!options.enumerable:false;var noTargetGet=options?!!options.noTargetGet:false;if(typeof value=='function'){if(typeof key=='string'&&!has(value,'name'))createNonEnumerableProperty(value,'name',key);enforceInternalState(value).source=TEMPLATE.join(typeof key=='string'?key:'');}if(O===global_1){if(simple)O[key]=value;else setGlobal(key,value);return;}else if(!unsafe){delete O[key];}else if(!noTargetGet&&O[key]){simple=true;}if(simple)O[key]=value;else createNonEnumerableProperty(O,key,value);// add fake Function#toString for correct work wrapped methods / constructors with methods like LoDash isNative
   })(Function.prototype,'toString',function toString(){return typeof this=='function'&&getInternalState(this).source||inspectSource(this);});});var path=global_1;var aFunction=function aFunction(variable){return typeof variable=='function'?variable:undefined;};var getBuiltIn=function getBuiltIn(namespace,method){return arguments.length<2?aFunction(path[namespace])||aFunction(global_1[namespace]):path[namespace]&&path[namespace][method]||global_1[namespace]&&global_1[namespace][method];};var ceil$1=Math.ceil;var floor=Math.floor;// `ToInteger` abstract operation
   // https://tc39.github.io/ecma262/#sec-tointeger
   var toInteger=function toInteger(argument){return isNaN(argument=+argument)?0:(argument>0?floor:ceil$1)(argument);};var min=Math.min;// `ToLength` abstract operation
@@ -21830,12 +22484,12 @@ var Forestry = (function () {
   // https://tc39.github.io/ecma262/#sec-array.prototype.fill
   _export({target:'Array',proto:true},{fill:arrayFill});// https://tc39.github.io/ecma262/#sec-array.prototype-@@unscopables
   addToUnscopables('fill');var aFunction$1=function aFunction$1(it){if(typeof it!='function'){throw TypeError(String(it)+' is not a function');}return it;};// optional / simple context binding
-  var functionBindContext=function functionBindContext(fn,that,length){aFunction$1(fn);if(that===undefined)return fn;switch(length){case 0:return function(){return fn.call(that);};case 1:return function(a){return fn.call(that,a);};case 2:return function(a,b){return fn.call(that,a,b);};case 3:return function(a,b,c){return fn.call(that,a,b,c);};}return function(){return fn.apply(that,arguments);};};var push=[].push;// `Array.prototype.{ forEach, map, filter, some, every, find, findIndex }` methods implementation
+  var functionBindContext=function functionBindContext(fn,that,length){aFunction$1(fn);if(that===undefined)return fn;switch(length){case 0:return function(){return fn.call(that);};case 1:return function(a){return fn.call(that,a);};case 2:return function(a,b){return fn.call(that,a,b);};case 3:return function(a,b,c){return fn.call(that,a,b,c);};}return function/* ...args */(){return fn.apply(that,arguments);};};var push$1=[].push;// `Array.prototype.{ forEach, map, filter, some, every, find, findIndex }` methods implementation
   var createMethod$1$1=function createMethod$1(TYPE){var IS_MAP=TYPE==1;var IS_FILTER=TYPE==2;var IS_SOME=TYPE==3;var IS_EVERY=TYPE==4;var IS_FIND_INDEX=TYPE==6;var NO_HOLES=TYPE==5||IS_FIND_INDEX;return function($this,callbackfn,that,specificCreate){var O=toObject($this);var self=indexedObject(O);var boundFunction=functionBindContext(callbackfn,that,3);var length=toLength(self.length);var index=0;var create=specificCreate||arraySpeciesCreate;var target=IS_MAP?create($this,length):IS_FILTER?create($this,0):undefined;var value,result;for(;length>index;index++){if(NO_HOLES||index in self){value=self[index];result=boundFunction(value,index,O);if(TYPE){if(IS_MAP)target[index]=result;// map
   else if(result)switch(TYPE){case 3:return true;// some
   case 5:return value;// find
   case 6:return index;// findIndex
-  case 2:push.call(target,value);// filter
+  case 2:push$1.call(target,value);// filter
   }else if(IS_EVERY)return false;// every
   }}}return IS_FIND_INDEX?-1:IS_SOME||IS_EVERY?IS_EVERY:target;};};var arrayIteration={// `Array.prototype.forEach` method
   // https://tc39.github.io/ecma262/#sec-array.prototype.foreach
@@ -21859,9 +22513,9 @@ var Forestry = (function () {
   _export({target:'Array',proto:true,forced:[].forEach!=arrayForEach},{forEach:arrayForEach});var $indexOf=arrayIncludes.indexOf;var nativeIndexOf=[].indexOf;var NEGATIVE_ZERO=!!nativeIndexOf&&1/[1].indexOf(1,-0)<0;var STRICT_METHOD$1=arrayMethodIsStrict('indexOf');var USES_TO_LENGTH$1=arrayMethodUsesToLength('indexOf',{ACCESSORS:true,1:0});// `Array.prototype.indexOf` method
   // https://tc39.github.io/ecma262/#sec-array.prototype.indexof
   _export({target:'Array',proto:true,forced:NEGATIVE_ZERO||!STRICT_METHOD$1||!USES_TO_LENGTH$1},{indexOf:function indexOf(searchElement/* , fromIndex = 0 */){return NEGATIVE_ZERO// convert -0 to +0
-  ?nativeIndexOf.apply(this,arguments)||0:$indexOf(this,searchElement,arguments.length>1?arguments[1]:undefined);}});var iterators={};var correctPrototypeGetter=!fails(function(){function F(){/* empty */}F.prototype.constructor=null;return Object.getPrototypeOf(new F())!==F.prototype;});var IE_PROTO$1=sharedKey('IE_PROTO');var ObjectPrototype=Object.prototype;// `Object.getPrototypeOf` method
+  ?nativeIndexOf.apply(this,arguments)||0:$indexOf(this,searchElement,arguments.length>1?arguments[1]:undefined);}});var iterators={};var correctPrototypeGetter=!fails(function(){function F(){/* empty */}F.prototype.constructor=null;return Object.getPrototypeOf(new F())!==F.prototype;});var IE_PROTO$1=sharedKey('IE_PROTO');var ObjectPrototype$1=Object.prototype;// `Object.getPrototypeOf` method
   // https://tc39.github.io/ecma262/#sec-object.getprototypeof
-  var objectGetPrototypeOf=correctPrototypeGetter?Object.getPrototypeOf:function(O){O=toObject(O);if(has(O,IE_PROTO$1))return O[IE_PROTO$1];if(typeof O.constructor=='function'&&O instanceof O.constructor){return O.constructor.prototype;}return O instanceof Object?ObjectPrototype:null;};var ITERATOR=wellKnownSymbol('iterator');var BUGGY_SAFARI_ITERATORS=false;var returnThis=function returnThis(){return this;};// `%IteratorPrototype%` object
+  var objectGetPrototypeOf=correctPrototypeGetter?Object.getPrototypeOf:function(O){O=toObject(O);if(has(O,IE_PROTO$1))return O[IE_PROTO$1];if(typeof O.constructor=='function'&&O instanceof O.constructor){return O.constructor.prototype;}return O instanceof Object?ObjectPrototype$1:null;};var ITERATOR=wellKnownSymbol('iterator');var BUGGY_SAFARI_ITERATORS=false;var returnThis=function returnThis(){return this;};// `%IteratorPrototype%` object
   // https://tc39.github.io/ecma262/#sec-%iteratorprototype%-object
   var IteratorPrototype,PrototypeOfArrayIteratorPrototype,arrayIterator;if([].keys){arrayIterator=[].keys();// Safari 8 has buggy iterators w/o `next`
   if(!('next'in arrayIterator))BUGGY_SAFARI_ITERATORS=true;else {PrototypeOfArrayIteratorPrototype=objectGetPrototypeOf(objectGetPrototypeOf(arrayIterator));if(PrototypeOfArrayIteratorPrototype!==Object.prototype)IteratorPrototype=PrototypeOfArrayIteratorPrototype;}}if(IteratorPrototype==undefined)IteratorPrototype={};// 25.1.2.1.1 %IteratorPrototype%[@@iterator]()
@@ -21873,7 +22527,7 @@ var Forestry = (function () {
   setToStringTag(CurrentIteratorPrototype,TO_STRING_TAG,true);}}// fix Array#{values, @@iterator}.name in V8 / FF
   if(DEFAULT==VALUES&&nativeIterator&&nativeIterator.name!==VALUES){INCORRECT_VALUES_NAME=true;defaultIterator=function values(){return nativeIterator.call(this);};}// define iterator
   if(IterablePrototype[ITERATOR$1]!==defaultIterator){createNonEnumerableProperty(IterablePrototype,ITERATOR$1,defaultIterator);}iterators[NAME]=defaultIterator;// export additional methods
-  if(DEFAULT){methods={values:getIterationMethod(VALUES),keys:IS_SET?defaultIterator:getIterationMethod(KEYS),entries:getIterationMethod(ENTRIES)};if(FORCED)for(KEY in methods){if(BUGGY_SAFARI_ITERATORS$1||INCORRECT_VALUES_NAME||!(KEY in IterablePrototype)){redefine(IterablePrototype,KEY,methods[KEY]);}}else _export({target:NAME,proto:true,forced:BUGGY_SAFARI_ITERATORS$1||INCORRECT_VALUES_NAME},methods);}return methods;};var ARRAY_ITERATOR='Array Iterator';var setInternalState=internalState.set;var getInternalState=internalState.getterFor(ARRAY_ITERATOR);// `Array.prototype.entries` method
+  if(DEFAULT){methods={values:getIterationMethod(VALUES),keys:IS_SET?defaultIterator:getIterationMethod(KEYS),entries:getIterationMethod(ENTRIES)};if(FORCED)for(KEY in methods){if(BUGGY_SAFARI_ITERATORS$1||INCORRECT_VALUES_NAME||!(KEY in IterablePrototype)){redefine(IterablePrototype,KEY,methods[KEY]);}}else _export({target:NAME,proto:true,forced:BUGGY_SAFARI_ITERATORS$1||INCORRECT_VALUES_NAME},methods);}return methods;};var ARRAY_ITERATOR='Array Iterator';var setInternalState$1=internalState.set;var getInternalState=internalState.getterFor(ARRAY_ITERATOR);// `Array.prototype.entries` method
   // https://tc39.github.io/ecma262/#sec-array.prototype.entries
   // `Array.prototype.keys` method
   // https://tc39.github.io/ecma262/#sec-array.prototype.keys
@@ -21883,7 +22537,7 @@ var Forestry = (function () {
   // https://tc39.github.io/ecma262/#sec-array.prototype-@@iterator
   // `CreateArrayIterator` internal method
   // https://tc39.github.io/ecma262/#sec-createarrayiterator
-  var es_array_iterator=defineIterator(Array,'Array',function(iterated,kind){setInternalState(this,{type:ARRAY_ITERATOR,target:toIndexedObject(iterated),// target
+  var es_array_iterator=defineIterator(Array,'Array',function(iterated,kind){setInternalState$1(this,{type:ARRAY_ITERATOR,target:toIndexedObject(iterated),// target
   index:0,// next index
   kind:kind// kind
   });// `%ArrayIteratorPrototype%.next` method
@@ -21925,12 +22579,12 @@ var Forestry = (function () {
   // eslint-disable-next-line no-shadow-restricted-names
   var Infinity$1=1/0;var abs=Math.abs;var pow=Math.pow;var floor$1=Math.floor;var log$1=Math.log;var LN2=Math.LN2;var pack=function pack(number,mantissaLength,bytes){var buffer=new Array(bytes);var exponentLength=bytes*8-mantissaLength-1;var eMax=(1<<exponentLength)-1;var eBias=eMax>>1;var rt=mantissaLength===23?pow(2,-24)-pow(2,-77):0;var sign=number<0||number===0&&1/number<0?1:0;var index=0;var exponent,mantissa,c;number=abs(number);// eslint-disable-next-line no-self-compare
   if(number!=number||number===Infinity$1){// eslint-disable-next-line no-self-compare
-  mantissa=number!=number?1:0;exponent=eMax;}else {exponent=floor$1(log$1(number)/LN2);if(number*(c=pow(2,-exponent))<1){exponent--;c*=2;}if(exponent+eBias>=1){number+=rt/c;}else {number+=rt*pow(2,1-eBias);}if(number*c>=2){exponent++;c/=2;}if(exponent+eBias>=eMax){mantissa=0;exponent=eMax;}else if(exponent+eBias>=1){mantissa=(number*c-1)*pow(2,mantissaLength);exponent=exponent+eBias;}else {mantissa=number*pow(2,eBias-1)*pow(2,mantissaLength);exponent=0;}}for(;mantissaLength>=8;buffer[index++]=mantissa&255,mantissa/=256,mantissaLength-=8){}exponent=exponent<<mantissaLength|mantissa;exponentLength+=mantissaLength;for(;exponentLength>0;buffer[index++]=exponent&255,exponent/=256,exponentLength-=8){}buffer[--index]|=sign*128;return buffer;};var unpack=function unpack(buffer,mantissaLength){var bytes=buffer.length;var exponentLength=bytes*8-mantissaLength-1;var eMax=(1<<exponentLength)-1;var eBias=eMax>>1;var nBits=exponentLength-7;var index=bytes-1;var sign=buffer[index--];var exponent=sign&127;var mantissa;sign>>=7;for(;nBits>0;exponent=exponent*256+buffer[index],index--,nBits-=8){}mantissa=exponent&(1<<-nBits)-1;exponent>>=-nBits;nBits+=mantissaLength;for(;nBits>0;mantissa=mantissa*256+buffer[index],index--,nBits-=8){}if(exponent===0){exponent=1-eBias;}else if(exponent===eMax){return mantissa?NaN:sign?-Infinity$1:Infinity$1;}else {mantissa=mantissa+pow(2,mantissaLength);exponent=exponent-eBias;}return (sign?-1:1)*mantissa*pow(2,exponent-mantissaLength);};var ieee754$1={pack:pack,unpack:unpack};var getOwnPropertyNames=objectGetOwnPropertyNames.f;var defineProperty$2=objectDefineProperty.f;var getInternalState$1=internalState.get;var setInternalState$1=internalState.set;var ARRAY_BUFFER='ArrayBuffer';var DATA_VIEW='DataView';var PROTOTYPE$1='prototype';var WRONG_LENGTH='Wrong length';var WRONG_INDEX='Wrong index';var NativeArrayBuffer=global_1[ARRAY_BUFFER];var $ArrayBuffer=NativeArrayBuffer;var $DataView=global_1[DATA_VIEW];var $DataViewPrototype=$DataView&&$DataView[PROTOTYPE$1];var ObjectPrototype$1=Object.prototype;var RangeError$1=global_1.RangeError;var packIEEE754=ieee754$1.pack;var unpackIEEE754=ieee754$1.unpack;var packInt8=function packInt8(number){return [number&0xFF];};var packInt16=function packInt16(number){return [number&0xFF,number>>8&0xFF];};var packInt32=function packInt32(number){return [number&0xFF,number>>8&0xFF,number>>16&0xFF,number>>24&0xFF];};var unpackInt32=function unpackInt32(buffer){return buffer[3]<<24|buffer[2]<<16|buffer[1]<<8|buffer[0];};var packFloat32=function packFloat32(number){return packIEEE754(number,23,4);};var packFloat64=function packFloat64(number){return packIEEE754(number,52,8);};var addGetter=function addGetter(Constructor,key){defineProperty$2(Constructor[PROTOTYPE$1],key,{get:function get(){return getInternalState$1(this)[key];}});};var get$1=function get$1(view,count,index,isLittleEndian){var intIndex=toIndex(index);var store=getInternalState$1(view);if(intIndex+count>store.byteLength)throw RangeError$1(WRONG_INDEX);var bytes=getInternalState$1(store.buffer).bytes;var start=intIndex+store.byteOffset;var pack=bytes.slice(start,start+count);return isLittleEndian?pack:pack.reverse();};var set$1=function set$1(view,count,index,conversion,value,isLittleEndian){var intIndex=toIndex(index);var store=getInternalState$1(view);if(intIndex+count>store.byteLength)throw RangeError$1(WRONG_INDEX);var bytes=getInternalState$1(store.buffer).bytes;var start=intIndex+store.byteOffset;var pack=conversion(+value);for(var i=0;i<count;i++){bytes[start+i]=pack[isLittleEndian?i:count-i-1];}};if(!arrayBufferNative){$ArrayBuffer=function ArrayBuffer(length){anInstance(this,$ArrayBuffer,ARRAY_BUFFER);var byteLength=toIndex(length);setInternalState$1(this,{bytes:arrayFill.call(new Array(byteLength),0),byteLength:byteLength});if(!descriptors)this.byteLength=byteLength;};$DataView=function DataView(buffer,byteOffset,byteLength){anInstance(this,$DataView,DATA_VIEW);anInstance(buffer,$ArrayBuffer,DATA_VIEW);var bufferLength=getInternalState$1(buffer).byteLength;var offset=toInteger(byteOffset);if(offset<0||offset>bufferLength)throw RangeError$1('Wrong offset');byteLength=byteLength===undefined?bufferLength-offset:toLength(byteLength);if(offset+byteLength>bufferLength)throw RangeError$1(WRONG_LENGTH);setInternalState$1(this,{buffer:buffer,byteLength:byteLength,byteOffset:offset});if(!descriptors){this.buffer=buffer;this.byteLength=byteLength;this.byteOffset=offset;}};if(descriptors){addGetter($ArrayBuffer,'byteLength');addGetter($DataView,'buffer');addGetter($DataView,'byteLength');addGetter($DataView,'byteOffset');}redefineAll($DataView[PROTOTYPE$1],{getInt8:function getInt8(byteOffset){return get$1(this,1,byteOffset)[0]<<24>>24;},getUint8:function getUint8(byteOffset){return get$1(this,1,byteOffset)[0];},getInt16:function getInt16(byteOffset/* , littleEndian */){var bytes=get$1(this,2,byteOffset,arguments.length>1?arguments[1]:undefined);return (bytes[1]<<8|bytes[0])<<16>>16;},getUint16:function getUint16(byteOffset/* , littleEndian */){var bytes=get$1(this,2,byteOffset,arguments.length>1?arguments[1]:undefined);return bytes[1]<<8|bytes[0];},getInt32:function getInt32(byteOffset/* , littleEndian */){return unpackInt32(get$1(this,4,byteOffset,arguments.length>1?arguments[1]:undefined));},getUint32:function getUint32(byteOffset/* , littleEndian */){return unpackInt32(get$1(this,4,byteOffset,arguments.length>1?arguments[1]:undefined))>>>0;},getFloat32:function getFloat32(byteOffset/* , littleEndian */){return unpackIEEE754(get$1(this,4,byteOffset,arguments.length>1?arguments[1]:undefined),23);},getFloat64:function getFloat64(byteOffset/* , littleEndian */){return unpackIEEE754(get$1(this,8,byteOffset,arguments.length>1?arguments[1]:undefined),52);},setInt8:function setInt8(byteOffset,value){set$1(this,1,byteOffset,packInt8,value);},setUint8:function setUint8(byteOffset,value){set$1(this,1,byteOffset,packInt8,value);},setInt16:function setInt16(byteOffset,value/* , littleEndian */){set$1(this,2,byteOffset,packInt16,value,arguments.length>2?arguments[2]:undefined);},setUint16:function setUint16(byteOffset,value/* , littleEndian */){set$1(this,2,byteOffset,packInt16,value,arguments.length>2?arguments[2]:undefined);},setInt32:function setInt32(byteOffset,value/* , littleEndian */){set$1(this,4,byteOffset,packInt32,value,arguments.length>2?arguments[2]:undefined);},setUint32:function setUint32(byteOffset,value/* , littleEndian */){set$1(this,4,byteOffset,packInt32,value,arguments.length>2?arguments[2]:undefined);},setFloat32:function setFloat32(byteOffset,value/* , littleEndian */){set$1(this,4,byteOffset,packFloat32,value,arguments.length>2?arguments[2]:undefined);},setFloat64:function setFloat64(byteOffset,value/* , littleEndian */){set$1(this,8,byteOffset,packFloat64,value,arguments.length>2?arguments[2]:undefined);}});}else {if(!fails(function(){NativeArrayBuffer(1);})||!fails(function(){new NativeArrayBuffer(-1);// eslint-disable-line no-new
+  mantissa=number!=number?1:0;exponent=eMax;}else {exponent=floor$1(log$1(number)/LN2);if(number*(c=pow(2,-exponent))<1){exponent--;c*=2;}if(exponent+eBias>=1){number+=rt/c;}else {number+=rt*pow(2,1-eBias);}if(number*c>=2){exponent++;c/=2;}if(exponent+eBias>=eMax){mantissa=0;exponent=eMax;}else if(exponent+eBias>=1){mantissa=(number*c-1)*pow(2,mantissaLength);exponent=exponent+eBias;}else {mantissa=number*pow(2,eBias-1)*pow(2,mantissaLength);exponent=0;}}for(;mantissaLength>=8;buffer[index++]=mantissa&255,mantissa/=256,mantissaLength-=8){}exponent=exponent<<mantissaLength|mantissa;exponentLength+=mantissaLength;for(;exponentLength>0;buffer[index++]=exponent&255,exponent/=256,exponentLength-=8){}buffer[--index]|=sign*128;return buffer;};var unpack=function unpack(buffer,mantissaLength){var bytes=buffer.length;var exponentLength=bytes*8-mantissaLength-1;var eMax=(1<<exponentLength)-1;var eBias=eMax>>1;var nBits=exponentLength-7;var index=bytes-1;var sign=buffer[index--];var exponent=sign&127;var mantissa;sign>>=7;for(;nBits>0;exponent=exponent*256+buffer[index],index--,nBits-=8){}mantissa=exponent&(1<<-nBits)-1;exponent>>=-nBits;nBits+=mantissaLength;for(;nBits>0;mantissa=mantissa*256+buffer[index],index--,nBits-=8){}if(exponent===0){exponent=1-eBias;}else if(exponent===eMax){return mantissa?NaN:sign?-Infinity$1:Infinity$1;}else {mantissa=mantissa+pow(2,mantissaLength);exponent=exponent-eBias;}return (sign?-1:1)*mantissa*pow(2,exponent-mantissaLength);};var ieee754$1={pack:pack,unpack:unpack};var getOwnPropertyNames=objectGetOwnPropertyNames.f;var defineProperty$2=objectDefineProperty.f;var getInternalState$1=internalState.get;var setInternalState$1$1=internalState.set;var ARRAY_BUFFER='ArrayBuffer';var DATA_VIEW='DataView';var PROTOTYPE$1='prototype';var WRONG_LENGTH='Wrong length';var WRONG_INDEX='Wrong index';var NativeArrayBuffer=global_1[ARRAY_BUFFER];var $ArrayBuffer=NativeArrayBuffer;var $DataView=global_1[DATA_VIEW];var $DataViewPrototype=$DataView&&$DataView[PROTOTYPE$1];var ObjectPrototype$1$1=Object.prototype;var RangeError$1=global_1.RangeError;var packIEEE754=ieee754$1.pack;var unpackIEEE754=ieee754$1.unpack;var packInt8=function packInt8(number){return [number&0xFF];};var packInt16=function packInt16(number){return [number&0xFF,number>>8&0xFF];};var packInt32=function packInt32(number){return [number&0xFF,number>>8&0xFF,number>>16&0xFF,number>>24&0xFF];};var unpackInt32=function unpackInt32(buffer){return buffer[3]<<24|buffer[2]<<16|buffer[1]<<8|buffer[0];};var packFloat32=function packFloat32(number){return packIEEE754(number,23,4);};var packFloat64=function packFloat64(number){return packIEEE754(number,52,8);};var addGetter=function addGetter(Constructor,key){defineProperty$2(Constructor[PROTOTYPE$1],key,{get:function get(){return getInternalState$1(this)[key];}});};var get$1=function get$1(view,count,index,isLittleEndian){var intIndex=toIndex(index);var store=getInternalState$1(view);if(intIndex+count>store.byteLength)throw RangeError$1(WRONG_INDEX);var bytes=getInternalState$1(store.buffer).bytes;var start=intIndex+store.byteOffset;var pack=bytes.slice(start,start+count);return isLittleEndian?pack:pack.reverse();};var set$1=function set$1(view,count,index,conversion,value,isLittleEndian){var intIndex=toIndex(index);var store=getInternalState$1(view);if(intIndex+count>store.byteLength)throw RangeError$1(WRONG_INDEX);var bytes=getInternalState$1(store.buffer).bytes;var start=intIndex+store.byteOffset;var pack=conversion(+value);for(var i=0;i<count;i++){bytes[start+i]=pack[isLittleEndian?i:count-i-1];}};if(!arrayBufferNative){$ArrayBuffer=function ArrayBuffer(length){anInstance(this,$ArrayBuffer,ARRAY_BUFFER);var byteLength=toIndex(length);setInternalState$1$1(this,{bytes:arrayFill.call(new Array(byteLength),0),byteLength:byteLength});if(!descriptors)this.byteLength=byteLength;};$DataView=function DataView(buffer,byteOffset,byteLength){anInstance(this,$DataView,DATA_VIEW);anInstance(buffer,$ArrayBuffer,DATA_VIEW);var bufferLength=getInternalState$1(buffer).byteLength;var offset=toInteger(byteOffset);if(offset<0||offset>bufferLength)throw RangeError$1('Wrong offset');byteLength=byteLength===undefined?bufferLength-offset:toLength(byteLength);if(offset+byteLength>bufferLength)throw RangeError$1(WRONG_LENGTH);setInternalState$1$1(this,{buffer:buffer,byteLength:byteLength,byteOffset:offset});if(!descriptors){this.buffer=buffer;this.byteLength=byteLength;this.byteOffset=offset;}};if(descriptors){addGetter($ArrayBuffer,'byteLength');addGetter($DataView,'buffer');addGetter($DataView,'byteLength');addGetter($DataView,'byteOffset');}redefineAll($DataView[PROTOTYPE$1],{getInt8:function getInt8(byteOffset){return get$1(this,1,byteOffset)[0]<<24>>24;},getUint8:function getUint8(byteOffset){return get$1(this,1,byteOffset)[0];},getInt16:function getInt16(byteOffset/* , littleEndian */){var bytes=get$1(this,2,byteOffset,arguments.length>1?arguments[1]:undefined);return (bytes[1]<<8|bytes[0])<<16>>16;},getUint16:function getUint16(byteOffset/* , littleEndian */){var bytes=get$1(this,2,byteOffset,arguments.length>1?arguments[1]:undefined);return bytes[1]<<8|bytes[0];},getInt32:function getInt32(byteOffset/* , littleEndian */){return unpackInt32(get$1(this,4,byteOffset,arguments.length>1?arguments[1]:undefined));},getUint32:function getUint32(byteOffset/* , littleEndian */){return unpackInt32(get$1(this,4,byteOffset,arguments.length>1?arguments[1]:undefined))>>>0;},getFloat32:function getFloat32(byteOffset/* , littleEndian */){return unpackIEEE754(get$1(this,4,byteOffset,arguments.length>1?arguments[1]:undefined),23);},getFloat64:function getFloat64(byteOffset/* , littleEndian */){return unpackIEEE754(get$1(this,8,byteOffset,arguments.length>1?arguments[1]:undefined),52);},setInt8:function setInt8(byteOffset,value){set$1(this,1,byteOffset,packInt8,value);},setUint8:function setUint8(byteOffset,value){set$1(this,1,byteOffset,packInt8,value);},setInt16:function setInt16(byteOffset,value/* , littleEndian */){set$1(this,2,byteOffset,packInt16,value,arguments.length>2?arguments[2]:undefined);},setUint16:function setUint16(byteOffset,value/* , littleEndian */){set$1(this,2,byteOffset,packInt16,value,arguments.length>2?arguments[2]:undefined);},setInt32:function setInt32(byteOffset,value/* , littleEndian */){set$1(this,4,byteOffset,packInt32,value,arguments.length>2?arguments[2]:undefined);},setUint32:function setUint32(byteOffset,value/* , littleEndian */){set$1(this,4,byteOffset,packInt32,value,arguments.length>2?arguments[2]:undefined);},setFloat32:function setFloat32(byteOffset,value/* , littleEndian */){set$1(this,4,byteOffset,packFloat32,value,arguments.length>2?arguments[2]:undefined);},setFloat64:function setFloat64(byteOffset,value/* , littleEndian */){set$1(this,8,byteOffset,packFloat64,value,arguments.length>2?arguments[2]:undefined);}});}else {if(!fails(function(){NativeArrayBuffer(1);})||!fails(function(){new NativeArrayBuffer(-1);// eslint-disable-line no-new
   })||fails(function(){new NativeArrayBuffer();// eslint-disable-line no-new
   new NativeArrayBuffer(1.5);// eslint-disable-line no-new
   new NativeArrayBuffer(NaN);// eslint-disable-line no-new
   return NativeArrayBuffer.name!=ARRAY_BUFFER;})){$ArrayBuffer=function ArrayBuffer(length){anInstance(this,$ArrayBuffer);return new NativeArrayBuffer(toIndex(length));};var ArrayBufferPrototype=$ArrayBuffer[PROTOTYPE$1]=NativeArrayBuffer[PROTOTYPE$1];for(var keys$1=getOwnPropertyNames(NativeArrayBuffer),j=0,key;keys$1.length>j;){if(!((key=keys$1[j++])in $ArrayBuffer)){createNonEnumerableProperty($ArrayBuffer,key,NativeArrayBuffer[key]);}}ArrayBufferPrototype.constructor=$ArrayBuffer;}// WebKit bug - the same parent prototype for typed arrays and data view
-  if(objectSetPrototypeOf&&objectGetPrototypeOf($DataViewPrototype)!==ObjectPrototype$1){objectSetPrototypeOf($DataViewPrototype,ObjectPrototype$1);}// iOS Safari 7.x bug
+  if(objectSetPrototypeOf&&objectGetPrototypeOf($DataViewPrototype)!==ObjectPrototype$1$1){objectSetPrototypeOf($DataViewPrototype,ObjectPrototype$1$1);}// iOS Safari 7.x bug
   var testView=new $DataView(new $ArrayBuffer(2));var nativeSetInt8=$DataViewPrototype.setInt8;testView.setInt8(0,2147483648);testView.setInt8(1,2147483649);if(testView.getInt8(0)||!testView.getInt8(1))redefineAll($DataViewPrototype,{setInt8:function setInt8(byteOffset,value){nativeSetInt8.call(this,byteOffset,value<<24>>24);},setUint8:function setUint8(byteOffset,value){nativeSetInt8.call(this,byteOffset,value<<24>>24);}},{unsafe:true});}setToStringTag($ArrayBuffer,ARRAY_BUFFER);setToStringTag($DataView,DATA_VIEW);var arrayBuffer={ArrayBuffer:$ArrayBuffer,DataView:$DataView};var SPECIES$3=wellKnownSymbol('species');// `SpeciesConstructor` abstract operation
   // https://tc39.github.io/ecma262/#sec-speciesconstructor
   var speciesConstructor=function speciesConstructor(O,defaultConstructor){var C=anObject(O).constructor;var S;return C===undefined||(S=anObject(C)[SPECIES$3])==undefined?defaultConstructor:aFunction$1(S);};var ArrayBuffer$1=arrayBuffer.ArrayBuffer;var DataView$1=arrayBuffer.DataView;var nativeArrayBufferSlice=ArrayBuffer$1.prototype.slice;var INCORRECT_SLICE=fails(function(){return !new ArrayBuffer$1(2).slice(1,undefined).byteLength;});// `ArrayBuffer.prototype.slice` method
@@ -21991,19 +22645,19 @@ var Forestry = (function () {
   }else if(global_1.addEventListener&&typeof postMessage=='function'&&!global_1.importScripts&&!fails(post)&&location$1.protocol!=='file:'){defer=post;global_1.addEventListener('message',listener,false);// IE8-
   }else if(ONREADYSTATECHANGE in documentCreateElement('script')){defer=function defer(id){html.appendChild(documentCreateElement('script'))[ONREADYSTATECHANGE]=function(){html.removeChild(this);run(id);};};// Rest old browsers
   }else {defer=function defer(id){setTimeout(runner(id),0);};}}var task={set:set$2,clear:clear};var getOwnPropertyDescriptor$3=objectGetOwnPropertyDescriptor.f;var macrotask=task.set;var MutationObserver$1=global_1.MutationObserver||global_1.WebKitMutationObserver;var process$2=global_1.process;var Promise$1=global_1.Promise;var IS_NODE=classofRaw(process$2)=='process';// Node.js 11 shows ExperimentalWarning on getting `queueMicrotask`
-  var queueMicrotaskDescriptor=getOwnPropertyDescriptor$3(global_1,'queueMicrotask');var queueMicrotask=queueMicrotaskDescriptor&&queueMicrotaskDescriptor.value;var flush,head,last,notify$4,toggle,node,promise,then;// modern engines have queueMicrotask method
-  if(!queueMicrotask){flush=function flush(){var parent,fn;if(IS_NODE&&(parent=process$2.domain))parent.exit();while(head){fn=head.fn;head=head.next;try{fn();}catch(error){if(head)notify$4();else last=undefined;throw error;}}last=undefined;if(parent)parent.enter();};// Node.js
-  if(IS_NODE){notify$4=function notify(){process$2.nextTick(flush);};// browsers with MutationObserver, except iOS - https://github.com/zloirock/core-js/issues/339
-  }else if(MutationObserver$1&&!engineIsIos){toggle=true;node=document.createTextNode('');new MutationObserver$1(flush).observe(node,{characterData:true});notify$4=function notify(){node.data=toggle=!toggle;};// environments with maybe non-completely correct, but existent Promise
+  var queueMicrotaskDescriptor=getOwnPropertyDescriptor$3(global_1,'queueMicrotask');var queueMicrotask=queueMicrotaskDescriptor&&queueMicrotaskDescriptor.value;var flush,head,last,notify$2,toggle,node,promise,then;// modern engines have queueMicrotask method
+  if(!queueMicrotask){flush=function flush(){var parent,fn;if(IS_NODE&&(parent=process$2.domain))parent.exit();while(head){fn=head.fn;head=head.next;try{fn();}catch(error){if(head)notify$2();else last=undefined;throw error;}}last=undefined;if(parent)parent.enter();};// Node.js
+  if(IS_NODE){notify$2=function notify(){process$2.nextTick(flush);};// browsers with MutationObserver, except iOS - https://github.com/zloirock/core-js/issues/339
+  }else if(MutationObserver$1&&!engineIsIos){toggle=true;node=document.createTextNode('');new MutationObserver$1(flush).observe(node,{characterData:true});notify$2=function notify(){node.data=toggle=!toggle;};// environments with maybe non-completely correct, but existent Promise
   }else if(Promise$1&&Promise$1.resolve){// Promise.resolve without an argument throws an error in LG WebOS 2
-  promise=Promise$1.resolve(undefined);then=promise.then;notify$4=function notify(){then.call(promise,flush);};// for other environments - macrotask based on:
+  promise=Promise$1.resolve(undefined);then=promise.then;notify$2=function notify(){then.call(promise,flush);};// for other environments - macrotask based on:
   // - setImmediate
   // - MessageChannel
   // - window.postMessag
   // - onreadystatechange
   // - setTimeout
-  }else {notify$4=function notify(){// strange IE + webpack dev server bug - use .call(global)
-  macrotask.call(global_1,flush);};}}var microtask=queueMicrotask||function(fn){var task={fn:fn,next:undefined};if(last)last.next=task;if(!head){head=task;notify$4();}last=task;};var PromiseCapability=function PromiseCapability(C){var resolve,reject;this.promise=new C(function($$resolve,$$reject){if(resolve!==undefined||reject!==undefined)throw TypeError('Bad Promise constructor');resolve=$$resolve;reject=$$reject;});this.resolve=aFunction$1(resolve);this.reject=aFunction$1(reject);};// 25.4.1.5 NewPromiseCapability(C)
+  }else {notify$2=function notify(){// strange IE + webpack dev server bug - use .call(global)
+  macrotask.call(global_1,flush);};}}var microtask=queueMicrotask||function(fn){var task={fn:fn,next:undefined};if(last)last.next=task;if(!head){head=task;notify$2();}last=task;};var PromiseCapability=function PromiseCapability(C){var resolve,reject;this.promise=new C(function($$resolve,$$reject){if(resolve!==undefined||reject!==undefined)throw TypeError('Bad Promise constructor');resolve=$$resolve;reject=$$reject;});this.resolve=aFunction$1(resolve);this.reject=aFunction$1(reject);};// 25.4.1.5 NewPromiseCapability(C)
   var f$5=function f$5(C){return new PromiseCapability(C);};var newPromiseCapability={f:f$5};var promiseResolve=function promiseResolve(C,x){anObject(C);if(isObject(x)&&x.constructor===C)return x;var promiseCapability=newPromiseCapability.f(C);var resolve=promiseCapability.resolve;resolve(x);return promiseCapability.promise;};var hostReportErrors=function hostReportErrors(a,b){var console=global_1.console;if(console&&console.error){arguments.length===1?console.error(a):console.error(a,b);}};var perform=function perform(exec){try{return {error:false,value:exec()};}catch(error){return {error:true,value:error};}};var task$1=task.set;var SPECIES$5=wellKnownSymbol('species');var PROMISE='Promise';var getInternalState$2=internalState.get;var setInternalState$2=internalState.set;var getInternalPromiseState=internalState.getterFor(PROMISE);var PromiseConstructor=nativePromiseConstructor;var TypeError$1=global_1.TypeError;var document$2=global_1.document;var process$3=global_1.process;var $fetch=getBuiltIn('fetch');var newPromiseCapability$1=newPromiseCapability.f;var newGenericPromiseCapability=newPromiseCapability$1;var IS_NODE$1=classofRaw(process$3)=='process';var DISPATCH_EVENT=!!(document$2&&document$2.createEvent&&global_1.dispatchEvent);var UNHANDLED_REJECTION='unhandledrejection';var REJECTION_HANDLED='rejectionhandled';var PENDING=0;var FULFILLED=1;var REJECTED=2;var HANDLED=1;var UNHANDLED=2;var Internal,OwnPromiseCapability,PromiseWrapper,nativeThen;var FORCED$3=isForced_1(PROMISE,function(){var GLOBAL_CORE_JS_PROMISE=inspectSource(PromiseConstructor)!==String(PromiseConstructor);if(!GLOBAL_CORE_JS_PROMISE){// V8 6.6 (Node 10 and Chrome 66) have a bug with resolving custom thenables
   // https://bugs.chromium.org/p/chromium/issues/detail?id=830565
   // We can't detect it synchronously, so just check versions
@@ -22142,7 +22796,7 @@ var Forestry = (function () {
   // of whitespaces and has a correct name
   var stringTrimForced=function stringTrimForced(METHOD_NAME){return fails(function(){return !!whitespaces[METHOD_NAME]()||non[METHOD_NAME]()!=non||whitespaces[METHOD_NAME].name!==METHOD_NAME;});};var $trim=stringTrim.trim;// `String.prototype.trim` method
   // https://tc39.github.io/ecma262/#sec-string.prototype.trim
-  _export({target:'String',proto:true,forced:stringTrimForced('trim')},{trim:function trim(){return $trim(this);}});var defineProperty$6=objectDefineProperty.f;var Int8Array$1=global_1.Int8Array;var Int8ArrayPrototype=Int8Array$1&&Int8Array$1.prototype;var Uint8ClampedArray=global_1.Uint8ClampedArray;var Uint8ClampedArrayPrototype=Uint8ClampedArray&&Uint8ClampedArray.prototype;var TypedArray=Int8Array$1&&objectGetPrototypeOf(Int8Array$1);var TypedArrayPrototype=Int8ArrayPrototype&&objectGetPrototypeOf(Int8ArrayPrototype);var ObjectPrototype$2=Object.prototype;var isPrototypeOf=ObjectPrototype$2.isPrototypeOf;var TO_STRING_TAG$3=wellKnownSymbol('toStringTag');var TYPED_ARRAY_TAG=uid('TYPED_ARRAY_TAG');// Fixing native typed arrays in Opera Presto crashes the browser, see #595
+  _export({target:'String',proto:true,forced:stringTrimForced('trim')},{trim:function trim(){return $trim(this);}});var defineProperty$6=objectDefineProperty.f;var Int8Array$1=global_1.Int8Array;var Int8ArrayPrototype=Int8Array$1&&Int8Array$1.prototype;var Uint8ClampedArray$1=global_1.Uint8ClampedArray;var Uint8ClampedArrayPrototype=Uint8ClampedArray$1&&Uint8ClampedArray$1.prototype;var TypedArray=Int8Array$1&&objectGetPrototypeOf(Int8Array$1);var TypedArrayPrototype=Int8ArrayPrototype&&objectGetPrototypeOf(Int8ArrayPrototype);var ObjectPrototype$2=Object.prototype;var isPrototypeOf=ObjectPrototype$2.isPrototypeOf;var TO_STRING_TAG$3=wellKnownSymbol('toStringTag');var TYPED_ARRAY_TAG=uid('TYPED_ARRAY_TAG');// Fixing native typed arrays in Opera Presto crashes the browser, see #595
   var NATIVE_ARRAY_BUFFER_VIEWS$1=arrayBufferNative&&!!objectSetPrototypeOf&&classof(global_1.opera)!=='Opera';var TYPED_ARRAY_TAG_REQIRED=false;var NAME$1;var TypedArrayConstructorsList={Int8Array:1,Uint8Array:1,Uint8ClampedArray:1,Int16Array:2,Uint16Array:2,Int32Array:4,Uint32Array:4,Float32Array:4,Float64Array:8};var isView=function isView(it){var klass=classof(it);return klass==='DataView'||has(TypedArrayConstructorsList,klass);};var isTypedArray=function isTypedArray(it){return isObject(it)&&has(TypedArrayConstructorsList,classof(it));};var aTypedArray=function aTypedArray(it){if(isTypedArray(it))return it;throw TypeError('Target is not a typed array');};var aTypedArrayConstructor=function aTypedArrayConstructor(C){if(objectSetPrototypeOf){if(isPrototypeOf.call(TypedArray,C))return C;}else for(var ARRAY in TypedArrayConstructorsList){if(has(TypedArrayConstructorsList,NAME$1)){var TypedArrayConstructor=global_1[ARRAY];if(TypedArrayConstructor&&(C===TypedArrayConstructor||isPrototypeOf.call(TypedArrayConstructor,C))){return C;}}}throw TypeError('Target is not a typed array constructor');};var exportTypedArrayMethod=function exportTypedArrayMethod(KEY,property,forced){if(!descriptors)return;if(forced)for(var ARRAY in TypedArrayConstructorsList){var TypedArrayConstructor=global_1[ARRAY];if(TypedArrayConstructor&&has(TypedArrayConstructor.prototype,KEY)){delete TypedArrayConstructor.prototype[KEY];}}if(!TypedArrayPrototype[KEY]||forced){redefine(TypedArrayPrototype,KEY,forced?property:NATIVE_ARRAY_BUFFER_VIEWS$1&&Int8ArrayPrototype[KEY]||property);}};var exportTypedArrayStaticMethod=function exportTypedArrayStaticMethod(KEY,property,forced){var ARRAY,TypedArrayConstructor;if(!descriptors)return;if(objectSetPrototypeOf){if(forced)for(ARRAY in TypedArrayConstructorsList){TypedArrayConstructor=global_1[ARRAY];if(TypedArrayConstructor&&has(TypedArrayConstructor,KEY)){delete TypedArrayConstructor[KEY];}}if(!TypedArray[KEY]||forced){// V8 ~ Chrome 49-50 `%TypedArray%` methods are non-writable non-configurable
   try{return redefine(TypedArray,KEY,forced?property:NATIVE_ARRAY_BUFFER_VIEWS$1&&Int8Array$1[KEY]||property);}catch(error){/* empty */}}else return;}for(ARRAY in TypedArrayConstructorsList){TypedArrayConstructor=global_1[ARRAY];if(TypedArrayConstructor&&(!TypedArrayConstructor[KEY]||forced)){redefine(TypedArrayConstructor,KEY,property);}}};for(NAME$1 in TypedArrayConstructorsList){if(!global_1[NAME$1])NATIVE_ARRAY_BUFFER_VIEWS$1=false;}// WebKit bug - typed arrays constructors prototype is Object.prototype
   if(!NATIVE_ARRAY_BUFFER_VIEWS$1||typeof TypedArray!='function'||TypedArray===Function.prototype){// eslint-disable-next-line no-shadow
@@ -22274,9 +22928,9 @@ var Forestry = (function () {
   var m=maxInt;for(i=0;i<input.length;i++){currentValue=input[i];if(currentValue>=n&&currentValue<m){m=currentValue;}}// Increase `delta` enough to advance the decoder's <n,i> state to <m,0>, but guard against overflow.
   var handledCPCountPlusOne=handledCPCount+1;if(m-n>floor$4((maxInt-delta)/handledCPCountPlusOne)){throw RangeError(OVERFLOW_ERROR);}delta+=(m-n)*handledCPCountPlusOne;n=m;for(i=0;i<input.length;i++){currentValue=input[i];if(currentValue<n&&++delta>maxInt){throw RangeError(OVERFLOW_ERROR);}if(currentValue==n){// Represent delta as a generalized variable-length integer.
   var q=delta;for(var k=base;;k+=base){var t=k<=bias?tMin:k>=bias+tMax?tMax:k-bias;if(q<t)break;var qMinusT=q-t;var baseMinusT=base-t;output.push(stringFromCharCode(digitToBasic(t+qMinusT%baseMinusT)));q=floor$4(qMinusT/baseMinusT);}output.push(stringFromCharCode(digitToBasic(q)));bias=adapt(delta,handledCPCountPlusOne,handledCPCount==basicLength);delta=0;++handledCPCount;}}++delta;++n;}return output.join('');};var stringPunycodeToAscii=function stringPunycodeToAscii(input){var encoded=[];var labels=input.toLowerCase().replace(regexSeparators,".").split('.');var i,label;for(i=0;i<labels.length;i++){label=labels[i];encoded.push(regexNonASCII.test(label)?'xn--'+encode(label):label);}return encoded.join('.');};var getIterator=function getIterator(it){var iteratorMethod=getIteratorMethod(it);if(typeof iteratorMethod!='function'){throw TypeError(String(it)+' is not iterable');}return anObject(iteratorMethod.call(it));};// TODO: in core-js@4, move /modules/ dependencies to public entries for better optimization by tools like `preset-env`
-  var $fetch$1=getBuiltIn('fetch');var Headers=getBuiltIn('Headers');var ITERATOR$8=wellKnownSymbol('iterator');var URL_SEARCH_PARAMS='URLSearchParams';var URL_SEARCH_PARAMS_ITERATOR=URL_SEARCH_PARAMS+'Iterator';var setInternalState$5=internalState.set;var getInternalParamsState=internalState.getterFor(URL_SEARCH_PARAMS);var getInternalIteratorState=internalState.getterFor(URL_SEARCH_PARAMS_ITERATOR);var plus=/\+/g;var sequences=Array(4);var percentSequence=function percentSequence(bytes){return sequences[bytes-1]||(sequences[bytes-1]=RegExp('((?:%[\\da-f]{2}){'+bytes+'})','gi'));};var percentDecode=function percentDecode(sequence){try{return decodeURIComponent(sequence);}catch(error){return sequence;}};var deserialize=function deserialize(it){var result=it.replace(plus,' ');var bytes=4;try{return decodeURIComponent(result);}catch(error){while(bytes){result=result.replace(percentSequence(bytes--),percentDecode);}return result;}};var find=/[!'()~]|%20/g;var replace={'!':'%21',"'":'%27','(':'%28',')':'%29','~':'%7E','%20':'+'};var replacer=function replacer(match){return replace[match];};var serialize=function serialize(it){return encodeURIComponent(it).replace(find,replacer);};var parseSearchParams=function parseSearchParams(result,query){if(query){var attributes=query.split('&');var index=0;var attribute,entry;while(index<attributes.length){attribute=attributes[index++];if(attribute.length){entry=attribute.split('=');result.push({key:deserialize(entry.shift()),value:deserialize(entry.join('='))});}}}};var updateSearchParams=function updateSearchParams(query){this.entries.length=0;parseSearchParams(this.entries,query);};var validateArgumentsLength=function validateArgumentsLength(passed,required){if(passed<required)throw TypeError('Not enough arguments');};var URLSearchParamsIterator=createIteratorConstructor(function Iterator(params,kind){setInternalState$5(this,{type:URL_SEARCH_PARAMS_ITERATOR,iterator:getIterator(getInternalParamsState(params).entries),kind:kind});},'Iterator',function next(){var state=getInternalIteratorState(this);var kind=state.kind;var step=state.iterator.next();var entry=step.value;if(!step.done){step.value=kind==='keys'?entry.key:kind==='values'?entry.value:[entry.key,entry.value];}return step;});// `URLSearchParams` constructor
+  var $fetch$1=getBuiltIn('fetch');var Headers=getBuiltIn('Headers');var ITERATOR$8=wellKnownSymbol('iterator');var URL_SEARCH_PARAMS='URLSearchParams';var URL_SEARCH_PARAMS_ITERATOR=URL_SEARCH_PARAMS+'Iterator';var setInternalState$5=internalState.set;var getInternalParamsState=internalState.getterFor(URL_SEARCH_PARAMS);var getInternalIteratorState=internalState.getterFor(URL_SEARCH_PARAMS_ITERATOR);var plus=/\+/g;var sequences=Array(4);var percentSequence=function percentSequence(bytes){return sequences[bytes-1]||(sequences[bytes-1]=RegExp('((?:%[\\da-f]{2}){'+bytes+'})','gi'));};var percentDecode=function percentDecode(sequence){try{return decodeURIComponent(sequence);}catch(error){return sequence;}};var deserialize=function deserialize(it){var result=it.replace(plus,' ');var bytes=4;try{return decodeURIComponent(result);}catch(error){while(bytes){result=result.replace(percentSequence(bytes--),percentDecode);}return result;}};var find$1=/[!'()~]|%20/g;var replace$1={'!':'%21',"'":'%27','(':'%28',')':'%29','~':'%7E','%20':'+'};var replacer=function replacer(match){return replace$1[match];};var serialize=function serialize(it){return encodeURIComponent(it).replace(find$1,replacer);};var parseSearchParams=function parseSearchParams(result,query){if(query){var attributes=query.split('&');var index=0;var attribute,entry;while(index<attributes.length){attribute=attributes[index++];if(attribute.length){entry=attribute.split('=');result.push({key:deserialize(entry.shift()),value:deserialize(entry.join('='))});}}}};var updateSearchParams=function updateSearchParams(query){this.entries.length=0;parseSearchParams(this.entries,query);};var validateArgumentsLength=function validateArgumentsLength(passed,required){if(passed<required)throw TypeError('Not enough arguments');};var URLSearchParamsIterator=createIteratorConstructor(function Iterator(params,kind){setInternalState$5(this,{type:URL_SEARCH_PARAMS_ITERATOR,iterator:getIterator(getInternalParamsState(params).entries),kind:kind});},'Iterator',function next(){var state=getInternalIteratorState(this);var kind=state.kind;var step=state.iterator.next();var entry=step.value;if(!step.done){step.value=kind==='keys'?entry.key:kind==='values'?entry.value:[entry.key,entry.value];}return step;});// `URLSearchParams` constructor
   // https://url.spec.whatwg.org/#interface-urlsearchparams
-  var URLSearchParamsConstructor=function URLSearchParams(){anInstance(this,URLSearchParamsConstructor,URL_SEARCH_PARAMS);var init=arguments.length>0?arguments[0]:undefined;var that=this;var entries=[];var iteratorMethod,iterator,next,step,entryIterator,entryNext,first,second,key;setInternalState$5(that,{type:URL_SEARCH_PARAMS,entries:entries,updateURL:function updateURL(){/* empty */},updateSearchParams:updateSearchParams});if(init!==undefined){if(isObject(init)){iteratorMethod=getIteratorMethod(init);if(typeof iteratorMethod==='function'){iterator=iteratorMethod.call(init);next=iterator.next;while(!(step=next.call(iterator)).done){entryIterator=getIterator(anObject(step.value));entryNext=entryIterator.next;if((first=entryNext.call(entryIterator)).done||(second=entryNext.call(entryIterator)).done||!entryNext.call(entryIterator).done)throw TypeError('Expected sequence with length 2');entries.push({key:first.value+'',value:second.value+''});}}else for(key in init){if(has(init,key))entries.push({key:key,value:init[key]+''});}}else {parseSearchParams(entries,typeof init==='string'?init.charAt(0)==='?'?init.slice(1):init:init+'');}}};var URLSearchParamsPrototype=URLSearchParamsConstructor.prototype;redefineAll(URLSearchParamsPrototype,{// `URLSearchParams.prototype.appent` method
+  var URLSearchParamsConstructor=function/* init */URLSearchParams(){anInstance(this,URLSearchParamsConstructor,URL_SEARCH_PARAMS);var init=arguments.length>0?arguments[0]:undefined;var that=this;var entries=[];var iteratorMethod,iterator,next,step,entryIterator,entryNext,first,second,key;setInternalState$5(that,{type:URL_SEARCH_PARAMS,entries:entries,updateURL:function updateURL(){/* empty */},updateSearchParams:updateSearchParams});if(init!==undefined){if(isObject(init)){iteratorMethod=getIteratorMethod(init);if(typeof iteratorMethod==='function'){iterator=iteratorMethod.call(init);next=iterator.next;while(!(step=next.call(iterator)).done){entryIterator=getIterator(anObject(step.value));entryNext=entryIterator.next;if((first=entryNext.call(entryIterator)).done||(second=entryNext.call(entryIterator)).done||!entryNext.call(entryIterator).done)throw TypeError('Expected sequence with length 2');entries.push({key:first.value+'',value:second.value+''});}}else for(key in init){if(has(init,key))entries.push({key:key,value:init[key]+''});}}else {parseSearchParams(entries,typeof init==='string'?init.charAt(0)==='?'?init.slice(1):init:init+'');}}};var URLSearchParamsPrototype=URLSearchParamsConstructor.prototype;redefineAll(URLSearchParamsPrototype,{// `URLSearchParams.prototype.appent` method
   // https://url.spec.whatwg.org/#dom-urlsearchparams-append
   append:function append(name,value){validateArgumentsLength(arguments.length,2);var state=getInternalParamsState(this);state.entries.push({key:name+'',value:value+''});state.updateURL();},// `URLSearchParams.prototype.delete` method
   // https://url.spec.whatwg.org/#dom-urlsearchparams-delete
@@ -22724,9 +23378,9 @@ var Forestry = (function () {
   if(typeof this.jobs[src]==='undefined'){this.jobs[src]=[];}this.jobs[src].push(attr);this.worker.postMessage({src:src,options:options});L.gmxUtil.loaderStatus(src);return new Promise(function(resolve,reject){attr.resolve=resolve;attr.reject=reject;}).catch(L.Util.falseFn);}};var imageBitmapLoader=new ImageBitmapLoader();L.gmx.getBitmap=imageBitmapLoader.push.bind(imageBitmapLoader);L.gmx.getJSON=imageBitmapLoader.push.bind(imageBitmapLoader);if(L.gmxUtil.debug===2){L.gmx.sendCmd=function(cmd,options){options.cmd=cmd;options.syncParams=L.gmx.gmxMapManager.syncParams;return imageBitmapLoader.push(null,options);};}worker.onerror=function(ev){console.warn('Error: Worker init: ImageBitmapLoader-worker.js',ev);ev.target.terminate();delete L.gmx.getBitmap;delete L.gmx.getJSON;delete L.gmx.sendCmd;};});})();var HAS_SPECIES_SUPPORT$2=arrayMethodHasSpeciesSupport('splice');var USES_TO_LENGTH$5=arrayMethodUsesToLength('splice',{ACCESSORS:true,0:0,1:2});var max$3=Math.max;var min$6=Math.min;var MAX_SAFE_INTEGER$1=0x1FFFFFFFFFFFFF;var MAXIMUM_ALLOWED_LENGTH_EXCEEDED='Maximum allowed length exceeded';// `Array.prototype.splice` method
   // https://tc39.github.io/ecma262/#sec-array.prototype.splice
   // with adding support of @@species
-  _export({target:'Array',proto:true,forced:!HAS_SPECIES_SUPPORT$2||!USES_TO_LENGTH$5},{splice:function splice(start,deleteCount/* , ...items */){var O=toObject(this);var len=toLength(O.length);var actualStart=toAbsoluteIndex(start,len);var argumentsLength=arguments.length;var insertCount,actualDeleteCount,A,k,from,to;if(argumentsLength===0){insertCount=actualDeleteCount=0;}else if(argumentsLength===1){insertCount=0;actualDeleteCount=len-actualStart;}else {insertCount=argumentsLength-2;actualDeleteCount=min$6(max$3(toInteger(deleteCount),0),len-actualStart);}if(len+insertCount-actualDeleteCount>MAX_SAFE_INTEGER$1){throw TypeError(MAXIMUM_ALLOWED_LENGTH_EXCEEDED);}A=arraySpeciesCreate(O,actualDeleteCount);for(k=0;k<actualDeleteCount;k++){from=actualStart+k;if(from in O)createProperty(A,k,O[from]);}A.length=actualDeleteCount;if(insertCount<actualDeleteCount){for(k=actualStart;k<len-actualDeleteCount;k++){from=k+actualDeleteCount;to=k+insertCount;if(from in O)O[to]=O[from];else delete O[to];}for(k=len;k>len-actualDeleteCount+insertCount;k--){delete O[k-1];}}else if(insertCount>actualDeleteCount){for(k=len-actualDeleteCount;k>actualStart;k--){from=k+actualDeleteCount-1;to=k+insertCount-1;if(from in O)O[to]=O[from];else delete O[to];}}for(k=0;k<insertCount;k++){O[k+actualStart]=arguments[k+2];}O.length=len-actualDeleteCount+insertCount;return A;}});var FAILS_ON_PRIMITIVES$1=fails(function(){objectKeys(1);});// `Object.keys` method
+  _export({target:'Array',proto:true,forced:!HAS_SPECIES_SUPPORT$2||!USES_TO_LENGTH$5},{splice:function splice(start,deleteCount/* , ...items */){var O=toObject(this);var len=toLength(O.length);var actualStart=toAbsoluteIndex(start,len);var argumentsLength=arguments.length;var insertCount,actualDeleteCount,A,k,from,to;if(argumentsLength===0){insertCount=actualDeleteCount=0;}else if(argumentsLength===1){insertCount=0;actualDeleteCount=len-actualStart;}else {insertCount=argumentsLength-2;actualDeleteCount=min$6(max$3(toInteger(deleteCount),0),len-actualStart);}if(len+insertCount-actualDeleteCount>MAX_SAFE_INTEGER$1){throw TypeError(MAXIMUM_ALLOWED_LENGTH_EXCEEDED);}A=arraySpeciesCreate(O,actualDeleteCount);for(k=0;k<actualDeleteCount;k++){from=actualStart+k;if(from in O)createProperty(A,k,O[from]);}A.length=actualDeleteCount;if(insertCount<actualDeleteCount){for(k=actualStart;k<len-actualDeleteCount;k++){from=k+actualDeleteCount;to=k+insertCount;if(from in O)O[to]=O[from];else delete O[to];}for(k=len;k>len-actualDeleteCount+insertCount;k--){delete O[k-1];}}else if(insertCount>actualDeleteCount){for(k=len-actualDeleteCount;k>actualStart;k--){from=k+actualDeleteCount-1;to=k+insertCount-1;if(from in O)O[to]=O[from];else delete O[to];}}for(k=0;k<insertCount;k++){O[k+actualStart]=arguments[k+2];}O.length=len-actualDeleteCount+insertCount;return A;}});var FAILS_ON_PRIMITIVES$3=fails(function(){objectKeys(1);});// `Object.keys` method
   // https://tc39.github.io/ecma262/#sec-object.keys
-  _export({target:'Object',stat:true,forced:FAILS_ON_PRIMITIVES$1},{keys:function keys(it){return objectKeys(toObject(it));}});(function(){var ImageRequest=function ImageRequest(id,url,options){this._id=id;this.def=new L.gmx.Deferred(L.gmx.imageLoader._cancelRequest.bind(L.gmx.imageLoader,this));this.remove=L.gmx.imageLoader._removeRequestFromCache.bind(L.gmx.imageLoader,this);this.url=url;this.options=options||{};};var GmxImageLoader=L.Class.extend({includes:L.Evented?L.Evented.prototype:L.Mixin.Events,statics:{MAX_COUNT:20// max number of parallel requests
+  _export({target:'Object',stat:true,forced:FAILS_ON_PRIMITIVES$3},{keys:function keys(it){return objectKeys(toObject(it));}});(function(){var ImageRequest=function ImageRequest(id,url,options){this._id=id;this.def=new L.gmx.Deferred(L.gmx.imageLoader._cancelRequest.bind(L.gmx.imageLoader,this));this.remove=L.gmx.imageLoader._removeRequestFromCache.bind(L.gmx.imageLoader,this);this.url=url;this.options=options||{};};var GmxImageLoader=L.Class.extend({includes:L.Evented?L.Evented.prototype:L.Mixin.Events,statics:{MAX_COUNT:20// max number of parallel requests
   },initialize:function initialize(){this.curCount=0;// number of currently processing requests (number of items in "inProgress")
   this.requests=[];// not yet processed image requests
   this.inProgress={};// hash of in progress image loadings
@@ -24341,76 +24995,68 @@ var Forestry = (function () {
         T_VERTEX_BOUNDARY = 2;
   })();
 
-  function copy(source) {
-    switch (_typeof$1(source)) {
-      case 'number':
-      case 'string':
-      case 'function':
-      default:
-        return source;
+  function merge$1(t, u) {
+    for (var _i = 0, _a = Object.keys(u); _i < _a.length; _i++) {
+      var k = _a[_i];
+      var v = u[k];
 
-      case 'object':
-        if (source === null) {
-          return null;
-        } else if (Array.isArray(source)) {
-          return source.map(function (item) {
-            return copy(item);
-          });
-        } else if (source instanceof Date) {
-          return source;
+      if (t[k]) {
+        if (typeof v === 'string') {
+          t[k] = v;
+        } else if (typeof t[k] === 'string') {
+          t[k] = v;
         } else {
-          return Object.keys(source).reduce(function (a, k) {
-            a[k] = copy(source[k]);
-            return a;
-          }, {});
+          t[k] = merge$1(t[k], v);
         }
-
+      } else {
+        t[k] = v;
+      }
     }
+
+    return t;
   }
 
-  function merge(target, source) {
-    if (target === source) {
-      return target;
-    } else {
-      return Object.keys(source).reduce(function (a, k) {
-        var value = source[k];
+  var langs$1 = {};
+  var language$1 = localStorage.getItem('lang') || 'ru';
 
-        if (_typeof$1(a[k]) === 'object' && k in a) {
-          a[k] = merge(a[k], value);
-        } else {
-          a[k] = copy(value);
-        }
-
-        return a;
-      }, copy(target));
+  function get_translation$1(root, path) {
+    if (!root) {
+      throw 'WRONG_OBJECT';
     }
-  }
 
-  var langs = {};
-  var language = localStorage.getItem('lang') || 'ru';
-
-  function add(lang, obj) {
-    langs[lang] = langs[lang] || {};
-    langs[lang] = merge(langs[lang], obj);
-  }
-
-  function get_translation(root, path) {
     var i = path.indexOf('.');
 
     if (i >= 0) {
-      return get_translation(root[path.substring(0, i)], path.substring(i + 1));
+      var v = root[path.substring(0, i)];
+
+      if (typeof v === 'undefined' || typeof v === 'string') {
+        throw 'LONG_PATH';
+      }
+
+      return get_translation$1(v, path.substring(i + 1));
     } else {
-      return root[path];
+      var v = root[path];
+
+      if (typeof v === 'string') {
+        return v;
+      }
+
+      throw 'SHORT_PATH';
     }
   }
 
-  function translate$v(path) {
-    return get_translation(langs[language], path);
+  function add$1(lang, obj) {
+    langs$1[lang] = langs$1[lang] || {};
+    langs$1[lang] = merge$1(langs$1[lang], obj);
+  }
+
+  function translate$t(path) {
+    return get_translation$1(langs$1[language$1], path);
   }
 
   (function () {
 
-    add('ru', {
+    add$1('ru', {
       FireVirtualLayer: {
         LayerClusterBalloon: "<div style='margin-bottom: 5px;'><b style='color: red;'>Пожар</b></div>" + "<b>Кол-во термоточек:</b> [count]<br/>" + "<b>Время наблюдения:</b> [dateRange]<br/>" + "<div>[SUMMARY]</div>",
         LayerClusterBalloonIndustrial: "<span style='margin-bottom: 5px;'><b style='color: red;'>Пожар</b></span> (вероятный техногенный источник <a target='blank' href='http://fires.kosmosnimki.ru/help.html#techno'>?</a>) <br/>" + "<b>Кол-во термоточек:</b> [count]<br/>" + "<b>Время наблюдения:</b> [dateRange]<br/>" + "<div>[SUMMARY]</div>",
@@ -24418,7 +25064,7 @@ var Forestry = (function () {
         zoomInMessage: "Приблизьте карту, чтобы увидеть контур"
       }
     });
-    add('en', {
+    add$1('en', {
       FireVirtualLayer: {
         LayerClusterBalloon: "<div style='margin-bottom: 5px;'><b style='color: red;'>Fire</b></div>" + "<b>Number of hotspots:</b> [count]<br/>" + "<b>Observation period:</b> [dateRange]<br/>" + "<div>[SUMMARY]</div>",
         LayerClusterBalloonIndustrial: "<span style='margin-bottom: 5px;'><b style='color: red;'>Fire</b></span> (probable industrial hotspot <a target='_blank' href='http://fires.kosmosnimki.ru/help.html#techno'>?</a>)<br/>" + "<b>Number of hotspots:</b> [count]<br/>" + "<b>Observation period:</b> [dateRange]<br/>" + "<div>[SUMMARY]</div>",
@@ -24679,7 +25325,7 @@ var Forestry = (function () {
             attributes: ['scale', 'count', 'label', 'startDate', 'endDate', 'dateRange', 'isIndustrial'],
             styles: [{
               Filter: '"isIndustrial"=0',
-              Balloon: translate$v('FireVirtualLayer.LayerClusterBalloon'),
+              Balloon: translate$t('FireVirtualLayer.LayerClusterBalloon'),
               MinZoom: 1,
               MaxZoom: this.options.minGeomZoom - 1,
               RenderStyle: {
@@ -24700,7 +25346,7 @@ var Forestry = (function () {
               }
             }, {
               Filter: '"isIndustrial"=1',
-              Balloon: translate$v('FireVirtualLayer.LayerClusterBalloonIndustrial'),
+              Balloon: translate$t('FireVirtualLayer.LayerClusterBalloonIndustrial'),
               MinZoom: 1,
               MaxZoom: this.options.minGeomZoom - 1,
               RenderStyle: {
@@ -24723,7 +25369,7 @@ var Forestry = (function () {
             title: 'FirePolygons',
             attributes: ['scale', 'count', 'label', 'startDate', 'endDate', 'dateRange', 'isIndustrial'],
             styles: [{
-              Balloon: translate$v('FireVirtualLayer.LayerGeometryBalloon'),
+              Balloon: translate$t('FireVirtualLayer.LayerGeometryBalloon'),
               MinZoom: this.options.minGeomZoom,
               MaxZoom: 21,
               RenderStyle: {
@@ -24780,7 +25426,7 @@ var Forestry = (function () {
         this._clustersLayer.on('popupopen', function (event) {
           var popup = event.popup,
               html = popup.getContent(),
-              title = translate$v('FireVirtualLayer.zoomInMessage'),
+              title = translate$t('FireVirtualLayer.zoomInMessage'),
               cont = L.DomUtil.create('div', '');
           cont.appendChild(html);
           var zoomLink = L.DomUtil.create('div', '', cont); // zoomLink = $('<div style="margin-top: 5px;"><a href="javascript:void(0)"><i>' + title + '</i></a></div>').click(function() {
@@ -25235,7 +25881,9 @@ var Forestry = (function () {
     // }
   })();
 
-  var GmxVirtualWMSLayer = function GmxVirtualWMSLayer() {};
+  var GmxVirtualWMSLayer = function
+    /*options*/
+  GmxVirtualWMSLayer() {};
 
   GmxVirtualWMSLayer.prototype.initFromDescription = function (layerDescription) {
     var WMS_OPTIONS = ['crossOrigin', 'layers', 'styles', 'format', 'transparent', 'version', 'minZoom', 'maxZoom', 'tileSize', 'f', 'bboxSR', 'imageSR', 'size'];
@@ -36091,9 +36739,11 @@ var Forestry = (function () {
     var m = date.match(/\/Date\((-?\d+)([-\+]?\d{2})?(\d{2})?\)\//i);
 
     if (m) {
-      var offset = m[2] ? 3600000 * m[2] + 60000 * m[3] * (m[2] / Math.abs(m[2])) // mins offset
+      var offset = m[2] ? 3600000 * m[2] // hrs offset
+      + 60000 * m[3] * (m[2] / Math.abs(m[2])) // mins offset
       : 0;
-      return new Date(1 * m[1] + offset);
+      return new Date(1 * m[1] // ticks
+      + offset);
     } // failing that, try to parse whatever we've got.
 
 
@@ -36125,8 +36775,8 @@ var Forestry = (function () {
 
   L.gmx.timeline = links;
 
-  var translate$u = translate$v;
-  add('ru', {
+  var translate$s = translate$t;
+  add$1('ru', {
     DateInterval: {
       onlyChecked: 'Только отмеченные',
       onlyOne: 'Только 1 снимок',
@@ -36161,20 +36811,20 @@ var Forestry = (function () {
       this._tabs = leafletSrc.DomUtil.create('div', 'buttons', this._container);
       this._timelineNode = leafletSrc.DomUtil.create('div', 'timeline', this._container);
       this._icon = leafletSrc.DomUtil.create('div', 'icon', this._container);
-      this._icon.innerHTML = translate$u('DateInterval.title');
+      this._icon.innerHTML = translate$s('DateInterval.title');
       this._topCont = leafletSrc.DomUtil.create('div', 'top', this._container);
       this._onlyCheckedNode = leafletSrc.DomUtil.create('input', '', this._topCont);
       this._onlyCheckedNode.type = 'checkbox';
       this._onlyCheckedNode.checked = true;
       leafletSrc.DomEvent.on(this._onlyCheckedNode, 'click', this._onlyChecked, this);
       this._onlyCheckedLabel = leafletSrc.DomUtil.create('label', '', this._topCont);
-      this._onlyCheckedLabel.innerHTML = translate$u('DateInterval.onlyChecked');
+      this._onlyCheckedLabel.innerHTML = translate$s('DateInterval.onlyChecked');
       this._onlyOneNode = leafletSrc.DomUtil.create('input', '', this._topCont);
       this._onlyOneNode.type = 'checkbox';
       this._onlyOneNode.checked = true;
       leafletSrc.DomEvent.on(this._onlyOneNode, 'click', this._onlyOne, this);
       this._onlyOneLabel = leafletSrc.DomUtil.create('label', '', this._topCont);
-      this._onlyOneLabel.innerHTML = translate$u('DateInterval.onlyOne');
+      this._onlyOneLabel.innerHTML = translate$s('DateInterval.onlyOne');
       this._timeline = new links.Timeline(this._timelineNode, {
         locale: 'ru',
         width: '100%',
@@ -36873,7 +37523,7 @@ var Forestry = (function () {
     }
   });
 
-  add('en', {
+  add$1('en', {
     gmxLocation: {
       locationChange: 'Сhange the map center:',
       locationTxt: 'Current center coordinates',
@@ -36885,7 +37535,7 @@ var Forestry = (function () {
       m: 'm'
     }
   });
-  add('ru', {
+  add$1('ru', {
     gmxLocation: {
       locationChange: 'Переместить центр карты:',
       locationTxt: 'Текущие координаты центра карты',
@@ -36897,7 +37547,7 @@ var Forestry = (function () {
       m: 'м'
     }
   });
-  var translate$t = translate$v;
+  var translate$r = translate$t;
   var _mzoom = ['M 1:500 000 000', //  0   156543.03392804
   'M 1:300 000 000', //  1   78271.51696402
   'M 1:150 000 000', //  2   39135.75848201
@@ -36971,12 +37621,12 @@ var Forestry = (function () {
       }
 
       this.locationTxt = leafletSrc.DomUtil.create('span', 'leaflet-gmx-locationTxt', container);
-      this.locationTxt.title = translate$t('gmxLocation.locationTxt');
+      this.locationTxt.title = translate$r('gmxLocation.locationTxt');
       this.coordFormatChange = leafletSrc.DomUtil.create('span', 'leaflet-gmx-coordFormatChange', container);
-      this.coordFormatChange.title = translate$t('gmxLocation.coordFormatChange');
+      this.coordFormatChange.title = translate$r('gmxLocation.coordFormatChange');
       this.scaleBar = leafletSrc.DomUtil.create('span', 'leaflet-gmx-scaleBar', container);
       this.scaleBarTxt = leafletSrc.DomUtil.create('span', 'leaflet-gmx-scaleBarTxt', container);
-      this.scaleBarTxt.title = this.scaleBar.title = translate$t('gmxLocation.scaleBarChange');
+      this.scaleBarTxt.title = this.scaleBar.title = translate$r('gmxLocation.scaleBarChange');
       this._map = map;
       var util = {
         coordFormat: this.options.coordinatesFormat || 0,
@@ -37034,7 +37684,7 @@ var Forestry = (function () {
             leafletSrc.DomEvent.on(button, 'click', function () {
               util.goTo(input.value);
             });
-            span.innerHTML = translate$t('gmxLocation.locationChange');
+            span.innerHTML = translate$r('gmxLocation.locationChange');
             input.value = oldText;
             leafletSrc.DomEvent.on(input, 'keydown', function (ev) {
               if (ev.which === 13) {
@@ -37220,11 +37870,11 @@ var Forestry = (function () {
     utils.prettifyDistance = function (length) {
       var type = '',
           //map.DistanceUnit
-      txt = translate$t('units.km') || 'km',
+      txt = translate$r('units.km') || 'km',
           km = ' ' + txt;
 
       if (length < 2000 || type === 'm') {
-        txt = translate$t('units.m') || 'm';
+        txt = translate$r('units.m') || 'm';
         return Math.round(length) + ' ' + txt;
       } else if (length < 200000) {
         return Math.round(length / 10) / 100 + km;
@@ -37893,14 +38543,14 @@ var Forestry = (function () {
   };
 
   Object.keys(s).forEach(function (lang) {
-    return add(lang, s[lang]);
+    return add$1(lang, s[lang]);
   });
-  var translate$s = translate$v;
+  var translate$q = translate$t;
   var TASK_POLLING_DELAY = 3000;
   var NOTIFY_TIMEOUT = 5000;
 
-  var Controller = /*#__PURE__*/function (_Evented) {
-    _inherits(Controller, _Evented);
+  var Controller = /*#__PURE__*/function (_Events) {
+    _inherits(Controller, _Events);
 
     var _super = _createSuper(Controller);
 
@@ -37930,43 +38580,43 @@ var Forestry = (function () {
             return true;
 
           case 400:
-            this._notification.error(translate$s('error.badrequest'), NOTIFY_TIMEOUT);
+            this._notification.error(translate$q('error.badrequest'), NOTIFY_TIMEOUT);
 
             return false;
 
           case 401:
-            this._notification.error(translate$s('error.unauthorized'), NOTIFY_TIMEOUT);
+            this._notification.error(translate$q('error.unauthorized'), NOTIFY_TIMEOUT);
 
             window.location.reload();
             return false;
 
           case 403:
-            this._notification.error(translate$s('error.forbidden'), NOTIFY_TIMEOUT);
+            this._notification.error(translate$q('error.forbidden'), NOTIFY_TIMEOUT);
 
             return false;
 
           case 404:
-            this._notification.error(translate$s('error.validation'), NOTIFY_TIMEOUT);
+            this._notification.error(translate$q('error.validation'), NOTIFY_TIMEOUT);
 
             return false;
 
           case 500:
-            this._notification.error(translate$s('error.server'), NOTIFY_TIMEOUT);
+            this._notification.error(translate$q('error.server'), NOTIFY_TIMEOUT);
 
             return false;
 
           case 502:
-            this._notification.error(translate$s('error.gateway'), NOTIFY_TIMEOUT);
+            this._notification.error(translate$q('error.gateway'), NOTIFY_TIMEOUT);
 
             return false;
 
           case 503:
-            this._notification.error(translate$s('error.unavailable'), NOTIFY_TIMEOUT);
+            this._notification.error(translate$q('error.unavailable'), NOTIFY_TIMEOUT);
 
             return false;
 
           default:
-            this._notification.error(translate$s('error.other'), NOTIFY_TIMEOUT);
+            this._notification.error(translate$q('error.other'), NOTIFY_TIMEOUT);
 
             return false;
         }
@@ -38173,7 +38823,7 @@ var Forestry = (function () {
     }]);
 
     return Controller;
-  }(Evented);
+  }(Events$1);
 
   var LayerController = /*#__PURE__*/function (_Controller) {
     _inherits(LayerController, _Controller);
@@ -38225,7 +38875,7 @@ var Forestry = (function () {
         }
       });
 
-      _this8._legend.addComponent(_this8._kind, translate$s("legend.".concat(_this8._kind)));
+      _this8._legend.addComponent(_this8._kind, translate$q("legend.".concat(_this8._kind)));
 
       _this8._legend.on('click', _this8._toggle, _assertThisInitialized(_this8));
 
@@ -38277,122 +38927,319 @@ var Forestry = (function () {
     return LayerController;
   }(Controller);
 
-  var Component = /*#__PURE__*/function (_Evented) {
-    _inherits(Component, _Evented);
+  var freezing = !fails$1(function () {
+    // eslint-disable-next-line es/no-object-isextensible, es/no-object-preventextensions -- required for testing
+    return Object.isExtensible(Object.preventExtensions({}));
+  });
 
-    var _super = _createSuper(Component);
+  // FF26- bug: ArrayBuffers are non-extensible, but Object.isExtensible does not report it
 
-    function Component(container, options) {
-      var _this;
 
-      _classCallCheck$1(this, Component);
+  var arrayBufferNonExtensible = fails$1(function () {
+    if (typeof ArrayBuffer == 'function') {
+      var buffer = new ArrayBuffer(8);
+      // eslint-disable-next-line es/no-object-isextensible, es/no-object-defineproperty -- safe
+      if (Object.isExtensible(buffer)) Object.defineProperty(buffer, 'a', { value: 8 });
+    }
+  });
 
-      _this = _super.call(this);
-      _this._container = container;
+  // eslint-disable-next-line es/no-object-isextensible -- safe
+  var $isExtensible = Object.isExtensible;
+  var FAILS_ON_PRIMITIVES$2 = fails$1(function () { $isExtensible(1); });
 
-      _this.render(options);
+  // `Object.isExtensible` method
+  // https://tc39.es/ecma262/#sec-object.isextensible
+  var objectIsExtensible = (FAILS_ON_PRIMITIVES$2 || arrayBufferNonExtensible) ? function isExtensible(it) {
+    if (!isObject$1(it)) return false;
+    if (arrayBufferNonExtensible && classofRaw$1(it) == 'ArrayBuffer') return false;
+    return $isExtensible ? $isExtensible(it) : true;
+  } : $isExtensible;
 
-      _this.element.classList.add('scanex-component');
+  var internalMetadata = createCommonjsModule$1(function (module) {
+  var defineProperty = objectDefineProperty$1.f;
+
+
+
+
+
+
+  var REQUIRED = false;
+  var METADATA = uid$1('meta');
+  var id = 0;
+
+  var setMetadata = function (it) {
+    defineProperty(it, METADATA, { value: {
+      objectID: 'O' + id++, // object ID
+      weakData: {}          // weak collections IDs
+    } });
+  };
+
+  var fastKey = function (it, create) {
+    // return a primitive with prefix
+    if (!isObject$1(it)) return typeof it == 'symbol' ? it : (typeof it == 'string' ? 'S' : 'P') + it;
+    if (!hasOwnProperty_1(it, METADATA)) {
+      // can't set metadata to uncaught frozen object
+      if (!objectIsExtensible(it)) return 'F';
+      // not necessary to add metadata
+      if (!create) return 'E';
+      // add missing metadata
+      setMetadata(it);
+    // return object ID
+    } return it[METADATA].objectID;
+  };
+
+  var getWeakData = function (it, create) {
+    if (!hasOwnProperty_1(it, METADATA)) {
+      // can't set metadata to uncaught frozen object
+      if (!objectIsExtensible(it)) return true;
+      // not necessary to add metadata
+      if (!create) return false;
+      // add missing metadata
+      setMetadata(it);
+    // return the store of weak collections IDs
+    } return it[METADATA].weakData;
+  };
+
+  // add metadata on freeze-family methods calling
+  var onFreeze = function (it) {
+    if (freezing && REQUIRED && objectIsExtensible(it) && !hasOwnProperty_1(it, METADATA)) setMetadata(it);
+    return it;
+  };
+
+  var enable = function () {
+    meta.enable = function () { /* empty */ };
+    REQUIRED = true;
+    var getOwnPropertyNames = objectGetOwnPropertyNames$1.f;
+    var splice = functionUncurryThis([].splice);
+    var test = {};
+    test[METADATA] = 1;
+
+    // prevent exposing of metadata key
+    if (getOwnPropertyNames(test).length) {
+      objectGetOwnPropertyNames$1.f = function (it) {
+        var result = getOwnPropertyNames(it);
+        for (var i = 0, length = result.length; i < length; i++) {
+          if (result[i] === METADATA) {
+            splice(result, i, 1);
+            break;
+          }
+        } return result;
+      };
+
+      _export$1({ target: 'Object', stat: true, forced: true }, {
+        getOwnPropertyNames: objectGetOwnPropertyNamesExternal.f
+      });
+    }
+  };
+
+  var meta = module.exports = {
+    enable: enable,
+    fastKey: fastKey,
+    getWeakData: getWeakData,
+    onFreeze: onFreeze
+  };
+
+  hiddenKeys$3[METADATA] = true;
+  });
+
+  var onFreeze = internalMetadata.onFreeze;
+
+  // eslint-disable-next-line es/no-object-freeze -- safe
+  var $freeze = Object.freeze;
+  var FAILS_ON_PRIMITIVES$1 = fails$1(function () { $freeze(1); });
+
+  // `Object.freeze` method
+  // https://tc39.es/ecma262/#sec-object.freeze
+  _export$1({ target: 'Object', stat: true, forced: FAILS_ON_PRIMITIVES$1, sham: !freezing }, {
+    freeze: function freeze(it) {
+      return $freeze && isObject$1(it) ? $freeze(onFreeze(it)) : it;
+    }
+  });
+
+  // `Number.isInteger` method
+  // https://tc39.es/ecma262/#sec-number.isinteger
+  _export$1({ target: 'Number', stat: true }, {
+    isInteger: isIntegralNumber
+  });
+
+  /*! *****************************************************************************
+  Copyright (c) Microsoft Corporation.
+
+  Permission to use, copy, modify, and/or distribute this software for any
+  purpose with or without fee is hereby granted.
+
+  THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+  REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+  AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+  LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+  OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+  PERFORMANCE OF THIS SOFTWARE.
+  ***************************************************************************** */
+
+  /* global Reflect, Promise */
+  var _extendStatics = function extendStatics(d, b) {
+    _extendStatics = Object.setPrototypeOf || {
+      __proto__: []
+    } instanceof Array && function (d, b) {
+      d.__proto__ = b;
+    } || function (d, b) {
+      for (var p in b) {
+        if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p];
+      }
+    };
+
+    return _extendStatics(d, b);
+  };
+
+  function __extends(d, b) {
+    if (typeof b !== "function" && b !== null) throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+
+    _extendStatics(d, b);
+
+    function __() {
+      this.constructor = d;
+    }
+
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+  }
+
+  var Events =
+  /** @class */
+  function () {
+    function Events() {
+      this.listeners = {};
+    }
+
+    Events.prototype.addEventListener = function (type, callback) {
+      if (!this.listeners[type]) {
+        this.listeners[type] = [];
+      }
+
+      this.listeners[type].push(callback);
+    };
+
+    Events.prototype.on = function (type, callback) {
+      this.addEventListener(type, callback);
+      return this;
+    };
+
+    Events.prototype.removeEventListener = function (type, callback) {
+      if (!this.listeners[type]) {
+        return;
+      }
+
+      var stack = this.listeners[type];
+
+      for (var i = 0, l = stack.length; i < l; i++) {
+        if (stack[i] === callback) {
+          stack.splice(i, 1);
+          return this.removeEventListener(type, callback);
+        }
+      }
+    };
+
+    Events.prototype.off = function (type, callback) {
+      this.removeEventListener(type, callback);
+      return this;
+    };
+
+    Events.prototype.dispatchEvent = function (event) {
+      if (!this.listeners[event.type]) {
+        return false;
+      }
+
+      var stack = this.listeners[event.type];
+      Object.defineProperty(event, 'target', {
+        enumerable: false,
+        configurable: false,
+        writable: false,
+        value: this
+      });
+
+      for (var i = 0, len = stack.length; i < len; i++) {
+        stack[i].call(this, event);
+      }
+
+      return true;
+    };
+
+    return Events;
+  }();
+
+  var Component =
+  /** @class */
+  function (_super) {
+    __extends(Component, _super);
+
+    function Component(el) {
+      var _this = _super.call(this) || this;
+
+      _this.el = el;
+      return _this;
+    }
+
+    Object.defineProperty(Component.prototype, "element", {
+      get: function get() {
+        return this.el;
+      },
+      enumerable: false,
+      configurable: true
+    });
+
+    Component.prototype.destroy = function () {};
+
+    return Component;
+  }(Events);
+
+  var Checkbox =
+  /** @class */
+  function (_super) {
+    __extends(Checkbox, _super);
+
+    function Checkbox(el, id) {
+      var _this = _super.call(this, el) || this;
+
+      _this._checked = false;
+      _this._disabled = false;
+
+      _this.element.classList.add('scanex-component-checkbox');
+
+      _this.element.classList.add('scanex-component-icon');
+
+      _this.element.addEventListener('click', _this._click.bind(_this));
+
+      if (id) {
+        _this._id = id;
+
+        _this.element.setAttribute('id', _this._id);
+      }
 
       return _this;
     }
 
-    _createClass$1(Component, [{
-      key: "destroy",
-      value: function destroy() {
-        this.element.classList.remove('scanex-component');
-      } // Должен устанавливать корневой элемент
+    Checkbox.prototype.destroy = function () {
+      this.element.classList.remove('scanex-component-checkbox');
+      this.element.classList.remove('scanex-component-icon');
+      this.element.removeEventListener('click', this._click.bind(this));
 
-    }, {
-      key: "render",
-      value: function render(options) {
-        this._element = this._container;
+      if (this.id) {
+        this.element.removeAttribute('id');
       }
-    }, {
-      key: "element",
-      get: function get() {
-        return this._element;
+
+      if (this.checked) {
+        this.element.classList.remove('check');
       }
-    }, {
-      key: "forwardEvent",
-      value: function forwardEvent(e) {
-        e.stopPropagation();
-        var event = document.createEvent('Event');
-        event.initEvent(e.type, false, false);
-        event.detail = e.detail;
-        this.dispatchEvent(event);
-      }
-    }, {
-      key: "disabled",
-      get: function get() {
-        return this.element.classList.contains('disabled');
-      },
-      set: function set(disabled) {
-        if (disabled) {
-          this.element.classList.add('disabled');
-        } else {
-          this.element.classList.remove('disabled');
-        }
-      }
-    }]);
+    };
 
-    return Component;
-  }(Evented);
-
-  var Checkbox = /*#__PURE__*/function (_Component) {
-    _inherits(Checkbox, _Component);
-
-    var _super = _createSuper(Checkbox);
-
-    function Checkbox() {
-      _classCallCheck$1(this, Checkbox);
-
-      return _super.apply(this, arguments);
-    }
-
-    _createClass$1(Checkbox, [{
-      key: "render",
-      value: function render(id) {
-        _get(_getPrototypeOf(Checkbox.prototype), "render", this).call(this);
-
-        this._checked = false;
-        this._disabled = false;
-        this.element.classList.add('scanex-component-checkbox');
-        this.element.classList.add('scanex-component-icon');
-        this._click = this._click.bind(this);
-        this.element.addEventListener('click', this._click);
-
-        if (id) {
-          this._id = id;
-          this.element.setAttribute('id', this._id);
-        }
-      }
-    }, {
-      key: "destroy",
-      value: function destroy() {
-        _get(_getPrototypeOf(Checkbox.prototype), "destroy", this).call(this);
-
-        this.element.classList.remove('scanex-component-checkbox');
-        this.element.classList.remove('scanex-component-icon');
-        this.element.removeEventListener('click', this._click);
-
-        if (this._id) {
-          this.element.removeAttribute('id');
-        }
-
-        if (this._checked) {
-          this.element.classList.remove('check');
-        }
-      }
-    }, {
-      key: "checked",
+    Object.defineProperty(Checkbox.prototype, "checked", {
       get: function get() {
         return this._checked;
       },
       set: function set(checked) {
         this._checked = checked;
 
-        if (this._checked) {
+        if (this.checked) {
           this.element.classList.add('check');
         } else {
           this.element.classList.remove('check');
@@ -38401,785 +39248,2147 @@ var Forestry = (function () {
         var event = document.createEvent('Event');
         event.initEvent('click', false, false);
         this.dispatchEvent(event);
-      }
-    }, {
-      key: "id",
+      },
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(Checkbox.prototype, "disabled", {
+      get: function get() {
+        return this._disabled;
+      },
+      set: function set(disabled) {
+        this._disabled = disabled;
+
+        if (this.disabled) {
+          this.element.classList.add('disabled');
+        } else {
+          this.element.classList.remove('disabled');
+        }
+      },
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(Checkbox.prototype, "id", {
       get: function get() {
         return this._id;
-      }
-    }, {
-      key: "_click",
-      value: function _click(e) {
-        e.stopPropagation();
+      },
+      enumerable: false,
+      configurable: true
+    });
 
-        if (!this.disabled) {
-          this.checked = !this.checked;
-        }
+    Checkbox.prototype._click = function (e) {
+      e.stopPropagation();
+
+      if (!this.disabled) {
+        this.checked = !this.checked;
       }
-    }]);
+    };
 
     return Checkbox;
   }(Component);
 
-  var notify$3 = {
-  	info: {
-  		ok: "Request Completed"
-  	},
-  	error: {
-  		badrequest: "Bad request",
-  		unauthorized: "Unauthorized",
-  		forbidden: "Forbidden",
-  		notfound: "Not found",
-  		server: "Internal server error",
-  		gateway: "Bad gateway",
-  		unavailable: "Service unavailable",
-  		other: "Other errors"
-  	}
-  };
-  var en$3 = {
-  	notify: notify$3
-  };
+  /** @class */
+  (function (_super) {
+    __extends(Group, _super);
 
-  var notify$2 = {
-  	info: {
-  		ok: "Запрос выполнен"
-  	},
-  	error: {
-  		badrequest: "Неправильный запрос",
-  		unauthorized: "Не авторизован",
-  		forbidden: "Нет разрешения",
-  		notfound: "Не найдено",
-  		server: "Внутренняя ошибка сервера",
-  		gateway: "Неправильный шлюз",
-  		unavailable: "Сервис недоступен",
-  		other: "Прочие ошибки"
-  	}
-  };
-  var ru$3 = {
-  	notify: notify$2
-  };
+    function Group() {
+      var _this = _super.call(this) || this;
 
-  add('ru', ru$3);
-  add('en', en$3);
-
-  var scanex$1 = {
-  	components: {
-  		dialog: {
-  			close: "Close",
-  			maximize: "Maximize",
-  			minimize: "Minimize"
-  		}
-  	}
-  };
-  var en$2 = {
-  	scanex: scanex$1
-  };
-
-  var scanex = {
-  	components: {
-  		dialog: {
-  			close: "Закрыть",
-  			maximize: "Развернуть",
-  			minimize: "Свернуть"
-  		}
-  	}
-  };
-  var ru$2 = {
-  	scanex: scanex
-  };
-
-  add('ru', ru$2);
-  add('en', en$2);
-  var translate$r = translate$v;
-
-  var Dialog = /*#__PURE__*/function (_Component) {
-    _inherits(Dialog, _Component);
-
-    var _super = _createSuper(Dialog);
-
-    function Dialog(options) {
-      _classCallCheck$1(this, Dialog);
-
-      return _super.call(this, document.body, options);
+      _this.current = 0;
+      _this.items = {};
+      _this.disableReset = false;
+      return _this;
     }
 
-    _createClass$1(Dialog, [{
-      key: "destroy",
-      value: function destroy() {
-        if (this._overlay) {
-          this._overlay.remove();
-        }
+    Group.prototype.add = function (item) {
+      ++this.current;
+      item.addEventListener('click', this.reset.bind(this, this.current));
+      this.items[this.current.toString()] = item;
+      return this;
+    };
 
-        this.element.remove();
-      }
-    }, {
-      key: "render",
-      value: function render(_ref) {
-        var title = _ref.title,
-            id = _ref.id,
-            _ref$collapsible = _ref.collapsible,
-            collapsible = _ref$collapsible === void 0 ? false : _ref$collapsible,
-            _ref$modal = _ref.modal,
-            modal = _ref$modal === void 0 ? false : _ref$modal,
-            top = _ref.top,
-            left = _ref.left;
-        this._element = document.createElement('div');
+    Group.prototype.remove = function (id) {
+      var _a;
 
-        this._container.appendChild(this._element);
+      (_a = this.items[id]) === null || _a === void 0 ? void 0 : _a.removeEventListener('click', this.reset.bind(this, id));
+      delete this.items[id];
+      return this;
+    };
 
-        if (modal) {
-          this._overlay = document.createElement('div');
+    Group.prototype.reset = function (id) {
+      var _a;
 
-          this._overlay.classList.add('scanex-dialog-overlay');
+      if (!this.disableReset) {
+        var checked = (_a = this.items[id]) === null || _a === void 0 ? void 0 : _a.checked;
+        this.disableReset = true;
 
-          this._overlay.addEventListener('click', function (e) {
-            return e.stopPropagation();
-          });
+        for (var _i = 0, _b = Object.keys(this.items); _i < _b.length; _i++) {
+          var k = _b[_i];
 
-          document.body.appendChild(this._overlay);
-        } else {
-          this._id = id;
-        }
-
-        this.element.classList.add('scanex-component-dialog');
-        this._header = document.createElement('div');
-
-        this._header.classList.add('header');
-
-        this._titleElement = document.createElement('label');
-
-        this._header.appendChild(this._titleElement);
-
-        var buttons = document.createElement('div');
-        buttons.classList.add('header-buttons');
-
-        if (collapsible && !modal) {
-          this._btnToggle = document.createElement('i');
-
-          this._btnToggle.setAttribute('title', translate$r('scanex.components.dialog.minimize'));
-
-          this._btnToggle.classList.add('scanex-component-icon');
-
-          this._btnToggle.classList.add('minimize');
-
-          this._btnToggle.addEventListener('click', this._toggle.bind(this));
-
-          buttons.appendChild(this._btnToggle);
-        }
-
-        var btnClose = document.createElement('i');
-        btnClose.setAttribute('title', translate$r('scanex.components.dialog.close'));
-        btnClose.classList.add('scanex-component-icon');
-        btnClose.classList.add('close');
-        btnClose.addEventListener('click', this.close.bind(this));
-        buttons.appendChild(btnClose);
-
-        this._header.appendChild(buttons);
-
-        this.element.appendChild(this._header);
-        this._content = document.createElement('div');
-
-        this._content.classList.add('content');
-
-        this.element.appendChild(this._content);
-        this._footer = document.createElement('div');
-
-        this._footer.classList.add('footer');
-
-        this.element.appendChild(this._footer);
-
-        this._restorePosition(this.element, top, left);
-
-        this._titleElement.innerText = title;
-        this._moving = false;
-
-        if (!modal) {
-          if (this._id) {
-            this._element.setAttribute('id', this._id);
+          if (k === id.toString()) {
+            continue;
           }
 
-          this._header.addEventListener('mousedown', this._start.bind(this));
-
-          this.element.addEventListener('mousemove', this._move.bind(this));
-          window.addEventListener('mouseup', this._stop.bind(this));
+          if (checked) {
+            this.items[k].checked = false;
+          }
         }
+
+        this.disableReset = false;
       }
-    }, {
-      key: "_restorePosition",
-      value: function _restorePosition(el, top, left) {
-        if (typeof this._id === 'string' && this._id != '') {
-          var pos = window.localStorage.getItem("".concat(this._id, ".position"));
+    };
 
-          var _ref2 = pos && pos.split(',') || [0, 0],
-              _ref3 = _slicedToArray(_ref2, 2),
-              x = _ref3[0],
-              y = _ref3[1];
+    return Group;
+  })(Events);
 
-          el.style.top = "".concat(y || top || Math.round(window.innerHeight / 2), "px");
-          el.style.left = "".concat(x || left || Math.round(window.innerWidth / 2), "px");
+  /** @class */
+  (function (_super) {
+    __extends(Collapse, _super);
+
+    function Collapse(el) {
+      var _this = _super.call(this, el) || this;
+
+      _this._collapsed = false;
+
+      _this.element.classList.add('scanex-component-collapse');
+
+      _this.element.classList.add('scanex-component-icon');
+
+      _this.element.classList.add('collapse-expanded');
+
+      _this.element.addEventListener('click', _this._click.bind(_this));
+
+      return _this;
+    }
+
+    Collapse.prototype.destroy = function () {
+      this.element.classList.remove('collapse-collapsed');
+      this.element.classList.remove('collapse-expanded');
+      this.element.removeEventListener('click', this._click.bind(this));
+    };
+
+    Collapse.prototype._click = function (e) {
+      e.stopPropagation();
+      this.collapsed = !this.collapsed;
+    };
+
+    Object.defineProperty(Collapse.prototype, "collapsed", {
+      get: function get() {
+        return this._collapsed;
+      },
+      set: function set(collapsed) {
+        this._collapsed = collapsed;
+
+        if (this.collapsed) {
+          this.element.classList.remove('collapse-expanded');
+          this.element.classList.add('collapse-collapsed');
         } else {
-          var r = el.getBoundingClientRect();
-          el.style.top = "".concat(top || Math.round(window.innerHeight / 2 - r.height), "px");
-          el.style.left = "".concat(left || Math.round(window.innerWidth / 2 - r.width), "px");
+          this.element.classList.remove('collapse-collapsed');
+          this.element.classList.add('collapse-expanded');
         }
-      }
-    }, {
-      key: "_savePosition",
-      value: function _savePosition(el) {
-        if (typeof this._id === 'string' && this._id != '') {
-          var _el$getBoundingClient = el.getBoundingClientRect(),
-              top = _el$getBoundingClient.top,
-              left = _el$getBoundingClient.left;
 
-          window.localStorage.setItem("".concat(this._id, ".position"), [left, top].join(','));
+        var event = document.createEvent('Event');
+        event.initEvent('click', false, false);
+        this.dispatchEvent(event);
+      },
+      enumerable: false,
+      configurable: true
+    });
+    return Collapse;
+  })(Component);
+
+  var ENUM_ID = typeof Symbol === 'function' ? Symbol('enumeration id') : 1e+6;
+
+  var Row =
+  /** @class */
+  function (_super) {
+    __extends(Row, _super);
+
+    function Row(el, item) {
+      var _this = _super.call(this, el) || this;
+
+      _this._cells = {};
+      _this._item = item;
+      return _this;
+    }
+
+    Object.defineProperty(Row.prototype, "item", {
+      get: function get() {
+        return this._item;
+      },
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(Row.prototype, "cells", {
+      get: function get() {
+        return this._cells;
+      },
+      enumerable: false,
+      configurable: true
+    });
+
+    Row.prototype.destroy = function () {
+      this.element.remove();
+      var event = document.createEvent('Event');
+      event.initEvent('remove', false, false);
+      this.dispatchEvent(event);
+    };
+
+    Row.prototype.update = function (item) {
+      for (var _i = 0, _a = Object.keys(this.item); _i < _a.length; _i++) {
+        var field = _a[_i];
+        var cell = this.cells[field];
+
+        if (cell) {
+          cell.update(item[field]);
         }
       }
-    }, {
-      key: "header",
+    };
+
+    return Row;
+  }(Component);
+
+  var Cell =
+  /** @class */
+  function (_super) {
+    __extends(Cell, _super);
+
+    function Cell(el, field, item) {
+      var _this = _super.call(this, el) || this;
+
+      _this._field = field;
+      _this._item = item;
+
+      _this.render();
+
+      return _this;
+    }
+
+    Object.defineProperty(Cell.prototype, "field", {
+      get: function get() {
+        return this._field;
+      },
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(Cell.prototype, "item", {
+      get: function get() {
+        return this._item;
+      },
+      enumerable: false,
+      configurable: true
+    });
+
+    Cell.prototype.destroy = function () {
+      this.element.remove();
+    };
+
+    Cell.prototype.update = function (value) {
+      this._item[this.field.name] = value;
+      this.render();
+    };
+
+    Cell.prototype.click = function (e) {
+      e.stopPropagation();
+      var event = document.createEvent('Event');
+      event.initEvent('click', false, false);
+      this.dispatchEvent(event);
+    };
+
+    Cell.prototype.render = function () {
+      var _this = this;
+
+      var _a = this.field,
+          name = _a.name,
+          type = _a.type;
+      var cbx;
+
+      switch (type) {
+        case 'boolean':
+          cbx = new Checkbox(this.element);
+          cbx.addEventListener('click', function (e) {
+            _this.item[_this.field.name] = cbx.checked;
+
+            _this.click(e);
+          });
+          cbx.checked = this._item[this.field.name];
+          break;
+
+        case 'action':
+          this.element.innerHTML = "<i class=\"scanex-component-icon ".concat(this.field.name, "\"></i>");
+          this.element.addEventListener('click', this.click.bind(this));
+          break;
+
+        default:
+          this.element.innerText = this.item[name].toLocaleString();
+          this.element.addEventListener('click', this.click.bind(this));
+          break;
+      }
+    };
+
+    return Cell;
+  }(Component);
+
+  /** @class */
+  (function (_super) {
+    __extends(ColumnEvent, _super);
+
+    function ColumnEvent() {
+      return _super !== null && _super.apply(this, arguments) || this;
+    }
+
+    return ColumnEvent;
+  })(Event);
+
+  /** @class */
+  (function (_super) {
+    __extends(CellEvent, _super);
+
+    function CellEvent() {
+      return _super !== null && _super.apply(this, arguments) || this;
+    }
+
+    return CellEvent;
+  })(Event);
+
+  /** @class */
+  (function (_super) {
+    __extends(RowEvent, _super);
+
+    function RowEvent() {
+      return _super !== null && _super.apply(this, arguments) || this;
+    }
+
+    return RowEvent;
+  })(Event);
+
+  var Column =
+  /** @class */
+  function (_super) {
+    __extends(Column, _super);
+
+    function Column(el, _a) {
+      var _b = _a.label,
+          label = _b === void 0 ? '' : _b,
+          type = _a.type,
+          _c = _a.sortable,
+          sortable = _c === void 0 ? false : _c,
+          field = _a.field;
+
+      var _this = _super.call(this) || this;
+
+      _this.el = document.createElement('div');
+      _this.label = document.createElement('label');
+      _this.icon = document.createElement('i');
+      _this._dir = 'none';
+      _this.sortable = false;
+
+      _this.el.classList.add('scanex-component-datagrid-column');
+
+      _this.label.innerText = label;
+      _this.sortable = type === 'action' ? false : sortable;
+
+      _this.el.appendChild(_this.label);
+
+      _this.icon.classList.add(field);
+
+      _this.icon.classList.add('scanex-component-icon');
+
+      switch (type) {
+        case 'boolean':
+          _this.cbx = new Checkbox(_this.icon);
+
+          _this.cbx.addEventListener('click', _this.onClick.bind(_this));
+
+          break;
+
+        default:
+          _this.el.addEventListener('click', function (e) {
+            e.stopPropagation();
+
+            if (_this.sortable) {
+              switch (_this.dir) {
+                case 'asc':
+                  _this.dir = 'desc';
+                  break;
+
+                case 'desc':
+                  _this.dir = 'asc';
+                  break;
+
+                default:
+                  _this.dir = 'asc';
+                  break;
+              }
+            } else {
+              _this.onClick();
+            }
+          });
+
+          break;
+      }
+
+      _this.el.appendChild(_this.icon);
+
+      el.appendChild(_this.el);
+      return _this;
+    }
+
+    Object.defineProperty(Column.prototype, "checked", {
+      get: function get() {
+        if (this.cbx) {
+          return this.cbx.checked;
+        } else {
+          return false;
+        }
+      },
+      set: function set(checked) {
+        if (this.cbx) {
+          this.cbx.checked = checked;
+        }
+      },
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(Column.prototype, "dir", {
+      get: function get() {
+        return this._dir;
+      },
+      set: function set(dir) {
+        if (this._dir !== dir) {
+          this._dir = dir;
+
+          if (this._dir === 'asc') {
+            this.icon.classList.remove('descending');
+            this.icon.classList.add('ascending');
+          } else if (this._dir === 'desc') {
+            this.icon.classList.remove('ascending');
+            this.icon.classList.add('descending');
+          } else {
+            this.reset();
+          }
+
+          var event_1 = document.createEvent('Event');
+          event_1.initEvent('sort', false, false);
+          this.dispatchEvent(event_1);
+        }
+      },
+      enumerable: false,
+      configurable: true
+    });
+
+    Column.prototype.reset = function () {
+      this._dir = 'none';
+      this.icon.classList.remove('descending');
+      this.icon.classList.remove('ascending');
+    };
+
+    Column.prototype.onClick = function () {
+      var event = document.createEvent('Event');
+      event.initEvent('click', false, false);
+      this.dispatchEvent(event);
+    };
+
+    return Column;
+  }(Events);
+
+  /** @class */
+  (function (_super) {
+    __extends(Grid, _super);
+
+    function Grid(el, options) {
+      var _this = _super.call(this, el) || this;
+
+      _this.header = document.createElement('table');
+      _this.hbody = document.createElement('tbody');
+      _this.table = document.createElement('table');
+      _this.tbody = document.createElement('tbody');
+      _this._items = {};
+      _this._columns = {};
+      _this._rows = {};
+      _this._filtered = false;
+      _this._id = 0;
+      _this.options = options;
+      var _a = _this.options,
+          _b = _a.header,
+          header = _b === void 0 ? true : _b,
+          fields = _a.fields;
+
+      if (header) {
+        _this.element.appendChild(_this.header);
+
+        _this.header.classList.add('header');
+
+        _this.header.appendChild(_this.hbody);
+
+        var _loop_1 = function _loop_1(field) {
+          var _d = fields[field],
+              label = _d.label,
+              type = _d.type,
+              _e = _d.sortable,
+              sortable = _e === void 0 ? true : _e,
+              _f = _d.hidden,
+              hidden = _f === void 0 ? false : _f;
+
+          if (hidden) {
+            return "continue";
+          }
+
+          var td = document.createElement('td');
+          td.classList.add('scanex-component-datagrid-cell');
+          td.classList.add(field);
+          this_1.hbody.appendChild(td);
+          var col = new Column(td, {
+            label: label,
+            type: type,
+            sortable: sortable,
+            field: field
+          });
+          col.on('sort', function () {
+            _this.reset(field);
+
+            var dir = col.dir;
+            _this.sortBy = {
+              field: field,
+              dir: dir
+            };
+            var event = document.createEvent('Event');
+            event.initEvent('sort', false, false);
+            event.detail = {
+              field: field,
+              col: col
+            };
+
+            _this.dispatchEvent(event);
+          }).on('click', function () {
+            var event = document.createEvent('Event');
+            event.initEvent('column:click', false, false);
+            event.detail = {
+              field: field,
+              col: col
+            };
+
+            _this.dispatchEvent(event);
+          });
+          this_1.columns[field] = col;
+        };
+
+        var this_1 = this;
+
+        for (var _i = 0, _c = Object.keys(fields); _i < _c.length; _i++) {
+          var field = _c[_i];
+
+          _loop_1(field);
+        }
+      }
+
+      _this.element.classList.add('scanex-component-datagrid');
+
+      _this.table.classList.add('table');
+
+      _this.table.appendChild(_this.tbody);
+
+      _this.element.appendChild(_this.table);
+
+      return _this;
+    }
+
+    Object.defineProperty(Grid.prototype, "columns", {
+      get: function get() {
+        return this._columns;
+      },
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(Grid.prototype, "rows", {
+      get: function get() {
+        return this._rows;
+      },
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(Grid.prototype, "sorted", {
+      get: function get() {
+        var _this = this;
+
+        var items = Object.keys(this._items).map(function (id) {
+          return {
+            id: id,
+            item: _this._items[id]
+          };
+        }).sort(function (a, b) {
+          var sortBy = _this.options.sortBy;
+
+          if (sortBy) {
+            var field = sortBy.field,
+                _a = sortBy.dir,
+                dir = _a === void 0 ? 'none' : _a;
+            var x = a.item[field];
+            var y = b.item[field];
+
+            if (x < y) {
+              return dir === 'asc' ? -1 : 1;
+            } else if (x > y) {
+              return dir === 'asc' ? 1 : -1;
+            }
+          }
+
+          return 0;
+        });
+        return this.filtered ? items.filter(function (_a) {
+          var item = _a.item;
+
+          if (_this._filter) {
+            return _this._filter(item);
+          }
+
+          return true;
+        }) : items;
+      },
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(Grid.prototype, "items", {
+      get: function get() {
+        return this.sorted.map(function (_a) {
+          var item = _a.item;
+          return item;
+        });
+      },
+      set: function set(items) {
+        this._id = 0;
+        this._items = {};
+
+        for (var _i = 0, items_1 = items; _i < items_1.length; _i++) {
+          var item = items_1[_i];
+          var id = (++this._id).toString();
+          item[ENUM_ID] = id;
+          this._items[id] = item;
+        }
+
+        this.render();
+      },
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(Grid.prototype, "fields", {
+      get: function get() {
+        return this.options.fields;
+      },
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(Grid.prototype, "sortBy", {
+      get: function get() {
+        return this.options.sortBy;
+      },
+      set: function set(sortBy) {
+        this.options.sortBy = sortBy;
+
+        if (!this.options.disableSort) {
+          this.render();
+        }
+      },
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(Grid.prototype, "filtered", {
+      get: function get() {
+        return this._filtered;
+      },
+      set: function set(filtered) {
+        this._filtered = filtered;
+        this.render();
+      },
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(Grid.prototype, "filter", {
+      set: function set(filter) {
+        this._filter = filter;
+      },
+      enumerable: false,
+      configurable: true
+    });
+
+    Grid.prototype.add = function (item) {
+      var id = (++this._id).toString();
+      item[ENUM_ID] = id;
+      this._items[id] = item;
+      this.render();
+      return {
+        row: this.rows[id],
+        id: id
+      };
+    };
+
+    Grid.prototype.remove = function (id) {
+      delete this._items[id];
+      this.render();
+    };
+
+    Grid.prototype.clear = function () {
+      this._items = {};
+      this._id = 0;
+      this.tbody.innerHTML = '';
+    };
+
+    Grid.prototype.destroy = function () {
+      this.header.remove();
+      this.table.remove();
+    };
+
+    Grid.prototype.render = function () {
+      var _this = this;
+
+      this.tbody.innerHTML = '';
+      var fields = this.options.fields;
+
+      var _loop_2 = function _loop_2(id, item) {
+        var tr = document.createElement('tr');
+        this_2.tbody.appendChild(tr);
+        var row = new Row(tr, item);
+        row.addEventListener('remove', function () {
+          delete _this._items[id];
+          delete _this._rows[id];
+        });
+
+        var _loop_3 = function _loop_3(field) {
+          var _g = fields[field],
+              _h = _g.hidden,
+              hidden = _h === void 0 ? false : _h,
+              type = _g.type;
+
+          if (hidden) {
+            return "continue";
+          }
+
+          var td = document.createElement('td');
+          td.classList.add('scanex-component-datagrid-cell');
+          td.classList.add(field);
+          tr.appendChild(td);
+          var cell = new Cell(td, {
+            name: field,
+            type: type
+          }, item);
+          cell.addEventListener('click', function () {
+            var event = document.createEvent('Event');
+            event.initEvent('cell:click', false, false);
+            event.detail = {
+              cell: cell,
+              row: row
+            };
+
+            _this.dispatchEvent(event);
+          });
+          row.cells[field] = cell;
+          var event_2 = document.createEvent('Event');
+          event_2.initEvent('cell:add', false, false);
+          event_2.detail = {
+            cell: cell,
+            row: row
+          };
+          this_2.dispatchEvent(event_2);
+        };
+
+        for (var _e = 0, _f = Object.keys(fields); _e < _f.length; _e++) {
+          var field = _f[_e];
+
+          _loop_3(field);
+        }
+
+        this_2._rows[id] = row;
+        var event_3 = document.createEvent('Event');
+        event_3.initEvent('row:add', false, false);
+        event_3.detail = {
+          row: row,
+          id: id
+        };
+        this_2.dispatchEvent(event_3);
+      };
+
+      var this_2 = this;
+
+      for (var _i = 0, _a = this.sorted; _i < _a.length; _i++) {
+        var _b = _a[_i],
+            id = _b.id,
+            item = _b.item;
+
+        _loop_2(id, item);
+      }
+
+      for (var _c = 0, _d = Object.keys(fields); _c < _d.length; _c++) {
+        var field = _d[_c];
+        var col = this.columns[field];
+        var event_4 = document.createEvent('Event');
+        event_4.initEvent('column:add', false, false);
+        event_4.detail = {
+          field: field,
+          col: col
+        };
+        this.dispatchEvent(event_4);
+      }
+    };
+
+    Grid.prototype.reset = function (id) {
+      for (var _i = 0, _a = Object.keys(this.columns); _i < _a.length; _i++) {
+        var fid = _a[_i];
+
+        if (id === fid) {
+          continue;
+        }
+
+        this.columns[fid].reset();
+      }
+    };
+
+    return Grid;
+  })(Component);
+
+  function merge(t, u) {
+    for (var _i = 0, _a = Object.keys(u); _i < _a.length; _i++) {
+      var k = _a[_i];
+      var v = u[k];
+
+      if (t[k]) {
+        if (typeof v === 'string') {
+          t[k] = v;
+        } else if (typeof t[k] === 'string') {
+          t[k] = v;
+        } else {
+          t[k] = merge(t[k], v);
+        }
+      } else {
+        t[k] = v;
+      }
+    }
+
+    return t;
+  }
+
+  var langs = {};
+  var language = localStorage.getItem('lang') || 'ru';
+
+  function get_translation(root, path) {
+    if (!root) {
+      throw 'WRONG_OBJECT';
+    }
+
+    var i = path.indexOf('.');
+
+    if (i >= 0) {
+      var v = root[path.substring(0, i)];
+
+      if (typeof v === 'undefined' || typeof v === 'string') {
+        throw 'LONG_PATH';
+      }
+
+      return get_translation(v, path.substring(i + 1));
+    } else {
+      var v = root[path];
+
+      if (typeof v === 'string') {
+        return v;
+      }
+
+      throw 'SHORT_PATH';
+    }
+  }
+
+  function add(lang, obj) {
+    langs[lang] = langs[lang] || {};
+    langs[lang] = merge(langs[lang], obj);
+  }
+
+  function translate$3$1(path) {
+    return get_translation(langs[language], path);
+  }
+
+  var scanex$1 = {
+    components: {
+      dialog: {
+        close: "Close",
+        maximize: "Maximize",
+        minimize: "Minimize"
+      }
+    }
+  };
+  var en$2 = {
+    scanex: scanex$1
+  };
+  var scanex = {
+    components: {
+      dialog: {
+        close: "Закрыть",
+        maximize: "Развернуть",
+        minimize: "Свернуть"
+      }
+    }
+  };
+  var ru$2 = {
+    scanex: scanex
+  };
+  add('ru', ru$2);
+  add('en', en$2);
+  var translate$2$1 = translate$3$1;
+
+  var Dialog =
+  /** @class */
+  function (_super) {
+    __extends(Dialog, _super);
+
+    function Dialog(options) {
+      var _this = _super.call(this, document.createElement('div')) || this;
+
+      _this._header = document.createElement('div');
+      _this._titleElement = document.createElement('label');
+      _this._buttons = document.createElement('div');
+      _this._btnToggle = document.createElement('i');
+      _this._content = document.createElement('div');
+      _this._footer = document.createElement('div');
+      _this.moving = false;
+      _this._offsetX = 0;
+      _this._offsetY = 0;
+      var id = options.id,
+          title = options.title,
+          modal = options.modal,
+          _a = options.closeable,
+          closeable = _a === void 0 ? true : _a,
+          collapsible = options.collapsible,
+          top = options.top,
+          left = options.left;
+      _this._id = id;
+
+      _this.element.classList.add(_this._id);
+
+      document.body.appendChild(_this.element);
+
+      if (modal) {
+        _this._overlay = document.createElement('div');
+
+        _this._overlay.classList.add('scanex-dialog-overlay');
+
+        _this._overlay.addEventListener('click', function (e) {
+          return e.stopPropagation();
+        });
+
+        document.body.appendChild(_this._overlay);
+      }
+
+      _this.element.classList.add('scanex-component-dialog');
+
+      _this._header.classList.add('header');
+
+      _this._header.appendChild(_this._titleElement);
+
+      _this._buttons.classList.add('header-buttons');
+
+      if (collapsible && !modal) {
+        _this._btnToggle.setAttribute('title', translate$2$1('scanex.components.dialog.minimize'));
+
+        _this._btnToggle.classList.add('scanex-component-icon');
+
+        _this._btnToggle.classList.add('minimize');
+
+        _this._btnToggle.addEventListener('click', _this._toggle.bind(_this));
+
+        _this._buttons.appendChild(_this._btnToggle);
+      }
+
+      if (closeable) {
+        var btnClose = document.createElement('i');
+        btnClose.setAttribute('title', translate$2$1('scanex.components.dialog.close'));
+        btnClose.classList.add('scanex-component-icon');
+        btnClose.classList.add('close');
+        btnClose.addEventListener('click', function (e) {
+          e.stopPropagation();
+
+          _this.close();
+        });
+
+        _this._buttons.appendChild(btnClose);
+      }
+
+      _this._header.appendChild(_this._buttons);
+
+      _this.element.appendChild(_this._header);
+
+      _this._content.classList.add('content');
+
+      _this.element.appendChild(_this._content);
+
+      _this._footer.classList.add('footer');
+
+      _this.element.appendChild(_this._footer);
+
+      _this._restorePosition(_this.element, top, left);
+
+      _this._titleElement.innerText = title;
+      _this.moving = false;
+
+      if (!modal) {
+        _this._header.addEventListener('mousedown', _this._start.bind(_this));
+
+        _this.element.addEventListener('mousemove', _this._move.bind(_this));
+
+        window.addEventListener('mouseup', _this._stop.bind(_this));
+      }
+
+      return _this;
+    }
+
+    Dialog.prototype.destroy = function () {
+      var _a;
+
+      (_a = this._overlay) === null || _a === void 0 ? void 0 : _a.remove();
+      this.element.remove();
+    };
+
+    Dialog.prototype._restorePosition = function (el, top, left) {
+      if (typeof this._id === 'string' && this._id != '') {
+        var pos = window.localStorage.getItem("".concat(this._id, ".position"));
+
+        var _a = pos && pos.split(',') || [0, 0],
+            x = _a[0],
+            y = _a[1];
+
+        el.style.top = "".concat(y || top || Math.round(window.innerHeight / 2), "px");
+        el.style.left = "".concat(x || left || Math.round(window.innerWidth / 2), "px");
+      } else {
+        var r = el.getBoundingClientRect();
+        el.style.top = "".concat(top || Math.round(window.innerHeight / 2 - r.height), "px");
+        el.style.left = "".concat(left || Math.round(window.innerWidth / 2 - r.width), "px");
+      }
+    };
+
+    Dialog.prototype._savePosition = function (el) {
+      if (typeof this._id === 'string' && this._id != '') {
+        var _a = el.getBoundingClientRect(),
+            top_1 = _a.top,
+            left = _a.left;
+
+        window.localStorage.setItem("".concat(this._id, ".position"), [left, top_1].join(','));
+      }
+    };
+
+    Object.defineProperty(Dialog.prototype, "title", {
+      get: function get() {
+        return this._titleElement;
+      },
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(Dialog.prototype, "header", {
       get: function get() {
         return this._header;
-      }
-    }, {
-      key: "content",
+      },
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(Dialog.prototype, "content", {
       get: function get() {
         return this._content;
-      }
-    }, {
-      key: "footer",
+      },
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(Dialog.prototype, "footer", {
       get: function get() {
         return this._footer;
+      },
+      enumerable: false,
+      configurable: true
+    });
+
+    Dialog.prototype._start = function (e) {
+      e.stopPropagation();
+      var clientX = e.clientX,
+          clientY = e.clientY;
+
+      var _a = this.element.getBoundingClientRect(),
+          top = _a.top,
+          left = _a.left;
+
+      this._offsetX = clientX - left;
+      this._offsetY = clientY - top;
+      this.moving = true;
+    };
+
+    Dialog.prototype._stop = function () {
+      if (this.moving) {
+        this.moving = false;
+
+        this._savePosition(this.element);
       }
-    }, {
-      key: "_start",
-      value: function _start(e) {
+    };
+
+    Dialog.prototype._move = function (e) {
+      if (this.moving) {
         e.stopPropagation();
         var clientX = e.clientX,
             clientY = e.clientY;
-
-        var _this$_element$getBou = this._element.getBoundingClientRect(),
-            top = _this$_element$getBou.top,
-            left = _this$_element$getBou.left;
-
-        this._offsetX = clientX - left;
-        this._offsetY = clientY - top;
-        this._moving = true;
+        this.element.style.left = "".concat(clientX - this._offsetX, "px");
+        this.element.style.top = "".concat(clientY - this._offsetY, "px");
       }
-    }, {
-      key: "_stop",
-      value: function _stop() {
-        if (this._moving) {
-          this._moving = false;
+    };
 
-          this._savePosition(this.element);
-        }
+    Dialog.prototype._toggle = function (e) {
+      e.stopPropagation();
+
+      if (this._btnToggle.classList.contains('minimize')) {
+        this._btnToggle.setAttribute('title', translate$2$1('scanex.components.dialog.maximize'));
+
+        this._btnToggle.classList.remove('minimize');
+
+        this._btnToggle.classList.add('maximize');
+
+        this._content.classList.add('hidden');
+
+        this._footer.classList.add('hidden');
+
+        var event_1 = document.createEvent('Event');
+        event_1.initEvent('minimize', false, false);
+        this.dispatchEvent(event_1);
+      } else {
+        this._btnToggle.setAttribute('title', translate$2$1('scanex.components.dialog.minimize'));
+
+        this._btnToggle.classList.remove('maximize');
+
+        this._btnToggle.classList.add('minimize');
+
+        this._content.classList.remove('hidden');
+
+        this._footer.classList.remove('hidden');
+
+        var event_2 = document.createEvent('Event');
+        event_2.initEvent('maximize', false, false);
+        this.dispatchEvent(event_2);
       }
-    }, {
-      key: "_move",
-      value: function _move(e) {
-        if (this._moving) {
-          e.stopPropagation();
-          var clientX = e.clientX,
-              clientY = e.clientY;
-          this.element.style.left = "".concat(clientX - this._offsetX, "px");
-          this.element.style.top = "".concat(clientY - this._offsetY, "px");
-        }
-      }
-    }, {
-      key: "_toggle",
-      value: function _toggle(e) {
-        e.stopPropagation();
+    };
 
-        if (this._btnToggle.classList.contains('minimize')) {
-          this._btnToggle.setAttribute('title', translate$r('scanex.components.dialog.maximize'));
-
-          this._btnToggle.classList.remove('minimize');
-
-          this._btnToggle.classList.add('maximize');
-
-          this._content.classList.add('hidden');
-
-          this._footer.classList.add('hidden');
-
-          var event = document.createEvent('Event');
-          event.initEvent('minimize', false, false);
-          this.dispatchEvent(event);
-        } else {
-          this._btnToggle.setAttribute('title', translate$r('scanex.components.dialog.minimize'));
-
-          this._btnToggle.classList.remove('maximize');
-
-          this._btnToggle.classList.add('minimize');
-
-          this._content.classList.remove('hidden');
-
-          this._footer.classList.remove('hidden');
-
-          var _event = document.createEvent('Event');
-
-          _event.initEvent('maximize', false, false);
-
-          this.dispatchEvent(_event);
-        }
-      }
-    }, {
-      key: "close",
-      value: function close(e) {
-        e.stopPropagation();
-        var event = document.createEvent('Event');
-        event.initEvent('close', false, false);
-        this.dispatchEvent(event);
-      }
-    }]);
+    Dialog.prototype.close = function () {
+      var event = document.createEvent('Event');
+      event.initEvent('close', false, false);
+      this.dispatchEvent(event);
+    };
 
     return Dialog;
   }(Component);
 
+  var Item =
+  /** @class */
+  function (_super) {
+    __extends(Item, _super);
+
+    function Item(el, options) {
+      var _this = _super.call(this, el) || this;
+
+      _this._el = document.createElement('div');
+      _this._title = document.createElement('label');
+      _this._id = '';
+      _this.disabled = false;
+      el.appendChild(_this.element);
+      var id = options.id,
+          title = options.title;
+      _this._id = id;
+
+      _this.element.addEventListener('click', _this._click.bind(_this));
+
+      _this.element.classList.add('scanex-menu-item');
+
+      _this.element.appendChild(_this._title);
+
+      _this._title.classList.add('scanex-menu-item-title');
+
+      _this._title.innerText = title;
+      return _this;
+    }
+
+    Item.prototype.destroy = function () {
+      this.element.remove();
+    };
+
+    Object.defineProperty(Item.prototype, "element", {
+      get: function get() {
+        return this._el;
+      },
+      enumerable: false,
+      configurable: true
+    });
+
+    Item.prototype._click = function (e) {
+      e.stopPropagation();
+
+      if (!this.disabled) {
+        var event_1 = document.createEvent('Event');
+        event_1.initEvent('item:click', false, false);
+        event_1.detail = this;
+        this.dispatchEvent(event_1);
+      }
+    };
+
+    Object.defineProperty(Item.prototype, "id", {
+      get: function get() {
+        return this._id;
+      },
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(Item.prototype, "path", {
+      get: function get() {
+        return this.parent ? "".concat(this.parent.path, ".").concat(this.id) : this.id;
+      },
+      enumerable: false,
+      configurable: true
+    });
+
+    Item.prototype.clear = function () {
+      this.element.removeEventListener('click', this._click);
+    };
+
+    return Item;
+  }(Component);
+
+  var Group =
+  /** @class */
+  function (_super) {
+    __extends(Group, _super);
+
+    function Group(el, options) {
+      var _this = _super.call(this, el) || this;
+
+      _this._el = document.createElement('div');
+      _this._header = document.createElement('div');
+      _this._title = document.createElement('label');
+      _this._expander = document.createElement('i');
+      _this._children = document.createElement('div');
+      _this._items = [];
+      _this._id = '';
+      _this._expanded = false;
+      _this.disabled = false;
+      el.appendChild(_this.element);
+      _this._id = options.id;
+
+      _this.element.classList.add('scanex-menu-group');
+
+      _this.element.addEventListener('click', _this._click.bind(_this));
+
+      _this._header.classList.add('scanex-menu-group-header');
+
+      _this.element.appendChild(_this._header);
+
+      _this._title.classList.add('scanex-menu-group-title');
+
+      _this._title.innerText = options.title;
+
+      _this._header.appendChild(_this._title);
+
+      _this._expander.classList.add('scanex-component-icon');
+
+      _this._expander.classList.add('scanex-menu-group-expander');
+
+      _this._header.appendChild(_this._expander);
+
+      _this._children.classList.add('scanex-menu-group-children');
+
+      _this._children.classList.add('hidden');
+
+      _this.element.appendChild(_this._children);
+
+      _this.expanded = false;
+      return _this;
+    }
+
+    Group.prototype.destroy = function () {
+      this.element.remove();
+    };
+
+    Object.defineProperty(Group.prototype, "element", {
+      get: function get() {
+        return this._el;
+      },
+      enumerable: false,
+      configurable: true
+    });
+
+    Group.prototype._click = function (e) {
+      e.stopPropagation();
+      this.expanded = !this.expanded;
+    };
+
+    Object.defineProperty(Group.prototype, "id", {
+      get: function get() {
+        return this._id;
+      },
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(Group.prototype, "path", {
+      get: function get() {
+        return this.parent ? "".concat(this.parent.path, ".").concat(this.id) : this.id;
+      },
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(Group.prototype, "parent", {
+      get: function get() {
+        return this._parent;
+      },
+      set: function set(parent) {
+        this._parent = parent;
+      },
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(Group.prototype, "expanded", {
+      get: function get() {
+        return this._expanded;
+      },
+      set: function set(expanded) {
+        if (!this.disabled) {
+          this._expanded = expanded;
+
+          if (this._expanded) {
+            this._expander.classList.remove('down');
+
+            this._expander.classList.add('up');
+
+            this._children.classList.remove('hidden');
+
+            var event_1 = document.createEvent('Event');
+            event_1.initEvent('expanded', false, false);
+            this.dispatchEvent(event_1);
+          } else {
+            this._expander.classList.remove('up');
+
+            this._expander.classList.add('down');
+
+            this._children.classList.add('hidden');
+          }
+        }
+      },
+      enumerable: false,
+      configurable: true
+    });
+
+    Group.prototype.clear = function () {
+      this.element.removeEventListener('click', this._click.bind(this));
+
+      this._items.forEach(function (item) {
+        return item.clear();
+      });
+    };
+
+    Object.defineProperty(Group.prototype, "items", {
+      get: function get() {
+        return this._items;
+      },
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(Group.prototype, "data", {
+      set: function set(items) {
+        var _this = this;
+
+        this.clear();
+        this._items = items.map(function (_a) {
+          var id = _a.id,
+              title = _a.title,
+              children = _a.children;
+          var item;
+
+          if (Array.isArray(children)) {
+            item = new Group(_this._children, {
+              id: id,
+              title: title
+            });
+            item.data = children;
+            item.on('expanded', function (e) {
+              var event = document.createEvent('Event');
+              event.initEvent('expanded', false, false);
+
+              _this.dispatchEvent(event);
+            });
+          } else {
+            item = new Item(_this._children, {
+              id: id,
+              title: title
+            });
+          }
+
+          item.parent = _this;
+          item.addEventListener('item:click', function (e) {
+            var event = document.createEvent('Event');
+            event.initEvent('item:click', false, false);
+            event.detail = e.detail;
+
+            _this.dispatchEvent(event);
+          });
+          return item;
+        });
+      },
+      enumerable: false,
+      configurable: true
+    });
+    return Group;
+  }(Component);
+
+  /** @class */
+  (function (_super) {
+    __extends(Menu, _super);
+
+    function Menu(el, options) {
+      var _this = _super.call(this, el) || this;
+
+      _this._el = document.createElement('div');
+      el.appendChild(_this.element);
+
+      _this.element.classList.add('scanex-component-menu');
+
+      _this.element.classList.add('noselect');
+
+      _this._group = new Group(_this.element, options);
+
+      _this._group.on('item:click', function (e) {
+        if (_this._group) {
+          _this._group.expanded = false;
+        }
+
+        var event = document.createEvent('Event');
+        event.initEvent('item:click', false, false);
+        event.detail = e.detail;
+
+        _this.dispatchEvent(event);
+      });
+
+      _this._group.on('expanded', function () {
+        var event = document.createEvent('Event');
+        event.initEvent('expanded', false, false);
+
+        _this.dispatchEvent(event);
+      });
+
+      window.addEventListener('click', function () {
+        return _this.expanded = false;
+      });
+      return _this;
+    }
+
+    Menu.prototype.destroy = function () {
+      this.element.remove();
+    };
+
+    Object.defineProperty(Menu.prototype, "element", {
+      get: function get() {
+        return this._el;
+      },
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(Menu.prototype, "items", {
+      get: function get() {
+        var _a;
+
+        return (_a = this._group) === null || _a === void 0 ? void 0 : _a.items;
+      },
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(Menu.prototype, "data", {
+      set: function set(items) {
+        if (this._group) {
+          this._group.data = items;
+        }
+      },
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(Menu.prototype, "disabled", {
+      get: function get() {
+        if (this._group) {
+          return this._group.disabled;
+        }
+
+        return false;
+      },
+      set: function set(disabled) {
+        if (this._group) {
+          this._group.disabled = disabled;
+        }
+      },
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(Menu.prototype, "expanded", {
+      get: function get() {
+        if (this._group) {
+          return this._group.expanded;
+        }
+
+        return false;
+      },
+      set: function set(expanded) {
+        if (this._group) {
+          this._group.expanded = expanded;
+        }
+      },
+      enumerable: false,
+      configurable: true
+    });
+    return Menu;
+  })(Component);
+
+  /** @class */
+  (function (_super) {
+    __extends(MenuItemEvent, _super);
+
+    function MenuItemEvent() {
+      return _super !== null && _super.apply(this, arguments) || this;
+    }
+
+    return MenuItemEvent;
+  })(Event);
+
   var notify$1 = {
-  	error: {
-  		title: "Error"
-  	},
-  	warn: {
-  		title: "Warning"
-  	},
-  	info: {
-  		title: "Information"
-  	}
+    error: {
+      title: "Error"
+    },
+    warn: {
+      title: "Warning"
+    },
+    info: {
+      title: "Information"
+    }
   };
   var en$1 = {
-  	notify: notify$1
+    notify: notify$1
   };
-
   var notify = {
-  	error: {
-  		title: "Ошибка"
-  	},
-  	warn: {
-  		title: "Внимание"
-  	},
-  	info: {
-  		title: "Информация"
-  	}
+    error: {
+      title: "Ошибка"
+    },
+    warn: {
+      title: "Внимание"
+    },
+    info: {
+      title: "Информация"
+    }
   };
   var ru$1 = {
-  	notify: notify
+    notify: notify
   };
 
-  add('ru', ru$1);
-  add('en', en$1);
-  var translate$q = translate$v;
-
   var delay = function delay(timeout) {
-    return new Promise(function (resolve) {
+    return new Promise(function (resolve, reject) {
       var id = window.setInterval(function () {
         window.clearInterval(id);
-        resolve();
+        resolve({});
       }, timeout);
     });
   };
 
-  var Notification = /*#__PURE__*/function (_Evented) {
-    _inherits(Notification, _Evented);
+  add('ru', ru$1);
+  add('en', en$1);
+  var translate$1$1 = translate$3$1;
 
-    var _super = _createSuper(Notification);
+  var Notification =
+  /** @class */
+  function (_super) {
+    __extends(Notification, _super);
 
     function Notification() {
-      var _this;
+      var _this = _super.call(this) || this;
 
-      _classCallCheck$1(this, Notification);
+      _this.el = document.createElement('div');
+      _this.timeout = 1000;
 
-      _this = _super.call(this);
-      _this._container = document.createElement('div');
+      _this.el.classList.add('scanex-notify-container');
 
-      _this._container.classList.add('scanex-notify-container');
-
-      document.body.appendChild(_this._container);
+      document.body.appendChild(_this.el);
       return _this;
     }
 
-    _createClass$1(Notification, [{
-      key: "_remove",
-      value: function _remove(el) {
-        el.classList.add('closing');
-        delay(1000).then(function () {
-          el.remove();
-          el = null;
+    Notification.prototype._remove = function (el) {
+      el.classList.add('closing');
+      delay(this.timeout).then(function () {
+        return el.remove();
+      });
+    };
+
+    Notification.prototype.error = function (text, timeout) {
+      var _this = this;
+
+      var _a;
+
+      if (timeout === void 0) {
+        timeout = 0;
+      }
+
+      var el = document.createElement('div');
+      el.classList.add('scanex-notify');
+      el.classList.add('noselect');
+      el.classList.add('notify-red');
+      el.classList.add('opening');
+      el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-component-icon scanex-notify-icon notify-error\"></i>\n                </td>            \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$1$1('notify.error.title'), "</label>\n                    <div class=\"message\">").concat(text, "</div>\n                </td>\n                <td>            \n                    <i class=\"scanex-component-icon scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
+      this.el.appendChild(el);
+      (_a = el.querySelector('.notify-close')) === null || _a === void 0 ? void 0 : _a.addEventListener('click', function (e) {
+        e.stopPropagation();
+
+        _this._remove(el);
+      });
+
+      if (timeout) {
+        delay(timeout).then(function () {
+          return _this._remove(el);
         });
       }
-    }, {
-      key: "error",
-      value: function error(text) {
-        var _this2 = this;
+    };
 
-        var timeout = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
-        var el = document.createElement('div');
-        el.classList.add('scanex-notify');
-        el.classList.add('noselect');
-        el.classList.add('notify-red');
-        el.classList.add('opening');
-        el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-notify-icon notify-error\"></i>\n                </td>            \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$q('notify.error.title'), "</label>\n                    <div class=\"message\">").concat(text, "</div>\n                </td>\n                <td>            \n                    <i class=\"scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
+    Notification.prototype.warn = function (text, timeout) {
+      var _this = this;
 
-        this._container.appendChild(el);
+      var _a;
 
-        var btnClose = el.querySelector('.notify-close');
-        btnClose.addEventListener('click', function (e) {
-          e.stopPropagation();
-
-          _this2._remove(el);
-        });
-
-        if (timeout) {
-          delay(timeout).then(function () {
-            return _this2._remove(el);
-          });
-        }
+      if (timeout === void 0) {
+        timeout = 0;
       }
-    }, {
-      key: "warn",
-      value: function warn(text) {
-        var _this3 = this;
 
-        var timeout = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
-        var el = document.createElement('div');
-        el.classList.add('scanex-notify');
-        el.classList.add('noselect');
-        el.classList.add('notify-orange');
-        el.classList.add('opening');
-        el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-notify-icon notify-warn\"></i>\n                </td>    \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$q('notify.warn.title'), "</label>\n                    <div class=\"message\">").concat(text, "</div>    \n                </td>            \n                <td>\n                    <i class=\"scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
+      var el = document.createElement('div');
+      el.classList.add('scanex-notify');
+      el.classList.add('noselect');
+      el.classList.add('notify-orange');
+      el.classList.add('opening');
+      el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-component-icon scanex-notify-icon notify-warn\"></i>\n                </td>    \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$1$1('notify.warn.title'), "</label>\n                    <div class=\"message\">").concat(text, "</div>    \n                </td>            \n                <td>\n                    <i class=\"scanex-component-icon scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
+      this.el.appendChild(el);
+      (_a = el.querySelector('.notify-close')) === null || _a === void 0 ? void 0 : _a.addEventListener('click', function (e) {
+        e.stopPropagation();
 
-        this._container.appendChild(el);
+        _this._remove(el);
+      });
 
-        var btnClose = el.querySelector('.notify-close');
-        btnClose.addEventListener('click', function (e) {
-          e.stopPropagation();
-
-          _this3._remove(el);
+      if (timeout) {
+        delay(timeout).then(function () {
+          return _this._remove(el);
         });
-
-        if (timeout) {
-          delay(timeout).then(function () {
-            return _this3._remove(el);
-          });
-        }
       }
-    }, {
-      key: "info",
-      value: function info(text) {
-        var _this4 = this;
+    };
 
-        var timeout = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
-        var el = document.createElement('div');
-        el.classList.add('scanex-notify');
-        el.classList.add('noselect');
-        el.classList.add('notify-green');
-        el.classList.add('opening');
-        el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-notify-icon notify-info\"></i>\n                </td>            \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$q('notify.info.title'), "</label>                    \n                    <div class=\"message\">").concat(text, "</div>    \n                </td>                                \n                <td>\n                    <i class=\"scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
+    Notification.prototype.info = function (text, timeout) {
+      var _this = this;
 
-        this._container.appendChild(el);
+      var _a;
 
-        var btnClose = el.querySelector('.notify-close');
-        btnClose.addEventListener('click', function (e) {
-          e.stopPropagation();
+      if (timeout === void 0) {
+        timeout = 0;
+      }
 
-          _this4._remove(el);
+      var el = document.createElement('div');
+      el.classList.add('scanex-notify');
+      el.classList.add('noselect');
+      el.classList.add('notify-green');
+      el.classList.add('opening');
+      el.innerHTML = "<table cellspacing=\"0\" cellpadding=\"0\">\n            <tr>\n                <td>\n                    <div></div>\n                </td>\n                <td>\n                    <i class=\"scanex-component-icon scanex-notify-icon notify-info\"></i>\n                </td>            \n                <td class=\"text\">\n                    <label class=\"title\">".concat(translate$1$1('notify.info.title'), "</label>                    \n                    <div class=\"message\">").concat(text, "</div>    \n                </td>                                \n                <td>\n                    <i class=\"scanex-component-icon scanex-notify-icon notify-close\"></i>\n                </td>\n            </tr>\n        </table>");
+      this.el.appendChild(el);
+      (_a = el.querySelector('.notify-close')) === null || _a === void 0 ? void 0 : _a.addEventListener('click', function (e) {
+        e.stopPropagation();
+
+        _this._remove(el);
+      });
+
+      if (timeout) {
+        delay(timeout).then(function () {
+          return _this._remove(el);
         });
-
-        if (timeout) {
-          delay(timeout).then(function () {
-            return _this4._remove(el);
-          });
-        }
       }
-    }]);
+    };
 
     return Notification;
-  }(Evented);
-
-  // `Number.isInteger` method
-  // https://tc39.es/ecma262/#sec-number.isinteger
-  _export$1({ target: 'Number', stat: true }, {
-    isInteger: isInteger
-  });
+  }(Events);
 
   var pager$1 = {
-  	previous: "Previous",
-  	next: "Next"
+    previous: "Previous",
+    next: "Next"
   };
   var en = {
-  	pager: pager$1
+    pager: pager$1
   };
-
   var pager = {
-  	previous: "Предыдущая",
-  	next: "Следующая"
+    previous: "Предыдущая",
+    next: "Следующая"
   };
   var ru = {
-  	pager: pager
+    pager: pager
   };
-
-  var translate$p = translate$v;
+  var translate$p = translate$3$1;
   add('ru', ru);
   add('en', en);
 
-  var Pager = /*#__PURE__*/function (_Component) {
-    _inherits(Pager, _Component);
+  var Pager =
+  /** @class */
+  function (_super) {
+    __extends(Pager, _super);
 
-    var _super = _createSuper(Pager);
+    function Pager(el) {
+      var _this = _super.call(this, el) || this;
 
-    function Pager() {
-      _classCallCheck$1(this, Pager);
+      _this._page = 1;
+      _this._pages = 0;
+      _this.first = document.createElement('button');
+      _this.previous = document.createElement('button');
+      _this.current = document.createElement('input');
+      _this.next = document.createElement('button');
+      _this.last = document.createElement('button');
 
-      return _super.apply(this, arguments);
+      _this.element.classList.add('scanex-component-pager');
+
+      _this.first.classList.add('first');
+
+      _this.element.appendChild(_this.first);
+
+      _this.previous.classList.add('previous');
+
+      _this.previous.innerText = translate$p('pager.previous');
+
+      _this.element.appendChild(_this.previous);
+
+      _this.current.setAttribute('type', 'text');
+
+      _this.element.appendChild(_this.current);
+
+      _this.next.classList.add('next');
+
+      _this.next.innerText = translate$p('pager.next');
+
+      _this.element.appendChild(_this.next);
+
+      _this.last.classList.add('last');
+
+      _this.element.appendChild(_this.last);
+
+      _this.first.innerText = '1';
+
+      _this.first.addEventListener('click', function (e) {
+        e.stopPropagation();
+        _this.page = 1;
+      });
+
+      _this.previous.addEventListener('click', function (e) {
+        e.stopPropagation();
+        _this.page -= 1;
+      });
+
+      _this.next.addEventListener('click', function (e) {
+        e.stopPropagation();
+        _this.page += 1;
+      });
+
+      _this.last.addEventListener('click', function (e) {
+        e.stopPropagation();
+        _this.page = _this.pages;
+      });
+
+      _this.current.addEventListener('change', function (e) {
+        e.stopPropagation();
+        _this.page = parseInt(_this.current.value, 10);
+      });
+
+      return _this;
     }
 
-    _createClass$1(Pager, [{
-      key: "render",
-      value: function render() {
-        var _this = this;
+    Pager.prototype.destroy = function () {
+      this.element.remove();
+    };
 
-        this._element = document.createElement('div');
-
-        this._container.appendChild(this.element);
-
-        this.element.classList.add('scanex-component-pager');
-        this.element.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <tr>\n                <td>\n                    <button class=\"first\">1</button>\n                </td>                \n                <td>\n                    <button class=\"previous\">".concat(translate$p('pager.previous'), "</button>\n                </td>\n                <td>\n                    <input type=\"text\" value=\"\" />\n                </td>\n                <td>\n                    <button class=\"next\">").concat(translate$p('pager.next'), "</button>\n                </td>                \n                <td>\n                    <button class=\"last\"></button>\n                </td>\n            </tr>\n        </table>");
-        this.element.querySelector('.first').addEventListener('click', function (e) {
-          e.stopPropagation();
-          _this.page = 1;
-        });
-        this.element.querySelector('.previous').addEventListener('click', function (e) {
-          e.stopPropagation();
-          _this.page -= 1;
-        });
-        this.element.querySelector('.next').addEventListener('click', function (e) {
-          e.stopPropagation();
-          _this.page += 1;
-        });
-        this.element.querySelector('.last').addEventListener('click', function (e) {
-          e.stopPropagation();
-          _this.page = _this.pages;
-        });
-        this._current = this.element.querySelector('input');
-
-        this._current.addEventListener('change', function (e) {
-          e.stopPropagation();
-          _this.page = parseInt(_this._current.value, 10);
-        });
-
-        this._last = this.element.querySelector('.last');
-      }
-    }, {
-      key: "page",
+    Object.defineProperty(Pager.prototype, "page", {
       get: function get() {
         return this._page;
       },
       set: function set(page) {
         if (Number.isInteger(page) && 1 <= page && page <= this.pages && this._page !== page) {
           this._page = page;
-          this._current.value = this._page;
-          var event = document.createEvent('Event');
-          event.initEvent('change', false, false);
-          this.dispatchEvent(event);
+          this.current.value = this._page.toString();
+          var event_1 = document.createEvent('Event');
+          event_1.initEvent('change', false, false);
+          this.dispatchEvent(event_1);
         } else {
-          this._current.value = this._page;
+          this.current.value = this._page.toString();
         }
-      }
-    }, {
-      key: "pages",
+      },
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(Pager.prototype, "pages", {
       get: function get() {
         return this._pages;
       },
       set: function set(pages) {
         if (pages && Number.isInteger(pages)) {
           this._pages = pages;
-          this._last.innerText = pages;
+          this.last.innerText = pages.toString();
         }
-      }
-    }]);
-
+      },
+      enumerable: false,
+      configurable: true
+    });
     return Pager;
   }(Component);
 
-  var Spinner = /*#__PURE__*/function (_Component) {
-    _inherits(Spinner, _Component);
-
-    var _super = _createSuper(Spinner);
-
-    function Spinner() {
-      _classCallCheck$1(this, Spinner);
-
-      return _super.apply(this, arguments);
+  var Panel$1 =
+  /** @class */
+  function () {
+    function Panel() {
+      this.el = document.createElement('div');
+      this._collapsed = false;
+      this.el.classList.add('scanex-component-sidebar-panel');
     }
 
-    _createClass$1(Spinner, [{
-      key: "render",
-      value: function render() {
-        this._value = 0;
-        this._min = 0;
-        this._max = 0;
-        this._element = document.createElement('div');
-
-        this._container.appendChild(this.element);
-
-        this.element.classList.add('scanex-component-spinner');
-        this.element.innerHTML = "<input type=\"text\" value=\"0\"/>\n        <div class=\"buttons\">\n            <i class=\"scanex-component-icon spinner-up\"></i>            \n            <i class=\"scanex-component-icon spinner-down\"></i>\n        </div>";
-        this._input = this.element.querySelector('input');
-        this._up = this.element.querySelector('.spinner-up');
-        this._down = this.element.querySelector('.spinner-down');
-
-        this._up.addEventListener('click', this.increment.bind(this));
-
-        this._down.addEventListener('click', this.decrement.bind(this));
-
-        this._input.addEventListener('change', this._change.bind(this));
-      }
-    }, {
-      key: "destroy",
-      value: function destroy() {
-        this.element.remove();
-      }
-    }, {
-      key: "_change",
-      value: function _change(e) {
-        e.stopPropagation();
-        this.value = parseInt(this._input.value, 10);
-      }
-    }, {
-      key: "value",
+    Object.defineProperty(Panel.prototype, "element", {
       get: function get() {
-        return this._value;
+        return this.el;
       },
-      set: function set(value) {
-        if (this._validate(value)) {
-          this._value = value;
-          var event = document.createEvent('Event');
-          event.initEvent("change", false, false);
-          event.detail = this._value;
-          this.dispatchEvent(event);
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(Panel.prototype, "collapsed", {
+      get: function get() {
+        return this._collapsed;
+      },
+      enumerable: false,
+      configurable: true
+    });
+
+    Panel.prototype.expand = function () {
+      this._collapsed = false;
+      this.el.classList.remove('collapsed');
+    };
+
+    Panel.prototype.collapse = function () {
+      this._collapsed = true;
+      this.el.classList.add('collapsed');
+    };
+
+    Panel.prototype.destroy = function () {
+      this.el.remove();
+    };
+
+    return Panel;
+  }();
+
+  var Tab$1 =
+  /** @class */
+  function (_super) {
+    __extends(Tab, _super);
+
+    function Tab(id, title, panel) {
+      var _this = _super.call(this) || this;
+
+      _this.el = document.createElement('div');
+      _this._collapsed = false;
+      _this.id = '';
+      _this.id = id;
+
+      _this.el.classList.add('scanex-component-sidebar-tab');
+
+      _this.el.classList.add('noselect');
+
+      _this.el.innerHTML = "<div class=\"scanex-component-sidebar-tab-label\">".concat(title, "</div><i class=\"scanex-component-sidebar-tab-icon scanex-component-icon ").concat(id, "\"></i>");
+      _this.panel = panel;
+
+      _this.el.addEventListener('click', function (e) {
+        e.stopPropagation();
+
+        _this.toggle();
+      });
+
+      _this.collapse();
+
+      return _this;
+    }
+
+    Object.defineProperty(Tab.prototype, "element", {
+      get: function get() {
+        return this.el;
+      },
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(Tab.prototype, "collapsed", {
+      get: function get() {
+        return this._collapsed;
+      },
+      enumerable: false,
+      configurable: true
+    });
+
+    Tab.prototype.expand = function () {
+      var _a, _b;
+
+      if (this.collapsed) {
+        this._collapsed = false;
+        this.el.classList.remove('collapsed');
+        (_a = this.el.querySelector('i')) === null || _a === void 0 ? void 0 : _a.classList.remove('collapsed');
+        (_b = this.panel) === null || _b === void 0 ? void 0 : _b.expand();
+        var event_1 = document.createEvent('Event');
+        event_1.initEvent('change', false, false);
+        this.dispatchEvent(event_1);
+      }
+    };
+
+    Tab.prototype.collapse = function () {
+      var _a, _b;
+
+      if (!this.collapsed) {
+        this._collapsed = true;
+        this.el.classList.add('collapsed');
+        (_a = this.el.querySelector('i')) === null || _a === void 0 ? void 0 : _a.classList.add('collapsed');
+        (_b = this.panel) === null || _b === void 0 ? void 0 : _b.collapse();
+        var event_2 = document.createEvent('Event');
+        event_2.initEvent('change', false, false);
+        this.dispatchEvent(event_2);
+      }
+    };
+
+    Tab.prototype.toggle = function () {
+      if (this.collapsed) {
+        this.expand();
+      } else {
+        this.collapse();
+      }
+    };
+
+    Tab.prototype.destroy = function () {
+      var _a;
+
+      (_a = this.panel) === null || _a === void 0 ? void 0 : _a.destroy();
+      this.el.remove();
+    };
+
+    return Tab;
+  }(Events);
+
+  /** @class */
+  (function (_super) {
+    __extends(Sidebar, _super);
+
+    function Sidebar(el) {
+      var _this = _super.call(this, el) || this;
+
+      _this._current = '';
+      _this.tabs = [];
+
+      _this.element.classList.add('scanex-component');
+
+      _this.element.classList.add('scanex-component-sidebar');
+
+      _this.element.innerHTML = '<div class="tabs"></div><div class="panels"></div>';
+      return _this;
+    }
+
+    Sidebar.prototype.destroy = function () {
+      var _a, _b;
+
+      for (var _i = 0, _c = this.tabs; _i < _c.length; _i++) {
+        var t = _c[_i];
+        t.destroy();
+      }
+
+      (_a = this.element.querySelector('.tabs')) === null || _a === void 0 ? void 0 : _a.remove();
+      (_b = this.element.querySelector('.panels')) === null || _b === void 0 ? void 0 : _b.remove();
+    };
+
+    Object.defineProperty(Sidebar.prototype, "current", {
+      get: function get() {
+        return this._current;
+      },
+      set: function set(current) {
+        if (this._current !== current) {
+          for (var _i = 0, _a = this.tabs; _i < _a.length; _i++) {
+            var t = _a[_i];
+
+            if (t.id === this._current) {
+              t.collapse();
+            } else if (t.id === current) {
+              t.expand();
+            }
+          }
+
+          this._current = current;
+          var event_1 = document.createEvent('Event');
+          event_1.initEvent('change', false, false);
+          this.dispatchEvent(event_1);
+        }
+      },
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(Sidebar.prototype, "collapsed", {
+      get: function get() {
+        for (var _i = 0, _a = this.tabs; _i < _a.length; _i++) {
+          var t = _a[_i];
+
+          if (t.id === this.current) {
+            return t.collapsed;
+          }
         }
 
-        this._input.value = this._value.toString();
+        return true;
+      },
+      enumerable: false,
+      configurable: true
+    });
+
+    Sidebar.prototype.add = function (id, title) {
+      var _this = this;
+
+      var _a, _b;
+
+      var p = new Panel$1();
+      var t = new Tab$1(id, title, p);
+      t.addEventListener('change', function () {
+        _this.current = t.collapsed ? '' : t.id;
+      });
+      (_a = this.element.querySelector('.tabs')) === null || _a === void 0 ? void 0 : _a.appendChild(t.element);
+      (_b = this.element.querySelector('.panels')) === null || _b === void 0 ? void 0 : _b.appendChild(p.element);
+      this.tabs.push(t);
+      return p.element;
+    };
+
+    Sidebar.prototype.remove = function (id) {
+      for (var i = 0; i < this.tabs.length; ++i) {
+        var t = this.tabs[i];
+
+        if (t.id === id) {
+          t.destroy();
+          this.tabs.splice(i, 1);
+
+          if (this.current === id) {
+            this.current = '';
+          }
+
+          return;
+        }
       }
-    }, {
-      key: "min",
+    };
+
+    return Sidebar;
+  })(Component);
+
+  var BaseSlider =
+  /** @class */
+  function (_super) {
+    __extends(BaseSlider, _super);
+
+    function BaseSlider(el, options) {
+      var _this = _super.call(this, el) || this;
+
+      _this._el = document.createElement('div');
+      _this.bar = document.createElement('div');
+      _this.range = document.createElement('div');
+      _this.rightTick = document.createElement('div');
+      _this.rightLabel = document.createElement('label');
+      _this.rightIcon = document.createElement('i');
+      _this.offset = 0;
+      _this._min = 0;
+      _this._max = 0;
+      _this._hi = 0;
+      _this._barWidth = 250;
+      _this._tickWidth = 12;
+      _this._halfTickWidth = 6;
+      _this._ratio = 1;
+      _this.floatMode = false;
+      _this.delay = 50;
+      var min = options.min,
+          max = options.max,
+          _a = options.floatMode,
+          floatMode = _a === void 0 ? false : _a,
+          _b = options.width,
+          width = _b === void 0 ? 250 : _b,
+          _c = options.tickWidth,
+          tickWidth = _c === void 0 ? 12 : _c;
+      _this.floatMode = floatMode;
+      _this._barWidth = width;
+      _this._tickWidth = tickWidth;
+      _this._halfTickWidth = Math.round(_this._tickWidth / 2);
+
+      if (!isNaN(min) && !isNaN(max)) {
+        _this._min = min;
+        _this._max = max;
+      } else {
+        throw 'min or max not set';
+      }
+
+      _this._ratio = (_this._barWidth - _this._tickWidth) / (_this.max - _this.min);
+      el.appendChild(_this.element);
+
+      _this.element.classList.add('scanex-component-slider');
+
+      _this.element.classList.add('no-select');
+
+      _this.element.style.width = "".concat(_this._barWidth, "px");
+
+      _this.bar.classList.add('slider-bar');
+
+      _this.element.appendChild(_this.bar);
+
+      _this.range.classList.add('slider-range');
+
+      _this.bar.appendChild(_this.range);
+
+      _this.rightTick.classList.add('slider-tick');
+
+      _this.rightTick.classList.add('slider-tick-right');
+
+      _this.range.appendChild(_this.rightTick);
+
+      _this.rightLabel.classList.add('hidden');
+
+      _this.rightTick.appendChild(_this.rightIcon);
+
+      _this.rightTick.appendChild(_this.rightLabel);
+
+      _this.rightTick.addEventListener('mousedown', _this._start.bind(_this, _this.rightTick));
+
+      document.body.addEventListener('mousemove', _this._slide.bind(_this));
+      document.body.addEventListener('mouseup', _this._stop.bind(_this));
+
+      _this.bar.addEventListener('mousedown', _this._click.bind(_this));
+
+      return _this;
+    }
+
+    BaseSlider.prototype.destroy = function () {
+      this.element.remove();
+    };
+
+    Object.defineProperty(BaseSlider.prototype, "element", {
+      get: function get() {
+        return this._el;
+      },
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(BaseSlider.prototype, "min", {
       get: function get() {
         return this._min;
       },
-      set: function set(min) {
-        if (!isNaN(min)) {
-          this._min = min;
-        }
-      }
-    }, {
-      key: "max",
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(BaseSlider.prototype, "max", {
       get: function get() {
         return this._max;
       },
-      set: function set(max) {
-        if (!isNaN(max) && this._min <= max) {
-          this._max = max;
-        }
-      }
-    }, {
-      key: "_validate",
-      value: function _validate(value) {
-        return !this.disabled && !isNaN(value) && this._min <= value && value <= this._max;
-      }
-    }, {
-      key: "increment",
-      value: function increment(e) {
-        e.stopPropagation();
-        this.value = this._value + 1;
-      }
-    }, {
-      key: "decrement",
-      value: function decrement(e) {
-        e.stopPropagation();
-        this.value = this._value - 1;
-      }
-    }]);
-
-    return Spinner;
-  }(Component);
-
-  var Slider1 = /*#__PURE__*/function (_Component) {
-    _inherits(Slider1, _Component);
-
-    var _super = _createSuper(Slider1);
-
-    function Slider1() {
-      _classCallCheck$1(this, Slider1);
-
-      return _super.apply(this, arguments);
-    }
-
-    _createClass$1(Slider1, [{
-      key: "render",
-      value: function render(_ref) {
-        var min = _ref.min,
-            max = _ref.max;
-        this._delay = 50;
-        this._tick = null;
-        this._offset = 0;
-
-        if (!isNaN(min) && !isNaN(max)) {
-          this._min = min;
-          this._max = max;
-        } else {
-          throw "min or max not set";
-        }
-
-        this._element = document.createElement('div');
-
-        this._container.appendChild(this.element);
-
-        this.element.classList.add('scanex-component-slider');
-        this.element.classList.add('no-select');
-        this.element.innerHTML = "<div class=\"slider-bar\">\n                <div class=\"slider-range\">\n                    <div class=\"slider-tick slider-tick-right\">\n                        <label></label>\n                        <i></i>\n                    </div>\n                </div>\n            </div>";
-        this._rightLabel = this.element.querySelector('.slider-tick label');
-
-        this._rightLabel.classList.add('hidden');
-
-        this._bar = this.element.querySelector('.slider-bar');
-        this._rightTick = this.element.querySelector('.slider-tick-right');
-        this._range = this.element.querySelector('.slider-range');
-
-        this._rightTick.addEventListener('mousedown', this._start.bind(this, this._rightTick));
-
-        document.body.addEventListener('mousemove', this._slide.bind(this));
-        document.body.addEventListener('mouseup', this._stop.bind(this));
-
-        this._bar.addEventListener('click', this._click.bind(this));
-      }
-    }, {
-      key: "destroy",
-      value: function destroy() {
-        this.element.remove();
-      }
-    }, {
-      key: "mode",
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(BaseSlider.prototype, "lo", {
       get: function get() {
-        return this._mode;
+        return this._min;
       },
-      set: function set(mode) {
-        this._mode = mode;
-      }
-    }, {
-      key: "min",
-      get: function get() {
-        return this._min;
-      }
-    }, {
-      key: "max",
-      get: function get() {
-        return this._max;
-      }
-    }, {
-      key: "lo",
-      get: function get() {
-        return this._min;
-      }
-    }, {
-      key: "hi",
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(BaseSlider.prototype, "hi", {
       get: function get() {
         return this._hi;
       },
@@ -39189,157 +41398,130 @@ var Forestry = (function () {
         }
 
         if (!isNaN(this.lo) && !isNaN(this.hi)) {
-          var b = this._bar.getBoundingClientRect();
-
-          var t = this._rightTick.getBoundingClientRect();
-
-          var k = (b.width - t.width) / (this.max - this.min);
-          this._range.style.width = "".concat(Math.round((this.hi - this.lo) * k) + t.width, "px");
-          var event = document.createEvent('Event');
-          event.initEvent('change', false, false);
-          this.dispatchEvent(event);
+          this.range.style.width = "".concat(Math.round((this.hi - this.lo) * this._ratio) + this._tickWidth, "px");
+          var event_1 = document.createEvent('Event');
+          event_1.initEvent('change', false, false);
+          this.dispatchEvent(event_1);
         }
+      },
+      enumerable: false,
+      configurable: true
+    });
+
+    BaseSlider.prototype.validate = function (value) {
+      return !isNaN(value) && this.min <= value && value <= this.max;
+    };
+
+    BaseSlider.prototype._stop = function () {
+      if (this.tick) {
+        this.tick = undefined;
+        this.offset = 0;
+        var event_2 = document.createEvent('Event');
+        event_2.initEvent('stop', false, false);
+        this.dispatchEvent(event_2);
       }
-    }, {
-      key: "validate",
-      value: function validate(value) {
-        return !isNaN(value) && this.min <= value && value <= this.max;
+    };
+
+    BaseSlider.prototype._start = function (tick, e) {
+      e.stopPropagation();
+      e.preventDefault();
+
+      if (!this.tick) {
+        this.tick = tick;
+        var t = this.tick.getBoundingClientRect();
+        this.offset = e.clientX - t.left;
+        var event_3 = document.createEvent('Event');
+        event_3.initEvent('start', false, false);
+        this.dispatchEvent(event_3);
       }
-    }, {
-      key: "_stop",
-      value: function _stop() {
-        if (this._tick !== null) {
-          this._tick = null;
-          this._offset = 0;
-          var event = document.createEvent('Event');
-          event.initEvent('stop', false, false);
-          this.dispatchEvent(event);
-        }
-      }
-    }, {
-      key: "_start",
-      value: function _start(tick, e) {
-        e.stopPropagation();
-        e.preventDefault();
+    };
 
-        if (this._tick === null) {
-          this._tick = tick;
+    BaseSlider.prototype._slide = function (e) {
+      var _this = this;
 
-          var t = this._tick.getBoundingClientRect();
+      e.stopPropagation();
+      e.preventDefault();
+      var tid = window.setTimeout(function () {
+        window.clearTimeout(tid);
 
-          this._offset = e.clientX - t.left;
-          var event = document.createEvent('Event');
-          event.initEvent('start', false, false);
-          this.dispatchEvent(event);
-        }
-      }
-    }, {
-      key: "_slide",
-      value: function _slide(e) {
-        var _this = this;
+        if (_this.tick) {
+          var b = _this.bar.getBoundingClientRect();
 
-        e.stopPropagation();
-        e.preventDefault();
-        var tid = window.setTimeout(function () {
-          window.clearTimeout(tid);
+          var x = e.clientX - _this.offset;
 
-          if (_this._tick) {
-            var t = _this._tick.getBoundingClientRect();
+          if (b.left <= x && x + _this._tickWidth <= b.right) {
+            _this.range.style.width = "".concat(e.clientX - _this.offset + _this._tickWidth - b.left, "px");
 
-            var b = _this._bar.getBoundingClientRect();
-
-            var x = e.clientX - _this._offset;
-
-            if (b.left <= x && x + t.width <= b.right) {
-              _this._range.style.width = "".concat(e.clientX - _this._offset + t.width - b.left, "px");
-
-              _this._updateBounds();
-            }
+            _this._updateBounds();
           }
-        }, this._delay);
-      }
-    }, {
-      key: "_click",
-      value: function _click(e) {
-        if (!this._tick) {
-          e.stopPropagation();
-
-          var b = this._bar.getBoundingClientRect();
-
-          var t = this._rightTick.getBoundingClientRect();
-
-          var halfWidth = Math.round(t.width / 2);
-
-          if (e.clientX < b.left + halfWidth) {
-            this._range.style.width = "".concat(t.width, "px");
-          } else if (e.clientX > b.right - halfWidth) {
-            this._range.style.width = "".concat(b.width, "px");
-          } else {
-            this._range.style.width = "".concat(e.clientX - b.left + halfWidth, "px");
-          }
-
-          this._updateBounds();
         }
+      }, this.delay);
+    };
+
+    BaseSlider.prototype._click = function (e) {
+      e.stopPropagation();
+      var b = this.bar.getBoundingClientRect();
+
+      if (e.clientX < b.left + this._halfTickWidth) {
+        this.range.style.width = "".concat(this._tickWidth, "px");
+      } else if (e.clientX > b.right - this._halfTickWidth) {
+        this.range.style.width = "".concat(b.width, "px");
+      } else {
+        this.range.style.width = "".concat(e.clientX - b.left + this._halfTickWidth, "px");
       }
-    }, {
-      key: "_updateBounds",
-      value: function _updateBounds() {
-        var b = this._bar.getBoundingClientRect();
 
-        var t = this._rightTick.getBoundingClientRect();
+      this._updateBounds();
+    };
 
-        var k = (this.max - this.min) / (b.width - t.width);
-        this._lo = this.min;
-        var hi = t.left - b.left;
-        this._hi = this.min + (this.mode === 'float' ? hi * k : Math.round(hi * k));
-        var event = document.createEvent('Event');
-        event.initEvent('change', false, false);
-        this.dispatchEvent(event);
-      }
-    }]);
+    BaseSlider.prototype._updateBounds = function () {
+      var b = this.bar.getBoundingClientRect();
+      var t = this.rightTick.getBoundingClientRect();
+      var hi = t.left - b.left;
+      this._hi = this.min + (this.floatMode ? hi * this._ratio : Math.round(hi * this._ratio));
+      var event = document.createEvent('Event');
+      event.initEvent('change', false, false);
+      this.dispatchEvent(event);
+    };
 
-    return Slider1;
+    return BaseSlider;
   }(Component);
 
-  var Slider2 = /*#__PURE__*/function (_Slider) {
-    _inherits(Slider2, _Slider);
+  var Slider =
+  /** @class */
+  function (_super) {
+    __extends(Slider, _super);
 
-    var _super = _createSuper(Slider2);
+    function Slider(el, options) {
+      var _this = _super.call(this, el, options) || this;
 
-    function Slider2() {
-      _classCallCheck$1(this, Slider2);
+      _this.leftTick = document.createElement('div');
+      _this.leftLabel = document.createElement('label');
+      _this.leftIcon = document.createElement('i');
+      _this._lo = 0;
+      _this._doubleTickWidth = 24;
 
-      return _super.apply(this, arguments);
+      _this.element.classList.add('scanex-component-two-tick-slider');
+
+      _this.leftTick.classList.add('slider-tick');
+
+      _this.leftTick.classList.add('slider-tick-left');
+
+      _this.leftTick.appendChild(_this.leftIcon);
+
+      _this.leftTick.appendChild(_this.leftLabel);
+
+      _this.leftLabel.classList.add('hidden');
+
+      _this.range.insertBefore(_this.leftTick, _this.rightTick);
+
+      _this.leftTick.addEventListener('mousedown', _this._start.bind(_this, _this.leftTick));
+
+      _this._doubleTickWidth = _this._tickWidth * 2;
+      _this._ratio = (_this._barWidth - _this._doubleTickWidth) / (_this.max - _this.min);
+      return _this;
     }
 
-    _createClass$1(Slider2, [{
-      key: "render",
-      value: function render(options) {
-        _get(_getPrototypeOf(Slider2.prototype), "render", this).call(this, options);
-
-        this.element.classList.add('scanex-component-two-tick-slider');
-        this._leftTick = document.createElement('div');
-
-        this._leftTick.classList.add('slider-tick');
-
-        this._leftTick.classList.add('slider-tick-left');
-
-        this._leftLabel = document.createElement('label');
-
-        this._leftTick.appendChild(this._leftLabel);
-
-        this._leftLabel.classList.add('hidden');
-
-        var icn = document.createElement('i');
-
-        this._leftTick.appendChild(icn);
-
-        this._range.insertBefore(this._leftTick, this._rightTick);
-
-        this._leftTick.addEventListener('mousedown', this._start.bind(this, this._leftTick));
-      }
-    }, {
-      key: "lo",
+    Object.defineProperty(Slider.prototype, "lo", {
       get: function get() {
         return this._lo;
       },
@@ -39349,9 +41531,11 @@ var Forestry = (function () {
         }
 
         this._updateUI();
-      }
-    }, {
-      key: "hi",
+      },
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(Slider.prototype, "hi", {
       get: function get() {
         return this._hi;
       },
@@ -39361,337 +41545,661 @@ var Forestry = (function () {
         }
 
         this._updateUI();
-      }
-    }, {
-      key: "_slide",
-      value: function _slide(e) {
-        var _this = this;
+      },
+      enumerable: false,
+      configurable: true
+    });
 
-        e.stopPropagation();
-        e.preventDefault();
-        var tid = window.setTimeout(function () {
-          window.clearTimeout(tid);
+    Slider.prototype._slide = function (e) {
+      var _this = this;
 
-          if (_this._tick) {
-            var lt = _this._leftTick.getBoundingClientRect();
+      e.stopPropagation();
+      e.preventDefault();
+      var tid = window.setTimeout(function () {
+        window.clearTimeout(tid);
 
-            var rt = _this._rightTick.getBoundingClientRect();
+        if (_this.tick) {
+          var lt = _this.leftTick.getBoundingClientRect();
 
-            var w = lt.width + rt.width;
-
-            var b = _this._bar.getBoundingClientRect();
-
-            var x = e.clientX - _this._offset;
-
-            if (_this._tick === _this._leftTick) {
-              if (x > b.left) {
-                if (x + lt.width < rt.left) {
-                  _this._range.style.left = "".concat(x - b.left, "px");
-                  _this._range.style.width = "".concat(rt.right - x, "px");
-                } else {
-                  _this._range.style.left = "".concat(rt.left - lt.width - b.left, "px");
-                  _this._range.style.width = "".concat(w, "px");
-                }
-              }
-
-              _this._updateBounds();
-            } else if (_this._tick === _this._rightTick) {
-              if (x < b.right - rt.width) {
-                if (lt.right < x) {
-                  _this._range.style.width = "".concat(x - lt.right + w, "px");
-                } else {
-                  _this._range.style.width = "".concat(w, "px");
-                }
-              }
-
-              _this._updateBounds();
-            }
-          }
-        }, this._delay);
-      }
-    }, {
-      key: "_click",
-      value: function _click(e) {
-        if (!this._tick) {
-          e.stopPropagation(); // const b = this._bar.getBoundingClientRect();
-          // const t = this._rightTick.getBoundingClientRect();
-          // const halfWidth = Math.round (t.width / 2);
-          // if (e.clientX < b.left + halfWidth) {                
-          //     this._range.style.width = `${t.width}px`;
-          // }
-          // else if (e.clientX > b.right - halfWidth) {
-          //     this._range.style.width = `${b.width}px`;
-          // }
-          // else {
-          //     this._range.style.width = `${e.clientX - b.left + halfWidth}px`;                
-          // }        
-          // this._updateBounds();
-        }
-      }
-    }, {
-      key: "_updateUI",
-      value: function _updateUI() {
-        if (!isNaN(this.lo) && !isNaN(this.hi)) {
-          var lt = this._leftTick.getBoundingClientRect();
-
-          var rt = this._rightTick.getBoundingClientRect();
+          var rt = _this.rightTick.getBoundingClientRect();
 
           var w = lt.width + rt.width;
 
-          var b = this._bar.getBoundingClientRect();
+          var b = _this.bar.getBoundingClientRect();
 
-          var k = (b.width - w) / (this.max - this.min);
-          this._range.style.left = "".concat(Math.round((this.lo - this.min) * k), "px");
-          this._range.style.width = "".concat(Math.round((this.hi - this.lo) * k) + w, "px");
-          var event = document.createEvent('Event');
-          event.initEvent('change', false, false);
-          this.dispatchEvent(event);
+          var x = e.clientX - _this.offset;
+
+          if (_this.tick === _this.leftTick) {
+            if (x >= b.left) {
+              if (x + lt.width < rt.left) {
+                _this.range.style.left = "".concat(x - b.left, "px");
+                _this.range.style.width = "".concat(rt.right - x, "px");
+              } else {
+                _this.range.style.left = "".concat(rt.left - lt.width - b.left, "px");
+                _this.range.style.width = "".concat(w, "px");
+              }
+            }
+
+            _this._updateBounds();
+          } else if (_this.tick === _this.rightTick) {
+            if (x <= b.right - rt.width) {
+              if (lt.right < x) {
+                _this.range.style.width = "".concat(x - lt.right + w, "px");
+              } else {
+                _this.range.style.width = "".concat(w, "px");
+              }
+            }
+
+            _this._updateBounds();
+          }
         }
+      }, this.delay);
+    };
+
+    Slider.prototype._click = function (e) {
+      e.stopPropagation();
+      var lt = this.leftTick.getBoundingClientRect();
+      var rt = this.rightTick.getBoundingClientRect();
+      var b = this.bar.getBoundingClientRect();
+      var r = this.range.getBoundingClientRect();
+      var h = Math.round(rt.width / 2);
+
+      if (e.clientX < lt.left + h) {
+        var x = e.clientX - b.left - h;
+        x = x > 0 ? x : 0;
+        var d = r.left - x;
+        var w = r.width + d - b.left;
+        this.range.style.left = "".concat(x, "px");
+        this.range.style.width = "".concat(w, "px");
+      } else if (e.clientX > rt.right - h) {
+        var d = e.clientX - r.right + h;
+        d = d < b.right - r.right ? d : b.right - r.right;
+        this.range.style.width = "".concat(r.width + d, "px");
+      } else if (e.clientX - lt.right < rt.left - e.clientX) {
+        var d = e.clientX - r.left - h;
+        this.range.style.left = "".concat(e.clientX - b.left - h, "px");
+        this.range.style.width = "".concat(r.width - d, "px");
+      } else {
+        this.range.style.width = "".concat(e.clientX - r.left + h, "px");
       }
-    }, {
-      key: "_updateBounds",
-      value: function _updateBounds() {
-        var b = this._bar.getBoundingClientRect();
 
-        var lt = this._leftTick.getBoundingClientRect();
+      this._updateBounds();
+    };
 
-        var rt = this._rightTick.getBoundingClientRect();
-
-        var w = lt.width + rt.width;
-        var k = (this.max - this.min) / (b.width - w);
-        var lo = lt.left - b.left;
-        this._lo = this.min + (this.mode === 'float' ? lo * k : Math.round(lo * k));
-        var hi = rt.left - b.left - lt.width;
-        this._hi = this.min + (this.mode === 'float' ? hi * k : Math.round(hi * k));
-        var event = document.createEvent('Event');
-        event.initEvent('change', false, false);
-        this.dispatchEvent(event);
+    Slider.prototype._updateUI = function () {
+      if (!isNaN(this.lo) && !isNaN(this.hi)) {
+        this.range.style.left = "".concat(Math.round((this.lo - this.min) * this._ratio), "px");
+        this.range.style.width = "".concat(Math.round((this.hi - this.lo) * this._ratio) + this._doubleTickWidth, "px");
+        var event_1 = document.createEvent('Event');
+        event_1.initEvent('change', false, false);
+        this.dispatchEvent(event_1);
       }
-    }]);
+    };
 
-    return Slider2;
-  }(Slider1);
+    Slider.prototype._updateBounds = function () {
+      var b = this.bar.getBoundingClientRect();
+      var lt = this.leftTick.getBoundingClientRect();
+      var rt = this.rightTick.getBoundingClientRect();
+      var lo = lt.left - b.left;
+      this._lo = this.min + (this.floatMode ? lo * this._ratio : Math.round(lo / this._ratio));
+      var hi = rt.left - b.left - lt.width;
+      this._hi = this.min + (this.floatMode ? hi * this._ratio : Math.round(hi / this._ratio));
+      var event = document.createEvent('Event');
+      event.initEvent('change', false, false);
+      this.dispatchEvent(event);
+    };
 
-  var Interval = /*#__PURE__*/function (_Component) {
-    _inherits(Interval, _Component);
+    return Slider;
+  }(BaseSlider);
 
-    var _super = _createSuper(Interval);
+  var Interval =
+  /** @class */
+  function (_super) {
+    __extends(Interval, _super);
 
-    function Interval() {
-      _classCallCheck$1(this, Interval);
+    function Interval(el, options) {
+      var _this = _super.call(this, el) || this;
 
-      return _super.apply(this, arguments);
+      _this._lo = document.createElement('input');
+      _this._sl = document.createElement('div');
+      _this._hi = document.createElement('input');
+
+      _this.element.classList.add('scanex-component-range');
+
+      _this._lo.classList.add('lo');
+
+      _this._lo.setAttribute('type', 'text');
+
+      _this.element.appendChild(_this._lo);
+
+      _this._sl.classList.add('slider');
+
+      _this.element.appendChild(_this._sl);
+
+      _this._hi.classList.add('hi');
+
+      _this._hi.setAttribute('type', 'text');
+
+      _this.element.appendChild(_this._hi);
+
+      _this.slider = new Slider(_this._sl, options);
+
+      _this.slider.on('change', _this._change.bind(_this));
+
+      return _this;
     }
 
-    _createClass$1(Interval, [{
-      key: "render",
-      value: function render(_ref) {
-        var min = _ref.min,
-            max = _ref.max,
-            slider = _ref.slider;
-        this._element = document.createElement('div');
+    Interval.prototype.destroy = function () {
+      this._lo.remove();
 
-        this._container.appendChild(this.element);
+      this._sl.remove();
 
-        this.element.classList.add('scanex-component-range');
-        this.element.innerHTML = "<table>\n            <tr>\n                <td>\n                    <input class=\"lo\" type=\"text\" />\n                </td>\n                <td>\n                    <div class=\"slider\"></div>\n                </td>\n                <td>\n                    <input class=\"hi\" type=\"text\" />\n                </td>\n            </tr>\n        </table>";
-        this._lo = this.element.querySelector('.lo');
-        this._hi = this.element.querySelector('.hi');
-        this._sliderElement = this.element.querySelector('.slider');
-        this._slider = new slider(this._sliderElement, {
-          min: min,
-          max: max
-        });
+      this._hi.remove();
+    };
 
-        this._slider.on('change', this._change.bind(this));
-      }
-    }, {
-      key: "destroy",
-      value: function destroy() {
-        this.element.remove();
-      }
-    }, {
-      key: "_change",
-      value: function _change(e) {
-        this._lo.value = this._slider.lo.toString();
-        this._hi.value = this._slider.hi.toString();
-        var event = document.createEvent('Event');
-        event.initEvent('change', false, false);
-        this.dispatchEvent(event);
-      }
-    }, {
-      key: "min",
+    Interval.prototype._change = function () {
+      var _a, _b;
+
+      this._lo.value = ((_a = this.slider) === null || _a === void 0 ? void 0 : _a.lo.toString()) || '';
+      this._hi.value = ((_b = this.slider) === null || _b === void 0 ? void 0 : _b.hi.toString()) || '';
+      var event = document.createEvent('Event');
+      event.initEvent('change', false, false);
+      this.dispatchEvent(event);
+    };
+
+    Object.defineProperty(Interval.prototype, "min", {
       get: function get() {
-        return this._slider.min;
+        var _a;
+
+        return (_a = this.slider) === null || _a === void 0 ? void 0 : _a.min;
       },
-      set: function set(min) {
-        this._slider.min = min;
-      }
-    }, {
-      key: "max",
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(Interval.prototype, "max", {
       get: function get() {
-        return this._slider.max;
+        var _a;
+
+        return (_a = this.slider) === null || _a === void 0 ? void 0 : _a.max;
       },
-      set: function set(max) {
-        this._slider.max = max;
-      }
-    }, {
-      key: "lo",
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(Interval.prototype, "lo", {
       get: function get() {
-        return this._slider.lo;
+        if (this.slider) {
+          return this.slider.lo;
+        }
+
+        return 0;
       },
       set: function set(lo) {
-        this._slider.lo = lo;
-      }
-    }, {
-      key: "hi",
+        if (this.slider) {
+          this.slider.lo = lo;
+        }
+      },
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(Interval.prototype, "hi", {
       get: function get() {
-        return this._slider.hi;
+        if (this.slider) {
+          return this.slider.hi;
+        }
+
+        return 0;
       },
       set: function set(hi) {
-        this._slider.hi = hi;
-      }
-    }]);
-
+        if (this.slider) {
+          this.slider.hi = hi;
+        }
+      },
+      enumerable: false,
+      configurable: true
+    });
     return Interval;
   }(Component);
 
-  var Tabs = /*#__PURE__*/function (_Component) {
-    _inherits(Tabs, _Component);
+  var Spinner =
+  /** @class */
+  function (_super) {
+    __extends(Spinner, _super);
 
-    var _super = _createSuper(Tabs);
+    function Spinner(el) {
+      var _this = _super.call(this, el) || this;
 
-    function Tabs() {
-      _classCallCheck$1(this, Tabs);
+      _this._value = 0;
+      _this._min = 0;
+      _this._max = 0;
+      _this.input = document.createElement('input');
+      _this.buttons = document.createElement('div');
+      _this.up = document.createElement('i');
+      _this.down = document.createElement('i');
+      _this._disabled = false;
 
-      return _super.apply(this, arguments);
+      _this.element.classList.add('scanex-component-spinner');
+
+      _this.element.appendChild(_this.input);
+
+      _this.input.setAttribute('type', 'text');
+
+      _this.input.value = "0";
+
+      _this.input.addEventListener('change', function (e) {
+        e.stopPropagation();
+        _this.value = parseInt(_this.input.value, 10);
+      });
+
+      _this.element.appendChild(_this.buttons);
+
+      _this.buttons.appendChild(_this.up);
+
+      _this.buttons.classList.add('buttons');
+
+      _this.up.addEventListener('click', function (e) {
+        e.stopPropagation();
+
+        _this.increment();
+      });
+
+      _this.up.classList.add('scanex-component-icon');
+
+      _this.up.classList.add('spinner-up');
+
+      _this.buttons.appendChild(_this.down);
+
+      _this.down.addEventListener('click', function (e) {
+        e.stopPropagation();
+
+        _this.decrement();
+      });
+
+      _this.down.classList.add('scanex-component-icon');
+
+      _this.down.classList.add('spinner-down');
+
+      return _this;
     }
 
-    _createClass$1(Tabs, [{
-      key: "render",
-      value: function render() {
-        this._tabs = {};
-        this._panels = {};
-        this._element = document.createElement('div');
+    Spinner.prototype.destroy = function () {
+      this.input.remove();
+      this.buttons.remove();
+    };
 
-        this._container.appendChild(this.element);
-
-        this.element.classList.add('scanex-component-tabs');
-        this._tabsContainer = document.createElement('div');
-
-        this._tabsContainer.classList.add('tabs');
-
-        this.element.appendChild(this._tabsContainer);
-        this._panelsContainer = document.createElement('div');
-
-        this._panelsContainer.classList.add('panels');
-
-        this.element.appendChild(this._panelsContainer);
-      }
-    }, {
-      key: "destroy",
-      value: function destroy() {
-        this.element.remove();
-      }
-    }, {
-      key: "_click",
-      value: function _click(id, e) {
-        e.stopPropagation();
-        this.selected = id;
-      }
-    }, {
-      key: "selected",
+    Object.defineProperty(Spinner.prototype, "value", {
       get: function get() {
-        return this._selected;
+        return this._value;
       },
-      set: function set(selected) {
-        var _this = this;
-
-        if (this.selected !== selected) {
-          Object.keys(this._tabs).forEach(function (id) {
-            if (id === selected) {
-              _this._tabs[id].classList.add('selected');
-
-              _this._panels[id].classList.remove('hidden');
-            } else {
-              _this._tabs[id].classList.remove('selected');
-
-              _this._panels[id].classList.add('hidden');
-            }
-          });
-          this._selected = selected;
-          var event = document.createEvent('Event');
-          event.initEvent('change:selected', false, false);
-          this.dispatchEvent(event);
+      set: function set(value) {
+        if (this.validate(value)) {
+          this._value = value;
+          var event_1 = document.createEvent('Event');
+          event_1.initEvent("change", false, false);
+          this.dispatchEvent(event_1);
         }
-      }
-    }, {
-      key: "tabs",
+
+        this.input.value = this._value.toString();
+      },
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(Spinner.prototype, "min", {
       get: function get() {
-        return this._tabs;
-      }
-    }, {
-      key: "panels",
+        return this._min;
+      },
+      set: function set(min) {
+        if (!isNaN(min)) {
+          this._min = min;
+        }
+      },
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(Spinner.prototype, "max", {
       get: function get() {
-        return this._panels;
+        return this._max;
+      },
+      set: function set(max) {
+        if (!isNaN(max) && this._min <= max) {
+          this._max = max;
+        }
+      },
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(Spinner.prototype, "disabled", {
+      get: function get() {
+        return this._disabled;
+      },
+      set: function set(disabled) {
+        this._disabled = disabled;
+
+        if (this._disabled) {
+          this.element.classList.add('disabled');
+          this.input.classList.add('disabled');
+          this.up.classList.add('disabled');
+          this.down.classList.add('disabled');
+        } else {
+          this.element.classList.remove('disabled');
+          this.input.classList.remove('disabled');
+          this.up.classList.remove('disabled');
+          this.down.classList.remove('disabled');
+        }
+      },
+      enumerable: false,
+      configurable: true
+    });
+
+    Spinner.prototype.validate = function (value) {
+      return !this.disabled && !isNaN(value) && this._min <= value && value <= this._max;
+    };
+
+    Spinner.prototype.increment = function () {
+      this.value = this._value + 1;
+      return this.value;
+    };
+
+    Spinner.prototype.decrement = function () {
+      this.value = this._value - 1;
+      return this.value;
+    };
+
+    return Spinner;
+  }(Component);
+
+  var Panel =
+  /** @class */
+  function () {
+    function Panel() {
+      this.el = document.createElement('div');
+      this._collapsed = false;
+      this.el.classList.add('scanex-component-tabs-panel');
+    }
+
+    Object.defineProperty(Panel.prototype, "element", {
+      get: function get() {
+        return this.el;
+      },
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(Panel.prototype, "collapsed", {
+      get: function get() {
+        return this._collapsed;
+      },
+      enumerable: false,
+      configurable: true
+    });
+
+    Panel.prototype.expand = function () {
+      this._collapsed = false;
+      this.el.classList.remove('collapsed');
+    };
+
+    Panel.prototype.collapse = function () {
+      this._collapsed = true;
+      this.el.classList.add('collapsed');
+    };
+
+    Panel.prototype.destroy = function () {
+      this.el.remove();
+    };
+
+    return Panel;
+  }();
+
+  var Tab =
+  /** @class */
+  function (_super) {
+    __extends(Tab, _super);
+
+    function Tab(id, title, panel) {
+      var _this = _super.call(this) || this;
+
+      _this.el = document.createElement('div');
+      _this._collapsed = false;
+      _this.id = '';
+      _this.id = id;
+
+      _this.el.classList.add('scanex-component-tabs-tab');
+
+      _this.el.classList.add('noselect');
+
+      _this.el.innerHTML = "<i class=\"scanex-component-tabs-tab-icon scanex-component-icon ".concat(id, "\"></i><div class=\"scanex-component-tabs-tab-label\">").concat(title, "</div>");
+      _this.panel = panel;
+
+      _this.el.addEventListener('click', function (e) {
+        e.stopPropagation();
+
+        _this.expand();
+      });
+
+      return _this;
+    }
+
+    Object.defineProperty(Tab.prototype, "element", {
+      get: function get() {
+        return this.el;
+      },
+      enumerable: false,
+      configurable: true
+    });
+    Object.defineProperty(Tab.prototype, "collapsed", {
+      get: function get() {
+        return this._collapsed;
+      },
+      enumerable: false,
+      configurable: true
+    });
+
+    Tab.prototype.expand = function () {
+      var _a, _b;
+
+      if (this.collapsed) {
+        this._collapsed = false;
+        this.el.classList.remove('collapsed');
+        (_a = this.el.querySelector('i')) === null || _a === void 0 ? void 0 : _a.classList.remove('collapsed');
+        (_b = this.panel) === null || _b === void 0 ? void 0 : _b.expand();
+        var event_1 = document.createEvent('Event');
+        event_1.initEvent('change', false, false);
+        this.dispatchEvent(event_1);
       }
-    }, {
-      key: "add",
-      value: function add(id, label) {
-        var tab = document.createElement('div');
-        tab.classList.add('tab');
-        tab.classList.add('noselect');
-        tab.classList.add(id);
-        tab.innerText = label;
-        tab.addEventListener('click', this._click.bind(this, id));
+    };
 
-        this._tabsContainer.appendChild(tab);
+    Tab.prototype.collapse = function () {
+      var _a, _b;
 
-        this._tabs[id] = tab;
-        var panel = document.createElement('div');
-        panel.classList.add('panel');
-        panel.classList.add('hidden');
-        panel.classList.add(id);
+      if (!this.collapsed) {
+        this._collapsed = true;
+        this.el.classList.add('collapsed');
+        (_a = this.el.querySelector('i')) === null || _a === void 0 ? void 0 : _a.classList.add('collapsed');
+        (_b = this.panel) === null || _b === void 0 ? void 0 : _b.collapse();
+        var event_2 = document.createEvent('Event');
+        event_2.initEvent('change', false, false);
+        this.dispatchEvent(event_2);
+      }
+    };
 
-        this._panelsContainer.appendChild(panel);
+    Tab.prototype.destroy = function () {
+      var _a;
 
-        this._panels[id] = panel;
+      (_a = this.panel) === null || _a === void 0 ? void 0 : _a.destroy();
+      this.el.remove();
+    };
 
-        if (!this.selected) {
-          this.selected = id;
+    return Tab;
+  }(Events);
+
+  var Tabs =
+  /** @class */
+  function (_super) {
+    __extends(Tabs, _super);
+
+    function Tabs(el) {
+      var _this = _super.call(this, el) || this;
+
+      _this._current = '';
+      _this.tabs = [];
+
+      _this.element.classList.add('scanex-component');
+
+      _this.element.classList.add('scanex-component-tabs');
+
+      _this.element.innerHTML = '<div class="tabs"></div><div class="panels"></div>';
+      return _this;
+    }
+
+    Tabs.prototype.destroy = function () {
+      var _a, _b;
+
+      for (var _i = 0, _c = this.tabs; _i < _c.length; _i++) {
+        var t = _c[_i];
+        t.destroy();
+      }
+
+      (_a = this.element.querySelector('.tabs')) === null || _a === void 0 ? void 0 : _a.remove();
+      (_b = this.element.querySelector('.panels')) === null || _b === void 0 ? void 0 : _b.remove();
+    };
+
+    Object.defineProperty(Tabs.prototype, "current", {
+      get: function get() {
+        return this._current;
+      },
+      set: function set(current) {
+        for (var _i = 0, _a = this.tabs; _i < _a.length; _i++) {
+          var t = _a[_i];
+
+          if (t.id === current) {
+            t.expand();
+          } else {
+            t.collapse();
+          }
         }
 
-        return panel;
-      }
-    }, {
-      key: "remove",
-      value: function remove(id) {
-        this._tabsContainer.removeChild(this._tabs[id]);
+        this._current = current;
+      },
+      enumerable: false,
+      configurable: true
+    });
 
-        delete this._tabs[id];
+    Tabs.prototype.add = function (id, title) {
+      var _this = this;
 
-        this._panelsContainer.removeChild(this._panels[id]);
+      var _a, _b;
 
-        delete this._panels[id];
+      var p = new Panel();
+      var t = new Tab(id, title, p);
+      t.addEventListener('change', function () {
+        if (!t.collapsed) {
+          _this.current = t.id;
+        }
 
-        if (this.selected === id) {
-          var tabs = Object.keys(this._tabs);
-          this.selected = tabs.length > 0 ? tabs[0] : undefined;
+        var event = document.createEvent('Event');
+        event.initEvent('change', false, false);
+
+        _this.dispatchEvent(event);
+      });
+      (_a = this.element.querySelector('.tabs')) === null || _a === void 0 ? void 0 : _a.appendChild(t.element);
+      (_b = this.element.querySelector('.panels')) === null || _b === void 0 ? void 0 : _b.appendChild(p.element);
+      this.tabs.push(t);
+      this.current = id;
+      return p.element;
+    };
+
+    Tabs.prototype.remove = function (id) {
+      for (var i = 0; i < this.tabs.length; ++i) {
+        var t = this.tabs[i];
+
+        if (t.id === id) {
+          t.destroy();
+          this.tabs.splice(i, 1);
+
+          if (this.current === id) {
+            this.current = '';
+          }
+
+          return;
         }
       }
-    }, {
-      key: "clear",
-      value: function clear() {
-        var _this2 = this;
-
-        Object.keys(this._tabs).forEach(function (id) {
-          _this2.remove(id);
-        });
-      }
-    }]);
+    };
 
     return Tabs;
   }(Component);
+
+  /** @class */
+  (function (_super) {
+    __extends(Tooltip, _super);
+
+    function Tooltip(el, _a) {
+      var _b = _a.top,
+          top = _b === void 0 ? 0 : _b,
+          _c = _a.left,
+          left = _c === void 0 ? 0 : _c,
+          _d = _a.timeout,
+          timeout = _d === void 0 ? 0 : _d;
+
+      var _this = _super.call(this, el) || this;
+
+      _this._content = document.createElement('div');
+
+      _this.content.classList.add('scanex-component-tooltip');
+
+      _this.element.addEventListener('mouseover', function (e) {
+        e.stopPropagation();
+
+        var pos = _this.element.getBoundingClientRect();
+
+        _this.content.style.top = "".concat(pos.top + top, "px");
+        _this.content.style.left = "".concat(pos.left + pos.width + left, "px");
+
+        if (timeout) {
+          _this.show();
+
+          delay(timeout).then(function () {
+            return _this.hide();
+          });
+        } else {
+          _this.show();
+        }
+      });
+
+      _this.element.addEventListener('mouseout', function (e) {
+        e.stopPropagation();
+
+        _this.hide();
+      });
+
+      return _this;
+    }
+
+    Tooltip.prototype.show = function () {
+      document.body.appendChild(this.content);
+      var event = document.createEvent('Event');
+      event.initEvent('show', false, false);
+      this.dispatchEvent(event);
+    };
+
+    Tooltip.prototype.hide = function () {
+      this.content.remove();
+      var event = document.createEvent('Event');
+      event.initEvent('hide', false, false);
+      this.dispatchEvent(event);
+    };
+
+    Object.defineProperty(Tooltip.prototype, "content", {
+      get: function get() {
+        return this._content;
+      },
+      enumerable: false,
+      configurable: true
+    });
+
+    Tooltip.prototype.destroy = function () {
+      this.content.remove();
+    };
+
+    return Tooltip;
+  })(Component);
 
   var strings$b = {
     ru: {
@@ -39710,9 +42218,9 @@ var Forestry = (function () {
   };
 
   Object.keys(strings$b).forEach(function (lang) {
-    return add(lang, strings$b[lang]);
+    return add$1(lang, strings$b[lang]);
   });
-  var translate$o = translate$v;
+  var translate$o = translate$t;
 
   var View$1 = /*#__PURE__*/function (_Dialog) {
     _inherits(View, _Dialog);
@@ -39728,19 +42236,20 @@ var Forestry = (function () {
         title: translate$o('baselayers.title'),
         top: 50,
         left: 450,
-        modal: true
+        modal: true,
+        id: 'create-baselayer'
       });
 
-      _this._element.classList.add('scanex-forestry-baselayers-view');
+      _this.el.classList.add('scanex-forestry-baselayers-view');
 
       _this.content.innerHTML = "\n        <div class=\"name\">\n            <div class=\"label\">".concat(translate$o('baselayers.name'), "</div>        \n            <input type=\"text\" value=\"\">        \n        </div>\n        <div class=\"url\">\n            <div class=\"label\">").concat(translate$o('baselayers.url'), "</div>        \n            <input type=\"text\" value=\"\">        \n        </div>\n        <div class=\"zoom\">\n            <div class=\"label\">").concat(translate$o('baselayers.zoom'), "</div>\n            <div></div>\n        </div>");
       _this._name = _this.content.querySelector('.name').querySelector('input');
       _this._url = _this.content.querySelector('.url').querySelector('input');
       _this._zoom = new Interval(_this.content.querySelector('.zoom').querySelector('div'), {
         min: 1,
-        max: 21,
-        slider: Slider2
-      });
+        max: 21
+      }); // this._zoom = new Interval(this.content.querySelector('.zoom').querySelector('div'), {min: 1, max: 21, slider: Sliders.Slider2});
+
       _this._zoom.lo = 1;
       _this._zoom.hi = 21;
       _this.footer.innerHTML = "<button class=\"ok\">".concat(translate$o('baselayers.ok'), "</button>\n        <button class=\"cancel\">").concat(translate$o('baselayers.cancel'), "</button>");
@@ -39823,7 +42332,7 @@ var Forestry = (function () {
     return View;
   }(Dialog);
 
-  var translate$n = translate$v;
+  var translate$n = translate$t;
 
   var BaseLayers = /*#__PURE__*/function (_Controller) {
     _inherits(BaseLayers, _Controller);
@@ -40297,7 +42806,7 @@ var Forestry = (function () {
     var data = [];
     var p = String(path).trim(); // A path data segment (if there is one) must begin with a "moveto" command
 
-    if (p[0] !== 'M' && p[0] !== 'm') {
+    if (p[0] !== "M" && p[0] !== "m") {
       return data;
     }
 
@@ -40306,15 +42815,15 @@ var Forestry = (function () {
       var theArgs = parseValues(args);
       var theCommand = command; // overloaded moveTo
 
-      if (type === 'm' && theArgs.length > 2) {
+      if (type === "m" && theArgs.length > 2) {
         data.push([theCommand].concat(theArgs.splice(0, 2)));
-        type = 'l';
-        theCommand = theCommand === 'm' ? 'l' : 'L';
+        type = "l";
+        theCommand = theCommand === "m" ? "l" : "L";
       } // Ignore invalid commands
 
 
       if (theArgs.length < ARG_LENGTH[type]) {
-        return '';
+        return "";
       }
 
       data.push([theCommand].concat(theArgs.splice(0, ARG_LENGTH[type]))); // The command letter can be eliminated on subsequent commands if the
@@ -40326,12 +42835,12 @@ var Forestry = (function () {
         data.push([theCommand].concat(theArgs.splice(0, ARG_LENGTH[type])));
       }
 
-      return '';
+      return "";
     });
     return data;
   }
 
-  var parsePath = parse$1;
+  var parsePath$2 = parse$1;
 
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
@@ -40389,17 +42898,18 @@ var Forestry = (function () {
   function _nonIterableSpread() {
     throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
   }
+
+  var parsePath$1 = parsePath$2;
   /**
    * Work around for https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/8438884/
    * @ignore
    */
 
-
   function supportsSvgPathArgument(window) {
-    var canvas = window.document.createElement('canvas');
-    var g = canvas.getContext('2d');
-    var p = new window.Path2D('M0 0 L1 1');
-    g.strokeStyle = 'red';
+    var canvas = window.document.createElement("canvas");
+    var g = canvas.getContext("2d");
+    var p = new window.Path2D("M0 0 L1 1");
+    g.strokeStyle = "red";
     g.lineWidth = 1;
     g.stroke(p);
     var imgData = g.getImageData(0, 0, 1, 1);
@@ -40424,7 +42934,7 @@ var Forestry = (function () {
   }
 
   function polyFillPath2D(window) {
-    if (typeof window === 'undefined' || !window.CanvasRenderingContext2D) {
+    if (typeof window === "undefined" || !window.CanvasRenderingContext2D) {
       return;
     }
 
@@ -40450,7 +42960,7 @@ var Forestry = (function () {
 
           (_this$segments = this.segments).push.apply(_this$segments, _toConsumableArray(path.segments));
         } else if (path) {
-          this.segments = parsePath(path);
+          this.segments = parsePath$1(path);
         }
       }
 
@@ -40466,47 +42976,47 @@ var Forestry = (function () {
       }, {
         key: "moveTo",
         value: function moveTo(x, y) {
-          this.segments.push(['M', x, y]);
+          this.segments.push(["M", x, y]);
         }
       }, {
         key: "lineTo",
         value: function lineTo(x, y) {
-          this.segments.push(['L', x, y]);
+          this.segments.push(["L", x, y]);
         }
       }, {
         key: "arc",
         value: function arc(x, y, r, start, end, ccw) {
-          this.segments.push(['AC', x, y, r, start, end, !!ccw]);
+          this.segments.push(["AC", x, y, r, start, end, !!ccw]);
         }
       }, {
         key: "arcTo",
         value: function arcTo(x1, y1, x2, y2, r) {
-          this.segments.push(['AT', x1, y1, x2, y2, r]);
+          this.segments.push(["AT", x1, y1, x2, y2, r]);
         }
       }, {
         key: "ellipse",
         value: function ellipse(x, y, rx, ry, angle, start, end, ccw) {
-          this.segments.push(['E', x, y, rx, ry, angle, start, end, !!ccw]);
+          this.segments.push(["E", x, y, rx, ry, angle, start, end, !!ccw]);
         }
       }, {
         key: "closePath",
         value: function closePath() {
-          this.segments.push(['Z']);
+          this.segments.push(["Z"]);
         }
       }, {
         key: "bezierCurveTo",
         value: function bezierCurveTo(cp1x, cp1y, cp2x, cp2y, x, y) {
-          this.segments.push(['C', cp1x, cp1y, cp2x, cp2y, x, y]);
+          this.segments.push(["C", cp1x, cp1y, cp2x, cp2y, x, y]);
         }
       }, {
         key: "quadraticCurveTo",
         value: function quadraticCurveTo(cpx, cpy, x, y) {
-          this.segments.push(['Q', cpx, cpy, x, y]);
+          this.segments.push(["Q", cpx, cpy, x, y]);
         }
       }, {
         key: "rect",
         value: function rect(x, y, width, height) {
-          this.segments.push(['R', x, y, width, height]);
+          this.segments.push(["R", x, y, width, height]);
         }
       }]);
 
@@ -40554,20 +43064,20 @@ var Forestry = (function () {
         var s = segments[i];
         pathType = s[0]; // Reset control point if command is not cubic
 
-        if (pathType !== 'S' && pathType !== 's' && pathType !== 'C' && pathType !== 'c') {
+        if (pathType !== "S" && pathType !== "s" && pathType !== "C" && pathType !== "c") {
           cpx = null;
           cpy = null;
         }
 
-        if (pathType !== 'T' && pathType !== 't' && pathType !== 'Q' && pathType !== 'q') {
+        if (pathType !== "T" && pathType !== "t" && pathType !== "Q" && pathType !== "q") {
           qcpx = null;
           qcpy = null;
         }
 
         switch (pathType) {
-          case 'm':
-          case 'M':
-            if (pathType === 'm') {
+          case "m":
+          case "M":
+            if (pathType === "m") {
               x += s[1];
               y += s[2];
             } else {
@@ -40575,7 +43085,7 @@ var Forestry = (function () {
               y = s[2];
             }
 
-            if (pathType === 'M' || !startPoint) {
+            if (pathType === "M" || !startPoint) {
               startPoint = {
                 x: x,
                 y: y
@@ -40585,41 +43095,41 @@ var Forestry = (function () {
             canvas.moveTo(x, y);
             break;
 
-          case 'l':
+          case "l":
             x += s[1];
             y += s[2];
             canvas.lineTo(x, y);
             break;
 
-          case 'L':
+          case "L":
             x = s[1];
             y = s[2];
             canvas.lineTo(x, y);
             break;
 
-          case 'H':
+          case "H":
             x = s[1];
             canvas.lineTo(x, y);
             break;
 
-          case 'h':
+          case "h":
             x += s[1];
             canvas.lineTo(x, y);
             break;
 
-          case 'V':
+          case "V":
             y = s[1];
             canvas.lineTo(x, y);
             break;
 
-          case 'v':
+          case "v":
             y += s[1];
             canvas.lineTo(x, y);
             break;
 
-          case 'a':
-          case 'A':
-            if (pathType === 'a') {
+          case "a":
+          case "A":
+            if (pathType === "a") {
               x += s[6];
               y += s[7];
             } else {
@@ -40678,7 +43188,7 @@ var Forestry = (function () {
             canvas.restore();
             break;
 
-          case 'C':
+          case "C":
             cpx = s[3]; // Last control point
 
             cpy = s[4];
@@ -40687,7 +43197,7 @@ var Forestry = (function () {
             canvas.bezierCurveTo(s[1], s[2], cpx, cpy, x, y);
             break;
 
-          case 'c':
+          case "c":
             canvas.bezierCurveTo(s[1] + x, s[2] + y, s[3] + x, s[4] + y, s[5] + x, s[6] + y);
             cpx = s[3] + x; // Last control point
 
@@ -40696,8 +43206,8 @@ var Forestry = (function () {
             y += s[6];
             break;
 
-          case 'S':
-            if (cpx === null || cpx === null) {
+          case "S":
+            if (cpx === null || cpy === null) {
               cpx = x;
               cpy = y;
             }
@@ -40710,8 +43220,8 @@ var Forestry = (function () {
             y = s[4];
             break;
 
-          case 's':
-            if (cpx === null || cpx === null) {
+          case "s":
+            if (cpx === null || cpy === null) {
               cpx = x;
               cpy = y;
             }
@@ -40724,7 +43234,7 @@ var Forestry = (function () {
             y += s[4];
             break;
 
-          case 'Q':
+          case "Q":
             qcpx = s[1]; // last control point
 
             qcpy = s[2];
@@ -40733,7 +43243,7 @@ var Forestry = (function () {
             canvas.quadraticCurveTo(qcpx, qcpy, x, y);
             break;
 
-          case 'q':
+          case "q":
             qcpx = s[1] + x; // last control point
 
             qcpy = s[2] + y;
@@ -40742,8 +43252,8 @@ var Forestry = (function () {
             canvas.quadraticCurveTo(qcpx, qcpy, x, y);
             break;
 
-          case 'T':
-            if (qcpx === null || qcpx === null) {
+          case "T":
+            if (qcpx === null || qcpy === null) {
               qcpx = x;
               qcpy = y;
             }
@@ -40756,8 +43266,8 @@ var Forestry = (function () {
             canvas.quadraticCurveTo(qcpx, qcpy, x, y);
             break;
 
-          case 't':
-            if (qcpx === null || qcpx === null) {
+          case "t":
+            if (qcpx === null || qcpy === null) {
               qcpx = x;
               qcpy = y;
             }
@@ -40770,15 +43280,15 @@ var Forestry = (function () {
             canvas.quadraticCurveTo(qcpx, qcpy, x, y);
             break;
 
-          case 'z':
-          case 'Z':
+          case "z":
+          case "Z":
             x = startPoint.x;
             y = startPoint.y;
             startPoint = undefined;
             canvas.closePath();
             break;
 
-          case 'AC':
+          case "AC":
             // arc
             x = s[1];
             y = s[2];
@@ -40789,7 +43299,7 @@ var Forestry = (function () {
             canvas.arc(x, y, r, startAngle, endAngle, ccw);
             break;
 
-          case 'AT':
+          case "AT":
             // arcTo
             x1 = s[1];
             y1 = s[2];
@@ -40799,7 +43309,7 @@ var Forestry = (function () {
             canvas.arcTo(x1, y1, x, y, r);
             break;
 
-          case 'E':
+          case "E":
             // ellipse
             x = s[1];
             y = s[2];
@@ -40817,7 +43327,7 @@ var Forestry = (function () {
             canvas.restore();
             break;
 
-          case 'R':
+          case "R":
             // rect
             x = s[1];
             y = s[2];
@@ -40844,9 +43354,9 @@ var Forestry = (function () {
         args[_key] = arguments[_key];
       }
 
-      var fillRule = 'nonzero';
+      var fillRule = "nonzero";
 
-      if (args.length === 0 || args.length === 1 && typeof args[0] === 'string') {
+      if (args.length === 0 || args.length === 1 && typeof args[0] === "string") {
         cFill.apply(this, args);
         return;
       }
@@ -40878,11 +43388,11 @@ var Forestry = (function () {
       } // let fillRule = 'nonzero';
 
 
-      if (args[0].constructor.name === 'Path2D') {
+      if (args[0].constructor.name === "Path2D") {
         // first argument is a Path2D object
         var x = args[1];
         var y = args[2];
-        var fillRule = args[3] || 'nonzero';
+        var fillRule = args[3] || "nonzero";
         var path = args[0];
         buildPath(this, path.segments);
         return cIsPointInPath.apply(this, [x, y, fillRule]);
@@ -40894,9 +43404,10 @@ var Forestry = (function () {
     window.Path2D = Path2D;
   }
 
-  var path2dPolyfill = polyFillPath2D;
+  var path2dPolyfill$1 = polyFillPath2D;
+  var path2dPolyfill = path2dPolyfill$1;
 
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     path2dPolyfill(window);
   }
 
@@ -42417,7 +44928,7 @@ var Forestry = (function () {
     }
   });
 
-  var translate$m = translate$v;
+  var translate$m = translate$t;
 
   var Cadastre = /*#__PURE__*/function () {
     function Cadastre(_ref) {
@@ -42524,11 +45035,11 @@ var Forestry = (function () {
       });
     }
 
-    return DKP;
+    return _createClass$1(DKP);
   }(LayerController);
 
-  var View = /*#__PURE__*/function (_Evented) {
-    _inherits(View, _Evented);
+  var View = /*#__PURE__*/function (_Events) {
+    _inherits(View, _Events);
 
     var _super = _createSuper(View);
 
@@ -42552,10 +45063,10 @@ var Forestry = (function () {
       });
       leafletSrc.DomEvent.disableScrollPropagation(_this._target);
       Object.keys(s).forEach(function (lang) {
-        return add(lang, s[lang]);
+        return add$1(lang, s[lang]);
       });
       Object.keys(strings).forEach(function (lang) {
-        return add(lang, strings[lang]);
+        return add$1(lang, strings[lang]);
       });
       return _this;
     }
@@ -42598,7 +45109,7 @@ var Forestry = (function () {
     }, {
       key: "translate",
       value: function translate(key) {
-        return translate$v(key);
+        return translate$t(key);
       }
     }, {
       key: "m",
@@ -42655,7 +45166,7 @@ var Forestry = (function () {
     }]);
 
     return View;
-  }(Evented);
+  }(Events$1);
 
   var strings$a = {
     ru: {
@@ -42983,11 +45494,11 @@ var Forestry = (function () {
     return Fires;
   }(View);
 
-  var translate$l = translate$v;
+  var translate$l = translate$t;
   var hotSpotLayerID = '9DC30891452449DD8D551D0AA62FFF54';
 
-  var Fires = /*#__PURE__*/function (_Evented) {
-    _inherits(Fires, _Evented);
+  var Fires = /*#__PURE__*/function (_Events) {
+    _inherits(Fires, _Events);
 
     var _super = _createSuper(Fires);
 
@@ -43179,7 +45690,7 @@ var Forestry = (function () {
     }]);
 
     return Fires;
-  }(Evented);
+  }(Events$1);
 
   // eslint-disable-next-line es/no-object-isfrozen -- safe
   var $isFrozen = Object.isFrozen;
@@ -43187,9 +45698,11 @@ var Forestry = (function () {
 
   // `Object.isFrozen` method
   // https://tc39.es/ecma262/#sec-object.isfrozen
-  _export$1({ target: 'Object', stat: true, forced: FAILS_ON_PRIMITIVES }, {
+  _export$1({ target: 'Object', stat: true, forced: FAILS_ON_PRIMITIVES || arrayBufferNonExtensible }, {
     isFrozen: function isFrozen(it) {
-      return isObject$1(it) ? $isFrozen ? $isFrozen(it) : false : true;
+      if (!isObject$1(it)) return true;
+      if (arrayBufferNonExtensible && classofRaw$1(it) == 'ArrayBuffer') return true;
+      return $isFrozen ? $isFrozen(it) : false;
     }
   });
 
@@ -49967,7 +52480,7 @@ var Forestry = (function () {
     });
   });
 
-  var translate$k = translate$v;
+  var translate$k = translate$t;
 
   var roundBytes = function roundBytes(s) {
     if (s > 1024 * 1024 * 1024 * 1024 * 1.2) {
@@ -50004,8 +52517,8 @@ var Forestry = (function () {
     ERROR: 2
   };
 
-  var UploadProgress = /*#__PURE__*/function (_Evented) {
-    _inherits(UploadProgress, _Evented);
+  var UploadProgress = /*#__PURE__*/function (_Events) {
+    _inherits(UploadProgress, _Events);
 
     var _super = _createSuper(UploadProgress);
 
@@ -50146,9 +52659,9 @@ var Forestry = (function () {
     }]);
 
     return UploadProgress;
-  }(Evented);
+  }(Events$1);
 
-  var translate$j = translate$v;
+  var translate$j = translate$t;
 
   var LayerProperties = /*#__PURE__*/function (_Dialog) {
     _inherits(LayerProperties, _Dialog);
@@ -50188,10 +52701,10 @@ var Forestry = (function () {
       return _this;
     }
 
-    return LayerProperties;
+    return _createClass$1(LayerProperties);
   }(Dialog);
 
-  var translate$i = translate$v;
+  var translate$i = translate$t;
   var FILE_EXTENSIONS = {
     vector: ['.geojson', '.shp', '.dbf', '.prj', '.sbn', '.sbx', '.shx', '.dat', '.mif', '.mid', '.csv', '.gpx', '.kml', '.kmz', '.sxf', '.sqlite', '.geojson', '.gdbtable'].join(','),
     raster: ['.tif', '.tiff', '.tfw', '.xml', '.jpg', '.jgw', '.png', '.pgw', '.jp2', '.j2w'].join(',')
@@ -50998,7 +53511,7 @@ var Forestry = (function () {
     return FileUploader;
   }(Controller);
 
-  var translate$h = translate$v;
+  var translate$h = translate$t;
 
   var _DAY = 60 * 60 * 24 * 1000;
 
@@ -51803,7 +54316,7 @@ var Forestry = (function () {
     return Incidents;
   }(Controller);
 
-  var translate$g = translate$v;
+  var translate$g = translate$t;
   var ALLOWED_LAYERS$3 = ['kppo_rgb', 'kppo'];
 
   var KPPO = /*#__PURE__*/function (_Controller) {
@@ -51867,7 +54380,7 @@ var Forestry = (function () {
     return KPPO;
   }(Controller);
 
-  var translate$f = translate$v;
+  var translate$f = translate$t;
 
   var LPO = /*#__PURE__*/function (_Controller) {
     _inherits(LPO, _Controller);
@@ -51922,8 +54435,8 @@ var Forestry = (function () {
     return LPO;
   }(Controller);
 
-  var Legend = /*#__PURE__*/function (_Evented) {
-    _inherits(Legend, _Evented);
+  var Legend = /*#__PURE__*/function (_Events) {
+    _inherits(Legend, _Events);
 
     var _super = _createSuper(Legend);
 
@@ -51986,10 +54499,10 @@ var Forestry = (function () {
     }]);
 
     return Legend;
-  }(Evented);
+  }(Events$1);
 
-  var Loading = /*#__PURE__*/function (_Evented) {
-    _inherits(Loading, _Evented);
+  var Loading = /*#__PURE__*/function (_Events) {
+    _inherits(Loading, _Events);
 
     var _super = _createSuper(Loading);
 
@@ -52016,7 +54529,7 @@ var Forestry = (function () {
     }]);
 
     return Loading;
-  }(Evented);
+  }(Events$1);
 
   var OIL = /*#__PURE__*/function (_LayerController) {
     _inherits(OIL, _LayerController);
@@ -52044,7 +54557,7 @@ var Forestry = (function () {
       });
     }
 
-    return OIL;
+    return _createClass$1(OIL);
   }(LayerController);
 
   var strings$7 = {
@@ -52133,7 +54646,7 @@ var Forestry = (function () {
     return Parks;
   }(View);
 
-  var translate$e = translate$v;
+  var translate$e = translate$t;
 
   var Parks = /*#__PURE__*/function (_Controller) {
     _inherits(Parks, _Controller);
@@ -52368,7 +54881,7 @@ var Forestry = (function () {
       });
     }
 
-    return Plan;
+    return _createClass$1(Plan);
   }(LayerController);
 
   // `Object.getOwnPropertyDescriptors` method
@@ -52389,31 +54902,41 @@ var Forestry = (function () {
     }
   });
 
-  var slice = [].slice;
+  _export$1({ global: true }, { Reflect: {} });
+
+  // Reflect[@@toStringTag] property
+  // https://tc39.es/ecma262/#sec-reflect-@@tostringtag
+  setToStringTag$1(global$1.Reflect, 'Reflect', true);
+
+  var Function$1 = global$1.Function;
+  var concat = functionUncurryThis([].concat);
+  var join = functionUncurryThis([].join);
   var factories = {};
 
   var construct = function (C, argsLength, args) {
-    if (!(argsLength in factories)) {
+    if (!hasOwnProperty_1(factories, argsLength)) {
       for (var list = [], i = 0; i < argsLength; i++) list[i] = 'a[' + i + ']';
-      // eslint-disable-next-line no-new-func -- we have no proper alternatives, IE8- only
-      factories[argsLength] = Function('C,a', 'return new C(' + list.join(',') + ')');
+      factories[argsLength] = Function$1('C,a', 'return new C(' + join(list, ',') + ')');
     } return factories[argsLength](C, args);
   };
 
   // `Function.prototype.bind` method implementation
   // https://tc39.es/ecma262/#sec-function.prototype.bind
-  var functionBind = Function.bind || function bind(that /* , ...args */) {
-    var fn = aFunction$2(this);
-    var partArgs = slice.call(arguments, 1);
+  var functionBind = functionBindNative ? Function$1.bind : function bind(that /* , ...args */) {
+    var F = aCallable(this);
+    var Prototype = F.prototype;
+    var partArgs = arraySlice$1(arguments, 1);
     var boundFunction = function bound(/* args... */) {
-      var args = partArgs.concat(slice.call(arguments));
-      return this instanceof boundFunction ? construct(fn, args.length, args) : fn.apply(that, args);
+      var args = concat(partArgs, arraySlice$1(arguments));
+      return this instanceof boundFunction ? construct(F, args.length, args) : F.apply(that, args);
     };
-    if (isObject$1(fn.prototype)) boundFunction.prototype = fn.prototype;
+    if (isObject$1(Prototype)) boundFunction.prototype = Prototype;
     return boundFunction;
   };
 
   var nativeConstruct = getBuiltIn$1('Reflect', 'construct');
+  var ObjectPrototype = Object.prototype;
+  var push = [].push;
 
   // `Reflect.construct` method
   // https://tc39.es/ecma262/#sec-reflect.construct
@@ -52423,16 +54946,18 @@ var Forestry = (function () {
     function F() { /* empty */ }
     return !(nativeConstruct(function () { /* empty */ }, [], F) instanceof F);
   });
+
   var ARGS_BUG = !fails$1(function () {
     nativeConstruct(function () { /* empty */ });
   });
+
   var FORCED = NEW_TARGET_BUG || ARGS_BUG;
 
   _export$1({ target: 'Reflect', stat: true, forced: FORCED, sham: FORCED }, {
     construct: function construct(Target, args /* , newTarget */) {
-      aFunction$2(Target);
+      aConstructor(Target);
       anObject$1(args);
-      var newTarget = arguments.length < 3 ? Target : aFunction$2(arguments[2]);
+      var newTarget = arguments.length < 3 ? Target : aConstructor(arguments[2]);
       if (ARGS_BUG && !NEW_TARGET_BUG) return nativeConstruct(Target, args, newTarget);
       if (Target == newTarget) {
         // w/o altered newTarget, optimization for 0-4 arguments
@@ -52445,13 +54970,13 @@ var Forestry = (function () {
         }
         // w/o altered newTarget, lot of arguments case
         var $args = [null];
-        $args.push.apply($args, args);
-        return new (functionBind.apply(Target, $args))();
+        functionApply(push, $args, args);
+        return new (functionApply(functionBind, Target, $args))();
       }
       // with altered newTarget, not support built-in constructors
       var proto = newTarget.prototype;
-      var instance = objectCreate$1(isObject$1(proto) ? proto : Object.prototype);
-      var result = Function.apply.call(Target, instance, args);
+      var instance = objectCreate$1(isObject$1(proto) ? proto : ObjectPrototype);
+      var result = functionApply(Target, instance, args);
       return isObject$1(result) ? result : instance;
     }
   });
@@ -52459,13 +54984,30 @@ var Forestry = (function () {
   var log = Math.log;
   var LOG10E = Math.LOG10E;
 
+  // eslint-disable-next-line es/no-math-log10 -- safe
+  var mathLog10 = Math.log10 || function log10(x) {
+    return log(x) * LOG10E;
+  };
+
   // `Math.log10` method
   // https://tc39.es/ecma262/#sec-math.log10
   _export$1({ target: 'Math', stat: true }, {
-    log10: function log10(x) {
-      return log(x) * LOG10E;
+    log10: mathLog10
+  });
+
+  // `Array.prototype.at` method
+  // https://github.com/tc39/proposal-relative-indexing-method
+  _export$1({ target: 'Array', proto: true }, {
+    at: function at(index) {
+      var O = toObject$1(this);
+      var len = lengthOfArrayLike(O);
+      var relativeIndex = toIntegerOrInfinity(index);
+      var k = relativeIndex >= 0 ? relativeIndex : len + relativeIndex;
+      return (k < 0 || k >= len) ? undefined : O[k];
     }
   });
+
+  addToUnscopables$1('at');
 
   var globalIsFinite = global$1.isFinite;
 
@@ -52481,13 +55023,14 @@ var Forestry = (function () {
   _export$1({ target: 'Number', stat: true }, { isFinite: numberIsFinite });
 
   var quot = /"/g;
+  var replace = functionUncurryThis(''.replace);
 
   // `CreateHTML` abstract operation
   // https://tc39.es/ecma262/#sec-createhtml
   var createHtml = function (string, tag, attribute, value) {
-    var S = toString$2(requireObjectCoercible$1(string));
+    var S = toString$1(requireObjectCoercible$1(string));
     var p1 = '<' + tag;
-    if (attribute !== '') p1 += ' ' + attribute + '="' + toString$2(value).replace(quot, '&quot;') + '"';
+    if (attribute !== '') p1 += ' ' + attribute + '="' + replace(toString$1(value), quot, '&quot;') + '"';
     return p1 + '>' + S + '</' + tag + '>';
   };
 
@@ -52508,41 +55051,287 @@ var Forestry = (function () {
     }
   });
 
+  var collection = function (CONSTRUCTOR_NAME, wrapper, common) {
+    var IS_MAP = CONSTRUCTOR_NAME.indexOf('Map') !== -1;
+    var IS_WEAK = CONSTRUCTOR_NAME.indexOf('Weak') !== -1;
+    var ADDER = IS_MAP ? 'set' : 'add';
+    var NativeConstructor = global$1[CONSTRUCTOR_NAME];
+    var NativePrototype = NativeConstructor && NativeConstructor.prototype;
+    var Constructor = NativeConstructor;
+    var exported = {};
+
+    var fixMethod = function (KEY) {
+      var uncurriedNativeMethod = functionUncurryThis(NativePrototype[KEY]);
+      redefine$1(NativePrototype, KEY,
+        KEY == 'add' ? function add(value) {
+          uncurriedNativeMethod(this, value === 0 ? 0 : value);
+          return this;
+        } : KEY == 'delete' ? function (key) {
+          return IS_WEAK && !isObject$1(key) ? false : uncurriedNativeMethod(this, key === 0 ? 0 : key);
+        } : KEY == 'get' ? function get(key) {
+          return IS_WEAK && !isObject$1(key) ? undefined : uncurriedNativeMethod(this, key === 0 ? 0 : key);
+        } : KEY == 'has' ? function has(key) {
+          return IS_WEAK && !isObject$1(key) ? false : uncurriedNativeMethod(this, key === 0 ? 0 : key);
+        } : function set(key, value) {
+          uncurriedNativeMethod(this, key === 0 ? 0 : key, value);
+          return this;
+        }
+      );
+    };
+
+    var REPLACE = isForced_1$1(
+      CONSTRUCTOR_NAME,
+      !isCallable(NativeConstructor) || !(IS_WEAK || NativePrototype.forEach && !fails$1(function () {
+        new NativeConstructor().entries().next();
+      }))
+    );
+
+    if (REPLACE) {
+      // create collection constructor
+      Constructor = common.getConstructor(wrapper, CONSTRUCTOR_NAME, IS_MAP, ADDER);
+      internalMetadata.enable();
+    } else if (isForced_1$1(CONSTRUCTOR_NAME, true)) {
+      var instance = new Constructor();
+      // early implementations not supports chaining
+      var HASNT_CHAINING = instance[ADDER](IS_WEAK ? {} : -0, 1) != instance;
+      // V8 ~ Chromium 40- weak-collections throws on primitives, but should return false
+      var THROWS_ON_PRIMITIVES = fails$1(function () { instance.has(1); });
+      // most early implementations doesn't supports iterables, most modern - not close it correctly
+      // eslint-disable-next-line no-new -- required for testing
+      var ACCEPT_ITERABLES = checkCorrectnessOfIteration$1(function (iterable) { new NativeConstructor(iterable); });
+      // for early implementations -0 and +0 not the same
+      var BUGGY_ZERO = !IS_WEAK && fails$1(function () {
+        // V8 ~ Chromium 42- fails only with 5+ elements
+        var $instance = new NativeConstructor();
+        var index = 5;
+        while (index--) $instance[ADDER](index, index);
+        return !$instance.has(-0);
+      });
+
+      if (!ACCEPT_ITERABLES) {
+        Constructor = wrapper(function (dummy, iterable) {
+          anInstance$1(dummy, NativePrototype);
+          var that = inheritIfRequired$1(new NativeConstructor(), dummy, Constructor);
+          if (iterable != undefined) iterate(iterable, that[ADDER], { that: that, AS_ENTRIES: IS_MAP });
+          return that;
+        });
+        Constructor.prototype = NativePrototype;
+        NativePrototype.constructor = Constructor;
+      }
+
+      if (THROWS_ON_PRIMITIVES || BUGGY_ZERO) {
+        fixMethod('delete');
+        fixMethod('has');
+        IS_MAP && fixMethod('get');
+      }
+
+      if (BUGGY_ZERO || HASNT_CHAINING) fixMethod(ADDER);
+
+      // weak collections should not contains .clear method
+      if (IS_WEAK && NativePrototype.clear) delete NativePrototype.clear;
+    }
+
+    exported[CONSTRUCTOR_NAME] = Constructor;
+    _export$1({ global: true, forced: Constructor != NativeConstructor }, exported);
+
+    setToStringTag$1(Constructor, CONSTRUCTOR_NAME);
+
+    if (!IS_WEAK) common.setStrong(Constructor, CONSTRUCTOR_NAME, IS_MAP);
+
+    return Constructor;
+  };
+
+  var getWeakData = internalMetadata.getWeakData;
+
+
+
+
+
+
+
+
+  var setInternalState = internalState$1.set;
+  var internalStateGetterFor = internalState$1.getterFor;
+  var find = arrayIteration$1.find;
+  var findIndex = arrayIteration$1.findIndex;
+  var splice = functionUncurryThis([].splice);
+  var id = 0;
+
+  // fallback for uncaught frozen keys
+  var uncaughtFrozenStore = function (store) {
+    return store.frozen || (store.frozen = new UncaughtFrozenStore());
+  };
+
+  var UncaughtFrozenStore = function () {
+    this.entries = [];
+  };
+
+  var findUncaughtFrozen = function (store, key) {
+    return find(store.entries, function (it) {
+      return it[0] === key;
+    });
+  };
+
+  UncaughtFrozenStore.prototype = {
+    get: function (key) {
+      var entry = findUncaughtFrozen(this, key);
+      if (entry) return entry[1];
+    },
+    has: function (key) {
+      return !!findUncaughtFrozen(this, key);
+    },
+    set: function (key, value) {
+      var entry = findUncaughtFrozen(this, key);
+      if (entry) entry[1] = value;
+      else this.entries.push([key, value]);
+    },
+    'delete': function (key) {
+      var index = findIndex(this.entries, function (it) {
+        return it[0] === key;
+      });
+      if (~index) splice(this.entries, index, 1);
+      return !!~index;
+    }
+  };
+
+  var collectionWeak = {
+    getConstructor: function (wrapper, CONSTRUCTOR_NAME, IS_MAP, ADDER) {
+      var Constructor = wrapper(function (that, iterable) {
+        anInstance$1(that, Prototype);
+        setInternalState(that, {
+          type: CONSTRUCTOR_NAME,
+          id: id++,
+          frozen: undefined
+        });
+        if (iterable != undefined) iterate(iterable, that[ADDER], { that: that, AS_ENTRIES: IS_MAP });
+      });
+
+      var Prototype = Constructor.prototype;
+
+      var getInternalState = internalStateGetterFor(CONSTRUCTOR_NAME);
+
+      var define = function (that, key, value) {
+        var state = getInternalState(that);
+        var data = getWeakData(anObject$1(key), true);
+        if (data === true) uncaughtFrozenStore(state).set(key, value);
+        else data[state.id] = value;
+        return that;
+      };
+
+      redefineAll$1(Prototype, {
+        // `{ WeakMap, WeakSet }.prototype.delete(key)` methods
+        // https://tc39.es/ecma262/#sec-weakmap.prototype.delete
+        // https://tc39.es/ecma262/#sec-weakset.prototype.delete
+        'delete': function (key) {
+          var state = getInternalState(this);
+          if (!isObject$1(key)) return false;
+          var data = getWeakData(key);
+          if (data === true) return uncaughtFrozenStore(state)['delete'](key);
+          return data && hasOwnProperty_1(data, state.id) && delete data[state.id];
+        },
+        // `{ WeakMap, WeakSet }.prototype.has(key)` methods
+        // https://tc39.es/ecma262/#sec-weakmap.prototype.has
+        // https://tc39.es/ecma262/#sec-weakset.prototype.has
+        has: function has(key) {
+          var state = getInternalState(this);
+          if (!isObject$1(key)) return false;
+          var data = getWeakData(key);
+          if (data === true) return uncaughtFrozenStore(state).has(key);
+          return data && hasOwnProperty_1(data, state.id);
+        }
+      });
+
+      redefineAll$1(Prototype, IS_MAP ? {
+        // `WeakMap.prototype.get(key)` method
+        // https://tc39.es/ecma262/#sec-weakmap.prototype.get
+        get: function get(key) {
+          var state = getInternalState(this);
+          if (isObject$1(key)) {
+            var data = getWeakData(key);
+            if (data === true) return uncaughtFrozenStore(state).get(key);
+            return data ? data[state.id] : undefined;
+          }
+        },
+        // `WeakMap.prototype.set(key, value)` method
+        // https://tc39.es/ecma262/#sec-weakmap.prototype.set
+        set: function set(key, value) {
+          return define(this, key, value);
+        }
+      } : {
+        // `WeakSet.prototype.add(value)` method
+        // https://tc39.es/ecma262/#sec-weakset.prototype.add
+        add: function add(value) {
+          return define(this, value, true);
+        }
+      });
+
+      return Constructor;
+    }
+  };
+
+  var enforceInternalState = internalState$1.enforce;
+
+
+  var IS_IE11 = !global$1.ActiveXObject && 'ActiveXObject' in global$1;
+  var InternalWeakMap;
+
+  var wrapper = function (init) {
+    return function WeakMap() {
+      return init(this, arguments.length ? arguments[0] : undefined);
+    };
+  };
+
+  // `WeakMap` constructor
+  // https://tc39.es/ecma262/#sec-weakmap-constructor
+  var $WeakMap = collection('WeakMap', wrapper, collectionWeak);
+
+  // IE11 WeakMap frozen keys fix
+  // We can't use feature detection because it crash some old IE builds
+  // https://github.com/zloirock/core-js/issues/485
+  if (nativeWeakMap$1 && IS_IE11) {
+    InternalWeakMap = collectionWeak.getConstructor(wrapper, 'WeakMap', true);
+    internalMetadata.enable();
+    var WeakMapPrototype = $WeakMap.prototype;
+    var nativeDelete = functionUncurryThis(WeakMapPrototype['delete']);
+    var nativeHas = functionUncurryThis(WeakMapPrototype.has);
+    var nativeGet = functionUncurryThis(WeakMapPrototype.get);
+    var nativeSet = functionUncurryThis(WeakMapPrototype.set);
+    redefineAll$1(WeakMapPrototype, {
+      'delete': function (key) {
+        if (isObject$1(key) && !objectIsExtensible(key)) {
+          var state = enforceInternalState(this);
+          if (!state.frozen) state.frozen = new InternalWeakMap();
+          return nativeDelete(this, key) || state.frozen['delete'](key);
+        } return nativeDelete(this, key);
+      },
+      has: function has(key) {
+        if (isObject$1(key) && !objectIsExtensible(key)) {
+          var state = enforceInternalState(this);
+          if (!state.frozen) state.frozen = new InternalWeakMap();
+          return nativeHas(this, key) || state.frozen.has(key);
+        } return nativeHas(this, key);
+      },
+      get: function get(key) {
+        if (isObject$1(key) && !objectIsExtensible(key)) {
+          var state = enforceInternalState(this);
+          if (!state.frozen) state.frozen = new InternalWeakMap();
+          return nativeHas(this, key) ? nativeGet(this, key) : state.frozen.get(key);
+        } return nativeGet(this, key);
+      },
+      set: function set(key, value) {
+        if (isObject$1(key) && !objectIsExtensible(key)) {
+          var state = enforceInternalState(this);
+          if (!state.frozen) state.frozen = new InternalWeakMap();
+          nativeHas(this, key) ? nativeSet(this, key, value) : state.frozen.set(key, value);
+        } else nativeSet(this, key, value);
+        return this;
+      }
+    });
+  }
+
   var apexcharts_common = createCommonjsModule$1(function (module, exports) {
 
-    function t(e) {
-      return (t = "function" == typeof Symbol && "symbol" == _typeof$1(Symbol.iterator) ? function (t) {
-        return _typeof$1(t);
-      } : function (t) {
-        return t && "function" == typeof Symbol && t.constructor === Symbol && t !== Symbol.prototype ? "symbol" : _typeof$1(t);
-      })(e);
-    }
-
-    function e(t, e) {
-      if (!(t instanceof e)) throw new TypeError("Cannot call a class as a function");
-    }
-
-    function i(t, e) {
-      for (var i = 0; i < e.length; i++) {
-        var a = e[i];
-        a.enumerable = a.enumerable || !1, a.configurable = !0, "value" in a && (a.writable = !0), Object.defineProperty(t, a.key, a);
-      }
-    }
-
-    function a(t, e, a) {
-      return e && i(t.prototype, e), a && i(t, a), t;
-    }
-
-    function s(t, e, i) {
-      return e in t ? Object.defineProperty(t, e, {
-        value: i,
-        enumerable: !0,
-        configurable: !0,
-        writable: !0
-      }) : t[e] = i, t;
-    }
-
-    function r(t, e) {
+    function t(t, e) {
       var i = Object.keys(t);
 
       if (Object.getOwnPropertySymbols) {
@@ -52555,17 +55344,49 @@ var Forestry = (function () {
       return i;
     }
 
-    function o(t) {
-      for (var e = 1; e < arguments.length; e++) {
-        var i = null != arguments[e] ? arguments[e] : {};
-        e % 2 ? r(Object(i), !0).forEach(function (e) {
-          s(t, e, i[e]);
-        }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(t, Object.getOwnPropertyDescriptors(i)) : r(Object(i)).forEach(function (e) {
-          Object.defineProperty(t, e, Object.getOwnPropertyDescriptor(i, e));
+    function e(e) {
+      for (var i = 1; i < arguments.length; i++) {
+        var a = null != arguments[i] ? arguments[i] : {};
+        i % 2 ? t(Object(a), !0).forEach(function (t) {
+          o(e, t, a[t]);
+        }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(a)) : t(Object(a)).forEach(function (t) {
+          Object.defineProperty(e, t, Object.getOwnPropertyDescriptor(a, t));
         });
       }
 
-      return t;
+      return e;
+    }
+
+    function i(t) {
+      return (i = "function" == typeof Symbol && "symbol" == _typeof$1(Symbol.iterator) ? function (t) {
+        return _typeof$1(t);
+      } : function (t) {
+        return t && "function" == typeof Symbol && t.constructor === Symbol && t !== Symbol.prototype ? "symbol" : _typeof$1(t);
+      })(t);
+    }
+
+    function a(t, e) {
+      if (!(t instanceof e)) throw new TypeError("Cannot call a class as a function");
+    }
+
+    function s(t, e) {
+      for (var i = 0; i < e.length; i++) {
+        var a = e[i];
+        a.enumerable = a.enumerable || !1, a.configurable = !0, "value" in a && (a.writable = !0), Object.defineProperty(t, a.key, a);
+      }
+    }
+
+    function r(t, e, i) {
+      return e && s(t.prototype, e), i && s(t, i), t;
+    }
+
+    function o(t, e, i) {
+      return e in t ? Object.defineProperty(t, e, {
+        value: i,
+        enumerable: !0,
+        configurable: !0,
+        writable: !0
+      }) : t[e] = i, t;
     }
 
     function n(t, e) {
@@ -52592,10 +55413,12 @@ var Forestry = (function () {
     }
 
     function c(t, e) {
-      return !e || "object" != _typeof$1(e) && "function" != typeof e ? function (t) {
+      if (e && ("object" == _typeof$1(e) || "function" == typeof e)) return e;
+      if (void 0 !== e) throw new TypeError("Derived constructors may only return object or undefined");
+      return function (t) {
         if (void 0 === t) throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
         return t;
-      }(t) : e;
+      }(t);
     }
 
     function d(t) {
@@ -52605,7 +55428,7 @@ var Forestry = (function () {
         if ("function" == typeof Proxy) return !0;
 
         try {
-          return Date.prototype.toString.call(Reflect.construct(Date, [], function () {})), !0;
+          return Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})), !0;
         } catch (t) {
           return !1;
         }
@@ -52628,7 +55451,7 @@ var Forestry = (function () {
       return function (t) {
         if (Array.isArray(t)) return u(t);
       }(t) || function (t) {
-        if ("undefined" != typeof Symbol && Symbol.iterator in Object(t)) return Array.from(t);
+        if ("undefined" != typeof Symbol && null != t[Symbol.iterator] || null != t["@@iterator"]) return Array.from(t);
       }(t) || function (t, e) {
         if (!t) return;
         if ("string" == typeof t) return u(t, e);
@@ -52652,11 +55475,11 @@ var Forestry = (function () {
     }
 
     var p = function () {
-      function i() {
-        e(this, i);
+      function t() {
+        a(this, t);
       }
 
-      return a(i, [{
+      return r(t, [{
         key: "shadeRGBColor",
         value: function value(t, e) {
           var i = e.split(","),
@@ -52680,8 +55503,8 @@ var Forestry = (function () {
         }
       }, {
         key: "shadeColor",
-        value: function value(t, e) {
-          return i.isColorHex(e) ? this.shadeHexColor(t, e) : this.shadeRGBColor(t, e);
+        value: function value(e, i) {
+          return t.isColorHex(i) ? this.shadeHexColor(e, i) : this.shadeRGBColor(e, i);
         }
       }], [{
         key: "bind",
@@ -52692,8 +55515,13 @@ var Forestry = (function () {
         }
       }, {
         key: "isObject",
-        value: function value(e) {
-          return e && "object" === t(e) && !Array.isArray(e) && null != e;
+        value: function value(t) {
+          return t && "object" === i(t) && !Array.isArray(t) && null != t;
+        }
+      }, {
+        key: "is",
+        value: function value(t, e) {
+          return Object.prototype.toString.call(e) === "[object " + t + "]";
         }
       }, {
         key: "listToArray",
@@ -52724,17 +55552,17 @@ var Forestry = (function () {
             return e;
           });
           var a = Object.assign({}, t);
-          return this.isObject(t) && this.isObject(e) && Object.keys(e).forEach(function (r) {
-            i.isObject(e[r]) && r in t ? a[r] = i.extend(t[r], e[r]) : Object.assign(a, s({}, r, e[r]));
+          return this.isObject(t) && this.isObject(e) && Object.keys(e).forEach(function (s) {
+            i.isObject(e[s]) && s in t ? a[s] = i.extend(t[s], e[s]) : Object.assign(a, o({}, s, e[s]));
           }), a;
         }
       }, {
         key: "extendArray",
-        value: function value(t, e) {
+        value: function value(e, i) {
           var a = [];
-          return t.map(function (t) {
-            a.push(i.extend(e, t));
-          }), t = a;
+          return e.map(function (e) {
+            a.push(t.extend(i, e));
+          }), e = a;
         }
       }, {
         key: "monthMod",
@@ -52744,25 +55572,25 @@ var Forestry = (function () {
       }, {
         key: "clone",
         value: function value(e) {
-          if ("[object Array]" === Object.prototype.toString.call(e)) {
-            for (var i = [], a = 0; a < e.length; a++) {
-              i[a] = this.clone(e[a]);
+          if (t.is("Array", e)) {
+            for (var a = [], s = 0; s < e.length; s++) {
+              a[s] = this.clone(e[s]);
             }
 
-            return i;
+            return a;
           }
 
-          if ("[object Null]" === Object.prototype.toString.call(e)) return null;
-          if ("[object Date]" === Object.prototype.toString.call(e)) return e;
+          if (t.is("Null", e)) return null;
+          if (t.is("Date", e)) return e;
 
-          if ("object" === t(e)) {
-            var s = {};
+          if ("object" === i(e)) {
+            var r = {};
 
-            for (var r in e) {
-              e.hasOwnProperty(r) && (s[r] = this.clone(e[r]));
+            for (var o in e) {
+              e.hasOwnProperty(o) && (r[o] = this.clone(e[o]));
             }
 
-            return s;
+            return r;
           }
 
           return e;
@@ -52977,19 +55805,14 @@ var Forestry = (function () {
           var a = t.indexOf("Edge/");
           return a > 0 && parseInt(t.substring(a + 5, t.indexOf(".", a)), 10);
         }
-      }, {
-        key: "sanitizeDom",
-        value: function value(t) {
-          return t.replace(/\&/g, "&amp;").replace(/\</g, "&lt;").replace(/\>/g, "&gt;").replace(/\"/g, "&quot;");
-        }
-      }]), i;
+      }]), t;
     }(),
         f = function () {
-      function t(i) {
-        e(this, t), this.ctx = i, this.w = i.w, this.setEasingFunctions();
+      function t(e) {
+        a(this, t), this.ctx = e, this.w = e.w, this.setEasingFunctions();
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "setEasingFunctions",
         value: function value() {
           var t;
@@ -53130,11 +55953,11 @@ var Forestry = (function () {
       }]), t;
     }(),
         x = function () {
-      function t(i) {
-        e(this, t), this.ctx = i, this.w = i.w;
+      function t(e) {
+        a(this, t), this.ctx = e, this.w = e.w;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "getDefaultFilter",
         value: function value(t, e) {
           var i = this.w;
@@ -53260,27 +56083,29 @@ var Forestry = (function () {
       }]), t;
     }(),
         b = function () {
-      function t(i) {
-        e(this, t), this.ctx = i, this.w = i.w;
+      function t(e) {
+        a(this, t), this.ctx = e, this.w = e.w;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "drawLine",
         value: function value(t, e, i, a) {
           var s = arguments.length > 4 && void 0 !== arguments[4] ? arguments[4] : "#a8a8a8",
               r = arguments.length > 5 && void 0 !== arguments[5] ? arguments[5] : 0,
               o = arguments.length > 6 && void 0 !== arguments[6] ? arguments[6] : null,
-              n = this.w,
-              l = n.globals.dom.Paper.line().attr({
+              n = arguments.length > 7 && void 0 !== arguments[7] ? arguments[7] : "butt",
+              l = this.w,
+              h = l.globals.dom.Paper.line().attr({
             x1: t,
             y1: e,
             x2: i,
             y2: a,
             stroke: s,
             "stroke-dasharray": r,
-            "stroke-width": o
+            "stroke-width": o,
+            "stroke-linecap": n
           });
-          return l;
+          return h;
         }
       }, {
         key: "drawRect",
@@ -53408,11 +56233,11 @@ var Forestry = (function () {
       }, {
         key: "renderPaths",
         value: function value(t) {
-          var e,
-              i = t.j,
-              a = t.realIndex,
-              s = t.pathFrom,
-              r = t.pathTo,
+          var i,
+              a = t.j,
+              s = t.realIndex,
+              r = t.pathFrom,
+              o = t.pathTo,
               n = t.stroke,
               l = t.strokeWidth,
               h = t.strokeLinecap,
@@ -53422,9 +56247,9 @@ var Forestry = (function () {
               u = t.dataChangeSpeed,
               p = t.className,
               b = t.shouldClipToGrid,
-              m = void 0 === b || b,
-              v = t.bindEventsOnPaths,
-              y = void 0 === v || v,
+              v = void 0 === b || b,
+              m = t.bindEventsOnPaths,
+              y = void 0 === m || m,
               w = t.drawShadow,
               k = void 0 === w || w,
               A = this.w,
@@ -53433,45 +56258,45 @@ var Forestry = (function () {
               L = this.w.config.chart.animations.enabled,
               P = L && this.w.config.chart.animations.dynamicAnimation.enabled,
               T = !!(L && !A.globals.resized || P && A.globals.dataChanged && A.globals.shouldAnimate);
-          T ? e = s : (e = r, A.globals.animationEnded = !0);
+          T ? i = r : (i = o, A.globals.animationEnded = !0);
           var M = A.config.stroke.dashArray,
-              z = 0;
-          z = Array.isArray(M) ? M[a] : A.config.stroke.dashArray;
-          var I = this.drawPath({
-            d: e,
+              I = 0;
+          I = Array.isArray(M) ? M[s] : A.config.stroke.dashArray;
+          var z = this.drawPath({
+            d: i,
             stroke: n,
             strokeWidth: l,
             fill: c,
             fillOpacity: 1,
             classes: p,
             strokeLinecap: h,
-            strokeDashArray: z
+            strokeDashArray: I
           });
-          if (I.attr("index", a), m && I.attr({
+          if (z.attr("index", s), v && z.attr({
             "clip-path": "url(#gridRectMask".concat(A.globals.cuid, ")")
-          }), "none" !== A.config.states.normal.filter.type) S.getDefaultFilter(I, a);else if (A.config.chart.dropShadow.enabled && k && (!A.config.chart.dropShadow.enabledOnSeries || A.config.chart.dropShadow.enabledOnSeries && -1 !== A.config.chart.dropShadow.enabledOnSeries.indexOf(a))) {
+          }), "none" !== A.config.states.normal.filter.type) S.getDefaultFilter(z, s);else if (A.config.chart.dropShadow.enabled && k && (!A.config.chart.dropShadow.enabledOnSeries || A.config.chart.dropShadow.enabledOnSeries && -1 !== A.config.chart.dropShadow.enabledOnSeries.indexOf(s))) {
             var X = A.config.chart.dropShadow;
-            S.dropShadow(I, X, a);
+            S.dropShadow(z, X, s);
           }
-          y && (I.node.addEventListener("mouseenter", this.pathMouseEnter.bind(this, I)), I.node.addEventListener("mouseleave", this.pathMouseLeave.bind(this, I)), I.node.addEventListener("mousedown", this.pathMouseDown.bind(this, I))), I.attr({
-            pathTo: r,
-            pathFrom: s
+          y && (z.node.addEventListener("mouseenter", this.pathMouseEnter.bind(this, z)), z.node.addEventListener("mouseleave", this.pathMouseLeave.bind(this, z)), z.node.addEventListener("mousedown", this.pathMouseDown.bind(this, z))), z.attr({
+            pathTo: o,
+            pathFrom: r
           });
           var E = {
-            el: I,
-            j: i,
-            realIndex: a,
-            pathFrom: s,
-            pathTo: r,
+            el: z,
+            j: a,
+            realIndex: s,
+            pathFrom: r,
+            pathTo: o,
             fill: c,
             strokeWidth: l,
             delay: d
           };
-          return !L || A.globals.resized || A.globals.dataChanged ? !A.globals.resized && A.globals.dataChanged || C.showDelayedElements() : C.animatePathsGradually(o(o({}, E), {}, {
+          return !L || A.globals.resized || A.globals.dataChanged ? !A.globals.resized && A.globals.dataChanged || C.showDelayedElements() : C.animatePathsGradually(e(e({}, E), {}, {
             speed: g
-          })), A.globals.dataChanged && P && T && C.animatePathsGradually(o(o({}, E), {}, {
+          })), A.globals.dataChanged && P && T && C.animatePathsGradually(e(e({}, E), {}, {
             speed: u
-          })), I;
+          })), z;
         }
       }, {
         key: "drawPattern",
@@ -53524,11 +56349,11 @@ var Forestry = (function () {
             });
           }), x) {
             var b = c.globals.gridWidth / 2,
-                m = c.globals.gridHeight / 2;
+                v = c.globals.gridHeight / 2;
             "bubble" !== c.config.chart.type ? r.attr({
               gradientUnits: "userSpaceOnUse",
               cx: b,
-              cy: m,
+              cy: v,
               r: o
             }) : r.attr({
               cx: .5,
@@ -53630,7 +56455,7 @@ var Forestry = (function () {
             seriesIndex: s,
             dataPointIndex: r,
             w: i
-          }]), ("none" === i.config.states.active.filter.type || "true" !== t.node.getAttribute("selected")) && "none" !== i.config.states.hover.filter.type && "none" !== i.config.states.active.filter.type && !i.globals.isTouchDevice) {
+          }]), ("none" === i.config.states.active.filter.type || "true" !== t.node.getAttribute("selected")) && "none" !== i.config.states.hover.filter.type && !i.globals.isTouchDevice) {
             var o = i.config.states.hover.filter;
             a.applyFilter(t, s, o.type, o.value);
           }
@@ -53704,8 +56529,8 @@ var Forestry = (function () {
       }, {
         key: "rotateAroundCenter",
         value: function value(t) {
-          var e = t.getBBox();
-          return {
+          var e = {};
+          return t && "function" == typeof t.getBBox && (e = t.getBBox()), {
             x: e.x + e.width / 2,
             y: e.y + e.height / 2
           };
@@ -53752,12 +56577,12 @@ var Forestry = (function () {
         }
       }]), t;
     }(),
-        m = function () {
-      function t(i) {
-        e(this, t), this.w = i.w, this.annoCtx = i;
+        v = function () {
+      function t(e) {
+        a(this, t), this.w = e.w, this.annoCtx = e;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "setOrientations",
         value: function value(t) {
           var e = arguments.length > 1 && void 0 !== arguments[1] ? arguments[1] : null,
@@ -53781,7 +56606,7 @@ var Forestry = (function () {
         key: "addBackgroundToAnno",
         value: function value(t, e) {
           var i = this.w;
-          if (!t || !e.label.text || e.label.text && !e.label.text.trim()) return null;
+          if (!t || void 0 === e.label.text || void 0 !== e.label.text && !String(e.label.text).trim()) return null;
           var a = i.globals.dom.baseEl.querySelector(".apexcharts-grid").getBoundingClientRect(),
               s = t.getBoundingClientRect(),
               r = e.label.style.padding.left,
@@ -53792,7 +56617,7 @@ var Forestry = (function () {
           var h = s.left - a.left - r,
               c = s.top - a.top - n,
               d = this.annoCtx.graphics.drawRect(h - i.globals.barPadForNumericAxis, c, s.width + r + o, s.height + n + l, e.label.borderRadius, e.label.style.background, 1, e.label.borderWidth, e.label.borderColor, 0);
-          return e.id && d.node.classList.add(e.id), d;
+          return e.id && d.node.classList.add(p.escapeString(e.id)), d;
         }
       }, {
         key: "annotationsBackground",
@@ -53805,7 +56630,7 @@ var Forestry = (function () {
             if (r) {
               var o = r.parentNode,
                   n = t.addBackgroundToAnno(r, _i);
-              n && o.insertBefore(n.node, r);
+              n && (o.insertBefore(n.node, r), _i.label.mouseEnter && n.node.addEventListener("mouseenter", _i.label.mouseEnter.bind(t, _i)), _i.label.mouseLeave && n.node.addEventListener("mouseleave", _i.label.mouseLeave.bind(t, _i)));
             }
           };
 
@@ -53829,12 +56654,12 @@ var Forestry = (function () {
         }
       }]), t;
     }(),
-        v = function () {
-      function t(i) {
-        e(this, t), this.w = i.w, this.annoCtx = i, this.invertAxis = this.annoCtx.invertAxis;
+        m = function () {
+      function t(e) {
+        a(this, t), this.w = e.w, this.annoCtx = e, this.invertAxis = this.annoCtx.invertAxis;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "addXaxisAnnotation",
         value: function value(t, e, i) {
           var a = this.w,
@@ -53896,11 +56721,11 @@ var Forestry = (function () {
       }]), t;
     }(),
         y = function () {
-      function t(i) {
-        e(this, t), this.ctx = i, this.w = i.w;
+      function t(e) {
+        a(this, t), this.ctx = e, this.w = e.w;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "getStackedSeriesTotals",
         value: function value() {
           var t = this.w,
@@ -54071,8 +56896,9 @@ var Forestry = (function () {
       }, {
         key: "getLogVal",
         value: function value(t, e) {
-          var i = this.w;
-          return (Math.log(t) - Math.log(i.globals.minYArr[e])) / (Math.log(i.globals.maxYArr[e]) - Math.log(i.globals.minYArr[e]));
+          var i = this.w,
+              a = (Math.log(t) - Math.log(i.globals.minYArr[e])) / (Math.log(i.globals.maxYArr[e]) - Math.log(i.globals.minYArr[e]));
+          return isNaN(a) ? t : a;
         }
       }, {
         key: "getLogYRatios",
@@ -54101,7 +56927,7 @@ var Forestry = (function () {
               a = 0;
           return t.length && void 0 !== t[0].type && t.forEach(function (t) {
             "bar" !== t.type && "column" !== t.type && "candlestick" !== t.type && "boxPlot" !== t.type || i++, void 0 !== t.type && a++;
-          }), a > 1 && (e = !0), {
+          }), a > 0 && (e = !0), {
             comboBarCount: i,
             comboCharts: e
           };
@@ -54114,11 +56940,11 @@ var Forestry = (function () {
       }]), t;
     }(),
         w = function () {
-      function t(i) {
-        e(this, t), this.w = i.w, this.annoCtx = i;
+      function t(e) {
+        a(this, t), this.w = e.w, this.annoCtx = e;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "addYaxisAnnotation",
         value: function value(t, e, i) {
           var a,
@@ -54143,7 +56969,7 @@ var Forestry = (function () {
           var d = "right" === t.label.position ? s.globals.gridWidth : 0,
               g = this.annoCtx.graphics.drawText({
             x: d + t.label.offsetX,
-            y: (a || o) + t.label.offsetY - 3,
+            y: (null != a ? a : o) + t.label.offsetY - 3,
             text: n,
             textAnchor: t.label.textAnchor,
             fontSize: t.label.style.fontSize,
@@ -54198,11 +57024,11 @@ var Forestry = (function () {
       }]), t;
     }(),
         k = function () {
-      function t(i) {
-        e(this, t), this.w = i.w, this.annoCtx = i;
+      function t(e) {
+        a(this, t), this.w = e.w, this.annoCtx = e;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "addPointAnnotation",
         value: function value(t, e, i) {
           var a = this.w,
@@ -54212,7 +57038,7 @@ var Forestry = (function () {
           this.annoCtx.invertAxis && console.warn("Point annotation is not supported in horizontal bar charts.");
           var n = parseFloat(t.y);
 
-          if ("string" == typeof t.x) {
+          if ("string" == typeof t.x || "category" === a.config.xaxis.type || a.config.xaxis.convertedCatToNumeric) {
             var l = a.globals.labels.indexOf(t.x);
             a.config.xaxis.convertedCatToNumeric && (l = a.globals.categoryLabels.indexOf(t.x)), s = this.annoCtx.helpers.getStringX(t.x), null === t.y && (n = a.globals.series[t.seriesIndex][l]);
           } else s = (t.x - a.globals.minX) / (a.globals.xRange / a.globals.gridWidth);
@@ -54241,13 +57067,13 @@ var Forestry = (function () {
               pRadius: t.marker.radius,
               class: "apexcharts-point-annotation-marker ".concat(t.marker.cssClass, " ").concat(t.id ? t.id : "")
             },
-                m = this.annoCtx.graphics.drawMarker(s + t.marker.offsetX, o + t.marker.offsetY, b);
-            e.appendChild(m.node);
-            var v = t.label.text ? t.label.text : "",
+                v = this.annoCtx.graphics.drawMarker(s + t.marker.offsetX, o + t.marker.offsetY, b);
+            e.appendChild(v.node);
+            var m = t.label.text ? t.label.text : "",
                 w = this.annoCtx.graphics.drawText({
               x: s + t.label.offsetX,
               y: r + t.label.offsetY,
-              text: v,
+              text: m,
               textAnchor: t.label.textAnchor,
               fontSize: t.label.style.fontSize,
               fontFamily: t.label.style.fontFamily,
@@ -54270,7 +57096,7 @@ var Forestry = (function () {
             if (t.image.path) {
               var A = t.image.width ? t.image.width : 20,
                   S = t.image.height ? t.image.height : 20;
-              this.annoCtx.addImage({
+              v = this.annoCtx.addImage({
                 x: s + t.image.offsetX - A / 2,
                 y: r + t.image.offsetY - S / 2,
                 width: A,
@@ -54279,6 +57105,8 @@ var Forestry = (function () {
                 appendTo: ".apexcharts-point-annotations"
               });
             }
+
+            t.mouseEnter && v.node.addEventListener("mouseenter", t.mouseEnter.bind(this, t)), t.mouseLeave && v.node.addEventListener("mouseleave", t.mouseLeave.bind(this, t));
           }
         }
       }, {
@@ -54319,7 +57147,7 @@ var Forestry = (function () {
     },
         S = function () {
       function t() {
-        e(this, t), this.yAxis = {
+        a(this, t), this.yAxis = {
           show: !0,
           showAlways: !1,
           showForNullSeries: !0,
@@ -54327,6 +57155,7 @@ var Forestry = (function () {
           opposite: !1,
           reversed: !1,
           logarithmic: !1,
+          logBase: 10,
           tickAmount: void 0,
           forceNiceScale: !1,
           max: void 0,
@@ -54392,10 +57221,13 @@ var Forestry = (function () {
             }
           }
         }, this.pointAnnotation = {
+          id: void 0,
           x: 0,
           y: null,
           yAxisIndex: 0,
           seriesIndex: 0,
+          mouseEnter: void 0,
+          mouseLeave: void 0,
           marker: {
             size: 4,
             fillColor: "#fff",
@@ -54415,6 +57247,8 @@ var Forestry = (function () {
             textAnchor: "middle",
             offsetX: 0,
             offsetY: 0,
+            mouseEnter: void 0,
+            mouseLeave: void 0,
             style: {
               background: "#fff",
               color: void 0,
@@ -54444,6 +57278,7 @@ var Forestry = (function () {
             offsetY: 0
           }
         }, this.yAxisAnnotation = {
+          id: void 0,
           y: 0,
           y2: null,
           strokeDashArray: 1,
@@ -54464,6 +57299,8 @@ var Forestry = (function () {
             position: "right",
             offsetX: 0,
             offsetY: -3,
+            mouseEnter: void 0,
+            mouseLeave: void 0,
             style: {
               background: "#fff",
               color: void 0,
@@ -54480,6 +57317,7 @@ var Forestry = (function () {
             }
           }
         }, this.xAxisAnnotation = {
+          id: void 0,
           x: 0,
           x2: null,
           strokeDashArray: 1,
@@ -54499,6 +57337,8 @@ var Forestry = (function () {
             position: "top",
             offsetX: 0,
             offsetY: 0,
+            mouseEnter: void 0,
+            mouseLeave: void 0,
             style: {
               background: "#fff",
               color: void 0,
@@ -54535,7 +57375,7 @@ var Forestry = (function () {
         };
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "init",
         value: function value() {
           return {
@@ -55342,11 +58182,11 @@ var Forestry = (function () {
       }]), t;
     }(),
         C = function () {
-      function t(i) {
-        e(this, t), this.ctx = i, this.w = i.w, this.graphics = new b(this.ctx), this.w.globals.isBarHorizontal && (this.invertAxis = !0), this.helpers = new m(this), this.xAxisAnnotations = new v(this), this.yAxisAnnotations = new w(this), this.pointsAnnotations = new k(this), this.w.globals.isBarHorizontal && this.w.config.yaxis[0].reversed && (this.inversedReversedAxis = !0), this.xDivision = this.w.globals.gridWidth / this.w.globals.dataPoints;
+      function t(e) {
+        a(this, t), this.ctx = e, this.w = e.w, this.graphics = new b(this.ctx), this.w.globals.isBarHorizontal && (this.invertAxis = !0), this.helpers = new v(this), this.xAxisAnnotations = new m(this), this.yAxisAnnotations = new w(this), this.pointsAnnotations = new k(this), this.w.globals.isBarHorizontal && this.w.config.yaxis[0].reversed && (this.inversedReversedAxis = !0), this.xDivision = this.w.globals.gridWidth / this.w.globals.dataPoints;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "drawAxesAnnotations",
         value: function value() {
           var t = this.w;
@@ -55412,8 +58252,8 @@ var Forestry = (function () {
               f = t.borderColor,
               x = t.appendTo,
               b = void 0 === x ? ".apexcharts-annotations" : x,
-              m = t.paddingLeft,
-              v = void 0 === m ? 4 : m,
+              v = t.paddingLeft,
+              m = void 0 === v ? 4 : v,
               y = t.paddingRight,
               w = void 0 === y ? 4 : y,
               k = t.paddingBottom,
@@ -55437,8 +58277,8 @@ var Forestry = (function () {
           var M = P.bbox();
 
           if (s) {
-            var z = this.graphics.drawRect(M.x - v, M.y - C, M.width + v + w, M.height + A + C, p, d || "transparent", 1, g, f, u);
-            T.insertBefore(z.node, P.node);
+            var I = this.graphics.drawRect(M.x - m, M.y - C, M.width + m + w, M.height + A + C, p, d || "transparent", 1, g, f, u);
+            T.insertBefore(I.node, P.node);
           }
         }
       }, {
@@ -55459,7 +58299,7 @@ var Forestry = (function () {
               p = i.globals.dom.Paper.image(a);
           p.size(h, d).move(r, n);
           var f = i.globals.dom.baseEl.querySelector(u);
-          f && f.appendChild(p.node);
+          return f && f.appendChild(p.node), p;
         }
       }, {
         key: "addXaxisAnnotationExternal",
@@ -55560,11 +58400,11 @@ var Forestry = (function () {
       }]), t;
     }(),
         L = function () {
-      function t(i) {
-        e(this, t), this.ctx = i, this.w = i.w, this.opts = null, this.seriesIndex = 0;
+      function t(e) {
+        a(this, t), this.ctx = e, this.w = e.w, this.opts = null, this.seriesIndex = 0;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "clippedImgArea",
         value: function value(t) {
           var e = this.w,
@@ -55689,11 +58529,11 @@ var Forestry = (function () {
       }]), t;
     }(),
         P = function () {
-      function t(i, a) {
-        e(this, t), this.ctx = i, this.w = i.w;
+      function t(e, i) {
+        a(this, t), this.ctx = e, this.w = e.w;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "setGlobalMarkerSize",
         value: function value() {
           var t = this.w;
@@ -55727,38 +58567,47 @@ var Forestry = (function () {
 
             if (f || r) {
               p.isNumber(l.y[d]) ? u += " w".concat(p.randomId()) : u = "apexcharts-nullpoint";
-              var m = this.getMarkerConfig(u, e, g);
-              o.config.series[n].data[g] && (o.config.series[n].data[g].fillColor && (m.pointFillColor = o.config.series[n].data[g].fillColor), o.config.series[n].data[g].strokeColor && (m.pointStrokeColor = o.config.series[n].data[g].strokeColor)), a && (m.pSize = a), (s = c.drawMarker(l.x[d], l.y[d], m)).attr("rel", g), s.attr("j", g), s.attr("index", e), s.node.setAttribute("default-marker-size", m.pSize);
-              var v = new x(this.ctx);
-              v.setSelectionFilter(s, e, g), this.addEvents(s), h && h.add(s);
+              var v = this.getMarkerConfig({
+                cssClass: u,
+                seriesIndex: e,
+                dataPointIndex: g
+              });
+              o.config.series[n].data[g] && (o.config.series[n].data[g].fillColor && (v.pointFillColor = o.config.series[n].data[g].fillColor), o.config.series[n].data[g].strokeColor && (v.pointStrokeColor = o.config.series[n].data[g].strokeColor)), a && (v.pSize = a), (s = c.drawMarker(l.x[d], l.y[d], v)).attr("rel", g), s.attr("j", g), s.attr("index", e), s.node.setAttribute("default-marker-size", v.pSize);
+              var m = new x(this.ctx);
+              m.setSelectionFilter(s, e, g), this.addEvents(s), h && h.add(s);
             } else void 0 === o.globals.pointsArray[e] && (o.globals.pointsArray[e] = []), o.globals.pointsArray[e].push([l.x[d], l.y[d]]);
           }
           return h;
         }
       }, {
         key: "getMarkerConfig",
-        value: function value(t, e) {
-          var i = arguments.length > 2 && void 0 !== arguments[2] ? arguments[2] : null,
-              a = this.w,
-              s = this.getMarkerStyle(e),
-              r = a.globals.markers.size[e],
-              o = a.config.markers;
-          return null !== i && o.discrete.length && o.discrete.map(function (t) {
-            t.seriesIndex === e && t.dataPointIndex === i && (s.pointStrokeColor = t.strokeColor, s.pointFillColor = t.fillColor, r = t.size, s.pointShape = t.shape);
+        value: function value(t) {
+          var e = t.cssClass,
+              i = t.seriesIndex,
+              a = t.dataPointIndex,
+              s = void 0 === a ? null : a,
+              r = t.finishRadius,
+              o = void 0 === r ? null : r,
+              n = this.w,
+              l = this.getMarkerStyle(i),
+              h = n.globals.markers.size[i],
+              c = n.config.markers;
+          return null !== s && c.discrete.length && c.discrete.map(function (t) {
+            t.seriesIndex === i && t.dataPointIndex === s && (l.pointStrokeColor = t.strokeColor, l.pointFillColor = t.fillColor, h = t.size, l.pointShape = t.shape);
           }), {
-            pSize: r,
-            pRadius: o.radius,
-            width: Array.isArray(o.width) ? o.width[e] : o.width,
-            height: Array.isArray(o.height) ? o.height[e] : o.height,
-            pointStrokeWidth: Array.isArray(o.strokeWidth) ? o.strokeWidth[e] : o.strokeWidth,
-            pointStrokeColor: s.pointStrokeColor,
-            pointFillColor: s.pointFillColor,
-            shape: s.pointShape || (Array.isArray(o.shape) ? o.shape[e] : o.shape),
-            class: t,
-            pointStrokeOpacity: Array.isArray(o.strokeOpacity) ? o.strokeOpacity[e] : o.strokeOpacity,
-            pointStrokeDashArray: Array.isArray(o.strokeDashArray) ? o.strokeDashArray[e] : o.strokeDashArray,
-            pointFillOpacity: Array.isArray(o.fillOpacity) ? o.fillOpacity[e] : o.fillOpacity,
-            seriesIndex: e
+            pSize: null === o ? h : o,
+            pRadius: c.radius,
+            width: Array.isArray(c.width) ? c.width[i] : c.width,
+            height: Array.isArray(c.height) ? c.height[i] : c.height,
+            pointStrokeWidth: Array.isArray(c.strokeWidth) ? c.strokeWidth[i] : c.strokeWidth,
+            pointStrokeColor: l.pointStrokeColor,
+            pointFillColor: l.pointFillColor,
+            shape: l.pointShape || (Array.isArray(c.shape) ? c.shape[i] : c.shape),
+            class: e,
+            pointStrokeOpacity: Array.isArray(c.strokeOpacity) ? c.strokeOpacity[i] : c.strokeOpacity,
+            pointStrokeDashArray: Array.isArray(c.strokeDashArray) ? c.strokeDashArray[i] : c.strokeDashArray,
+            pointFillOpacity: Array.isArray(c.fillOpacity) ? c.fillOpacity[i] : c.fillOpacity,
+            seriesIndex: i
           };
         }
       }, {
@@ -55784,11 +58633,11 @@ var Forestry = (function () {
       }]), t;
     }(),
         T = function () {
-      function t(i) {
-        e(this, t), this.ctx = i, this.w = i.w, this.initialAnim = this.w.config.chart.animations.enabled, this.dynamicAnim = this.initialAnim && this.w.config.chart.animations.dynamicAnimation.enabled;
+      function t(e) {
+        a(this, t), this.ctx = e, this.w = e.w, this.initialAnim = this.w.config.chart.animations.enabled, this.dynamicAnim = this.initialAnim && this.w.config.chart.animations.dynamicAnimation.enabled;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "draw",
         value: function value(t, e, i) {
           var a = this.w,
@@ -55815,11 +58664,11 @@ var Forestry = (function () {
 
             a.config.chart.animations.enabled || (u = p);
             var x = o.x[c],
-                m = o.y[c];
+                v = o.y[c];
 
-            if (u = u || 0, null !== m && void 0 !== a.globals.series[r][d] || (g = !1), g) {
-              var v = this.drawPoint(x, m, u, p, r, d, e);
-              h.add(v);
+            if (u = u || 0, null !== v && void 0 !== a.globals.series[r][d] || (g = !1), g) {
+              var m = this.drawPoint(x, v, u, p, r, d, e);
+              h.add(m);
             }
 
             l.add(h);
@@ -55828,63 +58677,70 @@ var Forestry = (function () {
       }, {
         key: "drawPoint",
         value: function value(t, e, i, a, s, r, o) {
-          var n,
-              l = this.w,
-              h = s,
-              c = new f(this.ctx),
-              d = new x(this.ctx),
-              g = new L(this.ctx),
-              u = new P(this.ctx),
-              p = new b(this.ctx),
-              m = u.getMarkerConfig("apexcharts-marker", h),
-              v = g.fillPath({
+          var n = this.w,
+              l = s,
+              h = new f(this.ctx),
+              c = new x(this.ctx),
+              d = new L(this.ctx),
+              g = new P(this.ctx),
+              u = new b(this.ctx),
+              p = g.getMarkerConfig({
+            cssClass: "apexcharts-marker",
+            seriesIndex: l,
+            dataPointIndex: r,
+            finishRadius: "bubble" === n.config.chart.type || n.globals.comboCharts && n.config.series[s] && "bubble" === n.config.series[s].type ? a : null
+          });
+          a = p.pSize;
+          var v,
+              m = d.fillPath({
             seriesNumber: s,
             dataPointIndex: r,
+            color: p.pointFillColor,
             patternUnits: "objectBoundingBox",
-            value: l.globals.series[s][o]
+            value: n.globals.series[s][o]
           });
 
-          if ("circle" === m.shape ? n = p.drawCircle(i) : "square" !== m.shape && "rect" !== m.shape || (n = p.drawRect(0, 0, m.width - m.pointStrokeWidth / 2, m.height - m.pointStrokeWidth / 2, m.pRadius)), l.config.series[h].data[r] && l.config.series[h].data[r].fillColor && (v = l.config.series[h].data[r].fillColor), n.attr({
-            x: t - m.width / 2 - m.pointStrokeWidth / 2,
-            y: e - m.height / 2 - m.pointStrokeWidth / 2,
+          if ("circle" === p.shape ? v = u.drawCircle(i) : "square" !== p.shape && "rect" !== p.shape || (v = u.drawRect(0, 0, p.width - p.pointStrokeWidth / 2, p.height - p.pointStrokeWidth / 2, p.pRadius)), n.config.series[l].data[r] && n.config.series[l].data[r].fillColor && (m = n.config.series[l].data[r].fillColor), v.attr({
+            x: t - p.width / 2 - p.pointStrokeWidth / 2,
+            y: e - p.height / 2 - p.pointStrokeWidth / 2,
             cx: t,
             cy: e,
-            fill: v,
-            "fill-opacity": m.pointFillOpacity,
-            stroke: m.pointStrokeColor,
+            fill: m,
+            "fill-opacity": p.pointFillOpacity,
+            stroke: p.pointStrokeColor,
             r: a,
-            "stroke-width": m.pointStrokeWidth,
-            "stroke-dasharray": m.pointStrokeDashArray,
-            "stroke-opacity": m.pointStrokeOpacity
-          }), l.config.chart.dropShadow.enabled) {
-            var y = l.config.chart.dropShadow;
-            d.dropShadow(n, y, s);
+            "stroke-width": p.pointStrokeWidth,
+            "stroke-dasharray": p.pointStrokeDashArray,
+            "stroke-opacity": p.pointStrokeOpacity
+          }), n.config.chart.dropShadow.enabled) {
+            var y = n.config.chart.dropShadow;
+            c.dropShadow(v, y, s);
           }
 
-          if (!this.initialAnim || l.globals.dataChanged || l.globals.resized) l.globals.animationEnded = !0;else {
-            var w = l.config.chart.animations.speed;
-            c.animateMarker(n, 0, "circle" === m.shape ? a : {
-              width: m.width,
-              height: m.height
-            }, w, l.globals.easing, function () {
+          if (!this.initialAnim || n.globals.dataChanged || n.globals.resized) n.globals.animationEnded = !0;else {
+            var w = n.config.chart.animations.speed;
+            h.animateMarker(v, 0, "circle" === p.shape ? a : {
+              width: p.width,
+              height: p.height
+            }, w, n.globals.easing, function () {
               window.setTimeout(function () {
-                c.animationCompleted(n);
+                h.animationCompleted(v);
               }, 100);
             });
           }
-          if (l.globals.dataChanged && "circle" === m.shape) if (this.dynamicAnim) {
+          if (n.globals.dataChanged && "circle" === p.shape) if (this.dynamicAnim) {
             var k,
                 A,
                 S,
                 C,
-                T = l.config.chart.animations.dynamicAnimation.speed;
-            null != (C = l.globals.previousPaths[s] && l.globals.previousPaths[s][o]) && (k = C.x, A = C.y, S = void 0 !== C.r ? C.r : a);
+                T = n.config.chart.animations.dynamicAnimation.speed;
+            null != (C = n.globals.previousPaths[s] && n.globals.previousPaths[s][o]) && (k = C.x, A = C.y, S = void 0 !== C.r ? C.r : a);
 
-            for (var M = 0; M < l.globals.collapsedSeries.length; M++) {
-              l.globals.collapsedSeries[M].index === s && (T = 1, a = 0);
+            for (var M = 0; M < n.globals.collapsedSeries.length; M++) {
+              n.globals.collapsedSeries[M].index === s && (T = 1, a = 0);
             }
 
-            0 === t && 0 === e && (a = 0), c.animateCircle(n, {
+            0 === t && 0 === e && (a = 0), h.animateCircle(v, {
               cx: k,
               cy: A,
               r: S
@@ -55892,16 +58748,16 @@ var Forestry = (function () {
               cx: t,
               cy: e,
               r: a
-            }, T, l.globals.easing);
-          } else n.attr({
+            }, T, n.globals.easing);
+          } else v.attr({
             r: a
           });
-          return n.attr({
+          return v.attr({
             rel: r,
             j: r,
             index: s,
             "default-marker-size": a
-          }), d.setSelectionFilter(n, s, r), u.addEvents(n), n.node.classList.add("apexcharts-marker"), n;
+          }), c.setSelectionFilter(v, s, r), g.addEvents(v), v.node.classList.add("apexcharts-marker"), v;
         }
       }, {
         key: "centerTextInBubble",
@@ -55914,11 +58770,11 @@ var Forestry = (function () {
       }]), t;
     }(),
         M = function () {
-      function t(i) {
-        e(this, t), this.ctx = i, this.w = i.w;
+      function t(e) {
+        a(this, t), this.ctx = e, this.w = e.w;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "dataLabelsCorrection",
         value: function value(t, e, i, a, s, r, o) {
           var n = this.w,
@@ -55982,8 +58838,8 @@ var Forestry = (function () {
               if ("bubble" === r.config.chart.type) {
                 p = f(u = r.globals.seriesZ[e][c]), h = t.y[g];
                 var x = new T(this.ctx),
-                    m = x.centerTextInBubble(h, e, c);
-                h = m.y;
+                    v = x.centerTextInBubble(h, e, c);
+                h = v.y;
               } else void 0 !== u && (p = f(u));
 
               this.plotDataLabelsText({
@@ -56023,26 +58879,27 @@ var Forestry = (function () {
             var f = {
               x: a,
               y: s,
-              drawnextLabel: !0
+              drawnextLabel: !0,
+              textRects: null
             };
             p && (f = this.dataLabelsCorrection(a, s, n, r, o, u, parseInt(d.style.fontSize, 10))), e.globals.zoomed || (a = f.x, s = f.y), f.textRects && (a < -10 - f.textRects.width || a > e.globals.gridWidth + f.textRects.width + 10) && (n = "");
-            var m = e.globals.dataLabels.style.colors[r];
-            (("bar" === e.config.chart.type || "rangeBar" === e.config.chart.type) && e.config.plotOptions.bar.distributed || e.config.dataLabels.distributed) && (m = e.globals.dataLabels.style.colors[o]), "function" == typeof m && (m = m({
+            var v = e.globals.dataLabels.style.colors[r];
+            (("bar" === e.config.chart.type || "rangeBar" === e.config.chart.type) && e.config.plotOptions.bar.distributed || e.config.dataLabels.distributed) && (v = e.globals.dataLabels.style.colors[o]), "function" == typeof v && (v = v({
               series: e.globals.series,
               seriesIndex: r,
               dataPointIndex: o,
               w: e
-            })), g && (m = g);
-            var v = d.offsetX,
+            })), g && (v = g);
+            var m = d.offsetX,
                 y = d.offsetY;
 
-            if ("bar" !== e.config.chart.type && "rangeBar" !== e.config.chart.type || (v = 0, y = 0), f.drawnextLabel) {
+            if ("bar" !== e.config.chart.type && "rangeBar" !== e.config.chart.type || (m = 0, y = 0), f.drawnextLabel) {
               var w = i.drawText({
                 width: 100,
                 height: parseInt(d.style.fontSize, 10),
-                x: a + v,
+                x: a + m,
                 y: s + y,
-                foreColor: m,
+                foreColor: v,
                 textAnchor: l || d.textAnchor,
                 text: n,
                 fontSize: h || d.style.fontSize,
@@ -56105,12 +58962,12 @@ var Forestry = (function () {
         }
       }]), t;
     }(),
-        z = function () {
-      function t(i) {
-        e(this, t), this.w = i.w, this.barCtx = i;
+        I = function () {
+      function t(e) {
+        a(this, t), this.w = e.w, this.barCtx = e;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "handleBarDataLabels",
         value: function value(t) {
           var e = t.x,
@@ -56129,15 +58986,15 @@ var Forestry = (function () {
               p = this.w,
               f = new b(this.barCtx.ctx),
               x = Array.isArray(this.barCtx.strokeWidth) ? this.barCtx.strokeWidth[n] : this.barCtx.strokeWidth,
-              m = e + parseFloat(c * g),
-              v = i + parseFloat(h * g);
-          p.globals.isXNumeric && !p.globals.isBarHorizontal && (m = e + parseFloat(c * (g + 1)), v = i + parseFloat(h * (g + 1)) - x);
+              v = e + parseFloat(c * g),
+              m = i + parseFloat(h * g);
+          p.globals.isXNumeric && !p.globals.isBarHorizontal && (v = e + parseFloat(c * (g + 1)), m = i + parseFloat(h * (g + 1)) - x);
           var y = e,
               w = i,
               k = {},
               A = p.config.dataLabels,
               S = this.barCtx.barOptions.dataLabels;
-          void 0 !== d && this.barCtx.isTimelineBar && (v = d, w = d);
+          void 0 !== d && this.barCtx.isRangeBar && (m = d, w = d);
           var C = A.offsetX,
               L = A.offsetY,
               P = {
@@ -56156,8 +59013,8 @@ var Forestry = (function () {
             i: r,
             j: o,
             renderedPath: u,
-            bcx: m,
-            bcy: v,
+            bcx: v,
+            bcy: m,
             barHeight: h,
             barWidth: c,
             textRects: P,
@@ -56178,7 +59035,7 @@ var Forestry = (function () {
           }), this.drawCalculatedDataLabels({
             x: k.dataLabelsX,
             y: k.dataLabelsY,
-            val: this.barCtx.isTimelineBar ? [a, s] : l[r][o],
+            val: this.barCtx.isRangeBar ? [a, s] : l[r][o],
             i: n,
             j: o,
             barWidth: c,
@@ -56214,19 +59071,19 @@ var Forestry = (function () {
           }
 
           var b = this.barCtx.series[a][s] < 0,
-              m = r;
+              v = r;
 
-          switch (this.barCtx.isReversed && (m = r - l + (b ? 2 * l : 0), r -= l), d.position) {
+          switch (this.barCtx.isReversed && (v = r - l + (b ? 2 * l : 0), r -= l), d.position) {
             case "center":
-              c = f ? b ? m + l / 2 + p : m + l / 2 - p : b ? m - l / 2 + h.height / 2 + p : m + l / 2 + h.height / 2 - p;
+              c = f ? b ? v + l / 2 + p : v + l / 2 - p : b ? v - l / 2 + h.height / 2 + p : v + l / 2 + h.height / 2 - p;
               break;
 
             case "bottom":
-              c = f ? b ? m + l + p : m + l - p : b ? m - l + h.height + g + p : m + l - h.height / 2 + g - p;
+              c = f ? b ? v + l + p : v + l - p : b ? v - l + h.height + g + p : v + l - h.height / 2 + g - p;
               break;
 
             case "top":
-              c = f ? b ? m + p : m - p : b ? m - h.height / 2 - p : m + h.height + p;
+              c = f ? b ? v + p : v - p : b ? v - h.height / 2 - p : v + h.height + p;
           }
 
           return i.config.chart.stacked || (c < 0 ? c = 0 + g : c + h.height / 3 > i.globals.gridHeight && (c = i.globals.gridHeight - g)), {
@@ -56254,7 +59111,7 @@ var Forestry = (function () {
               u = t.offY,
               p = e.globals.gridHeight / e.globals.dataPoints;
           n = Math.abs(n);
-          var f = r - (this.barCtx.isTimelineBar ? 0 : p) + o / 2 + l.height / 2 + u - 3,
+          var f = r - (this.barCtx.isRangeBar ? 0 : p) + o / 2 + l.height / 2 + u - 3,
               x = this.barCtx.series[a][s] < 0,
               b = i;
 
@@ -56281,46 +59138,46 @@ var Forestry = (function () {
       }, {
         key: "drawCalculatedDataLabels",
         value: function value(t) {
-          var e = t.x,
-              i = t.y,
-              a = t.val,
-              s = t.i,
-              r = t.j,
+          var i = t.x,
+              a = t.y,
+              s = t.val,
+              r = t.i,
+              o = t.j,
               n = t.textRects,
               l = t.barHeight,
               h = t.barWidth,
               c = t.dataLabelsConfig,
               d = this.w,
               g = "rotate(0)";
-          "vertical" === d.config.plotOptions.bar.dataLabels.orientation && (g = "rotate(-90, ".concat(e, ", ").concat(i, ")"));
+          "vertical" === d.config.plotOptions.bar.dataLabels.orientation && (g = "rotate(-90, ".concat(i, ", ").concat(a, ")"));
           var u = new M(this.barCtx.ctx),
               p = new b(this.barCtx.ctx),
               f = c.formatter,
               x = null,
-              m = d.globals.collapsedSeriesIndices.indexOf(s) > -1;
+              v = d.globals.collapsedSeriesIndices.indexOf(r) > -1;
 
-          if (c.enabled && !m) {
+          if (c.enabled && !v) {
             x = p.group({
               class: "apexcharts-data-labels",
               transform: g
             });
-            var v = "";
-            void 0 !== a && (v = f(a, {
-              seriesIndex: s,
-              dataPointIndex: r,
+            var m = "";
+            void 0 !== s && (m = f(s, {
+              seriesIndex: r,
+              dataPointIndex: o,
               w: d
             }));
-            var y = d.globals.series[s][r] < 0,
+            var y = d.globals.series[r][o] < 0,
                 w = d.config.plotOptions.bar.dataLabels.position;
-            if ("vertical" === d.config.plotOptions.bar.dataLabels.orientation && ("top" === w && (c.textAnchor = y ? "end" : "start"), "center" === w && (c.textAnchor = "middle"), "bottom" === w && (c.textAnchor = y ? "end" : "start")), this.barCtx.isTimelineBar && this.barCtx.barOptions.dataLabels.hideOverflowingLabels) h < p.getTextRects(v, parseFloat(c.style.fontSize)).width && (v = "");
-            d.config.chart.stacked && this.barCtx.barOptions.dataLabels.hideOverflowingLabels && (this.barCtx.isHorizontal ? (h > 0 && n.width / 1.6 > h || h < 0 && n.width / 1.6 < h) && (v = "") : n.height / 1.6 > l && (v = ""));
-            var k = o({}, c);
-            this.barCtx.isHorizontal && a < 0 && ("start" === c.textAnchor ? k.textAnchor = "end" : "end" === c.textAnchor && (k.textAnchor = "start")), u.plotDataLabelsText({
-              x: e,
-              y: i,
-              text: v,
-              i: s,
-              j: r,
+            if ("vertical" === d.config.plotOptions.bar.dataLabels.orientation && ("top" === w && (c.textAnchor = y ? "end" : "start"), "center" === w && (c.textAnchor = "middle"), "bottom" === w && (c.textAnchor = y ? "end" : "start")), this.barCtx.isRangeBar && this.barCtx.barOptions.dataLabels.hideOverflowingLabels) h < p.getTextRects(m, parseFloat(c.style.fontSize)).width && (m = "");
+            d.config.chart.stacked && this.barCtx.barOptions.dataLabels.hideOverflowingLabels && (this.barCtx.isHorizontal ? n.width / 1.6 > Math.abs(h) && (m = "") : n.height / 1.6 > Math.abs(l) && (m = ""));
+            var k = e({}, c);
+            this.barCtx.isHorizontal && s < 0 && ("start" === c.textAnchor ? k.textAnchor = "end" : "end" === c.textAnchor && (k.textAnchor = "start")), u.plotDataLabelsText({
+              x: i,
+              y: a,
+              text: m,
+              i: r,
+              j: o,
               parent: x,
               dataLabelsConfig: k,
               alwaysDrawDataLabel: !0,
@@ -56332,12 +59189,12 @@ var Forestry = (function () {
         }
       }]), t;
     }(),
-        I = function () {
-      function t(i) {
-        e(this, t), this.ctx = i, this.w = i.w, this.legendInactiveClass = "legend-mouseover-inactive";
+        z = function () {
+      function t(e) {
+        a(this, t), this.ctx = e, this.w = e.w, this.legendInactiveClass = "legend-mouseover-inactive";
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "getAllSeriesEls",
         value: function value() {
           return this.w.globals.dom.baseEl.getElementsByClassName("apexcharts-series");
@@ -56410,8 +59267,9 @@ var Forestry = (function () {
       }, {
         key: "toggleSeriesOnHover",
         value: function value(t, e) {
-          var i = this.w,
-              a = i.globals.dom.baseEl.querySelectorAll(".apexcharts-series, .apexcharts-datalabels");
+          var i = this.w;
+          e || (e = t.target);
+          var a = i.globals.dom.baseEl.querySelectorAll(".apexcharts-series, .apexcharts-datalabels");
 
           if ("mousemove" === t.type) {
             var s = parseInt(e.getAttribute("rel"), 10) - 1,
@@ -56605,11 +59463,11 @@ var Forestry = (function () {
       }]), t;
     }(),
         X = function () {
-      function t(i) {
-        e(this, t), this.w = i.w, this.barCtx = i;
+      function t(e) {
+        a(this, t), this.w = e.w, this.barCtx = e;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "initVariables",
         value: function value(t) {
           var e = this.w;
@@ -56638,7 +59496,7 @@ var Forestry = (function () {
               n,
               l = this.w,
               h = l.globals.dataPoints;
-          this.barCtx.isTimelineBar && (h = l.globals.labels.length);
+          this.barCtx.isRangeBar && (h = l.globals.labels.length);
           var c = this.barCtx.seriesLen;
           if (l.config.plotOptions.bar.rangeBarGroupRows && (c = 1), this.barCtx.isHorizontal) s = (i = l.globals.gridHeight / h) / c, l.globals.isXNumeric && (s = (i = l.globals.gridHeight / this.barCtx.totalItems) / this.barCtx.seriesLen), s = s * parseInt(this.barCtx.barOptions.barHeight, 10) / 100, n = this.barCtx.baseLineInvertedY + l.globals.padHorizontal + (this.barCtx.isReversed ? l.globals.gridWidth : 0) - (this.barCtx.isReversed ? 2 * this.barCtx.baseLineInvertedY : 0), e = (i - s * this.barCtx.seriesLen) / 2;else {
             if (a = l.globals.gridWidth / this.barCtx.visibleItems, l.config.xaxis.convertedCatToNumeric && (a = l.globals.gridWidth / l.globals.dataPoints), r = a / this.barCtx.seriesLen * parseInt(this.barCtx.barOptions.columnWidth, 10) / 100, l.globals.isXNumeric) {
@@ -56695,7 +59553,7 @@ var Forestry = (function () {
               n = t.elSeries,
               l = this.w,
               h = new b(this.barCtx.ctx),
-              c = new I(this.barCtx.ctx).getActiveConfigSeriesIndex();
+              c = new z(this.barCtx.ctx).getActiveConfigSeriesIndex();
 
           if (this.barCtx.barOptions.colors.backgroundBarColors.length > 0 && c === i) {
             e >= this.barCtx.barOptions.colors.backgroundBarColors.length && (e -= this.barCtx.barOptions.colors.backgroundBarColors.length);
@@ -56731,12 +59589,12 @@ var Forestry = (function () {
               p = this.getRoundedBars(d, u, n, h, c),
               f = i,
               x = i + e,
-              m = g.move(f, s),
               v = g.move(f, s),
+              m = g.move(f, s),
               y = g.line(x - o, s);
-          return d.globals.previousPaths.length > 0 && (v = this.barCtx.getPreviousPath(l, c, !1)), m = m + g.line(f, p.y2) + p.pathWithRadius + g.line(x - o, p.y2) + y + y + "z", v = v + g.line(f, s) + y + y + y + y + y + g.line(f, s), d.config.chart.stacked && (this.barCtx.yArrj.push(p.y2), this.barCtx.yArrjF.push(Math.abs(s - p.y2)), this.barCtx.yArrjVal.push(this.barCtx.series[h][c])), {
-            pathTo: m,
-            pathFrom: v
+          return d.globals.previousPaths.length > 0 && (m = this.barCtx.getPreviousPath(l, c, !1)), v = v + g.line(f, p.y2) + p.pathWithRadius + g.line(x - o, p.y2) + y + y + "z", m = m + g.line(f, s) + y + y + y + y + y + g.line(f, s), d.config.chart.stacked && (this.barCtx.yArrj.push(p.y2), this.barCtx.yArrjF.push(Math.abs(s - p.y2)), this.barCtx.yArrjVal.push(this.barCtx.series[h][c])), {
+            pathTo: v,
+            pathFrom: m
           };
         }
       }, {
@@ -56766,9 +59624,9 @@ var Forestry = (function () {
               f = d.move(a, e);
           c.globals.previousPaths.length > 0 && (f = this.barCtx.getPreviousPath(n, h, !1));
           var x = e,
-              m = e + i,
-              v = d.line(a, m - r);
-          return p = p + d.line(u.x2, x) + u.pathWithRadius + d.line(u.x2, m - r) + v + v + "z", f = f + d.line(a, x) + v + v + v + v + v + d.line(a, x), c.config.chart.stacked && (this.barCtx.xArrj.push(u.x2), this.barCtx.xArrjF.push(Math.abs(a - u.x2)), this.barCtx.xArrjVal.push(this.barCtx.series[l][h])), {
+              v = e + i,
+              m = d.line(a, v - r);
+          return p = p + d.line(u.x2, x) + u.pathWithRadius + d.line(u.x2, v - r) + m + m + "z", f = f + d.line(a, x) + m + m + m + m + m + d.line(a, x), c.config.chart.stacked && (this.barCtx.xArrj.push(u.x2), this.barCtx.xArrjF.push(Math.abs(a - u.x2)), this.barCtx.xArrjVal.push(this.barCtx.series[l][h])), {
             pathTo: p,
             pathFrom: f
           };
@@ -56777,34 +59635,37 @@ var Forestry = (function () {
         key: "getRoundedBars",
         value: function value(t, e, i, a, s) {
           var r = new b(this.barCtx.ctx),
-              o = t.config.plotOptions.bar.borderRadius;
+              o = 0,
+              n = t.config.plotOptions.bar.borderRadius,
+              l = Array.isArray(n);
+          l ? o = n[a > n.length - 1 ? n.length - 1 : a] : o = n;
 
-          if (t.config.chart.stacked && i.length > 1 && a !== this.barCtx.radiusOnSeriesNumber && (o = 0), this.barCtx.isHorizontal) {
-            var n = "",
-                l = e.x2;
+          if (t.config.chart.stacked && i.length > 1 && a !== this.barCtx.radiusOnSeriesNumber && !l && (o = 0), this.barCtx.isHorizontal) {
+            var h = "",
+                c = e.x2;
 
             if (Math.abs(e.x1 - e.x2) < o && (o = Math.abs(e.x1 - e.x2)), void 0 !== i[a][s] || null !== i[a][s]) {
-              var h = this.barCtx.isReversed ? i[a][s] > 0 : i[a][s] < 0;
-              h && (o *= -1), l -= o, n = r.quadraticCurve(l + o, e.barYPosition, l + o, e.barYPosition + (h ? -1 * o : o)) + r.line(l + o, e.barYPosition + e.barHeight - e.strokeWidth - (h ? -1 * o : o)) + r.quadraticCurve(l + o, e.barYPosition + e.barHeight - e.strokeWidth, l, e.barYPosition + e.barHeight - e.strokeWidth);
+              var d = this.barCtx.isReversed ? i[a][s] > 0 : i[a][s] < 0;
+              d && (o *= -1), c -= o, h = r.quadraticCurve(c + o, e.barYPosition, c + o, e.barYPosition + (d ? -1 * o : o)) + r.line(c + o, e.barYPosition + e.barHeight - e.strokeWidth - (d ? -1 * o : o)) + r.quadraticCurve(c + o, e.barYPosition + e.barHeight - e.strokeWidth, c, e.barYPosition + e.barHeight - e.strokeWidth);
             }
 
             return {
-              pathWithRadius: n,
-              x2: l
+              pathWithRadius: h,
+              x2: c
             };
           }
 
-          var c = "",
-              d = e.y2;
+          var g = "",
+              u = e.y2;
 
           if (Math.abs(e.y1 - e.y2) < o && (o = Math.abs(e.y1 - e.y2)), void 0 !== i[a][s] || null !== i[a][s]) {
-            var g = i[a][s] < 0;
-            g && (o *= -1), d += o, c = r.quadraticCurve(e.barXPosition, d - o, e.barXPosition + (g ? -1 * o : o), d - o) + r.line(e.barXPosition + e.barWidth - e.strokeWidth - (g ? -1 * o : o), d - o) + r.quadraticCurve(e.barXPosition + e.barWidth - e.strokeWidth, d - o, e.barXPosition + e.barWidth - e.strokeWidth, d);
+            var p = i[a][s] < 0;
+            p && (o *= -1), u += o, g = r.quadraticCurve(e.barXPosition, u - o, e.barXPosition + (p ? -1 * o : o), u - o) + r.line(e.barXPosition + e.barWidth - e.strokeWidth - (p ? -1 * o : o), u - o) + r.quadraticCurve(e.barXPosition + e.barWidth - e.strokeWidth, u - o, e.barXPosition + e.barWidth - e.strokeWidth, u);
           }
 
           return {
-            pathWithRadius: c,
-            y2: d
+            pathWithRadius: g,
+            y2: u
           };
         }
       }, {
@@ -56842,13 +59703,13 @@ var Forestry = (function () {
         }
       }, {
         key: "getGoalValues",
-        value: function value(t, e, i, a, r) {
-          var o = this,
+        value: function value(t, e, i, a, s) {
+          var r = this,
               n = this.w,
               l = [];
-          return n.globals.seriesGoals[a] && n.globals.seriesGoals[a][r] && Array.isArray(n.globals.seriesGoals[a][r]) && n.globals.seriesGoals[a][r].forEach(function (a) {
-            var r;
-            l.push((s(r = {}, t, "x" === t ? o.getXForValue(a.value, e, !1) : o.getYForValue(a.value, i, !1)), s(r, "attrs", a), r));
+          return n.globals.seriesGoals[a] && n.globals.seriesGoals[a][s] && Array.isArray(n.globals.seriesGoals[a][s]) && n.globals.seriesGoals[a][s].forEach(function (a) {
+            var s;
+            l.push((o(s = {}, t, "x" === t ? r.getXForValue(a.value, e, !1) : r.getYForValue(a.value, i, !1)), o(s, "attrs", a), s));
           }), l;
         }
       }, {
@@ -56866,31 +59727,35 @@ var Forestry = (function () {
           }),
               h = null;
           return this.barCtx.isHorizontal ? Array.isArray(a) && a.forEach(function (t) {
-            h = n.drawLine(t.x, i, t.x, i + o, t.attrs.strokeColor ? t.attrs.strokeColor : void 0, 0, t.attrs.strokeWidth ? t.attrs.strokeWidth : 2), l.add(h);
+            var e = void 0 !== t.attrs.strokeHeight ? t.attrs.strokeHeight : o / 2,
+                a = i + e + o / 2;
+            h = n.drawLine(t.x, a - 2 * e, t.x, a, t.attrs.strokeColor ? t.attrs.strokeColor : void 0, t.attrs.strokeDashArray, t.attrs.strokeWidth ? t.attrs.strokeWidth : 2, t.attrs.strokeLineCap), l.add(h);
           }) : Array.isArray(s) && s.forEach(function (t) {
-            h = n.drawLine(e, t.y, e + r, t.y, t.attrs.strokeColor ? t.attrs.strokeColor : void 0, 0, t.attrs.strokeWidth ? t.attrs.strokeWidth : 2), l.add(h);
+            var i = void 0 !== t.attrs.strokeWidth ? t.attrs.strokeWidth : r / 2,
+                a = e + i + r / 2;
+            h = n.drawLine(a - 2 * i, t.y, a, t.y, t.attrs.strokeColor ? t.attrs.strokeColor : void 0, t.attrs.strokeDashArray, t.attrs.strokeHeight ? t.attrs.strokeHeight : 2, t.attrs.strokeLineCap), l.add(h);
           }), l;
         }
       }]), t;
     }(),
         E = function () {
-      function t(i, a) {
-        e(this, t), this.ctx = i, this.w = i.w;
+      function t(e, i) {
+        a(this, t), this.ctx = e, this.w = e.w;
         var s = this.w;
-        this.barOptions = s.config.plotOptions.bar, this.isHorizontal = this.barOptions.horizontal, this.strokeWidth = s.config.stroke.width, this.isNullValue = !1, this.isTimelineBar = "datetime" === s.config.xaxis.type && s.globals.seriesRangeBarTimeline.length, this.xyRatios = a, null !== this.xyRatios && (this.xRatio = a.xRatio, this.initialXRatio = a.initialXRatio, this.yRatio = a.yRatio, this.invertedXRatio = a.invertedXRatio, this.invertedYRatio = a.invertedYRatio, this.baseLineY = a.baseLineY, this.baseLineInvertedY = a.baseLineInvertedY), this.yaxisIndex = 0, this.seriesLen = 0, this.barHelpers = new X(this);
+        this.barOptions = s.config.plotOptions.bar, this.isHorizontal = this.barOptions.horizontal, this.strokeWidth = s.config.stroke.width, this.isNullValue = !1, this.isRangeBar = s.globals.seriesRangeBar.length && this.isHorizontal, this.xyRatios = i, null !== this.xyRatios && (this.xRatio = i.xRatio, this.initialXRatio = i.initialXRatio, this.yRatio = i.yRatio, this.invertedXRatio = i.invertedXRatio, this.invertedYRatio = i.invertedYRatio, this.baseLineY = i.baseLineY, this.baseLineInvertedY = i.baseLineInvertedY), this.yaxisIndex = 0, this.seriesLen = 0, this.barHelpers = new X(this);
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "draw",
-        value: function value(t, e) {
-          var i = this.w,
-              a = new b(this.ctx),
-              s = new y(this.ctx, i);
-          t = s.getLogSeries(t), this.series = t, this.yRatio = s.getLogYRatios(this.yRatio), this.barHelpers.initVariables(t);
-          var r = a.group({
+        value: function value(t, i) {
+          var a = this.w,
+              s = new b(this.ctx),
+              r = new y(this.ctx, a);
+          t = r.getLogSeries(t), this.series = t, this.yRatio = r.getLogYRatios(this.yRatio), this.barHelpers.initVariables(t);
+          var o = s.group({
             class: "apexcharts-bar-series apexcharts-plot-series"
           });
-          i.config.dataLabels.enabled && this.totalItems > this.barOptions.dataLabels.maxItems && console.warn("WARNING: DataLabels are enabled but there are too many to display. This may cause performance issue when rendering.");
+          a.config.dataLabels.enabled && this.totalItems > this.barOptions.dataLabels.maxItems && console.warn("WARNING: DataLabels are enabled but there are too many to display. This may cause performance issue when rendering.");
 
           for (var n = 0, l = 0; n < t.length; n++, l++) {
             var h,
@@ -56900,35 +59765,35 @@ var Forestry = (function () {
                 u = void 0,
                 f = void 0,
                 x = [],
-                m = [],
-                v = i.globals.comboCharts ? e[n] : n,
-                w = a.group({
+                v = [],
+                m = a.globals.comboCharts ? i[n] : n,
+                w = s.group({
               class: "apexcharts-series",
               rel: n + 1,
-              seriesName: p.escapeString(i.globals.seriesNames[v]),
-              "data:realIndex": v
+              seriesName: p.escapeString(a.globals.seriesNames[m]),
+              "data:realIndex": m
             });
-            this.ctx.series.addCollapsedClassToSeries(w, v), t[n].length > 0 && (this.visibleI = this.visibleI + 1);
+            this.ctx.series.addCollapsedClassToSeries(w, m), t[n].length > 0 && (this.visibleI = this.visibleI + 1);
             var k = 0,
                 A = 0;
-            this.yRatio.length > 1 && (this.yaxisIndex = v), this.isReversed = i.config.yaxis[this.yaxisIndex] && i.config.yaxis[this.yaxisIndex].reversed;
+            this.yRatio.length > 1 && (this.yaxisIndex = m), this.isReversed = a.config.yaxis[this.yaxisIndex] && a.config.yaxis[this.yaxisIndex].reversed;
             var S = this.barHelpers.initialPositions();
-            f = S.y, k = S.barHeight, c = S.yDivision, g = S.zeroW, u = S.x, A = S.barWidth, h = S.xDivision, d = S.zeroH, this.horizontal || m.push(u + A / 2);
+            f = S.y, k = S.barHeight, c = S.yDivision, g = S.zeroW, u = S.x, A = S.barWidth, h = S.xDivision, d = S.zeroH, this.horizontal || v.push(u + A / 2);
 
-            for (var C = a.group({
+            for (var C = s.group({
               class: "apexcharts-datalabels",
-              "data:realIndex": v
-            }), L = a.group({
+              "data:realIndex": m
+            }), L = s.group({
               class: "apexcharts-bar-goals-markers",
               style: "pointer-events: none"
-            }), P = 0; P < i.globals.dataPoints; P++) {
-              var T = this.barHelpers.getStrokeWidth(n, P, v),
+            }), P = 0; P < a.globals.dataPoints; P++) {
+              var T = this.barHelpers.getStrokeWidth(n, P, m),
                   M = null,
-                  z = {
+                  I = {
                 indexes: {
                   i: n,
                   j: P,
-                  realIndex: v,
+                  realIndex: m,
                   bc: l
                 },
                 x: u,
@@ -56936,16 +59801,16 @@ var Forestry = (function () {
                 strokeWidth: T,
                 elSeries: w
               };
-              this.isHorizontal ? (M = this.drawBarPaths(o(o({}, z), {}, {
+              this.isHorizontal ? (M = this.drawBarPaths(e(e({}, I), {}, {
                 barHeight: k,
                 zeroW: g,
                 yDivision: c
-              })), A = this.series[n][P] / this.invertedYRatio) : (M = this.drawColumnPaths(o(o({}, z), {}, {
+              })), A = this.series[n][P] / this.invertedYRatio) : (M = this.drawColumnPaths(e(e({}, I), {}, {
                 xDivision: h,
                 barWidth: A,
                 zeroH: d
               })), k = this.series[n][P] / this.yRatio[this.yaxisIndex]);
-              var I = this.barHelpers.drawGoalLine({
+              var z = this.barHelpers.drawGoalLine({
                 barXPosition: M.barXPosition,
                 barYPosition: M.barYPosition,
                 goalX: M.goalX,
@@ -56953,10 +59818,10 @@ var Forestry = (function () {
                 barHeight: k,
                 barWidth: A
               });
-              I && L.add(I), f = M.y, u = M.x, P > 0 && m.push(u + A / 2), x.push(f);
-              var X = this.barHelpers.getPathFillColor(t, n, P, v);
+              z && L.add(z), f = M.y, u = M.x, P > 0 && v.push(u + A / 2), x.push(f);
+              var X = this.barHelpers.getPathFillColor(t, n, P, m);
               this.renderSeries({
-                realIndex: v,
+                realIndex: m,
                 pathFill: X,
                 j: P,
                 i: n,
@@ -56976,10 +59841,10 @@ var Forestry = (function () {
               });
             }
 
-            i.globals.seriesXvalues[v] = m, i.globals.seriesYvalues[v] = x, r.add(w);
+            a.globals.seriesXvalues[m] = v, a.globals.seriesYvalues[m] = x, o.add(w);
           }
 
-          return r;
+          return o;
         }
       }, {
         key: "renderSeries",
@@ -56999,8 +59864,8 @@ var Forestry = (function () {
               u = t.y2,
               p = t.series,
               f = t.barHeight,
-              m = t.barWidth,
-              v = t.barYPosition,
+              v = t.barWidth,
+              m = t.barYPosition,
               y = t.elDataLabelsWrap,
               w = t.elGoalsMarkers,
               k = t.visibleSeries,
@@ -57027,7 +59892,7 @@ var Forestry = (function () {
           P.attr("clip-path", "url(#gridRectMask".concat(S.globals.cuid, ")"));
           var T = S.config.forecastDataPoints;
           T.count > 0 && s >= S.globals.dataPoints - T.count && (P.node.setAttribute("stroke-dasharray", T.dashArray), P.node.setAttribute("stroke-width", T.strokeWidth), P.node.setAttribute("fill-opacity", T.fillOpacity)), void 0 !== g && void 0 !== u && (P.attr("data-range-y1", g), P.attr("data-range-y2", u)), new x(this.ctx).setSelectionFilter(P, e, s), h.add(P);
-          var M = new z(this).handleBarDataLabels({
+          var M = new I(this).handleBarDataLabels({
             x: c,
             y: d,
             y1: g,
@@ -57037,8 +59902,8 @@ var Forestry = (function () {
             series: p,
             realIndex: e,
             barHeight: f,
-            barWidth: m,
-            barYPosition: v,
+            barWidth: v,
+            barYPosition: m,
             renderedPath: P,
             visibleSeries: k
           });
@@ -57153,11 +60018,11 @@ var Forestry = (function () {
       }]), t;
     }(),
         Y = function () {
-      function t(i) {
-        e(this, t), this.ctx = i, this.w = i.w, this.months31 = [1, 3, 5, 7, 8, 10, 12], this.months30 = [2, 4, 6, 9, 11], this.daysCntOfYear = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+      function t(e) {
+        a(this, t), this.ctx = e, this.w = e.w, this.months31 = [1, 3, 5, 7, 8, 10, 12], this.months30 = [2, 4, 6, 9, 11], this.daysCntOfYear = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "isValidDate",
         value: function value(t) {
           return !isNaN(this.parseDate(t));
@@ -57220,10 +60085,10 @@ var Forestry = (function () {
           e = (e = e.replace(/(^|[^\\])ss+/g, "$1" + l(x))).replace(/(^|[^\\])s/g, "$1" + x);
           var b = a ? t.getUTCMilliseconds() : t.getMilliseconds();
           e = e.replace(/(^|[^\\])fff+/g, "$1" + l(b, 3)), b = Math.round(b / 10), e = e.replace(/(^|[^\\])ff/g, "$1" + l(b)), b = Math.round(b / 10);
-          var m = u < 12 ? "AM" : "PM";
-          e = (e = (e = e.replace(/(^|[^\\])f/g, "$1" + b)).replace(/(^|[^\\])TT+/g, "$1" + m)).replace(/(^|[^\\])T/g, "$1" + m.charAt(0));
-          var v = m.toLowerCase();
-          e = (e = e.replace(/(^|[^\\])tt+/g, "$1" + v)).replace(/(^|[^\\])t/g, "$1" + v.charAt(0));
+          var v = u < 12 ? "AM" : "PM";
+          e = (e = (e = e.replace(/(^|[^\\])f/g, "$1" + b)).replace(/(^|[^\\])TT+/g, "$1" + v)).replace(/(^|[^\\])T/g, "$1" + v.charAt(0));
+          var m = v.toLowerCase();
+          e = (e = e.replace(/(^|[^\\])tt+/g, "$1" + m)).replace(/(^|[^\\])t/g, "$1" + m.charAt(0));
           var y = -t.getTimezoneOffset(),
               w = a || !y ? "Z" : y > 0 ? "+" : "-";
 
@@ -57308,49 +60173,49 @@ var Forestry = (function () {
       var i = d(s);
 
       function s() {
-        return e(this, s), i.apply(this, arguments);
+        return a(this, s), i.apply(this, arguments);
       }
 
-      return a(s, [{
+      return r(s, [{
         key: "draw",
-        value: function value(t, e) {
-          var i = this.w,
-              a = new b(this.ctx);
-          this.rangeBarOptions = this.w.config.plotOptions.rangeBar, this.series = t, this.seriesRangeStart = i.globals.seriesRangeStart, this.seriesRangeEnd = i.globals.seriesRangeEnd, this.barHelpers.initVariables(t);
+        value: function value(t, i) {
+          var a = this.w,
+              s = new b(this.ctx);
+          this.rangeBarOptions = this.w.config.plotOptions.rangeBar, this.series = t, this.seriesRangeStart = a.globals.seriesRangeStart, this.seriesRangeEnd = a.globals.seriesRangeEnd, this.barHelpers.initVariables(t);
 
-          for (var s = a.group({
+          for (var r = s.group({
             class: "apexcharts-rangebar-series apexcharts-plot-series"
-          }), r = 0; r < t.length; r++) {
+          }), o = 0; o < t.length; o++) {
             var n,
                 l,
                 h,
                 c = void 0,
                 d = void 0,
                 g = void 0,
-                u = i.globals.comboCharts ? e[r] : r,
-                f = a.group({
+                u = a.globals.comboCharts ? i[o] : o,
+                f = s.group({
               class: "apexcharts-series",
-              seriesName: p.escapeString(i.globals.seriesNames[u]),
-              rel: r + 1,
+              seriesName: p.escapeString(a.globals.seriesNames[u]),
+              rel: o + 1,
               "data:realIndex": u
             });
-            t[r].length > 0 && (this.visibleI = this.visibleI + 1);
+            this.ctx.series.addCollapsedClassToSeries(f, u), t[o].length > 0 && (this.visibleI = this.visibleI + 1);
             var x = 0,
-                m = 0;
+                v = 0;
             this.yRatio.length > 1 && (this.yaxisIndex = u);
-            var v = this.barHelpers.initialPositions();
-            d = v.y, h = v.zeroW, c = v.x, m = v.barWidth, n = v.xDivision, l = v.zeroH;
+            var m = this.barHelpers.initialPositions();
+            d = m.y, h = m.zeroW, c = m.x, v = m.barWidth, n = m.xDivision, l = m.zeroH;
 
-            for (var y = a.group({
+            for (var y = s.group({
               class: "apexcharts-datalabels",
               "data:realIndex": u
-            }), w = a.group({
+            }), w = s.group({
               class: "apexcharts-rangebar-goals-markers",
               style: "pointer-events: none"
-            }), k = 0; k < i.globals.dataPoints; k++) {
-              var A = this.barHelpers.getStrokeWidth(r, k, u),
-                  S = this.seriesRangeStart[r][k],
-                  C = this.seriesRangeEnd[r][k],
+            }), k = 0; k < a.globals.dataPoints; k++) {
+              var A = this.barHelpers.getStrokeWidth(o, k, u),
+                  S = this.seriesRangeStart[o][k],
+                  C = this.seriesRangeEnd[o][k],
                   L = null,
                   P = null,
                   T = {
@@ -57360,29 +60225,29 @@ var Forestry = (function () {
                 elSeries: f
               };
 
-              if (g = v.yDivision, x = v.barHeight, this.isHorizontal) {
+              if (g = m.yDivision, x = m.barHeight, this.isHorizontal) {
                 P = d + x * this.visibleI;
                 var M = this.seriesLen;
-                i.config.plotOptions.bar.rangeBarGroupRows && (M = 1);
-                var z = (g - x * M) / 2;
-                if (void 0 === i.config.series[r].data[k]) break;
+                a.config.plotOptions.bar.rangeBarGroupRows && (M = 1);
+                var I = (g - x * M) / 2;
+                if (void 0 === a.config.series[o].data[k]) break;
 
-                if (this.isTimelineBar && i.config.series[r].data[k].x) {
-                  var I = this.detectOverlappingBars({
-                    i: r,
+                if (a.config.series[o].data[k].x) {
+                  var z = this.detectOverlappingBars({
+                    i: o,
                     j: k,
                     barYPosition: P,
-                    srty: z,
+                    srty: I,
                     barHeight: x,
                     yDivision: g,
-                    initPositions: v
+                    initPositions: m
                   });
-                  x = I.barHeight, P = I.barYPosition;
+                  x = z.barHeight, P = z.barYPosition;
                 }
 
-                m = (L = this.drawRangeBarPaths(o({
+                v = (L = this.drawRangeBarPaths(e({
                   indexes: {
-                    i: r,
+                    i: o,
                     j: k,
                     realIndex: u
                   },
@@ -57393,14 +60258,14 @@ var Forestry = (function () {
                   y1: S,
                   y2: C
                 }, T))).barWidth;
-              } else x = (L = this.drawRangeColumnPaths(o({
+              } else x = (L = this.drawRangeColumnPaths(e({
                 indexes: {
-                  i: r,
+                  i: o,
                   j: k,
                   realIndex: u
                 },
                 zeroH: l,
-                barWidth: m,
+                barWidth: v,
                 xDivision: n
               }, T))).barHeight;
 
@@ -57410,17 +60275,17 @@ var Forestry = (function () {
                 goalX: L.goalX,
                 goalY: L.goalY,
                 barHeight: x,
-                barWidth: m
+                barWidth: v
               });
               X && w.add(X), d = L.y, c = L.x;
-              var E = this.barHelpers.getPathFillColor(t, r, k, u),
-                  Y = i.globals.stroke.colors[u];
+              var E = this.barHelpers.getPathFillColor(t, o, k, u),
+                  Y = a.globals.stroke.colors[u];
               this.renderSeries({
                 realIndex: u,
                 pathFill: E,
                 lineFill: Y,
                 j: k,
-                i: r,
+                i: o,
                 x: c,
                 y: d,
                 y1: S,
@@ -57432,7 +60297,7 @@ var Forestry = (function () {
                 series: t,
                 barHeight: x,
                 barYPosition: P,
-                barWidth: m,
+                barWidth: v,
                 elDataLabelsWrap: y,
                 elGoalsMarkers: w,
                 visibleSeries: this.visibleI,
@@ -57440,10 +60305,10 @@ var Forestry = (function () {
               });
             }
 
-            s.add(f);
+            r.add(f);
           }
 
-          return s;
+          return r;
         }
       }, {
         key: "detectOverlappingBars",
@@ -57460,10 +60325,10 @@ var Forestry = (function () {
               c = l.config.series[e].data[i].rangeName,
               d = l.config.series[e].data[i].x,
               g = l.globals.labels.indexOf(d),
-              u = l.globals.seriesRangeBarTimeline[e].findIndex(function (t) {
+              u = l.globals.seriesRangeBar[e].findIndex(function (t) {
             return t.x === d && t.overlaps.length > 0;
           });
-          return a = l.config.plotOptions.bar.rangeBarGroupRows ? s + o * g : s + r * this.visibleI + o * g, u > -1 && !l.config.plotOptions.bar.rangeBarOverlap && (h = l.globals.seriesRangeBarTimeline[e][u].overlaps).indexOf(c) > -1 && (a = (r = n.barHeight / h.length) * this.visibleI + o * (100 - parseInt(this.barOptions.barHeight, 10)) / 100 / 2 + r * (this.visibleI + h.indexOf(c)) + o * g), {
+          return a = l.config.plotOptions.bar.rangeBarGroupRows ? s + o * g : s + r * this.visibleI + o * g, u > -1 && !l.config.plotOptions.bar.rangeBarOverlap && (h = l.globals.seriesRangeBar[e][u].overlaps).indexOf(c) > -1 && (a = (r = n.barHeight / h.length) * this.visibleI + o * (100 - parseInt(this.barOptions.barHeight, 10)) / 100 / 2 + r * (this.visibleI + h.indexOf(c)) + o * g), {
             barYPosition: a,
             barHeight: r
           };
@@ -57472,8 +60337,9 @@ var Forestry = (function () {
         key: "drawRangeColumnPaths",
         value: function value(t) {
           var e = t.indexes,
-              i = t.x,
-              a = (t.strokeWidth, t.xDivision),
+              i = t.x;
+          t.strokeWidth;
+          var a = t.xDivision,
               s = t.barWidth,
               r = t.zeroH,
               o = this.w,
@@ -57607,11 +60473,11 @@ var Forestry = (function () {
       }]), s;
     }(),
         R = function () {
-      function t(i) {
-        e(this, t), this.opts = i;
+      function t(e) {
+        a(this, t), this.opts = e;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "line",
         value: function value() {
           return {
@@ -58364,14 +61230,14 @@ var Forestry = (function () {
       }]), t;
     }(),
         H = function () {
-      function i(t) {
-        e(this, i), this.opts = t;
+      function t(e) {
+        a(this, t), this.opts = e;
       }
 
-      return a(i, [{
+      return r(t, [{
         key: "init",
-        value: function value(e) {
-          var i = e.responsiveOverride,
+        value: function value(t) {
+          var e = t.responsiveOverride,
               a = this.opts,
               s = new S(),
               r = new R(a);
@@ -58385,9 +61251,9 @@ var Forestry = (function () {
           var o = s.init(),
               n = {};
 
-          if (a && "object" === t(a)) {
+          if (a && "object" === i(a)) {
             var l = {};
-            l = -1 !== ["line", "area", "bar", "candlestick", "boxPlot", "rangeBar", "histogram", "bubble", "scatter", "heatmap", "treemap", "pie", "polarArea", "donut", "radar", "radialBar"].indexOf(a.chart.type) ? r[a.chart.type]() : r.line(), a.chart.brush && a.chart.brush.enabled && (l = r.brush(l)), a.chart.stacked && "100%" === a.chart.stackType && (a = r.stacked100(a)), this.checkForDarkTheme(window.Apex), this.checkForDarkTheme(a), a.xaxis = a.xaxis || window.Apex.xaxis || {}, i || (a.xaxis.convertedCatToNumeric = !1), ((a = this.checkForCatToNumericXAxis(this.chartType, l, a)).chart.sparkline && a.chart.sparkline.enabled || window.Apex.chart && window.Apex.chart.sparkline && window.Apex.chart.sparkline.enabled) && (l = r.sparkline(l)), n = p.extend(o, l);
+            l = -1 !== ["line", "area", "bar", "candlestick", "boxPlot", "rangeBar", "histogram", "bubble", "scatter", "heatmap", "treemap", "pie", "polarArea", "donut", "radar", "radialBar"].indexOf(a.chart.type) ? r[a.chart.type]() : r.line(), a.chart.brush && a.chart.brush.enabled && (l = r.brush(l)), a.chart.stacked && "100%" === a.chart.stackType && (a = r.stacked100(a)), this.checkForDarkTheme(window.Apex), this.checkForDarkTheme(a), a.xaxis = a.xaxis || window.Apex.xaxis || {}, e || (a.xaxis.convertedCatToNumeric = !1), ((a = this.checkForCatToNumericXAxis(this.chartType, l, a)).chart.sparkline && a.chart.sparkline.enabled || window.Apex.chart && window.Apex.chart.sparkline && window.Apex.chart.sparkline.enabled) && (l = r.sparkline(l)), n = p.extend(o, l);
           }
 
           var h = p.extend(n, window.Apex);
@@ -58397,7 +61263,7 @@ var Forestry = (function () {
         key: "checkForCatToNumericXAxis",
         value: function value(t, e, i) {
           var a = new R(i),
-              s = "bar" === t && i.plotOptions && i.plotOptions.bar && i.plotOptions.bar.horizontal,
+              s = ("bar" === t || "boxPlot" === t) && i.plotOptions && i.plotOptions.bar && i.plotOptions.bar.horizontal,
               r = "pie" === t || "polarArea" === t || "donut" === t || "radar" === t || "radialBar" === t || "heatmap" === t,
               o = "datetime" !== i.xaxis.type && "numeric" !== i.xaxis.type,
               n = i.xaxis.tickPlacement ? i.xaxis.tickPlacement : e.xaxis && e.xaxis.tickPlacement;
@@ -58458,19 +61324,19 @@ var Forestry = (function () {
             e.yaxis[0].reversed && (e.yaxis[0].opposite = !0), e.xaxis.tooltip.enabled = !1, e.yaxis[0].tooltip.enabled = !1, e.chart.zoom.enabled = !1;
           }
 
-          return "bar" !== e.chart.type && "rangeBar" !== e.chart.type || e.tooltip.shared && "barWidth" === e.xaxis.crosshairs.width && e.series.length > 1 && (e.xaxis.crosshairs.width = "tickWidth"), "candlestick" !== e.chart.type && "boxPlot" !== e.chart.type || e.yaxis[0].reversed && (console.warn("Reversed y-axis in ".concat(e.chart.type, " chart is not supported.")), e.yaxis[0].reversed = !1), e.chart.group && 0 === e.yaxis[0].labels.minWidth && console.warn("It looks like you have multiple charts in synchronization. You must provide yaxis.labels.minWidth which must be EQUAL for all grouped charts to prevent incorrect behaviour."), Array.isArray(e.stroke.width) && "line" !== e.chart.type && "area" !== e.chart.type && (console.warn("stroke.width option accepts array only for line and area charts. Reverted back to Number"), e.stroke.width = e.stroke.width[0]), e;
+          return "bar" !== e.chart.type && "rangeBar" !== e.chart.type || e.tooltip.shared && "barWidth" === e.xaxis.crosshairs.width && e.series.length > 1 && (e.xaxis.crosshairs.width = "tickWidth"), "candlestick" !== e.chart.type && "boxPlot" !== e.chart.type || e.yaxis[0].reversed && (console.warn("Reversed y-axis in ".concat(e.chart.type, " chart is not supported.")), e.yaxis[0].reversed = !1), Array.isArray(e.stroke.width) && "line" !== e.chart.type && "area" !== e.chart.type && (console.warn("stroke.width option accepts array only for line and area charts. Reverted back to Number"), e.stroke.width = e.stroke.width[0]), e;
         }
-      }]), i;
+      }]), t;
     }(),
         D = function () {
       function t() {
-        e(this, t);
+        a(this, t);
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "initGlobalVars",
         value: function value(t) {
-          t.series = [], t.seriesCandleO = [], t.seriesCandleH = [], t.seriesCandleM = [], t.seriesCandleL = [], t.seriesCandleC = [], t.seriesRangeStart = [], t.seriesRangeEnd = [], t.seriesRangeBarTimeline = [], t.seriesPercent = [], t.seriesGoals = [], t.seriesX = [], t.seriesZ = [], t.seriesNames = [], t.seriesTotals = [], t.seriesLog = [], t.seriesColors = [], t.stackedSeriesTotals = [], t.seriesXvalues = [], t.seriesYvalues = [], t.labels = [], t.categoryLabels = [], t.timescaleLabels = [], t.noLabelsProvided = !1, t.resizeTimer = null, t.selectionResizeTimer = null, t.delayedElements = [], t.pointsArray = [], t.dataLabelsRects = [], t.isXNumeric = !1, t.xaxisLabelsCount = 0, t.skipLastTimelinelabel = !1, t.skipFirstTimelinelabel = !1, t.isDataXYZ = !1, t.isMultiLineX = !1, t.isMultipleYAxis = !1, t.maxY = -Number.MAX_VALUE, t.minY = Number.MIN_VALUE, t.minYArr = [], t.maxYArr = [], t.maxX = -Number.MAX_VALUE, t.minX = Number.MAX_VALUE, t.initialMaxX = -Number.MAX_VALUE, t.initialMinX = Number.MAX_VALUE, t.maxDate = 0, t.minDate = Number.MAX_VALUE, t.minZ = Number.MAX_VALUE, t.maxZ = -Number.MAX_VALUE, t.minXDiff = Number.MAX_VALUE, t.yAxisScale = [], t.xAxisScale = null, t.xAxisTicksPositions = [], t.yLabelsCoords = [], t.yTitleCoords = [], t.barPadForNumericAxis = 0, t.padHorizontal = 0, t.xRange = 0, t.yRange = [], t.zRange = 0, t.dataPoints = 0, t.xTickAmount = 0;
+          t.series = [], t.seriesCandleO = [], t.seriesCandleH = [], t.seriesCandleM = [], t.seriesCandleL = [], t.seriesCandleC = [], t.seriesRangeStart = [], t.seriesRangeEnd = [], t.seriesRangeBar = [], t.seriesPercent = [], t.seriesGoals = [], t.seriesX = [], t.seriesZ = [], t.seriesNames = [], t.seriesTotals = [], t.seriesLog = [], t.seriesColors = [], t.stackedSeriesTotals = [], t.seriesXvalues = [], t.seriesYvalues = [], t.labels = [], t.categoryLabels = [], t.timescaleLabels = [], t.noLabelsProvided = !1, t.resizeTimer = null, t.selectionResizeTimer = null, t.delayedElements = [], t.pointsArray = [], t.dataLabelsRects = [], t.isXNumeric = !1, t.xaxisLabelsCount = 0, t.skipLastTimelinelabel = !1, t.skipFirstTimelinelabel = !1, t.isDataXYZ = !1, t.isMultiLineX = !1, t.isMultipleYAxis = !1, t.maxY = -Number.MAX_VALUE, t.minY = Number.MIN_VALUE, t.minYArr = [], t.maxYArr = [], t.maxX = -Number.MAX_VALUE, t.minX = Number.MAX_VALUE, t.initialMaxX = -Number.MAX_VALUE, t.initialMinX = Number.MAX_VALUE, t.maxDate = 0, t.minDate = Number.MAX_VALUE, t.minZ = Number.MAX_VALUE, t.maxZ = -Number.MAX_VALUE, t.minXDiff = Number.MAX_VALUE, t.yAxisScale = [], t.xAxisScale = null, t.xAxisTicksPositions = [], t.yLabelsCoords = [], t.yTitleCoords = [], t.barPadForNumericAxis = 0, t.padHorizontal = 0, t.xRange = 0, t.yRange = [], t.zRange = 0, t.dataPoints = 0, t.xTickAmount = 0;
         }
       }, {
         key: "globalVars",
@@ -58611,11 +61477,11 @@ var Forestry = (function () {
       }]), t;
     }(),
         N = function () {
-      function t(i) {
-        e(this, t), this.opts = i;
+      function t(e) {
+        a(this, t), this.opts = e;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "init",
         value: function value() {
           var t = new H(this.opts).init({
@@ -58629,11 +61495,11 @@ var Forestry = (function () {
       }]), t;
     }(),
         O = function () {
-      function t(i) {
-        e(this, t), this.ctx = i, this.w = i.w, this.twoDSeries = [], this.threeDSeries = [], this.twoDSeriesX = [], this.seriesGoals = [], this.coreUtils = new y(this.ctx);
+      function t(e) {
+        a(this, t), this.ctx = e, this.w = e.w, this.twoDSeries = [], this.threeDSeries = [], this.twoDSeriesX = [], this.seriesGoals = [], this.coreUtils = new y(this.ctx);
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "isMultiFormat",
         value: function value() {
           return this.isFormatXY() || this.isFormat2DArray();
@@ -58642,14 +61508,14 @@ var Forestry = (function () {
         key: "isFormatXY",
         value: function value() {
           var t = this.w.config.series.slice(),
-              e = new I(this.ctx);
+              e = new z(this.ctx);
           if (this.activeSeriesIndex = e.getActiveConfigSeriesIndex(), void 0 !== t[this.activeSeriesIndex].data && t[this.activeSeriesIndex].data.length > 0 && null !== t[this.activeSeriesIndex].data[0] && void 0 !== t[this.activeSeriesIndex].data[0].x && null !== t[this.activeSeriesIndex].data[0]) return !0;
         }
       }, {
         key: "isFormat2DArray",
         value: function value() {
           var t = this.w.config.series.slice(),
-              e = new I(this.ctx);
+              e = new z(this.ctx);
           if (this.activeSeriesIndex = e.getActiveConfigSeriesIndex(), void 0 !== t[this.activeSeriesIndex].data && t[this.activeSeriesIndex].data.length > 0 && void 0 !== t[this.activeSeriesIndex].data[0] && null !== t[this.activeSeriesIndex].data[0] && t[this.activeSeriesIndex].data[0].constructor === Array) return !0;
         }
       }, {
@@ -58702,10 +61568,9 @@ var Forestry = (function () {
       }, {
         key: "handleRangeData",
         value: function value(t, e) {
-          var i = this.w.config,
-              a = this.w.globals,
-              s = {};
-          return this.isFormat2DArray() ? s = this.handleRangeDataFormat("array", t, e) : this.isFormatXY() && (s = this.handleRangeDataFormat("xy", t, e)), a.seriesRangeStart.push(s.start), a.seriesRangeEnd.push(s.end), "datetime" === i.xaxis.type && a.seriesRangeBarTimeline.push(s.rangeUniques), a.seriesRangeBarTimeline.forEach(function (t, e) {
+          var i = this.w.globals,
+              a = {};
+          return this.isFormat2DArray() ? a = this.handleRangeDataFormat("array", t, e) : this.isFormatXY() && (a = this.handleRangeDataFormat("xy", t, e)), i.seriesRangeStart.push(a.start), i.seriesRangeEnd.push(a.end), i.seriesRangeBar.push(a.rangeUniques), i.seriesRangeBar.forEach(function (t, e) {
             t && t.forEach(function (t, e) {
               t.y.forEach(function (e, i) {
                 for (var a = 0; a < t.y.length; a++) {
@@ -58718,7 +61583,7 @@ var Forestry = (function () {
                 }
               });
             });
-          }), s;
+          }), a;
         }
       }, {
         key: "handleCandleStickBoxData",
@@ -58744,7 +61609,7 @@ var Forestry = (function () {
             };
           }),
               o = "Please provide [Start, End] values in valid format. Read more https://apexcharts.com/docs/series/#rangecharts",
-              n = new I(this.ctx).getActiveConfigSeriesIndex();
+              n = new z(this.ctx).getActiveConfigSeriesIndex();
 
           if ("array" === t) {
             if (2 !== e[n].data[0][1].length) throw new Error(o);
@@ -58815,7 +61680,7 @@ var Forestry = (function () {
               s = this.w.globals,
               r = new Y(i),
               o = a.labels.length > 0 ? a.labels.slice() : a.xaxis.categories.slice();
-          s.isTimelineBar = "rangeBar" === a.chart.type && "datetime" === a.xaxis.type;
+          s.isRangeBar = "rangeBar" === a.chart.type && s.isBarHorizontal;
 
           for (var n = function n() {
             for (var t = 0; t < o.length; t++) {
@@ -58857,7 +61722,7 @@ var Forestry = (function () {
           var e = this.w.config,
               i = this.w.globals;
           if (e.xaxis.categories.length > 0) i.labels = e.xaxis.categories;else if (e.labels.length > 0) i.labels = e.labels.slice();else if (this.fallbackToCategory) {
-            if (i.labels = i.labels[0], i.seriesRangeBarTimeline.length && (i.seriesRangeBarTimeline.map(function (t) {
+            if (i.labels = i.labels[0], i.seriesRangeBar.length && (i.seriesRangeBar.map(function (t) {
               t.forEach(function (t) {
                 i.labels.indexOf(t.x) < 0 && t.x && i.labels.push(t.x);
               });
@@ -58874,12 +61739,22 @@ var Forestry = (function () {
               a = [];
 
           if (e.axisCharts) {
-            if (e.series.length > 0) for (var s = 0; s < e.series[e.maxValsInArrayIndex].length; s++) {
-              a.push(s + 1);
+            if (e.series.length > 0) if (this.isFormatXY()) for (var s = i.series.map(function (t, e) {
+              return t.data.filter(function (t, e, i) {
+                return i.findIndex(function (e) {
+                  return e.x === t.x;
+                }) === e;
+              });
+            }), r = s.reduce(function (t, e, i, a) {
+              return a[t].length > e.length ? t : i;
+            }, 0), o = 0; o < s[r].length; o++) {
+              a.push(o + 1);
+            } else for (var n = 0; n < e.series[e.maxValsInArrayIndex].length; n++) {
+              a.push(n + 1);
             }
             e.seriesX = [];
 
-            for (var r = 0; r < t.length; r++) {
+            for (var l = 0; l < t.length; l++) {
               e.seriesX.push(a);
             }
 
@@ -58891,7 +61766,7 @@ var Forestry = (function () {
               return e + 1;
             });
 
-            for (var o = 0; o < t.length; o++) {
+            for (var h = 0; h < t.length; h++) {
               e.seriesX.push(a);
             }
           }
@@ -58908,7 +61783,7 @@ var Forestry = (function () {
               a = e.globals;
 
           if (this.excludeCollapsedSeriesInYAxis(), this.fallbackToCategory = !1, this.ctx.core.resetGlobals(), this.ctx.core.isMultipleY(), a.axisCharts ? this.parseDataAxisCharts(t) : this.parseDataNonAxisCharts(t), this.coreUtils.getLargestSeries(), "bar" === i.chart.type && i.chart.stacked) {
-            var s = new I(this.ctx);
+            var s = new z(this.ctx);
             a.series = s.setNullSeriesToZeroValues(a.series);
           }
 
@@ -58933,11 +61808,11 @@ var Forestry = (function () {
       }]), t;
     }(),
         W = function () {
-      function t(i) {
-        e(this, t), this.ctx = i, this.w = i.w, this.tooltipKeyFormat = "dd MMM";
+      function t(e) {
+        a(this, t), this.ctx = e, this.w = e.w, this.tooltipKeyFormat = "dd MMM";
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "xLabelFormat",
         value: function value(t, e, i, a) {
           var s = this.w;
@@ -59012,11 +61887,11 @@ var Forestry = (function () {
       }]), t;
     }(),
         B = function () {
-      function t(i) {
-        e(this, t), this.ctx = i, this.w = i.w;
+      function t(e) {
+        a(this, t), this.ctx = e, this.w = e.w;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "getLabel",
         value: function value(t, e, i, a) {
           var s = arguments.length > 4 && void 0 !== arguments[4] ? arguments[4] : [],
@@ -59050,8 +61925,8 @@ var Forestry = (function () {
           var f = new b(this.ctx),
               x = {};
           x = o.globals.rotateXLabels ? f.getTextRects(l, parseInt(r, 10), null, "rotate(".concat(o.config.xaxis.labels.rotate, " 0 0)"), !1) : f.getTextRects(l, parseInt(r, 10));
-          var m = !o.config.xaxis.labels.showDuplicates && this.ctx.timeScale;
-          return !Array.isArray(l) && (0 === l.indexOf("NaN") || 0 === l.toLowerCase().indexOf("invalid") || l.toLowerCase().indexOf("infinity") >= 0 || s.indexOf(l) >= 0 && m) && (l = ""), {
+          var v = !o.config.xaxis.labels.showDuplicates && this.ctx.timeScale;
+          return !Array.isArray(l) && (0 === l.indexOf("NaN") || 0 === l.toLowerCase().indexOf("invalid") || l.toLowerCase().indexOf("infinity") >= 0 || s.indexOf(l) >= 0 && v) && (l = ""), {
             x: i,
             text: l,
             textRect: x,
@@ -59117,11 +61992,11 @@ var Forestry = (function () {
       }]), t;
     }(),
         V = function () {
-      function t(i) {
-        e(this, t), this.ctx = i, this.w = i.w;
+      function t(e) {
+        a(this, t), this.ctx = e, this.w = e.w;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "scaleSvgNode",
         value: function value(t, e) {
           var i = parseFloat(t.getAttributeNS(null, "width")),
@@ -59131,10 +62006,10 @@ var Forestry = (function () {
       }, {
         key: "fixSvgStringForIe11",
         value: function value(t) {
-          if (!p.isIE11()) return t;
+          if (!p.isIE11()) return t.replace(/&nbsp;/g, "&#160;");
           var e = 0,
               i = t.replace(/xmlns="http:\/\/www.w3.org\/2000\/svg"/g, function (t) {
-            return 2 === ++e ? 'xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.com/svgjs"' : t;
+            return 2 === ++e ? 'xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.dev"' : t;
           });
           return i = (i = i.replace(/xmlns:NS\d+=""/g, "")).replace(/NS\d+:(\w+:\w+=")/g, "$1");
         }
@@ -59241,7 +62116,7 @@ var Forestry = (function () {
               o = this.w,
               n = [],
               l = [],
-              h = "data:text/csv;charset=utf-8,\uFEFF",
+              h = "",
               c = new O(this.ctx),
               d = new B(this.ctx),
               g = function g(t) {
@@ -59250,7 +62125,7 @@ var Forestry = (function () {
             if (o.globals.axisCharts) {
               if ("category" === o.config.xaxis.type || o.config.xaxis.convertedCatToNumeric) if (o.globals.isBarHorizontal) {
                 var s = o.globals.yLabelFormatters[0],
-                    r = new I(e.ctx).getActiveConfigSeriesIndex();
+                    r = new z(e.ctx).getActiveConfigSeriesIndex();
                 i = s(o.globals.labels[t], {
                   seriesIndex: r,
                   dataPointIndex: t,
@@ -59284,7 +62159,7 @@ var Forestry = (function () {
               }
               var d;
             }(t, e) : ((n = []).push(o.globals.labels[e].split(a).join("")), n.push(o.globals.series[e]), l.push(n.join(a)));
-          }), h += l.join(r), this.triggerDownload(encodeURI(h), o.config.chart.toolbar.export.csv.filename, ".csv");
+          }), h += l.join(r), this.triggerDownload("data:text/csv; charset=utf-8," + encodeURIComponent("\uFEFF" + h), o.config.chart.toolbar.export.csv.filename, ".csv");
         }
       }, {
         key: "triggerDownload",
@@ -59295,13 +62170,13 @@ var Forestry = (function () {
       }]), t;
     }(),
         G = function () {
-      function t(i) {
-        e(this, t), this.ctx = i, this.w = i.w;
-        var a = this.w;
-        this.axesUtils = new B(i), this.xaxisLabels = a.globals.labels.slice(), a.globals.timescaleLabels.length > 0 && !a.globals.isBarHorizontal && (this.xaxisLabels = a.globals.timescaleLabels.slice()), a.config.xaxis.overwriteCategories && (this.xaxisLabels = a.config.xaxis.overwriteCategories), this.drawnLabels = [], this.drawnLabelsRects = [], "top" === a.config.xaxis.position ? this.offY = 0 : this.offY = a.globals.gridHeight + 1, this.offY = this.offY + a.config.xaxis.axisBorder.offsetY, this.isCategoryBarHorizontal = "bar" === a.config.chart.type && a.config.plotOptions.bar.horizontal, this.xaxisFontSize = a.config.xaxis.labels.style.fontSize, this.xaxisFontFamily = a.config.xaxis.labels.style.fontFamily, this.xaxisForeColors = a.config.xaxis.labels.style.colors, this.xaxisBorderWidth = a.config.xaxis.axisBorder.width, this.isCategoryBarHorizontal && (this.xaxisBorderWidth = a.config.yaxis[0].axisBorder.width.toString()), this.xaxisBorderWidth.indexOf("%") > -1 ? this.xaxisBorderWidth = a.globals.gridWidth * parseInt(this.xaxisBorderWidth, 10) / 100 : this.xaxisBorderWidth = parseInt(this.xaxisBorderWidth, 10), this.xaxisBorderHeight = a.config.xaxis.axisBorder.height, this.yaxis = a.config.yaxis[0];
+      function t(e) {
+        a(this, t), this.ctx = e, this.w = e.w;
+        var i = this.w;
+        this.axesUtils = new B(e), this.xaxisLabels = i.globals.labels.slice(), i.globals.timescaleLabels.length > 0 && !i.globals.isBarHorizontal && (this.xaxisLabels = i.globals.timescaleLabels.slice()), i.config.xaxis.overwriteCategories && (this.xaxisLabels = i.config.xaxis.overwriteCategories), this.drawnLabels = [], this.drawnLabelsRects = [], "top" === i.config.xaxis.position ? this.offY = 0 : this.offY = i.globals.gridHeight + 1, this.offY = this.offY + i.config.xaxis.axisBorder.offsetY, this.isCategoryBarHorizontal = "bar" === i.config.chart.type && i.config.plotOptions.bar.horizontal, this.xaxisFontSize = i.config.xaxis.labels.style.fontSize, this.xaxisFontFamily = i.config.xaxis.labels.style.fontFamily, this.xaxisForeColors = i.config.xaxis.labels.style.colors, this.xaxisBorderWidth = i.config.xaxis.axisBorder.width, this.isCategoryBarHorizontal && (this.xaxisBorderWidth = i.config.yaxis[0].axisBorder.width.toString()), this.xaxisBorderWidth.indexOf("%") > -1 ? this.xaxisBorderWidth = i.globals.gridWidth * parseInt(this.xaxisBorderWidth, 10) / 100 : this.xaxisBorderWidth = parseInt(this.xaxisBorderWidth, 10), this.xaxisBorderHeight = i.config.xaxis.axisBorder.height, this.yaxis = i.config.yaxis[0];
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "drawXaxis",
         value: function value() {
           var t,
@@ -59464,16 +62339,16 @@ var Forestry = (function () {
             f.add(x), n.add(f);
           }
 
-          var m = 0;
-          this.isCategoryBarHorizontal && s.config.yaxis[0].opposite && (m = s.globals.gridWidth);
-          var v = s.config.xaxis.axisBorder;
+          var v = 0;
+          this.isCategoryBarHorizontal && s.config.yaxis[0].opposite && (v = s.globals.gridWidth);
+          var m = s.config.xaxis.axisBorder;
 
-          if (v.show) {
-            var y = r.drawLine(s.globals.padHorizontal + v.offsetX + m, 1 + v.offsetY, s.globals.padHorizontal + v.offsetX + m, s.globals.gridHeight + v.offsetY, v.color, 0);
+          if (m.show) {
+            var y = r.drawLine(s.globals.padHorizontal + m.offsetX + v, 1 + m.offsetY, s.globals.padHorizontal + m.offsetX + v, s.globals.gridHeight + m.offsetY, m.color, 0);
             n.add(y);
           }
 
-          return s.config.yaxis[0].axisTicks.show && this.axesUtils.drawYAxisTicks(m, h.length, s.config.yaxis[0].axisBorder, s.config.yaxis[0].axisTicks, 0, e, n), n;
+          return s.config.yaxis[0].axisTicks.show && this.axesUtils.drawYAxisTicks(v, h.length, s.config.yaxis[0].axisBorder, s.config.yaxis[0].axisTicks, 0, e, n), n;
         }
       }, {
         key: "drawXaxisTicks",
@@ -59545,13 +62420,13 @@ var Forestry = (function () {
       }]), t;
     }(),
         _ = function () {
-      function t(i) {
-        e(this, t), this.ctx = i, this.w = i.w;
-        var a = this.w;
-        this.xaxisLabels = a.globals.labels.slice(), this.axesUtils = new B(i), this.isTimelineBar = "datetime" === a.config.xaxis.type && a.globals.seriesRangeBarTimeline.length, a.globals.timescaleLabels.length > 0 && (this.xaxisLabels = a.globals.timescaleLabels.slice());
+      function t(e) {
+        a(this, t), this.ctx = e, this.w = e.w;
+        var i = this.w;
+        this.xaxisLabels = i.globals.labels.slice(), this.axesUtils = new B(e), this.isRangeBar = i.globals.seriesRangeBar.length, i.globals.timescaleLabels.length > 0 && (this.xaxisLabels = i.globals.timescaleLabels.slice());
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "drawGridArea",
         value: function value() {
           var t = arguments.length > 0 && void 0 !== arguments[0] ? arguments[0] : null,
@@ -59721,16 +62596,16 @@ var Forestry = (function () {
                 h = 0,
                 c = s.globals.gridWidth,
                 d = a + 1;
-            this.isTimelineBar && (d = s.globals.labels.length);
+            this.isRangeBar && (d = s.globals.labels.length);
 
-            for (var g = 0; g < d + (this.isTimelineBar ? 1 : 0); g++) {
+            for (var g = 0; g < d + (this.isRangeBar ? 1 : 0); g++) {
               this._drawGridLine({
                 x1: 0,
                 y1: l,
                 x2: c,
                 y2: h,
                 parent: this.elgridLinesH
-              }), h = l += s.globals.gridHeight / (this.isTimelineBar ? d : a);
+              }), h = l += s.globals.gridHeight / (this.isRangeBar ? d : a);
             }
           }
         }
@@ -59774,7 +62649,7 @@ var Forestry = (function () {
           for (var i, a = t.globals.yAxisScale.length ? t.globals.yAxisScale[0].result.length - 1 : 5, s = 0; s < t.globals.series.length && (void 0 !== t.globals.yAxisScale[s] && (a = t.globals.yAxisScale[s].result.length - 1), !(a > 2)); s++) {
           }
 
-          return !t.globals.isBarHorizontal || this.isTimelineBar ? (i = this.xaxisLabels.length, this.isTimelineBar && (a = t.globals.labels.length, t.config.xaxis.tickAmount && t.config.xaxis.labels.formatter && (i = t.config.xaxis.tickAmount)), this._drawXYLines({
+          return !t.globals.isBarHorizontal || this.isRangeBar ? (i = this.xaxisLabels.length, this.isRangeBar && (a = t.globals.labels.length, t.config.xaxis.tickAmount && t.config.xaxis.labels.formatter && (i = t.config.xaxis.tickAmount)), this._drawXYLines({
             xCount: i,
             tickAmount: a
           })) : (i = a, a = t.globals.xTickAmount, this._drawInvertedXYLines({
@@ -59813,11 +62688,11 @@ var Forestry = (function () {
       }]), t;
     }(),
         j = function () {
-      function t(i) {
-        e(this, t), this.ctx = i, this.w = i.w;
+      function t(e) {
+        a(this, t), this.ctx = e, this.w = e.w;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "niceScale",
         value: function value(t, e) {
           var i = arguments.length > 2 && void 0 !== arguments[2] ? arguments[2] : 10,
@@ -59845,10 +62720,10 @@ var Forestry = (function () {
           var f = u * g,
               x = f * Math.floor(t / f),
               b = f * Math.ceil(e / f),
-              m = x;
+              v = x;
 
           if (s && o > 2) {
-            for (; l.push(m), !((m += f) > b);) {
+            for (; l.push(v), !((v += f) > b);) {
             }
 
             return {
@@ -59858,11 +62733,11 @@ var Forestry = (function () {
             };
           }
 
-          var v = t;
-          (l = []).push(v);
+          var m = t;
+          (l = []).push(m);
 
           for (var y = Math.abs(e - t) / i, w = 0; w <= i; w++) {
-            v += y, l.push(v);
+            m += y, l.push(m);
           }
 
           return l[l.length - 2] >= e && l.pop(), {
@@ -59893,15 +62768,15 @@ var Forestry = (function () {
         }
       }, {
         key: "logarithmicScale",
-        value: function value(t) {
-          for (var e = [], i = Math.ceil(Math.log10(t)) + 1, a = 0; a < i; a++) {
-            e.push(Math.pow(10, a));
+        value: function value(t, e, i) {
+          for (var a = [], s = Math.ceil(Math.log(e) / Math.log(i)) + 1, r = 0; r < s; r++) {
+            a.push(Math.pow(i, r));
           }
 
-          return {
-            result: e,
-            niceMin: e[0],
-            niceMax: e[e.length - 1]
+          return 0 === t && a.unshift(t), {
+            result: a,
+            niceMin: a[0],
+            niceMax: a[a.length - 1]
           };
         }
       }, {
@@ -59924,7 +62799,7 @@ var Forestry = (function () {
               r = a.isBarHorizontal ? s.xaxis : s.yaxis[t];
           void 0 === a.yAxisScale[t] && (a.yAxisScale[t] = []);
           var o = Math.abs(i - e);
-          if (r.logarithmic && o <= 5 && (a.invalidLogScale = !0), r.logarithmic && o > 5) a.allSeriesCollapsed = !1, a.yAxisScale[t] = this.logarithmicScale(i);else if (i !== -Number.MAX_VALUE && p.isNumber(i)) {
+          if (r.logarithmic && o <= 5 && (a.invalidLogScale = !0), r.logarithmic && o > 5) a.allSeriesCollapsed = !1, a.yAxisScale[t] = this.logarithmicScale(e, i, r.logBase);else if (i !== -Number.MAX_VALUE && p.isNumber(i)) {
             if (a.allSeriesCollapsed = !1, void 0 === r.min && void 0 === r.max || r.forceNiceScale) {
               var n = void 0 === s.yaxis[t].max && void 0 === s.yaxis[t].min || s.yaxis[t].forceNiceScale;
               a.yAxisScale[t] = this.niceScale(e, i, r.tickAmount ? r.tickAmount : o < 5 && o > 1 ? o + 1 : 5, t, n);
@@ -60074,11 +62949,11 @@ var Forestry = (function () {
       }]), t;
     }(),
         U = function () {
-      function t(i) {
-        e(this, t), this.ctx = i, this.w = i.w, this.scales = new j(i);
+      function t(e) {
+        a(this, t), this.ctx = e, this.w = e.w, this.scales = new j(e);
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "init",
         value: function value() {
           this.setYRange(), this.setXRange(), this.setZRange();
@@ -60100,17 +62975,19 @@ var Forestry = (function () {
           "candlestick" === s.chart.type ? (h = r.seriesCandleL, c = r.seriesCandleH) : "boxPlot" === s.chart.type ? (h = r.seriesCandleO, c = r.seriesCandleC) : r.isRangeData && (h = r.seriesRangeStart, c = r.seriesRangeEnd);
 
           for (var d = t; d < a; d++) {
-            r.dataPoints = Math.max(r.dataPoints, l[d].length);
+            r.dataPoints = Math.max(r.dataPoints, l[d].length), r.categoryLabels.length && (r.dataPoints = r.categoryLabels.filter(function (t) {
+              return void 0 !== t;
+            }).length);
 
             for (var g = 0; g < r.series[d].length; g++) {
               var u = l[d][g];
-              null !== u && p.isNumber(u) ? (void 0 !== c[d][g] && (o = Math.max(o, c[d][g])), void 0 !== h[d][g] && (e = Math.min(e, h[d][g]), i = Math.max(i, h[d][g])), "candlestick" !== this.w.config.chart.type && "boxPlot" !== this.w.config.chart.type || (void 0 !== r.seriesCandleC[d][g] && (o = Math.max(o, r.seriesCandleO[d][g]), o = Math.max(o, r.seriesCandleH[d][g]), o = Math.max(o, r.seriesCandleL[d][g]), o = Math.max(o, r.seriesCandleC[d][g]), "boxPlot" === this.w.config.chart.type && (o = Math.max(o, r.seriesCandleM[d][g]))), !s.series[d].type || "candlestick" === s.series[d].type && "boxPlot" === s.series[d].type || (o = Math.max(o, r.series[d][g]), e = Math.min(e, r.series[d][g])), i = o), r.seriesGoals[d] && r.seriesGoals[d][g] && Array.isArray(r.seriesGoals[d][g]) && r.seriesGoals[d][g].forEach(function (t) {
+              null !== u && p.isNumber(u) ? (void 0 !== c[d][g] && (o = Math.max(o, c[d][g]), e = Math.min(e, c[d][g])), void 0 !== h[d][g] && (e = Math.min(e, h[d][g]), i = Math.max(i, h[d][g])), "candlestick" !== this.w.config.chart.type && "boxPlot" !== this.w.config.chart.type || (void 0 !== r.seriesCandleC[d][g] && (o = Math.max(o, r.seriesCandleO[d][g]), o = Math.max(o, r.seriesCandleH[d][g]), o = Math.max(o, r.seriesCandleL[d][g]), o = Math.max(o, r.seriesCandleC[d][g]), "boxPlot" === this.w.config.chart.type && (o = Math.max(o, r.seriesCandleM[d][g]))), !s.series[d].type || "candlestick" === s.series[d].type && "boxPlot" === s.series[d].type || (o = Math.max(o, r.series[d][g]), e = Math.min(e, r.series[d][g])), i = o), r.seriesGoals[d] && r.seriesGoals[d][g] && Array.isArray(r.seriesGoals[d][g]) && r.seriesGoals[d][g].forEach(function (t) {
                 n !== Number.MIN_VALUE && (n = Math.min(n, t.value), e = n), o = Math.max(o, t.value), i = o;
               }), p.isFloat(u) && (u = p.noExponents(u), r.yValueDecimal = Math.max(r.yValueDecimal, u.toString().split(".")[1].length)), n > h[d][g] && h[d][g] < 0 && (n = h[d][g])) : r.hasNullValues = !0;
             }
           }
 
-          return "rangeBar" === s.chart.type && r.seriesRangeStart.length && r.isBarHorizontal && "datetime" === s.xaxis.type && (n = e), "bar" === s.chart.type && (n < 0 && o < 0 && (o = 0), n === Number.MIN_VALUE && (n = 0)), {
+          return "rangeBar" === s.chart.type && r.seriesRangeStart.length && r.isBarHorizontal && (n = e), "bar" === s.chart.type && (n < 0 && o < 0 && (o = 0), n === Number.MIN_VALUE && (n = 0)), {
             minY: n,
             maxY: o,
             lowestY: e,
@@ -60210,9 +63087,9 @@ var Forestry = (function () {
 
             if ("datetime" === e.xaxis.type) {
               var a = i.getDate(t.minX);
-              a.setUTCDate(a.getDate() - 2), t.minX = new Date(a).getTime();
+              e.xaxis.labels.datetimeUTC ? a.setUTCDate(a.getUTCDate() - 2) : a.setDate(a.getDate() - 2), t.minX = new Date(a).getTime();
               var s = i.getDate(t.maxX);
-              s.setUTCDate(s.getDate() + 2), t.maxX = new Date(s).getTime();
+              e.xaxis.labels.datetimeUTC ? s.setUTCDate(s.getUTCDate() + 2) : s.setDate(s.getDate() + 2), t.maxX = new Date(s).getTime();
             } else ("numeric" === e.xaxis.type || "category" === e.xaxis.type && !t.noLabelsProvided) && (t.minX = t.minX - 2, t.initialMinX = t.minX, t.maxX = t.maxX + 2, t.initialMaxX = t.maxX);
           }
         }
@@ -60230,7 +63107,7 @@ var Forestry = (function () {
                 var s = e - a[i - 1];
                 s > 0 && (t.minXDiff = Math.min(s, t.minXDiff));
               }
-            }), 1 === t.dataPoints && t.minXDiff === Number.MAX_VALUE && (t.minXDiff = .5);
+            }), 1 !== t.dataPoints && t.minXDiff !== Number.MAX_VALUE || (t.minXDiff = .5);
           });
         }
       }, {
@@ -60252,13 +63129,13 @@ var Forestry = (function () {
       }]), t;
     }(),
         q = function () {
-      function t(i) {
-        e(this, t), this.ctx = i, this.w = i.w;
-        var a = this.w;
-        this.xaxisFontSize = a.config.xaxis.labels.style.fontSize, this.axisFontFamily = a.config.xaxis.labels.style.fontFamily, this.xaxisForeColors = a.config.xaxis.labels.style.colors, this.isCategoryBarHorizontal = "bar" === a.config.chart.type && a.config.plotOptions.bar.horizontal, this.xAxisoffX = 0, "bottom" === a.config.xaxis.position && (this.xAxisoffX = a.globals.gridHeight), this.drawnLabels = [], this.axesUtils = new B(i);
+      function t(e) {
+        a(this, t), this.ctx = e, this.w = e.w;
+        var i = this.w;
+        this.xaxisFontSize = i.config.xaxis.labels.style.fontSize, this.axisFontFamily = i.config.xaxis.labels.style.fontFamily, this.xaxisForeColors = i.config.xaxis.labels.style.colors, this.isCategoryBarHorizontal = "bar" === i.config.chart.type && i.config.plotOptions.bar.horizontal, this.xAxisoffX = 0, "bottom" === i.config.xaxis.position && (this.xAxisoffX = i.globals.gridHeight), this.drawnLabels = [], this.axesUtils = new B(e);
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "drawYaxis",
         value: function value(t) {
           var e = this,
@@ -60290,8 +63167,8 @@ var Forestry = (function () {
             x = u(x, l, i);
             var b = i.config.yaxis[t].labels.padding;
             i.config.yaxis[t].opposite && 0 !== i.config.yaxis.length && (b *= -1);
-            var m = e.axesUtils.getYAxisForeColor(s.colors, t),
-                v = a.drawText({
+            var v = e.axesUtils.getYAxisForeColor(s.colors, t),
+                m = a.drawText({
               x: b,
               y: g + c / 10 + i.config.yaxis[t].labels.offsetY + 1,
               text: x,
@@ -60299,26 +63176,26 @@ var Forestry = (function () {
               fontSize: r,
               fontFamily: o,
               fontWeight: n,
-              foreColor: Array.isArray(m) ? m[l] : m,
+              foreColor: Array.isArray(v) ? v[l] : v,
               isPlainText: !1,
               cssClass: "apexcharts-yaxis-label " + s.cssClass
             });
-            l === c && (f = v), h.add(v);
+            l === c && (f = m), h.add(m);
             var y = document.createElementNS(i.globals.SVGNS, "title");
 
-            if (y.textContent = Array.isArray(x) ? x.join(" ") : x, v.node.appendChild(y), 0 !== i.config.yaxis[t].labels.rotate) {
+            if (y.textContent = Array.isArray(x) ? x.join(" ") : x, m.node.appendChild(y), 0 !== i.config.yaxis[t].labels.rotate) {
               var w = a.rotateAroundCenter(f.node),
-                  k = a.rotateAroundCenter(v.node);
-              v.node.setAttribute("transform", "rotate(".concat(i.config.yaxis[t].labels.rotate, " ").concat(w.x, " ").concat(k.y, ")"));
+                  k = a.rotateAroundCenter(m.node);
+              m.node.setAttribute("transform", "rotate(".concat(i.config.yaxis[t].labels.rotate, " ").concat(w.x, " ").concat(k.y, ")"));
             }
 
             g += d;
-          }, m = c; m >= 0; m--) {
-            x(m);
+          }, v = c; v >= 0; v--) {
+            x(v);
           }
 
           if (void 0 !== i.config.yaxis[t].title.text) {
-            var v = a.group({
+            var m = a.group({
               class: "apexcharts-yaxis-title"
             }),
                 y = 0;
@@ -60334,7 +63211,7 @@ var Forestry = (function () {
               fontFamily: i.config.yaxis[t].title.style.fontFamily,
               cssClass: "apexcharts-yaxis-title-text " + i.config.yaxis[t].title.style.cssClass
             });
-            v.add(w), l.add(v);
+            m.add(w), l.add(m);
           }
 
           var k = i.config.yaxis[t].axisBorder,
@@ -60391,8 +63268,8 @@ var Forestry = (function () {
               cssClass: "apexcharts-xaxis-label " + e.config.xaxis.labels.style.cssClass
             });
             s.add(x), x.tspan(u);
-            var m = document.createElementNS(e.globals.SVGNS, "title");
-            m.textContent = u, x.node.appendChild(m), n += o;
+            var v = document.createElementNS(e.globals.SVGNS, "title");
+            v.textContent = u, x.node.appendChild(v), n += o;
           }
           return this.inversedYAxisTitleText(a), this.inversedYAxisBorder(a), a;
         }
@@ -60516,11 +63393,11 @@ var Forestry = (function () {
       }]), t;
     }(),
         Z = function () {
-      function t(i) {
-        e(this, t), this.ctx = i, this.w = i.w, this.documentEvent = p.bind(this.documentEvent, this);
+      function t(e) {
+        a(this, t), this.ctx = e, this.w = e.w, this.documentEvent = p.bind(this.documentEvent, this);
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "addEventListener",
         value: function value(t, e) {
           var i = this.w;
@@ -60589,11 +63466,11 @@ var Forestry = (function () {
       }]), t;
     }(),
         $ = function () {
-      function t(i) {
-        e(this, t), this.ctx = i, this.w = i.w;
+      function t(e) {
+        a(this, t), this.ctx = e, this.w = e.w;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "setCurrentLocaleValues",
         value: function value(t) {
           var e = this.w.config.chart.locales;
@@ -60608,11 +63485,11 @@ var Forestry = (function () {
       }]), t;
     }(),
         J = function () {
-      function t(i) {
-        e(this, t), this.ctx = i, this.w = i.w;
+      function t(e) {
+        a(this, t), this.ctx = e, this.w = e.w;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "drawAxis",
         value: function value(t, e) {
           var i,
@@ -60628,11 +63505,11 @@ var Forestry = (function () {
       }]), t;
     }(),
         Q = function () {
-      function t(i) {
-        e(this, t), this.ctx = i, this.w = i.w;
+      function t(e) {
+        a(this, t), this.ctx = e, this.w = e.w;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "drawXCrosshairs",
         value: function value() {
           var t = this.w,
@@ -60650,8 +63527,8 @@ var Forestry = (function () {
               g = s.left,
               u = s.top,
               f = s.blur,
-              m = s.color,
-              v = s.opacity,
+              v = s.color,
+              m = s.opacity,
               y = t.config.xaxis.crosshairs.fill.color;
 
           if (t.config.xaxis.crosshairs.show) {
@@ -60678,8 +63555,8 @@ var Forestry = (function () {
               left: g,
               top: u,
               blur: f,
-              color: m,
-              opacity: v
+              color: v,
+              opacity: m
             })), t.globals.dom.elGraphical.add(w);
           }
         }
@@ -60706,11 +63583,11 @@ var Forestry = (function () {
       }]), t;
     }(),
         K = function () {
-      function t(i) {
-        e(this, t), this.ctx = i, this.w = i.w;
+      function t(e) {
+        a(this, t), this.ctx = e, this.w = e.w;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "checkResponsiveConfig",
         value: function value(t) {
           var e = this,
@@ -60754,13 +63631,13 @@ var Forestry = (function () {
       }]), t;
     }(),
         tt = function () {
-      function t(i) {
-        e(this, t), this.ctx = i, this.colors = [], this.w = i.w;
-        var a = this.w;
-        this.isColorFn = !1, this.isHeatmapDistributed = "treemap" === a.config.chart.type && a.config.plotOptions.treemap.distributed || "heatmap" === a.config.chart.type && a.config.plotOptions.heatmap.distributed, this.isBarDistributed = a.config.plotOptions.bar.distributed && ("bar" === a.config.chart.type || "rangeBar" === a.config.chart.type);
+      function t(e) {
+        a(this, t), this.ctx = e, this.colors = [], this.w = e.w;
+        var i = this.w;
+        this.isColorFn = !1, this.isHeatmapDistributed = "treemap" === i.config.chart.type && i.config.plotOptions.treemap.distributed || "heatmap" === i.config.chart.type && i.config.plotOptions.heatmap.distributed, this.isBarDistributed = i.config.plotOptions.bar.distributed && ("bar" === i.config.chart.type || "rangeBar" === i.config.chart.type);
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "init",
         value: function value() {
           this.setDefaultColors();
@@ -60873,11 +63750,11 @@ var Forestry = (function () {
       }]), t;
     }(),
         et = function () {
-      function t(i) {
-        e(this, t), this.ctx = i, this.w = i.w;
+      function t(e) {
+        a(this, t), this.ctx = e, this.w = e.w;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "draw",
         value: function value() {
           this.drawTitleSubtitle("title"), this.drawTitleSubtitle("subtitle");
@@ -60909,11 +63786,11 @@ var Forestry = (function () {
       }]), t;
     }(),
         it = function () {
-      function t(i) {
-        e(this, t), this.w = i.w, this.dCtx = i;
+      function t(e) {
+        a(this, t), this.w = e.w, this.dCtx = e;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "getTitleSubtitleCoords",
         value: function value(t) {
           var e = this.w,
@@ -60969,11 +63846,11 @@ var Forestry = (function () {
       }]), t;
     }(),
         at = function () {
-      function t(i) {
-        e(this, t), this.w = i.w, this.dCtx = i;
+      function t(e) {
+        a(this, t), this.w = e.w, this.dCtx = e;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "getxAxisLabelsCoords",
         value: function value() {
           var t,
@@ -61086,7 +63963,7 @@ var Forestry = (function () {
                     h = n.position - o / 1.75 + e.dCtx.yAxisWidthLeft,
                     c = "right" === i.config.legend.position && e.dCtx.lgRect.width > 0 ? e.dCtx.lgRect.width : 0;
                 l > a.svgWidth - a.translateX - c && (a.skipLastTimelinelabel = !0), h < -(t.show && !t.floating || "bar" !== s.chart.type && "candlestick" !== s.chart.type && "rangeBar" !== s.chart.type && "boxPlot" !== s.chart.type ? 10 : o / 1.75) && (a.skipFirstTimelinelabel = !0);
-              } else "datetime" === r ? e.dCtx.gridPad.right < o && !a.rotateXLabels && (a.skipLastTimelinelabel = !0) : "datetime" !== r && e.dCtx.gridPad.right < o / 2 - e.dCtx.yAxisWidthRight && !a.rotateXLabels && ("between" !== i.config.xaxis.tickPlacement || i.globals.isBarHorizontal) && (e.dCtx.xPadRight = o / 2 + 1);
+              } else "datetime" === r ? e.dCtx.gridPad.right < o && !a.rotateXLabels && (a.skipLastTimelinelabel = !0) : "datetime" !== r && e.dCtx.gridPad.right < o / 2 - e.dCtx.yAxisWidthRight && !a.rotateXLabels && !i.config.xaxis.labels.trim && ("between" !== i.config.xaxis.tickPlacement || i.globals.isBarHorizontal) && (e.dCtx.xPadRight = o / 2 + 1);
             }(t);
           };
 
@@ -61097,11 +63974,11 @@ var Forestry = (function () {
       }]), t;
     }(),
         st = function () {
-      function t(i) {
-        e(this, t), this.w = i.w, this.dCtx = i;
+      function t(e) {
+        a(this, t), this.w = e.w, this.dCtx = e;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "getyAxisLabelsCoords",
         value: function value() {
           var t = this,
@@ -61135,12 +64012,12 @@ var Forestry = (function () {
               }
 
               var x = new b(t.dCtx.ctx),
-                  m = "rotate(".concat(r.labels.rotate, " 0 0)"),
-                  v = x.getTextRects(g, r.labels.style.fontSize, r.labels.style.fontFamily, m, !1),
-                  y = v;
-              g !== u && (y = x.getTextRects(u, r.labels.style.fontSize, r.labels.style.fontFamily, m, !1)), i.push({
-                width: (l > y.width || l > v.width ? l : y.width > v.width ? y.width : v.width) + a,
-                height: y.height > v.height ? y.height : v.height
+                  v = "rotate(".concat(r.labels.rotate, " 0 0)"),
+                  m = x.getTextRects(g, r.labels.style.fontSize, r.labels.style.fontFamily, v, !1),
+                  y = m;
+              g !== u && (y = x.getTextRects(u, r.labels.style.fontSize, r.labels.style.fontFamily, v, !1)), i.push({
+                width: (l > y.width || l > m.width ? l : y.width > m.width ? y.width : m.width) + a,
+                height: y.height > m.height ? y.height : m.height
               });
             } else i.push({
               width: 0,
@@ -61195,11 +64072,11 @@ var Forestry = (function () {
       }]), t;
     }(),
         rt = function () {
-      function t(i) {
-        e(this, t), this.w = i.w, this.dCtx = i;
+      function t(e) {
+        a(this, t), this.w = e.w, this.dCtx = e;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "gridPadForColumnsInNumericAxis",
         value: function value(t) {
           var e = this.w;
@@ -61249,11 +64126,11 @@ var Forestry = (function () {
       }]), t;
     }(),
         ot = function () {
-      function t(i) {
-        e(this, t), this.ctx = i, this.w = i.w, this.lgRect = {}, this.yAxisWidth = 0, this.yAxisWidthLeft = 0, this.yAxisWidthRight = 0, this.xAxisHeight = 0, this.isSparkline = this.w.config.chart.sparkline.enabled, this.dimHelpers = new it(this), this.dimYAxis = new st(this), this.dimXAxis = new at(this), this.dimGrid = new rt(this), this.lgWidthForSideLegends = 0, this.gridPad = this.w.config.grid.padding, this.xPadRight = 0, this.xPadLeft = 0;
+      function t(e) {
+        a(this, t), this.ctx = e, this.w = e.w, this.lgRect = {}, this.yAxisWidth = 0, this.yAxisWidthLeft = 0, this.yAxisWidthRight = 0, this.xAxisHeight = 0, this.isSparkline = this.w.config.chart.sparkline.enabled, this.dimHelpers = new it(this), this.dimYAxis = new st(this), this.dimXAxis = new at(this), this.dimGrid = new rt(this), this.lgWidthForSideLegends = 0, this.gridPad = this.w.config.grid.padding, this.xPadRight = 0, this.xPadLeft = 0;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "plotCoords",
         value: function value() {
           var t = this.w.globals;
@@ -61354,27 +64231,31 @@ var Forestry = (function () {
       }, {
         key: "conditionalChecksForAxisCoords",
         value: function value(t, e) {
-          var i = this.w;
-          this.xAxisHeight = (t.height + e.height) * (i.globals.isMultiLineX ? 1.2 : i.globals.LINE_HEIGHT_RATIO) + (i.globals.rotateXLabels ? 22 : 10), this.xAxisWidth = t.width, this.xAxisHeight - e.height > i.config.xaxis.labels.maxHeight && (this.xAxisHeight = i.config.xaxis.labels.maxHeight), i.config.xaxis.labels.minHeight && this.xAxisHeight < i.config.xaxis.labels.minHeight && (this.xAxisHeight = i.config.xaxis.labels.minHeight), i.config.xaxis.floating && (this.xAxisHeight = 0);
-          var a = 0,
-              s = 0;
+          var i = this.w,
+              a = t.height + e.height,
+              s = i.globals.isMultiLineX ? 1.2 : i.globals.LINE_HEIGHT_RATIO,
+              r = i.globals.rotateXLabels ? 22 : 10,
+              o = i.globals.rotateXLabels && "bottom" === i.config.legend.position ? 10 : 0;
+          this.xAxisHeight = a * s + r + o, this.xAxisWidth = t.width, this.xAxisHeight - e.height > i.config.xaxis.labels.maxHeight && (this.xAxisHeight = i.config.xaxis.labels.maxHeight), i.config.xaxis.labels.minHeight && this.xAxisHeight < i.config.xaxis.labels.minHeight && (this.xAxisHeight = i.config.xaxis.labels.minHeight), i.config.xaxis.floating && (this.xAxisHeight = 0);
+          var n = 0,
+              l = 0;
           i.config.yaxis.forEach(function (t) {
-            a += t.labels.minWidth, s += t.labels.maxWidth;
-          }), this.yAxisWidth < a && (this.yAxisWidth = a), this.yAxisWidth > s && (this.yAxisWidth = s);
+            n += t.labels.minWidth, l += t.labels.maxWidth;
+          }), this.yAxisWidth < n && (this.yAxisWidth = n), this.yAxisWidth > l && (this.yAxisWidth = l);
         }
       }]), t;
     }(),
         nt = function () {
-      function t(i) {
-        e(this, t), this.w = i.w, this.lgCtx = i;
+      function t(e) {
+        a(this, t), this.w = e.w, this.lgCtx = e;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "getLegendStyles",
         value: function value() {
           var t = document.createElement("style");
           t.setAttribute("type", "text/css");
-          var e = document.createTextNode("\t\n    \t\n      .apexcharts-legend {\t\n        display: flex;\t\n        overflow: auto;\t\n        padding: 0 10px;\t\n      }\t\n      .apexcharts-legend.position-bottom, .apexcharts-legend.position-top {\t\n        flex-wrap: wrap\t\n      }\t\n      .apexcharts-legend.position-right, .apexcharts-legend.position-left {\t\n        flex-direction: column;\t\n        bottom: 0;\t\n      }\t\n      .apexcharts-legend.position-bottom.apexcharts-align-left, .apexcharts-legend.position-top.apexcharts-align-left, .apexcharts-legend.position-right, .apexcharts-legend.position-left {\t\n        justify-content: flex-start;\t\n      }\t\n      .apexcharts-legend.position-bottom.apexcharts-align-center, .apexcharts-legend.position-top.apexcharts-align-center {\t\n        justify-content: center;  \t\n      }\t\n      .apexcharts-legend.position-bottom.apexcharts-align-right, .apexcharts-legend.position-top.apexcharts-align-right {\t\n        justify-content: flex-end;\t\n      }\t\n      .apexcharts-legend-series {\t\n        cursor: pointer;\t\n        line-height: normal;\t\n      }\t\n      .apexcharts-legend.position-bottom .apexcharts-legend-series, .apexcharts-legend.position-top .apexcharts-legend-series{\t\n        display: flex;\t\n        align-items: center;\t\n      }\t\n      .apexcharts-legend-text {\t\n        position: relative;\t\n        font-size: 14px;\t\n      }\t\n      .apexcharts-legend-text *, .apexcharts-legend-marker * {\t\n        pointer-events: none;\t\n      }\t\n      .apexcharts-legend-marker {\t\n        position: relative;\t\n        display: inline-block;\t\n        cursor: pointer;\t\n        margin-right: 3px;\t\n        border-style: solid;\n      }\t\n      \t\n      .apexcharts-legend.apexcharts-align-right .apexcharts-legend-series, .apexcharts-legend.apexcharts-align-left .apexcharts-legend-series{\t\n        display: inline-block;\t\n      }\t\n      .apexcharts-legend-series.apexcharts-no-click {\t\n        cursor: auto;\t\n      }\t\n      .apexcharts-legend .apexcharts-hidden-zero-series, .apexcharts-legend .apexcharts-hidden-null-series {\t\n        display: none !important;\t\n      }\t\n      .apexcharts-inactive-legend {\t\n        opacity: 0.45;\t\n      }");
+          var e = document.createTextNode("\t\n    \t\n      .apexcharts-legend {\t\n        display: flex;\t\n        overflow: auto;\t\n        padding: 0 10px;\t\n      }\t\n      .apexcharts-legend.apx-legend-position-bottom, .apexcharts-legend.apx-legend-position-top {\t\n        flex-wrap: wrap\t\n      }\t\n      .apexcharts-legend.apx-legend-position-right, .apexcharts-legend.apx-legend-position-left {\t\n        flex-direction: column;\t\n        bottom: 0;\t\n      }\t\n      .apexcharts-legend.apx-legend-position-bottom.apexcharts-align-left, .apexcharts-legend.apx-legend-position-top.apexcharts-align-left, .apexcharts-legend.apx-legend-position-right, .apexcharts-legend.apx-legend-position-left {\t\n        justify-content: flex-start;\t\n      }\t\n      .apexcharts-legend.apx-legend-position-bottom.apexcharts-align-center, .apexcharts-legend.apx-legend-position-top.apexcharts-align-center {\t\n        justify-content: center;  \t\n      }\t\n      .apexcharts-legend.apx-legend-position-bottom.apexcharts-align-right, .apexcharts-legend.apx-legend-position-top.apexcharts-align-right {\t\n        justify-content: flex-end;\t\n      }\t\n      .apexcharts-legend-series {\t\n        cursor: pointer;\t\n        line-height: normal;\t\n      }\t\n      .apexcharts-legend.apx-legend-position-bottom .apexcharts-legend-series, .apexcharts-legend.apx-legend-position-top .apexcharts-legend-series{\t\n        display: flex;\t\n        align-items: center;\t\n      }\t\n      .apexcharts-legend-text {\t\n        position: relative;\t\n        font-size: 14px;\t\n      }\t\n      .apexcharts-legend-text *, .apexcharts-legend-marker * {\t\n        pointer-events: none;\t\n      }\t\n      .apexcharts-legend-marker {\t\n        position: relative;\t\n        display: inline-block;\t\n        cursor: pointer;\t\n        margin-right: 3px;\t\n        border-style: solid;\n      }\t\n      \t\n      .apexcharts-legend.apexcharts-align-right .apexcharts-legend-series, .apexcharts-legend.apexcharts-align-left .apexcharts-legend-series{\t\n        display: inline-block;\t\n      }\t\n      .apexcharts-legend-series.apexcharts-no-click {\t\n        cursor: auto;\t\n      }\t\n      .apexcharts-legend .apexcharts-hidden-zero-series, .apexcharts-legend .apexcharts-hidden-null-series {\t\n        display: none !important;\t\n      }\t\n      .apexcharts-inactive-legend {\t\n        opacity: 0.45;\t\n      }");
           return t.appendChild(e), t;
         }
       }, {
@@ -61491,11 +64372,11 @@ var Forestry = (function () {
       }]), t;
     }(),
         lt = function () {
-      function t(i, a) {
-        e(this, t), this.ctx = i, this.w = i.w, this.onLegendClick = this.onLegendClick.bind(this), this.onLegendHovered = this.onLegendHovered.bind(this), this.isBarsDistributed = "bar" === this.w.config.chart.type && this.w.config.plotOptions.bar.distributed && 1 === this.w.config.series.length, this.legendHelpers = new nt(this);
+      function t(e, i) {
+        a(this, t), this.ctx = e, this.w = e.w, this.onLegendClick = this.onLegendClick.bind(this), this.onLegendHovered = this.onLegendHovered.bind(this), this.isBarsDistributed = "bar" === this.w.config.chart.type && this.w.config.plotOptions.bar.distributed && 1 === this.w.config.series.length, this.legendHelpers = new nt(this);
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "init",
         value: function value() {
           var t = this.w,
@@ -61546,20 +64427,20 @@ var Forestry = (function () {
             var f = document.createElement("span");
             f.classList.add("apexcharts-legend-marker");
             var x = e.config.legend.markers.offsetX,
-                m = e.config.legend.markers.offsetY,
-                v = e.config.legend.markers.height,
+                v = e.config.legend.markers.offsetY,
+                m = e.config.legend.markers.height,
                 w = e.config.legend.markers.width,
                 k = e.config.legend.markers.strokeWidth,
                 A = e.config.legend.markers.strokeColor,
                 S = e.config.legend.markers.radius,
                 C = f.style;
-            C.background = s[l], C.color = s[l], C.setProperty("background", s[l], "important"), e.config.legend.markers.fillColors && e.config.legend.markers.fillColors[l] && (C.background = e.config.legend.markers.fillColors[l]), void 0 !== e.globals.seriesColors[l] && (C.background = e.globals.seriesColors[l], C.color = e.globals.seriesColors[l]), C.height = Array.isArray(v) ? parseFloat(v[l]) + "px" : parseFloat(v) + "px", C.width = Array.isArray(w) ? parseFloat(w[l]) + "px" : parseFloat(w) + "px", C.left = (Array.isArray(x) ? parseFloat(x[l]) : parseFloat(x)) + "px", C.top = (Array.isArray(m) ? parseFloat(m[l]) : parseFloat(m)) + "px", C.borderWidth = Array.isArray(k) ? k[l] : k, C.borderColor = Array.isArray(A) ? A[l] : A, C.borderRadius = Array.isArray(S) ? parseFloat(S[l]) + "px" : parseFloat(S) + "px", e.config.legend.markers.customHTML && (Array.isArray(e.config.legend.markers.customHTML) ? e.config.legend.markers.customHTML[l] && (f.innerHTML = e.config.legend.markers.customHTML[l]()) : f.innerHTML = e.config.legend.markers.customHTML()), b.setAttrs(f, {
+            C.background = s[l], C.color = s[l], C.setProperty("background", s[l], "important"), e.config.legend.markers.fillColors && e.config.legend.markers.fillColors[l] && (C.background = e.config.legend.markers.fillColors[l]), void 0 !== e.globals.seriesColors[l] && (C.background = e.globals.seriesColors[l], C.color = e.globals.seriesColors[l]), C.height = Array.isArray(m) ? parseFloat(m[l]) + "px" : parseFloat(m) + "px", C.width = Array.isArray(w) ? parseFloat(w[l]) + "px" : parseFloat(w) + "px", C.left = (Array.isArray(x) ? parseFloat(x[l]) : parseFloat(x)) + "px", C.top = (Array.isArray(v) ? parseFloat(v[l]) : parseFloat(v)) + "px", C.borderWidth = Array.isArray(k) ? k[l] : k, C.borderColor = Array.isArray(A) ? A[l] : A, C.borderRadius = Array.isArray(S) ? parseFloat(S[l]) + "px" : parseFloat(S) + "px", e.config.legend.markers.customHTML && (Array.isArray(e.config.legend.markers.customHTML) ? e.config.legend.markers.customHTML[l] && (f.innerHTML = e.config.legend.markers.customHTML[l]()) : f.innerHTML = e.config.legend.markers.customHTML()), b.setAttrs(f, {
               rel: l + 1,
               "data:collapsed": c || d
             }), (c || d) && f.classList.add("apexcharts-inactive-legend");
             var L = document.createElement("div"),
                 P = document.createElement("span");
-            P.classList.add("apexcharts-legend-text"), P.innerHTML = Array.isArray(h) ? p.sanitizeDom(h.join(" ")) : p.sanitizeDom(h);
+            P.classList.add("apexcharts-legend-text"), P.innerHTML = Array.isArray(h) ? h.join(" ") : h;
             var T = e.config.legend.labels.useSeriesColors ? e.globals.colors[l] : e.config.legend.labels.colors;
             T || (T = e.config.chart.foreColor), P.style.color = T, P.style.fontSize = parseFloat(e.config.legend.fontSize) + "px", P.style.fontWeight = e.config.legend.fontWeight, P.style.fontFamily = i || e.config.chart.fontFamily, b.setAttrs(P, {
               rel: l + 1,
@@ -61569,7 +64450,7 @@ var Forestry = (function () {
             }), L.appendChild(f), L.appendChild(P);
             var M = new y(this.ctx);
             if (!e.config.legend.showForZeroSeries) 0 === M.getSeriesTotalByIndex(l) && M.seriesHaveSameValues(l) && !M.isSeriesNull(l) && -1 === e.globals.collapsedSeriesIndices.indexOf(l) && -1 === e.globals.ancillaryCollapsedSeriesIndices.indexOf(l) && L.classList.add("apexcharts-hidden-zero-series");
-            e.config.legend.showForNullSeries || M.isSeriesNull(l) && -1 === e.globals.collapsedSeriesIndices.indexOf(l) && -1 === e.globals.ancillaryCollapsedSeriesIndices.indexOf(l) && L.classList.add("apexcharts-hidden-null-series"), e.globals.dom.elLegendWrap.appendChild(L), e.globals.dom.elLegendWrap.classList.add("apexcharts-align-".concat(e.config.legend.horizontalAlign)), e.globals.dom.elLegendWrap.classList.add("position-" + e.config.legend.position), L.classList.add("apexcharts-legend-series"), L.style.margin = "".concat(e.config.legend.itemMargin.vertical, "px ").concat(e.config.legend.itemMargin.horizontal, "px"), e.globals.dom.elLegendWrap.style.width = e.config.legend.width ? e.config.legend.width + "px" : "", e.globals.dom.elLegendWrap.style.height = e.config.legend.height ? e.config.legend.height + "px" : "", b.setAttrs(L, {
+            e.config.legend.showForNullSeries || M.isSeriesNull(l) && -1 === e.globals.collapsedSeriesIndices.indexOf(l) && -1 === e.globals.ancillaryCollapsedSeriesIndices.indexOf(l) && L.classList.add("apexcharts-hidden-null-series"), e.globals.dom.elLegendWrap.appendChild(L), e.globals.dom.elLegendWrap.classList.add("apexcharts-align-".concat(e.config.legend.horizontalAlign)), e.globals.dom.elLegendWrap.classList.add("apx-legend-position-" + e.config.legend.position), L.classList.add("apexcharts-legend-series"), L.style.margin = "".concat(e.config.legend.itemMargin.vertical, "px ").concat(e.config.legend.itemMargin.horizontal, "px"), e.globals.dom.elLegendWrap.style.width = e.config.legend.width ? e.config.legend.width + "px" : "", e.globals.dom.elLegendWrap.style.height = e.config.legend.height ? e.config.legend.height + "px" : "", b.setAttrs(L, {
               rel: l + 1,
               seriesName: p.escapeString(a[l]),
               "data:collapsed": c || d
@@ -61626,9 +64507,9 @@ var Forestry = (function () {
           if ("heatmap" === e.config.chart.type || this.isBarsDistributed) {
             if (i) {
               var a = parseInt(t.target.getAttribute("rel"), 10) - 1;
-              this.ctx.events.fireEvent("legendHover", [this.ctx, a, this.w]), new I(this.ctx).highlightRangeInSeries(t, t.target);
+              this.ctx.events.fireEvent("legendHover", [this.ctx, a, this.w]), new z(this.ctx).highlightRangeInSeries(t, t.target);
             }
-          } else !t.target.classList.contains("apexcharts-inactive-legend") && i && new I(this.ctx).toggleSeriesOnHover(t, t.target);
+          } else !t.target.classList.contains("apexcharts-inactive-legend") && i && new z(this.ctx).toggleSeriesOnHover(t, t.target);
         }
       }, {
         key: "onLegendClick",
@@ -61647,13 +64528,13 @@ var Forestry = (function () {
       }]), t;
     }(),
         ht = function () {
-      function t(i) {
-        e(this, t), this.ctx = i, this.w = i.w;
-        var a = this.w;
-        this.ev = this.w.config.chart.events, this.selectedClass = "apexcharts-selected", this.localeValues = this.w.globals.locale.toolbar, this.minX = a.globals.minX, this.maxX = a.globals.maxX;
+      function t(e) {
+        a(this, t), this.ctx = e, this.w = e.w;
+        var i = this.w;
+        this.ev = this.w.config.chart.events, this.selectedClass = "apexcharts-selected", this.localeValues = this.w.globals.locale.toolbar, this.minX = i.globals.minX, this.maxX = i.globals.maxX;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "createToolbar",
         value: function value() {
           var t = this,
@@ -61805,7 +64686,7 @@ var Forestry = (function () {
         key: "handleZoomIn",
         value: function value() {
           var t = this.w;
-          t.globals.isTimelineBar && (this.minX = t.globals.minY, this.maxX = t.globals.maxY);
+          t.globals.isRangeBar && (this.minX = t.globals.minY, this.maxX = t.globals.maxY);
 
           var e = (this.minX + this.maxX) / 2,
               i = (this.minX + e) / 2,
@@ -61819,7 +64700,7 @@ var Forestry = (function () {
         value: function value() {
           var t = this.w;
 
-          if (t.globals.isTimelineBar && (this.minX = t.globals.minY, this.maxX = t.globals.maxY), !("datetime" === t.config.xaxis.type && new Date(this.minX).getUTCFullYear() < 1e3)) {
+          if (t.globals.isRangeBar && (this.minX = t.globals.minY, this.maxX = t.globals.maxY), !("datetime" === t.config.xaxis.type && new Date(this.minX).getUTCFullYear() < 1e3)) {
             var e = (this.minX + this.maxX) / 2,
                 i = this.minX - (e - this.minX),
                 a = this.maxX - (e - this.maxX),
@@ -61936,15 +64817,15 @@ var Forestry = (function () {
       }]), t;
     }(),
         ct = function (t) {
-      n(s, ht);
-      var i = d(s);
+      n(i, ht);
+      var e = d(i);
 
-      function s(t) {
-        var a;
-        return e(this, s), (a = i.call(this, t)).ctx = t, a.w = t.w, a.dragged = !1, a.graphics = new b(a.ctx), a.eventList = ["mousedown", "mouseleave", "mousemove", "touchstart", "touchmove", "mouseup", "touchend"], a.clientX = 0, a.clientY = 0, a.startX = 0, a.endX = 0, a.dragX = 0, a.startY = 0, a.endY = 0, a.dragY = 0, a.moveDirection = "none", a;
+      function i(t) {
+        var s;
+        return a(this, i), (s = e.call(this, t)).ctx = t, s.w = t.w, s.dragged = !1, s.graphics = new b(s.ctx), s.eventList = ["mousedown", "mouseleave", "mousemove", "touchstart", "touchmove", "mouseup", "touchend"], s.clientX = 0, s.clientY = 0, s.startX = 0, s.endX = 0, s.dragX = 0, s.startY = 0, s.endY = 0, s.dragY = 0, s.moveDirection = "none", s;
       }
 
-      return a(s, [{
+      return r(i, [{
         key: "init",
         value: function value(t) {
           var e = this,
@@ -61979,31 +64860,34 @@ var Forestry = (function () {
               s = this.ctx.toolbar,
               r = i.globals.zoomEnabled ? i.config.chart.zoom.type : i.config.chart.selection.type,
               o = i.config.chart.toolbar.autoSelected;
-          e.shiftKey ? (this.shiftWasPressed = !0, s.enableZoomPanFromToolbar("pan" === o ? "zoom" : "pan")) : this.shiftWasPressed && (s.enableZoomPanFromToolbar(o), this.shiftWasPressed = !1);
-          var n = e.target.classList;
 
-          if (!(n.contains("apexcharts-selection-rect") || n.contains("apexcharts-legend-marker") || n.contains("apexcharts-legend-text") || e.target.parentNode.classList.contains("apexcharts-toolbar"))) {
-            if (a.clientX = "touchmove" === e.type || "touchstart" === e.type ? e.touches[0].clientX : "touchend" === e.type ? e.changedTouches[0].clientX : e.clientX, a.clientY = "touchmove" === e.type || "touchstart" === e.type ? e.touches[0].clientY : "touchend" === e.type ? e.changedTouches[0].clientY : e.clientY, "mousedown" === e.type && 1 === e.which) {
-              var l = a.gridRect.getBoundingClientRect();
-              a.startX = a.clientX - l.left, a.startY = a.clientY - l.top, a.dragged = !1, a.w.globals.mousedown = !0;
-            }
+          if (e.shiftKey ? (this.shiftWasPressed = !0, s.enableZoomPanFromToolbar("pan" === o ? "zoom" : "pan")) : this.shiftWasPressed && (s.enableZoomPanFromToolbar(o), this.shiftWasPressed = !1), e.target) {
+            var n,
+                l = e.target.classList;
 
-            if (("mousemove" === e.type && 1 === e.which || "touchmove" === e.type) && (a.dragged = !0, i.globals.panEnabled ? (i.globals.selection = null, a.w.globals.mousedown && a.panDragging({
-              context: a,
-              zoomtype: r,
-              xyRatios: t
-            })) : (a.w.globals.mousedown && i.globals.zoomEnabled || a.w.globals.mousedown && i.globals.selectionEnabled) && (a.selection = a.selectionDrawing({
-              context: a,
-              zoomtype: r
-            }))), "mouseup" === e.type || "touchend" === e.type || "mouseleave" === e.type) {
-              var h = a.gridRect.getBoundingClientRect();
-              a.w.globals.mousedown && (a.endX = a.clientX - h.left, a.endY = a.clientY - h.top, a.dragX = Math.abs(a.endX - a.startX), a.dragY = Math.abs(a.endY - a.startY), (i.globals.zoomEnabled || i.globals.selectionEnabled) && a.selectionDrawn({
+            if (e.target.parentNode && null !== e.target.parentNode && (n = e.target.parentNode.classList), !(l.contains("apexcharts-selection-rect") || l.contains("apexcharts-legend-marker") || l.contains("apexcharts-legend-text") || n && n.contains("apexcharts-toolbar"))) {
+              if (a.clientX = "touchmove" === e.type || "touchstart" === e.type ? e.touches[0].clientX : "touchend" === e.type ? e.changedTouches[0].clientX : e.clientX, a.clientY = "touchmove" === e.type || "touchstart" === e.type ? e.touches[0].clientY : "touchend" === e.type ? e.changedTouches[0].clientY : e.clientY, "mousedown" === e.type && 1 === e.which) {
+                var h = a.gridRect.getBoundingClientRect();
+                a.startX = a.clientX - h.left, a.startY = a.clientY - h.top, a.dragged = !1, a.w.globals.mousedown = !0;
+              }
+
+              if (("mousemove" === e.type && 1 === e.which || "touchmove" === e.type) && (a.dragged = !0, i.globals.panEnabled ? (i.globals.selection = null, a.w.globals.mousedown && a.panDragging({
+                context: a,
+                zoomtype: r,
+                xyRatios: t
+              })) : (a.w.globals.mousedown && i.globals.zoomEnabled || a.w.globals.mousedown && i.globals.selectionEnabled) && (a.selection = a.selectionDrawing({
                 context: a,
                 zoomtype: r
-              }), i.globals.panEnabled && i.config.xaxis.convertedCatToNumeric && a.delayedPanScrolled()), i.globals.zoomEnabled && a.hideSelectionRect(this.selectionRect), a.dragged = !1, a.w.globals.mousedown = !1;
-            }
+              }))), "mouseup" === e.type || "touchend" === e.type || "mouseleave" === e.type) {
+                var c = a.gridRect.getBoundingClientRect();
+                a.w.globals.mousedown && (a.endX = a.clientX - c.left, a.endY = a.clientY - c.top, a.dragX = Math.abs(a.endX - a.startX), a.dragY = Math.abs(a.endY - a.startY), (i.globals.zoomEnabled || i.globals.selectionEnabled) && a.selectionDrawn({
+                  context: a,
+                  zoomtype: r
+                }), i.globals.panEnabled && i.config.xaxis.convertedCatToNumeric && a.delayedPanScrolled()), i.globals.zoomEnabled && a.hideSelectionRect(this.selectionRect), a.dragged = !1, a.w.globals.mousedown = !1;
+              }
 
-            this.makeSelectionRectDraggable();
+              this.makeSelectionRectDraggable();
+            }
           }
         }
       }, {
@@ -62195,7 +65079,7 @@ var Forestry = (function () {
 
           var h = void 0,
               c = void 0;
-          a.globals.isTimelineBar ? (h = a.globals.yAxisScale[0].niceMin + s.startX * r.invertedYRatio, c = a.globals.yAxisScale[0].niceMin + s.endX * r.invertedYRatio) : (h = a.globals.xAxisScale.niceMin + s.startX * r.xRatio, c = a.globals.xAxisScale.niceMin + s.endX * r.xRatio);
+          a.globals.isRangeBar ? (h = a.globals.yAxisScale[0].niceMin + s.startX * r.invertedYRatio, c = a.globals.yAxisScale[0].niceMin + s.endX * r.invertedYRatio) : (h = a.globals.xAxisScale.niceMin + s.startX * r.xRatio, c = a.globals.xAxisScale.niceMin + s.endX * r.xRatio);
           var d = [],
               g = [];
           if (a.config.yaxis.forEach(function (t, e) {
@@ -62221,20 +65105,20 @@ var Forestry = (function () {
               b && (f = b.xaxis ? b.xaxis : f, u = b.yaxis ? b.yaxis : u);
             }
 
-            var m = {
+            var v = {
               xaxis: f
             };
-            a.config.chart.group || (m.yaxis = u), s.ctx.updateHelpers._updateOptions(m, !1, s.w.config.chart.animations.dynamicAnimation.enabled), "function" == typeof a.config.chart.events.zoomed && o.zoomCallback(f, u);
+            a.config.chart.group || (v.yaxis = u), s.ctx.updateHelpers._updateOptions(v, !1, s.w.config.chart.animations.dynamicAnimation.enabled), "function" == typeof a.config.chart.events.zoomed && o.zoomCallback(f, u);
           } else if (a.globals.selectionEnabled) {
-            var v,
+            var m,
                 y = null;
-            v = {
+            m = {
               min: h,
               max: c
             }, "xy" !== i && "y" !== i || (y = p.clone(a.config.yaxis)).forEach(function (t, e) {
               y[e].min = g[e], y[e].max = d[e];
             }), a.globals.selection = s.selection, "function" == typeof a.config.chart.events.selection && a.config.chart.events.selection(s.ctx, {
-              xaxis: v,
+              xaxis: m,
               yaxis: y
             });
           }
@@ -62256,8 +65140,8 @@ var Forestry = (function () {
             x: a.clientX,
             y: a.clientY
           };
-          var o = i.globals.isTimelineBar ? i.globals.minY : i.globals.minX,
-              n = i.globals.isTimelineBar ? i.globals.maxY : i.globals.maxX;
+          var o = i.globals.isRangeBar ? i.globals.minY : i.globals.minX,
+              n = i.globals.isRangeBar ? i.globals.maxY : i.globals.maxX;
           i.config.xaxis.convertedCatToNumeric || a.panScrolled(o, n);
         }
       }, {
@@ -62283,7 +65167,7 @@ var Forestry = (function () {
               r = a.xRatio,
               o = i.globals.minX,
               n = i.globals.maxX;
-          i.globals.isTimelineBar && (r = a.invertedYRatio, o = i.globals.minY, n = i.globals.maxY), "left" === this.moveDirection ? (t = o + i.globals.gridWidth / 15 * r, e = n + i.globals.gridWidth / 15 * r) : "right" === this.moveDirection && (t = o - i.globals.gridWidth / 15 * r, e = n - i.globals.gridWidth / 15 * r), i.globals.isTimelineBar || (t < i.globals.initialMinX || e > i.globals.initialMaxX) && (t = o, e = n);
+          i.globals.isRangeBar && (r = a.invertedYRatio, o = i.globals.minY, n = i.globals.maxY), "left" === this.moveDirection ? (t = o + i.globals.gridWidth / 15 * r, e = n + i.globals.gridWidth / 15 * r) : "right" === this.moveDirection && (t = o - i.globals.gridWidth / 15 * r, e = n - i.globals.gridWidth / 15 * r), i.globals.isRangeBar || (t < i.globals.initialMinX || e > i.globals.initialMaxX) && (t = o, e = n);
           var l = {
             min: t,
             max: e
@@ -62310,14 +65194,14 @@ var Forestry = (function () {
             }
           });
         }
-      }]), s;
+      }]), i;
     }(),
         dt = function () {
-      function t(i) {
-        e(this, t), this.w = i.w, this.ttCtx = i, this.ctx = i.ctx;
+      function t(e) {
+        a(this, t), this.w = e.w, this.ttCtx = e, this.ctx = e.ctx;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "getNearestValues",
         value: function value(t) {
           var e = t.hoverArea,
@@ -62325,25 +65209,25 @@ var Forestry = (function () {
               a = t.clientX,
               s = t.clientY,
               r = this.w,
-              o = r.globals.gridWidth,
-              n = r.globals.gridHeight,
-              l = o / (r.globals.dataPoints - 1),
-              h = n / r.globals.dataPoints,
-              c = i.getBoundingClientRect(),
+              o = i.getBoundingClientRect(),
+              n = o.width,
+              l = o.height,
+              h = n / (r.globals.dataPoints - 1),
+              c = l / r.globals.dataPoints,
               d = this.hasBars();
-          !r.globals.comboCharts && !d || r.config.xaxis.convertedCatToNumeric || (l = o / r.globals.dataPoints);
-          var g = a - c.left - r.globals.barPadForNumericAxis,
-              u = s - c.top;
-          g < 0 || u < 0 || g > r.globals.gridWidth || u > r.globals.gridHeight ? (e.classList.remove("hovering-zoom"), e.classList.remove("hovering-pan")) : r.globals.zoomEnabled ? (e.classList.remove("hovering-pan"), e.classList.add("hovering-zoom")) : r.globals.panEnabled && (e.classList.remove("hovering-zoom"), e.classList.add("hovering-pan"));
-          var f = Math.round(g / l),
-              x = Math.floor(u / h);
-          d && !r.config.xaxis.convertedCatToNumeric && (f = Math.ceil(g / l), f -= 1);
+          !r.globals.comboCharts && !d || r.config.xaxis.convertedCatToNumeric || (h = n / r.globals.dataPoints);
+          var g = a - o.left - r.globals.barPadForNumericAxis,
+              u = s - o.top;
+          g < 0 || u < 0 || g > n || u > l ? (e.classList.remove("hovering-zoom"), e.classList.remove("hovering-pan")) : r.globals.zoomEnabled ? (e.classList.remove("hovering-pan"), e.classList.add("hovering-zoom")) : r.globals.panEnabled && (e.classList.remove("hovering-zoom"), e.classList.add("hovering-pan"));
+          var f = Math.round(g / h),
+              x = Math.floor(u / c);
+          d && !r.config.xaxis.convertedCatToNumeric && (f = Math.ceil(g / h), f -= 1);
 
-          for (var b, m = null, v = null, y = [], w = 0; w < r.globals.seriesXvalues.length; w++) {
+          for (var b, v = null, m = null, y = [], w = 0; w < r.globals.seriesXvalues.length; w++) {
             y.push([r.globals.seriesXvalues[w][0] - 1e-6].concat(r.globals.seriesXvalues[w]));
           }
 
-          return y = y.map(function (t) {
+          if (y = y.map(function (t) {
             return t.filter(function (t) {
               return t;
             });
@@ -62351,8 +65235,15 @@ var Forestry = (function () {
             return t.filter(function (t) {
               return p.isNumber(t);
             });
-          }), r.globals.isXNumeric && (m = (v = this.closestInMultiArray(g, u, y, b)).index, f = v.j, null !== m && (y = r.globals.seriesXvalues[m], f = (v = this.closestInArray(g, y)).index)), r.globals.capturedSeriesIndex = null === m ? -1 : m, (!f || f < 1) && (f = 0), r.globals.capturedDataPointIndex = f, {
-            capturedSeries: m,
+          }), r.globals.isXNumeric) {
+            var k = this.ttCtx.getElGrid().getBoundingClientRect(),
+                A = g * (k.width / n),
+                S = u * (k.height / l);
+            v = (m = this.closestInMultiArray(A, S, y, b)).index, f = m.j, null !== v && (y = r.globals.seriesXvalues[v], f = (m = this.closestInArray(A, y)).index);
+          }
+
+          return r.globals.capturedSeriesIndex = null === v ? -1 : v, (!f || f < 1) && (f = 0), r.globals.isBarHorizontal ? r.globals.capturedDataPointIndex = x : r.globals.capturedDataPointIndex = f, {
+            capturedSeries: v,
             j: r.globals.isBarHorizontal ? x : f,
             hoverX: g,
             hoverY: u
@@ -62386,16 +65277,16 @@ var Forestry = (function () {
       }, {
         key: "getFirstActiveXArray",
         value: function value(t) {
-          for (var e = 0, i = t.map(function (t, e) {
+          for (var e = this.w, i = 0, a = t.map(function (t, e) {
             return t.length > 0 ? e : -1;
-          }), a = 0; a < i.length; a++) {
-            if (-1 !== i[a]) {
-              e = i[a];
+          }), s = 0; s < a.length; s++) {
+            if (-1 !== a[s] && -1 === e.globals.collapsedSeriesIndices.indexOf(s) && -1 === e.globals.ancillaryCollapsedSeriesIndices.indexOf(s)) {
+              i = a[s];
               break;
             }
           }
 
-          return e;
+          return i;
         }
       }, {
         key: "closestInArray",
@@ -62493,11 +65384,11 @@ var Forestry = (function () {
       }]), t;
     }(),
         gt = function () {
-      function t(i) {
-        e(this, t), this.w = i.w, this.ctx = i.ctx, this.ttCtx = i, this.tooltipUtil = new dt(i);
+      function t(e) {
+        a(this, t), this.w = e.w, this.ctx = e.ctx, this.ttCtx = e, this.tooltipUtil = new dt(e);
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "drawSeriesTexts",
         value: function value(t) {
           var e = t.shared,
@@ -62536,88 +65427,88 @@ var Forestry = (function () {
       }, {
         key: "printLabels",
         value: function value(t) {
-          var e,
-              i = this,
-              a = t.i,
-              s = t.j,
-              r = t.values,
+          var i,
+              a = this,
+              s = t.i,
+              r = t.j,
+              o = t.values,
               n = t.ttItems,
               l = t.shared,
               h = t.e,
               c = this.w,
               d = [],
               g = function g(t) {
-            return c.globals.seriesGoals[t] && c.globals.seriesGoals[t][s] && Array.isArray(c.globals.seriesGoals[t][s]);
+            return c.globals.seriesGoals[t] && c.globals.seriesGoals[t][r] && Array.isArray(c.globals.seriesGoals[t][r]);
           },
-              u = r.xVal,
-              p = r.zVal,
-              f = r.xAxisTTVal,
+              u = o.xVal,
+              p = o.zVal,
+              f = o.xAxisTTVal,
               x = "",
-              b = c.globals.colors[a];
+              b = c.globals.colors[s];
 
-          null !== s && c.config.plotOptions.bar.distributed && (b = c.globals.colors[s]);
+          null !== r && c.config.plotOptions.bar.distributed && (b = c.globals.colors[r]);
 
-          for (var m = function m(t, r) {
-            var m = i.getFormatters(a);
-            x = i.getSeriesName({
-              fn: m.yLbTitleFormatter,
-              index: a,
-              seriesIndex: a,
-              j: s
-            }), "treemap" === c.config.chart.type && (x = m.yLbTitleFormatter(String(c.config.series[a].data[s].x), {
+          for (var v = function v(t, o) {
+            var v = a.getFormatters(s);
+            x = a.getSeriesName({
+              fn: v.yLbTitleFormatter,
+              index: s,
+              seriesIndex: s,
+              j: r
+            }), "treemap" === c.config.chart.type && (x = v.yLbTitleFormatter(String(c.config.series[s].data[r].x), {
               series: c.globals.series,
-              seriesIndex: a,
-              dataPointIndex: s,
+              seriesIndex: s,
+              dataPointIndex: r,
               w: c
             }));
-            var v = c.config.tooltip.inverseOrder ? r : t;
+            var m = c.config.tooltip.inverseOrder ? o : t;
 
             if (c.globals.axisCharts) {
               var y = function y(t) {
-                return m.yLbFormatter(c.globals.series[t][s], {
+                return v.yLbFormatter(c.globals.series[t][r], {
                   series: c.globals.series,
                   seriesIndex: t,
-                  dataPointIndex: s,
+                  dataPointIndex: r,
                   w: c
                 });
               };
 
-              l ? (m = i.getFormatters(v), x = i.getSeriesName({
-                fn: m.yLbTitleFormatter,
-                index: v,
-                seriesIndex: a,
-                j: s
-              }), b = c.globals.colors[v], e = y(v), g(v) && (d = c.globals.seriesGoals[v][s].map(function (t) {
+              l ? (v = a.getFormatters(m), x = a.getSeriesName({
+                fn: v.yLbTitleFormatter,
+                index: m,
+                seriesIndex: s,
+                j: r
+              }), b = c.globals.colors[m], i = y(m), g(m) && (d = c.globals.seriesGoals[m][r].map(function (t) {
                 return {
                   attrs: t,
-                  val: m.yLbFormatter(t.value, {
-                    seriesIndex: v,
-                    dataPointIndex: s,
+                  val: v.yLbFormatter(t.value, {
+                    seriesIndex: m,
+                    dataPointIndex: r,
                     w: c
                   })
                 };
-              }))) : (h && h.target && h.target.getAttribute("fill") && (b = h.target.getAttribute("fill")), e = y(a), g(a) && Array.isArray(c.globals.seriesGoals[a][s]) && (d = c.globals.seriesGoals[a][s].map(function (t) {
+              }))) : (h && h.target && h.target.getAttribute("fill") && (b = h.target.getAttribute("fill")), i = y(s), g(s) && Array.isArray(c.globals.seriesGoals[s][r]) && (d = c.globals.seriesGoals[s][r].map(function (t) {
                 return {
                   attrs: t,
-                  val: m.yLbFormatter(t.value, {
-                    seriesIndex: a,
-                    dataPointIndex: s,
+                  val: v.yLbFormatter(t.value, {
+                    seriesIndex: s,
+                    dataPointIndex: r,
                     w: c
                   })
                 };
               })));
             }
 
-            null === s && (e = m.yLbFormatter(c.globals.series[a], o(o({}, c), {}, {
-              seriesIndex: a,
-              dataPointIndex: a
-            }))), i.DOMHandling({
-              i: a,
-              t: v,
-              j: s,
+            null === r && (i = v.yLbFormatter(c.globals.series[s], e(e({}, c), {}, {
+              seriesIndex: s,
+              dataPointIndex: s
+            }))), a.DOMHandling({
+              i: s,
+              t: m,
+              j: r,
               ttItems: n,
               values: {
-                val: e,
+                val: i,
                 goalVals: d,
                 xVal: u,
                 xAxisTTVal: f,
@@ -62627,8 +65518,8 @@ var Forestry = (function () {
               shared: l,
               pColor: b
             });
-          }, v = 0, y = c.globals.series.length - 1; v < c.globals.series.length; v++, y--) {
-            m(v, y);
+          }, m = 0, y = c.globals.series.length - 1; m < c.globals.series.length; m++, y--) {
+            v(m, y);
           }
         }
       }, {
@@ -62673,38 +65564,35 @@ var Forestry = (function () {
               o = t.shared,
               n = t.pColor,
               l = this.w,
-              h = this.ttCtx;
-          Object.keys(s).forEach(function (t) {
-            "string" == typeof s[t] && (s[t] = p.sanitizeDom(s[t]));
-          });
-          var c = s.val,
+              h = this.ttCtx,
+              c = s.val,
               d = s.goalVals,
               g = s.xVal,
               u = s.xAxisTTVal,
-              f = s.zVal,
-              x = null;
-          x = a[e].children, l.config.tooltip.fillSeriesColor && (a[e].style.backgroundColor = n, x[0].style.display = "none"), h.showTooltipTitle && (null === h.tooltipTitle && (h.tooltipTitle = l.globals.dom.baseEl.querySelector(".apexcharts-tooltip-title")), h.tooltipTitle.innerHTML = g), h.blxaxisTooltip && (h.xaxisTooltipText.innerHTML = "" !== u ? u : g);
-          var b = a[e].querySelector(".apexcharts-tooltip-text-y-label");
-          b && (b.innerHTML = r ? p.sanitizeDom(r) : "");
-          var m = a[e].querySelector(".apexcharts-tooltip-text-y-value");
-          m && (m.innerHTML = void 0 !== c ? c : ""), x[0] && x[0].classList.contains("apexcharts-tooltip-marker") && (l.config.tooltip.marker.fillColors && Array.isArray(l.config.tooltip.marker.fillColors) && (n = l.config.tooltip.marker.fillColors[e]), x[0].style.backgroundColor = n), l.config.tooltip.marker.show || (x[0].style.display = "none");
+              p = s.zVal,
+              f = null;
+          f = a[e].children, l.config.tooltip.fillSeriesColor && (a[e].style.backgroundColor = n, f[0].style.display = "none"), h.showTooltipTitle && (null === h.tooltipTitle && (h.tooltipTitle = l.globals.dom.baseEl.querySelector(".apexcharts-tooltip-title")), h.tooltipTitle.innerHTML = g), h.isXAxisTooltipEnabled && (h.xaxisTooltipText.innerHTML = "" !== u ? u : g);
+          var x = a[e].querySelector(".apexcharts-tooltip-text-y-label");
+          x && (x.innerHTML = r || "");
+          var b = a[e].querySelector(".apexcharts-tooltip-text-y-value");
+          b && (b.innerHTML = void 0 !== c ? c : ""), f[0] && f[0].classList.contains("apexcharts-tooltip-marker") && (l.config.tooltip.marker.fillColors && Array.isArray(l.config.tooltip.marker.fillColors) && (n = l.config.tooltip.marker.fillColors[e]), f[0].style.backgroundColor = n), l.config.tooltip.marker.show || (f[0].style.display = "none");
           var v = a[e].querySelector(".apexcharts-tooltip-text-goals-label"),
-              y = a[e].querySelector(".apexcharts-tooltip-text-goals-value");
+              m = a[e].querySelector(".apexcharts-tooltip-text-goals-value");
 
           if (d.length && l.globals.seriesGoals[e]) {
-            var w = function w() {
+            var y = function y() {
               var t = "<div >",
                   e = "<div>";
               d.forEach(function (i, a) {
                 t += ' <div style="display: flex"><span class="apexcharts-tooltip-marker" style="background-color: '.concat(i.attrs.strokeColor, '; height: 3px; border-radius: 0; top: 5px;"></span> ').concat(i.attrs.name, "</div>"), e += "<div>".concat(i.val, "</div>");
-              }), v.innerHTML = t + "</div>", y.innerHTML = e + "</div>";
+              }), v.innerHTML = t + "</div>", m.innerHTML = e + "</div>";
             };
 
-            o ? l.globals.seriesGoals[e][i] && Array.isArray(l.globals.seriesGoals[e][i]) ? w() : (v.innerHTML = "", y.innerHTML = "") : w();
-          } else v.innerHTML = "", y.innerHTML = "";
+            o ? l.globals.seriesGoals[e][i] && Array.isArray(l.globals.seriesGoals[e][i]) ? y() : (v.innerHTML = "", m.innerHTML = "") : y();
+          } else v.innerHTML = "", m.innerHTML = "";
 
-          null !== f && (a[e].querySelector(".apexcharts-tooltip-text-z-label").innerHTML = l.config.tooltip.z.title, a[e].querySelector(".apexcharts-tooltip-text-z-value").innerHTML = void 0 !== f ? f : "");
-          o && x[0] && (null == c || l.globals.collapsedSeriesIndices.indexOf(e) > -1 ? x[0].parentNode.style.display = "none" : x[0].parentNode.style.display = l.config.tooltip.items.display);
+          null !== p && (a[e].querySelector(".apexcharts-tooltip-text-z-label").innerHTML = l.config.tooltip.z.title, a[e].querySelector(".apexcharts-tooltip-text-z-value").innerHTML = void 0 !== p ? p : "");
+          o && f[0] && (null == c || l.globals.ancillaryCollapsedSeriesIndices.indexOf(e) > -1 || l.globals.collapsedSeriesIndices.indexOf(e) > -1 ? f[0].parentNode.style.display = "none" : f[0].parentNode.style.display = l.config.tooltip.items.display);
         }
       }, {
         key: "toggleActiveInactiveSeries",
@@ -62771,11 +65659,11 @@ var Forestry = (function () {
       }]), t;
     }(),
         ut = function () {
-      function t(i) {
-        e(this, t), this.ttCtx = i, this.ctx = i.ctx, this.w = i.w;
+      function t(e) {
+        a(this, t), this.ttCtx = e, this.ctx = e.ctx, this.w = e.w;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "moveXCrosshairs",
         value: function value(t) {
           var e = arguments.length > 1 && void 0 !== arguments[1] ? arguments[1] : null,
@@ -62785,7 +65673,7 @@ var Forestry = (function () {
               r = t - i.xcrosshairsWidth / 2,
               o = a.globals.labels.slice().length;
 
-          if (null !== e && (r = a.globals.gridWidth / o * e), null !== s && (s.setAttribute("x", r), s.setAttribute("x1", r), s.setAttribute("x2", r), s.setAttribute("y2", a.globals.gridHeight), s.classList.add("apexcharts-active")), r < 0 && (r = 0), r > a.globals.gridWidth && (r = a.globals.gridWidth), i.blxaxisTooltip) {
+          if (null !== e && (r = a.globals.gridWidth / o * e), null === s || a.globals.isBarHorizontal || (s.setAttribute("x", r), s.setAttribute("x1", r), s.setAttribute("x2", r), s.setAttribute("y2", a.globals.gridHeight), s.classList.add("apexcharts-active")), r < 0 && (r = 0), r > a.globals.gridWidth && (r = a.globals.gridWidth), i.isXAxisTooltipEnabled) {
             var n = r;
             "tickWidth" !== a.config.xaxis.crosshairs.width && "barWidth" !== a.config.xaxis.crosshairs.width || (n = r + i.xcrosshairsWidth / 2), this.moveXAxisTooltip(n);
           }
@@ -62808,7 +65696,7 @@ var Forestry = (function () {
           var e = this.w,
               i = this.ttCtx;
 
-          if (null !== i.xaxisTooltip) {
+          if (null !== i.xaxisTooltip && 0 !== i.xcrosshairsWidth) {
             i.xaxisTooltip.classList.add("apexcharts-active");
             var a = i.xaxisOffY + e.config.xaxis.tooltip.offsetY + e.globals.translateY + 1 + e.config.xaxis.offsetY;
 
@@ -62847,7 +65735,7 @@ var Forestry = (function () {
             var c = s.getElGrid(),
                 d = c.getBoundingClientRect();
             h = s.e.clientY + a.globals.translateY - d.top - o.ttHeight / 2;
-          } else a.globals.isBarHorizontal ? h -= o.ttHeight : (o.ttHeight / 2 + h > a.globals.gridHeight && (h = a.globals.gridHeight - o.ttHeight + a.globals.translateY), h < 0 && (h = 0));
+          } else a.globals.isBarHorizontal || (o.ttHeight / 2 + h > a.globals.gridHeight && (h = a.globals.gridHeight - o.ttHeight + a.globals.translateY), h < 0 && (h = 0));
 
           isNaN(l) || (l += a.globals.translateX, r.style.left = l + "px", r.style.top = h + "px");
         }
@@ -62886,7 +65774,7 @@ var Forestry = (function () {
               s = 0,
               r = 0,
               o = a.globals.pointsArray;
-          e = new I(this.ctx).getActiveConfigSeriesIndex(!0);
+          e = new z(this.ctx).getActiveConfigSeriesIndex(!0);
           var n = i.tooltipUtil.getHoverMarkerSize(e);
           o[e] && (s = o[e][t][0], r = o[e][t][1]);
           var l = i.tooltipUtil.getAllMarkers();
@@ -62895,7 +65783,7 @@ var Forestry = (function () {
 
             if (a.globals.comboCharts && void 0 === c && l.splice(h, 0, null), c && c.length) {
               var d = o[h][t][1];
-              l[h].setAttribute("cx", s), null !== d && !isNaN(d) && d < a.globals.gridHeight && d > 0 ? (l[h] && l[h].setAttribute("r", n), l[h] && l[h].setAttribute("cy", d)) : l[h] && l[h].setAttribute("r", 0);
+              l[h].setAttribute("cx", s), null !== d && !isNaN(d) && d < a.globals.gridHeight + n && d + n > 0 ? (l[h] && l[h].setAttribute("r", n), l[h] && l[h].setAttribute("cy", d)) : l[h] && l[h].setAttribute("r", 0);
             }
           }
 
@@ -62911,27 +65799,28 @@ var Forestry = (function () {
               i = this.ttCtx,
               a = e.globals.columnSeries ? e.globals.columnSeries.length : e.globals.series.length,
               s = a >= 2 && a % 2 == 0 ? Math.floor(a / 2) : Math.floor(a / 2) + 1;
-          e.globals.isBarHorizontal && (s = new I(this.ctx).getActiveConfigSeriesIndex(!1, "desc") + 1);
+          e.globals.isBarHorizontal && (s = new z(this.ctx).getActiveConfigSeriesIndex(!1, "desc") + 1);
           var r = e.globals.dom.baseEl.querySelector(".apexcharts-bar-series .apexcharts-series[rel='".concat(s, "'] path[j='").concat(t, "'], .apexcharts-candlestick-series .apexcharts-series[rel='").concat(s, "'] path[j='").concat(t, "'], .apexcharts-boxPlot-series .apexcharts-series[rel='").concat(s, "'] path[j='").concat(t, "'], .apexcharts-rangebar-series .apexcharts-series[rel='").concat(s, "'] path[j='").concat(t, "']")),
               o = r ? parseFloat(r.getAttribute("cx")) : 0,
               n = r ? parseFloat(r.getAttribute("cy")) : 0,
               l = r ? parseFloat(r.getAttribute("barWidth")) : 0,
               h = r ? parseFloat(r.getAttribute("barHeight")) : 0,
-              c = i.getElGrid().getBoundingClientRect();
+              c = i.getElGrid().getBoundingClientRect(),
+              d = r.classList.contains("apexcharts-candlestick-area") || r.classList.contains("apexcharts-boxPlot-area");
 
-          if (e.globals.isXNumeric ? (o -= a % 2 != 0 ? l / 2 : 0, r && (r.classList.contains("apexcharts-candlestick-area") || r.classList.contains("apexcharts-boxPlot-area")) && e.globals.comboCharts && (o -= l / 2)) : e.globals.isBarHorizontal || (o = i.xAxisTicksPositions[t - 1] + i.dataPointsDividedWidth / 2, isNaN(o) && (o = i.xAxisTicksPositions[t] - i.dataPointsDividedWidth / 2)), e.globals.isBarHorizontal ? n += h / 3 : n = i.e.clientY - c.top - i.tooltipRect.ttHeight / 2, e.globals.isBarHorizontal || this.moveXCrosshairs(o), !i.fixedTooltip) {
-            var d = n || e.globals.gridHeight;
-            this.moveTooltip(o, d);
+          if (e.globals.isXNumeric ? (r && !d && (o -= a % 2 != 0 ? l / 2 : 0), r && d && e.globals.comboCharts && (o -= l / 2)) : e.globals.isBarHorizontal || (o = i.xAxisTicksPositions[t - 1] + i.dataPointsDividedWidth / 2, isNaN(o) && (o = i.xAxisTicksPositions[t] - i.dataPointsDividedWidth / 2)), e.globals.isBarHorizontal ? n += h / 3 : n = i.e.clientY - c.top - i.tooltipRect.ttHeight / 2, e.globals.isBarHorizontal || this.moveXCrosshairs(o), !i.fixedTooltip) {
+            var g = n || e.globals.gridHeight;
+            this.moveTooltip(o, g);
           }
         }
       }]), t;
     }(),
         pt = function () {
-      function t(i) {
-        e(this, t), this.w = i.w, this.ttCtx = i, this.ctx = i.ctx, this.tooltipPosition = new ut(i);
+      function t(e) {
+        a(this, t), this.w = e.w, this.ttCtx = e, this.ctx = e.ctx, this.tooltipPosition = new ut(e);
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "drawDynamicPoints",
         value: function value() {
           var t = this.w,
@@ -62949,7 +65838,10 @@ var Forestry = (function () {
               var o = void 0,
                   n = "apexcharts-marker w".concat((Math.random() + 1).toString(36).substring(4));
               "line" !== t.config.chart.type && "area" !== t.config.chart.type || t.globals.comboCharts || t.config.tooltip.intersect || (n += " no-pointer-events");
-              var l = i.getMarkerConfig(n, s);
+              var l = i.getMarkerConfig({
+                cssClass: n,
+                seriesIndex: Number(r.getAttribute("data:realIndex"))
+              });
               (o = e.drawMarker(0, 0, l)).node.setAttribute("default-marker-size", 0);
               var h = document.createElementNS(t.globals.SVGNS, "g");
               h.classList.add("apexcharts-series-markers"), h.appendChild(o.node), r.appendChild(h);
@@ -63020,11 +65912,11 @@ var Forestry = (function () {
       }]), t;
     }(),
         ft = function () {
-      function t(i) {
-        e(this, t), this.w = i.w, this.ttCtx = i;
+      function t(e) {
+        a(this, t), this.w = e.w, this.ttCtx = e;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "getAttr",
         value: function value(t, e) {
           return parseFloat(t.target.getAttribute(e));
@@ -63056,7 +65948,7 @@ var Forestry = (function () {
               e: e
             }), n.globals.capturedSeriesIndex = l, n.globals.capturedDataPointIndex = h, a = c + o.tooltipRect.ttWidth / 2 + g, s = d + o.tooltipRect.ttHeight / 2 - u / 2, o.tooltipPosition.moveXCrosshairs(c + g / 2), a > n.globals.gridWidth / 2 && (a = c - o.tooltipRect.ttWidth / 2 + g), o.w.config.tooltip.followCursor) {
               var p = n.globals.dom.elWrap.getBoundingClientRect();
-              a = n.globals.clientX - p.left - o.tooltipRect.ttWidth / 2, s = n.globals.clientY - p.top - o.tooltipRect.ttHeight - 5;
+              a = n.globals.clientX - p.left - (a > n.globals.gridWidth / 2 ? o.tooltipRect.ttWidth : 0), s = n.globals.clientY - p.top;
             }
           }
 
@@ -63135,7 +66027,7 @@ var Forestry = (function () {
             c = o.e.clientY - x.top;
           }
 
-          null === o.tooltip && (o.tooltip = r.globals.dom.baseEl.querySelector(".apexcharts-tooltip")), r.config.tooltip.shared || (r.globals.comboBarCount > 0 ? o.tooltipPosition.moveXCrosshairs(l + i / 2) : o.tooltipPosition.moveXCrosshairs(l)), !o.fixedTooltip && (!r.config.tooltip.shared || r.globals.isBarHorizontal && o.tooltipUtil.hasBars()) && (f && (h -= o.tooltipRect.ttWidth) < 0 && (h = 0), n.style.left = h + r.globals.translateX + "px", !f || r.globals.isBarHorizontal && o.tooltipUtil.hasBars() || (c = c + g - 2 * (r.globals.series[e][u] < 0 ? g : 0)), o.tooltipRect.ttHeight + c > r.globals.gridHeight ? (c = r.globals.gridHeight - o.tooltipRect.ttHeight + r.globals.translateY, n.style.top = c + "px") : n.style.top = c + r.globals.translateY - o.tooltipRect.ttHeight / 2 + "px");
+          null === o.tooltip && (o.tooltip = r.globals.dom.baseEl.querySelector(".apexcharts-tooltip")), r.config.tooltip.shared || (r.globals.comboBarCount > 0 ? o.tooltipPosition.moveXCrosshairs(l + i / 2) : o.tooltipPosition.moveXCrosshairs(l)), !o.fixedTooltip && (!r.config.tooltip.shared || r.globals.isBarHorizontal && o.tooltipUtil.hasBars()) && (f && (h -= o.tooltipRect.ttWidth) < 0 && (h = 0), !f || r.globals.isBarHorizontal && o.tooltipUtil.hasBars() || (c = c + g - 2 * (r.globals.series[e][u] < 0 ? g : 0)), o.tooltipRect.ttHeight + c > r.globals.gridHeight ? c = r.globals.gridHeight - o.tooltipRect.ttHeight + r.globals.translateY : (c = c + r.globals.translateY - o.tooltipRect.ttHeight / 2) < 0 && (c = 0), n.style.left = h + r.globals.translateX + "px", n.style.top = c + "px");
         }
       }, {
         key: "getBarTooltipXY",
@@ -63160,9 +66052,9 @@ var Forestry = (function () {
             c = u.height;
             var x = u.width,
                 b = parseInt(g.getAttribute("cx"), 10),
-                m = parseInt(g.getAttribute("cy"), 10);
+                v = parseInt(g.getAttribute("cy"), 10);
             h = parseFloat(g.getAttribute("barWidth"));
-            var v = "touchmove" === e.type ? e.touches[0].clientX : e.clientX;
+            var m = "touchmove" === e.type ? e.touches[0].clientX : e.clientX;
             s = parseInt(g.getAttribute("j"), 10), o = parseInt(g.parentNode.getAttribute("rel"), 10) - 1;
             var y = g.getAttribute("data-range-y1"),
                 w = g.getAttribute("data-range-y2");
@@ -63174,7 +66066,7 @@ var Forestry = (function () {
               y2: w ? parseInt(w, 10) : null,
               shared: !r.showOnIntersect && a.config.tooltip.shared,
               e: e
-            }), a.config.tooltip.followCursor ? a.globals.isBarHorizontal ? (n = v - p.left + 15, l = m - r.dataPointsDividedHeight + f / 2 - r.tooltipRect.ttHeight / 2) : (n = a.globals.isXNumeric ? b - x / 2 : b - r.dataPointsDividedWidth + x / 2, l = e.clientY - p.top - r.tooltipRect.ttHeight / 2 - 15) : a.globals.isBarHorizontal ? ((n = b) < r.xyRatios.baseLineInvertedY && (n = b - r.tooltipRect.ttWidth), l = m - r.dataPointsDividedHeight + f / 2 - r.tooltipRect.ttHeight / 2) : (n = a.globals.isXNumeric ? b - x / 2 : b - r.dataPointsDividedWidth + x / 2, l = m);
+            }), a.config.tooltip.followCursor ? a.globals.isBarHorizontal ? (n = m - p.left + 15, l = v - r.dataPointsDividedHeight + f / 2 - r.tooltipRect.ttHeight / 2) : (n = a.globals.isXNumeric ? b - x / 2 : b - r.dataPointsDividedWidth + x / 2, l = e.clientY - p.top - r.tooltipRect.ttHeight / 2 - 15) : a.globals.isBarHorizontal ? ((n = b) < r.xyRatios.baseLineInvertedY && (n = b - r.tooltipRect.ttWidth), l = v - r.dataPointsDividedHeight + f / 2 - r.tooltipRect.ttHeight / 2) : (n = a.globals.isXNumeric ? b - x / 2 : b - r.dataPointsDividedWidth + x / 2, l = v);
           }
 
           return {
@@ -63189,11 +66081,11 @@ var Forestry = (function () {
       }]), t;
     }(),
         xt = function () {
-      function t(i) {
-        e(this, t), this.w = i.w, this.ttCtx = i;
+      function t(e) {
+        a(this, t), this.w = e.w, this.ttCtx = e;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "drawXaxisTooltip",
         value: function value() {
           var t = this.w,
@@ -63202,7 +66094,7 @@ var Forestry = (function () {
           e.xaxisOffY = i ? t.globals.gridHeight + 1 : -t.globals.xAxisHeight - t.config.xaxis.axisTicks.height + 3;
           var a = i ? "apexcharts-xaxistooltip apexcharts-xaxistooltip-bottom" : "apexcharts-xaxistooltip apexcharts-xaxistooltip-top",
               s = t.globals.dom.elWrap;
-          e.blxaxisTooltip && null === t.globals.dom.baseEl.querySelector(".apexcharts-xaxistooltip") && (e.xaxisTooltip = document.createElement("div"), e.xaxisTooltip.setAttribute("class", a + " apexcharts-theme-" + t.config.tooltip.theme), s.appendChild(e.xaxisTooltip), e.xaxisTooltipText = document.createElement("div"), e.xaxisTooltipText.classList.add("apexcharts-xaxistooltip-text"), e.xaxisTooltipText.style.fontFamily = t.config.xaxis.tooltip.style.fontFamily || t.config.chart.fontFamily, e.xaxisTooltipText.style.fontSize = t.config.xaxis.tooltip.style.fontSize, e.xaxisTooltip.appendChild(e.xaxisTooltipText));
+          e.isXAxisTooltipEnabled && null === t.globals.dom.baseEl.querySelector(".apexcharts-xaxistooltip") && (e.xaxisTooltip = document.createElement("div"), e.xaxisTooltip.setAttribute("class", a + " apexcharts-theme-" + t.config.tooltip.theme), s.appendChild(e.xaxisTooltip), e.xaxisTooltipText = document.createElement("div"), e.xaxisTooltipText.classList.add("apexcharts-xaxistooltip-text"), e.xaxisTooltipText.style.fontFamily = t.config.xaxis.tooltip.style.fontFamily || t.config.chart.fontFamily, e.xaxisTooltipText.style.fontSize = t.config.xaxis.tooltip.style.fontSize, e.xaxisTooltip.appendChild(e.xaxisTooltipText));
         }
       }, {
         key: "drawYaxisTooltip",
@@ -63278,16 +66170,16 @@ var Forestry = (function () {
       }]), t;
     }(),
         bt = function () {
-      function t(i) {
-        e(this, t), this.ctx = i, this.w = i.w;
-        var a = this.w;
-        this.tConfig = a.config.tooltip, this.tooltipUtil = new dt(this), this.tooltipLabels = new gt(this), this.tooltipPosition = new ut(this), this.marker = new pt(this), this.intersect = new ft(this), this.axesTooltip = new xt(this), this.showOnIntersect = this.tConfig.intersect, this.showTooltipTitle = this.tConfig.x.show, this.fixedTooltip = this.tConfig.fixed.enabled, this.xaxisTooltip = null, this.yaxisTTEls = null, this.isBarShared = !a.globals.isBarHorizontal && this.tConfig.shared;
+      function t(e) {
+        a(this, t), this.ctx = e, this.w = e.w;
+        var i = this.w;
+        this.tConfig = i.config.tooltip, this.tooltipUtil = new dt(this), this.tooltipLabels = new gt(this), this.tooltipPosition = new ut(this), this.marker = new pt(this), this.intersect = new ft(this), this.axesTooltip = new xt(this), this.showOnIntersect = this.tConfig.intersect, this.showTooltipTitle = this.tConfig.x.show, this.fixedTooltip = this.tConfig.fixed.enabled, this.xaxisTooltip = null, this.yaxisTTEls = null, this.isBarShared = !i.globals.isBarHorizontal && this.tConfig.shared, this.lastHoverTime = Date.now();
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "getElTooltip",
         value: function value(t) {
-          return t || (t = this), t.w.globals.dom.baseEl.querySelector(".apexcharts-tooltip");
+          return t || (t = this), t.w.globals.dom.baseEl ? t.w.globals.dom.baseEl.querySelector(".apexcharts-tooltip") : null;
         }
       }, {
         key: "getElXCrosshairs",
@@ -63303,7 +66195,7 @@ var Forestry = (function () {
         key: "drawTooltip",
         value: function value(t) {
           var e = this.w;
-          this.xyRatios = t, this.blxaxisTooltip = e.config.xaxis.tooltip.enabled && e.globals.axisCharts, this.yaxisTooltips = e.config.yaxis.map(function (t, i) {
+          this.xyRatios = t, this.isXAxisTooltipEnabled = e.config.xaxis.tooltip.enabled && e.globals.axisCharts, this.yaxisTooltips = e.config.yaxis.map(function (t, i) {
             return !!(t.show && t.tooltip.enabled && e.globals.axisCharts);
           }), this.allTooltipSeriesGroups = [], e.globals.axisCharts || (this.showTooltipTitle = !1);
           var i = document.createElement("div");
@@ -63416,7 +66308,7 @@ var Forestry = (function () {
               ttItems: e.ttItems
             };
             ["mousemove", "mouseup", "touchmove", "mouseout", "touchend"].map(function (e) {
-              return t[_a].addEventListener(e, i.seriesHover.bind(i, s), {
+              return t[_a].addEventListener(e, i.onSeriesHover.bind(i, s), {
                 capture: !1,
                 passive: !0
               });
@@ -63426,10 +66318,20 @@ var Forestry = (function () {
           }
         }
       }, {
-        key: "seriesHover",
+        key: "onSeriesHover",
         value: function value(t, e) {
           var i = this,
-              a = [],
+              a = Date.now() - this.lastHoverTime;
+          a >= 100 ? this.seriesHover(t, e) : (clearTimeout(this.seriesHoverTimeout), this.seriesHoverTimeout = setTimeout(function () {
+            i.seriesHover(t, e);
+          }, 100 - a));
+        }
+      }, {
+        key: "seriesHover",
+        value: function value(t, e) {
+          var i = this;
+          this.lastHoverTime = Date.now();
+          var a = [],
               s = this.w;
           s.config.chart.group && (a = this.ctx.getGroupedCharts()), s.globals.axisCharts && (s.globals.minX === -1 / 0 && s.globals.maxX === 1 / 0 || 0 === s.globals.dataPoints) || (a.length ? a.forEach(function (a) {
             var s = i.getElTooltip(a),
@@ -63464,21 +66366,24 @@ var Forestry = (function () {
               s = t.e,
               r = e.w,
               o = this.getElTooltip();
-          (i.tooltipRect = {
-            x: 0,
-            y: 0,
-            ttWidth: o.getBoundingClientRect().width,
-            ttHeight: o.getBoundingClientRect().height
-          }, i.e = s, !i.tooltipUtil.hasBars() || r.globals.comboCharts || i.isBarShared) || this.tConfig.onDatasetHover.highlightDataSeries && new I(e).toggleSeriesOnHover(s, s.target.parentNode);
-          i.fixedTooltip && i.drawFixedTooltipRect(), r.globals.axisCharts ? i.axisChartsTooltips({
-            e: s,
-            opt: a,
-            tooltipRect: i.tooltipRect
-          }) : i.nonAxisChartsTooltips({
-            e: s,
-            opt: a,
-            tooltipRect: i.tooltipRect
-          });
+
+          if (o) {
+            if (i.tooltipRect = {
+              x: 0,
+              y: 0,
+              ttWidth: o.getBoundingClientRect().width,
+              ttHeight: o.getBoundingClientRect().height
+            }, i.e = s, i.tooltipUtil.hasBars() && !r.globals.comboCharts && !i.isBarShared) if (this.tConfig.onDatasetHover.highlightDataSeries) new z(e).toggleSeriesOnHover(s, s.target.parentNode);
+            i.fixedTooltip && i.drawFixedTooltipRect(), r.globals.axisCharts ? i.axisChartsTooltips({
+              e: s,
+              opt: a,
+              tooltipRect: i.tooltipRect
+            }) : i.nonAxisChartsTooltips({
+              e: s,
+              opt: a,
+              tooltipRect: i.tooltipRect
+            });
+          }
         }
       }, {
         key: "axisChartsTooltips",
@@ -63502,6 +66407,7 @@ var Forestry = (function () {
                 g = r.globals.xyCharts || "bar" === r.config.chart.type && !r.globals.isBarHorizontal && this.tooltipUtil.hasBars() && this.tConfig.shared || r.globals.comboCharts && this.tooltipUtil.hasBars();
 
             if ("mousemove" === a.type || "touchmove" === a.type || "mouseup" === a.type) {
+              if (r.globals.collapsedSeries.length + r.globals.ancillaryCollapsedSeries.length === r.globals.series.length) return;
               null !== d && d.classList.add("apexcharts-active");
               var u = this.yaxisTooltips.filter(function (t) {
                 return !0 === t;
@@ -63577,14 +66483,16 @@ var Forestry = (function () {
             clientY: i
           }),
               o = r.j,
-              n = r.capturedSeries;
-          r.hoverX < 0 || r.hoverX > s.globals.gridWidth ? this.handleMouseOut(a) : null !== n ? this.handleStickyCapturedSeries(t, n, a, o) : (this.tooltipUtil.isXoverlap(o) || s.globals.isBarHorizontal) && this.create(t, this, 0, o, a.ttItems);
+              n = r.capturedSeries,
+              l = a.elGrid.getBoundingClientRect();
+          r.hoverX < 0 || r.hoverX > l.width ? this.handleMouseOut(a) : null !== n ? this.handleStickyCapturedSeries(t, n, a, o) : (this.tooltipUtil.isXoverlap(o) || s.globals.isBarHorizontal) && this.create(t, this, 0, o, a.ttItems);
         }
       }, {
         key: "handleStickyCapturedSeries",
         value: function value(t, e, i, a) {
           var s = this.w;
-          null === s.globals.series[e][a] ? this.handleMouseOut(i) : void 0 !== s.globals.series[e][a] ? this.tConfig.shared && this.tooltipUtil.isXoverlap(a) && this.tooltipUtil.isInitialSeriesSameLen() ? this.create(t, this, e, a, i.ttItems) : this.create(t, this, e, a, i.ttItems, !1) : this.tooltipUtil.isXoverlap(a) && this.create(t, this, 0, a, i.ttItems);
+          if (!this.tConfig.shared && null === s.globals.series[e][a]) return void this.handleMouseOut(i);
+          void 0 !== s.globals.series[e][a] ? this.tConfig.shared && this.tooltipUtil.isXoverlap(a) && this.tooltipUtil.isInitialSeriesSameLen() ? this.create(t, this, e, a, i.ttItems) : this.create(t, this, e, a, i.ttItems, !1) : this.tooltipUtil.isXoverlap(a) && this.create(t, this, 0, a, i.ttItems);
         }
       }, {
         key: "deactivateHoverFilter",
@@ -63599,7 +66507,7 @@ var Forestry = (function () {
           var e = this.w,
               i = this.getElXCrosshairs();
 
-          if (t.tooltipEl.classList.remove("apexcharts-active"), this.deactivateHoverFilter(), "bubble" !== e.config.chart.type && this.marker.resetPointsSize(), null !== i && i.classList.remove("apexcharts-active"), null !== this.ycrosshairs && this.ycrosshairs.classList.remove("apexcharts-active"), this.blxaxisTooltip && this.xaxisTooltip.classList.remove("apexcharts-active"), this.yaxisTooltips.length) {
+          if (t.tooltipEl.classList.remove("apexcharts-active"), this.deactivateHoverFilter(), "bubble" !== e.config.chart.type && this.marker.resetPointsSize(), null !== i && i.classList.remove("apexcharts-active"), null !== this.ycrosshairs && this.ycrosshairs.classList.remove("apexcharts-active"), this.isXAxisTooltipEnabled && this.xaxisTooltip.classList.remove("apexcharts-active"), this.yaxisTooltips.length) {
             null === this.yaxisTTEls && (this.yaxisTTEls = e.globals.dom.baseEl.querySelectorAll(".apexcharts-yaxistooltip"));
 
             for (var a = 0; a < this.yaxisTTEls.length; a++) {
@@ -63664,12 +66572,12 @@ var Forestry = (function () {
               j: a,
               shared: !this.showOnIntersect && this.tConfig.shared
             }), l && (o.globals.markers.largestSize > 0 ? n.marker.enlargePoints(a) : n.tooltipPosition.moveDynamicPointsOnHover(a)), this.tooltipUtil.hasBars() && (this.barSeriesHeight = this.tooltipUtil.getBarsHeight(h), this.barSeriesHeight > 0)) {
-              var m = new b(this.ctx),
-                  v = o.globals.dom.Paper.select(".apexcharts-bar-area[j='".concat(a, "']"));
+              var v = new b(this.ctx),
+                  m = o.globals.dom.Paper.select(".apexcharts-bar-area[j='".concat(a, "']"));
               this.deactivateHoverFilter(), this.tooltipPosition.moveStickyTooltipOverBars(a);
 
-              for (var y = 0; y < v.length; y++) {
-                m.pathMouseEnter(v[y]);
+              for (var y = 0; y < m.length; y++) {
+                v.pathMouseEnter(m[y]);
               }
             }
           } else n.tooltipLabels.drawSeriesTexts({
@@ -63681,106 +66589,106 @@ var Forestry = (function () {
         }
       }]), t;
     }(),
-        mt = function (t) {
+        vt = function (t) {
       n(s, E);
       var i = d(s);
 
       function s() {
-        return e(this, s), i.apply(this, arguments);
+        return a(this, s), i.apply(this, arguments);
       }
 
-      return a(s, [{
+      return r(s, [{
         key: "draw",
-        value: function value(t, e) {
-          var i = this,
-              a = this.w;
+        value: function value(t, i) {
+          var a = this,
+              s = this.w;
           this.graphics = new b(this.ctx), this.bar = new E(this.ctx, this.xyRatios);
-          var s = new y(this.ctx, a);
-          t = s.getLogSeries(t), this.yRatio = s.getLogYRatios(this.yRatio), this.barHelpers.initVariables(t), "100%" === a.config.chart.stackType && (t = a.globals.seriesPercent.slice()), this.series = t, this.totalItems = 0, this.prevY = [], this.prevX = [], this.prevYF = [], this.prevXF = [], this.prevYVal = [], this.prevXVal = [], this.xArrj = [], this.xArrjF = [], this.xArrjVal = [], this.yArrj = [], this.yArrjF = [], this.yArrjVal = [];
+          var r = new y(this.ctx, s);
+          t = r.getLogSeries(t), this.yRatio = r.getLogYRatios(this.yRatio), this.barHelpers.initVariables(t), "100%" === s.config.chart.stackType && (t = s.globals.seriesPercent.slice()), this.series = t, this.totalItems = 0, this.prevY = [], this.prevX = [], this.prevYF = [], this.prevXF = [], this.prevYVal = [], this.prevXVal = [], this.xArrj = [], this.xArrjF = [], this.xArrjVal = [], this.yArrj = [], this.yArrjF = [], this.yArrjVal = [];
 
-          for (var r = 0; r < t.length; r++) {
-            t[r].length > 0 && (this.totalItems += t[r].length);
+          for (var o = 0; o < t.length; o++) {
+            t[o].length > 0 && (this.totalItems += t[o].length);
           }
 
           for (var n = this.graphics.group({
             class: "apexcharts-bar-series apexcharts-plot-series"
-          }), l = 0, h = 0, c = function c(s, r) {
+          }), l = 0, h = 0, c = function c(r, o) {
             var c = void 0,
                 d = void 0,
                 g = void 0,
                 u = void 0,
                 f = [],
                 x = [],
-                b = a.globals.comboCharts ? e[s] : s;
-            i.yRatio.length > 1 && (i.yaxisIndex = b), i.isReversed = a.config.yaxis[i.yaxisIndex] && a.config.yaxis[i.yaxisIndex].reversed;
-            var m = i.graphics.group({
+                b = s.globals.comboCharts ? i[r] : r;
+            a.yRatio.length > 1 && (a.yaxisIndex = b), a.isReversed = s.config.yaxis[a.yaxisIndex] && s.config.yaxis[a.yaxisIndex].reversed;
+            var v = a.graphics.group({
               class: "apexcharts-series",
-              seriesName: p.escapeString(a.globals.seriesNames[b]),
-              rel: s + 1,
+              seriesName: p.escapeString(s.globals.seriesNames[b]),
+              rel: r + 1,
               "data:realIndex": b
             });
-            i.ctx.series.addCollapsedClassToSeries(m, b);
-            var v = i.graphics.group({
+            a.ctx.series.addCollapsedClassToSeries(v, b);
+            var m = a.graphics.group({
               class: "apexcharts-datalabels",
               "data:realIndex": b
             }),
                 y = 0,
                 w = 0,
-                k = i.initialPositions(l, h, c, d, g, u);
-            h = k.y, y = k.barHeight, d = k.yDivision, u = k.zeroW, l = k.x, w = k.barWidth, c = k.xDivision, g = k.zeroH, i.yArrj = [], i.yArrjF = [], i.yArrjVal = [], i.xArrj = [], i.xArrjF = [], i.xArrjVal = [], 1 === i.prevY.length && i.prevY[0].every(function (t) {
+                k = a.initialPositions(l, h, c, d, g, u);
+            h = k.y, y = k.barHeight, d = k.yDivision, u = k.zeroW, l = k.x, w = k.barWidth, c = k.xDivision, g = k.zeroH, a.yArrj = [], a.yArrjF = [], a.yArrjVal = [], a.xArrj = [], a.xArrjF = [], a.xArrjVal = [], 1 === a.prevY.length && a.prevY[0].every(function (t) {
               return isNaN(t);
-            }) && (i.prevY[0] = i.prevY[0].map(function (t) {
+            }) && (a.prevY[0] = a.prevY[0].map(function (t) {
               return g;
-            }), i.prevYF[0] = i.prevYF[0].map(function (t) {
+            }), a.prevYF[0] = a.prevYF[0].map(function (t) {
               return 0;
             }));
 
-            for (var A = 0; A < a.globals.dataPoints; A++) {
-              var S = i.barHelpers.getStrokeWidth(s, A, b),
+            for (var A = 0; A < s.globals.dataPoints; A++) {
+              var S = a.barHelpers.getStrokeWidth(r, A, b),
                   C = {
                 indexes: {
-                  i: s,
+                  i: r,
                   j: A,
                   realIndex: b,
-                  bc: r
+                  bc: o
                 },
                 strokeWidth: S,
                 x: l,
                 y: h,
-                elSeries: m
+                elSeries: v
               },
                   L = null;
-              i.isHorizontal ? (L = i.drawStackedBarPaths(o(o({}, C), {}, {
+              a.isHorizontal ? (L = a.drawStackedBarPaths(e(e({}, C), {}, {
                 zeroW: u,
                 barHeight: y,
                 yDivision: d
-              })), w = i.series[s][A] / i.invertedYRatio) : (L = i.drawStackedColumnPaths(o(o({}, C), {}, {
+              })), w = a.series[r][A] / a.invertedYRatio) : (L = a.drawStackedColumnPaths(e(e({}, C), {}, {
                 xDivision: c,
                 barWidth: w,
                 zeroH: g
-              })), y = i.series[s][A] / i.yRatio[i.yaxisIndex]), h = L.y, l = L.x, f.push(l), x.push(h);
-              var P = i.barHelpers.getPathFillColor(t, s, A, b);
-              m = i.renderSeries({
+              })), y = a.series[r][A] / a.yRatio[a.yaxisIndex]), h = L.y, l = L.x, f.push(l), x.push(h);
+              var P = a.barHelpers.getPathFillColor(t, r, A, b);
+              v = a.renderSeries({
                 realIndex: b,
                 pathFill: P,
                 j: A,
-                i: s,
+                i: r,
                 pathFrom: L.pathFrom,
                 pathTo: L.pathTo,
                 strokeWidth: S,
-                elSeries: m,
+                elSeries: v,
                 x: l,
                 y: h,
                 series: t,
                 barHeight: y,
                 barWidth: w,
-                elDataLabelsWrap: v,
+                elDataLabelsWrap: m,
                 type: "bar",
                 visibleSeries: 0
               });
             }
 
-            a.globals.seriesXvalues[b] = f, a.globals.seriesYvalues[b] = x, i.prevY.push(i.yArrj), i.prevYF.push(i.yArrjF), i.prevYVal.push(i.yArrjVal), i.prevX.push(i.xArrj), i.prevXF.push(i.xArrjF), i.prevXVal.push(i.xArrjVal), n.add(m);
+            s.globals.seriesXvalues[b] = f, s.globals.seriesYvalues[b] = x, a.prevY.push(a.yArrj), a.prevYF.push(a.yArrjF), a.prevYVal.push(a.yArrjVal), a.prevX.push(a.xArrj), a.prevXF.push(a.xArrjF), a.prevXVal.push(a.xArrjVal), n.add(v);
           }, d = 0, g = 0; d < t.length; d++, g++) {
             c(d, g);
           }
@@ -63850,8 +66758,9 @@ var Forestry = (function () {
               a = t.y,
               s = t.xDivision,
               r = t.barWidth,
-              o = t.zeroH,
-              n = (t.strokeWidth, t.elSeries),
+              o = t.zeroH;
+          t.strokeWidth;
+          var n = t.elSeries,
               l = this.w,
               h = e.i,
               c = e.j,
@@ -63868,23 +66777,23 @@ var Forestry = (function () {
 
           if (h > 0 && !l.globals.isXNumeric || h > 0 && l.globals.isXNumeric && l.globals.seriesX[h - 1][c] === l.globals.seriesX[h][c]) {
             var b,
-                m,
-                v = Math.min(this.yRatio.length + 1, h + 1);
-            if (void 0 !== this.prevY[h - 1]) for (var y = 1; y < v; y++) {
+                v,
+                m = Math.min(this.yRatio.length + 1, h + 1);
+            if (void 0 !== this.prevY[h - 1]) for (var y = 1; y < m; y++) {
               if (!isNaN(this.prevY[h - y][c])) {
-                m = this.prevY[h - y][c];
+                v = this.prevY[h - y][c];
                 break;
               }
             }
 
-            for (var w = 1; w < v; w++) {
+            for (var w = 1; w < m; w++) {
               if (this.prevYVal[h - w][c] < 0) {
-                b = this.series[h][c] >= 0 ? m - f + 2 * (this.isReversed ? f : 0) : m;
+                b = this.series[h][c] >= 0 ? v - f + 2 * (this.isReversed ? f : 0) : v;
                 break;
               }
 
               if (this.prevYVal[h - w][c] >= 0) {
-                b = this.series[h][c] >= 0 ? m : m + f - 2 * (this.isReversed ? f : 0);
+                b = this.series[h][c] >= 0 ? v : v + f - 2 * (this.isReversed ? f : 0);
                 break;
               }
             }
@@ -63928,112 +66837,121 @@ var Forestry = (function () {
         }
       }]), s;
     }(),
-        vt = function (t) {
+        mt = function (t) {
       n(s, E);
       var i = d(s);
 
       function s() {
-        return e(this, s), i.apply(this, arguments);
+        return a(this, s), i.apply(this, arguments);
       }
 
-      return a(s, [{
+      return r(s, [{
         key: "draw",
-        value: function value(t, e) {
-          var i = this,
-              a = this.w,
-              s = new b(this.ctx),
-              r = new L(this.ctx);
-          this.candlestickOptions = this.w.config.plotOptions.candlestick, this.boxOptions = this.w.config.plotOptions.boxPlot;
-          var o = new y(this.ctx, a);
-          t = o.getLogSeries(t), this.series = t, this.yRatio = o.getLogYRatios(this.yRatio), this.barHelpers.initVariables(t);
+        value: function value(t, i) {
+          var a = this,
+              s = this.w,
+              r = new b(this.ctx),
+              o = new L(this.ctx);
+          this.candlestickOptions = this.w.config.plotOptions.candlestick, this.boxOptions = this.w.config.plotOptions.boxPlot, this.isHorizontal = s.config.plotOptions.bar.horizontal;
+          var n = new y(this.ctx, s);
+          t = n.getLogSeries(t), this.series = t, this.yRatio = n.getLogYRatios(this.yRatio), this.barHelpers.initVariables(t);
 
-          for (var n = s.group({
-            class: "apexcharts-".concat(a.config.chart.type, "-series apexcharts-plot-series")
-          }), l = function l(o) {
-            i.isBoxPlot = "boxPlot" === a.config.chart.type || "boxPlot" === a.config.series[o].type;
-            var l,
-                h,
-                c = void 0,
-                d = void 0,
-                g = [],
-                u = [],
-                f = a.globals.comboCharts ? e[o] : o,
-                x = s.group({
+          for (var l = r.group({
+            class: "apexcharts-".concat(s.config.chart.type, "-series apexcharts-plot-series")
+          }), h = function h(n) {
+            a.isBoxPlot = "boxPlot" === s.config.chart.type || "boxPlot" === s.config.series[n].type;
+            var h,
+                c,
+                d,
+                g,
+                u = void 0,
+                f = void 0,
+                x = [],
+                b = [],
+                v = s.globals.comboCharts ? i[n] : n,
+                m = r.group({
               class: "apexcharts-series",
-              seriesName: p.escapeString(a.globals.seriesNames[f]),
-              rel: o + 1,
-              "data:realIndex": f
+              seriesName: p.escapeString(s.globals.seriesNames[v]),
+              rel: n + 1,
+              "data:realIndex": v
             });
-            t[o].length > 0 && (i.visibleI = i.visibleI + 1);
-            var b, m;
-            i.yRatio.length > 1 && (i.yaxisIndex = f);
-            var v = i.barHelpers.initialPositions();
-            d = v.y, b = v.barHeight, c = v.x, m = v.barWidth, l = v.xDivision, h = v.zeroH, u.push(c + m / 2);
+            a.ctx.series.addCollapsedClassToSeries(m, v), t[n].length > 0 && (a.visibleI = a.visibleI + 1);
+            var y, w;
+            a.yRatio.length > 1 && (a.yaxisIndex = v);
+            var k = a.barHelpers.initialPositions();
+            f = k.y, y = k.barHeight, c = k.yDivision, g = k.zeroW, u = k.x, w = k.barWidth, h = k.xDivision, d = k.zeroH, b.push(u + w / 2);
 
-            for (var y = s.group({
+            for (var A = r.group({
               class: "apexcharts-datalabels",
-              "data:realIndex": f
-            }), w = function w(e) {
-              var s = i.barHelpers.getStrokeWidth(o, e, f),
-                  n = i.drawBoxPaths({
+              "data:realIndex": v
+            }), S = function S(i) {
+              var r = a.barHelpers.getStrokeWidth(n, i, v),
+                  l = null,
+                  p = {
                 indexes: {
-                  i: o,
-                  j: e,
-                  realIndex: f
+                  i: n,
+                  j: i,
+                  realIndex: v
                 },
-                x: c,
-                y: d,
-                xDivision: l,
-                barWidth: m,
-                zeroH: h,
-                strokeWidth: s,
-                elSeries: x
-              });
-              d = n.y, c = n.x, e > 0 && u.push(c + m / 2), g.push(d), n.pathTo.forEach(function (l, h) {
-                var g = !i.isBoxPlot && i.candlestickOptions.wick.useFillColor ? n.color[h] : a.globals.stroke.colors[o],
-                    u = r.fillPath({
-                  seriesNumber: f,
-                  dataPointIndex: e,
-                  color: n.color[h],
-                  value: t[o][e]
+                x: u,
+                y: f,
+                strokeWidth: r,
+                elSeries: m
+              };
+              l = a.isHorizontal ? a.drawHorizontalBoxPaths(e(e({}, p), {}, {
+                yDivision: c,
+                barHeight: y,
+                zeroW: g
+              })) : a.drawVerticalBoxPaths(e(e({}, p), {}, {
+                xDivision: h,
+                barWidth: w,
+                zeroH: d
+              })), f = l.y, u = l.x, i > 0 && b.push(u + w / 2), x.push(f), l.pathTo.forEach(function (e, h) {
+                var c = !a.isBoxPlot && a.candlestickOptions.wick.useFillColor ? l.color[h] : s.globals.stroke.colors[n],
+                    d = o.fillPath({
+                  seriesNumber: v,
+                  dataPointIndex: i,
+                  color: l.color[h],
+                  value: t[n][i]
                 });
-                i.renderSeries({
-                  realIndex: f,
-                  pathFill: u,
-                  lineFill: g,
-                  j: e,
-                  i: o,
-                  pathFrom: n.pathFrom,
-                  pathTo: l,
-                  strokeWidth: s,
-                  elSeries: x,
-                  x: c,
-                  y: d,
+                a.renderSeries({
+                  realIndex: v,
+                  pathFill: d,
+                  lineFill: c,
+                  j: i,
+                  i: n,
+                  pathFrom: l.pathFrom,
+                  pathTo: e,
+                  strokeWidth: r,
+                  elSeries: m,
+                  x: u,
+                  y: f,
                   series: t,
-                  barHeight: b,
-                  barWidth: m,
-                  elDataLabelsWrap: y,
-                  visibleSeries: i.visibleI,
-                  type: a.config.chart.type
+                  barHeight: y,
+                  barWidth: w,
+                  elDataLabelsWrap: A,
+                  visibleSeries: a.visibleI,
+                  type: s.config.chart.type
                 });
               });
-            }, k = 0; k < a.globals.dataPoints; k++) {
-              w(k);
+            }, C = 0; C < s.globals.dataPoints; C++) {
+              S(C);
             }
 
-            a.globals.seriesXvalues[f] = u, a.globals.seriesYvalues[f] = g, n.add(x);
-          }, h = 0; h < t.length; h++) {
-            l(h);
+            s.globals.seriesXvalues[v] = b, s.globals.seriesYvalues[v] = x, l.add(m);
+          }, c = 0; c < t.length; c++) {
+            h(c);
           }
 
-          return n;
+          return l;
         }
       }, {
-        key: "drawBoxPaths",
+        key: "drawVerticalBoxPaths",
         value: function value(t) {
           var e = t.indexes,
-              i = t.x,
-              a = (t.y, t.xDivision),
+              i = t.x;
+          t.y;
+          var a = t.xDivision,
               s = t.barWidth,
               r = t.zeroH,
               o = t.strokeWidth,
@@ -64048,25 +66966,63 @@ var Forestry = (function () {
           this.isBoxPlot && (p = [this.boxOptions.colors.lower, this.boxOptions.colors.upper]);
           var f = this.yRatio[this.yaxisIndex],
               x = e.realIndex,
-              m = this.getOHLCValue(x, c),
-              v = r,
+              v = this.getOHLCValue(x, c),
+              m = r,
               y = r;
-          m.o > m.c && (d = !1);
-          var w = Math.min(m.o, m.c),
-              k = Math.max(m.o, m.c),
-              A = m.m;
+          v.o > v.c && (d = !1);
+          var w = Math.min(v.o, v.c),
+              k = Math.max(v.o, v.c),
+              A = v.m;
           n.globals.isXNumeric && (i = (n.globals.seriesX[x][c] - n.globals.minX) / this.xRatio - s / 2);
           var S = i + s * this.visibleI;
-          void 0 === this.series[h][c] || null === this.series[h][c] ? (w = r, k = r) : (w = r - w / f, k = r - k / f, v = r - m.h / f, y = r - m.l / f, A = r - m.m / f);
+          void 0 === this.series[h][c] || null === this.series[h][c] ? (w = r, k = r) : (w = r - w / f, k = r - k / f, m = r - v.h / f, y = r - v.l / f, A = r - v.m / f);
           var C = l.move(S, r),
               L = l.move(S + s / 2, w);
-          return n.globals.previousPaths.length > 0 && (L = this.getPreviousPath(x, c, !0)), C = this.isBoxPlot ? [l.move(S, w) + l.line(S + s / 2, w) + l.line(S + s / 2, v) + l.line(S + s / 4, v) + l.line(S + s - s / 4, v) + l.line(S + s / 2, v) + l.line(S + s / 2, w) + l.line(S + s, w) + l.line(S + s, A) + l.line(S, A) + l.line(S, w + o / 2), l.move(S, A) + l.line(S + s, A) + l.line(S + s, k) + l.line(S + s / 2, k) + l.line(S + s / 2, y) + l.line(S + s - s / 4, y) + l.line(S + s / 4, y) + l.line(S + s / 2, y) + l.line(S + s / 2, k) + l.line(S, k) + l.line(S, A) + "z"] : [l.move(S, k) + l.line(S + s / 2, k) + l.line(S + s / 2, v) + l.line(S + s / 2, k) + l.line(S + s, k) + l.line(S + s, w) + l.line(S + s / 2, w) + l.line(S + s / 2, y) + l.line(S + s / 2, w) + l.line(S, w) + l.line(S, k - o / 2)], L += l.move(S, w), n.globals.isXNumeric || (i += a), {
+          return n.globals.previousPaths.length > 0 && (L = this.getPreviousPath(x, c, !0)), C = this.isBoxPlot ? [l.move(S, w) + l.line(S + s / 2, w) + l.line(S + s / 2, m) + l.line(S + s / 4, m) + l.line(S + s - s / 4, m) + l.line(S + s / 2, m) + l.line(S + s / 2, w) + l.line(S + s, w) + l.line(S + s, A) + l.line(S, A) + l.line(S, w + o / 2), l.move(S, A) + l.line(S + s, A) + l.line(S + s, k) + l.line(S + s / 2, k) + l.line(S + s / 2, y) + l.line(S + s - s / 4, y) + l.line(S + s / 4, y) + l.line(S + s / 2, y) + l.line(S + s / 2, k) + l.line(S, k) + l.line(S, A) + "z"] : [l.move(S, k) + l.line(S + s / 2, k) + l.line(S + s / 2, m) + l.line(S + s / 2, k) + l.line(S + s, k) + l.line(S + s, w) + l.line(S + s / 2, w) + l.line(S + s / 2, y) + l.line(S + s / 2, w) + l.line(S, w) + l.line(S, k - o / 2)], L += l.move(S, w), n.globals.isXNumeric || (i += a), {
             pathTo: C,
             pathFrom: L,
             x: i,
             y: k,
             barXPosition: S,
             color: this.isBoxPlot ? p : d ? [g] : [u]
+          };
+        }
+      }, {
+        key: "drawHorizontalBoxPaths",
+        value: function value(t) {
+          var e = t.indexes;
+          t.x;
+          var i = t.y,
+              a = t.yDivision,
+              s = t.barHeight,
+              r = t.zeroW,
+              o = t.strokeWidth,
+              n = this.w,
+              l = new b(this.ctx),
+              h = e.i,
+              c = e.j,
+              d = this.boxOptions.colors.lower;
+          this.isBoxPlot && (d = [this.boxOptions.colors.lower, this.boxOptions.colors.upper]);
+          var g = this.invertedYRatio,
+              u = e.realIndex,
+              p = this.getOHLCValue(u, c),
+              f = r,
+              x = r,
+              v = Math.min(p.o, p.c),
+              m = Math.max(p.o, p.c),
+              y = p.m;
+          n.globals.isXNumeric && (i = (n.globals.seriesX[u][c] - n.globals.minX) / this.invertedXRatio - s / 2);
+          var w = i + s * this.visibleI;
+          void 0 === this.series[h][c] || null === this.series[h][c] ? (v = r, m = r) : (v = r + v / g, m = r + m / g, f = r + p.h / g, x = r + p.l / g, y = r + p.m / g);
+          var k = l.move(r, w),
+              A = l.move(v, w + s / 2);
+          return n.globals.previousPaths.length > 0 && (A = this.getPreviousPath(u, c, !0)), k = [l.move(v, w) + l.line(v, w + s / 2) + l.line(f, w + s / 2) + l.line(f, w + s / 2 - s / 4) + l.line(f, w + s / 2 + s / 4) + l.line(f, w + s / 2) + l.line(v, w + s / 2) + l.line(v, w + s) + l.line(y, w + s) + l.line(y, w) + l.line(v + o / 2, w), l.move(y, w) + l.line(y, w + s) + l.line(m, w + s) + l.line(m, w + s / 2) + l.line(x, w + s / 2) + l.line(x, w + s - s / 4) + l.line(x, w + s / 4) + l.line(x, w + s / 2) + l.line(m, w + s / 2) + l.line(m, w) + l.line(y, w) + "z"], A += l.move(v, w), n.globals.isXNumeric || (i += a), {
+            pathTo: k,
+            pathFrom: A,
+            x: m,
+            y: i,
+            barYPosition: w,
+            color: d
           };
         }
       }, {
@@ -64084,11 +67040,11 @@ var Forestry = (function () {
       }]), s;
     }(),
         yt = function () {
-      function t(i) {
-        e(this, t), this.ctx = i, this.w = i.w;
+      function t(e) {
+        a(this, t), this.ctx = e, this.w = e.w;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "checkColorRange",
         value: function value() {
           var t = this.w,
@@ -64120,7 +67076,7 @@ var Forestry = (function () {
               s = a.globals.series[e][i],
               r = a.config.plotOptions[t],
               o = r.colorScale.inverse ? i : e;
-          a.config.plotOptions[t].distributed && (o = i);
+          r.distributed && "treemap" === a.config.chart.type && (o = i);
           var n = a.globals.colors[o],
               l = null,
               h = Math.min.apply(Math, g(a.globals.series[e])),
@@ -64188,11 +67144,11 @@ var Forestry = (function () {
       }]), t;
     }(),
         wt = function () {
-      function t(i, a) {
-        e(this, t), this.ctx = i, this.w = i.w, this.xRatio = a.xRatio, this.yRatio = a.yRatio, this.dynamicAnim = this.w.config.chart.animations.dynamicAnimation, this.helpers = new yt(i), this.rectRadius = this.w.config.plotOptions.heatmap.radius, this.strokeWidth = this.w.config.stroke.show ? this.w.config.stroke.width : 0;
+      function t(e, i) {
+        a(this, t), this.ctx = e, this.w = e.w, this.xRatio = i.xRatio, this.yRatio = i.yRatio, this.dynamicAnim = this.w.config.chart.animations.dynamicAnimation, this.helpers = new yt(e), this.rectRadius = this.w.config.plotOptions.heatmap.radius, this.strokeWidth = this.w.config.stroke.show ? this.w.config.stroke.width : 0;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "draw",
         value: function value(t) {
           var e = this.w,
@@ -64223,10 +67179,10 @@ var Forestry = (function () {
             }
 
             for (var g = 0, u = e.config.plotOptions.heatmap.shadeIntensity, f = 0; f < l[h].length; f++) {
-              var m = this.helpers.getShadeColor(e.config.chart.type, h, f, this.negRange),
-                  v = m.color,
-                  y = m.colorProps;
-              if ("image" === e.config.fill.type) v = new L(this.ctx).fillPath({
+              var v = this.helpers.getShadeColor(e.config.chart.type, h, f, this.negRange),
+                  m = v.color,
+                  y = v.colorProps;
+              if ("image" === e.config.fill.type) m = new L(this.ctx).fillPath({
                 seriesNumber: h,
                 dataPointIndex: f,
                 opacity: e.globals.hasNegs ? y.percent < 0 ? 1 - (1 + y.percent / 100) : u + y.percent / 100 : y.percent / 100,
@@ -64241,14 +67197,14 @@ var Forestry = (function () {
                 cx: g,
                 cy: o
               }), k.node.classList.add("apexcharts-heatmap-rect"), c.add(k), k.attr({
-                fill: v,
+                fill: m,
                 i: h,
                 index: h,
                 j: f,
                 val: l[h][f],
                 "stroke-width": this.strokeWidth,
-                stroke: e.config.plotOptions.heatmap.useFillColorAsStroke ? v : e.globals.stroke.colors[0],
-                color: v
+                stroke: e.config.plotOptions.heatmap.useFillColorAsStroke ? m : e.globals.stroke.colors[0],
+                color: m
               }), this.helpers.addListeners(k), e.config.chart.animations.enabled && !e.globals.dataChanged) {
                 var A = 1;
                 e.globals.resized || (A = e.config.chart.animations.speed), this.animateHeatMap(k, g, o, s, r, A);
@@ -64260,7 +67216,7 @@ var Forestry = (function () {
                 if (this.dynamicAnim.enabled && e.globals.shouldAnimate) {
                   S = this.dynamicAnim.speed;
                   var C = e.globals.previousPaths[h] && e.globals.previousPaths[h][f] && e.globals.previousPaths[h][f].color;
-                  C || (C = "rgba(255, 255, 255, 0)"), this.animateHeatColor(k, p.isColorHex(C) ? C : p.rgb2hex(C), p.isColorHex(v) ? v : p.rgb2hex(v), S);
+                  C || (C = "rgba(255, 255, 255, 0)"), this.animateHeatColor(k, p.isColorHex(C) ? C : p.rgb2hex(C), p.isColorHex(m) ? m : p.rgb2hex(m), S);
                 }
               }
 
@@ -64287,8 +67243,8 @@ var Forestry = (function () {
 
           var M = e.globals.yAxisScale[0].result.slice();
           e.config.yaxis[0].reversed ? M.unshift("") : M.push(""), e.globals.yAxisScale[0].result = M;
-          var z = e.globals.gridHeight / e.globals.series.length;
-          return e.config.yaxis[0].labels.offsetY = -z / 2, a;
+          var I = e.globals.gridHeight / e.globals.series.length;
+          return e.config.yaxis[0].labels.offsetY = -I / 2, a;
         }
       }, {
         key: "animateHeatMap",
@@ -64320,11 +67276,11 @@ var Forestry = (function () {
       }]), t;
     }(),
         kt = function () {
-      function t(i) {
-        e(this, t), this.ctx = i, this.w = i.w;
+      function t(e) {
+        a(this, t), this.ctx = e, this.w = e.w;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "drawYAxisTexts",
         value: function value(t, e, i, a) {
           var s = this.w,
@@ -64343,13 +67299,13 @@ var Forestry = (function () {
       }]), t;
     }(),
         At = function () {
-      function t(i) {
-        e(this, t), this.ctx = i, this.w = i.w;
-        var a = this.w;
-        this.chartType = this.w.config.chart.type, this.initialAnim = this.w.config.chart.animations.enabled, this.dynamicAnim = this.initialAnim && this.w.config.chart.animations.dynamicAnimation.enabled, this.animBeginArr = [0], this.animDur = 0, this.donutDataLabels = this.w.config.plotOptions.pie.donut.labels, this.lineColorArr = void 0 !== a.globals.stroke.colors ? a.globals.stroke.colors : a.globals.colors, this.defaultSize = Math.min(a.globals.gridWidth, a.globals.gridHeight), this.centerY = this.defaultSize / 2, this.centerX = a.globals.gridWidth / 2, "radialBar" === a.config.chart.type ? this.fullAngle = 360 : this.fullAngle = Math.abs(a.config.plotOptions.pie.endAngle - a.config.plotOptions.pie.startAngle), this.initialAngle = a.config.plotOptions.pie.startAngle % this.fullAngle, a.globals.radialSize = this.defaultSize / 2.05 - a.config.stroke.width - (a.config.chart.sparkline.enabled ? 0 : a.config.chart.dropShadow.blur), this.donutSize = a.globals.radialSize * parseInt(a.config.plotOptions.pie.donut.size, 10) / 100, this.maxY = 0, this.sliceLabels = [], this.sliceSizes = [], this.prevSectorAngleArr = [];
+      function t(e) {
+        a(this, t), this.ctx = e, this.w = e.w;
+        var i = this.w;
+        this.chartType = this.w.config.chart.type, this.initialAnim = this.w.config.chart.animations.enabled, this.dynamicAnim = this.initialAnim && this.w.config.chart.animations.dynamicAnimation.enabled, this.animBeginArr = [0], this.animDur = 0, this.donutDataLabels = this.w.config.plotOptions.pie.donut.labels, this.lineColorArr = void 0 !== i.globals.stroke.colors ? i.globals.stroke.colors : i.globals.colors, this.defaultSize = Math.min(i.globals.gridWidth, i.globals.gridHeight), this.centerY = this.defaultSize / 2, this.centerX = i.globals.gridWidth / 2, "radialBar" === i.config.chart.type ? this.fullAngle = 360 : this.fullAngle = Math.abs(i.config.plotOptions.pie.endAngle - i.config.plotOptions.pie.startAngle), this.initialAngle = i.config.plotOptions.pie.startAngle % this.fullAngle, i.globals.radialSize = this.defaultSize / 2.05 - i.config.stroke.width - (i.config.chart.sparkline.enabled ? 0 : i.config.chart.dropShadow.blur), this.donutSize = i.globals.radialSize * parseInt(i.config.plotOptions.pie.donut.size, 10) / 100, this.maxY = 0, this.sliceLabels = [], this.sliceSizes = [], this.prevSectorAngleArr = [];
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "draw",
         value: function value(t) {
           var e = this,
@@ -64387,9 +67343,9 @@ var Forestry = (function () {
           this.donutSize < 0 && (this.donutSize = 0);
           var f = i.config.plotOptions.pie.customScale,
               x = i.globals.gridWidth / 2,
-              m = i.globals.gridHeight / 2,
-              v = x - i.globals.gridWidth / 2 * f,
-              y = m - i.globals.gridHeight / 2 * f;
+              v = i.globals.gridHeight / 2,
+              m = x - i.globals.gridWidth / 2 * f,
+              y = v - i.globals.gridHeight / 2 * f;
 
           if ("donut" === this.chartType) {
             var w = a.drawCircle(this.donutSize);
@@ -64405,14 +67361,14 @@ var Forestry = (function () {
           if (this.sliceLabels.forEach(function (t) {
             k.add(t);
           }), n.attr({
-            transform: "translate(".concat(v, ", ").concat(y, ") scale(").concat(f, ")")
+            transform: "translate(".concat(m, ", ").concat(y, ") scale(").concat(f, ")")
           }), n.add(k), this.ret.add(n), this.donutDataLabels.show) {
             var A = this.renderInnerDataLabels(this.donutDataLabels, {
               hollowSize: this.donutSize,
               centerX: this.centerX,
               centerY: this.centerY,
               opacity: this.donutDataLabels.show,
-              translateX: v,
+              translateX: m,
               translateY: y
             });
             this.ret.add(A);
@@ -64450,9 +67406,9 @@ var Forestry = (function () {
               size: this.sliceSizes[d],
               value: e[d]
             }),
-                m = this.getChangedPath(l, c),
-                v = s.drawPath({
-              d: m,
+                v = this.getChangedPath(l, c),
+                m = s.drawPath({
+              d: v,
               stroke: Array.isArray(this.lineColorArr) ? this.lineColorArr[d] : this.lineColorArr,
               strokeWidth: 0,
               fill: f,
@@ -64460,15 +67416,15 @@ var Forestry = (function () {
               classes: "apexcharts-pie-area apexcharts-".concat(this.chartType.toLowerCase(), "-slice-").concat(d)
             });
 
-            if (v.attr({
+            if (m.attr({
               index: 0,
               j: d
-            }), a.setSelectionFilter(v, 0, d), i.config.chart.dropShadow.enabled) {
+            }), a.setSelectionFilter(m, 0, d), i.config.chart.dropShadow.enabled) {
               var y = i.config.chart.dropShadow;
-              a.dropShadow(v, y, d);
+              a.dropShadow(m, y, d);
             }
 
-            this.addListeners(v, this.donutDataLabels), b.setAttrs(v.node, {
+            this.addListeners(m, this.donutDataLabels), b.setAttrs(m.node, {
               "data:angle": u,
               "data:startAngle": n,
               "data:strokeWidth": this.strokeWidth,
@@ -64478,10 +67434,10 @@ var Forestry = (function () {
               x: 0,
               y: 0
             };
-            "pie" === this.chartType || "polarArea" === this.chartType ? w = p.polarToCartesian(this.centerX, this.centerY, i.globals.radialSize / 1.25 + i.config.plotOptions.pie.dataLabels.offset, (n + u / 2) % this.fullAngle) : "donut" === this.chartType && (w = p.polarToCartesian(this.centerX, this.centerY, (i.globals.radialSize + this.donutSize) / 2 + i.config.plotOptions.pie.dataLabels.offset, (n + u / 2) % this.fullAngle)), g.add(v);
+            "pie" === this.chartType || "polarArea" === this.chartType ? w = p.polarToCartesian(this.centerX, this.centerY, i.globals.radialSize / 1.25 + i.config.plotOptions.pie.dataLabels.offset, (n + u / 2) % this.fullAngle) : "donut" === this.chartType && (w = p.polarToCartesian(this.centerX, this.centerY, (i.globals.radialSize + this.donutSize) / 2 + i.config.plotOptions.pie.dataLabels.offset, (n + u / 2) % this.fullAngle)), g.add(m);
             var k = 0;
 
-            if (!this.initialAnim || i.globals.resized || i.globals.dataChanged ? this.animBeginArr.push(0) : (0 === (k = u / this.fullAngle * i.config.chart.animations.speed) && (k = 1), this.animDur = k + this.animDur, this.animBeginArr.push(this.animDur)), this.dynamicAnim && i.globals.dataChanged ? this.animatePaths(v, {
+            if (!this.initialAnim || i.globals.resized || i.globals.dataChanged ? this.animBeginArr.push(0) : (0 === (k = u / this.fullAngle * i.config.chart.animations.speed) && (k = 1), this.animDur = k + this.animDur, this.animBeginArr.push(this.animDur)), this.dynamicAnim && i.globals.dataChanged ? this.animatePaths(m, {
               size: this.sliceSizes[d],
               endAngle: h,
               startAngle: n,
@@ -64492,7 +67448,7 @@ var Forestry = (function () {
               animBeginArr: this.animBeginArr,
               shouldSetPrevPaths: !0,
               dur: i.config.chart.animations.dynamicAnimation.speed
-            }) : this.animatePaths(v, {
+            }) : this.animatePaths(m, {
               size: this.sliceSizes[d],
               endAngle: h,
               startAngle: n,
@@ -64500,7 +67456,7 @@ var Forestry = (function () {
               totalItems: t.length - 1,
               animBeginArr: this.animBeginArr,
               dur: k
-            }), i.config.plotOptions.pie.expandOnClick && "polarArea" !== this.chartType && v.click(this.pieClicked.bind(this, d)), void 0 !== i.globals.selectedDataPoints[0] && i.globals.selectedDataPoints[0].indexOf(d) > -1 && this.pieClicked(d), i.config.dataLabels.enabled) {
+            }), i.config.plotOptions.pie.expandOnClick && "polarArea" !== this.chartType && m.click(this.pieClicked.bind(this, d)), void 0 !== i.globals.selectedDataPoints[0] && i.globals.selectedDataPoints[0].indexOf(d) > -1 && this.pieClicked(d), i.config.dataLabels.enabled) {
               var A = w.x,
                   S = w.y,
                   C = 100 * u / this.fullAngle + "%";
@@ -64515,7 +67471,7 @@ var Forestry = (function () {
                     M = s.group({
                   class: "apexcharts-datalabels"
                 }),
-                    z = s.drawText({
+                    I = s.drawText({
                   x: A,
                   y: S,
                   text: C,
@@ -64526,12 +67482,12 @@ var Forestry = (function () {
                   foreColor: T
                 });
 
-                if (M.add(z), i.config.dataLabels.dropShadow.enabled) {
-                  var I = i.config.dataLabels.dropShadow;
-                  a.dropShadow(z, I);
+                if (M.add(I), i.config.dataLabels.dropShadow.enabled) {
+                  var z = i.config.dataLabels.dropShadow;
+                  a.dropShadow(I, z);
                 }
 
-                z.node.classList.add("apexcharts-pie-label"), i.config.chart.animations.animate && !1 === i.globals.resized && (z.node.classList.add("apexcharts-pie-label-delay"), z.node.style.animationDelay = i.config.chart.animations.speed / 940 + "s"), this.sliceLabels.push(M);
+                I.node.classList.add("apexcharts-pie-label"), i.config.chart.animations.animate && !1 === i.globals.resized && (I.node.classList.add("apexcharts-pie-label-delay"), I.node.style.animationDelay = i.config.chart.animations.speed / 940 + "s"), this.sliceLabels.push(M);
               }
             }
           }
@@ -64714,7 +67670,7 @@ var Forestry = (function () {
           o = void 0 === t.name.color ? i.globals.colors[0] : t.name.color;
           var c = t.name.fontSize,
               d = t.name.fontFamily,
-              g = t.value.fontWeight;
+              g = t.name.fontWeight;
           n = void 0 === t.value.color ? i.config.chart.foreColor : t.value.color;
           var u = t.value.formatter,
               p = "",
@@ -64735,10 +67691,10 @@ var Forestry = (function () {
           }
 
           if (t.value.show) {
-            var m = t.name.show ? parseFloat(t.value.offsetY) + 16 : t.value.offsetY,
-                v = a.drawText({
+            var v = t.name.show ? parseFloat(t.value.offsetY) + 16 : t.value.offsetY,
+                m = a.drawText({
               x: l,
-              y: h + m,
+              y: h + v,
               text: p,
               textAnchor: "middle",
               foreColor: n,
@@ -64746,7 +67702,7 @@ var Forestry = (function () {
               fontSize: t.value.fontSize,
               fontFamily: t.value.fontFamily
             });
-            v.node.classList.add("apexcharts-datalabel-value"), s.add(v);
+            m.node.classList.add("apexcharts-datalabel-value"), s.add(m);
           }
 
           return s;
@@ -64828,25 +67784,25 @@ var Forestry = (function () {
       }]), t;
     }(),
         St = function () {
-      function t(i) {
-        e(this, t), this.ctx = i, this.w = i.w, this.chartType = this.w.config.chart.type, this.initialAnim = this.w.config.chart.animations.enabled, this.dynamicAnim = this.initialAnim && this.w.config.chart.animations.dynamicAnimation.enabled, this.animDur = 0;
-        var a = this.w;
-        this.graphics = new b(this.ctx), this.lineColorArr = void 0 !== a.globals.stroke.colors ? a.globals.stroke.colors : a.globals.colors, this.defaultSize = a.globals.svgHeight < a.globals.svgWidth ? a.globals.gridHeight + 1.5 * a.globals.goldenPadding : a.globals.gridWidth, this.isLog = a.config.yaxis[0].logarithmic, this.coreUtils = new y(this.ctx), this.maxValue = this.isLog ? this.coreUtils.getLogVal(a.globals.maxY, 0) : a.globals.maxY, this.minValue = this.isLog ? this.coreUtils.getLogVal(this.w.globals.minY, 0) : a.globals.minY, this.polygons = a.config.plotOptions.radar.polygons, this.strokeWidth = a.config.stroke.show ? a.config.stroke.width : 0, this.size = this.defaultSize / 2.1 - this.strokeWidth - a.config.chart.dropShadow.blur, a.config.xaxis.labels.show && (this.size = this.size - a.globals.xAxisLabelsWidth / 1.75), void 0 !== a.config.plotOptions.radar.size && (this.size = a.config.plotOptions.radar.size), this.dataRadiusOfPercent = [], this.dataRadius = [], this.angleArr = [], this.yaxisLabelsTextsPos = [];
+      function t(e) {
+        a(this, t), this.ctx = e, this.w = e.w, this.chartType = this.w.config.chart.type, this.initialAnim = this.w.config.chart.animations.enabled, this.dynamicAnim = this.initialAnim && this.w.config.chart.animations.dynamicAnimation.enabled, this.animDur = 0;
+        var i = this.w;
+        this.graphics = new b(this.ctx), this.lineColorArr = void 0 !== i.globals.stroke.colors ? i.globals.stroke.colors : i.globals.colors, this.defaultSize = i.globals.svgHeight < i.globals.svgWidth ? i.globals.gridHeight + 1.5 * i.globals.goldenPadding : i.globals.gridWidth, this.isLog = i.config.yaxis[0].logarithmic, this.coreUtils = new y(this.ctx), this.maxValue = this.isLog ? this.coreUtils.getLogVal(i.globals.maxY, 0) : i.globals.maxY, this.minValue = this.isLog ? this.coreUtils.getLogVal(this.w.globals.minY, 0) : i.globals.minY, this.polygons = i.config.plotOptions.radar.polygons, this.strokeWidth = i.config.stroke.show ? i.config.stroke.width : 0, this.size = this.defaultSize / 2.1 - this.strokeWidth - i.config.chart.dropShadow.blur, i.config.xaxis.labels.show && (this.size = this.size - i.globals.xAxisLabelsWidth / 1.75), void 0 !== i.config.plotOptions.radar.size && (this.size = i.config.plotOptions.radar.size), this.dataRadiusOfPercent = [], this.dataRadius = [], this.angleArr = [], this.yaxisLabelsTextsPos = [];
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "draw",
         value: function value(t) {
-          var e = this,
-              i = this.w,
-              a = new L(this.ctx),
-              s = [],
-              r = new M(this.ctx);
-          t.length && (this.dataPointsLen = t[i.globals.maxValsInArrayIndex].length), this.disAngle = 2 * Math.PI / this.dataPointsLen;
-          var n = i.globals.gridWidth / 2,
-              l = i.globals.gridHeight / 2,
-              h = n + i.config.plotOptions.radar.offsetX,
-              c = l + i.config.plotOptions.radar.offsetY,
+          var i = this,
+              a = this.w,
+              s = new L(this.ctx),
+              r = [],
+              o = new M(this.ctx);
+          t.length && (this.dataPointsLen = t[a.globals.maxValsInArrayIndex].length), this.disAngle = 2 * Math.PI / this.dataPointsLen;
+          var n = a.globals.gridWidth / 2,
+              l = a.globals.gridHeight / 2,
+              h = n + a.config.plotOptions.radar.offsetX,
+              c = l + a.config.plotOptions.radar.offsetY,
               d = this.graphics.group({
             class: "apexcharts-radar-series apexcharts-plot-series",
             transform: "translate(".concat(h || 0, ", ").concat(c || 0, ")")
@@ -64858,28 +67814,28 @@ var Forestry = (function () {
           if (this.yaxisLabels = this.graphics.group({
             class: "apexcharts-yaxis"
           }), t.forEach(function (t, n) {
-            var l = t.length === i.globals.dataPoints,
-                h = e.graphics.group().attr({
+            var l = t.length === a.globals.dataPoints,
+                h = i.graphics.group().attr({
               class: "apexcharts-series",
               "data:longestSeries": l,
-              seriesName: p.escapeString(i.globals.seriesNames[n]),
+              seriesName: p.escapeString(a.globals.seriesNames[n]),
               rel: n + 1,
               "data:realIndex": n
             });
-            e.dataRadiusOfPercent[n] = [], e.dataRadius[n] = [], e.angleArr[n] = [], t.forEach(function (t, i) {
-              var a = Math.abs(e.maxValue - e.minValue);
-              t += Math.abs(e.minValue), e.isLog && (t = e.coreUtils.getLogVal(t, 0)), e.dataRadiusOfPercent[n][i] = t / a, e.dataRadius[n][i] = e.dataRadiusOfPercent[n][i] * e.size, e.angleArr[n][i] = i * e.disAngle;
-            }), g = e.getDataPointsPos(e.dataRadius[n], e.angleArr[n]);
-            var c = e.createPaths(g, {
+            i.dataRadiusOfPercent[n] = [], i.dataRadius[n] = [], i.angleArr[n] = [], t.forEach(function (t, e) {
+              var a = Math.abs(i.maxValue - i.minValue);
+              t += Math.abs(i.minValue), i.isLog && (t = i.coreUtils.getLogVal(t, 0)), i.dataRadiusOfPercent[n][e] = t / a, i.dataRadius[n][e] = i.dataRadiusOfPercent[n][e] * i.size, i.angleArr[n][e] = e * i.disAngle;
+            }), g = i.getDataPointsPos(i.dataRadius[n], i.angleArr[n]);
+            var c = i.createPaths(g, {
               x: 0,
               y: 0
             });
-            u = e.graphics.group({
+            u = i.graphics.group({
               class: "apexcharts-series-markers-wrap apexcharts-element-hidden"
-            }), f = e.graphics.group({
+            }), f = i.graphics.group({
               class: "apexcharts-datalabels",
               "data:realIndex": n
-            }), i.globals.delayedElements.push({
+            }), a.globals.delayedElements.push({
               el: u.node,
               index: n
             });
@@ -64887,40 +67843,40 @@ var Forestry = (function () {
               i: n,
               realIndex: n,
               animationDelay: n,
-              initialSpeed: i.config.chart.animations.speed,
-              dataChangeSpeed: i.config.chart.animations.dynamicAnimation.speed,
+              initialSpeed: a.config.chart.animations.speed,
+              dataChangeSpeed: a.config.chart.animations.dynamicAnimation.speed,
               className: "apexcharts-radar",
               shouldClipToGrid: !1,
               bindEventsOnPaths: !1,
-              stroke: i.globals.stroke.colors[n],
-              strokeLineCap: i.config.stroke.lineCap
+              stroke: a.globals.stroke.colors[n],
+              strokeLineCap: a.config.stroke.lineCap
             },
                 b = null;
-            i.globals.previousPaths.length > 0 && (b = e.getPreviousPath(n));
+            a.globals.previousPaths.length > 0 && (b = i.getPreviousPath(n));
 
-            for (var m = 0; m < c.linePathsTo.length; m++) {
-              var v = e.graphics.renderPaths(o(o({}, d), {}, {
-                pathFrom: null === b ? c.linePathsFrom[m] : b,
-                pathTo: c.linePathsTo[m],
-                strokeWidth: Array.isArray(e.strokeWidth) ? e.strokeWidth[n] : e.strokeWidth,
+            for (var v = 0; v < c.linePathsTo.length; v++) {
+              var m = i.graphics.renderPaths(e(e({}, d), {}, {
+                pathFrom: null === b ? c.linePathsFrom[v] : b,
+                pathTo: c.linePathsTo[v],
+                strokeWidth: Array.isArray(i.strokeWidth) ? i.strokeWidth[n] : i.strokeWidth,
                 fill: "none",
                 drawShadow: !1
               }));
-              h.add(v);
-              var y = a.fillPath({
+              h.add(m);
+              var y = s.fillPath({
                 seriesNumber: n
               }),
-                  w = e.graphics.renderPaths(o(o({}, d), {}, {
-                pathFrom: null === b ? c.areaPathsFrom[m] : b,
-                pathTo: c.areaPathsTo[m],
+                  w = i.graphics.renderPaths(e(e({}, d), {}, {
+                pathFrom: null === b ? c.areaPathsFrom[v] : b,
+                pathTo: c.areaPathsTo[v],
                 strokeWidth: 0,
                 fill: y,
                 drawShadow: !1
               }));
 
-              if (i.config.chart.dropShadow.enabled) {
-                var k = new x(e.ctx),
-                    A = i.config.chart.dropShadow;
+              if (a.config.chart.dropShadow.enabled) {
+                var k = new x(i.ctx),
+                    A = a.config.chart.dropShadow;
                 k.dropShadow(w, Object.assign({}, A, {
                   noUserSpaceOnUse: !0
                 }), n);
@@ -64929,45 +67885,49 @@ var Forestry = (function () {
               h.add(w);
             }
 
-            t.forEach(function (t, a) {
-              var s = new P(e.ctx).getMarkerConfig("apexcharts-marker", n, a),
-                  l = e.graphics.drawMarker(g[a].x, g[a].y, s);
-              l.attr("rel", a), l.attr("j", a), l.attr("index", n), l.node.setAttribute("default-marker-size", s.pSize);
-              var c = e.graphics.group({
+            t.forEach(function (t, s) {
+              var r = new P(i.ctx).getMarkerConfig({
+                cssClass: "apexcharts-marker",
+                seriesIndex: n,
+                dataPointIndex: s
+              }),
+                  l = i.graphics.drawMarker(g[s].x, g[s].y, r);
+              l.attr("rel", s), l.attr("j", s), l.attr("index", n), l.node.setAttribute("default-marker-size", r.pSize);
+              var c = i.graphics.group({
                 class: "apexcharts-series-markers"
               });
               c && c.add(l), u.add(c), h.add(u);
-              var d = i.config.dataLabels;
+              var d = a.config.dataLabels;
 
               if (d.enabled) {
-                var p = d.formatter(i.globals.series[n][a], {
+                var p = d.formatter(a.globals.series[n][s], {
                   seriesIndex: n,
-                  dataPointIndex: a,
-                  w: i
+                  dataPointIndex: s,
+                  w: a
                 });
-                r.plotDataLabelsText({
-                  x: g[a].x,
-                  y: g[a].y,
+                o.plotDataLabelsText({
+                  x: g[s].x,
+                  y: g[s].y,
                   text: p,
                   textAnchor: "middle",
                   i: n,
                   j: n,
                   parent: f,
                   offsetCorrection: !1,
-                  dataLabelsConfig: o({}, d)
+                  dataLabelsConfig: e({}, d)
                 });
               }
 
               h.add(f);
-            }), s.push(h);
+            }), r.push(h);
           }), this.drawPolygons({
             parent: d
-          }), i.config.xaxis.labels.show) {
+          }), a.config.xaxis.labels.show) {
             var b = this.drawXAxisTexts();
             d.add(b);
           }
 
-          return s.forEach(function (t) {
+          return r.forEach(function (t) {
             d.add(t);
           }), d.add(this.yaxisLabels), d;
         }
@@ -65011,22 +67971,22 @@ var Forestry = (function () {
         key: "drawXAxisTexts",
         value: function value() {
           var t = this,
-              e = this.w,
-              i = e.config.xaxis.labels,
-              a = this.graphics.group({
+              i = this.w,
+              a = i.config.xaxis.labels,
+              s = this.graphics.group({
             class: "apexcharts-xaxis"
           }),
-              s = p.getPolygonPos(this.size, this.dataPointsLen);
-          return e.globals.labels.forEach(function (r, n) {
-            var l = e.config.xaxis.labels.formatter,
+              r = p.getPolygonPos(this.size, this.dataPointsLen);
+          return i.globals.labels.forEach(function (o, n) {
+            var l = i.config.xaxis.labels.formatter,
                 h = new M(t.ctx);
 
-            if (s[n]) {
-              var c = t.getTextPos(s[n], t.size),
-                  d = l(r, {
+            if (r[n]) {
+              var c = t.getTextPos(r[n], t.size),
+                  d = l(o, {
                 seriesIndex: -1,
                 dataPointIndex: n,
-                w: e
+                w: i
               });
               h.plotDataLabelsText({
                 x: c.newX,
@@ -65035,18 +67995,18 @@ var Forestry = (function () {
                 textAnchor: c.textAnchor,
                 i: n,
                 j: n,
-                parent: a,
-                color: Array.isArray(i.style.colors) && i.style.colors[n] ? i.style.colors[n] : "#a8a8a8",
-                dataLabelsConfig: o({
+                parent: s,
+                color: Array.isArray(a.style.colors) && a.style.colors[n] ? a.style.colors[n] : "#a8a8a8",
+                dataLabelsConfig: e({
                   textAnchor: c.textAnchor,
                   dropShadow: {
                     enabled: !1
                   }
-                }, i),
+                }, a),
                 offsetCorrection: !1
               });
             }
-          }), a;
+          }), s;
         }
       }, {
         key: "createPaths",
@@ -65111,17 +68071,17 @@ var Forestry = (function () {
       }]), t;
     }(),
         Ct = function (t) {
-      n(s, At);
-      var i = d(s);
+      n(i, At);
+      var e = d(i);
 
-      function s(t) {
-        var a;
-        e(this, s), (a = i.call(this, t)).ctx = t, a.w = t.w, a.animBeginArr = [0], a.animDur = 0;
-        var r = a.w;
-        return a.startAngle = r.config.plotOptions.radialBar.startAngle, a.endAngle = r.config.plotOptions.radialBar.endAngle, a.totalAngle = Math.abs(r.config.plotOptions.radialBar.endAngle - r.config.plotOptions.radialBar.startAngle), a.trackStartAngle = r.config.plotOptions.radialBar.track.startAngle, a.trackEndAngle = r.config.plotOptions.radialBar.track.endAngle, a.radialDataLabels = r.config.plotOptions.radialBar.dataLabels, a.trackStartAngle || (a.trackStartAngle = a.startAngle), a.trackEndAngle || (a.trackEndAngle = a.endAngle), 360 === a.endAngle && (a.endAngle = 359.99), a.margin = parseInt(r.config.plotOptions.radialBar.track.margin, 10), a;
+      function i(t) {
+        var s;
+        a(this, i), (s = e.call(this, t)).ctx = t, s.w = t.w, s.animBeginArr = [0], s.animDur = 0;
+        var r = s.w;
+        return s.startAngle = r.config.plotOptions.radialBar.startAngle, s.endAngle = r.config.plotOptions.radialBar.endAngle, s.totalAngle = Math.abs(r.config.plotOptions.radialBar.endAngle - r.config.plotOptions.radialBar.startAngle), s.trackStartAngle = r.config.plotOptions.radialBar.track.startAngle, s.trackEndAngle = r.config.plotOptions.radialBar.track.endAngle, s.donutDataLabels = s.w.config.plotOptions.radialBar.dataLabels, s.radialDataLabels = s.donutDataLabels, s.trackStartAngle || (s.trackStartAngle = s.startAngle), s.trackEndAngle || (s.trackEndAngle = s.endAngle), 360 === s.endAngle && (s.endAngle = 359.99), s.margin = parseInt(r.config.plotOptions.radialBar.track.margin, 10), s;
       }
 
-      return a(s, [{
+      return r(i, [{
         key: "draw",
         value: function value(t) {
           var e = this.w,
@@ -65265,52 +68225,52 @@ var Forestry = (function () {
           var f = !1;
           e.config.plotOptions.radialBar.inverseOrder && (f = !0);
 
-          for (var m = f ? t.series.length - 1 : 0; f ? m >= 0 : m < t.series.length; f ? m-- : m++) {
-            var v = i.group({
+          for (var v = f ? t.series.length - 1 : 0; f ? v >= 0 : v < t.series.length; f ? v-- : v++) {
+            var m = i.group({
               class: "apexcharts-series apexcharts-radial-series",
-              seriesName: p.escapeString(e.globals.seriesNames[m])
+              seriesName: p.escapeString(e.globals.seriesNames[v])
             });
-            r.add(v), v.attr({
-              rel: m + 1,
-              "data:realIndex": m
-            }), this.ctx.series.addCollapsedClassToSeries(v, m), t.size = t.size - o - this.margin;
+            r.add(m), m.attr({
+              rel: v + 1,
+              "data:realIndex": v
+            }), this.ctx.series.addCollapsedClassToSeries(m, v), t.size = t.size - o - this.margin;
             var y = a.fillPath({
-              seriesNumber: m,
+              seriesNumber: v,
               size: t.size,
-              value: t.series[m]
+              value: t.series[v]
             }),
                 w = this.startAngle,
                 k = void 0,
-                A = p.negToZero(t.series[m] > 100 ? 100 : t.series[m]) / 100,
+                A = p.negToZero(t.series[v] > 100 ? 100 : t.series[v]) / 100,
                 S = Math.round(this.totalAngle * A) + this.startAngle,
                 C = void 0;
-            e.globals.dataChanged && (k = this.startAngle, C = Math.round(this.totalAngle * p.negToZero(e.globals.previousPaths[m]) / 100) + k), Math.abs(S) + Math.abs(w) >= 360 && (S -= .01), Math.abs(C) + Math.abs(k) >= 360 && (C -= .01);
+            e.globals.dataChanged && (k = this.startAngle, C = Math.round(this.totalAngle * p.negToZero(e.globals.previousPaths[v]) / 100) + k), Math.abs(S) + Math.abs(w) >= 360 && (S -= .01), Math.abs(C) + Math.abs(k) >= 360 && (C -= .01);
             var P = S - w,
-                T = Array.isArray(e.config.stroke.dashArray) ? e.config.stroke.dashArray[m] : e.config.stroke.dashArray,
+                T = Array.isArray(e.config.stroke.dashArray) ? e.config.stroke.dashArray[v] : e.config.stroke.dashArray,
                 M = i.drawPath({
               d: "",
               stroke: y,
               strokeWidth: o,
               fill: "none",
               fillOpacity: e.config.fill.opacity,
-              classes: "apexcharts-radialbar-area apexcharts-radialbar-slice-" + m,
+              classes: "apexcharts-radialbar-area apexcharts-radialbar-slice-" + v,
               strokeDashArray: T
             });
 
             if (b.setAttrs(M.node, {
               "data:angle": P,
-              "data:value": t.series[m]
+              "data:value": t.series[v]
             }), e.config.chart.dropShadow.enabled) {
-              var z = e.config.chart.dropShadow;
-              s.dropShadow(M, z, m);
+              var I = e.config.chart.dropShadow;
+              s.dropShadow(M, I, v);
             }
 
-            s.setSelectionFilter(M, 0, m), this.addListeners(M, this.radialDataLabels), v.add(M), M.attr({
+            s.setSelectionFilter(M, 0, v), this.addListeners(M, this.radialDataLabels), m.add(M), M.attr({
               index: 0,
-              j: m
+              j: v
             });
-            var I = 0;
-            !this.initialAnim || e.globals.resized || e.globals.dataChanged || (I = (S - w) / 360 * e.config.chart.animations.speed, this.animDur = I / (1.2 * t.series.length) + this.animDur, this.animBeginArr.push(this.animDur)), e.globals.dataChanged && (I = (S - w) / 360 * e.config.chart.animations.dynamicAnimation.speed, this.animDur = I / (1.2 * t.series.length) + this.animDur, this.animBeginArr.push(this.animDur)), this.animatePaths(M, {
+            var z = 0;
+            !this.initialAnim || e.globals.resized || e.globals.dataChanged || (z = (S - w) / 360 * e.config.chart.animations.speed, this.animDur = z / (1.2 * t.series.length) + this.animDur, this.animBeginArr.push(this.animDur)), e.globals.dataChanged && (z = (S - w) / 360 * e.config.chart.animations.dynamicAnimation.speed, this.animDur = z / (1.2 * t.series.length) + this.animDur, this.animBeginArr.push(this.animDur)), this.animatePaths(M, {
               centerX: t.centerX,
               centerY: t.centerY,
               endAngle: S,
@@ -65318,10 +68278,10 @@ var Forestry = (function () {
               prevEndAngle: C,
               prevStartAngle: k,
               size: t.size,
-              i: m,
+              i: v,
               totalItems: 2,
               animBeginArr: this.animBeginArr,
-              dur: I,
+              dur: z,
               shouldSetPrevPaths: !0,
               easing: e.globals.easing
             });
@@ -65381,14 +68341,14 @@ var Forestry = (function () {
           var e = this.w;
           return t.size * (100 - parseInt(e.config.plotOptions.radialBar.hollow.size, 10)) / 100 / (t.series.length + 1) - this.margin;
         }
-      }]), s;
+      }]), i;
     }(),
         Lt = function () {
-      function t(i) {
-        e(this, t), this.w = i.w, this.lineCtx = i;
+      function t(e) {
+        a(this, t), this.w = e.w, this.lineCtx = e;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "sameValueSeriesFix",
         value: function value(t, e) {
           var i = this.w;
@@ -65459,11 +68419,11 @@ var Forestry = (function () {
       }]), t;
     }(),
         Pt = function () {
-      function t(i, a, s) {
-        e(this, t), this.ctx = i, this.w = i.w, this.xyRatios = a, this.pointsChart = !("bubble" !== this.w.config.chart.type && "scatter" !== this.w.config.chart.type) || s, this.scatter = new T(this.ctx), this.noNegatives = this.w.globals.minX === Number.MAX_VALUE, this.lineHelpers = new Lt(this), this.markers = new P(this.ctx), this.prevSeriesY = [], this.categoryAxisCorrection = 0, this.yaxisIndex = 0;
+      function t(e, i, s) {
+        a(this, t), this.ctx = e, this.w = e.w, this.xyRatios = i, this.pointsChart = !("bubble" !== this.w.config.chart.type && "scatter" !== this.w.config.chart.type) || s, this.scatter = new T(this.ctx), this.noNegatives = this.w.globals.minX === Number.MAX_VALUE, this.lineHelpers = new Lt(this), this.markers = new P(this.ctx), this.prevSeriesY = [], this.categoryAxisCorrection = 0, this.yaxisIndex = 0;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "draw",
         value: function value(t, e, i) {
           var a = this.w,
@@ -65488,20 +68448,20 @@ var Forestry = (function () {
             var p,
                 f = u,
                 x = f,
-                m = this.zeroY;
-            m = this.lineHelpers.determineFirstPrevY({
+                v = this.zeroY;
+            v = this.lineHelpers.determineFirstPrevY({
               i: h,
               series: t,
-              prevY: m,
+              prevY: v,
               lineYPosition: 0
-            }).prevY, d.push(m), p = m;
+            }).prevY, d.push(v), p = v;
 
-            var v = this._calculatePathsFrom({
+            var m = this._calculatePathsFrom({
               series: t,
               i: h,
               realIndex: c,
               prevX: x,
-              prevY: m
+              prevY: v
             }),
                 w = this._iterateOverDataPoints({
               series: t,
@@ -65511,7 +68471,7 @@ var Forestry = (function () {
               y: 1,
               pX: f,
               pY: p,
-              pathsFrom: v,
+              pathsFrom: m,
               linePaths: [],
               areaPaths: [],
               seriesIndex: i,
@@ -65602,42 +68562,42 @@ var Forestry = (function () {
       }, {
         key: "_handlePaths",
         value: function value(t) {
-          var e = t.type,
-              i = t.realIndex,
-              a = t.i,
-              s = t.paths,
-              r = this.w,
+          var i = t.type,
+              a = t.realIndex,
+              s = t.i,
+              r = t.paths,
+              o = this.w,
               n = new b(this.ctx),
               l = new L(this.ctx);
-          this.prevSeriesY.push(s.yArrj), r.globals.seriesXvalues[i] = s.xArrj, r.globals.seriesYvalues[i] = s.yArrj;
-          var h = r.config.forecastDataPoints;
+          this.prevSeriesY.push(r.yArrj), o.globals.seriesXvalues[a] = r.xArrj, o.globals.seriesYvalues[a] = r.yArrj;
+          var h = o.config.forecastDataPoints;
 
           if (h.count > 0) {
-            var c = r.globals.seriesXvalues[i][r.globals.seriesXvalues[i].length - h.count - 1],
-                d = n.drawRect(c, 0, r.globals.gridWidth, r.globals.gridHeight, 0);
-            r.globals.dom.elForecastMask.appendChild(d.node);
-            var g = n.drawRect(0, 0, c, r.globals.gridHeight, 0);
-            r.globals.dom.elNonForecastMask.appendChild(g.node);
+            var c = o.globals.seriesXvalues[a][o.globals.seriesXvalues[a].length - h.count - 1],
+                d = n.drawRect(c, 0, o.globals.gridWidth, o.globals.gridHeight, 0);
+            o.globals.dom.elForecastMask.appendChild(d.node);
+            var g = n.drawRect(0, 0, c, o.globals.gridHeight, 0);
+            o.globals.dom.elNonForecastMask.appendChild(g.node);
           }
 
-          this.pointsChart || r.globals.delayedElements.push({
+          this.pointsChart || o.globals.delayedElements.push({
             el: this.elPointsMain.node,
-            index: i
+            index: a
           });
           var u = {
-            i: a,
-            realIndex: i,
-            animationDelay: a,
-            initialSpeed: r.config.chart.animations.speed,
-            dataChangeSpeed: r.config.chart.animations.dynamicAnimation.speed,
-            className: "apexcharts-".concat(e)
+            i: s,
+            realIndex: a,
+            animationDelay: s,
+            initialSpeed: o.config.chart.animations.speed,
+            dataChangeSpeed: o.config.chart.animations.dynamicAnimation.speed,
+            className: "apexcharts-".concat(i)
           };
-          if ("area" === e) for (var p = l.fillPath({
-            seriesNumber: i
-          }), f = 0; f < s.areaPaths.length; f++) {
-            var x = n.renderPaths(o(o({}, u), {}, {
-              pathFrom: s.pathFromArea,
-              pathTo: s.areaPaths[f],
+          if ("area" === i) for (var p = l.fillPath({
+            seriesNumber: a
+          }), f = 0; f < r.areaPaths.length; f++) {
+            var x = n.renderPaths(e(e({}, u), {}, {
+              pathFrom: r.pathFromArea,
+              pathTo: r.areaPaths[f],
               stroke: "none",
               strokeWidth: 0,
               strokeLineCap: null,
@@ -65646,27 +68606,27 @@ var Forestry = (function () {
             this.elSeries.add(x);
           }
 
-          if (r.config.stroke.show && !this.pointsChart) {
-            var m = null;
-            m = "line" === e ? l.fillPath({
-              seriesNumber: i,
-              i: a
-            }) : r.globals.stroke.colors[i];
+          if (o.config.stroke.show && !this.pointsChart) {
+            var v = null;
+            v = "line" === i ? l.fillPath({
+              seriesNumber: a,
+              i: s
+            }) : o.globals.stroke.colors[a];
 
-            for (var v = 0; v < s.linePaths.length; v++) {
-              var y = o(o({}, u), {}, {
-                pathFrom: s.pathFromLine,
-                pathTo: s.linePaths[v],
-                stroke: m,
+            for (var m = 0; m < r.linePaths.length; m++) {
+              var y = e(e({}, u), {}, {
+                pathFrom: r.pathFromLine,
+                pathTo: r.linePaths[m],
+                stroke: v,
                 strokeWidth: this.strokeWidth,
-                strokeLineCap: r.config.stroke.lineCap,
+                strokeLineCap: o.config.stroke.lineCap,
                 fill: "none"
               }),
                   w = n.renderPaths(y);
 
               if (this.elSeries.add(w), h.count > 0) {
                 var k = n.renderPaths(y);
-                k.node.setAttribute("stroke-dasharray", h.dashArray), h.strokeWidth && k.node.setAttribute("stroke-width", h.strokeWidth), this.elSeries.add(k), k.attr("clip-path", "url(#forecastMask".concat(r.globals.cuid, ")")), w.attr("clip-path", "url(#nonForecastMask".concat(r.globals.cuid, ")"));
+                k.node.setAttribute("stroke-dasharray", h.dashArray), h.strokeWidth && k.node.setAttribute("stroke-width", h.strokeWidth), this.elSeries.add(k), k.attr("clip-path", "url(#forecastMask".concat(o.globals.cuid, ")")), w.attr("clip-path", "url(#nonForecastMask".concat(o.globals.cuid, ")"));
               }
             }
           }
@@ -65674,7 +68634,7 @@ var Forestry = (function () {
       }, {
         key: "_iterateOverDataPoints",
         value: function value(t) {
-          for (var e = t.series, i = t.realIndex, a = t.i, s = t.x, r = t.y, o = t.pX, n = t.pY, l = t.pathsFrom, h = t.linePaths, c = t.areaPaths, d = t.seriesIndex, g = t.lineYPosition, u = t.xArrj, f = t.yArrj, x = this.w, m = new b(this.ctx), v = this.yRatio, y = l.prevY, w = l.linePath, k = l.areaPath, A = l.pathFromLine, S = l.pathFromArea, C = p.isNumber(x.globals.minYArr[i]) ? x.globals.minYArr[i] : x.globals.minY, L = x.globals.dataPoints > 1 ? x.globals.dataPoints - 1 : x.globals.dataPoints, P = 0; P < L; P++) {
+          for (var e = t.series, i = t.realIndex, a = t.i, s = t.x, r = t.y, o = t.pX, n = t.pY, l = t.pathsFrom, h = t.linePaths, c = t.areaPaths, d = t.seriesIndex, g = t.lineYPosition, u = t.xArrj, f = t.yArrj, x = this.w, v = new b(this.ctx), m = this.yRatio, y = l.prevY, w = l.linePath, k = l.areaPath, A = l.pathFromLine, S = l.pathFromArea, C = p.isNumber(x.globals.minYArr[i]) ? x.globals.minYArr[i] : x.globals.minY, L = x.globals.dataPoints > 1 ? x.globals.dataPoints - 1 : x.globals.dataPoints, P = 0; P < L; P++) {
             var T = void 0 === e[a][P + 1] || null === e[a][P + 1];
 
             if (x.globals.isXNumeric) {
@@ -65696,9 +68656,9 @@ var Forestry = (function () {
                 }(a - 1)][P + 1];
               } else g = this.zeroY;
             } else g = this.zeroY;
-            r = T ? g - C / v[this.yaxisIndex] + 2 * (this.isReversed ? C / v[this.yaxisIndex] : 0) : g - e[a][P + 1] / v[this.yaxisIndex] + 2 * (this.isReversed ? e[a][P + 1] / v[this.yaxisIndex] : 0), u.push(s), f.push(r);
+            r = T ? g - C / m[this.yaxisIndex] + 2 * (this.isReversed ? C / m[this.yaxisIndex] : 0) : g - e[a][P + 1] / m[this.yaxisIndex] + 2 * (this.isReversed ? e[a][P + 1] / m[this.yaxisIndex] : 0), u.push(s), f.push(r);
 
-            var z = this.lineHelpers.calculatePoints({
+            var I = this.lineHelpers.calculatePoints({
               series: e,
               x: s,
               y: r,
@@ -65707,7 +68667,7 @@ var Forestry = (function () {
               j: P,
               prevY: y
             }),
-                I = this._createPaths({
+                z = this._createPaths({
               series: e,
               i: a,
               realIndex: i,
@@ -65723,8 +68683,8 @@ var Forestry = (function () {
               seriesIndex: d
             });
 
-            c = I.areaPaths, h = I.linePaths, o = I.pX, n = I.pY, k = I.areaPath, w = I.linePath, this.appendPathFrom && (A += m.line(s, this.zeroY), S += m.line(s, this.zeroY)), this.handleNullDataPoints(e, z, a, P, i), this._handleMarkersAndLabels({
-              pointsPos: z,
+            c = z.areaPaths, h = z.linePaths, o = z.pX, n = z.pY, k = z.areaPath, w = z.linePath, this.appendPathFrom && (A += v.line(s, this.zeroY), S += v.line(s, this.zeroY)), this.handleNullDataPoints(e, I, a, P, i), this._handleMarkersAndLabels({
+              pointsPos: I,
               series: e,
               x: s,
               y: r,
@@ -65747,8 +68707,9 @@ var Forestry = (function () {
       }, {
         key: "_handleMarkersAndLabels",
         value: function value(t) {
-          var e = t.pointsPos,
-              i = (t.series, t.x, t.y, t.prevY, t.i),
+          var e = t.pointsPos;
+          t.series, t.x, t.y, t.prevY;
+          var i = t.i,
               a = t.j,
               s = t.realIndex,
               r = this.w,
@@ -65785,19 +68746,19 @@ var Forestry = (function () {
               p = this.w,
               f = new b(this.ctx),
               x = p.config.stroke.curve,
-              m = this.areaBottomY;
+              v = this.areaBottomY;
 
           if (Array.isArray(p.config.stroke.curve) && (x = Array.isArray(u) ? p.config.stroke.curve[u[i]] : p.config.stroke.curve[i]), "smooth" === x) {
-            var v = .35 * (r - n);
-            p.globals.hasNullValues ? (null !== e[i][s] && (null !== e[i][s + 1] ? (h = f.move(n, l) + f.curve(n + v, l, r - v, o, r + 1, o), c = f.move(n + 1, l) + f.curve(n + v, l, r - v, o, r + 1, o) + f.line(r, m) + f.line(n, m) + "z") : (h = f.move(n, l), c = f.move(n, l) + "z")), d.push(h), g.push(c)) : (h += f.curve(n + v, l, r - v, o, r, o), c += f.curve(n + v, l, r - v, o, r, o)), n = r, l = o, s === e[i].length - 2 && (c = c + f.curve(n, l, r, o, r, m) + f.move(r, o) + "z", p.globals.hasNullValues || (d.push(h), g.push(c)));
+            var m = .35 * (r - n);
+            p.globals.hasNullValues ? (null !== e[i][s] && (null !== e[i][s + 1] ? (h = f.move(n, l) + f.curve(n + m, l, r - m, o, r + 1, o), c = f.move(n + 1, l) + f.curve(n + m, l, r - m, o, r + 1, o) + f.line(r, v) + f.line(n, v) + "z") : (h = f.move(n, l), c = f.move(n, l) + "z")), d.push(h), g.push(c)) : (h += f.curve(n + m, l, r - m, o, r, o), c += f.curve(n + m, l, r - m, o, r, o)), n = r, l = o, s === e[i].length - 2 && (c = c + f.curve(n, l, r, o, r, v) + f.move(r, o) + "z", p.globals.hasNullValues || (d.push(h), g.push(c)));
           } else {
             if (null === e[i][s + 1]) {
               h += f.move(r, o);
               var y = p.globals.isXNumeric ? (p.globals.seriesX[a][s] - p.globals.minX) / this.xRatio : r - this.xDivision;
-              c = c + f.line(y, m) + f.move(r, o) + "z";
+              c = c + f.line(y, v) + f.move(r, o) + "z";
             }
 
-            null === e[i][s] && (h += f.move(r, o), c += f.move(r, m)), "stepline" === x ? (h = h + f.line(r, null, "H") + f.line(null, o, "V"), c = c + f.line(r, null, "H") + f.line(null, o, "V")) : "straight" === x && (h += f.line(r, o), c += f.line(r, o)), s === e[i].length - 2 && (c = c + f.line(r, m) + f.move(r, o) + "z", d.push(h), g.push(c));
+            null === e[i][s] && (h += f.move(r, o), c += f.move(r, v)), "stepline" === x ? (h = h + f.line(r, null, "H") + f.line(null, o, "V"), c = c + f.line(r, null, "H") + f.line(null, o, "V")) : "straight" === x && (h += f.line(r, o), c += f.line(r, o)), s === e[i].length - 2 && (c = c + f.line(r, v) + f.move(r, o) + "z", d.push(h), g.push(c));
           }
 
           return {
@@ -65949,12 +68910,12 @@ var Forestry = (function () {
 
     var Tt,
         Mt,
-        zt = function () {
-      function t(i, a) {
-        e(this, t), this.ctx = i, this.w = i.w, this.strokeWidth = this.w.config.stroke.width, this.helpers = new yt(i), this.dynamicAnim = this.w.config.chart.animations.dynamicAnimation, this.labels = [];
+        It = function () {
+      function t(e, i) {
+        a(this, t), this.ctx = e, this.w = e.w, this.strokeWidth = this.w.config.stroke.width, this.helpers = new yt(e), this.dynamicAnim = this.w.config.chart.animations.dynamicAnimation, this.labels = [];
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "draw",
         value: function value(t) {
           var e = this,
@@ -66023,7 +68984,7 @@ var Forestry = (function () {
                 width: 0,
                 height: 0
               },
-                  m = {
+                  v = {
                 x: h,
                 y: c,
                 width: d - h,
@@ -66031,13 +68992,13 @@ var Forestry = (function () {
               };
 
               if (i.config.chart.animations.enabled && !i.globals.dataChanged) {
-                var v = 1;
-                i.globals.resized || (v = i.config.chart.animations.speed), e.animateTreemap(u, b, m, v);
+                var m = 1;
+                i.globals.resized || (m = i.config.chart.animations.speed), e.animateTreemap(u, b, v, m);
               }
 
               if (i.globals.dataChanged) {
                 var y = 1;
-                e.dynamicAnim.enabled && i.globals.shouldAnimate && (y = e.dynamicAnim.speed, i.globals.previousPaths[n] && i.globals.previousPaths[n][o] && i.globals.previousPaths[n][o].rect && (b = i.globals.previousPaths[n][o].rect), e.animateTreemap(u, b, m, y));
+                e.dynamicAnim.enabled && i.globals.shouldAnimate && (y = e.dynamicAnim.speed, i.globals.previousPaths[n] && i.globals.previousPaths[n][o] && i.globals.previousPaths[n][o].rect && (b = i.globals.previousPaths[n][o].rect), e.animateTreemap(u, b, v, y));
               }
 
               var w = e.getFontSize(r),
@@ -66123,32 +69084,32 @@ var Forestry = (function () {
         }
       }]), t;
     }(),
-        It = function () {
-      function t(i) {
-        e(this, t), this.ctx = i, this.w = i.w, this.timeScaleArray = [], this.utc = this.w.config.xaxis.labels.datetimeUTC;
+        zt = function () {
+      function t(e) {
+        a(this, t), this.ctx = e, this.w = e.w, this.timeScaleArray = [], this.utc = this.w.config.xaxis.labels.datetimeUTC;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "calculateTimeScaleTicks",
-        value: function value(t, e) {
-          var i = this,
-              a = this.w;
-          if (a.globals.allSeriesCollapsed) return a.globals.labels = [], a.globals.timescaleLabels = [], [];
-          var s = new Y(this.ctx),
-              r = (e - t) / 864e5;
-          this.determineInterval(r), a.globals.disableZoomIn = !1, a.globals.disableZoomOut = !1, r < .00011574074074074075 ? a.globals.disableZoomIn = !0 : r > 5e4 && (a.globals.disableZoomOut = !0);
-          var n = s.getTimeUnitsfromTimestamp(t, e, this.utc),
-              l = a.globals.gridWidth / r,
+        value: function value(t, i) {
+          var a = this,
+              s = this.w;
+          if (s.globals.allSeriesCollapsed) return s.globals.labels = [], s.globals.timescaleLabels = [], [];
+          var r = new Y(this.ctx),
+              o = (i - t) / 864e5;
+          this.determineInterval(o), s.globals.disableZoomIn = !1, s.globals.disableZoomOut = !1, o < .00011574074074074075 ? s.globals.disableZoomIn = !0 : o > 5e4 && (s.globals.disableZoomOut = !0);
+          var n = r.getTimeUnitsfromTimestamp(t, i, this.utc),
+              l = s.globals.gridWidth / o,
               h = l / 24,
               c = h / 60,
               d = c / 60,
-              g = Math.floor(24 * r),
-              u = Math.floor(1440 * r),
-              p = Math.floor(86400 * r),
-              f = Math.floor(r),
-              x = Math.floor(r / 30),
-              b = Math.floor(r / 365),
-              m = {
+              g = Math.floor(24 * o),
+              u = Math.floor(1440 * o),
+              p = Math.floor(86400 * o),
+              f = Math.floor(o),
+              x = Math.floor(o / 30),
+              b = Math.floor(o / 365),
+              v = {
             minMillisecond: n.minMillisecond,
             minSecond: n.minSecond,
             minMinute: n.minMinute,
@@ -66157,16 +69118,16 @@ var Forestry = (function () {
             minMonth: n.minMonth,
             minYear: n.minYear
           },
-              v = {
-            firstVal: m,
-            currentMillisecond: m.minMillisecond,
-            currentSecond: m.minSecond,
-            currentMinute: m.minMinute,
-            currentHour: m.minHour,
-            currentMonthDate: m.minDate,
-            currentDate: m.minDate,
-            currentMonth: m.minMonth,
-            currentYear: m.minYear,
+              m = {
+            firstVal: v,
+            currentMillisecond: v.minMillisecond,
+            currentSecond: v.minSecond,
+            currentMinute: v.minMinute,
+            currentHour: v.minHour,
+            currentMonthDate: v.minDate,
+            currentDate: v.minDate,
+            currentMonth: v.minMonth,
+            currentYear: v.minYear,
             daysWidthOnXAxis: l,
             hoursWidthOnXAxis: h,
             minutesWidthOnXAxis: c,
@@ -66181,38 +69142,38 @@ var Forestry = (function () {
 
           switch (this.tickInterval) {
             case "years":
-              this.generateYearScale(v);
+              this.generateYearScale(m);
               break;
 
             case "months":
             case "half_year":
-              this.generateMonthScale(v);
+              this.generateMonthScale(m);
               break;
 
             case "months_days":
             case "months_fortnight":
             case "days":
             case "week_days":
-              this.generateDayScale(v);
+              this.generateDayScale(m);
               break;
 
             case "hours":
-              this.generateHourScale(v);
+              this.generateHourScale(m);
               break;
 
             case "minutes_fives":
             case "minutes":
-              this.generateMinuteScale(v);
+              this.generateMinuteScale(m);
               break;
 
             case "seconds_tens":
             case "seconds_fives":
             case "seconds":
-              this.generateSecondScale(v);
+              this.generateSecondScale(m);
           }
 
           var y = this.timeScaleArray.map(function (t) {
-            var e = {
+            var i = {
               position: t.position,
               unit: t.unit,
               year: t.year,
@@ -66220,15 +69181,15 @@ var Forestry = (function () {
               hour: t.hour ? t.hour : 0,
               month: t.month + 1
             };
-            return "month" === t.unit ? o(o({}, e), {}, {
+            return "month" === t.unit ? e(e({}, i), {}, {
               day: 1,
               value: t.value + 1
-            }) : "day" === t.unit || "hour" === t.unit ? o(o({}, e), {}, {
+            }) : "day" === t.unit || "hour" === t.unit ? e(e({}, i), {}, {
               value: t.value
-            }) : "minute" === t.unit ? o(o({}, e), {}, {
+            }) : "minute" === t.unit ? e(e({}, i), {}, {
               value: t.value,
               minute: t.value
-            }) : "second" === t.unit ? o(o({}, e), {}, {
+            }) : "second" === t.unit ? e(e({}, i), {}, {
               value: t.value,
               minute: t.minute,
               second: t.second
@@ -66236,13 +69197,13 @@ var Forestry = (function () {
           });
           return y.filter(function (t) {
             var e = 1,
-                s = Math.ceil(a.globals.gridWidth / 120),
+                i = Math.ceil(s.globals.gridWidth / 120),
                 r = t.value;
-            void 0 !== a.config.xaxis.tickAmount && (s = a.config.xaxis.tickAmount), y.length > s && (e = Math.floor(y.length / s));
+            void 0 !== s.config.xaxis.tickAmount && (i = s.config.xaxis.tickAmount), y.length > i && (e = Math.floor(y.length / i));
             var o = !1,
                 n = !1;
 
-            switch (i.tickInterval) {
+            switch (a.tickInterval) {
               case "years":
                 "year" === t.unit && (o = !0);
                 break;
@@ -66287,7 +69248,7 @@ var Forestry = (function () {
                 r % 5 != 0 && (n = !0);
             }
 
-            if ("hours" === i.tickInterval || "minutes_fives" === i.tickInterval || "seconds_tens" === i.tickInterval || "seconds_fives" === i.tickInterval) {
+            if ("hours" === a.tickInterval || "minutes_fives" === a.tickInterval || "seconds_tens" === a.tickInterval || "seconds_fives" === a.tickInterval) {
               if (!n) return !0;
             } else if ((r % e == 0 || o) && !n) return !0;
           });
@@ -66434,7 +69395,7 @@ var Forestry = (function () {
             month: p.monthMod(a)
           });
 
-          for (var x = n + 1, b = l, m = 0, v = 1; m < o; m++, v++) {
+          for (var x = n + 1, b = l, v = 0, m = 1; v < o; v++, m++) {
             0 === (x = p.monthMod(x)) ? (c = "year", d += 1) : c = "month";
 
             var y = this._getYear(s, x, d);
@@ -66484,14 +69445,14 @@ var Forestry = (function () {
             var b = this._getYear(a, u, 0);
 
             f = 24 * s + f;
-            var m = 1 === h ? p.monthMod(u) : h;
+            var v = 1 === h ? p.monthMod(u) : h;
             this.timeScaleArray.push({
               position: f,
-              value: m,
+              value: v,
               unit: n,
               year: b,
               month: p.monthMod(u),
-              day: m
+              day: v
             });
           }
         }
@@ -66533,15 +69494,15 @@ var Forestry = (function () {
             month: p.monthMod(b)
           });
 
-          for (var m = g, v = 0; v < o; v++) {
+          for (var v = g, m = 0; m < o; m++) {
             if (l = "hour", f >= 24) f = 0, l = "day", b = h(x += 1, b).month, b = c(x, b);
 
             var y = this._getYear(s, b, 0);
 
-            m = 0 === f && 0 === v ? d * r : 60 * r + m;
+            v = 0 === f && 0 === m ? d * r : 60 * r + v;
             var w = 0 === f ? x : f;
             this.timeScaleArray.push({
-              position: m,
+              position: v,
               value: w,
               unit: l,
               hour: f,
@@ -66554,7 +69515,7 @@ var Forestry = (function () {
       }, {
         key: "generateMinuteScale",
         value: function value(t) {
-          for (var e = t.currentMillisecond, i = t.currentSecond, a = t.currentMinute, s = t.currentHour, r = t.currentDate, o = t.currentMonth, n = t.currentYear, l = t.minutesWidthOnXAxis, h = t.secondsWidthOnXAxis, c = t.numberOfMinutes, d = a + 1, g = r, u = o, f = n, x = s, b = (60 - i - e / 1e3) * h, m = 0; m < c; m++) {
+          for (var e = t.currentMillisecond, i = t.currentSecond, a = t.currentMinute, s = t.currentHour, r = t.currentDate, o = t.currentMonth, n = t.currentYear, l = t.minutesWidthOnXAxis, h = t.secondsWidthOnXAxis, c = t.numberOfMinutes, d = a + 1, g = r, u = o, f = n, x = s, b = (60 - i - e / 1e3) * h, v = 0; v < c; v++) {
             d >= 60 && (d = 0, 24 === (x += 1) && (x = 0)), this.timeScaleArray.push({
               position: b,
               value: d,
@@ -66570,7 +69531,7 @@ var Forestry = (function () {
       }, {
         key: "generateSecondScale",
         value: function value(t) {
-          for (var e = t.currentMillisecond, i = t.currentSecond, a = t.currentMinute, s = t.currentHour, r = t.currentDate, o = t.currentMonth, n = t.currentYear, l = t.secondsWidthOnXAxis, h = t.numberOfSeconds, c = i + 1, d = a, g = r, u = o, f = n, x = s, b = (1e3 - e) / 1e3 * l, m = 0; m < h; m++) {
+          for (var e = t.currentMillisecond, i = t.currentSecond, a = t.currentMinute, s = t.currentHour, r = t.currentDate, o = t.currentMonth, n = t.currentYear, l = t.secondsWidthOnXAxis, h = t.numberOfSeconds, c = i + 1, d = a, g = r, u = o, f = n, x = s, b = (1e3 - e) / 1e3 * l, v = 0; v < h; v++) {
             c >= 60 && (c = 0, ++d >= 60 && (d = 0, 24 === ++x && (x = 0))), this.timeScaleArray.push({
               position: b,
               value: c,
@@ -66649,17 +69610,17 @@ var Forestry = (function () {
       }]), t;
     }(),
         Xt = function () {
-      function t(i, a) {
-        e(this, t), this.ctx = a, this.w = a.w, this.el = i;
+      function t(e, i) {
+        a(this, t), this.ctx = i, this.w = i.w, this.el = e;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "setupElements",
         value: function value() {
           var t = this.w.globals,
               e = this.w.config,
               i = e.chart.type;
-          t.axisCharts = ["line", "area", "bar", "rangeBar", "candlestick", "boxPlot", "scatter", "bubble", "radar", "heatmap", "treemap"].indexOf(i) > -1, t.xyCharts = ["line", "area", "bar", "rangeBar", "candlestick", "boxPlot", "scatter", "bubble"].indexOf(i) > -1, t.isBarHorizontal = ("bar" === e.chart.type || "rangeBar" === e.chart.type) && e.plotOptions.bar.horizontal, t.chartClass = ".apexcharts" + t.chartID, t.dom.baseEl = this.el, t.dom.elWrap = document.createElement("div"), b.setAttrs(t.dom.elWrap, {
+          t.axisCharts = ["line", "area", "bar", "rangeBar", "candlestick", "boxPlot", "scatter", "bubble", "radar", "heatmap", "treemap"].indexOf(i) > -1, t.xyCharts = ["line", "area", "bar", "rangeBar", "candlestick", "boxPlot", "scatter", "bubble"].indexOf(i) > -1, t.isBarHorizontal = ("bar" === e.chart.type || "rangeBar" === e.chart.type || "boxPlot" === e.chart.type) && e.plotOptions.bar.horizontal, t.chartClass = ".apexcharts" + t.chartID, t.dom.baseEl = this.el, t.dom.elWrap = document.createElement("div"), b.setAttrs(t.dom.elWrap, {
             id: t.chartClass.substring(1),
             class: "apexcharts-canvas " + t.chartClass.substring(1)
           }), this.el.appendChild(t.dom.elWrap), t.dom.Paper = new window.SVG.Doc(t.dom.elWrap), t.dom.Paper.attr({
@@ -66711,7 +69672,7 @@ var Forestry = (function () {
             void 0 !== t[g].type ? ("column" === t[g].type || "bar" === t[g].type ? (s.series.length > 1 && a.plotOptions.bar.horizontal && console.warn("Horizontal bars are not supported in a mixed/combo chart. Please turn off `plotOptions.bar.horizontal`"), h.series.push(e), h.i.push(g), u++, i.globals.columnSeries = h.series) : "area" === t[g].type ? (o.series.push(e), o.i.push(g), u++) : "line" === t[g].type ? (r.series.push(e), r.i.push(g), u++) : "scatter" === t[g].type ? (n.series.push(e), n.i.push(g)) : "bubble" === t[g].type ? (l.series.push(e), l.i.push(g), u++) : "candlestick" === t[g].type ? (c.series.push(e), c.i.push(g), u++) : "boxPlot" === t[g].type ? (d.series.push(e), d.i.push(g), u++) : console.warn("You have specified an unrecognized chart type. Available types for this property are line/area/column/bar/scatter/bubble"), u > 1 && (s.comboCharts = !0)) : (r.series.push(e), r.i.push(g));
           });
           var g = new Pt(this.ctx, e),
-              u = new vt(this.ctx, e);
+              u = new mt(this.ctx, e);
           this.ctx.pie = new At(this.ctx);
           var p = new Ct(this.ctx);
           this.ctx.rangeBar = new F(this.ctx, e);
@@ -66720,18 +69681,18 @@ var Forestry = (function () {
 
           if (s.comboCharts) {
             if (o.series.length > 0 && x.push(g.draw(o.series, "area", o.i)), h.series.length > 0) if (i.config.chart.stacked) {
-              var b = new mt(this.ctx, e);
+              var b = new vt(this.ctx, e);
               x.push(b.draw(h.series, h.i));
             } else this.ctx.bar = new E(this.ctx, e), x.push(this.ctx.bar.draw(h.series, h.i));
 
             if (r.series.length > 0 && x.push(g.draw(r.series, "line", r.i)), c.series.length > 0 && x.push(u.draw(c.series, c.i)), d.series.length > 0 && x.push(u.draw(d.series, d.i)), n.series.length > 0) {
-              var m = new Pt(this.ctx, e, !0);
-              x.push(m.draw(n.series, "scatter", n.i));
+              var v = new Pt(this.ctx, e, !0);
+              x.push(v.draw(n.series, "scatter", n.i));
             }
 
             if (l.series.length > 0) {
-              var v = new Pt(this.ctx, e, !0);
-              x.push(v.draw(l.series, "bubble", l.i));
+              var m = new Pt(this.ctx, e, !0);
+              x.push(m.draw(l.series, "bubble", l.i));
             }
           } else switch (a.chart.type) {
             case "line":
@@ -66743,15 +69704,15 @@ var Forestry = (function () {
               break;
 
             case "bar":
-              if (a.chart.stacked) x = new mt(this.ctx, e).draw(s.series);else this.ctx.bar = new E(this.ctx, e), x = this.ctx.bar.draw(s.series);
+              if (a.chart.stacked) x = new vt(this.ctx, e).draw(s.series);else this.ctx.bar = new E(this.ctx, e), x = this.ctx.bar.draw(s.series);
               break;
 
             case "candlestick":
-              x = new vt(this.ctx, e).draw(s.series);
+              x = new mt(this.ctx, e).draw(s.series);
               break;
 
             case "boxPlot":
-              x = new vt(this.ctx, e).draw(s.series);
+              x = new mt(this.ctx, e).draw(s.series);
               break;
 
             case "rangeBar":
@@ -66763,7 +69724,7 @@ var Forestry = (function () {
               break;
 
             case "treemap":
-              x = new zt(this.ctx, e).draw(s.series);
+              x = new It(this.ctx, e).draw(s.series);
               break;
 
             case "pie":
@@ -66834,7 +69795,7 @@ var Forestry = (function () {
           var s = t.globals.dom.baseEl.querySelector(".apexcharts-radialbar, .apexcharts-pie"),
               r = 2.05 * t.globals.radialSize;
 
-          if (s && !t.config.chart.sparkline.enabled) {
+          if (s && !t.config.chart.sparkline.enabled && 0 !== t.config.plotOptions.radialBar.startAngle) {
             var o = p.getBoundingClientRect(s);
             r = o.bottom;
             var n = o.bottom - o.top;
@@ -66881,7 +69842,7 @@ var Forestry = (function () {
             if ("back" === e.config.yaxis[0].crosshairs.position) new Q(this.ctx).drawYCrosshairs();
 
             if ("datetime" === e.config.xaxis.type && void 0 === e.config.xaxis.labels.formatter) {
-              this.ctx.timeScale = new It(this.ctx);
+              this.ctx.timeScale = new zt(this.ctx);
               var i = [];
               isFinite(e.globals.minX) && isFinite(e.globals.maxX) && !e.globals.isBarHorizontal ? i = this.ctx.timeScale.calculateTimeScaleTicks(e.globals.minX, e.globals.maxX) : e.globals.isBarHorizontal && (i = this.ctx.timeScale.calculateTimeScaleTicks(e.globals.minY, e.globals.maxY)), this.ctx.timeScale.recalcDimensionsBasedOnFormat(i);
             }
@@ -66909,38 +69870,38 @@ var Forestry = (function () {
         key: "setupBrushHandler",
         value: function value() {
           var t = this,
-              e = this.w;
+              i = this.w;
 
-          if (e.config.chart.brush.enabled && "function" != typeof e.config.chart.events.selection) {
-            var i = e.config.chart.brush.targets || [e.config.chart.brush.target];
-            i.forEach(function (e) {
+          if (i.config.chart.brush.enabled && "function" != typeof i.config.chart.events.selection) {
+            var a = i.config.chart.brush.targets || [i.config.chart.brush.target];
+            a.forEach(function (e) {
               var i = ApexCharts.getChartByID(e);
               i.w.globals.brushSource = t.ctx, "function" != typeof i.w.config.chart.events.zoomed && (i.w.config.chart.events.zoomed = function () {
                 t.updateSourceChart(i);
               }), "function" != typeof i.w.config.chart.events.scrolled && (i.w.config.chart.events.scrolled = function () {
                 t.updateSourceChart(i);
               });
-            }), e.config.chart.events.selection = function (t, a) {
-              i.forEach(function (t) {
-                var i = ApexCharts.getChartByID(t),
-                    s = p.clone(e.config.yaxis);
+            }), i.config.chart.events.selection = function (t, s) {
+              a.forEach(function (t) {
+                var a = ApexCharts.getChartByID(t),
+                    r = p.clone(i.config.yaxis);
 
-                if (e.config.chart.brush.autoScaleYaxis && 1 === i.w.globals.series.length) {
-                  var r = new j(i);
-                  s = r.autoScaleY(i, s, a);
+                if (i.config.chart.brush.autoScaleYaxis && 1 === a.w.globals.series.length) {
+                  var o = new j(a);
+                  r = o.autoScaleY(a, r, s);
                 }
 
-                var n = i.w.config.yaxis.reduce(function (t, e, a) {
-                  return [].concat(g(t), [o(o({}, i.w.config.yaxis[a]), {}, {
-                    min: s[0].min,
-                    max: s[0].max
+                var n = a.w.config.yaxis.reduce(function (t, i, s) {
+                  return [].concat(g(t), [e(e({}, a.w.config.yaxis[s]), {}, {
+                    min: r[0].min,
+                    max: r[0].max
                   })]);
                 }, []);
 
-                i.ctx.updateHelpers._updateOptions({
+                a.ctx.updateHelpers._updateOptions({
                   xaxis: {
-                    min: a.xaxis.min,
-                    max: a.xaxis.max
+                    min: s.xaxis.min,
+                    max: s.xaxis.max
                   },
                   yaxis: n
                 }, !1, !1, !1, !1);
@@ -66951,47 +69912,55 @@ var Forestry = (function () {
       }]), t;
     }(),
         Et = function () {
-      function i(t) {
-        e(this, i), this.ctx = t, this.w = t.w;
+      function t(e) {
+        a(this, t), this.ctx = e, this.w = e.w;
       }
 
-      return a(i, [{
+      return r(t, [{
         key: "_updateOptions",
-        value: function value(e) {
-          var i = this,
+        value: function value(t) {
+          var e = this,
               a = arguments.length > 1 && void 0 !== arguments[1] && arguments[1],
               s = !(arguments.length > 2 && void 0 !== arguments[2]) || arguments[2],
               r = !(arguments.length > 3 && void 0 !== arguments[3]) || arguments[3],
-              o = arguments.length > 4 && void 0 !== arguments[4] && arguments[4],
-              n = [this.ctx];
-          r && (n = this.ctx.getSyncedCharts()), this.ctx.w.globals.isExecCalled && (n = [this.ctx], this.ctx.w.globals.isExecCalled = !1), n.forEach(function (r) {
-            var n = r.w;
-            return n.globals.shouldAnimate = s, a || (n.globals.resized = !0, n.globals.dataChanged = !0, s && r.series.getPreviousPaths()), e && "object" === t(e) && (r.config = new H(e), e = y.extendArrayProps(r.config, e, n), r.w.globals.chartID !== i.ctx.w.globals.chartID && delete e.series, n.config = p.extend(n.config, e), o && (n.globals.lastXAxis = e.xaxis ? p.clone(e.xaxis) : [], n.globals.lastYAxis = e.yaxis ? p.clone(e.yaxis) : [], n.globals.initialConfig = p.extend({}, n.config), n.globals.initialSeries = p.clone(n.config.series))), r.update(e);
+              o = arguments.length > 4 && void 0 !== arguments[4] && arguments[4];
+          return new Promise(function (n) {
+            var l = [e.ctx];
+            r && (l = e.ctx.getSyncedCharts()), e.ctx.w.globals.isExecCalled && (l = [e.ctx], e.ctx.w.globals.isExecCalled = !1), l.forEach(function (r, h) {
+              var c = r.w;
+              return c.globals.shouldAnimate = s, a || (c.globals.resized = !0, c.globals.dataChanged = !0, s && r.series.getPreviousPaths()), t && "object" === i(t) && (r.config = new H(t), t = y.extendArrayProps(r.config, t, c), r.w.globals.chartID !== e.ctx.w.globals.chartID && delete t.series, c.config = p.extend(c.config, t), o && (c.globals.lastXAxis = t.xaxis ? p.clone(t.xaxis) : [], c.globals.lastYAxis = t.yaxis ? p.clone(t.yaxis) : [], c.globals.initialConfig = p.extend({}, c.config), c.globals.initialSeries = p.clone(c.config.series))), r.update(t).then(function () {
+                h === l.length - 1 && n(r);
+              });
+            });
           });
         }
       }, {
         key: "_updateSeries",
         value: function value(t, e) {
-          var i,
-              a = this,
-              s = arguments.length > 2 && void 0 !== arguments[2] && arguments[2],
-              r = this.w;
-          return r.globals.shouldAnimate = e, r.globals.dataChanged = !0, e && this.ctx.series.getPreviousPaths(), r.globals.axisCharts ? (0 === (i = t.map(function (t, e) {
-            return a._extendSeries(t, e);
-          })).length && (i = [{
-            data: []
-          }]), r.config.series = i) : r.config.series = t.slice(), s && (r.globals.initialSeries = p.clone(r.config.series)), this.ctx.update();
+          var i = this,
+              a = arguments.length > 2 && void 0 !== arguments[2] && arguments[2];
+          return new Promise(function (s) {
+            var r,
+                o = i.w;
+            return o.globals.shouldAnimate = e, o.globals.dataChanged = !0, e && i.ctx.series.getPreviousPaths(), o.globals.axisCharts ? (0 === (r = t.map(function (t, e) {
+              return i._extendSeries(t, e);
+            })).length && (r = [{
+              data: []
+            }]), o.config.series = r) : o.config.series = t.slice(), a && (o.globals.initialSeries = p.clone(o.config.series)), i.ctx.update().then(function () {
+              s(i.ctx);
+            });
+          });
         }
       }, {
         key: "_extendSeries",
-        value: function value(t, e) {
-          var i = this.w,
-              a = i.config.series[e];
-          return o(o({}, i.config.series[e]), {}, {
-            name: t.name ? t.name : a && a.name,
-            color: t.color ? t.color : a && a.color,
-            type: t.type ? t.type : a && a.type,
-            data: t.data ? t.data : a && a.data
+        value: function value(t, i) {
+          var a = this.w,
+              s = a.config.series[i];
+          return e(e({}, a.config.series[i]), {}, {
+            name: t.name ? t.name : s && s.name,
+            color: t.color ? t.color : s && s.color,
+            type: t.type ? t.type : s && s.type,
+            data: t.data ? t.data : s && s.data
           });
         }
       }, {
@@ -67041,20 +70010,20 @@ var Forestry = (function () {
             i.globals.zoomed || void 0 !== s[a] ? r(a) : void 0 !== e.ctx.opts.yaxis[a] && (t.min = e.ctx.opts.yaxis[a].min, t.max = e.ctx.opts.yaxis[a].max);
           });
         }
-      }]), i;
+      }]), t;
     }();
 
-    Tt = "undefined" != typeof window ? window : void 0, Mt = function Mt(e, i) {
-      var a = (void 0 !== this ? this : e).SVG = function (t) {
+    Tt = "undefined" != typeof window ? window : void 0, Mt = function Mt(t, e) {
+      var a = (void 0 !== this ? this : t).SVG = function (t) {
         if (a.supported) return t = new a.Doc(t), a.parser.draw || a.prepare(), t;
       };
 
-      if (a.ns = "http://www.w3.org/2000/svg", a.xmlns = "http://www.w3.org/2000/xmlns/", a.xlink = "http://www.w3.org/1999/xlink", a.svgjs = "http://svgjs.com/svgjs", a.supported = !0, !a.supported) return !1;
+      if (a.ns = "http://www.w3.org/2000/svg", a.xmlns = "http://www.w3.org/2000/xmlns/", a.xlink = "http://www.w3.org/1999/xlink", a.svgjs = "http://svgjs.dev", a.supported = !0, !a.supported) return !1;
       a.did = 1e3, a.eid = function (t) {
         return "Svgjs" + d(t) + a.did++;
       }, a.create = function (t) {
-        var e = i.createElementNS(this.ns, t);
-        return e.setAttribute("id", this.eid(t)), e;
+        var i = e.createElementNS(this.ns, t);
+        return i.setAttribute("id", this.eid(t)), i;
       }, a.extend = function () {
         var t, e;
         e = (t = [].slice.call(arguments)).pop();
@@ -67071,22 +70040,22 @@ var Forestry = (function () {
           this.constructor.call(this, a.create(t.create));
         };
         return t.inherit && (e.prototype = new t.inherit()), t.extend && a.extend(e, t.extend), t.construct && a.extend(t.parent || a.Container, t.construct), e;
-      }, a.adopt = function (t) {
-        return t ? t.instance ? t.instance : ((i = "svg" == t.nodeName ? t.parentNode instanceof e.SVGElement ? new a.Nested() : new a.Doc() : "linearGradient" == t.nodeName ? new a.Gradient("linear") : "radialGradient" == t.nodeName ? new a.Gradient("radial") : a[d(t.nodeName)] ? new a[d(t.nodeName)]() : new a.Element(t)).type = t.nodeName, i.node = t, t.instance = i, i instanceof a.Doc && i.namespace().defs(), i.setData(JSON.parse(t.getAttribute("svgjs:data")) || {}), i) : null;
+      }, a.adopt = function (e) {
+        return e ? e.instance ? e.instance : ((i = "svg" == e.nodeName ? e.parentNode instanceof t.SVGElement ? new a.Nested() : new a.Doc() : "linearGradient" == e.nodeName ? new a.Gradient("linear") : "radialGradient" == e.nodeName ? new a.Gradient("radial") : a[d(e.nodeName)] ? new a[d(e.nodeName)]() : new a.Element(e)).type = e.nodeName, i.node = e, e.instance = i, i instanceof a.Doc && i.namespace().defs(), i.setData(JSON.parse(e.getAttribute("svgjs:data")) || {}), i) : null;
         var i;
       }, a.prepare = function () {
-        var t = i.getElementsByTagName("body")[0],
-            e = (t ? new a.Doc(t) : a.adopt(i.documentElement).nested()).size(2, 0);
+        var t = e.getElementsByTagName("body")[0],
+            i = (t ? new a.Doc(t) : a.adopt(e.documentElement).nested()).size(2, 0);
         a.parser = {
-          body: t || i.documentElement,
-          draw: e.style("opacity:0;position:absolute;left:-100%;top:-100%;overflow:hidden").node,
-          poly: e.polyline().node,
-          path: e.path().node,
+          body: t || e.documentElement,
+          draw: i.style("opacity:0;position:absolute;left:-100%;top:-100%;overflow:hidden").node,
+          poly: i.polyline().node,
+          path: i.path().node,
           native: a.create("svg")
         };
       }, a.parser = {
         native: a.create("svg")
-      }, i.addEventListener("DOMContentLoaded", function () {
+      }, e.addEventListener("DOMContentLoaded", function () {
         a.parser.draw || a.prepare();
       }, !1), a.regex = {
         numberAndUnit: /^([+-]?(\d+(\.\d*)?|\.\d+)(e[+-]?\d+)?)([a-z%]*)$/i,
@@ -67123,9 +70092,9 @@ var Forestry = (function () {
 
           return a;
         },
-        filterSVGElements: function filterSVGElements(t) {
-          return this.filter(t, function (t) {
-            return t instanceof e.SVGElement;
+        filterSVGElements: function filterSVGElements(e) {
+          return this.filter(e, function (e) {
+            return e instanceof t.SVGElement;
           });
         }
       }, a.defaults = {
@@ -67154,9 +70123,9 @@ var Forestry = (function () {
           "font-family": "Helvetica, Arial, sans-serif",
           "text-anchor": "start"
         }
-      }, a.Color = function (e) {
-        var i, s;
-        this.r = 0, this.g = 0, this.b = 0, e && ("string" == typeof e ? a.regex.isRgb.test(e) ? (i = a.regex.rgb.exec(e.replace(a.regex.whitespace, "")), this.r = parseInt(i[1]), this.g = parseInt(i[2]), this.b = parseInt(i[3])) : a.regex.isHex.test(e) && (i = a.regex.hex.exec(4 == (s = e).length ? ["#", s.substring(1, 2), s.substring(1, 2), s.substring(2, 3), s.substring(2, 3), s.substring(3, 4), s.substring(3, 4)].join("") : s), this.r = parseInt(i[1], 16), this.g = parseInt(i[2], 16), this.b = parseInt(i[3], 16)) : "object" === t(e) && (this.r = e.r, this.g = e.g, this.b = e.b));
+      }, a.Color = function (t) {
+        var e, s;
+        this.r = 0, this.g = 0, this.b = 0, t && ("string" == typeof t ? a.regex.isRgb.test(t) ? (e = a.regex.rgb.exec(t.replace(a.regex.whitespace, "")), this.r = parseInt(e[1]), this.g = parseInt(e[2]), this.b = parseInt(e[3])) : a.regex.isHex.test(t) && (e = a.regex.hex.exec(4 == (s = t).length ? ["#", s.substring(1, 2), s.substring(1, 2), s.substring(2, 3), s.substring(2, 3), s.substring(3, 4), s.substring(3, 4)].join("") : s), this.r = parseInt(e[1], 16), this.g = parseInt(e[2], 16), this.b = parseInt(e[3], 16)) : "object" === i(t) && (this.r = t.r, this.g = t.g, this.b = t.b));
       }, a.extend(a.Color, {
         toString: function toString() {
           return this.toHex();
@@ -67230,7 +70199,7 @@ var Forestry = (function () {
             if ("H" == t) e[0] = e[0] + i.x;else if ("V" == t) e[0] = e[0] + i.y;else if ("A" == t) e[5] = e[5] + i.x, e[6] = e[6] + i.y;else for (var r = 0, o = e.length; r < o; ++r) {
               e[r] = e[r] + (r % 2 ? i.y : i.x);
             }
-            return s[t](e, i, a);
+            if (s && "function" == typeof s[t]) return s[t](e, i, a);
           };
         }(r[o].toUpperCase());
       }
@@ -67427,13 +70396,13 @@ var Forestry = (function () {
           reference: function reference(t) {
             return a.get(this.attr(t));
           },
-          parent: function parent(t) {
+          parent: function parent(e) {
             var i = this;
             if (!i.node.parentNode) return null;
-            if (i = a.adopt(i.node.parentNode), !t) return i;
+            if (i = a.adopt(i.node.parentNode), !e) return i;
 
-            for (; i && i.node instanceof e.SVGElement;) {
-              if ("string" == typeof t ? i.matches(t) : i instanceof t) return i;
+            for (; i && i.node instanceof t.SVGElement;) {
+              if ("string" == typeof e ? i.matches(e) : i instanceof e) return i;
               if (!i.node.parentNode || "#document" == i.node.parentNode.nodeName) return null;
               i = a.adopt(i.node.parentNode);
             }
@@ -67461,12 +70430,12 @@ var Forestry = (function () {
             return this.node;
           },
           svg: function svg(t) {
-            var e = i.createElement("svg");
-            if (!(t && this instanceof a.Parent)) return e.appendChild(t = i.createElement("svg")), this.writeDataToDom(), t.appendChild(this.node.cloneNode(!0)), e.innerHTML.replace(/^<svg>/, "").replace(/<\/svg>$/, "");
-            e.innerHTML = "<svg>" + t.replace(/\n/, "").replace(/<([\w:-]+)([^<]+?)\/>/g, "<$1$2></$1>") + "</svg>";
+            var i = e.createElement("svg");
+            if (!(t && this instanceof a.Parent)) return i.appendChild(t = e.createElement("svg")), this.writeDataToDom(), t.appendChild(this.node.cloneNode(!0)), i.innerHTML.replace(/^<svg>/, "").replace(/<\/svg>$/, "");
+            i.innerHTML = "<svg>" + t.replace(/\n/, "").replace(/<([\w:-]+)([^<]+?)\/>/g, "<$1$2></$1>") + "</svg>";
 
-            for (var s = 0, r = e.firstChild.childNodes.length; s < r; s++) {
-              this.node.appendChild(e.firstChild.firstChild);
+            for (var s = 0, r = i.firstChild.childNodes.length; s < r; s++) {
+              this.node.appendChild(i.firstChild.firstChild);
             }
 
             return this;
@@ -67511,12 +70480,12 @@ var Forestry = (function () {
           this._target = t, this.situations = [], this.active = !1, this.situation = null, this.paused = !1, this.lastPos = 0, this.pos = 0, this.absPos = 0, this._speed = 1;
         },
         extend: {
-          animate: function animate(e, i, s) {
-            "object" === t(e) && (i = e.ease, s = e.delay, e = e.duration);
+          animate: function animate(t, e, s) {
+            "object" === i(t) && (e = t.ease, s = t.delay, t = t.duration);
             var r = new a.Situation({
-              duration: e || 1e3,
+              duration: t || 1e3,
               delay: s || 0,
-              ease: a.easing[i || "-"] || i
+              ease: a.easing[e || "-"] || e
             });
             return this.queue(r), this;
           },
@@ -67530,12 +70499,12 @@ var Forestry = (function () {
             return this.situation.duration / this._speed * t + this.situation.start;
           },
           startAnimFrame: function startAnimFrame() {
-            this.stopAnimFrame(), this.animationFrame = e.requestAnimationFrame(function () {
+            this.stopAnimFrame(), this.animationFrame = t.requestAnimationFrame(function () {
               this.step();
             }.bind(this));
           },
           stopAnimFrame: function stopAnimFrame() {
-            e.cancelAnimationFrame(this.animationFrame);
+            t.cancelAnimationFrame(this.animationFrame);
           },
           start: function start() {
             return !this.active && this.situation && (this.active = !0, this.startCurrent()), this;
@@ -67705,41 +70674,41 @@ var Forestry = (function () {
           }
         }
       }), a.extend(a.FX, {
-        attr: function attr(e, i, a) {
-          if ("object" === t(e)) for (var s in e) {
-            this.attr(s, e[s]);
-          } else this.add(e, i, "attrs");
+        attr: function attr(t, e, a) {
+          if ("object" === i(t)) for (var s in t) {
+            this.attr(s, t[s]);
+          } else this.add(t, e, "attrs");
           return this;
         },
         plot: function plot(t, e, i, a) {
           return 4 == arguments.length ? this.plot([t, e, i, a]) : this.add("plot", new (this.target().morphArray)(t));
         }
       }), a.Box = a.invent({
-        create: function create(e, i, s, r) {
-          if (!("object" !== t(e) || e instanceof a.Element)) return a.Box.call(this, null != e.left ? e.left : e.x, null != e.top ? e.top : e.y, e.width, e.height);
-          4 == arguments.length && (this.x = e, this.y = i, this.width = s, this.height = r), b(this);
+        create: function create(t, e, s, r) {
+          if (!("object" !== i(t) || t instanceof a.Element)) return a.Box.call(this, null != t.left ? t.left : t.x, null != t.top ? t.top : t.y, t.width, t.height);
+          4 == arguments.length && (this.x = t, this.y = e, this.width = s, this.height = r), b(this);
         }
       }), a.BBox = a.invent({
         create: function create(t) {
           if (a.Box.apply(this, [].slice.call(arguments)), t instanceof a.Element) {
-            var e;
+            var i;
 
             try {
-              if (!i.documentElement.contains) {
+              if (!e.documentElement.contains) {
                 for (var s = t.node; s.parentNode;) {
                   s = s.parentNode;
                 }
 
-                if (s != i) throw new Error("Element not in the dom");
+                if (s != e) throw new Error("Element not in the dom");
               }
 
-              e = t.node.getBBox();
-            } catch (i) {
+              i = t.node.getBBox();
+            } catch (e) {
               if (t instanceof a.Shape) {
                 a.parser.draw || a.prepare();
                 var r = t.clone(a.parser.draw.instance).show();
-                e = r.node.getBBox(), r.remove();
-              } else e = {
+                r && r.node && "function" == typeof r.node.getBBox && (i = r.node.getBBox()), r && "function" == typeof r.remove && r.remove();
+              } else i = {
                 x: t.node.clientLeft,
                 y: t.node.clientTop,
                 width: t.node.clientWidth,
@@ -67747,7 +70716,7 @@ var Forestry = (function () {
               };
             }
 
-            a.Box.call(this, e);
+            a.Box.call(this, i);
           }
         },
         inherit: a.Box,
@@ -67758,18 +70727,19 @@ var Forestry = (function () {
           }
         }
       }), a.BBox.prototype.constructor = a.BBox, a.Matrix = a.invent({
-        create: function create(e) {
-          var i = f([1, 0, 0, 1, 0, 0]);
-          e = e instanceof a.Element ? e.matrixify() : "string" == typeof e ? f(e.split(a.regex.delimiter).map(parseFloat)) : 6 == arguments.length ? f([].slice.call(arguments)) : Array.isArray(e) ? f(e) : "object" === t(e) ? e : i;
+        create: function create(t) {
+          var e = f([1, 0, 0, 1, 0, 0]);
+          t = null === t ? e : t instanceof a.Element ? t.matrixify() : "string" == typeof t ? f(t.split(a.regex.delimiter).map(parseFloat)) : 6 == arguments.length ? f([].slice.call(arguments)) : Array.isArray(t) ? f(t) : t && "object" === i(t) ? t : e;
 
-          for (var s = v.length - 1; s >= 0; --s) {
-            this[v[s]] = null != e[v[s]] ? e[v[s]] : i[v[s]];
+          for (var s = m.length - 1; s >= 0; --s) {
+            this[m[s]] = null != t[m[s]] ? t[m[s]] : e[m[s]];
           }
         },
         extend: {
           extract: function extract() {
-            var t = p(this, 0, 1),
-                e = (p(this, 1, 0), 180 / Math.PI * Math.atan2(t.y, t.x) - 90);
+            var t = p(this, 0, 1);
+            p(this, 1, 0);
+            var e = 180 / Math.PI * Math.atan2(t.y, t.x) - 90;
             return {
               x: this.e,
               y: this.f,
@@ -67803,14 +70773,14 @@ var Forestry = (function () {
             return new a.Matrix(this.native().translate(t || 0, e || 0));
           },
           native: function native() {
-            for (var t = a.parser.native.createSVGMatrix(), e = v.length - 1; e >= 0; e--) {
-              t[v[e]] = this[v[e]];
+            for (var t = a.parser.native.createSVGMatrix(), e = m.length - 1; e >= 0; e--) {
+              t[m[e]] = this[m[e]];
             }
 
             return t;
           },
           toString: function toString() {
-            return "matrix(" + m(this.a) + "," + m(this.b) + "," + m(this.c) + "," + m(this.d) + "," + m(this.e) + "," + m(this.f) + ")";
+            return "matrix(" + v(this.a) + "," + v(this.b) + "," + v(this.c) + "," + v(this.d) + "," + v(this.e) + "," + v(this.f) + ")";
           }
         },
         parent: a.Element,
@@ -67829,17 +70799,17 @@ var Forestry = (function () {
           }
         }
       }), a.Point = a.invent({
-        create: function create(e, i) {
+        create: function create(t, e) {
           var a;
-          a = Array.isArray(e) ? {
-            x: e[0],
-            y: e[1]
-          } : "object" === t(e) ? {
-            x: e.x,
-            y: e.y
-          } : null != e ? {
-            x: e,
-            y: null != i ? i : e
+          a = Array.isArray(t) ? {
+            x: t[0],
+            y: t[1]
+          } : "object" === i(t) ? {
+            x: t.x,
+            y: t.y
+          } : null != t ? {
+            x: t,
+            y: null != e ? e : t
           } : {
             x: 0,
             y: 0
@@ -67858,29 +70828,29 @@ var Forestry = (function () {
           return new a.Point(t, e).transform(this.screenCTM().inverse());
         }
       }), a.extend(a.Element, {
-        attr: function attr(e, i, s) {
-          if (null == e) {
-            for (e = {}, s = (i = this.node.attributes).length - 1; s >= 0; s--) {
-              e[i[s].nodeName] = a.regex.isNumber.test(i[s].nodeValue) ? parseFloat(i[s].nodeValue) : i[s].nodeValue;
+        attr: function attr(t, e, s) {
+          if (null == t) {
+            for (t = {}, s = (e = this.node.attributes).length - 1; s >= 0; s--) {
+              t[e[s].nodeName] = a.regex.isNumber.test(e[s].nodeValue) ? parseFloat(e[s].nodeValue) : e[s].nodeValue;
             }
 
-            return e;
+            return t;
           }
 
-          if ("object" === t(e)) for (var r in e) {
-            this.attr(r, e[r]);
-          } else if (null === i) this.node.removeAttribute(e);else {
-            if (null == i) return null == (i = this.node.getAttribute(e)) ? a.defaults.attrs[e] : a.regex.isNumber.test(i) ? parseFloat(i) : i;
-            "stroke-width" == e ? this.attr("stroke", parseFloat(i) > 0 ? this._stroke : null) : "stroke" == e && (this._stroke = i), "fill" != e && "stroke" != e || (a.regex.isImage.test(i) && (i = this.doc().defs().image(i, 0, 0)), i instanceof a.Image && (i = this.doc().defs().pattern(0, 0, function () {
-              this.add(i);
-            }))), "number" == typeof i ? i = new a.Number(i) : a.Color.isColor(i) ? i = new a.Color(i) : Array.isArray(i) && (i = new a.Array(i)), "leading" == e ? this.leading && this.leading(i) : "string" == typeof s ? this.node.setAttributeNS(s, e, i.toString()) : this.node.setAttribute(e, i.toString()), !this.rebuild || "font-size" != e && "x" != e || this.rebuild(e, i);
+          if ("object" === i(t)) for (var r in t) {
+            this.attr(r, t[r]);
+          } else if (null === e) this.node.removeAttribute(t);else {
+            if (null == e) return null == (e = this.node.getAttribute(t)) ? a.defaults.attrs[t] : a.regex.isNumber.test(e) ? parseFloat(e) : e;
+            "stroke-width" == t ? this.attr("stroke", parseFloat(e) > 0 ? this._stroke : null) : "stroke" == t && (this._stroke = e), "fill" != t && "stroke" != t || (a.regex.isImage.test(e) && (e = this.doc().defs().image(e, 0, 0)), e instanceof a.Image && (e = this.doc().defs().pattern(0, 0, function () {
+              this.add(e);
+            }))), "number" == typeof e ? e = new a.Number(e) : a.Color.isColor(e) ? e = new a.Color(e) : Array.isArray(e) && (e = new a.Array(e)), "leading" == t ? this.leading && this.leading(e) : "string" == typeof s ? this.node.setAttributeNS(s, t, e.toString()) : this.node.setAttribute(t, e.toString()), !this.rebuild || "font-size" != t && "x" != t || this.rebuild(t, e);
           }
           return this;
         }
       }), a.extend(a.Element, {
-        transform: function transform(e, i) {
+        transform: function transform(t, e) {
           var s;
-          return "object" !== t(e) ? (s = new a.Matrix(this).extract(), "string" == typeof e ? s[e] : s) : (s = new a.Matrix(this), i = !!i || !!e.relative, null != e.a && (s = i ? s.multiply(new a.Matrix(e)) : new a.Matrix(e)), this.attr("transform", s));
+          return "object" !== i(t) ? (s = new a.Matrix(this).extract(), "string" == typeof t ? s[t] : s) : (s = new a.Matrix(this), e = !!e || !!t.relative, null != t.a && (s = e ? s.multiply(new a.Matrix(t)) : new a.Matrix(t)), this.attr("transform", s));
         }
       }), a.extend(a.Element, {
         untransform: function untransform() {
@@ -67906,14 +70876,14 @@ var Forestry = (function () {
           return this.toParent(this.doc());
         }
       }), a.Transformation = a.invent({
-        create: function create(e, i) {
-          if (arguments.length > 1 && "boolean" != typeof i) return this.constructor.call(this, [].slice.call(arguments));
-          if (Array.isArray(e)) for (var a = 0, s = this.arguments.length; a < s; ++a) {
-            this[this.arguments[a]] = e[a];
-          } else if ("object" === t(e)) for (a = 0, s = this.arguments.length; a < s; ++a) {
-            this[this.arguments[a]] = e[this.arguments[a]];
+        create: function create(t, e) {
+          if (arguments.length > 1 && "boolean" != typeof e) return this.constructor.call(this, [].slice.call(arguments));
+          if (Array.isArray(t)) for (var a = 0, s = this.arguments.length; a < s; ++a) {
+            this[this.arguments[a]] = t[a];
+          } else if (t && "object" === i(t)) for (a = 0, s = this.arguments.length; a < s; ++a) {
+            this[this.arguments[a]] = t[this.arguments[a]];
           }
-          this.inversed = !1, !0 === i && (this.inversed = !0);
+          this.inversed = !1, !0 === e && (this.inversed = !0);
         }
       }), a.Translate = a.invent({
         parent: a.Matrix,
@@ -67926,23 +70896,23 @@ var Forestry = (function () {
           method: "translate"
         }
       }), a.extend(a.Element, {
-        style: function style(e, i) {
+        style: function style(t, e) {
           if (0 == arguments.length) return this.node.style.cssText || "";
           if (arguments.length < 2) {
-            if ("object" === t(e)) for (var s in e) {
-              this.style(s, e[s]);
+            if ("object" === i(t)) for (var s in t) {
+              this.style(s, t[s]);
             } else {
-              if (!a.regex.isCss.test(e)) return this.node.style[c(e)];
+              if (!a.regex.isCss.test(t)) return this.node.style[c(t)];
 
-              for (e = e.split(/\s*;\s*/).filter(function (t) {
+              for (t = t.split(/\s*;\s*/).filter(function (t) {
                 return !!t;
               }).map(function (t) {
                 return t.split(/\s*:\s*/);
-              }); i = e.pop();) {
-                this.style(i[0], i[1]);
+              }); e = t.pop();) {
+                this.style(e[0], e[1]);
               }
             }
-          } else this.node.style[c(e)] = null === i || a.regex.isBlank.test(i) ? "" : i;
+          } else this.node.style[c(t)] = null === e || a.regex.isBlank.test(e) ? "" : e;
           return this;
         }
       }), a.Parent = a.invent({
@@ -68069,11 +71039,11 @@ var Forestry = (function () {
         off: function off(t, e) {
           return a.off(this.node, t, e), this;
         },
-        fire: function fire(t, i) {
-          return t instanceof e.Event ? this.node.dispatchEvent(t) : this.node.dispatchEvent(t = new a.CustomEvent(t, {
+        fire: function fire(e, i) {
+          return e instanceof t.Event ? this.node.dispatchEvent(e) : this.node.dispatchEvent(e = new a.CustomEvent(e, {
             detail: i,
             cancelable: !0
-          })), this._event = t, this;
+          })), this._event = e, this;
         },
         event: function event() {
           return this._event;
@@ -68098,7 +71068,7 @@ var Forestry = (function () {
         }
       }), a.Doc = a.invent({
         create: function create(t) {
-          t && ("svg" == (t = "string" == typeof t ? i.getElementById(t) : t).nodeName ? this.constructor.call(this, t) : (this.constructor.call(this, a.create("svg")), t.appendChild(this.node), this.size("100%", "100%")), this.namespace().defs());
+          t && ("svg" == (t = "string" == typeof t ? e.getElementById(t) : t).nodeName ? this.constructor.call(this, t) : (this.constructor.call(this, a.create("svg")), t.appendChild(this.node), this.size("100%", "100%")), this.namespace().defs());
         },
         inherit: a.Container,
         extend: {
@@ -68414,22 +71384,22 @@ var Forestry = (function () {
         create: "image",
         inherit: a.Shape,
         extend: {
-          load: function load(t) {
-            if (!t) return this;
+          load: function load(e) {
+            if (!e) return this;
             var i = this,
-                s = new e.Image();
+                s = new t.Image();
             return a.on(s, "load", function () {
               a.off(s);
-              var e = i.parent(a.Pattern);
-              null !== e && (0 == i.width() && 0 == i.height() && i.size(s.width, s.height), e && 0 == e.width() && 0 == e.height() && e.size(i.width(), i.height()), "function" == typeof i._loaded && i._loaded.call(i, {
+              var t = i.parent(a.Pattern);
+              null !== t && (0 == i.width() && 0 == i.height() && i.size(s.width, s.height), t && 0 == t.width() && 0 == t.height() && t.size(i.width(), i.height()), "function" == typeof i._loaded && i._loaded.call(i, {
                 width: s.width,
                 height: s.height,
                 ratio: s.width / s.height,
-                url: t
+                url: e
               }));
             }), a.on(s, "error", function (t) {
               a.off(s), "function" == typeof i._error && i._error.call(i, t);
-            }), this.attr("href", s.src = this.src = t, a.xlink);
+            }), this.attr("href", s.src = this.src = e, a.xlink);
           },
           loaded: function loaded(t) {
             return this._loaded = t, this;
@@ -68532,7 +71502,7 @@ var Forestry = (function () {
         }
       }), a.extend(a.Text, a.Tspan, {
         plain: function plain(t) {
-          return !1 === this._build && this.clear(), this.node.appendChild(i.createTextNode(t)), this;
+          return !1 === this._build && this.clear(), this.node.appendChild(e.createTextNode(t)), this;
         },
         tspan: function tspan(t) {
           var e = (this.textPath && this.textPath() || this).node,
@@ -68640,19 +71610,19 @@ var Forestry = (function () {
         };
       }
 
-      function x(t) {
-        for (var i = t.childNodes.length - 1; i >= 0; i--) {
-          t.childNodes[i] instanceof e.SVGElement && x(t.childNodes[i]);
+      function x(e) {
+        for (var i = e.childNodes.length - 1; i >= 0; i--) {
+          e.childNodes[i] instanceof t.SVGElement && x(e.childNodes[i]);
         }
 
-        return a.adopt(t).id(a.eid(t.nodeName));
+        return a.adopt(e).id(a.eid(e.nodeName));
       }
 
       function b(t) {
         return null == t.x && (t.x = 0, t.y = 0, t.width = 0, t.height = 0), t.w = t.width, t.h = t.height, t.x2 = t.x + t.width, t.y2 = t.y + t.height, t.cx = t.x + t.width / 2, t.cy = t.y + t.height / 2, t;
       }
 
-      function m(t) {
+      function v(t) {
         return Math.abs(t) > 1e-37 ? t : 0;
       }
 
@@ -68777,12 +71747,12 @@ var Forestry = (function () {
           };
         });
       }, a.extend(a.Element, {}), a.extend(a.Element, {
-        remember: function remember(e, i) {
-          if ("object" === t(arguments[0])) for (var a in e) {
-            this.remember(a, e[a]);
+        remember: function remember(t, e) {
+          if ("object" === i(arguments[0])) for (var a in t) {
+            this.remember(a, t[a]);
           } else {
-            if (1 == arguments.length) return this.memory()[e];
-            this.memory()[e] = i;
+            if (1 == arguments.length) return this.memory()[t];
+            this.memory()[t] = e;
           }
           return this;
         },
@@ -68796,13 +71766,13 @@ var Forestry = (function () {
           return this._memory || (this._memory = {});
         }
       }), a.get = function (t) {
-        var e = i.getElementById(function (t) {
+        var i = e.getElementById(function (t) {
           var e = (t || "").toString().match(a.regex.reference);
           if (e) return e[1];
         }(t) || t);
-        return a.adopt(e);
-      }, a.select = function (t, e) {
-        return new a.Set(a.utils.map((e || i).querySelectorAll(t), function (t) {
+        return a.adopt(i);
+      }, a.select = function (t, i) {
+        return new a.Set(a.utils.map((i || e).querySelectorAll(t), function (t) {
           return a.adopt(t);
         }));
       }, a.extend(a.Parent, {
@@ -68810,24 +71780,24 @@ var Forestry = (function () {
           return a.select(t, this.node);
         }
       });
-      var v = "abcdef".split("");
+      var m = "abcdef".split("");
 
-      if ("function" != typeof e.CustomEvent) {
-        var y = function y(t, e) {
-          e = e || {
+      if ("function" != typeof t.CustomEvent) {
+        var y = function y(t, i) {
+          i = i || {
             bubbles: !1,
             cancelable: !1,
             detail: void 0
           };
-          var a = i.createEvent("CustomEvent");
-          return a.initCustomEvent(t, e.bubbles, e.cancelable, e.detail), a;
+          var a = e.createEvent("CustomEvent");
+          return a.initCustomEvent(t, i.bubbles, i.cancelable, i.detail), a;
         };
 
-        y.prototype = e.Event.prototype, a.CustomEvent = y;
-      } else a.CustomEvent = e.CustomEvent;
+        y.prototype = t.Event.prototype, a.CustomEvent = y;
+      } else a.CustomEvent = t.CustomEvent;
 
       return a;
-    }, "object" === (t(exports)) && "undefined" != 'object' ? module.exports = Tt.document ? Mt(Tt, Tt.document) : function (t) {
+    }, "object" === (i(exports)) && "undefined" != 'object' ? module.exports = Tt.document ? Mt(Tt, Tt.document) : function (t) {
       return Mt(t, t.document);
     } : Tt.SVG = Mt(Tt, Tt.document),
     /*! svg.filter.js - v2.0.2 - 2016-02-24
@@ -69315,8 +72285,8 @@ var Forestry = (function () {
                   f,
                   x,
                   b,
-                  m,
                   v,
+                  m,
                   y,
                   w,
                   k,
@@ -69327,8 +72297,8 @@ var Forestry = (function () {
                   P,
                   T = Math.abs(e[1]),
                   M = Math.abs(e[2]),
-                  z = e[3] % 360,
-                  I = e[4],
+                  I = e[3] % 360,
+                  z = e[4],
                   X = e[5],
                   E = e[6],
                   Y = e[7],
@@ -69336,18 +72306,18 @@ var Forestry = (function () {
                   R = new SVG.Point(E, Y),
                   H = [];
               if (0 === T || 0 === M || F.x === R.x && F.y === R.y) return [["C", F.x, F.y, R.x, R.y, R.x, R.y]];
-              i = new SVG.Point((F.x - R.x) / 2, (F.y - R.y) / 2).transform(new SVG.Matrix().rotate(z)), (a = i.x * i.x / (T * T) + i.y * i.y / (M * M)) > 1 && (T *= a = Math.sqrt(a), M *= a);
-              s = new SVG.Matrix().rotate(z).scale(1 / T, 1 / M).rotate(-z), F = F.transform(s), R = R.transform(s), r = [R.x - F.x, R.y - F.y], n = r[0] * r[0] + r[1] * r[1], o = Math.sqrt(n), r[0] /= o, r[1] /= o, l = n < 4 ? Math.sqrt(1 - n / 4) : 0, I === X && (l *= -1);
+              i = new SVG.Point((F.x - R.x) / 2, (F.y - R.y) / 2).transform(new SVG.Matrix().rotate(I)), (a = i.x * i.x / (T * T) + i.y * i.y / (M * M)) > 1 && (T *= a = Math.sqrt(a), M *= a);
+              s = new SVG.Matrix().rotate(I).scale(1 / T, 1 / M).rotate(-I), F = F.transform(s), R = R.transform(s), r = [R.x - F.x, R.y - F.y], n = r[0] * r[0] + r[1] * r[1], o = Math.sqrt(n), r[0] /= o, r[1] /= o, l = n < 4 ? Math.sqrt(1 - n / 4) : 0, z === X && (l *= -1);
               h = new SVG.Point((R.x + F.x) / 2 + l * -r[1], (R.y + F.y) / 2 + l * r[0]), c = new SVG.Point(F.x - h.x, F.y - h.y), d = new SVG.Point(R.x - h.x, R.y - h.y), g = Math.acos(c.x / Math.sqrt(c.x * c.x + c.y * c.y)), c.y < 0 && (g *= -1);
               u = Math.acos(d.x / Math.sqrt(d.x * d.x + d.y * d.y)), d.y < 0 && (u *= -1);
               X && g > u && (u += 2 * Math.PI);
               !X && g < u && (u -= 2 * Math.PI);
 
-              for (f = Math.ceil(2 * Math.abs(g - u) / Math.PI), b = [], m = g, p = (u - g) / f, x = 4 * Math.tan(p / 4) / 3, k = 0; k <= f; k++) {
-                y = Math.cos(m), v = Math.sin(m), w = new SVG.Point(h.x + y, h.y + v), b[k] = [new SVG.Point(w.x + x * v, w.y - x * y), w, new SVG.Point(w.x - x * v, w.y + x * y)], m += p;
+              for (f = Math.ceil(2 * Math.abs(g - u) / Math.PI), b = [], v = g, p = (u - g) / f, x = 4 * Math.tan(p / 4) / 3, k = 0; k <= f; k++) {
+                y = Math.cos(v), m = Math.sin(v), w = new SVG.Point(h.x + y, h.y + m), b[k] = [new SVG.Point(w.x + x * m, w.y - x * y), w, new SVG.Point(w.x - x * m, w.y + x * y)], v += p;
               }
 
-              for (b[0][0] = b[0][1].clone(), b[b.length - 1][2] = b[b.length - 1][1].clone(), s = new SVG.Matrix().rotate(z).scale(T, M).rotate(-z), k = 0, A = b.length; k < A; k++) {
+              for (b[0][0] = b[0][1].clone(), b[b.length - 1][2] = b[b.length - 1][1].clone(), s = new SVG.Matrix().rotate(I).scale(T, M).rotate(-I), k = 0, A = b.length; k < A; k++) {
                 b[k][0] = b[k][0].transform(s), b[k][1] = b[k][1].transform(s), b[k][2] = b[k][2].transform(s);
               }
 
@@ -69920,84 +72890,26 @@ var Forestry = (function () {
           saveAspectRatio: !1
         };
       }).call(this);
-    }();
-    !function (t, e) {
-      void 0 === e && (e = {});
-      var i = e.insertAt;
-
-      if (t && "undefined" != typeof document) {
-        var a = document.head || document.getElementsByTagName("head")[0],
-            s = document.createElement("style");
-        s.type = "text/css", "top" === i && a.firstChild ? a.insertBefore(s, a.firstChild) : a.appendChild(s), s.styleSheet ? s.styleSheet.cssText = t : s.appendChild(document.createTextNode(t));
-      }
-    }('.apexcharts-canvas {\n  position: relative;\n  user-select: none;\n  /* cannot give overflow: hidden as it will crop tooltips which overflow outside chart area */\n}\n\n\n/* scrollbar is not visible by default for legend, hence forcing the visibility */\n.apexcharts-canvas ::-webkit-scrollbar {\n  -webkit-appearance: none;\n  width: 6px;\n}\n\n.apexcharts-canvas ::-webkit-scrollbar-thumb {\n  border-radius: 4px;\n  background-color: rgba(0, 0, 0, .5);\n  box-shadow: 0 0 1px rgba(255, 255, 255, .5);\n  -webkit-box-shadow: 0 0 1px rgba(255, 255, 255, .5);\n}\n\n\n.apexcharts-inner {\n  position: relative;\n}\n\n.apexcharts-text tspan {\n  font-family: inherit;\n}\n\n.legend-mouseover-inactive {\n  transition: 0.15s ease all;\n  opacity: 0.20;\n}\n\n.apexcharts-series-collapsed {\n  opacity: 0;\n}\n\n.apexcharts-tooltip {\n  border-radius: 5px;\n  box-shadow: 2px 2px 6px -4px #999;\n  cursor: default;\n  font-size: 14px;\n  left: 62px;\n  opacity: 0;\n  pointer-events: none;\n  position: absolute;\n  top: 20px;\n  display: flex;\n  flex-direction: column;\n  overflow: hidden;\n  white-space: nowrap;\n  z-index: 12;\n  transition: 0.15s ease all;\n}\n\n.apexcharts-tooltip.apexcharts-active {\n  opacity: 1;\n  transition: 0.15s ease all;\n}\n\n.apexcharts-tooltip.apexcharts-theme-light {\n  border: 1px solid #e3e3e3;\n  background: rgba(255, 255, 255, 0.96);\n}\n\n.apexcharts-tooltip.apexcharts-theme-dark {\n  color: #fff;\n  background: rgba(30, 30, 30, 0.8);\n}\n\n.apexcharts-tooltip * {\n  font-family: inherit;\n}\n\n\n.apexcharts-tooltip-title {\n  padding: 6px;\n  font-size: 15px;\n  margin-bottom: 4px;\n}\n\n.apexcharts-tooltip.apexcharts-theme-light .apexcharts-tooltip-title {\n  background: #ECEFF1;\n  border-bottom: 1px solid #ddd;\n}\n\n.apexcharts-tooltip.apexcharts-theme-dark .apexcharts-tooltip-title {\n  background: rgba(0, 0, 0, 0.7);\n  border-bottom: 1px solid #333;\n}\n\n.apexcharts-tooltip-text-y-value,\n.apexcharts-tooltip-text-goals-value,\n.apexcharts-tooltip-text-z-value {\n  display: inline-block;\n  font-weight: 600;\n  margin-left: 5px;\n}\n\n.apexcharts-tooltip-text-y-label:empty,\n.apexcharts-tooltip-text-y-value:empty,\n.apexcharts-tooltip-text-goals-label:empty,\n.apexcharts-tooltip-text-goals-value:empty,\n.apexcharts-tooltip-text-z-value:empty {\n  display: none;\n}\n\n.apexcharts-tooltip-text-y-value,\n.apexcharts-tooltip-text-goals-value,\n.apexcharts-tooltip-text-z-value {\n  font-weight: 600;\n}\n\n.apexcharts-tooltip-text-goals-label, \n.apexcharts-tooltip-text-goals-value {\n  padding: 6px 0 5px;\n}\n\n.apexcharts-tooltip-goals-group, \n.apexcharts-tooltip-text-goals-label, \n.apexcharts-tooltip-text-goals-value {\n  display: flex;\n}\n.apexcharts-tooltip-text-goals-label:not(:empty),\n.apexcharts-tooltip-text-goals-value:not(:empty) {\n  margin-top: -6px;\n}\n\n.apexcharts-tooltip-marker {\n  width: 12px;\n  height: 12px;\n  position: relative;\n  top: 0px;\n  margin-right: 10px;\n  border-radius: 50%;\n}\n\n.apexcharts-tooltip-series-group {\n  padding: 0 10px;\n  display: none;\n  text-align: left;\n  justify-content: left;\n  align-items: center;\n}\n\n.apexcharts-tooltip-series-group.apexcharts-active .apexcharts-tooltip-marker {\n  opacity: 1;\n}\n\n.apexcharts-tooltip-series-group.apexcharts-active,\n.apexcharts-tooltip-series-group:last-child {\n  padding-bottom: 4px;\n}\n\n.apexcharts-tooltip-series-group-hidden {\n  opacity: 0;\n  height: 0;\n  line-height: 0;\n  padding: 0 !important;\n}\n\n.apexcharts-tooltip-y-group {\n  padding: 6px 0 5px;\n}\n\n.apexcharts-tooltip-box, .apexcharts-custom-tooltip {\n  padding: 4px 8px;\n}\n\n.apexcharts-tooltip-boxPlot {\n  display: flex;\n  flex-direction: column-reverse;\n}\n\n.apexcharts-tooltip-box>div {\n  margin: 4px 0;\n}\n\n.apexcharts-tooltip-box span.value {\n  font-weight: bold;\n}\n\n.apexcharts-tooltip-rangebar {\n  padding: 5px 8px;\n}\n\n.apexcharts-tooltip-rangebar .category {\n  font-weight: 600;\n  color: #777;\n}\n\n.apexcharts-tooltip-rangebar .series-name {\n  font-weight: bold;\n  display: block;\n  margin-bottom: 5px;\n}\n\n.apexcharts-xaxistooltip {\n  opacity: 0;\n  padding: 9px 10px;\n  pointer-events: none;\n  color: #373d3f;\n  font-size: 13px;\n  text-align: center;\n  border-radius: 2px;\n  position: absolute;\n  z-index: 10;\n  background: #ECEFF1;\n  border: 1px solid #90A4AE;\n  transition: 0.15s ease all;\n}\n\n.apexcharts-xaxistooltip.apexcharts-theme-dark {\n  background: rgba(0, 0, 0, 0.7);\n  border: 1px solid rgba(0, 0, 0, 0.5);\n  color: #fff;\n}\n\n.apexcharts-xaxistooltip:after,\n.apexcharts-xaxistooltip:before {\n  left: 50%;\n  border: solid transparent;\n  content: " ";\n  height: 0;\n  width: 0;\n  position: absolute;\n  pointer-events: none;\n}\n\n.apexcharts-xaxistooltip:after {\n  border-color: rgba(236, 239, 241, 0);\n  border-width: 6px;\n  margin-left: -6px;\n}\n\n.apexcharts-xaxistooltip:before {\n  border-color: rgba(144, 164, 174, 0);\n  border-width: 7px;\n  margin-left: -7px;\n}\n\n.apexcharts-xaxistooltip-bottom:after,\n.apexcharts-xaxistooltip-bottom:before {\n  bottom: 100%;\n}\n\n.apexcharts-xaxistooltip-top:after,\n.apexcharts-xaxistooltip-top:before {\n  top: 100%;\n}\n\n.apexcharts-xaxistooltip-bottom:after {\n  border-bottom-color: #ECEFF1;\n}\n\n.apexcharts-xaxistooltip-bottom:before {\n  border-bottom-color: #90A4AE;\n}\n\n.apexcharts-xaxistooltip-bottom.apexcharts-theme-dark:after {\n  border-bottom-color: rgba(0, 0, 0, 0.5);\n}\n\n.apexcharts-xaxistooltip-bottom.apexcharts-theme-dark:before {\n  border-bottom-color: rgba(0, 0, 0, 0.5);\n}\n\n.apexcharts-xaxistooltip-top:after {\n  border-top-color: #ECEFF1\n}\n\n.apexcharts-xaxistooltip-top:before {\n  border-top-color: #90A4AE;\n}\n\n.apexcharts-xaxistooltip-top.apexcharts-theme-dark:after {\n  border-top-color: rgba(0, 0, 0, 0.5);\n}\n\n.apexcharts-xaxistooltip-top.apexcharts-theme-dark:before {\n  border-top-color: rgba(0, 0, 0, 0.5);\n}\n\n.apexcharts-xaxistooltip.apexcharts-active {\n  opacity: 1;\n  transition: 0.15s ease all;\n}\n\n.apexcharts-yaxistooltip {\n  opacity: 0;\n  padding: 4px 10px;\n  pointer-events: none;\n  color: #373d3f;\n  font-size: 13px;\n  text-align: center;\n  border-radius: 2px;\n  position: absolute;\n  z-index: 10;\n  background: #ECEFF1;\n  border: 1px solid #90A4AE;\n}\n\n.apexcharts-yaxistooltip.apexcharts-theme-dark {\n  background: rgba(0, 0, 0, 0.7);\n  border: 1px solid rgba(0, 0, 0, 0.5);\n  color: #fff;\n}\n\n.apexcharts-yaxistooltip:after,\n.apexcharts-yaxistooltip:before {\n  top: 50%;\n  border: solid transparent;\n  content: " ";\n  height: 0;\n  width: 0;\n  position: absolute;\n  pointer-events: none;\n}\n\n.apexcharts-yaxistooltip:after {\n  border-color: rgba(236, 239, 241, 0);\n  border-width: 6px;\n  margin-top: -6px;\n}\n\n.apexcharts-yaxistooltip:before {\n  border-color: rgba(144, 164, 174, 0);\n  border-width: 7px;\n  margin-top: -7px;\n}\n\n.apexcharts-yaxistooltip-left:after,\n.apexcharts-yaxistooltip-left:before {\n  left: 100%;\n}\n\n.apexcharts-yaxistooltip-right:after,\n.apexcharts-yaxistooltip-right:before {\n  right: 100%;\n}\n\n.apexcharts-yaxistooltip-left:after {\n  border-left-color: #ECEFF1;\n}\n\n.apexcharts-yaxistooltip-left:before {\n  border-left-color: #90A4AE;\n}\n\n.apexcharts-yaxistooltip-left.apexcharts-theme-dark:after {\n  border-left-color: rgba(0, 0, 0, 0.5);\n}\n\n.apexcharts-yaxistooltip-left.apexcharts-theme-dark:before {\n  border-left-color: rgba(0, 0, 0, 0.5);\n}\n\n.apexcharts-yaxistooltip-right:after {\n  border-right-color: #ECEFF1;\n}\n\n.apexcharts-yaxistooltip-right:before {\n  border-right-color: #90A4AE;\n}\n\n.apexcharts-yaxistooltip-right.apexcharts-theme-dark:after {\n  border-right-color: rgba(0, 0, 0, 0.5);\n}\n\n.apexcharts-yaxistooltip-right.apexcharts-theme-dark:before {\n  border-right-color: rgba(0, 0, 0, 0.5);\n}\n\n.apexcharts-yaxistooltip.apexcharts-active {\n  opacity: 1;\n}\n\n.apexcharts-yaxistooltip-hidden {\n  display: none;\n}\n\n.apexcharts-xcrosshairs,\n.apexcharts-ycrosshairs {\n  pointer-events: none;\n  opacity: 0;\n  transition: 0.15s ease all;\n}\n\n.apexcharts-xcrosshairs.apexcharts-active,\n.apexcharts-ycrosshairs.apexcharts-active {\n  opacity: 1;\n  transition: 0.15s ease all;\n}\n\n.apexcharts-ycrosshairs-hidden {\n  opacity: 0;\n}\n\n.apexcharts-selection-rect {\n  cursor: move;\n}\n\n.svg_select_boundingRect, .svg_select_points_rot {\n  pointer-events: none;\n  opacity: 0;\n  visibility: hidden;\n}\n.apexcharts-selection-rect + g .svg_select_boundingRect,\n.apexcharts-selection-rect + g .svg_select_points_rot {\n  opacity: 0;\n  visibility: hidden;\n}\n\n.apexcharts-selection-rect + g .svg_select_points_l,\n.apexcharts-selection-rect + g .svg_select_points_r {\n  cursor: ew-resize;\n  opacity: 1;\n  visibility: visible;\n}\n\n.svg_select_points {\n  fill: #efefef;\n  stroke: #333;\n  rx: 2;\n}\n\n.apexcharts-svg.apexcharts-zoomable.hovering-zoom {\n  cursor: crosshair\n}\n\n.apexcharts-svg.apexcharts-zoomable.hovering-pan {\n  cursor: move\n}\n\n.apexcharts-zoom-icon,\n.apexcharts-zoomin-icon,\n.apexcharts-zoomout-icon,\n.apexcharts-reset-icon,\n.apexcharts-pan-icon,\n.apexcharts-selection-icon,\n.apexcharts-menu-icon,\n.apexcharts-toolbar-custom-icon {\n  cursor: pointer;\n  width: 20px;\n  height: 20px;\n  line-height: 24px;\n  color: #6E8192;\n  text-align: center;\n}\n\n.apexcharts-zoom-icon svg,\n.apexcharts-zoomin-icon svg,\n.apexcharts-zoomout-icon svg,\n.apexcharts-reset-icon svg,\n.apexcharts-menu-icon svg {\n  fill: #6E8192;\n}\n\n.apexcharts-selection-icon svg {\n  fill: #444;\n  transform: scale(0.76)\n}\n\n.apexcharts-theme-dark .apexcharts-zoom-icon svg,\n.apexcharts-theme-dark .apexcharts-zoomin-icon svg,\n.apexcharts-theme-dark .apexcharts-zoomout-icon svg,\n.apexcharts-theme-dark .apexcharts-reset-icon svg,\n.apexcharts-theme-dark .apexcharts-pan-icon svg,\n.apexcharts-theme-dark .apexcharts-selection-icon svg,\n.apexcharts-theme-dark .apexcharts-menu-icon svg,\n.apexcharts-theme-dark .apexcharts-toolbar-custom-icon svg {\n  fill: #f3f4f5;\n}\n\n.apexcharts-canvas .apexcharts-zoom-icon.apexcharts-selected svg,\n.apexcharts-canvas .apexcharts-selection-icon.apexcharts-selected svg,\n.apexcharts-canvas .apexcharts-reset-zoom-icon.apexcharts-selected svg {\n  fill: #008FFB;\n}\n\n.apexcharts-theme-light .apexcharts-selection-icon:not(.apexcharts-selected):hover svg,\n.apexcharts-theme-light .apexcharts-zoom-icon:not(.apexcharts-selected):hover svg,\n.apexcharts-theme-light .apexcharts-zoomin-icon:hover svg,\n.apexcharts-theme-light .apexcharts-zoomout-icon:hover svg,\n.apexcharts-theme-light .apexcharts-reset-icon:hover svg,\n.apexcharts-theme-light .apexcharts-menu-icon:hover svg {\n  fill: #333;\n}\n\n.apexcharts-selection-icon,\n.apexcharts-menu-icon {\n  position: relative;\n}\n\n.apexcharts-reset-icon {\n  margin-left: 5px;\n}\n\n.apexcharts-zoom-icon,\n.apexcharts-reset-icon,\n.apexcharts-menu-icon {\n  transform: scale(0.85);\n}\n\n.apexcharts-zoomin-icon,\n.apexcharts-zoomout-icon {\n  transform: scale(0.7)\n}\n\n.apexcharts-zoomout-icon {\n  margin-right: 3px;\n}\n\n.apexcharts-pan-icon {\n  transform: scale(0.62);\n  position: relative;\n  left: 1px;\n  top: 0px;\n}\n\n.apexcharts-pan-icon svg {\n  fill: #fff;\n  stroke: #6E8192;\n  stroke-width: 2;\n}\n\n.apexcharts-pan-icon.apexcharts-selected svg {\n  stroke: #008FFB;\n}\n\n.apexcharts-pan-icon:not(.apexcharts-selected):hover svg {\n  stroke: #333;\n}\n\n.apexcharts-toolbar {\n  position: absolute;\n  z-index: 11;\n  max-width: 176px;\n  text-align: right;\n  border-radius: 3px;\n  padding: 0px 6px 2px 6px;\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n}\n\n.apexcharts-menu {\n  background: #fff;\n  position: absolute;\n  top: 100%;\n  border: 1px solid #ddd;\n  border-radius: 3px;\n  padding: 3px;\n  right: 10px;\n  opacity: 0;\n  min-width: 110px;\n  transition: 0.15s ease all;\n  pointer-events: none;\n}\n\n.apexcharts-menu.apexcharts-menu-open {\n  opacity: 1;\n  pointer-events: all;\n  transition: 0.15s ease all;\n}\n\n.apexcharts-menu-item {\n  padding: 6px 7px;\n  font-size: 12px;\n  cursor: pointer;\n}\n\n.apexcharts-theme-light .apexcharts-menu-item:hover {\n  background: #eee;\n}\n\n.apexcharts-theme-dark .apexcharts-menu {\n  background: rgba(0, 0, 0, 0.7);\n  color: #fff;\n}\n\n@media screen and (min-width: 768px) {\n  .apexcharts-canvas:hover .apexcharts-toolbar {\n    opacity: 1;\n  }\n}\n\n.apexcharts-datalabel.apexcharts-element-hidden {\n  opacity: 0;\n}\n\n.apexcharts-pie-label,\n.apexcharts-datalabels,\n.apexcharts-datalabel,\n.apexcharts-datalabel-label,\n.apexcharts-datalabel-value {\n  cursor: default;\n  pointer-events: none;\n}\n\n.apexcharts-pie-label-delay {\n  opacity: 0;\n  animation-name: opaque;\n  animation-duration: 0.3s;\n  animation-fill-mode: forwards;\n  animation-timing-function: ease;\n}\n\n.apexcharts-canvas .apexcharts-element-hidden {\n  opacity: 0;\n}\n\n.apexcharts-hide .apexcharts-series-points {\n  opacity: 0;\n}\n\n.apexcharts-gridline,\n.apexcharts-annotation-rect,\n.apexcharts-tooltip .apexcharts-marker,\n.apexcharts-area-series .apexcharts-area,\n.apexcharts-line,\n.apexcharts-zoom-rect,\n.apexcharts-toolbar svg,\n.apexcharts-area-series .apexcharts-series-markers .apexcharts-marker.no-pointer-events,\n.apexcharts-line-series .apexcharts-series-markers .apexcharts-marker.no-pointer-events,\n.apexcharts-radar-series path,\n.apexcharts-radar-series polygon {\n  pointer-events: none;\n}\n\n\n/* markers */\n\n.apexcharts-marker {\n  transition: 0.15s ease all;\n}\n\n@keyframes opaque {\n  0% {\n    opacity: 0;\n  }\n  100% {\n    opacity: 1;\n  }\n}\n\n\n/* Resize generated styles */\n\n@keyframes resizeanim {\n  from {\n    opacity: 0;\n  }\n  to {\n    opacity: 0;\n  }\n}\n\n.resize-triggers {\n  animation: 1ms resizeanim;\n  visibility: hidden;\n  opacity: 0;\n}\n\n.resize-triggers,\n.resize-triggers>div,\n.contract-trigger:before {\n  content: " ";\n  display: block;\n  position: absolute;\n  top: 0;\n  left: 0;\n  height: 100%;\n  width: 100%;\n  overflow: hidden;\n}\n\n.resize-triggers>div {\n  background: #eee;\n  overflow: auto;\n}\n\n.contract-trigger:before {\n  width: 200%;\n  height: 200%;\n}'), function () {
-      function t(t) {
-        var e = t.__resizeTriggers__,
-            i = e.firstElementChild,
-            a = e.lastElementChild,
-            s = i ? i.firstElementChild : null;
-        a && (a.scrollLeft = a.scrollWidth, a.scrollTop = a.scrollHeight), s && (s.style.width = i.offsetWidth + 1 + "px", s.style.height = i.offsetHeight + 1 + "px"), i && (i.scrollLeft = i.scrollWidth, i.scrollTop = i.scrollHeight);
-      }
-
-      function e(e) {
-        var i = this;
-        t(this), this.__resizeRAF__ && r(this.__resizeRAF__), this.__resizeRAF__ = s(function () {
-          (function (t) {
-            return t.offsetWidth != t.__resizeLast__.width || t.offsetHeight != t.__resizeLast__.height;
-          })(i) && (i.__resizeLast__.width = i.offsetWidth, i.__resizeLast__.height = i.offsetHeight, i.__resizeListeners__.forEach(function (t) {
-            t.call(e);
-          }));
-        });
-      }
-
-      var i,
-          a,
-          s = (i = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || function (t) {
-        return window.setTimeout(t, 20);
-      }, function (t) {
-        return i(t);
-      }),
-          r = (a = window.cancelAnimationFrame || window.mozCancelAnimationFrame || window.webkitCancelAnimationFrame || window.clearTimeout, function (t) {
-        return a(t);
-      }),
-          o = !1,
-          n = "animationstart",
-          l = "Webkit Moz O ms".split(" "),
-          h = "webkitAnimationStart animationstart oAnimationStart MSAnimationStart".split(" "),
-          c = document.createElement("fakeelement");
-      if (void 0 !== c.style.animationName && (o = !0), !1 === o) for (var d = 0; d < l.length; d++) {
-        if (void 0 !== c.style[l[d] + "AnimationName"]) {
-          n = h[d];
-          break;
-        }
-      }
-      window.addResizeListener = function (i, a) {
-        i.__resizeTriggers__ || ("static" == getComputedStyle(i).position && (i.style.position = "relative"), i.__resizeLast__ = {}, i.__resizeListeners__ = [], (i.__resizeTriggers__ = document.createElement("div")).className = "resize-triggers", i.__resizeTriggers__.innerHTML = '<div class="expand-trigger"><div></div></div><div class="contract-trigger"></div>', i.appendChild(i.__resizeTriggers__), t(i), i.addEventListener("scroll", e, !0), n && i.__resizeTriggers__.addEventListener(n, function (e) {
-          "resizeanim" == e.animationName && t(i);
-        })), i.__resizeListeners__.push(a);
-      }, window.removeResizeListener = function (t, i) {
-        t && (t.__resizeListeners__.splice(t.__resizeListeners__.indexOf(i), 1), t.__resizeListeners__.length || (t.removeEventListener("scroll", e), t.__resizeTriggers__.parentNode && (t.__resizeTriggers__ = !t.removeChild(t.__resizeTriggers__))));
-      };
     }(), void 0 === window.Apex && (window.Apex = {});
 
     var Yt = function () {
-      function t(i) {
-        e(this, t), this.ctx = i, this.w = i.w;
+      function t(e) {
+        a(this, t), this.ctx = e, this.w = e.w;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "initModules",
         value: function value() {
-          this.ctx.publicMethods = ["updateOptions", "updateSeries", "appendData", "appendSeries", "toggleSeries", "showSeries", "hideSeries", "setLocale", "resetSeries", "zoomX", "toggleDataPointSelection", "dataURI", "addXaxisAnnotation", "addYaxisAnnotation", "addPointAnnotation", "clearAnnotations", "removeAnnotation", "paper", "destroy"], this.ctx.eventList = ["click", "mousedown", "mousemove", "mouseleave", "touchstart", "touchmove", "touchleave", "mouseup", "touchend"], this.ctx.animations = new f(this.ctx), this.ctx.axes = new J(this.ctx), this.ctx.core = new Xt(this.ctx.el, this.ctx), this.ctx.config = new H({}), this.ctx.data = new O(this.ctx), this.ctx.grid = new _(this.ctx), this.ctx.graphics = new b(this.ctx), this.ctx.coreUtils = new y(this.ctx), this.ctx.crosshairs = new Q(this.ctx), this.ctx.events = new Z(this.ctx), this.ctx.exports = new V(this.ctx), this.ctx.localization = new $(this.ctx), this.ctx.options = new S(), this.ctx.responsive = new K(this.ctx), this.ctx.series = new I(this.ctx), this.ctx.theme = new tt(this.ctx), this.ctx.formatters = new W(this.ctx), this.ctx.titleSubtitle = new et(this.ctx), this.ctx.legend = new lt(this.ctx), this.ctx.toolbar = new ht(this.ctx), this.ctx.dimensions = new ot(this.ctx), this.ctx.updateHelpers = new Et(this.ctx), this.ctx.zoomPanSelection = new ct(this.ctx), this.ctx.w.globals.tooltip = new bt(this.ctx);
+          this.ctx.publicMethods = ["updateOptions", "updateSeries", "appendData", "appendSeries", "toggleSeries", "showSeries", "hideSeries", "setLocale", "resetSeries", "zoomX", "toggleDataPointSelection", "dataURI", "addXaxisAnnotation", "addYaxisAnnotation", "addPointAnnotation", "clearAnnotations", "removeAnnotation", "paper", "destroy"], this.ctx.eventList = ["click", "mousedown", "mousemove", "mouseleave", "touchstart", "touchmove", "touchleave", "mouseup", "touchend"], this.ctx.animations = new f(this.ctx), this.ctx.axes = new J(this.ctx), this.ctx.core = new Xt(this.ctx.el, this.ctx), this.ctx.config = new H({}), this.ctx.data = new O(this.ctx), this.ctx.grid = new _(this.ctx), this.ctx.graphics = new b(this.ctx), this.ctx.coreUtils = new y(this.ctx), this.ctx.crosshairs = new Q(this.ctx), this.ctx.events = new Z(this.ctx), this.ctx.exports = new V(this.ctx), this.ctx.localization = new $(this.ctx), this.ctx.options = new S(), this.ctx.responsive = new K(this.ctx), this.ctx.series = new z(this.ctx), this.ctx.theme = new tt(this.ctx), this.ctx.formatters = new W(this.ctx), this.ctx.titleSubtitle = new et(this.ctx), this.ctx.legend = new lt(this.ctx), this.ctx.toolbar = new ht(this.ctx), this.ctx.dimensions = new ot(this.ctx), this.ctx.updateHelpers = new Et(this.ctx), this.ctx.zoomPanSelection = new ct(this.ctx), this.ctx.w.globals.tooltip = new bt(this.ctx);
         }
       }]), t;
     }(),
         Ft = function () {
-      function t(i) {
-        e(this, t), this.ctx = i, this.w = i.w;
+      function t(e) {
+        a(this, t), this.ctx = e, this.w = e.w;
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "clear",
         value: function value(t) {
           var e = t.isUpdating;
@@ -70031,12 +72943,14 @@ var Forestry = (function () {
         }
       }]), t;
     }(),
-        Rt = function () {
-      function t(i, a) {
-        e(this, t), this.opts = a, this.ctx = this, this.w = new N(a).init(), this.el = i, this.w.globals.cuid = p.randomId(), this.w.globals.chartID = this.w.config.chart.id ? p.escapeString(this.w.config.chart.id) : this.w.globals.cuid, new Yt(this).initModules(), this.create = p.bind(this.create, this), this.windowResizeHandler = this._windowResizeHandler.bind(this), this.parentResizeHandler = this._parentResizeCallback.bind(this);
+        Rt = new WeakMap();
+
+    var Ht = function () {
+      function t(e, i) {
+        a(this, t), this.opts = i, this.ctx = this, this.w = new N(i).init(), this.el = e, this.w.globals.cuid = p.randomId(), this.w.globals.chartID = this.w.config.chart.id ? p.escapeString(this.w.config.chart.id) : this.w.globals.cuid, new Yt(this).initModules(), this.create = p.bind(this.create, this), this.windowResizeHandler = this._windowResizeHandler.bind(this), this.parentResizeHandler = this._parentResizeCallback.bind(this);
       }
 
-      return a(t, [{
+      return r(t, [{
         key: "render",
         value: function value() {
           var t = this;
@@ -70048,15 +72962,29 @@ var Forestry = (function () {
                 chart: t
               }), t.setLocale(t.w.config.chart.defaultLocale);
               var a = t.w.config.chart.events.beforeMount;
-              "function" == typeof a && a(t, t.w), t.events.fireEvent("beforeMount", [t, t.w]), window.addEventListener("resize", t.windowResizeHandler), window.addResizeListener(t.el.parentNode, t.parentResizeHandler);
-              var s = t.create(t.w.config.series, {});
-              if (!s) return e(t);
-              t.mount(s).then(function () {
-                "function" == typeof t.w.config.chart.events.mounted && t.w.config.chart.events.mounted(t, t.w), t.events.fireEvent("mounted", [t, t.w]), e(s);
+
+              if ("function" == typeof a && a(t, t.w), t.events.fireEvent("beforeMount", [t, t.w]), window.addEventListener("resize", t.windowResizeHandler), h = t.el.parentNode, c = t.parentResizeHandler, d = !1, g = new ResizeObserver(function (t) {
+                d && c.call(h, t), d = !0;
+              }), h.nodeType === Node.DOCUMENT_FRAGMENT_NODE ? Array.from(h.children).forEach(function (t) {
+                return g.observe(t);
+              }) : g.observe(h), Rt.set(c, g), !t.css) {
+                var s = t.el.getRootNode && t.el.getRootNode(),
+                    r = p.is("ShadowRoot", s),
+                    o = t.el.ownerDocument,
+                    n = o.getElementById("apexcharts-css");
+                !r && n || (t.css = document.createElement("style"), t.css.id = "apexcharts-css", t.css.textContent = '.apexcharts-canvas {\n  position: relative;\n  user-select: none;\n  /* cannot give overflow: hidden as it will crop tooltips which overflow outside chart area */\n}\n\n\n/* scrollbar is not visible by default for legend, hence forcing the visibility */\n.apexcharts-canvas ::-webkit-scrollbar {\n  -webkit-appearance: none;\n  width: 6px;\n}\n\n.apexcharts-canvas ::-webkit-scrollbar-thumb {\n  border-radius: 4px;\n  background-color: rgba(0, 0, 0, .5);\n  box-shadow: 0 0 1px rgba(255, 255, 255, .5);\n  -webkit-box-shadow: 0 0 1px rgba(255, 255, 255, .5);\n}\n\n\n.apexcharts-inner {\n  position: relative;\n}\n\n.apexcharts-text tspan {\n  font-family: inherit;\n}\n\n.legend-mouseover-inactive {\n  transition: 0.15s ease all;\n  opacity: 0.20;\n}\n\n.apexcharts-series-collapsed {\n  opacity: 0;\n}\n\n.apexcharts-tooltip {\n  border-radius: 5px;\n  box-shadow: 2px 2px 6px -4px #999;\n  cursor: default;\n  font-size: 14px;\n  left: 62px;\n  opacity: 0;\n  pointer-events: none;\n  position: absolute;\n  top: 20px;\n  display: flex;\n  flex-direction: column;\n  overflow: hidden;\n  white-space: nowrap;\n  z-index: 12;\n  transition: 0.15s ease all;\n}\n\n.apexcharts-tooltip.apexcharts-active {\n  opacity: 1;\n  transition: 0.15s ease all;\n}\n\n.apexcharts-tooltip.apexcharts-theme-light {\n  border: 1px solid #e3e3e3;\n  background: rgba(255, 255, 255, 0.96);\n}\n\n.apexcharts-tooltip.apexcharts-theme-dark {\n  color: #fff;\n  background: rgba(30, 30, 30, 0.8);\n}\n\n.apexcharts-tooltip * {\n  font-family: inherit;\n}\n\n\n.apexcharts-tooltip-title {\n  padding: 6px;\n  font-size: 15px;\n  margin-bottom: 4px;\n}\n\n.apexcharts-tooltip.apexcharts-theme-light .apexcharts-tooltip-title {\n  background: #ECEFF1;\n  border-bottom: 1px solid #ddd;\n}\n\n.apexcharts-tooltip.apexcharts-theme-dark .apexcharts-tooltip-title {\n  background: rgba(0, 0, 0, 0.7);\n  border-bottom: 1px solid #333;\n}\n\n.apexcharts-tooltip-text-y-value,\n.apexcharts-tooltip-text-goals-value,\n.apexcharts-tooltip-text-z-value {\n  display: inline-block;\n  font-weight: 600;\n  margin-left: 5px;\n}\n\n.apexcharts-tooltip-title:empty,\n.apexcharts-tooltip-text-y-label:empty,\n.apexcharts-tooltip-text-y-value:empty,\n.apexcharts-tooltip-text-goals-label:empty,\n.apexcharts-tooltip-text-goals-value:empty,\n.apexcharts-tooltip-text-z-value:empty {\n  display: none;\n}\n\n.apexcharts-tooltip-text-y-value,\n.apexcharts-tooltip-text-goals-value,\n.apexcharts-tooltip-text-z-value {\n  font-weight: 600;\n}\n\n.apexcharts-tooltip-text-goals-label, \n.apexcharts-tooltip-text-goals-value {\n  padding: 6px 0 5px;\n}\n\n.apexcharts-tooltip-goals-group, \n.apexcharts-tooltip-text-goals-label, \n.apexcharts-tooltip-text-goals-value {\n  display: flex;\n}\n.apexcharts-tooltip-text-goals-label:not(:empty),\n.apexcharts-tooltip-text-goals-value:not(:empty) {\n  margin-top: -6px;\n}\n\n.apexcharts-tooltip-marker {\n  width: 12px;\n  height: 12px;\n  position: relative;\n  top: 0px;\n  margin-right: 10px;\n  border-radius: 50%;\n}\n\n.apexcharts-tooltip-series-group {\n  padding: 0 10px;\n  display: none;\n  text-align: left;\n  justify-content: left;\n  align-items: center;\n}\n\n.apexcharts-tooltip-series-group.apexcharts-active .apexcharts-tooltip-marker {\n  opacity: 1;\n}\n\n.apexcharts-tooltip-series-group.apexcharts-active,\n.apexcharts-tooltip-series-group:last-child {\n  padding-bottom: 4px;\n}\n\n.apexcharts-tooltip-series-group-hidden {\n  opacity: 0;\n  height: 0;\n  line-height: 0;\n  padding: 0 !important;\n}\n\n.apexcharts-tooltip-y-group {\n  padding: 6px 0 5px;\n}\n\n.apexcharts-tooltip-box, .apexcharts-custom-tooltip {\n  padding: 4px 8px;\n}\n\n.apexcharts-tooltip-boxPlot {\n  display: flex;\n  flex-direction: column-reverse;\n}\n\n.apexcharts-tooltip-box>div {\n  margin: 4px 0;\n}\n\n.apexcharts-tooltip-box span.value {\n  font-weight: bold;\n}\n\n.apexcharts-tooltip-rangebar {\n  padding: 5px 8px;\n}\n\n.apexcharts-tooltip-rangebar .category {\n  font-weight: 600;\n  color: #777;\n}\n\n.apexcharts-tooltip-rangebar .series-name {\n  font-weight: bold;\n  display: block;\n  margin-bottom: 5px;\n}\n\n.apexcharts-xaxistooltip {\n  opacity: 0;\n  padding: 9px 10px;\n  pointer-events: none;\n  color: #373d3f;\n  font-size: 13px;\n  text-align: center;\n  border-radius: 2px;\n  position: absolute;\n  z-index: 10;\n  background: #ECEFF1;\n  border: 1px solid #90A4AE;\n  transition: 0.15s ease all;\n}\n\n.apexcharts-xaxistooltip.apexcharts-theme-dark {\n  background: rgba(0, 0, 0, 0.7);\n  border: 1px solid rgba(0, 0, 0, 0.5);\n  color: #fff;\n}\n\n.apexcharts-xaxistooltip:after,\n.apexcharts-xaxistooltip:before {\n  left: 50%;\n  border: solid transparent;\n  content: " ";\n  height: 0;\n  width: 0;\n  position: absolute;\n  pointer-events: none;\n}\n\n.apexcharts-xaxistooltip:after {\n  border-color: rgba(236, 239, 241, 0);\n  border-width: 6px;\n  margin-left: -6px;\n}\n\n.apexcharts-xaxistooltip:before {\n  border-color: rgba(144, 164, 174, 0);\n  border-width: 7px;\n  margin-left: -7px;\n}\n\n.apexcharts-xaxistooltip-bottom:after,\n.apexcharts-xaxistooltip-bottom:before {\n  bottom: 100%;\n}\n\n.apexcharts-xaxistooltip-top:after,\n.apexcharts-xaxistooltip-top:before {\n  top: 100%;\n}\n\n.apexcharts-xaxistooltip-bottom:after {\n  border-bottom-color: #ECEFF1;\n}\n\n.apexcharts-xaxistooltip-bottom:before {\n  border-bottom-color: #90A4AE;\n}\n\n.apexcharts-xaxistooltip-bottom.apexcharts-theme-dark:after {\n  border-bottom-color: rgba(0, 0, 0, 0.5);\n}\n\n.apexcharts-xaxistooltip-bottom.apexcharts-theme-dark:before {\n  border-bottom-color: rgba(0, 0, 0, 0.5);\n}\n\n.apexcharts-xaxistooltip-top:after {\n  border-top-color: #ECEFF1\n}\n\n.apexcharts-xaxistooltip-top:before {\n  border-top-color: #90A4AE;\n}\n\n.apexcharts-xaxistooltip-top.apexcharts-theme-dark:after {\n  border-top-color: rgba(0, 0, 0, 0.5);\n}\n\n.apexcharts-xaxistooltip-top.apexcharts-theme-dark:before {\n  border-top-color: rgba(0, 0, 0, 0.5);\n}\n\n.apexcharts-xaxistooltip.apexcharts-active {\n  opacity: 1;\n  transition: 0.15s ease all;\n}\n\n.apexcharts-yaxistooltip {\n  opacity: 0;\n  padding: 4px 10px;\n  pointer-events: none;\n  color: #373d3f;\n  font-size: 13px;\n  text-align: center;\n  border-radius: 2px;\n  position: absolute;\n  z-index: 10;\n  background: #ECEFF1;\n  border: 1px solid #90A4AE;\n}\n\n.apexcharts-yaxistooltip.apexcharts-theme-dark {\n  background: rgba(0, 0, 0, 0.7);\n  border: 1px solid rgba(0, 0, 0, 0.5);\n  color: #fff;\n}\n\n.apexcharts-yaxistooltip:after,\n.apexcharts-yaxistooltip:before {\n  top: 50%;\n  border: solid transparent;\n  content: " ";\n  height: 0;\n  width: 0;\n  position: absolute;\n  pointer-events: none;\n}\n\n.apexcharts-yaxistooltip:after {\n  border-color: rgba(236, 239, 241, 0);\n  border-width: 6px;\n  margin-top: -6px;\n}\n\n.apexcharts-yaxistooltip:before {\n  border-color: rgba(144, 164, 174, 0);\n  border-width: 7px;\n  margin-top: -7px;\n}\n\n.apexcharts-yaxistooltip-left:after,\n.apexcharts-yaxistooltip-left:before {\n  left: 100%;\n}\n\n.apexcharts-yaxistooltip-right:after,\n.apexcharts-yaxistooltip-right:before {\n  right: 100%;\n}\n\n.apexcharts-yaxistooltip-left:after {\n  border-left-color: #ECEFF1;\n}\n\n.apexcharts-yaxistooltip-left:before {\n  border-left-color: #90A4AE;\n}\n\n.apexcharts-yaxistooltip-left.apexcharts-theme-dark:after {\n  border-left-color: rgba(0, 0, 0, 0.5);\n}\n\n.apexcharts-yaxistooltip-left.apexcharts-theme-dark:before {\n  border-left-color: rgba(0, 0, 0, 0.5);\n}\n\n.apexcharts-yaxistooltip-right:after {\n  border-right-color: #ECEFF1;\n}\n\n.apexcharts-yaxistooltip-right:before {\n  border-right-color: #90A4AE;\n}\n\n.apexcharts-yaxistooltip-right.apexcharts-theme-dark:after {\n  border-right-color: rgba(0, 0, 0, 0.5);\n}\n\n.apexcharts-yaxistooltip-right.apexcharts-theme-dark:before {\n  border-right-color: rgba(0, 0, 0, 0.5);\n}\n\n.apexcharts-yaxistooltip.apexcharts-active {\n  opacity: 1;\n}\n\n.apexcharts-yaxistooltip-hidden {\n  display: none;\n}\n\n.apexcharts-xcrosshairs,\n.apexcharts-ycrosshairs {\n  pointer-events: none;\n  opacity: 0;\n  transition: 0.15s ease all;\n}\n\n.apexcharts-xcrosshairs.apexcharts-active,\n.apexcharts-ycrosshairs.apexcharts-active {\n  opacity: 1;\n  transition: 0.15s ease all;\n}\n\n.apexcharts-ycrosshairs-hidden {\n  opacity: 0;\n}\n\n.apexcharts-selection-rect {\n  cursor: move;\n}\n\n.svg_select_boundingRect, .svg_select_points_rot {\n  pointer-events: none;\n  opacity: 0;\n  visibility: hidden;\n}\n.apexcharts-selection-rect + g .svg_select_boundingRect,\n.apexcharts-selection-rect + g .svg_select_points_rot {\n  opacity: 0;\n  visibility: hidden;\n}\n\n.apexcharts-selection-rect + g .svg_select_points_l,\n.apexcharts-selection-rect + g .svg_select_points_r {\n  cursor: ew-resize;\n  opacity: 1;\n  visibility: visible;\n}\n\n.svg_select_points {\n  fill: #efefef;\n  stroke: #333;\n  rx: 2;\n}\n\n.apexcharts-svg.apexcharts-zoomable.hovering-zoom {\n  cursor: crosshair\n}\n\n.apexcharts-svg.apexcharts-zoomable.hovering-pan {\n  cursor: move\n}\n\n.apexcharts-zoom-icon,\n.apexcharts-zoomin-icon,\n.apexcharts-zoomout-icon,\n.apexcharts-reset-icon,\n.apexcharts-pan-icon,\n.apexcharts-selection-icon,\n.apexcharts-menu-icon,\n.apexcharts-toolbar-custom-icon {\n  cursor: pointer;\n  width: 20px;\n  height: 20px;\n  line-height: 24px;\n  color: #6E8192;\n  text-align: center;\n}\n\n.apexcharts-zoom-icon svg,\n.apexcharts-zoomin-icon svg,\n.apexcharts-zoomout-icon svg,\n.apexcharts-reset-icon svg,\n.apexcharts-menu-icon svg {\n  fill: #6E8192;\n}\n\n.apexcharts-selection-icon svg {\n  fill: #444;\n  transform: scale(0.76)\n}\n\n.apexcharts-theme-dark .apexcharts-zoom-icon svg,\n.apexcharts-theme-dark .apexcharts-zoomin-icon svg,\n.apexcharts-theme-dark .apexcharts-zoomout-icon svg,\n.apexcharts-theme-dark .apexcharts-reset-icon svg,\n.apexcharts-theme-dark .apexcharts-pan-icon svg,\n.apexcharts-theme-dark .apexcharts-selection-icon svg,\n.apexcharts-theme-dark .apexcharts-menu-icon svg,\n.apexcharts-theme-dark .apexcharts-toolbar-custom-icon svg {\n  fill: #f3f4f5;\n}\n\n.apexcharts-canvas .apexcharts-zoom-icon.apexcharts-selected svg,\n.apexcharts-canvas .apexcharts-selection-icon.apexcharts-selected svg,\n.apexcharts-canvas .apexcharts-reset-zoom-icon.apexcharts-selected svg {\n  fill: #008FFB;\n}\n\n.apexcharts-theme-light .apexcharts-selection-icon:not(.apexcharts-selected):hover svg,\n.apexcharts-theme-light .apexcharts-zoom-icon:not(.apexcharts-selected):hover svg,\n.apexcharts-theme-light .apexcharts-zoomin-icon:hover svg,\n.apexcharts-theme-light .apexcharts-zoomout-icon:hover svg,\n.apexcharts-theme-light .apexcharts-reset-icon:hover svg,\n.apexcharts-theme-light .apexcharts-menu-icon:hover svg {\n  fill: #333;\n}\n\n.apexcharts-selection-icon,\n.apexcharts-menu-icon {\n  position: relative;\n}\n\n.apexcharts-reset-icon {\n  margin-left: 5px;\n}\n\n.apexcharts-zoom-icon,\n.apexcharts-reset-icon,\n.apexcharts-menu-icon {\n  transform: scale(0.85);\n}\n\n.apexcharts-zoomin-icon,\n.apexcharts-zoomout-icon {\n  transform: scale(0.7)\n}\n\n.apexcharts-zoomout-icon {\n  margin-right: 3px;\n}\n\n.apexcharts-pan-icon {\n  transform: scale(0.62);\n  position: relative;\n  left: 1px;\n  top: 0px;\n}\n\n.apexcharts-pan-icon svg {\n  fill: #fff;\n  stroke: #6E8192;\n  stroke-width: 2;\n}\n\n.apexcharts-pan-icon.apexcharts-selected svg {\n  stroke: #008FFB;\n}\n\n.apexcharts-pan-icon:not(.apexcharts-selected):hover svg {\n  stroke: #333;\n}\n\n.apexcharts-toolbar {\n  position: absolute;\n  z-index: 11;\n  max-width: 176px;\n  text-align: right;\n  border-radius: 3px;\n  padding: 0px 6px 2px 6px;\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n}\n\n.apexcharts-menu {\n  background: #fff;\n  position: absolute;\n  top: 100%;\n  border: 1px solid #ddd;\n  border-radius: 3px;\n  padding: 3px;\n  right: 10px;\n  opacity: 0;\n  min-width: 110px;\n  transition: 0.15s ease all;\n  pointer-events: none;\n}\n\n.apexcharts-menu.apexcharts-menu-open {\n  opacity: 1;\n  pointer-events: all;\n  transition: 0.15s ease all;\n}\n\n.apexcharts-menu-item {\n  padding: 6px 7px;\n  font-size: 12px;\n  cursor: pointer;\n}\n\n.apexcharts-theme-light .apexcharts-menu-item:hover {\n  background: #eee;\n}\n\n.apexcharts-theme-dark .apexcharts-menu {\n  background: rgba(0, 0, 0, 0.7);\n  color: #fff;\n}\n\n@media screen and (min-width: 768px) {\n  .apexcharts-canvas:hover .apexcharts-toolbar {\n    opacity: 1;\n  }\n}\n\n.apexcharts-datalabel.apexcharts-element-hidden {\n  opacity: 0;\n}\n\n.apexcharts-pie-label,\n.apexcharts-datalabels,\n.apexcharts-datalabel,\n.apexcharts-datalabel-label,\n.apexcharts-datalabel-value {\n  cursor: default;\n  pointer-events: none;\n}\n\n.apexcharts-pie-label-delay {\n  opacity: 0;\n  animation-name: opaque;\n  animation-duration: 0.3s;\n  animation-fill-mode: forwards;\n  animation-timing-function: ease;\n}\n\n.apexcharts-canvas .apexcharts-element-hidden {\n  opacity: 0;\n}\n\n.apexcharts-hide .apexcharts-series-points {\n  opacity: 0;\n}\n\n.apexcharts-gridline,\n.apexcharts-annotation-rect,\n.apexcharts-tooltip .apexcharts-marker,\n.apexcharts-area-series .apexcharts-area,\n.apexcharts-line,\n.apexcharts-zoom-rect,\n.apexcharts-toolbar svg,\n.apexcharts-area-series .apexcharts-series-markers .apexcharts-marker.no-pointer-events,\n.apexcharts-line-series .apexcharts-series-markers .apexcharts-marker.no-pointer-events,\n.apexcharts-radar-series path,\n.apexcharts-radar-series polygon {\n  pointer-events: none;\n}\n\n\n/* markers */\n\n.apexcharts-marker {\n  transition: 0.15s ease all;\n}\n\n@keyframes opaque {\n  0% {\n    opacity: 0;\n  }\n  100% {\n    opacity: 1;\n  }\n}\n\n\n/* Resize generated styles */\n\n@keyframes resizeanim {\n  from {\n    opacity: 0;\n  }\n  to {\n    opacity: 0;\n  }\n}\n\n.resize-triggers {\n  animation: 1ms resizeanim;\n  visibility: hidden;\n  opacity: 0;\n}\n\n.resize-triggers,\n.resize-triggers>div,\n.contract-trigger:before {\n  content: " ";\n  display: block;\n  position: absolute;\n  top: 0;\n  left: 0;\n  height: 100%;\n  width: 100%;\n  overflow: hidden;\n}\n\n.resize-triggers>div {\n  background: #eee;\n  overflow: auto;\n}\n\n.contract-trigger:before {\n  width: 200%;\n  height: 200%;\n}', r ? s.prepend(t.css) : o.head.appendChild(t.css));
+              }
+
+              var l = t.create(t.w.config.series, {});
+              if (!l) return e(t);
+              t.mount(l).then(function () {
+                "function" == typeof t.w.config.chart.events.mounted && t.w.config.chart.events.mounted(t, t.w), t.events.fireEvent("mounted", [t, t.w]), e(l);
               }).catch(function (t) {
                 i(t);
               });
             } else i(new Error("Element not found"));
+
+            var h, c, d, g;
           });
         }
       }, {
@@ -70115,7 +73043,7 @@ var Forestry = (function () {
             } else a.globals.dom.elGraphical.add(e.elGraph);
 
             if ("front" === a.config.grid.position && o && a.globals.dom.elGraphical.add(o.el), "front" === a.config.xaxis.crosshairs.position && i.crosshairs.drawXCrosshairs(), "front" === a.config.yaxis[0].crosshairs.position && i.crosshairs.drawYCrosshairs(), "front" === a.config.annotations.position && (a.globals.dom.Paper.add(a.globals.dom.elAnnotations), i.annotations.drawAxesAnnotations()), !a.globals.noData) {
-              if (a.config.tooltip.enabled && !a.globals.noData && i.w.globals.tooltip.drawTooltip(e.xyRatios), a.globals.axisCharts && (a.globals.isXNumeric || a.config.xaxis.convertedCatToNumeric || a.globals.isTimelineBar)) (a.config.chart.zoom.enabled || a.config.chart.selection && a.config.chart.selection.enabled || a.config.chart.pan && a.config.chart.pan.enabled) && i.zoomPanSelection.init({
+              if (a.config.tooltip.enabled && !a.globals.noData && i.w.globals.tooltip.drawTooltip(e.xyRatios), a.globals.axisCharts && (a.globals.isXNumeric || a.config.xaxis.convertedCatToNumeric || a.globals.isRangeBar)) (a.config.chart.zoom.enabled || a.config.chart.selection && a.config.chart.selection.enabled || a.config.chart.pan && a.config.chart.pan.enabled) && i.zoomPanSelection.init({
                 xyRatios: e.xyRatios
               });else {
                 var c = a.config.chart.toolbar.tools;
@@ -70134,10 +73062,11 @@ var Forestry = (function () {
       }, {
         key: "destroy",
         value: function value() {
-          window.removeEventListener("resize", this.windowResizeHandler), window.removeResizeListener(this.el.parentNode, this.parentResizeHandler);
-          var t = this.w.config.chart.id;
-          t && Apex._chartInstances.forEach(function (e, i) {
-            e.id === p.escapeString(t) && Apex._chartInstances.splice(i, 1);
+          var t, e;
+          window.removeEventListener("resize", this.windowResizeHandler), this.el.parentNode, t = this.parentResizeHandler, (e = Rt.get(t)) && (e.disconnect(), Rt.delete(t));
+          var i = this.w.config.chart.id;
+          i && Apex._chartInstances.forEach(function (t, e) {
+            t.id === p.escapeString(i) && Apex._chartInstances.splice(e, 1);
           }), new Ft(this.ctx).clear({
             isUpdating: !1
           });
@@ -70226,6 +73155,11 @@ var Forestry = (function () {
         key: "toggleSeries",
         value: function value(t) {
           return this.series.toggleSeries(t);
+        }
+      }, {
+        key: "highlightSeriesOnLegendHover",
+        value: function value(t, e) {
+          return this.series.toggleSeriesOnHover(t, e);
         }
       }, {
         key: "showSeries",
@@ -70410,7 +73344,7 @@ var Forestry = (function () {
       }]), t;
     }();
 
-    module.exports = Rt;
+    module.exports = Ht;
   });
 
   var strings$6 = {
@@ -70737,7 +73671,7 @@ var Forestry = (function () {
     return Plots;
   }(LayerController);
 
-  var translate$d = translate$v;
+  var translate$d = translate$t;
 
   var Prohibited = /*#__PURE__*/function (_Controller) {
     _inherits(Prohibited, _Controller);
@@ -70813,10 +73747,10 @@ var Forestry = (function () {
     return Prohibited;
   }(Controller);
 
-  var translate$c = translate$v;
+  var translate$c = translate$t;
 
-  var Quadrants$2 = /*#__PURE__*/function (_Evented) {
-    _inherits(Quadrants, _Evented);
+  var Quadrants$2 = /*#__PURE__*/function (_Events) {
+    _inherits(Quadrants, _Events);
 
     var _super = _createSuper(Quadrants);
 
@@ -70923,7 +73857,7 @@ var Forestry = (function () {
     }]);
 
     return Quadrants;
-  }(Evented);
+  }(Events$1);
 
   // https://github.com/tc39/proposal-string-pad-start-end
 
@@ -70931,20 +73865,23 @@ var Forestry = (function () {
 
 
 
+
+  var repeat = functionUncurryThis(stringRepeat$1);
+  var stringSlice = functionUncurryThis(''.slice);
   var ceil = Math.ceil;
 
   // `String.prototype.{ padStart, padEnd }` methods implementation
   var createMethod = function (IS_END) {
     return function ($this, maxLength, fillString) {
-      var S = toString$2(requireObjectCoercible$1($this));
-      var stringLength = S.length;
-      var fillStr = fillString === undefined ? ' ' : toString$2(fillString);
+      var S = toString$1(requireObjectCoercible$1($this));
       var intMaxLength = toLength$1(maxLength);
+      var stringLength = S.length;
+      var fillStr = fillString === undefined ? ' ' : toString$1(fillString);
       var fillLen, stringFiller;
       if (intMaxLength <= stringLength || fillStr == '') return S;
       fillLen = intMaxLength - stringLength;
-      stringFiller = stringRepeat$1.call(fillStr, ceil(fillLen / fillStr.length));
-      if (stringFiller.length > fillLen) stringFiller = stringFiller.slice(0, fillLen);
+      stringFiller = repeat(fillStr, ceil(fillLen / fillStr.length));
+      if (stringFiller.length > fillLen) stringFiller = stringSlice(stringFiller, 0, fillLen);
       return IS_END ? S + stringFiller : stringFiller + S;
     };
   };
@@ -70961,7 +73898,6 @@ var Forestry = (function () {
   // https://github.com/zloirock/core-js/issues/280
 
 
-  // eslint-disable-next-line unicorn/no-unsafe-regex -- safe
   var stringPadWebkitBug = /Version\/10(?:\.\d+){1,2}(?: [\w./]+)?(?: Mobile\/\w+)? Safari\//.test(engineUserAgent$1);
 
   var $padStart = stringPad.start;
@@ -70975,10 +73911,10 @@ var Forestry = (function () {
     }
   });
 
-  var translate$b = translate$v;
+  var translate$b = translate$t;
 
-  var SpeciesTable = /*#__PURE__*/function (_Evented) {
-    _inherits(SpeciesTable, _Evented);
+  var SpeciesTable = /*#__PURE__*/function (_Events) {
+    _inherits(SpeciesTable, _Events);
 
     var _super = _createSuper(SpeciesTable);
 
@@ -71048,9 +73984,9 @@ var Forestry = (function () {
     }]);
 
     return SpeciesTable;
-  }(Evented);
+  }(Events$1);
 
-  var translate$a = translate$v;
+  var translate$a = translate$t;
 
   var Species = /*#__PURE__*/function () {
     function Species(container) {
@@ -71335,7 +74271,36 @@ var Forestry = (function () {
         available: 'Допустимые объемы изъятия (в год)',
         cost: 'Начальная ставка',
         period: 'Период проведения аукциона и идентификатор лота аукциона',
-        status: 'Статус аукциона'
+        status: 'Статус участка',
+        plot: 'Лесной участок №',
+        forestry: 'Лесничество:',
+        stats: 'Свод',
+        species: {
+          tab: 'Породный состав',
+          label: 'Порода',
+          total: 'Всего',
+          annual: 'В год'
+        },
+        auction: {
+          tab: 'Аукцион',
+          link: 'Ссылка на аукцион',
+          status: 'Статус акциона',
+          org: 'Организатор',
+          lot: 'Название лота',
+          item: 'Предмет торга',
+          price: 'Начальная цена, руб',
+          pub: 'Аукцион опубликован',
+          req: 'Подача заявок',
+          con: 'Рассмотрение заявок',
+          sale: 'Проведение торгов',
+          res: 'Итоги торгов'
+        },
+        area: 'Площадь участка',
+        usage: 'Вид использования',
+        term: 'Срок использования, лет',
+        cadastre: 'Кадастровый номер',
+        extraction: 'Объемы изъятия (в год/всего)',
+        reserves: 'Запас углерода, тонн С'
       },
       project: {
         carbon: 'Запас углерода',
@@ -71625,7 +74590,7 @@ var Forestry = (function () {
 
       _this._container.classList.add('scanex-forestry-view-project');
 
-      _this._container.innerHTML = "<h1>    \n            <button class=\"scanex-project-icon back\"></button>\n            <label class=\"title\"></label>\n        </h1>\n        <h2>\n            <label>".concat(_this.translate('project.forestry'), "</label>\n            <label class=\"forestry\"></label>\n        </h2>\n        <div class=\"content\">\n            <div class=\"stats scrollable\"></div>\n            <div class=\"chart\"></div>\n        </div>");
+      _this._container.innerHTML = "<h1>    \n            <button class=\"scanex-project-icon back\"></button>\n            <label>".concat(_this.translate('info.plot'), "</label>\n            <label class=\"title\"></label>\n        </h1>\n        <h2>\n            <label>").concat(_this.translate('info.forestry'), "</label>\n            <label class=\"forestry\"></label>\n            <label class=\"blocks\"></label>\n        </h2>\n        <div class=\"content\">\n            <div class=\"chart\"></div>\n            <div class=\"tabs\"></div>\n        </div>");
 
       var btnBack = _this._container.querySelector('.back');
 
@@ -71638,8 +74603,30 @@ var Forestry = (function () {
       });
       _this._title = _this._container.querySelector('.title');
       _this._forestry = _this._container.querySelector('.forestry');
-      _this._stats = _this._container.querySelector('.stats');
-      _this._chart = new apexcharts_common(_this._container.querySelector('.chart'), {
+      _this._blocks = _this._container.querySelector('.blocks');
+      var tabs = new Tabs(_this._container.querySelector('.tabs'));
+      var statsContainer = tabs.add('stats', _this.translate('info.stats'));
+      statsContainer.classList.add('stats');
+      statsContainer.innerHTML = "<div>           \n            <div class=\"row\">\n                <div>".concat(_this.translate('info.status'), "</div>\n                <div class=\"status\"></div>\n            </div>\n            <div class=\"row\">\n                <div>").concat(_this.translate('info.area'), "</div>\n                <div class=\"area\"></div>\n            </div>\n            <div class=\"row\">\n                <div>").concat(_this.translate('info.usage'), "</div>\n                <div class=\"usage\"></div>\n            </div>\n            <div class=\"row\">\n                <div>").concat(_this.translate('info.term'), "</div>\n                <div class=\"term\"></div>\n            </div>\n            <div class=\"row\">\n                <div>").concat(_this.translate('info.cadastre'), "</div>\n                <div class=\"cadastre\"></div>\n            </div>\n            <div class=\"row\">\n                <div>").concat(_this.translate('info.extraction'), ", ").concat(_this.translate('units.m'), "<sup>3</sup></div>\n                <div class=\"extraction\"></div>\n            </div>\n            <div class=\"row\">\n                <div>").concat(_this.translate('info.reserves'), "</div>\n                <div class=\"reserves\"></div>\n            </div>            \n            <div class=\"row footer\">\n                <div>").concat(_this.translate('info.auction.link'), "</div>\n                <div class=\"auction-link\"></div>\n            </div>\n            <div class=\"row\">\n                <div>").concat(_this.translate('info.auction.status'), "</div>\n                <div class=\"auction-status\"></div>\n            </div>\n            <div class=\"row\">\n                <div>").concat(_this.translate('info.auction.org'), "</div>\n                <div class=\"auction-org\"></div>\n            </div>\n        </div>");
+      _this.status = statsContainer.querySelector('.status');
+      _this.area = statsContainer.querySelector('.area');
+      _this.usage = statsContainer.querySelector('.usage');
+      _this.term = statsContainer.querySelector('.term');
+      _this.cadastre = statsContainer.querySelector('.cadastre');
+      _this.extraction = statsContainer.querySelector('.extraction');
+      _this.reserves = statsContainer.querySelector('.reserves');
+      _this.auctionLink = statsContainer.querySelector('.auction-link');
+      _this.auctionStatus = statsContainer.querySelector('.auction-status');
+      _this.auctionOrg = statsContainer.querySelector('.auction-org');
+      _this.speciesContainer = tabs.add('species', _this.translate('info.species.tab'));
+
+      _this.speciesContainer.classList.add('species');
+
+      var auctionContainer = tabs.add('auction', _this.translate('info.auction.tab'));
+      auctionContainer.classList.add('auction');
+      auctionContainer.innerHTML = "<div>\n            <div class=\"row\">\n                <div>".concat(_this.translate('info.auction.link'), "</div>\n                <div class=\"auction-link\"></div>\n            </div>\n            <div class=\"row\">\n                <div>").concat(_this.translate('info.auction.status'), "</div>\n                <div class=\"auction-status\"></div>\n            </div>\n            <div class=\"row\">\n                <div>").concat(_this.translate('info.auction.org'), "</div>\n                <div class=\"auction-org\"></div>\n            </div>\n            <div class=\"row\">\n                <div>").concat(_this.translate('info.auction.lot'), "</div>\n                <div class=\"auction-lot\"></div>\n            </div>\n            <div class=\"row\">\n                <div>").concat(_this.translate('info.auction.item'), "</div>\n                <div class=\"auction-item\"></div>\n            </div>\n            <div class=\"row\">\n                <div>").concat(_this.translate('info.auction.price'), "</div>\n                <div class=\"auction-price\"></div>\n            </div>\n        </div>\n        <div>\n            <div class=\"row\">\n                <div>").concat(_this.translate('info.auction.pub'), "</div>\n                <div class=\"auction-pub\"></div>\n            </div>\n            <div class=\"row\">\n                <div>").concat(_this.translate('info.auction.req'), "</div>\n                <div class=\"auction-req\"></div>\n            </div>\n            <div class=\"row\">\n                <div>").concat(_this.translate('info.auction.con'), "</div>\n                <div class=\"auction-con\"></div>\n            </div>\n            <div class=\"row\">\n                <div>").concat(_this.translate('info.auction.sale'), "</div>\n                <div class=\"auction-sale\"></div>\n            </div>\n            <div class=\"row\">\n                <div>").concat(_this.translate('info.auction.res'), "</div>\n                <div class=\"auction-res\"></div>\n            </div>\n        </div>");
+      tabs.current = 'stats';
+      var chartOptions = {
         tooltip: {
           x: {
             formatter: _this.chartFormatDataLabels.bind(_assertThisInitialized(_this))
@@ -71651,8 +74638,8 @@ var Forestry = (function () {
         colors: CHART_COLORS,
         chart: {
           type: 'donut',
-          width: '100%',
-          height: '150px',
+          width: '480px',
+          height: '200px',
           fontFamily: 'Open Sans'
         },
         dataLabels: {
@@ -71670,7 +74657,7 @@ var Forestry = (function () {
         plotOptions: {
           pie: {
             donut: {
-              size: '85%',
+              size: '70%',
               labels: {
                 show: true,
                 value: {
@@ -71689,10 +74676,21 @@ var Forestry = (function () {
             }
           }
         }
+      };
+
+      var chartContainer = _this._container.querySelector('.chart');
+
+      _this.chart = new apexcharts_common(chartContainer, chartOptions);
+
+      _this.chart.render();
+
+      tabs.on('change', function () {
+        if (tabs.current === 'auction') {
+          chartContainer.style.display = 'none';
+        } else {
+          chartContainer.style.display = 'block';
+        }
       });
-
-      _this._chart.render();
-
       return _this;
     }
 
@@ -71708,19 +74706,18 @@ var Forestry = (function () {
     }, {
       key: "open",
       value: function open(data) {
-        var _this2 = this;
-
         _get(_getPrototypeOf(Info.prototype), "open", this).call(this);
 
         var gmx_id = data.gmx_id;
             data.Addres;
             data.ApplicationForm;
-            var ApproveDate = data.ApproveDate;
+            data.ApproveDate;
             data.ApproveName;
-            var AuctionEnd = data.AuctionEnd,
-            AuctionStart = data.AuctionStart;
-            data.AuctionURL;
-            data.CadastralNum;
+            data.AuctionEnd;
+            data.AuctionStart;
+            var AuctionURL = data.AuctionURL,
+            CadastralNum = data.CadastralNum,
+            CarbonStock = data.CarbonStock;
             data.Comments;
             data.DeclineDate;
             data.EgrFile;
@@ -71728,38 +74725,81 @@ var Forestry = (function () {
             ForestBlocks = data.ForestBlocks;
             data.ForestProjectGeo;
             data.ForestProjectID;
-            data.ForestStat;
-            var Forestry = data.Forestry;
+            var ForestStat = data.ForestStat,
+            Forestry = data.Forestry;
             data.OGRN;
             data.Opf;
-            data.OrganizationName;
+            var OrganizationName = data.OrganizationName;
             data.OwnerID;
-            data.PeriodUsage;
+            var PeriodUsage = data.PeriodUsage;
             data.Phone;
             data.PostAddress;
-            var RentCost = data.RentCost;
+            data.RentCost;
             data.RentFile;
-            data.Square;
+            var Square = data.Square;
             data.SquareStat;
-            var Status = data.Status;
-            data.TargetUsage;
-            var Title = data.Title;
+            var Status = data.Status,
+            TargetUsage = data.TargetUsage;
+            data.Title;
         this._gmx_id = gmx_id;
-        this._title.innerHTML = Title;
-        this._forestry.innerHTML = "".concat(Forestry, " ").concat(ForestBlocks);
-        var approveDate = ApproveDate && new Date(ApproveDate);
-        var start = AuctionStart && new Date(AuctionStart);
-        var end = AuctionEnd && new Date(AuctionEnd);
-        this._stats.innerHTML = "<table cellpadding=\"0\" cellspacing=\"0\">\n            <tbody>\n                <tr>\n                    <td class=\"text\">".concat(this.translate('info.approve'), "</td>\n                    <td class=\"value\">").concat(approveDate && this.date(approveDate) || '', "</td>\n                </tr>\n                <tr>\n                    <td class=\"text\">").concat(this.translate('info.status'), "</td>\n                    <td class=\"value\">").concat(Status || '', "</td>\n                </tr>\n                <tr>\n                    <td class=\"text\">").concat(this.translate('info.period'), "</td>\n                    <td class=\"value\">").concat(start && end ? "".concat(this.date(start), " - ").concat(this.date(end)) : '', "</td>\n                </tr>\n                <tr>\n                    <td class=\"text\">").concat(this.translate('info.cost'), "</td>\n                    <td class=\"value\">").concat(this.rub(RentCost), "</td>\n                </tr>                \n                <tr>\n                    <td class=\"separator\" colspan=\"2\">").concat(this.translate('info.available'), ", ").concat(this.translate('units.m'), "<sup>3</sup></td>\n                </tr>\n                ").concat(Array.isArray(ForestAvailable) ? ForestAvailable.map(function (_ref) {
-          var species = _ref.species,
-              value = _ref.value;
-          return "<tr class=\"volumes\">\n                            <td class=\"text\">".concat(species, "</td>\n                            <td class=\"value\">").concat(_this2.m(value), "</td>\n                        </tr>");
-        }).join('') : '', "                \n            </tbody>\n        </table>");
+        this._title.innerHTML = data.Number;
+        this._forestry.innerText = Forestry || '';
+        this._blocks.innerText = ForestBlocks || '';
+        var extraction = int(Array.isArray(ForestAvailable) && ForestAvailable.reduce(function (a, _ref) {
+          var value = _ref.value;
+          return a + value;
+        }, 0) || 0);
+        var total = int(Array.isArray(ForestStat) && ForestStat.reduce(function (a, _ref2) {
+          var permitted_stock = _ref2.permitted_stock;
+          return a + permitted_stock;
+        }, 0) || 0);
+        this.status.innerText = Status || '';
+        this.area.innerText = Square && m(Square) || '';
+        this.usage.innerText = TargetUsage || '';
+        this.term.innerText = PeriodUsage || '';
+        this.cadastre.innerText = CadastralNum || '';
+        this.extraction.innerText = "".concat(extraction, " / ").concat(total);
+        this.reserves.innerText = CarbonStock && fmt(CarbonStock) || '';
+        this.auctionLink.innerText = AuctionURL || '';
+        this.auctionStatus.innerText = '';
+        this.auctionOrg.innerText = OrganizationName || '';
+        var stats = Array.isArray(ForestStat) && ForestStat.reduce(function (a, _ref3) {
+          var species = _ref3.species,
+              permitted_stock = _ref3.permitted_stock;
+          a[species] = {
+            value: permitted_stock,
+            annual: 0
+          };
+          return a;
+        }, {}) || {};
+        stats = Array.isArray(ForestAvailable) && ForestAvailable.reduce(function (a, _ref4) {
+          var species = _ref4.species,
+              value = _ref4.value;
+          a[species].annual = value;
+          return a;
+        }, stats);
+        var totals = Object.keys(stats).reduce(function (a, species) {
+          var _stats$species = stats[species],
+              value = _stats$species.value,
+              annual = _stats$species.annual;
+          a.value += value;
+          a.annual += annual;
+          return a;
+        }, {
+          value: 0,
+          annual: 0
+        });
+        this.speciesContainer.innerHTML = "<div class=\"header\">\n            <div>".concat(this.translate('info.species.label'), "</div>\n            <div>").concat(this.translate('info.species.total'), ", ").concat(this.translate('units.m'), "<sup>3</sup></div>\n            <div>").concat(this.translate('info.species.annual'), ", ").concat(this.translate('units.m'), "<sup>3</sup></div>\n        </div>\n        <div class=\"scrollable\">            \n            ").concat(Object.keys(stats).map(function (species) {
+          var _stats$species2 = stats[species],
+              value = _stats$species2.value,
+              annual = _stats$species2.annual;
+          return "<div class=\"row\">\n                    <div>".concat(species, "</div>\n                    <div>").concat(value && m(value) || '', "</div>\n                    <div>").concat(annual && m(annual) || '', "</div>\n                </div>");
+        }).join('') || '', "          \n        </div>\n        <div class=\"footer\">            \n            <div>").concat(this.translate('info.species.total'), "</div>\n            <div>").concat(totals.value && m(totals.value) || '', "</div>\n            <div>").concat(totals.annual && m(totals.annual) || '', "</div>\n        </div>");
 
         if (Array.isArray(ForestAvailable)) {
-          var _ForestAvailable$redu = ForestAvailable.reduce(function (a, _ref2) {
-            var species = _ref2.species,
-                value = _ref2.value;
+          var _ForestAvailable$redu = ForestAvailable.reduce(function (a, _ref5) {
+            var species = _ref5.species,
+                value = _ref5.value;
             a.labels.push(species);
             a.series.push(value);
             return a;
@@ -71770,11 +74810,10 @@ var Forestry = (function () {
               labels = _ForestAvailable$redu.labels,
               series = _ForestAvailable$redu.series;
 
-          this._chart.updateOptions({
+          this.chart.updateOptions({
             labels: labels
           });
-
-          this._chart.updateSeries(series);
+          this.chart.updateSeries(series);
         }
       }
     }, {
@@ -71789,7 +74828,7 @@ var Forestry = (function () {
     return Info;
   }(View);
 
-  var translate$9 = translate$v;
+  var translate$9 = translate$t;
 
   var indexByName = function indexByName(layer, name) {
     var _layer$getGmxProperti = layer.getGmxProperties(),
@@ -73290,7 +76329,7 @@ var Forestry = (function () {
     return Stands;
   }(View);
 
-  var translate$8 = translate$v;
+  var translate$8 = translate$t;
   var ALLOWED_LAYERS$2 = ['forestries_local', 'forestries', 'regions', 'quadrants', 'stands'];
 
   var Quadrants = /*#__PURE__*/function (_Controller) {
@@ -73612,7 +76651,7 @@ var Forestry = (function () {
     return Quadrants;
   }(Controller);
 
-  var translate$7 = translate$v;
+  var translate$7 = translate$t;
 
   var RasterCatalog = /*#__PURE__*/function () {
     function RasterCatalog(_ref) {
@@ -73676,7 +76715,7 @@ var Forestry = (function () {
     return RasterCatalog;
   }();
 
-  var translate$6 = translate$v;
+  var translate$6 = translate$t;
   var ALLOWED_LAYERS$1 = ['relief_hk', 'relief_zk'];
 
   var Relief = /*#__PURE__*/function (_Controller) {
@@ -74609,7 +77648,7 @@ var Forestry = (function () {
       });
     }
 
-    return Roads;
+    return _createClass$1(Roads);
   }(LayerController);
 
   var strings$1 = {
@@ -74779,7 +77818,7 @@ var Forestry = (function () {
       return _this;
     }
 
-    return Search;
+    return _createClass$1(Search);
   }(Controller);
 
   var strings = {
@@ -75161,7 +78200,7 @@ var Forestry = (function () {
     return Uploaded;
   }(View);
 
-  var translate$5 = translate$v;
+  var translate$5 = translate$t;
 
   var TmsView = /*#__PURE__*/function (_Dialog) {
     _inherits(TmsView, _Dialog);
@@ -75187,8 +78226,7 @@ var Forestry = (function () {
       _this._url = _this.content.querySelector('.url').querySelector('input');
       _this._zoom = new Interval(_this.content.querySelector('.zoom').querySelector('div'), {
         min: 1,
-        max: 21,
-        slider: Slider2
+        max: 21
       });
       _this._zoom.lo = 1;
       _this._zoom.hi = 21;
@@ -75251,10 +78289,10 @@ var Forestry = (function () {
       return _this;
     }
 
-    return TmsView;
+    return _createClass$1(TmsView);
   }(Dialog);
 
-  var translate$4 = translate$v;
+  var translate$4 = translate$t;
 
   var WmsView = /*#__PURE__*/function (_Dialog) {
     _inherits(WmsView, _Dialog);
@@ -75300,10 +78338,10 @@ var Forestry = (function () {
       return _this;
     }
 
-    return WmsView;
+    return _createClass$1(WmsView);
   }(Dialog);
 
-  var translate$3 = translate$v;
+  var translate$3 = translate$t;
 
   var WfsView = /*#__PURE__*/function (_Dialog) {
     _inherits(WfsView, _Dialog);
@@ -75329,8 +78367,7 @@ var Forestry = (function () {
       _this._url = _this.content.querySelector('.url').querySelector('input');
       _this._zoom = new Interval(_this.content.querySelector('.zoom').querySelector('div'), {
         min: 1,
-        max: 21,
-        slider: Slider2
+        max: 21
       });
       _this._zoom.lo = 1;
       _this._zoom.hi = 21;
@@ -75400,7 +78437,7 @@ var Forestry = (function () {
       return _this;
     }
 
-    return WfsView;
+    return _createClass$1(WfsView);
   }(Dialog);
 
   function parseLinearRing(linearRing) {
@@ -75769,7 +78806,7 @@ var Forestry = (function () {
     return parse_node(xml.childNodes[0]);
   }
 
-  var translate$2 = translate$v;
+  var translate$2 = translate$t;
 
   var Uploaded = /*#__PURE__*/function (_Controller) {
     _inherits(Uploaded, _Controller);
@@ -77118,14 +80155,14 @@ var Forestry = (function () {
       });
     }
 
-    return Warehouses;
+    return _createClass$1(Warehouses);
   }(LayerController);
 
-  var translate$1 = translate$v;
+  var translate$1 = translate$t;
   var ALLOWED_LAYERS = ['incidents_temporal', 'forestries_local', 'forestries', 'regions', 'fires', 'warehouses', 'roads', 'declarations', 'oil', 'quadrants_editor', 'quadrants_protected', 'quadrants_reserved', 'plots', 'dkp', 'projects', 'reg_parks', 'fed_parks', 'parks', 'stands', 'quadrants', 'sentinel', 'landsat', 'cadastre', 'plan', 'kppo', 'kppo_rgb', 'lpo', 'relief_hk', 'relief_zk'].reverse();
 
-  var Map = /*#__PURE__*/function (_Evented) {
-    _inherits(Map, _Evented);
+  var Map = /*#__PURE__*/function (_Events) {
+    _inherits(Map, _Events);
 
     var _super = _createSuper(Map);
 
@@ -78078,9 +81115,9 @@ var Forestry = (function () {
     }]);
 
     return Map;
-  }(Evented);
+  }(Events$1);
 
   return Map;
 
-}());
+})();
 //# sourceMappingURL=forestry.js.map
