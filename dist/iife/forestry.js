@@ -74590,7 +74590,7 @@ var Forestry = (function () {
 
       _this._container.classList.add('scanex-forestry-view-project');
 
-      _this._container.innerHTML = "<h1>    \n            <button class=\"scanex-project-icon back\"></button>\n            <label>".concat(_this.translate('info.plot'), "</label>\n            <label class=\"title\"></label>\n        </h1>\n        <h2>\n            <label>").concat(_this.translate('info.forestry'), "</label>\n            <label class=\"forestry\"></label>\n            <label class=\"blocks\"></label>\n        </h2>\n\t\t<div class=\"tabs\"></div>\n\t\t<div class=\"content\">\n            <div class=\"chartTitle\">").concat(_this.translate('info.available'), "</div>\n            <div class=\"chart\"></div>\n        </div>");
+      _this._container.innerHTML = "<h1>    \n            <button class=\"scanex-project-icon back\"></button>\n            <label>".concat(_this.translate('info.plot'), "</label>\n            <label class=\"title\"></label>\n        </h1>\n        <h2>\n            <label>").concat(_this.translate('info.forestry'), "</label>\n            <label class=\"forestry\"></label>\n            <label class=\"blocks\"></label>\n        </h2>\n\t\t<div class=\"tabs\"></div>\n\t\t<div class=\"content\">\n            <div class=\"chartTitle\"></div>\n            <div class=\"chart\"></div>\n        </div>");
 
       var btnBack = _this._container.querySelector('.back');
 
@@ -74814,6 +74814,10 @@ var Forestry = (function () {
             labels: labels
           });
           this.chart.updateSeries(series);
+
+          var chartTitle = this._container.querySelector('.chartTitle');
+
+          chartTitle.innerHTML = series.length ? this.translate('info.available') : '';
         }
       }
     }, {

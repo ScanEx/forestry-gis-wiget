@@ -1220,25 +1220,41 @@ svg.leaflet-image-layer.leaflet-interactive path {
 .fireMappletContainer {
     margin-left: 4px;
 }
-.leaflet-gmx-center {
-    height: 100%;
-    width: 100%;
-    margin-left: 6px;
-    margin-top: 6px;
-    pointer-events: none;
-    position: absolute;
+.scanex-forestry-content > .view.hidden {
+    display: none;
 }
-.leaflet-gmx-center div {
-    height: 12px;
-    width: 12px;
-    margin-bottom: 5px;
-    margin-right: 5px;
-    margin-right: 3px;
-    bottom: 50%;
-    right: 50%;
-    position: absolute;
+.scanex-forestry-content .view {
+    background-color: #FFFFFF;
+    padding: 15px 15px 0 15px;
+    border-radius: 6px;    
+    display: -webkit-inline-box;
+    display: -ms-inline-flexbox;
+    display: inline-flex;    
+    -webkit-box-pack: justify;
+    -ms-flex-pack: justify;
+    justify-content: space-between;
+    -webkit-box-align: start;
+    -ms-flex-align: start;
+    align-items: flex-start;    
 }
 
+.scanex-forestry-content .view .scanex-component-icon {
+    background-repeat: no-repeat;
+    background-position: center;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    vertical-align: middle;
+    display: inline-block;
+}
+
+.scanex-forestry-content .view > .scanex-component-icon {    
+    float: right;
+    opacity: 0.3;
+    position: absolute;
+    top: 0px;
+    right: 0px;
+}
 .scanex-date-interval div.timeline-frame {
     background-color: #d3d3d3b5;
 }
@@ -1321,41 +1337,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
 
 .scanex-date-interval .top label:nth-child(2) {
     margin-right: 15px;
-}
-.scanex-forestry-content > .view.hidden {
-    display: none;
-}
-.scanex-forestry-content .view {
-    background-color: #FFFFFF;
-    padding: 15px 15px 0 15px;
-    border-radius: 6px;    
-    display: -webkit-inline-box;
-    display: -ms-inline-flexbox;
-    display: inline-flex;    
-    -webkit-box-pack: justify;
-    -ms-flex-pack: justify;
-    justify-content: space-between;
-    -webkit-box-align: start;
-    -ms-flex-align: start;
-    align-items: flex-start;    
-}
-
-.scanex-forestry-content .view .scanex-component-icon {
-    background-repeat: no-repeat;
-    background-position: center;
-    cursor: pointer;
-    width: 24px;
-    height: 24px;
-    vertical-align: middle;
-    display: inline-block;
-}
-
-.scanex-forestry-content .view > .scanex-component-icon {    
-    float: right;
-    opacity: 0.3;
-    position: absolute;
-    top: 0px;
-    right: 0px;
 }
 .leaflet-control.scanex-forestry-legend {  
     clear: none;      
@@ -1632,6 +1613,25 @@ svg.leaflet-image-layer.leaflet-interactive path {
     border-radius: 2px;
     padding: 2px 6px;
 	margin-left: 4px;
+}
+
+.leaflet-gmx-center {
+    height: 100%;
+    width: 100%;
+    margin-left: 6px;
+    margin-top: 6px;
+    pointer-events: none;
+    position: absolute;
+}
+.leaflet-gmx-center div {
+    height: 12px;
+    width: 12px;
+    margin-bottom: 5px;
+    margin-right: 5px;
+    margin-right: 3px;
+    bottom: 50%;
+    right: 50%;
+    position: absolute;
 }
 
 .leaflet-control.scanex-forestry-search {
@@ -1979,6 +1979,9 @@ body .scanex-forestry-incident .hidden {
 .scanex-forestry-content .view .scanex-forestry-incident {
     margin-right: 17px;
 }
+.scanex-forestry-content .view[data-id=fires] {
+    margin-bottom: 60px;
+}
 .scanex-forestry-declaration .scrollable {
     max-height: 240px;
 }
@@ -2066,9 +2069,6 @@ body .scanex-forestry-incident .hidden {
 .scanex-forestry-declaration table.volumes-last td.value:nth-child(1) {
     text-indent: 10px;
 }
-.scanex-forestry-content .view[data-id=fires] {
-    margin-bottom: 60px;
-}
 
 .scanex-forestry-view-plot .content > * {
     float: left;
@@ -2123,6 +2123,205 @@ body .scanex-forestry-incident .hidden {
     border-right: 1px solid rgba(0,0,0,0.1);
 }
 
+.scanex-forestry-content .view[data-id=stands] {
+    height: 398px;
+}
+.scanex-forestry-stand .content {
+    max-height: 300px;
+}
+.scanex-forestry-stand .content td {
+    border: none;
+    height: 22px;    
+}
+.scanex-forestry-stand .header2 {
+    white-space: normal;
+    max-width: 1260px;
+}
+.scanex-forestry-stand .header2 > div {
+    float: left;
+}
+.scanex-forestry-stand .stats > * {
+    display: inline-block;
+    vertical-align: top;
+}
+.scanex-forestry-stand .content td.label,
+.scanex-forestry-stand .content td.value {        
+    font-family: Open Sans;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 12px;
+    line-height: 16px;
+    color: #453D3D;    
+    width: 250px;
+    white-space: nowrap;
+    text-align: left;
+}
+.scanex-forestry-stand .content > .stats td.label {
+    padding-right: 10px;    
+}
+.scanex-forestry-stand .content > .stats td.value {
+    font-weight: normal;
+}
+.scanex-forestry-stand .content > .stats > .graph > .label {
+    font-family: Open Sans;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 14px;
+    line-height: 40px;
+    color: #453D3D;
+    margin-left: 90px;
+}
+.scanex-forestry-stand .scanex-stand-icon {
+    background-repeat: no-repeat;
+    background-position: center;
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    display: inline-block;
+    vertical-align: middle;
+}
+.scanex-forestry-stand .stand-doc {
+    font-family: 'Open Sans', 'Arial';
+    font-style: normal;
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 24px;
+    color: #067A57;
+    border: none;
+    background-color: transparent;
+    vertical-align: middle;    
+    margin-top: 20px;
+}
+.scanex-forestry-stand .stand-doc > * {
+    cursor: pointer;
+}
+.scanex-forestry-stand .levels {    
+    margin-top: 27px;
+}
+.scanex-forestry-stand .levels > .storey .header {
+    padding: 5px 0px 5px 0px;
+    margin-top: 10px;    
+}
+.scanex-forestry-stand .levels > .storey .header label {
+    font-family: Open Sans;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 12px;
+    line-height: 16px;
+    color: #453D3D;
+    cursor: pointer;
+}
+.scanex-forestry-stand .hidden {
+    display: none;
+}
+.container.scanex-forestry-stand {
+    min-width: 914px;
+}
+.scanex-forestry-stand div.green {
+    color: #067A57;
+    margin-left: 7px;
+    margin-right: 24px;
+    width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.scanex-forestry-stand div.green:last-child {
+    margin-right: 0px;
+    width: 72px;
+}
+.scanex-forestry-stand .levels .tab {
+    font-family: Open Sans;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 24px;
+    color: #453D3D;
+    cursor: pointer;
+    width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+    padding: 8px;
+    border-top: 1px solid #E0E0E0;
+    border-left: 1px solid #E0E0E0;
+}
+.scanex-forestry-stand .levels .tab:first-child {
+    border-top-left-radius: 12px;
+}
+.scanex-forestry-stand .levels .tab:last-child {
+    border-top-right-radius: 12px;
+    border-right: 1px solid #E0E0E0;
+}
+.scanex-forestry-stand .levels .tab.selected {
+    background: #007F60;
+    color: #FFFFFF;
+    border-color: #007F60;
+}
+.scanex-forestry-stand .levels td {
+    width: 250px;    
+}
+.scanex-forestry-stand .levels .panel {
+    background-color: ghostwhite;
+    border-top-right-radius: 12px;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+    border: 1px solid #E0E0E0;
+    width: 100%;
+}
+.scanex-forestry-stand .levels .panel hr {
+    margin-top: 17px;
+    margin-bottom: 29px;
+    color: #E0E0E0;
+}
+.scanex-forestry-stand .levels .panel .species {
+    margin-left: 8px;    
+}
+.scanex-forestry-stand .levels .panel .species tr:first-child {
+    background-color: rgba(107, 112, 123, 0.1);
+    height: 39px;
+    vertical-align: middle;
+}
+.scanex-forestry-stand .levels .panel .species td {
+    height: 35px;
+    vertical-align: middle;
+    border-bottom: 1px solid #E0E0E0;
+    font-family: Open Sans;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 14px;
+}
+.scanex-forestry-stand .levels .panel .species tr:first-child td {
+    font-family: Open Sans;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 20px;
+    color: #6B707B;
+}
+.scanex-forestry-stand .levels .panel table:first-child {
+    margin-top: 24px;
+}
+.scanex-forestry-stand .levels .panel table:first-child td {
+    font-family: Open Sans;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 12px;
+    line-height: 16px;
+    color: #453D3D;
+}
+.scanex-forestry-stand .levels .panel table td:first-child {
+    padding-left: 8px;
+}
+
+.scanex-forestry-stand .levels .panel .species td:first-child {
+    padding-left: 28px;
+}
+.scanex-forestry-stand .levels .panel .species tr:last-child td {
+    border-bottom: none;
+}
 .scanex-forestry-quadrant {
     --cell-width: 160px;
     --cell-height: 40px;       
@@ -2329,205 +2528,6 @@ body .scanex-forestry-incident .hidden {
 }
 .scanex-forestry-quadrant .to {
   background-image: url("data:image/svg+xml;charset=utf8,%3Csvg width='36' height='41' viewBox='0 0 36 41' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg filter='url(%23filter0_d)'%3E%3Cpath d='M10.75 17H24.75' stroke='%23007F60' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' shape-rendering='crispEdges'/%3E%3C/g%3E%3Cg filter='url(%23filter1_d)'%3E%3Cpath d='M10.75 11H24.75' stroke='%23007F60' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' shape-rendering='crispEdges'/%3E%3C/g%3E%3Cg filter='url(%23filter2_d)'%3E%3Cpath d='M10.75 23H17.75' stroke='%23007F60' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' shape-rendering='crispEdges'/%3E%3C/g%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M3.75 0.5C2.90814 0.5 2.08868 0.817105 1.47485 1.40025C0.858838 1.98546 0.5 2.79328 0.5 3.65V37.85C0.5 38.7067 0.858837 39.5145 1.47485 40.0998C2.08869 40.6829 2.90815 41 3.75 41H18.891C18.2572 40.2469 17.7449 39.4056 17.3805 38.5H3.75C3.53099 38.5 3.33303 38.4167 3.19672 38.2873C3.06259 38.1598 3 38.0011 3 37.85V3.65C3 3.4989 3.06259 3.34017 3.19672 3.21275C3.33303 3.08325 3.53099 3 3.75 3H31.75C31.969 3 32.167 3.08325 32.3033 3.21275C32.4374 3.34017 32.5 3.4989 32.5 3.65V27.0209C33.4338 27.5096 34.2766 28.1247 35 28.8403V3.65C35 2.79328 34.6412 1.98546 34.0252 1.40025C33.4113 0.817104 32.5919 0.5 31.75 0.5H3.75Z' fill='%23007F60'/%3E%3Cpath d='M29.5374 37.5769H28.0589V32.7006C28.0589 32.612 27.987 32.5396 27.8992 32.5396H26.702C26.6142 32.5396 26.5424 32.612 26.5424 32.7006V37.5769H25.0678C24.9342 37.5769 24.8603 37.7319 24.9421 37.8365L27.1769 40.6883C27.1919 40.7075 27.2109 40.7231 27.2327 40.7338C27.2545 40.7445 27.2784 40.7501 27.3026 40.7501C27.3269 40.7501 27.3508 40.7445 27.3726 40.7338C27.3943 40.7231 27.4134 40.7075 27.4283 40.6883L29.6631 37.8365C29.7449 37.7319 29.6711 37.5769 29.5374 37.5769Z' fill='%23008060'/%3E%3Cpath d='M33.0184 31.7571C32.144 29.4153 29.9161 27.75 27.3064 27.75C24.6968 27.75 22.4689 29.4133 21.5945 31.7551C19.9584 32.1913 18.75 33.7054 18.75 35.5044C18.75 37.6465 20.4586 39.3816 22.5662 39.3816H23.3318C23.4158 39.3816 23.4845 39.3118 23.4845 39.2265V38.0633C23.4845 37.978 23.4158 37.9082 23.3318 37.9082H22.5662C21.9229 37.9082 21.3177 37.6485 20.8672 37.1774C20.4185 36.7083 20.1799 36.0763 20.2009 35.421C20.2181 34.9092 20.3899 34.4285 20.7011 34.0233C21.0199 33.6104 21.4666 33.3099 21.963 33.1761L22.6865 32.9842L22.9519 32.2747C23.116 31.8327 23.3451 31.4198 23.6334 31.0456C23.918 30.6748 24.2551 30.3488 24.6338 30.0783C25.4184 29.518 26.3424 29.2214 27.3064 29.2214C28.2705 29.2214 29.1945 29.518 29.9791 30.0783C30.3591 30.3497 30.695 30.6753 30.9795 31.0456C31.2678 31.4198 31.4969 31.8346 31.661 32.2747L31.9245 32.9823L32.6461 33.1761C33.6808 33.4592 34.4044 34.4149 34.4044 35.5044C34.4044 36.1461 34.1581 36.7509 33.7114 37.2045C33.4923 37.4283 33.2317 37.6057 32.9446 37.7265C32.6576 37.8473 32.3498 37.9091 32.039 37.9082H31.2735C31.1895 37.9082 31.1208 37.978 31.1208 38.0633V39.2265C31.1208 39.3118 31.1895 39.3816 31.2735 39.3816H32.039C34.1466 39.3816 35.8553 37.6465 35.8553 35.5044C35.8553 33.7073 34.6506 32.1952 33.0184 31.7571Z' fill='%23008060'/%3E%3Cdefs%3E%3Cfilter id='filter0_d' x='8.75' y='15' width='20' height='6' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0' result='hardAlpha'/%3E%3CfeOffset dx='1' dy='1'/%3E%3CfeGaussianBlur stdDeviation='1'/%3E%3CfeComposite in2='hardAlpha' operator='out'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.1 0'/%3E%3CfeBlend mode='normal' in2='BackgroundImageFix' result='effect1_dropShadow'/%3E%3CfeBlend mode='normal' in='SourceGraphic' in2='effect1_dropShadow' result='shape'/%3E%3C/filter%3E%3Cfilter id='filter1_d' x='8.75' y='9' width='20' height='6' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0' result='hardAlpha'/%3E%3CfeOffset dx='1' dy='1'/%3E%3CfeGaussianBlur stdDeviation='1'/%3E%3CfeComposite in2='hardAlpha' operator='out'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.1 0'/%3E%3CfeBlend mode='normal' in2='BackgroundImageFix' result='effect1_dropShadow'/%3E%3CfeBlend mode='normal' in='SourceGraphic' in2='effect1_dropShadow' result='shape'/%3E%3C/filter%3E%3Cfilter id='filter2_d' x='8.75' y='21' width='13' height='6' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0' result='hardAlpha'/%3E%3CfeOffset dx='1' dy='1'/%3E%3CfeGaussianBlur stdDeviation='1'/%3E%3CfeComposite in2='hardAlpha' operator='out'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.1 0'/%3E%3CfeBlend mode='normal' in2='BackgroundImageFix' result='effect1_dropShadow'/%3E%3CfeBlend mode='normal' in='SourceGraphic' in2='effect1_dropShadow' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E");
-}
-.scanex-forestry-content .view[data-id=stands] {
-    height: 398px;
-}
-.scanex-forestry-stand .content {
-    max-height: 300px;
-}
-.scanex-forestry-stand .content td {
-    border: none;
-    height: 22px;    
-}
-.scanex-forestry-stand .header2 {
-    white-space: normal;
-    max-width: 1260px;
-}
-.scanex-forestry-stand .header2 > div {
-    float: left;
-}
-.scanex-forestry-stand .stats > * {
-    display: inline-block;
-    vertical-align: top;
-}
-.scanex-forestry-stand .content td.label,
-.scanex-forestry-stand .content td.value {        
-    font-family: Open Sans;
-    font-style: normal;
-    font-weight: 600;
-    font-size: 12px;
-    line-height: 16px;
-    color: #453D3D;    
-    width: 250px;
-    white-space: nowrap;
-    text-align: left;
-}
-.scanex-forestry-stand .content > .stats td.label {
-    padding-right: 10px;    
-}
-.scanex-forestry-stand .content > .stats td.value {
-    font-weight: normal;
-}
-.scanex-forestry-stand .content > .stats > .graph > .label {
-    font-family: Open Sans;
-    font-style: normal;
-    font-weight: bold;
-    font-size: 14px;
-    line-height: 40px;
-    color: #453D3D;
-    margin-left: 90px;
-}
-.scanex-forestry-stand .scanex-stand-icon {
-    background-repeat: no-repeat;
-    background-position: center;
-    cursor: pointer;
-    width: 30px;
-    height: 30px;
-    display: inline-block;
-    vertical-align: middle;
-}
-.scanex-forestry-stand .stand-doc {
-    font-family: 'Open Sans', 'Arial';
-    font-style: normal;
-    font-weight: 600;
-    font-size: 16px;
-    line-height: 24px;
-    color: #067A57;
-    border: none;
-    background-color: transparent;
-    vertical-align: middle;    
-    margin-top: 20px;
-}
-.scanex-forestry-stand .stand-doc > * {
-    cursor: pointer;
-}
-.scanex-forestry-stand .levels {    
-    margin-top: 27px;
-}
-.scanex-forestry-stand .levels > .storey .header {
-    padding: 5px 0px 5px 0px;
-    margin-top: 10px;    
-}
-.scanex-forestry-stand .levels > .storey .header label {
-    font-family: Open Sans;
-    font-style: normal;
-    font-weight: 600;
-    font-size: 12px;
-    line-height: 16px;
-    color: #453D3D;
-    cursor: pointer;
-}
-.scanex-forestry-stand .hidden {
-    display: none;
-}
-.container.scanex-forestry-stand {
-    min-width: 914px;
-}
-.scanex-forestry-stand div.green {
-    color: #067A57;
-    margin-left: 7px;
-    margin-right: 24px;
-    width: 200px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.scanex-forestry-stand div.green:last-child {
-    margin-right: 0px;
-    width: 72px;
-}
-.scanex-forestry-stand .levels .tab {
-    font-family: Open Sans;
-    font-style: normal;
-    font-weight: 600;
-    font-size: 16px;
-    line-height: 24px;
-    color: #453D3D;
-    cursor: pointer;
-    width: 200px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    text-align: center;
-    padding: 8px;
-    border-top: 1px solid #E0E0E0;
-    border-left: 1px solid #E0E0E0;
-}
-.scanex-forestry-stand .levels .tab:first-child {
-    border-top-left-radius: 12px;
-}
-.scanex-forestry-stand .levels .tab:last-child {
-    border-top-right-radius: 12px;
-    border-right: 1px solid #E0E0E0;
-}
-.scanex-forestry-stand .levels .tab.selected {
-    background: #007F60;
-    color: #FFFFFF;
-    border-color: #007F60;
-}
-.scanex-forestry-stand .levels td {
-    width: 250px;    
-}
-.scanex-forestry-stand .levels .panel {
-    background-color: ghostwhite;
-    border-top-right-radius: 12px;
-    border-bottom-left-radius: 12px;
-    border-bottom-right-radius: 12px;
-    border: 1px solid #E0E0E0;
-    width: 100%;
-}
-.scanex-forestry-stand .levels .panel hr {
-    margin-top: 17px;
-    margin-bottom: 29px;
-    color: #E0E0E0;
-}
-.scanex-forestry-stand .levels .panel .species {
-    margin-left: 8px;    
-}
-.scanex-forestry-stand .levels .panel .species tr:first-child {
-    background-color: rgba(107, 112, 123, 0.1);
-    height: 39px;
-    vertical-align: middle;
-}
-.scanex-forestry-stand .levels .panel .species td {
-    height: 35px;
-    vertical-align: middle;
-    border-bottom: 1px solid #E0E0E0;
-    font-family: Open Sans;
-    font-style: normal;
-    font-weight: 600;
-    font-size: 13px;
-    line-height: 14px;
-}
-.scanex-forestry-stand .levels .panel .species tr:first-child td {
-    font-family: Open Sans;
-    font-style: normal;
-    font-weight: 600;
-    font-size: 14px;
-    line-height: 20px;
-    color: #6B707B;
-}
-.scanex-forestry-stand .levels .panel table:first-child {
-    margin-top: 24px;
-}
-.scanex-forestry-stand .levels .panel table:first-child td {
-    font-family: Open Sans;
-    font-style: normal;
-    font-weight: 600;
-    font-size: 12px;
-    line-height: 16px;
-    color: #453D3D;
-}
-.scanex-forestry-stand .levels .panel table td:first-child {
-    padding-left: 8px;
-}
-
-.scanex-forestry-stand .levels .panel .species td:first-child {
-    padding-left: 28px;
-}
-.scanex-forestry-stand .levels .panel .species tr:last-child td {
-    border-bottom: none;
 }
 .scanex-forestry-project {
     height: 440px;
@@ -3073,13 +3073,6 @@ body .scanex-forestry-incident .hidden {
     left: 20% !important;
 }
 
-.scanex-forestry-search-result .content {
-    max-height: 250px;
-}
-.scanex-forestry-search-result .content .row {  
-    border-bottom: 1px solid #F2F2F2F2;
-    cursor: pointer;
-}
 .scanex-forestry-requests {
     --id-width: 45px;
     --title-width: 185px;
@@ -3276,6 +3269,13 @@ body .scanex-forestry-incident .hidden {
 
 .container.scanex-forestry-analytics {
     height: 100%;
+}
+.scanex-forestry-search-result .content {
+    max-height: 250px;
+}
+.scanex-forestry-search-result .content .row {  
+    border-bottom: 1px solid #F2F2F2F2;
+    cursor: pointer;
 }
 .scanex-forestry-uploaded {
     width: 100%;
@@ -3736,6 +3736,124 @@ div.timeline-navigation-move-right {
     background: url('images/moveright.png') no-repeat center;
 }
 
+.scanex-baselayers {
+    clear: left;
+}
+
+.scanex-baselayers > * {
+    float: left;
+}
+.scanex-baselayers .content {
+    background: #FFFFFF;
+    border: 1px solid #E0E0E0;
+    box-sizing: border-box;
+    border-radius: 12px;
+    padding: 5px;
+}
+
+.scanex-baselayers .hidden {
+    display: none;
+}
+
+.scanex-baselayers .scanex-baselayers-icon {
+    background-repeat: no-repeat;
+    background-position: center;
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.scanex-baselayers > .scanex-baselayers-icon {
+    padding: 12px;
+    margin-left: 10px;
+    border-radius: 10px;
+    background-color: #FFFFFF;
+    box-sizing: content-box;
+}
+
+.scanex-baselayers .content > * {    
+    float: left;
+    position: relative;      
+    margin: 5px;
+    border-radius: 12px;    
+    border: 3px solid transparent;
+}
+
+.scanex-baselayers .content .baselayer-content {
+    position: relative;    
+    border-radius: 9px;
+    width: 60px;
+    height: 60px;
+}
+
+.scanex-baselayers .content .baselayer-content {
+    border: 1px solid #C4C4C4;
+}
+.scanex-baselayers .content .baselayer.current .baselayer-content {
+    border: 1px solid transparent;
+}
+.scanex-baselayers .content .baselayer .baselayer-content > * {
+    display: block;
+}
+.scanex-baselayers .content .baselayer,
+.scanex-baselayers .content .baselayer-add {    
+    width: 62px;
+    height: 62px;    
+}
+.scanex-baselayers .content .baselayer .scanex-baselayers-icon {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    z-index: 1;
+}
+
+.scanex-baselayers .baselayer-add .scanex-baselayers-icon.add {
+    width: 24px;
+    height: 24px;
+    position: relative;
+    top: 16px;
+    left: 16px;
+}
+
+.scanex-baselayers .content .baselayer-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 9px;
+    cursor: pointer;
+}
+
+.scanex-baselayers .content .baselayer .user-baselayer-icon {
+    width: 22px;
+    height: 22px;
+    position: absolute;
+    top: 14px;
+    left: 19px;
+    border: none;
+}
+
+.scanex-baselayers .content .baselayer-title {
+    position: absolute;
+    bottom: 0;
+    z-index: 1;
+    width: 60px;
+    text-align: center;
+    background-color: #1F1F1F;
+    opacity: 0.8;
+    color: #FFFFFF;
+    border-bottom-right-radius: 9px;
+    border-bottom-left-radius: 9px;
+    pointer-events: none;    
+    overflow: hidden;    
+    text-overflow: ellipsis;
+    font-size: 11px;
+}
+
+.scanex-baselayers .content > .baselayer.current {
+    border: 3px solid #007F60;
+	box-sizing: unset;
+}
 .scanex-forestry-baselayers-view.scanex-component-dialog {
     height: 468px;
     width: 650px;    
@@ -3909,124 +4027,6 @@ div.timeline-navigation-move-right {
 
 .scanex-forestry-baselayers-view .scanex-baselayers .content .baselayer.user-baselayer.current {
     border: 1px solid transparent;
-}
-.scanex-baselayers {
-    clear: left;
-}
-
-.scanex-baselayers > * {
-    float: left;
-}
-.scanex-baselayers .content {
-    background: #FFFFFF;
-    border: 1px solid #E0E0E0;
-    box-sizing: border-box;
-    border-radius: 12px;
-    padding: 5px;
-}
-
-.scanex-baselayers .hidden {
-    display: none;
-}
-
-.scanex-baselayers .scanex-baselayers-icon {
-    background-repeat: no-repeat;
-    background-position: center;
-    cursor: pointer;
-    width: 16px;
-    height: 16px;
-    display: inline-block;
-    vertical-align: middle;
-}
-
-.scanex-baselayers > .scanex-baselayers-icon {
-    padding: 12px;
-    margin-left: 10px;
-    border-radius: 10px;
-    background-color: #FFFFFF;
-    box-sizing: content-box;
-}
-
-.scanex-baselayers .content > * {    
-    float: left;
-    position: relative;      
-    margin: 5px;
-    border-radius: 12px;    
-    border: 3px solid transparent;
-}
-
-.scanex-baselayers .content .baselayer-content {
-    position: relative;    
-    border-radius: 9px;
-    width: 60px;
-    height: 60px;
-}
-
-.scanex-baselayers .content .baselayer-content {
-    border: 1px solid #C4C4C4;
-}
-.scanex-baselayers .content .baselayer.current .baselayer-content {
-    border: 1px solid transparent;
-}
-.scanex-baselayers .content .baselayer .baselayer-content > * {
-    display: block;
-}
-.scanex-baselayers .content .baselayer,
-.scanex-baselayers .content .baselayer-add {    
-    width: 62px;
-    height: 62px;    
-}
-.scanex-baselayers .content .baselayer .scanex-baselayers-icon {
-    position: absolute;
-    top: 2px;
-    right: 2px;
-    z-index: 1;
-}
-
-.scanex-baselayers .baselayer-add .scanex-baselayers-icon.add {
-    width: 24px;
-    height: 24px;
-    position: relative;
-    top: 16px;
-    left: 16px;
-}
-
-.scanex-baselayers .content .baselayer-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 9px;
-    cursor: pointer;
-}
-
-.scanex-baselayers .content .baselayer .user-baselayer-icon {
-    width: 22px;
-    height: 22px;
-    position: absolute;
-    top: 14px;
-    left: 19px;
-    border: none;
-}
-
-.scanex-baselayers .content .baselayer-title {
-    position: absolute;
-    bottom: 0;
-    z-index: 1;
-    width: 60px;
-    text-align: center;
-    background-color: #1F1F1F;
-    opacity: 0.8;
-    color: #FFFFFF;
-    border-bottom-right-radius: 9px;
-    border-bottom-left-radius: 9px;
-    pointer-events: none;    
-    overflow: hidden;    
-    text-overflow: ellipsis;
-    font-size: 11px;
-}
-
-.scanex-baselayers .content > .baselayer.current {
-    border: 3px solid #007F60;
-	box-sizing: unset;
 }
 @charset "UTF-8";
 
