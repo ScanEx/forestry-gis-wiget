@@ -42242,16 +42242,17 @@ var Forestry = (function () {
 
       _this.el.classList.add('scanex-forestry-baselayers-view');
 
-      _this.content.innerHTML = "\n        <div class=\"name\">\n            <div class=\"label\">".concat(translate$o('baselayers.name'), "</div>        \n            <input type=\"text\" value=\"\">        \n        </div>\n        <div class=\"url\">\n            <div class=\"label\">").concat(translate$o('baselayers.url'), "</div>        \n            <input type=\"text\" value=\"\">        \n        </div>\n        <div class=\"zoom\">\n            <div class=\"label\">").concat(translate$o('baselayers.zoom'), "</div>\n            <div></div>\n        </div>");
+      _this.content.innerHTML = "\n        <div class=\"name\">\n            <div class=\"label\">".concat(translate$o('baselayers.name'), "</div>        \n            <input type=\"text\" value=\"\">        \n        </div>\n        <div class=\"url\">\n            <div class=\"label\">").concat(translate$o('baselayers.url'), "</div>        \n            <input type=\"text\" value=\"\">        \n        </div>\n        <div>\n            <div class=\"label\">").concat(translate$o('baselayers.zoom'), "</div>\n            <div class=\"zoom\"></div>\n        </div>");
       _this._name = _this.content.querySelector('.name').querySelector('input');
       _this._url = _this.content.querySelector('.url').querySelector('input');
-      _this._zoom = new Interval(_this.content.querySelector('.zoom').querySelector('div'), {
+      _this._zoom = new Interval(_this.content.querySelector('.zoom'), {
         min: 1,
-        max: 21
+        max: 21,
+        width: 650
       }); // this._zoom = new Interval(this.content.querySelector('.zoom').querySelector('div'), {min: 1, max: 21, slider: Sliders.Slider2});
 
-      _this._zoom.lo = 1;
       _this._zoom.hi = 21;
+      _this._zoom.lo = 1;
       _this.footer.innerHTML = "<button class=\"ok\">".concat(translate$o('baselayers.ok'), "</button>\n        <button class=\"cancel\">").concat(translate$o('baselayers.cancel'), "</button>");
 
       var btnOk = _this.footer.querySelector('.ok');
